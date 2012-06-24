@@ -1,0 +1,46 @@
+#include "pch.h"
+
+static AbcThreadReturnType AbcKernelCallbackDecl ui_thread( void* tp )
+{
+	int niter = 10000;
+	for ( int iter = 0; iter < niter; iter++ )
+	{
+
+	}
+	return 0;
+}
+
+static AbcThreadReturnType AbcKernelCallbackDecl rend_thread( void* tp )
+{
+	int niter = 10000;
+	nuDoc* srcDoc = (nuDoc*) tp;
+	nuRenderDoc rdoc;
+
+	for ( int iter = 0; iter < niter; iter++ )
+	{
+		rdoc.UpdateDoc( *srcDoc );
+	}
+	return 0;
+}
+
+// Simulate a single document that is mutated by a UI thread, and a renderer thread that continually consumes it.
+TESTFUNC(DocumentClone)
+{
+	nuDoc d1;
+	nuDomEl* div = new nuDomEl();
+	div->Tag = nuTagDiv;
+	div->Style.Parse( "margin: 3px;" );
+	d1.Root.AddChild( div );
+
+	AbcThreadHandle t_ui, t_render;
+	AbcThreadCreate( &ui_thread, &d1, t_ui );
+	AbcThreadCreate( &rend_thread, &d1, t_render );
+
+	AbcThreadJoin( t_ui );
+	AbcThreadJoin( t_render );
+	AbcThreadCloseHandle( t_ui );
+	AbcThreadCloseHandle( t_render );
+
+	//nuDoc d2;
+	//d1.CloneFastInto( d2, 0 );
+}

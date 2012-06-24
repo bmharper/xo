@@ -1,0 +1,80 @@
+#pragma once
+
+#ifdef _WIN32
+	#define _CRT_SECURE_NO_WARNINGS 1
+	#include "../dependencies/biggle.h"
+	//#include <biggle/biggle.h>
+	#include <windows.h>
+#else
+	typedef const wchar_t* LPCTSTR;
+	typedef const char* LPCSTR;
+	// Android
+	#include <jni.h>
+	#include <GLES2/gl2.h>
+	#include <GLES2/gl2ext.h>
+	#include <android/log.h>
+	#include <pthread.h>
+	#include <semaphore.h>
+	#include <math.h>
+#endif
+
+#include <stdio.h>
+#include <assert.h>
+
+#include <algorithm>
+#include <limits>
+#include <functional>
+
+#if PROJECT_NUDOM
+	#ifdef _WIN32
+		#define PAPI __declspec(dllexport)
+	#else
+		#define PAPI
+	#endif
+#else
+	#ifdef _WIN32
+		#define PAPI __declspec(dllimport)
+	#else
+		#define PAPI
+	#endif
+#endif
+
+#define NO_XSTRING
+
+#ifndef INLINE
+#define INLINE inline
+#endif
+
+#ifndef _TCHAR_DEFINED
+typedef char TCHAR;
+#endif
+
+#ifndef _INC_TCHAR
+//#define _T(x) L ## x
+#define _T(x) x
+#endif
+
+#ifndef ASSERT
+	#define TEMP_ASSERT
+	#ifdef _DEBUG
+		#define ASSERT(condition) (void)0
+	#else
+		#define ASSERT(condition) assert(condition)
+	#endif
+#endif
+
+#include "../dependencies/Panacea/coredefs.h"
+#include "../dependencies/Panacea/Platform/err.h"
+#include "../dependencies/Panacea/Other/lmstdint.h"
+#include "../dependencies/Panacea/Containers/pvect.h"
+#include "../dependencies/Panacea/Containers/podvec.h"
+#include "../dependencies/Panacea/Containers/queue.h"
+#include "../dependencies/Panacea/Bits/BitMap.h"
+#include "../dependencies/Panacea/fhash/fhashtable.h"
+#include "../dependencies/Panacea/Platform/syncprims.h"
+#include "../dependencies/Panacea/Vec/Mat4.h"
+
+#ifdef TEMP_ASSERT
+	#undef TEMP_ASSERT
+	#undef ASSERT
+#endif

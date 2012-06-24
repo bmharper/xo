@@ -1,0 +1,15 @@
+
+For the C++ side of things, you need the Crystax NDK r7 (http://www.crystax.net/en/android/ndk/7)
+This is necessary for some C++11 features (auto and decltype). It might be prudent to get rid of that
+dependency.
+
+I have only tried this on Ubuntu 12.04.
+
+Simply make your current directory samples/Android (the same directory that contains this BUILD-HOWTO file),
+and run 'ndk-build'.
+
+ndk-build must be in your path, and must point to the root of the crystax NDK.
+
+That ought to give you libs/<platform>/libnudom.so
+
+You should now be able to load the project in eclipse, and deploy to a device.
