@@ -44,6 +44,7 @@ so let's say a conservative estimate for total document size then is 1 MB.
 sizeof(nuDomEl) = 128.
 1 MB / 128 = 8192 naked document elements fit into a 1 MB document.
 
+
 Locks
 -----
 

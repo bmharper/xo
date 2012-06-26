@@ -21,6 +21,7 @@ LRESULT nuProcessor::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	PAINTSTRUCT ps;
 	HDC dc;
 	nuEvent ev;
+	ev.Processor = this;
 
 	switch (message)
 	{
@@ -34,10 +35,12 @@ LRESULT nuProcessor::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 		break;
 
 	case WM_SIZE:
-		Doc->WindowWidth = lParam & 0xffff;
-		Doc->WindowHeight = (lParam >> 16) & 0xffff;
-		Doc->InvalidateLayout();
-		CopyDocAndQueueRender();
+		ev.Type = nuEventWindowSize;
+		ev.Points[0].x = float(lParam & 0xffff);
+		ev.Points[0].y = float((lParam >> 16) & 0xffff);
+		nuGlobal()->EventQueue.Add( ev );
+		//Doc->InvalidateLayout();
+		//CopyDocAndQueueRender();
 		//CopyDocAndRenderNow();
 		break;
 
@@ -52,9 +55,10 @@ LRESULT nuProcessor::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 		ev.Type = nuEventMouseMove;
 		ev.PointCount = 1;
 		ev.Points[0] = NUVEC2( LOWORD(lParam), HIWORD(lParam) );
-		BubbleEvent( ev );
+		nuGlobal()->EventQueue.Add( ev );
+		//BubbleEvent( ev );
 		//CopyDocAndRenderNow();
-		CopyDocAndQueueRender();
+		//CopyDocAndQueueRender();
 		break;
 
 	default:

@@ -9,10 +9,11 @@ xcopy /y ..\Panacea\Containers\queue.cpp dependencies\Panacea\Containers\
 xcopy /y ..\Panacea\Containers\queue.h dependencies\Panacea\Containers\
 xcopy /y ..\Panacea\Containers\cont_utils.h dependencies\Panacea\Containers\
 xcopy /y ..\Panacea\fhash\fhashtable.h dependencies\Panacea\fhash\
-xcopy /y ..\Panacea\Platform\syncprims.cpp dependencies\Panacea\Platform\
-xcopy /y ..\Panacea\Platform\syncprims.h dependencies\Panacea\Platform\
 xcopy /y ..\Panacea\Platform\err.cpp dependencies\Panacea\Platform\
 xcopy /y ..\Panacea\Platform\err.h dependencies\Panacea\Platform\
+xcopy /y ..\Panacea\Platform\syncprims.cpp dependencies\Panacea\Platform\
+xcopy /y ..\Panacea\Platform\syncprims.h dependencies\Panacea\Platform\
+xcopy /y ..\Panacea\Platform\timeprims.h dependencies\Panacea\Platform\
 xcopy /y ..\Panacea\Vec\Vec2.h dependencies\Panacea\Vec\
 xcopy /y ..\Panacea\Vec\Vec3.h dependencies\Panacea\Vec\
 xcopy /y ..\Panacea\Vec\Vec4.h dependencies\Panacea\Vec\

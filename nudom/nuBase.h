@@ -72,6 +72,7 @@ typedef char TCHAR;
 #include "../dependencies/Panacea/Bits/BitMap.h"
 #include "../dependencies/Panacea/fhash/fhashtable.h"
 #include "../dependencies/Panacea/Platform/syncprims.h"
+#include "../dependencies/Panacea/Platform/timeprims.h"
 #include "../dependencies/Panacea/Vec/Mat4.h"
 
 #ifdef TEMP_ASSERT

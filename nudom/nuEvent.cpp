@@ -3,9 +3,10 @@
 
 nuEvent::nuEvent()
 {
-	Type = nuEventMouseMove;
+	Processor = NULL;
 	Context = NULL;
 	Target = NULL;
+	Type = nuEventMouseMove;
 	PointCount = 0;
 	memset( Points, 0, sizeof(Points) );
 }

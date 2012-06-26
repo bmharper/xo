@@ -5,8 +5,9 @@
 // It will be good if we can keep these inside 32 bits, for easy masking of handlers. If not, just use as many 32-bit words as necessary.
 enum nuEvents
 {
-	nuEventTouch = BIT(0),
-	nuEventMouseMove = BIT(1),
+	nuEventTouch		= BIT(0),
+	nuEventMouseMove	= BIT(1),
+	nuEventWindowSize	= BIT(2),
 };
 
 /* User interface event (keyboard, mouse, touch, etc).
@@ -14,11 +15,12 @@ enum nuEvents
 class NUAPI nuEvent
 {
 public:
-	nuEvents	Type;
-	void*		Context;
-	nuDomEl*	Target;
-	int			PointCount;					// Mouse = 1	Touch >= 1
-	nuVec2		Points[NU_MAX_TOUCHES];
+	nuProcessor*	Processor;
+	void*			Context;
+	nuDomEl*		Target;
+	nuEvents		Type;
+	int				PointCount;					// Mouse = 1	Touch >= 1
+	nuVec2			Points[NU_MAX_TOUCHES];
 
 	nuEvent();
 	~nuEvent();

@@ -16,6 +16,7 @@ nuDoc::nuDoc()
 
 nuDoc::~nuDoc()
 {
+	// TODO: Ensure that all of your events in the process-wide event queue have been dealt with
 	Reset();
 }
 
@@ -111,15 +112,11 @@ void nuDoc::ResetInternalIDs()
 
 nuRenderDoc::nuRenderDoc()
 {
-	AbcCriticalSectionInitialize( Lock );
 	RenderRoot.SetPool( &RenderPool );
-	DocWidth = 0;
-	DocHeight = 0;
 }
 
 nuRenderDoc::~nuRenderDoc()
 {
-	AbcCriticalSectionDestroy( Lock );
 }
 
 void nuRenderDoc::ResetRenderData()
@@ -130,22 +127,16 @@ void nuRenderDoc::ResetRenderData()
 
 void nuRenderDoc::Render( nuRenderGL* rgl )
 {
-	{
-		TakeCriticalSection lock( Lock );
-		ResetRenderData();
-		nuLayout lay;
-		lay.Layout( Doc, RenderRoot, &RenderPool );
-		DocWidth = Doc.WindowWidth;
-		DocHeight = Doc.WindowHeight;
-	}
+	ResetRenderData();
+	nuLayout lay;
+	lay.Layout( Doc, RenderRoot, &RenderPool );
 
 	nuRenderer rend;
-	rend.Render( rgl, &RenderRoot, DocWidth, DocHeight );
+	rend.Render( rgl, &RenderRoot, Doc.WindowWidth, Doc.WindowHeight );
 }
 
 void nuRenderDoc::UpdateDoc( const nuDoc& original )
 {
-	TakeCriticalSection lock( Lock );
 	Doc.Reset();
 	original.CloneFastInto( Doc, 0 );
 }

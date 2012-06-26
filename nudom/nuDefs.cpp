@@ -8,11 +8,15 @@
 static nuStyle*						DefaultTagStyles[nuTagEND];
 static volatile uint32				ExitSignalled = 0;
 static int							InitializeCount = 0;
-static TAbcQueue<nuProcessor*>*		RenderQueue = NULL;
+//static TAbcQueue<nuProcessor*>*		RenderQueue = NULL;
 
 #if NU_WIN_DESKTOP
-static HANDLE						RenderThread = NULL;
+//static HANDLE						RenderThread = NULL;
+static HANDLE						UIThread = NULL;
 #endif
+
+// Single globally accessible data
+static nuGlobalStruct*				nuGlobals = NULL;
 
 void nuBox::SetInt( int32 left, int32 top, int32 right, int32 bottom )
 {
@@ -24,30 +28,47 @@ void nuBox::SetInt( int32 left, int32 top, int32 right, int32 bottom )
 
 #if NU_WIN_DESKTOP
 
-DWORD WINAPI nuRenderThread( LPVOID tp )
+//DWORD WINAPI nuRenderThread( LPVOID tp )
+//{
+//	while ( true )
+//	{
+//		AbcSemaphoreWait( RenderQueue->SemaphoreObj(), INFINITE );
+//		if ( ExitSignalled )
+//			break;
+//		nuProcessor* proc = NULL;
+//		NUVERIFY( RenderQueue->PopTail( proc ) );
+//		proc->Render();
+//	}
+//	return 0;
+//}
+
+DWORD WINAPI nuUIThread( LPVOID tp )
 {
 	while ( true )
 	{
-		AbcSemaphoreWait( RenderQueue->SemaphoreObj(), INFINITE );
+		AbcSemaphoreWait( nuGlobal()->EventQueue.SemaphoreObj(), INFINITE );
 		if ( ExitSignalled )
 			break;
-		nuProcessor* proc = NULL;
-		NUVERIFY( RenderQueue->PopTail( proc ) );
-		proc->Render();
+		nuEvent ev;
+		NUVERIFY( nuGlobal()->EventQueue.PopTail( ev ) );
+		ev.Processor->ProcessEvent( ev );
 	}
 	return 0;
 }
 
 static void nuInitialize_Win32()
 {
-	RenderQueue = new TAbcQueue<nuProcessor*>();
-	RenderQueue->Initialize( true );
-	RenderThread = CreateThread( NULL, 0, &nuRenderThread, NULL, 0, NULL );
+	//RenderQueue = new TAbcQueue<nuProcessor*>();
+	//RenderQueue->Initialize( true );
+	//RenderThread = CreateThread( NULL, 0, &nuRenderThread, NULL, 0, NULL );
+	//UIThread = CreateThread( NULL, 0, &nuUIThread, NULL, 0, NULL );
+	AbcVerify( AbcThreadCreate( &nuUIThread, NULL, UIThread ) );
 }
 
 static void nuShutdown_Win32()
 {
 	InterlockedExchange( &ExitSignalled,  1 );
+	/*
 	if ( RenderThread != NULL )
 	{
 		for ( uint waitNum = 0; true; waitNum++ )
@@ -62,6 +83,18 @@ static void nuShutdown_Win32()
 
 	delete RenderQueue;
 	RenderQueue = NULL;
+	*/
+	if ( UIThread != NULL )
+	{
+		nuGlobal()->EventQueue.Add( nuEvent() );
+		for ( uint waitNum = 0; true; waitNum++ )
+		{
+			if ( WaitForSingleObject( UIThread, waitNum ) == WAIT_OBJECT_0 )
+				break;
+		}
+		AbcThreadCreate( &nuUIThread, NULL, UIThread );
+		UIThread = NULL;
+	}
 }
 
 #endif
@@ -97,10 +130,20 @@ void nuInitializeDefaultTagStyles()
 }
 
 
+NUAPI nuGlobalStruct* nuGlobal()
+{
+	return nuGlobals;
+}
+
 NUAPI void nuInitialize()
 {
 	InitializeCount++;
 	if ( InitializeCount != 1 ) return;
+	nuGlobals = new nuGlobalStruct();
+	nuGlobals->TargetFPS = 60;
+	nuGlobals->DocAddQueue.Initialize( false );
+	nuGlobals->DocRemoveQueue.Initialize( false );
+	nuGlobals->EventQueue.Initialize( true );
 	nuInitializeDefaultTagStyles();
 	nuSysWnd::PlatformInitialize();
 #if NU_WIN_DESKTOP
@@ -120,6 +163,8 @@ NUAPI void nuShutdown()
 #if NU_WIN_DESKTOP
 	nuShutdown_Win32();
 #endif
+
+	delete nuGlobals;
 }
 
 NUAPI nuStyle** nuDefaultTagStyles()
@@ -127,10 +172,10 @@ NUAPI nuStyle** nuDefaultTagStyles()
 	return DefaultTagStyles;
 }
 
-NUAPI void nuQueueRender( nuProcessor* proc )
-{
-	RenderQueue->Add( proc );
-}
+//NUAPI void nuQueueRender( nuProcessor* proc )
+//{
+//	RenderQueue->Add( proc );
+//}
 
 NUAPI void nuParseFail( const char* msg, ... )
 {

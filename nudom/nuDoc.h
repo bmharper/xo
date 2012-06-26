@@ -30,7 +30,7 @@ protected:
 	bool						AppearanceDirty;
 	pvect<nuDomEl*>				ChildByInternalID;
 	nuInternalID				NextID;
-	podvec<nuInternalID>		UsableIDs;				// When we do a re-layout, then FreeIDs are appended to UsableIDs
+	podvec<nuInternalID>		UsableIDs;				// When we do a render sync, then FreeIDs are moved into UsableIDs
 	podvec<nuInternalID>		FreeIDs;
 
 	void	ResetInternalIDs();
@@ -45,7 +45,6 @@ public:
 	// Rendered state
 	nuRenderDomEl				RenderRoot;
 	nuPool						RenderPool;
-	AbcCriticalSection			Lock;
 
 			nuRenderDoc();
 			~nuRenderDoc();
@@ -54,7 +53,6 @@ public:
 	void	UpdateDoc( const nuDoc& original );
 
 protected:
-	int							DocWidth, DocHeight;
 	nuDoc						Doc;
 
 	void	ResetRenderData();

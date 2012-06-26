@@ -7,6 +7,8 @@
 
 nuProcessor::nuProcessor()
 {
+	AbcCriticalSectionInitialize( DocLock );
+	MessagesSinceLastRender = 0;
 	Doc = NULL;
 	Wnd = NULL;
 	RenderDoc = new nuRenderDoc();
@@ -15,43 +17,76 @@ nuProcessor::nuProcessor()
 nuProcessor::~nuProcessor()
 {
 	delete RenderDoc;
+	AbcCriticalSectionDestroy( DocLock );
 }
 
-// This will come in either from the main thread (on Win32), or from the Renderer thread.
-// Win32 is main thread OR renderer thread
-// Android is always renderer thread
-void nuProcessor::Render()
+// This is always called from the Render thread
+nuRenderResult nuProcessor::Render()
 {
-	if ( !Wnd->BeginRender() )
-		return;
+	bool haveLock = false;
+	// I'm not quite sure how we should handle this. The idea is that you don't want to go without a UI update
+	// for too long, even if the UI thread is taking its time, and being bombarded with messages.
+	if ( MessagesSinceLastRender > 0 )
+	{
+		haveLock = true;
+		AbcCriticalSectionEnter( DocLock );
+	}
+	else
+		haveLock = AbcCriticalSectionTryEnter( DocLock );
 
-	RenderDoc->Render( Wnd->RGL );
+	if ( !haveLock )
+		return nuRenderResultNeedMore;
 
-	Wnd->FinishRender();
+	// TODO: If AnyAnimationsRunning(), then we are not idle
+	bool idle = (Doc->WindowWidth == 0 || Doc->WindowHeight == 0) ||
+				!(Doc->IsAppearanceDirty() || Doc->IsLayoutDirty());
+	
+	if ( idle )
+	{
+		AbcCriticalSectionLeave( DocLock );
+	}
+	else
+	{
+		Doc->AppearanceClean();
+		Doc->LayoutClean();
+		RenderDoc->UpdateDoc( *Doc );
+		InterlockedExchange( &MessagesSinceLastRender,  0 );
+		AbcCriticalSectionLeave( DocLock );
+
+		if ( !Wnd->BeginRender() )
+			return nuRenderResultNeedMore;
+
+		RenderDoc->Render( Wnd->RGL );
+
+		Wnd->FinishRender();
+	}
+
+	return idle ? nuRenderResultIdle : nuRenderResultNeedMore;
 }
 
-bool nuProcessor::CopyDoc()
+// This is always called from the UI thread
+void nuProcessor::ProcessEvent( nuEvent& ev )
 {
-	if ( Doc->WindowWidth == 0 || Doc->WindowHeight == 0 )
-		return false;
-
-	RenderDoc->UpdateDoc( *Doc );
-
-	return true;
-}
-
-void nuProcessor::CopyDocAndQueueRender()
-{
-	if ( !CopyDoc() )
-		return;
-	nuQueueRender( this );
-}
-
-void nuProcessor::CopyDocAndRenderNow()
-{
-	if ( !CopyDoc() )
-		return;
-	Render();
+	{
+		TakeCriticalSection lock( DocLock );
+		switch ( ev.Type )
+		{
+		case nuEventWindowSize:
+			Doc->WindowWidth = (uint32) ev.Points[0].x;
+			Doc->WindowHeight = (uint32) ev.Points[0].y;
+			Doc->InvalidateLayout();
+			break;
+		}
+		// HACK. This analysis needs to be performed by the renderer, after it has copied our document over.
+		// Doc shouldn't actually have these flags. It should have only one flag, which is "An user-controllable event ran".
+		// If that flag is true (or if we've had a systemic event such as WindowSize), then we should proceed to the render
+		// phase, and perform differential analysis there. First just compare the two linear tables of dom elements. From
+		// there you can know whether you need to perform layout.
+		Doc->InvalidateLayout();
+		Doc->InvalidateAppearance();
+		BubbleEvent( ev );
+	}
+	InterlockedIncrement( &MessagesSinceLastRender );
 }
 
 void nuProcessor::BubbleEvent( nuEvent& ev )

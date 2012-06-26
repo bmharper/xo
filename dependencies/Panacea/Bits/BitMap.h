@@ -275,7 +275,7 @@ public:
 		UINT32 pword = bit >> 5;
 		UINT32 pbit = bit & 31; 
 #ifdef _WIN32
-		return 1 != _bittest( ((LONG*) Map) + pword, pbit );
+		return 0 != _bittest( ((LONG*) Map) + pword, pbit );
 #else
 		return 0 != (((UINT32*)Map)[pword] & (1 << pbit));
 #endif

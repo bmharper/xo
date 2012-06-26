@@ -37,4 +37,3 @@ typedef int				int32;
 #else
 #define NU_ANDROID 0
 #endif
-

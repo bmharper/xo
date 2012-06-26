@@ -82,6 +82,10 @@ PAPI void		AbcThreadCloseHandle( AbcThreadHandle handle )
 {
 	CloseHandle( handle );
 }
+PAPI void		AbcSleep( int milliseconds )
+{
+	Sleep( milliseconds );	
+}
 #if XSTRING_DEFINED
 PAPI bool		AbcProcessCreate( const char* cmd, AbcForkedProcessHandle* handle, AbcProcessID* pid )
 {
@@ -232,6 +236,15 @@ PAPI bool		AbcThreadJoin( AbcThreadHandle handle )
 PAPI void		AbcThreadCloseHandle( AbcThreadHandle handle )
 {
 	// pthread has no equivalent/requirement of this
+}
+
+PAPI void		AbcSleep( int milliseconds )
+{
+	int64 nano = milliseconds * (int64) 1000;
+	timespec t;
+	t.tv_nsec = nano % 1000000000; 
+	t.tv_sec = (nano - t.tv_nsec) / 1000000000;
+	nanosleep( &t );
 }
 
 PAPI bool		AbcProcessCreate( const char* cmd, AbcForkedProcessHandle* handle, AbcProcessID* pid )

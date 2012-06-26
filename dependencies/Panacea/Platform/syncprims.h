@@ -42,6 +42,8 @@ PAPI bool		AbcThreadCreate( AbcThreadFunc threadfunc, void* context, AbcThreadHa
 PAPI bool		AbcThreadJoin( AbcThreadHandle handle );
 PAPI void		AbcThreadCloseHandle( AbcThreadHandle handle );
 
+PAPI void		AbcSleep( int milliseconds );
+
 PAPI bool		AbcProcessCreate( const char* cmd, AbcForkedProcessHandle* handle, AbcProcessID* pid );
 PAPI bool		AbcProcessWait( AbcForkedProcessHandle handle, int* exitCode );
 PAPI void 		AbcProcessCloseHandle( AbcForkedProcessHandle handle );

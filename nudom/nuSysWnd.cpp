@@ -131,7 +131,7 @@ nuSysWnd::~nuSysWnd()
 #if NU_ANDROID
 	MainWnd = NULL;
 #endif
-	delete Processor;
+	nuGlobal()->DocRemoveQueue.Add( Processor );
 	Processor = NULL;
 	delete RGL;
 	RGL = NULL;
@@ -172,6 +172,7 @@ nuSysWnd* nuSysWnd::CreateWithDoc()
 	nuSysWnd* w = Create();
 	if ( !w ) return NULL;
 	w->Attach( new nuDoc(), true );
+	nuGlobal()->DocAddQueue.Add( w->Processor );
 	return w;
 }
 

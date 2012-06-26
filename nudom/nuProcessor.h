@@ -2,12 +2,14 @@
 #include "nuDefs.h"
 
 // Process UI input. Schedule rendering.
+// Coordinates between DOM and Render threads.
 class NUAPI nuProcessor
 {
 public:
 	nuDoc*				Doc;
 	nuSysWnd*			Wnd;
 	nuRenderDoc*		RenderDoc;
+	volatile uint32		MessagesSinceLastRender;
 
 			nuProcessor();
 			~nuProcessor();
@@ -17,14 +19,16 @@ public:
 	LRESULT WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam );
 #endif
 
-	void	Render();
-
-	void	BubbleEvent( nuEvent& ev );
+	// These are our only two entry points into our content
+	nuRenderResult	Render();							// This is always called from the Render thread
+	void			ProcessEvent( nuEvent& ev );		// This is always called from the UI thread
 
 protected:
+	AbcCriticalSection	DocLock;
 
 	bool	CopyDoc();
 	void	CopyDocAndQueueRender();
 	void	CopyDocAndRenderNow();
 	void	FindTarget( const nuVec2& p, pvect<nuRenderDomEl*>& chain );
+	void	BubbleEvent( nuEvent& ev );
 };

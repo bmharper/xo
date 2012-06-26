@@ -40,6 +40,12 @@ enum nuMainEvent
 	nuMainEventShutdown,
 };
 
+enum nuRenderResult
+{
+	nuRenderResultNeedMore,
+	nuRenderResultIdle
+};
+
 #define NU_TAGS_DEFINE \
 XX(Body, 1) \
 XY(Div) \
@@ -95,10 +101,20 @@ struct nuStyleID
 	operator uint32 () const { return StyleID; }
 };
 
-NUAPI void			nuInitialize();
-NUAPI void			nuShutdown();
-NUAPI nuStyle**		nuDefaultTagStyles();
-NUAPI void			nuQueueRender( nuProcessor* proc );
-NUAPI void			nuParseFail( const char* msg, ... );
-NUAPI void			NUTRACE( const char* msg, ... );
+struct nuGlobalStruct
+{
+	int							TargetFPS;
+	pvect<nuProcessor*>			Docs;				// Only Main thread is allowed to touch this.
+	TAbcQueue<nuProcessor*>		DocAddQueue;		// Documents requesting addition
+	TAbcQueue<nuProcessor*>		DocRemoveQueue;		// Documents requesting removal
+	TAbcQueue<nuEvent>			EventQueue;			// Global event queue, consumed by the one-and-only UI thread
+};
+
+NUAPI nuGlobalStruct*	nuGlobal();
+NUAPI void				nuInitialize();
+NUAPI void				nuShutdown();
+NUAPI nuStyle**			nuDefaultTagStyles();
+//NUAPI void			nuQueueRender( nuProcessor* proc );
+NUAPI void				nuParseFail( const char* msg, ... );
+NUAPI void				NUTRACE( const char* msg, ... );
 
