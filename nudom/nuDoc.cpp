@@ -2,43 +2,34 @@
 #include "nuDoc.h"
 #include "nuProcessor.h"
 #include "nuLayout.h"
-#include "nuRender.h"
+#include "Render/nuRenderer.h"
 
 nuDoc::nuDoc()
 {
 	IsReadOnly = false;
-	AppearanceDirty = true;
-	LayoutDirty = true;
+	Version = 0;
 	WindowWidth = WindowHeight = 0;
-	Root.Tag = nuTagBody;
+	Root.SetDoc( this );
+	Root.SetDocRoot();
 	ResetInternalIDs();
 }
 
 nuDoc::~nuDoc()
 {
-	// TODO: Ensure that all of your events in the process-wide event queue have been dealt with
+	// TODO: Ensure that all of your events in the process-wide event queue have been dealt with,
+	// because the event processor is going to try to access this doc.
 	Reset();
 }
 
-void nuDoc::InvalidateAppearance()
+void nuDoc::IncVersion()
 {
-	AppearanceDirty = true;
+	Version++;
 }
 
-void nuDoc::InvalidateLayout()
+void nuDoc::RenderSync()
 {
-	LayoutDirty = true;
-	InvalidateAppearance();
-}
-
-void nuDoc::AppearanceClean()
-{
-	AppearanceDirty = false;
-}
-
-void nuDoc::LayoutClean()
-{
-	LayoutDirty = false;
+	UsableIDs += FreeIDs;
+	FreeIDs.clear();
 }
 
 void nuDoc::CloneFastInto( nuDoc& c, uint cloneFlags ) const
@@ -49,36 +40,34 @@ void nuDoc::CloneFastInto( nuDoc& c, uint cloneFlags ) const
 	Styles.CloneFastInto( c.Styles, &c.Pool );
 	c.WindowWidth = WindowWidth;
 	c.WindowHeight = WindowHeight;
-	c.LayoutDirty = false;
-	c.AppearanceDirty = false;
+	c.Version = Version;
 }
 
 void nuDoc::ChildAdded( nuDomEl* el )
 {
-	NUASSERT(el->Doc == NULL);
-	NUASSERT(el->InternalID == 0);
-	el->Doc = this;
+	NUASSERT(el->GetDoc() == this);
+	NUASSERT(el->GetInternalID() == 0);
 	if ( UsableIDs.size() != 0 )
 	{
-		el->InternalID = UsableIDs.rpop();
-		ChildByInternalID[el->InternalID] = el;
+		el->SetInternalID( UsableIDs.rpop() );
+		ChildByInternalID[el->GetInternalID()] = el;
 	}
 	else
 	{
-		el->InternalID = NextID++;
+		el->SetInternalID( (nuInternalID) ChildByInternalID.size() );
 		ChildByInternalID += el;
-		NUASSERT(ChildByInternalID.size() == el->InternalID + 1);
 	}
 }
 
 void nuDoc::ChildRemoved( nuDomEl* el )
 {
-	NUASSERT(el->Doc == this);
-	NUASSERT(el->InternalID != 0);
-	ChildByInternalID[el->InternalID] = NULL;
-	el->Doc = NULL;
-	el->InternalID = 0;
-	FreeIDs += el->InternalID;
+	nuInternalID elID = el->GetInternalID();
+	NUASSERT(el->GetDoc() == this);
+	NUASSERT(elID != 0);
+	ChildByInternalID[el->GetInternalID()] = NULL;
+	el->SetDoc( NULL );
+	el->SetInternalID( 0 );
+	FreeIDs += elID;
 }
 
 void nuDoc::Reset()
@@ -86,58 +75,21 @@ void nuDoc::Reset()
 	if ( IsReadOnly )
 	{
 		Root.Discard();
-		Styles.Reset();
+		Styles.Discard();
 	}
 	WindowWidth = 0;
 	WindowHeight = 0;
-	LayoutDirty = false;
-	AppearanceDirty = false;
+	Version = 0;
 	Pool.FreeAll();
-	Root.Doc = NULL;
-	Root.InternalID = 0;
+	Root.SetInternalID( 0 );
 	ResetInternalIDs();
 }
 
 void nuDoc::ResetInternalIDs()
 {
-	NextID = 1;
 	FreeIDs.clear();
 	UsableIDs.clear();
 	ChildByInternalID.clear();
 	ChildByInternalID += NULL;	// zero is NULL
 	ChildAdded( &Root );
 }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-nuRenderDoc::nuRenderDoc()
-{
-	RenderRoot.SetPool( &RenderPool );
-}
-
-nuRenderDoc::~nuRenderDoc()
-{
-}
-
-void nuRenderDoc::ResetRenderData()
-{
-	RenderRoot.Discard();
-	RenderPool.FreeAll();
-}
-
-void nuRenderDoc::Render( nuRenderGL* rgl )
-{
-	ResetRenderData();
-	nuLayout lay;
-	lay.Layout( Doc, RenderRoot, &RenderPool );
-
-	nuRenderer rend;
-	rend.Render( rgl, &RenderRoot, Doc.WindowWidth, Doc.WindowHeight );
-}
-
-void nuRenderDoc::UpdateDoc( const nuDoc& original )
-{
-	Doc.Reset();
-	original.CloneFastInto( Doc, 0 );
-}
-

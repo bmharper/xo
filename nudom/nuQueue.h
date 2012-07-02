@@ -1,5 +1,6 @@
 #pragma once
-#include "nuPlatform.h"
+
+#include "nuDefs.h"
 
 /*
 // Job for nuQueue
@@ -11,14 +12,14 @@ public:
 };
 
 // Job queue
-class NUAPI nuQueue
+class NUAPI nuJobQueue
 {
 public:
-			nuQueue();
-			~nuQueue();
+			nuJobQueue();
+			~nuJobQueue();
 	void	Add( nuJob* job );
 				
 protected:
-	AbcQueue Queue;
+	TAbcQueue<nuJob*> Queue;
 };
 */

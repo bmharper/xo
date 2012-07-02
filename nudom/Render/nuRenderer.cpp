@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "nuDoc.h"
-#include "nuRender.h"
+#include "nuRenderer.h"
 #include "nuRenderGL.h"
+#include "nuRenderDomEl.h"
 
 void nuRenderer::Render( nuRenderGL* gl, nuRenderDomEl* root, int width, int height )
 {
@@ -38,10 +39,10 @@ void nuRenderer::RenderNode( nuRenderDomEl* node )
 	//NUTRACE( "node %f\n", left );
 
 	auto bg = style.Get( nuCatBackground );
-	if ( bg && bg->Color.a != 0 )
+	if ( bg && bg->GetColor().a != 0 )
 	{
 		for ( int i = 0; i < 4; i++ )
-			corners[i].Color = bg->Color.GetRGBA();
+			corners[i].Color = bg->GetColor().GetRGBA();
 
 		if ( radius != 0 )
 		{

@@ -13,6 +13,7 @@
 	#include <GLES2/gl2.h>
 	#include <GLES2/gl2ext.h>
 	#include <android/log.h>
+	#include <sys/atomics.h>
 	#include <pthread.h>
 	#include <semaphore.h>
 	#include <math.h>

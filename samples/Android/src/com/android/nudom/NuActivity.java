@@ -44,6 +44,7 @@ public class NuActivity extends Activity {
     		y[i] = event.getY(i);
     	}
     	NuLib.input( 1, x, y );
+    	mView.requestRender();
     	return true;
     }
 }

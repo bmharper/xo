@@ -17,11 +17,18 @@ void nuClonePodvecPrepare( podvec<T>& dst, const podvec<T>& src, nuPool* pool )
 }
 
 template<typename T>
-void nuClonePodvec( podvec<T>& dst, const podvec<T>& src, nuPool* pool )
+void nuClonePodvecWithCloneFastInto( podvec<T>& dst, const podvec<T>& src, nuPool* pool )
 {
 	nuClonePodvecPrepare( dst, src, pool );
 	for ( uintp i = 0; i < src.count; i++ )
 	{
 		src[i].CloneFastInto( dst[i], pool );
 	}
+}
+
+template<typename T>
+void nuClonePodvecWithMemCopy( podvec<T>& dst, const podvec<T>& src, nuPool* pool )
+{
+	nuClonePodvecPrepare( dst, src, pool );
+	memcpy( dst.data, src.data, src.size() * sizeof(T) );
 }

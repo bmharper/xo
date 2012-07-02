@@ -131,11 +131,16 @@ nuGLProg::nuGLProg()
 
 nuRenderGL::nuRenderGL()
 {
-	ActiveProgram = NULL;
+	Reset();
 }
 
 nuRenderGL::~nuRenderGL()
 {
+}
+
+void nuRenderGL::Reset()
+{
+	memset( this, 0, sizeof(*this) );
 }
 
 bool nuRenderGL::CreateShaders()
@@ -175,6 +180,12 @@ void nuRenderGL::DeleteShaders()
 	DeleteProgram( PFill );
 	DeleteProgram( PRect );
 	DeleteProgram( PCurve );
+}
+
+void nuRenderGL::SurfaceLost()
+{
+	Reset();
+	CreateShaders();
 }
 
 void nuRenderGL::ActivateProgram( nuGLProg& p )

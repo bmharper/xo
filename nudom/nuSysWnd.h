@@ -8,7 +8,7 @@ class NUAPI nuSysWnd
 {
 public:
 #if NU_WIN_DESKTOP
-	HWND			Wnd;
+	HWND			SysWnd;
 	HGLRC			GLRC;
 #endif
 	nuProcessor*	Processor;
@@ -27,6 +27,7 @@ public:
 	nuDoc*	Doc();
 	bool	BeginRender();
 	void	FinishRender();
+	void	SurfaceLost();
 
 protected:
 #if NU_WIN_DESKTOP

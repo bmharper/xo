@@ -10,7 +10,7 @@
 #include "nuDefs.h"
 #include "nuDoc.h"
 #include "nuLayout.h"
-#include "nuRender.h"
+#include "Render/nuRenderer.h"
 #include "nuSysWnd.h"
 #include "nuEvent.h"
 

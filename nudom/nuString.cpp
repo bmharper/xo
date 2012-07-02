@@ -110,6 +110,13 @@ nuString::nuString( const nuString& b )
 	*this = b;
 }
 
+nuString::nuString( const char* z )
+{
+	Z = NULL;
+	Len = 0;
+	*this = z;
+}
+
 nuString::~nuString()
 {
 	Free();

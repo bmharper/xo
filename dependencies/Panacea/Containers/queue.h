@@ -47,6 +47,7 @@ private:
 	u32					Mask() const				{ return RingSize - 1; }
 	void*				Slot( u32 pos ) const		{ return (byte*) Buffer + (pos * ItemSize); }
 	void				Increment( u32& i ) const	{ i = (i + 1) & Mask(); }
+	int32				SizeInternal() const		{ return (Head - Tail) & Mask(); }
 
 	void	Grow();
 };

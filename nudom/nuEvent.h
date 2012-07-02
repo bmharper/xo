@@ -24,6 +24,8 @@ public:
 
 	nuEvent();
 	~nuEvent();
+
+	void MakeWindowSize( int w, int h );
 };
 
 // The Android ecosystem is just not up to this yet. It is a pity, because lambdas make such good event handlers.

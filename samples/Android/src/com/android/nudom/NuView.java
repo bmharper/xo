@@ -35,6 +35,8 @@ import javax.microedition.khronos.opengles.GL10;
 class NuView extends GLSurfaceView {
     private static String TAG = "NuView";
     private static final boolean DEBUG = false;
+    public static final int RENDER_RESULT_NEED_MORE = 0;
+    public static final int RENDER_RESULT_IDLE = 1;
 
     public NuView(Context context) {
         super(context);
@@ -72,7 +74,8 @@ class NuView extends GLSurfaceView {
                              new ConfigChooser(5, 6, 5, 0, depth, stencil) );
 
         /* Set the renderer responsible for frame rendering */
-        setRenderer(new Renderer());
+        setRenderer(new NuRenderer(this));
+        setRenderMode(RENDERMODE_WHEN_DIRTY);
     }
 
     private static class ContextFactory implements GLSurfaceView.EGLContextFactory {
@@ -291,17 +294,33 @@ class NuView extends GLSurfaceView {
         private int[] mValue = new int[1];
     }
 
-    private static class Renderer implements GLSurfaceView.Renderer {
-        public void onDrawFrame(GL10 gl) {
-            NuLib.step();
-        }
-
+    private class NuRenderer implements GLSurfaceView.Renderer {
+    	public NuView MyView;
+    	
+    	public NuRenderer( NuView view ) {
+    		MyView = view;
+    	}
+    	
         public void onSurfaceChanged(GL10 gl, int width, int height) {
             NuLib.init(width, height);
         }
 
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-            // Do nothing.
+        	// This is a 'surface lost' message.
+        	NuLib.surfacelost();
         }
+        
+        public void onDrawFrame(GL10 gl) {
+        	int res = NuLib.step();
+        	if ( res == NuView.RENDER_RESULT_IDLE ) {
+        		//Log.i("nu", "idle");
+        		MyView.setRenderMode(RENDERMODE_WHEN_DIRTY);
+        	}
+        	else {
+        		//Log.i("nu", "continuous");
+                MyView.setRenderMode(RENDERMODE_CONTINUOUSLY);
+        	}
+        }
+        
     }
 }

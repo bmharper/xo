@@ -3,6 +3,7 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 NU_SRC = \
+../../../nudom/nuAndroid.cpp \
 ../../../nudom/nuDefs.cpp \
 ../../../nudom/nuDoc.cpp \
 ../../../nudom/nuDomEl.cpp \
@@ -11,12 +12,17 @@ NU_SRC = \
 ../../../nudom/nuMem.cpp \
 ../../../nudom/nuProcessor.cpp \
 ../../../nudom/nuQueue.cpp \
-../../../nudom/nuRender.cpp \
-../../../nudom/nuRenderGL.cpp \
 ../../../nudom/nuString.cpp \
+../../../nudom/nuStringTable.cpp \
 ../../../nudom/nuStyle.cpp \
 ../../../nudom/nuSysWnd.cpp \
-../../../nudom/nuAndroid.cpp \
+../../../nudom/nuWinMain.cpp \
+../../../nudom/Render/nuRenderDoc.cpp \
+../../../nudom/Render/nuRenderDomEl.cpp \
+../../../nudom/Render/nuRenderer.cpp \
+../../../nudom/Render/nuRenderGL.cpp \
+../../../nudom/Text/nuTextCache.cpp \
+../../../nudom/Text/nuTextDefs.cpp \
 ../../../dependencies/Panacea/Containers/queue.cpp \
 ../../../dependencies/Panacea/Platform/err.cpp \
 ../../../dependencies/Panacea/Platform/syncprims.cpp \

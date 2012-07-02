@@ -135,119 +135,82 @@ nuColor nuColor::Parse( const char* s, intp len )
 
 nuStyleAttrib::nuStyleAttrib()
 {
-	Category = nuCatWidth;
+	memset( this, 0, sizeof(*this) );
 }
 
-nuStyleAttrib::nuStyleAttrib( const nuStyleAttrib& b )
+void nuStyleAttrib::SetU32( nuStyleCategories cat, uint32 val )
 {
-	Category = nuCatWidth;
-	*this = b;
-}
-
-nuStyleAttrib::~nuStyleAttrib()
-{
-	Free();
-}
-
-void nuStyleAttrib::Free()
-{
-	switch ( Category )
-	{
-	case nuCatFontFamily:
-		String.Free();
-		break;
-	}
-}
-
-nuStyleAttrib& nuStyleAttrib::operator=( const nuStyleAttrib& b )
-{
-	Free();
-	Category = b.Category;
-	switch ( Category )
-	{
-	case nuCatFontFamily:
-		String.Set( b.String );
-		break;
-	default:
-		memcpy( this, &b, sizeof(b) );
-		break;
-	}
-	return *this;
-}
-
-void nuStyleAttrib::Discard()
-{
-	// We can set ourselves here to anything that has a trivial destructor
-	Category = nuCatWidth;
-}
-
-void nuStyleAttrib::SetZeroCopy( const nuStyleAttrib& b )
-{
-	memcpy( this, &b, sizeof(b) );
-}
-
-void nuStyleAttrib::CloneFastInto( nuStyleAttrib& c, nuPool* pool ) const
-{
-	switch ( Category )
-	{
-	case nuCatFontFamily:
-		c.Category = Category;
-		String.CloneFastInto( c.String, pool );
-		break;
-	default:
-		memcpy( &c, this, sizeof(c) );
-		break;
-	}
-}
-
-template<typename T>
-void nuStyleAttrib::SetA( nuStyleCategories cat, T& prop, const T& value )
-{
-	Free();
 	Category = cat;
-	prop = value;
+	ValU32 = val;
+}
+
+void nuStyleAttrib::SetWithSubtypeU32( nuStyleCategories cat, uint8 subtype, uint32 val )
+{
+	Category = cat;
+	SubType = subtype;
+	ValU32 = val;
+}
+
+void nuStyleAttrib::SetWithSubtypeF( nuStyleCategories cat, uint8 subtype, float val )
+{
+	Category = cat;
+	SubType = subtype;
+	ValF = val;
+}
+
+void nuStyleAttrib::SetString( nuStyleCategories cat, const char* str, nuDoc* doc )
+{
+	Category = cat;
+	ValU32 = doc->Strings.GetId( str );
 }
 
 void nuStyleAttrib::SetColor( nuStyleCategories cat, nuColor val )
 {
-	SetA( cat, Color, val );
+	SetU32( cat, val.u );
 }
 
 void nuStyleAttrib::SetSize( nuStyleCategories cat, nuSize val )
 {
-	SetA( cat, Size, val );
-}
-
-void nuStyleAttrib::SetBox( nuStyleCategories cat, nuStyleBox val )
-{
-	SetA( cat, Box, val );
+	SetWithSubtypeF( cat, val.Type, val.Val );
 }
 
 void nuStyleAttrib::SetDisplay( nuDisplayType val )
 {
-	SetA( nuCatDisplay, Display, val );
+	SetU32( nuCatDisplay, val );
 }
 
 void nuStyleAttrib::SetBorderRadius( nuSize val )
 {
-	SetA( nuCatBorderRadius, BorderRadius, val );
+	SetSize( nuCatBorderRadius, val );
 }
 
 void nuStyleAttrib::SetPosition( nuPositionType val )
 {
-	SetA( nuCatPosition, Position, val );
+	SetU32( nuCatPosition, val );
+}
+
+void nuStyleAttrib::SetFont( const char* font, nuDoc* doc )
+{
+	SetString( nuCatFontFamily, font, doc );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+template<typename T>	void nuStyleAttrib_SetT( nuStyleAttrib& attrib, const T& v )					{}
+template<>				void nuStyleAttrib_SetT( nuStyleAttrib& attrib, const nuDisplayType& v )		{ attrib.SetDisplay(v); }
+template<>				void nuStyleAttrib_SetT( nuStyleAttrib& attrib, const nuPositionType& v )		{ attrib.SetPosition(v); }
+
 template<typename T>
-static bool Parse1( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, T& t), nuStyleCategories cat, nuStyleAttrib& attrib, T& attribVal )
+//static bool Parse1( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, T& t), nuStyleCategories cat, nuStyleAttrib& attrib, T& attribVal )
+static bool Parse1( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, T& t), nuStyleCategories cat, nuStyleAttrib& attrib )
 {
-	if ( parseFunc( s, len, attribVal ) )
+	T val;
+	if ( parseFunc( s, len, val ) )
 	{
 		attrib.Category = cat;
+		nuStyleAttrib_SetT( attrib, val );
 		return true;
 	}
 	else
@@ -274,13 +237,14 @@ bool nuStyle::Parse( const char* t )
 		{
 			nuStyleAttrib a;
 			bool ok = true;
+			bool done = false;
 			if ( MATCH(t, startk, eq, "background") )			{ a.SetColor( nuCatBackground, nuColor::Parse(TSTART, TLEN) ); }
 			else if ( MATCH(t, startk, eq, "width") )			{ a.SetSize( nuCatWidth, nuSize::Parse(TSTART, TLEN) ); }
 			else if ( MATCH(t, startk, eq, "height") )			{ a.SetSize( nuCatHeight, nuSize::Parse(TSTART, TLEN) ); }
-			else if ( MATCH(t, startk, eq, "padding") )			{ a.SetBox( nuCatPadding, nuStyleBox::Parse(TSTART, TLEN) ); }
-			else if ( MATCH(t, startk, eq, "margin") )			{ a.SetBox( nuCatMargin, nuStyleBox::Parse(TSTART, TLEN) ); }
-			else if ( MATCH(t, startk, eq, "display") )			{ ok = Parse1( TSTART, TLEN, &nuDisplayTypeParse, nuCatDisplay, a, a.Display ); }
-			else if ( MATCH(t, startk, eq, "position") )		{ ok = Parse1( TSTART, TLEN, &nuPositionTypeParse, nuCatPosition, a, a.Position ); }
+			else if ( MATCH(t, startk, eq, "padding") )			{ SetBox( nuCatPadding_Left, nuStyleBox::Parse(TSTART, TLEN) ); done = true; }
+			else if ( MATCH(t, startk, eq, "margin") )			{ SetBox( nuCatMargin_Left, nuStyleBox::Parse(TSTART, TLEN) ); done = true; }
+			else if ( MATCH(t, startk, eq, "display") )			{ ok = Parse1( TSTART, TLEN, &nuDisplayTypeParse, nuCatDisplay, a ); }
+			else if ( MATCH(t, startk, eq, "position") )		{ ok = Parse1( TSTART, TLEN, &nuPositionTypeParse, nuCatPosition, a ); }
 			else if ( MATCH(t, startk, eq, "border-radius") )	{ a.SetSize( nuCatBorderRadius, nuSize::Parse(TSTART, TLEN) ); }
 			else if ( MATCH(t, startk, eq, "left") )			{ a.SetSize( nuCatLeft, nuSize::Parse(TSTART, TLEN) ); }
 			else if ( MATCH(t, startk, eq, "right") )			{ a.SetSize( nuCatRight, nuSize::Parse(TSTART, TLEN) ); }
@@ -291,7 +255,8 @@ bool nuStyle::Parse( const char* t )
 				ok = false;
 				nuParseFail( "Unknown: '%.*s'", int(eq - startk), t + startk );
 			}
-			if ( ok )
+			if ( done ) {}
+			else if ( ok )
 				Set(a);
 			else
 				nerror++;
@@ -312,35 +277,16 @@ bool nuStyle::Parse( const char* t )
 #undef TLEN
 }
 
-bool nuStyle::Parsef( const char* t, ... )
-{
-	char buff[8192] = "";
-	va_list va;
-	va_start( va, t );
-	uint r = vsnprintf( buff, arraysize(buff), t, va );
-	va_end( va );
-	if ( r < arraysize(buff) )
-	{
-		return Parse( buff );
-	}
-	else
-	{
-		NUASSERTDEBUG(false);
-		return false;
-	}
-}
-
 void nuStyle::Compute( const nuDoc& doc, const nuDomEl& node )
 {
-	NUASSERT( Name.Len == 0 );
 	NUASSERT( Attribs.size() == 0 );
 
 	nuStyle** defaults = nuDefaultTagStyles();
 
 	const nuStyle* styles[] = {
-		defaults[node.Tag],
+		defaults[node.GetTag()],
 		// TODO: Classes
-		&node.Style,
+		&node.GetStyle(),
 	};
 	MergeInZeroCopy( arraysize(styles), styles );
 }
@@ -352,6 +298,35 @@ const nuStyleAttrib* nuStyle::Get( nuStyleCategories cat ) const
 		if ( Attribs[i].Category == cat ) return &Attribs[i];
 	}
 	return NULL;
+}
+
+void nuStyle::GetBox( nuStyleCategories cat, nuStyleBox& box ) const
+{
+	nuStyleCategories base = nuCatMakeBaseBox(cat);
+	for ( intp i = 0; i < Attribs.size(); i++ )
+	{
+		uint pindex = uint(Attribs[i].Category - base);
+		if ( pindex < 4 )
+			box.All[pindex] = Attribs[i].GetSize();
+	}
+}
+
+void nuStyle::SetBox( nuStyleCategories cat, nuStyleBox val )
+{
+	if ( cat >= nuCatMargin_Left && cat <= nuCatBorder_Bottom )
+	{
+		SetBoxInternal( nuCatMakeBaseBox(cat), val );
+	}
+	else NUASSERT(false);
+}
+
+void nuStyle::SetBoxInternal( nuStyleCategories catBase, nuStyleBox val )
+{
+	nuStyleAttrib a;
+	a.SetSize( (nuStyleCategories) (catBase + 0), val.Left );	Set( a );
+	a.SetSize( (nuStyleCategories) (catBase + 1), val.Top );	Set( a );
+	a.SetSize( (nuStyleCategories) (catBase + 2), val.Right );	Set( a );
+	a.SetSize( (nuStyleCategories) (catBase + 3), val.Bottom );	Set( a );
 }
 
 void nuStyle::Set( const nuStyleAttrib& attrib )
@@ -373,6 +348,8 @@ void nuStyle::MergeInZeroCopy( int n, const nuStyle** src )
 
 	// Use a lookup table to avoid making this merge operation O(n*m).
 	// If the list of attributes balloons, then we should probably use something like a two level tree here.
+	// This table is:
+	// Category > Attrib Index
 	u8 lut[nuCatEND];
 	static const u8 EMPTY = 255;
 	memset( lut, EMPTY, sizeof(lut) );
@@ -386,11 +363,12 @@ void nuStyle::MergeInZeroCopy( int n, const nuStyle** src )
 		for ( intp i = 0; i < s.size(); i++ )
 		{
 			lut[s[i].Category] = (u8) i;
-			Attribs.add().SetZeroCopy( s[i] );
+			Attribs += s[i];
 		}
 		isrc = 1;
 	}
 
+	// Apply each nuStyle in turn. Later nuStyles override earlier ones.
 	for ( ; isrc < n; isrc++ )
 	{
 		auto& s = src[isrc]->Attribs;
@@ -400,12 +378,14 @@ void nuStyle::MergeInZeroCopy( int n, const nuStyle** src )
 			u8 existing = lut[s[i].Category];
 			if ( existing == EMPTY )
 			{
+				// new category
 				lut[s[i].Category] = (u8) Attribs.size();
-				Attribs.add().SetZeroCopy( s[i] );
+				Attribs += s[i];
 			}
 			else
 			{
-				Attribs[existing].SetZeroCopy( s[i] );
+				// overwrite existing category
+				Attribs[existing] = s[i];
 			}
 		}
 	}
@@ -413,16 +393,14 @@ void nuStyle::MergeInZeroCopy( int n, const nuStyle** src )
 
 void nuStyle::Discard()
 {
-	for ( intp i = 0; i < Attribs.size(); i++ )
-		Attribs[i].Discard();
 	Attribs.clear_noalloc();
-	Name.Discard();
+	//Name.Discard();
 }
 
 void nuStyle::CloneFastInto( nuStyle& c, nuPool* pool ) const
 {
-	Name.CloneFastInto( c.Name, pool );
-	nuClonePodvec( c.Attribs, Attribs, pool );
+	//Name.CloneFastInto( c.Name, pool );
+	nuClonePodvecWithMemCopy( c.Attribs, Attribs, pool );
 }
 
 #define XX(name, type, setfunc, cat) \
@@ -447,82 +425,19 @@ NUSTYLE_SETTERS_1P
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nuStyleSet::nuStyleSet()
-{
-	IsReadOnly = false;
-}
-
-nuStyleSet::~nuStyleSet()
-{
-}
-
-nuStyle* nuStyleSet::GetOrCreate( const char* name )
-{
-	NUASSERTDEBUG(name && name[0] != 0);
-	return GetOrCreate( nuTempString( name ) );
-}
-
-nuStyle* nuStyleSet::GetOrCreate( const nuString& name )
-{
-	NUASSERT(!IsReadOnly);
-	NUASSERT(name.Len != 0);
-	int index;
-	bool exists = NameToIndexMutable.get( name, index );
-	if ( !exists )
-	{
-		index = (int) Styles.size();
-		nuStyle& s = Styles.add();
-		s.Name = name;
-		NameToIndexMutable.insert( name, index );
-	}
-	return &Styles[index];
-}
-
-nuStyle* nuStyleSet::GetReadOnly( const nuString& name )
-{
-	NUASSERT(IsReadOnly);
-	int index;
-	bool exists = NameToIndexReadOnly.get( name, index );
-	return exists ? &Styles[index] : NULL;
-}
-
-void nuStyleSet::CloneFastInto( nuStyleSet& c, nuPool* pool ) const
-{
-	c.IsReadOnly = true;
-	nuClonePodvec( c.Styles, Styles, pool );
-	c.BuildIndexReadOnly();
-}
-
-void nuStyleSet::Reset()
-{
-	if ( IsReadOnly )
-	{
-		Styles.hack( 0, 0, NULL );
-	}
-	NameToIndexMutable.clear();
-	NameToIndexReadOnly.clear();
-}
-
-void nuStyleSet::BuildIndexReadOnly()
-{
-	NUASSERT(NameToIndexReadOnly.size() == 0);
-	NameToIndexReadOnly.resize_for( Styles.size() );
-	for ( intp i = 0; i < Styles.size(); i++ )
-	{
-		NUASSERTDEBUG( Styles[i].Name.Len != 0 );
-		NUASSERTDEBUG( !NameToIndexReadOnly.contains(Styles[i].Name) );
-		NameToIndexReadOnly.insert( Styles[i].Name, (int) i );
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 nuStyleTable::nuStyleTable()
 {
 }
 
 nuStyleTable::~nuStyleTable()
 {
+}
+
+void nuStyleTable::Discard()
+{
+	Styles.hack( 0, 0, NULL );
+	Names.hack( 0, 0, NULL );
+	NUASSERT( UnusedSlots.size() == 0 && NameToIndex.size() == 0 );
 }
 
 nuStyle* nuStyleTable::GetOrCreate( const char* name )
@@ -540,10 +455,20 @@ nuStyle* nuStyleTable::GetOrCreate( const char* name )
 	{
 		index = (int) Styles.size();
 		Styles.add();
+		Names.add();
 	}
 	nuStyle* s = &Styles[index];
 	NameToIndex.insert( n, index );
+	Names[index] = nuString( name );
 	return s;
+}
+
+nuStyleID nuStyleTable::GetStyleID( const char* name )
+{
+	nuTempString n(name);
+	int* pindex = NameToIndex.getp( n );
+	if ( pindex )	return nuStyleID( *pindex );
+	else			return nuStyleID(0);
 }
 
 void nuStyleTable::GarbageCollect( nuDomEl* root )
@@ -556,8 +481,8 @@ void nuStyleTable::GarbageCollect( nuDomEl* root )
 	{
 		if ( !used.Get( i ) )
 		{
-			NameToIndex.erase( Styles[i].Name );
-			Styles[i].Name = "";
+			NameToIndex.erase( Names[i] );
+			Names[i] = "";
 			Styles[i].Attribs.clear();
 			UnusedSlots += i;
 		}
@@ -568,6 +493,12 @@ void nuStyleTable::GarbageCollect( nuDomEl* root )
 	{
 		Compact( used, root );
 	}
+}
+
+void nuStyleTable::CloneFastInto( nuStyleTable& c, nuPool* pool ) const
+{
+	// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
+	nuClonePodvecWithMemCopy( c.Styles, Styles, pool );
 }
 
 void nuStyleTable::Compact( BitMap& used, nuDomEl* root )
@@ -592,20 +523,23 @@ void nuStyleTable::Compact( BitMap& used, nuDomEl* root )
 	for ( intp i = Styles.size() - 1; i >= 0; i-- )
 	{
 		if ( !used.Get((uint32) i) )
+		{
 			Styles.erase(i);
+			Names.erase(i);
+		}
 	}
 
 	NameToIndex.clear();
 	for ( intp i = 0; i < Styles.size(); i++ )
-		NameToIndex.insert( Styles[i].Name, (int) i );
+		NameToIndex.insert( Names[i], (int) i );
 
 	UnusedSlots.clear();
 }
 
 void nuStyleTable::GarbageCollectInternalR( BitMap& used, nuDomEl* node )
 {
-	for ( intp i = 0; i < node->Classes.size(); i++ )
-		used.Set( node->Classes[i], true );
+	for ( intp i = 0; i < node->GetClasses().size(); i++ )
+		used.Set( node->GetClasses()[i], true );
 	
 	for ( intp i = 0; i < node->ChildCount(); i++ )
 		GarbageCollectInternalR( used, node->ChildByIndex(i) );
@@ -613,10 +547,10 @@ void nuStyleTable::GarbageCollectInternalR( BitMap& used, nuDomEl* node )
 
 void nuStyleTable::CompactR( const nuStyleID* old2newID, nuDomEl* node )
 {
-	for ( intp i = 0; i < node->Classes.size(); i++ )
+	for ( intp i = 0; i < node->GetClasses().size(); i++ )
 	{
-		nuStyleID newval = old2newID[node->Classes[i]];
-		node->Classes[i] = newval;
+		nuStyleID newval = old2newID[node->GetClasses()[i]];
+		node->GetClassesMutable()[i] = newval;
 		NUASSERT( newval != -1 );
 	}
 

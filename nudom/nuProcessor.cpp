@@ -1,14 +1,15 @@
 #include "pch.h"
 #include "nuDoc.h"
 #include "nuProcessor.h"
-#include "nuRender.h"
 #include "nuLayout.h"
 #include "nuSysWnd.h"
+#include "Render/nuRenderer.h"
+#include "Render/nuRenderDoc.h"
+#include "Render/nuRenderDomEl.h"
 
 nuProcessor::nuProcessor()
 {
 	AbcCriticalSectionInitialize( DocLock );
-	MessagesSinceLastRender = 0;
 	Doc = NULL;
 	Wnd = NULL;
 	RenderDoc = new nuRenderDoc();
@@ -26,7 +27,8 @@ nuRenderResult nuProcessor::Render()
 	bool haveLock = false;
 	// I'm not quite sure how we should handle this. The idea is that you don't want to go without a UI update
 	// for too long, even if the UI thread is taking its time, and being bombarded with messages.
-	if ( MessagesSinceLastRender > 0 )
+	uint32 rDocAge = Doc->GetVersion() - RenderDoc->Doc.GetVersion(); 
+	if ( rDocAge > 0 )
 	{
 		haveLock = true;
 		AbcCriticalSectionEnter( DocLock );
@@ -35,11 +37,13 @@ nuRenderResult nuProcessor::Render()
 		haveLock = AbcCriticalSectionTryEnter( DocLock );
 
 	if ( !haveLock )
+	{
+		NUTRACE( "Render: Failed to acquire DocLock\n" );
 		return nuRenderResultNeedMore;
+	}
 
 	// TODO: If AnyAnimationsRunning(), then we are not idle
-	bool idle = (Doc->WindowWidth == 0 || Doc->WindowHeight == 0) ||
-				!(Doc->IsAppearanceDirty() || Doc->IsLayoutDirty());
+	bool idle = (Doc->WindowWidth == 0 || Doc->WindowHeight == 0) || Doc->GetVersion() == RenderDoc->Doc.GetVersion();
 	
 	if ( idle )
 	{
@@ -47,17 +51,27 @@ nuRenderResult nuProcessor::Render()
 	}
 	else
 	{
-		Doc->AppearanceClean();
-		Doc->LayoutClean();
+		NUTRACE( "Render Version %u\n", Doc->GetVersion() );
 		RenderDoc->UpdateDoc( *Doc );
-		InterlockedExchange( &MessagesSinceLastRender,  0 );
+		
+		// Assume we are the only renderer of 'Doc'. If this assumption were not true, then you would need to update
+		// all renderers simultaneously, so that you can guarantee that UsableIDs all go to FreeIDs atomically.
+		//NUTRACE( "RenderSync\n" );
+		Doc->RenderSync();
+
 		AbcCriticalSectionLeave( DocLock );
 
+		//NUTRACE( "BeginRender\n" );
 		if ( !Wnd->BeginRender() )
+		{
+			NUTRACE( "BeginRender failed\n" );
 			return nuRenderResultNeedMore;
+		}
 
+		//NUTRACE( "Render DO\n" );
 		RenderDoc->Render( Wnd->RGL );
 
+		//NUTRACE( "Render Finish\n" );
 		Wnd->FinishRender();
 	}
 
@@ -67,29 +81,22 @@ nuRenderResult nuProcessor::Render()
 // This is always called from the UI thread
 void nuProcessor::ProcessEvent( nuEvent& ev )
 {
+	TakeCriticalSection lock( DocLock );
+	switch ( ev.Type )
 	{
-		TakeCriticalSection lock( DocLock );
-		switch ( ev.Type )
-		{
-		case nuEventWindowSize:
-			Doc->WindowWidth = (uint32) ev.Points[0].x;
-			Doc->WindowHeight = (uint32) ev.Points[0].y;
-			Doc->InvalidateLayout();
-			break;
-		}
-		// HACK. This analysis needs to be performed by the renderer, after it has copied our document over.
-		// Doc shouldn't actually have these flags. It should have only one flag, which is "An user-controllable event ran".
-		// If that flag is true (or if we've had a systemic event such as WindowSize), then we should proceed to the render
-		// phase, and perform differential analysis there. First just compare the two linear tables of dom elements. From
-		// there you can know whether you need to perform layout.
-		Doc->InvalidateLayout();
-		Doc->InvalidateAppearance();
-		BubbleEvent( ev );
+	case nuEventWindowSize:
+		Doc->WindowWidth = (uint32) ev.Points[0].x;
+		Doc->WindowHeight = (uint32) ev.Points[0].y;
+		Doc->IncVersion();
+		NUTRACE( "Processed WindowSize event. Document at version %d\n", Doc->GetVersion() );
+		break;
 	}
-	InterlockedIncrement( &MessagesSinceLastRender );
+	if ( BubbleEvent( ev ) )
+		Doc->IncVersion();
 }
 
-void nuProcessor::BubbleEvent( nuEvent& ev )
+// Returns true if the event was handled
+bool nuProcessor::BubbleEvent( nuEvent& ev )
 {
 	// TODO. My plan is to go with upward bubbling only. The inner-most
 	// control gets the event first, then outward.
@@ -99,6 +106,7 @@ void nuProcessor::BubbleEvent( nuEvent& ev )
 
 	nuDomEl* el = &Doc->Root;
 	bool stop = false;
+	bool handled = false;
 
 	if ( el->HandlesEvent(ev.Type) )
 	{
@@ -107,6 +115,7 @@ void nuProcessor::BubbleEvent( nuEvent& ev )
 		{
 			if ( h[i].Handles( ev.Type ) )
 			{
+				handled = true;
 				nuEvent c = ev;
 				c.Context = h[i].Context;
 				c.Target = el;
@@ -117,6 +126,8 @@ void nuProcessor::BubbleEvent( nuEvent& ev )
 			}
 		}
 	}
+
+	return handled;
 }
 
 void nuProcessor::FindTarget( const nuVec2& p, pvect<nuRenderDomEl*>& chain )

@@ -44,6 +44,7 @@ public:
 					~nuRenderGL();
 	bool			CreateShaders();
 	void			DeleteShaders();
+	void			SurfaceLost();
 	void			ActivateProgram( nuGLProg& p );
 	void			PreRender( int fbwidth, int fbheight );
 	void			PostRenderCleanup();
@@ -60,6 +61,7 @@ protected:
 	bool			LoadShader( GLenum shaderType, GLuint& shader, const char* src );
 	void			Check();
 	void			Ortho( Mat4f &imat, double left, double right, double bottom, double top, double znear, double zfar );
+	void			Reset();
 
 };
 

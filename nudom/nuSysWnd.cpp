@@ -2,7 +2,7 @@
 #include "nuSysWnd.h"
 #include "nuProcessor.h"
 #include "nuDoc.h"
-#include "nuRenderGL.h"
+#include "Render/nuRenderGL.h"
 
 void initGLExt();
 
@@ -104,13 +104,14 @@ void nuSysWnd::PlatformInitialize()
 nuSysWnd::nuSysWnd()
 {
 #if NU_WIN_DESKTOP
-	Wnd = NULL;
+	SysWnd = NULL;
 	DC = NULL;
 #endif
 #if NU_ANDROID
 	MainWnd = this;
 #endif
 	Processor = new nuProcessor();
+	Processor->Wnd = this;
 	RGL = new nuRenderGL();
 	DestroyDocWithWindow = false;
 }
@@ -120,13 +121,13 @@ nuSysWnd::~nuSysWnd()
 #if NU_WIN_DESKTOP
 	if ( GLRC )
 	{
-		HDC dc = GetDC( Wnd );
+		HDC dc = GetDC( SysWnd );
 		wglMakeCurrent( dc, GLRC );
 		RGL->DeleteShaders();
 		wglMakeCurrent( NULL, NULL );
-		ReleaseDC( Wnd, dc );
+		ReleaseDC( SysWnd, dc );
 	}
-	DestroyWindow( Wnd );
+	DestroyWindow( SysWnd );
 #endif
 #if NU_ANDROID
 	MainWnd = NULL;
@@ -142,14 +143,13 @@ nuSysWnd* nuSysWnd::Create()
 #if NU_WIN_DESKTOP
 	bool ok = false;
 	nuSysWnd* w = new nuSysWnd();
-	w->Wnd = CreateWindow( WClass, "nuDom", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
-	w->Processor->Wnd = w;
-	if ( w->Wnd )
+	w->SysWnd = CreateWindow( WClass, "nuDom", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
+	if ( w->SysWnd )
 	{
-		w->GLRC = nuInitGL( w->Wnd, w->RGL );
+		w->GLRC = nuInitGL( w->SysWnd, w->RGL );
 		if ( w->GLRC )
 		{
-			SetWindowLongPtr( w->Wnd, GWLP_USERDATA, (LONG_PTR) w->Processor );
+			SetWindowLongPtr( w->SysWnd, GWLP_USERDATA, (LONG_PTR) w->Processor );
 			ok = true;
 		}
 	}
@@ -179,7 +179,7 @@ nuSysWnd* nuSysWnd::CreateWithDoc()
 void nuSysWnd::Show()
 {
 #if NU_WIN_DESKTOP
-	ShowWindow( Wnd, SW_SHOW );
+	ShowWindow( SysWnd, SW_SHOW );
 #endif
 }
 
@@ -199,7 +199,7 @@ bool nuSysWnd::BeginRender()
 #if NU_WIN_DESKTOP
 	if ( GLRC )
 	{
-		DC = GetDC( Wnd );
+		DC = GetDC( SysWnd );
 		if ( DC )
 		{
 			wglMakeCurrent( DC, GLRC );
@@ -216,7 +216,11 @@ void nuSysWnd::FinishRender()
 	SwapBuffers( DC );
 	DC = NULL;
 	wglMakeCurrent( NULL, NULL );
-	ReleaseDC( Wnd, DC );
+	ReleaseDC( SysWnd, DC );
 #endif
 }
 
+void nuSysWnd::SurfaceLost()
+{
+	if ( RGL ) RGL->SurfaceLost();
+}

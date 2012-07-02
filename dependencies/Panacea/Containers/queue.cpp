@@ -23,7 +23,7 @@ AbcQueue::~AbcQueue()
 
 void AbcQueue::Initialize( bool useSemaphore, size_t itemSize )
 {
-	AbcAssert( Size() == 0 );
+	AbcAssert( SizeInternal() == 0 );
 	if ( itemSize != this->ItemSize )
 	{
 		AbcAssert( this->ItemSize == 0 );
@@ -43,7 +43,7 @@ void AbcQueue::Add( const void* item )
 {
 	TakeCriticalSection lock(Lock);
 	
-	if ( Size() >= (int32) RingSize - 1 )
+	if ( SizeInternal() >= (int32) RingSize - 1 )
 		Grow();
 
 	memcpy( Slot(Head), item, ItemSize );
@@ -56,7 +56,7 @@ void AbcQueue::Add( const void* item )
 bool AbcQueue::PopTail( void* item )
 {
 	TakeCriticalSection lock(Lock);
-	if ( Size() == 0 ) return false;
+	if ( SizeInternal() == 0 ) return false;
 	memcpy( item, Slot(Tail), ItemSize );
 	//mtlog( "pop %d:%d", (int) Tail, (int) *((u64*) item) );
 	Increment( Tail );
@@ -66,7 +66,7 @@ bool AbcQueue::PopTail( void* item )
 bool AbcQueue::PeekTail( void* item )
 {
 	TakeCriticalSection lock(Lock);
-	if ( Size() == 0 ) return false;
+	if ( SizeInternal() == 0 ) return false;
 	memcpy( item, Slot(Tail), ItemSize );
 	return true;
 }
@@ -94,5 +94,5 @@ void AbcQueue::Grow()
 int32 AbcQueue::Size()
 {
 	TakeCriticalSection lock(Lock);
-	return (Head - Tail) & Mask();
+	return SizeInternal();
 }

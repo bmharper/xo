@@ -1,13 +1,14 @@
 #include "pch.h"
 #include "nuLayout.h"
 #include "nuDoc.h"
+#include "Render/nuRenderDomEl.h"
 
 void nuLayout::Reset()
 {
 	DefaultWidth.SetSize( nuCatWidth, nuSize::Percent(100) );
 	DefaultHeight.SetSize( nuCatHeight, nuSize::Percent(100) );
-	DefaultPadding.SetBox( nuCatPadding, nuStyleBox::MakeZero() );
-	DefaultMargin.SetBox( nuCatPadding, nuStyleBox::MakeZero() );
+	DefaultPadding.SetZero();
+	DefaultMargin.SetZero();
 	DefaultBorderRadius.SetSize( nuCatBorderRadius, nuSize::Pixels(0) );
 	DefaultDisplay.SetDisplay( nuDisplayInline );
 	DefaultPosition.SetPosition( nuPositionStatic );
@@ -39,31 +40,32 @@ void nuLayout::Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode )
 	style.Discard();
 	style.Compute( *Doc, node );
 
-	rnode->InternalID = node.InternalID;
+	rnode->InternalID = node.GetInternalID();
 
+	nuStyleBox margin = DefaultMargin;
+	nuStyleBox padding = DefaultPadding;
+
+	style.GetBox( nuCatMargin_Left, margin );
+	style.GetBox( nuCatPadding_Left, padding );
 	auto width = style.Get( nuCatWidth );
 	auto height = style.Get( nuCatHeight );
-	auto margin = style.Get( nuCatMargin );
-	auto padding = style.Get( nuCatPadding );
 	auto borderRadius = style.Get( nuCatBorderRadius );
 	auto display = style.Get( nuCatDisplay );
 	auto position = style.Get( nuCatPosition );
 	if ( !width ) width = &DefaultWidth;
 	if ( !height ) height = &DefaultHeight;
-	if ( !margin ) margin = &DefaultMargin;
-	if ( !padding ) padding = &DefaultPadding;
 	if ( !borderRadius ) borderRadius = &DefaultBorderRadius;
 	if ( !display ) display = &DefaultDisplay;
 	if ( !position ) position = &DefaultPosition;
-	nuPos cwidth = ComputeDimension( s.ParentContentBox.Width(), width->Size );
-	nuPos cheight = ComputeDimension( s.ParentContentBox.Height(), height->Size );
-	nuPos cborderRadius = ComputeDimension( s.ParentContentBox.Width(), borderRadius->Size );
-	nuBox cmargin = ComputeBox( s.ParentContentBox, margin->Box );
-	nuBox cpadding = ComputeBox( s.ParentContentBox, padding->Box );
+	nuPos cwidth = ComputeDimension( s.ParentContentBox.Width(), width->GetSize() );
+	nuPos cheight = ComputeDimension( s.ParentContentBox.Height(), height->GetSize() );
+	nuPos cborderRadius = ComputeDimension( s.ParentContentBox.Width(), borderRadius->GetSize() );
+	nuBox cmargin = ComputeBox( s.ParentContentBox, margin );
+	nuBox cpadding = ComputeBox( s.ParentContentBox, padding );
 	
 	rnode->BorderRadius = nuPosToReal( cborderRadius );
 
-	if ( position->Position == nuPositionAbsolute )
+	if ( position->GetPositionType() == nuPositionAbsolute )
 	{
 		rnode->Pos = ComputeSpecifiedPosition( s, style );
 	}
@@ -75,9 +77,9 @@ void nuLayout::Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode )
 		rnode->Pos.Bottom = rnode->Pos.Top + cheight;
 	}
 
-	if ( position->Position != nuPositionAbsolute )
+	if ( position->GetPositionType() != nuPositionAbsolute )
 	{
-		switch( display->Display )
+		switch( display->GetDisplayType() )
 		{
 		case nuDisplayInline:
 			s.PosX = rnode->Pos.Right + cmargin.Right;
@@ -89,14 +91,14 @@ void nuLayout::Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode )
 		}
 	}
 
-	if ( position->Position == nuPositionRelative )
+	if ( position->GetPositionType() == nuPositionRelative )
 		ComputeRelativeOffset( s, style, rnode->Pos );
 
 	NodeState cs = s;
 	cs.ParentContentBox = rnode->Pos;
 	// 'PositionedAncestor' means the nearest ancestor that was specifically positioned. Same as HTML.
-	if ( position->Position != nuPositionStatic )	cs.PositionedAncestor = rnode->Pos;
-	else											cs.PositionedAncestor = s.ParentContentBox;
+	if ( position->GetPositionType() != nuPositionStatic )	cs.PositionedAncestor = rnode->Pos;
+	else													cs.PositionedAncestor = s.ParentContentBox;
 	cs.PosX = cs.ParentContentBox.Left;
 	cs.PosY = cs.ParentContentBox.Top;
 
@@ -131,14 +133,14 @@ nuBox nuLayout::ComputeSpecifiedPosition( const NodeState& s, const nuStyle& sty
 	auto bottom = style.Get( nuCatBottom );
 	auto width = style.Get( nuCatWidth );
 	auto height = style.Get( nuCatHeight );
-	if ( left )		box.Left = s.PositionedAncestor.Left + ComputeDimension( s.PositionedAncestor.Width(), left->Size );
-	if ( right )	box.Right = s.PositionedAncestor.Right + ComputeDimension( s.PositionedAncestor.Width(), right->Size );
-	if ( top )		box.Top = s.PositionedAncestor.Top + ComputeDimension( s.PositionedAncestor.Height(), top->Size );
-	if ( bottom )	box.Bottom = s.PositionedAncestor.Bottom + ComputeDimension( s.PositionedAncestor.Height(), bottom->Size );
-	if ( width && left && !right ) box.Right = box.Left + ComputeDimension( s.PositionedAncestor.Width(), width->Size );
-	if ( width && !left && right ) box.Left = box.Right - ComputeDimension( s.PositionedAncestor.Width(), width->Size );
-	if ( height && top && !bottom ) box.Bottom = box.Top + ComputeDimension( s.PositionedAncestor.Height(), height->Size );
-	if ( height && !top && bottom ) box.Top = box.Bottom + ComputeDimension( s.PositionedAncestor.Height(), height->Size );
+	if ( left )		box.Left = s.PositionedAncestor.Left + ComputeDimension( s.PositionedAncestor.Width(), left->GetSize() );
+	if ( right )	box.Right = s.PositionedAncestor.Right + ComputeDimension( s.PositionedAncestor.Width(), right->GetSize() );
+	if ( top )		box.Top = s.PositionedAncestor.Top + ComputeDimension( s.PositionedAncestor.Height(), top->GetSize() );
+	if ( bottom )	box.Bottom = s.PositionedAncestor.Bottom + ComputeDimension( s.PositionedAncestor.Height(), bottom->GetSize() );
+	if ( width && left && !right ) box.Right = box.Left + ComputeDimension( s.PositionedAncestor.Width(), width->GetSize() );
+	if ( width && !left && right ) box.Left = box.Right - ComputeDimension( s.PositionedAncestor.Width(), width->GetSize() );
+	if ( height && top && !bottom ) box.Bottom = box.Top + ComputeDimension( s.PositionedAncestor.Height(), height->GetSize() );
+	if ( height && !top && bottom ) box.Top = box.Bottom + ComputeDimension( s.PositionedAncestor.Height(), height->GetSize() );
 	return box;
 }
 
@@ -146,8 +148,8 @@ void nuLayout::ComputeRelativeOffset( const NodeState& s, const nuStyle& style, 
 {
 	auto left = style.Get( nuCatLeft );
 	auto top = style.Get( nuCatTop );
-	if ( left )		box.Left += ComputeDimension( s.ParentContentBox.Width(), left->Size );
-	if ( top )		box.Top += ComputeDimension( s.ParentContentBox.Height(), top->Size );
+	if ( left )		box.Left += ComputeDimension( s.ParentContentBox.Width(), left->GetSize() );
+	if ( top )		box.Top += ComputeDimension( s.ParentContentBox.Height(), top->GetSize() );
 }
 
 nuBox nuLayout::ComputeBox( nuBox container, nuStyleBox box )

@@ -18,20 +18,18 @@ void nuMain( nuMainEvent ev )
 
 			for ( int i = 0; i < 4; i++ )
 			{
-				nuDomEl* div = new nuDomEl();
-				div->Tag = nuTagDiv;
-				div->Style.Parse( "width: 100px; height: 100px; border-radius: 15px; display: inline;" );
-				div->Style.Parse( "margin: 3px;" );
-				doc->Root.AddChild( div );
+				nuDomEl* div = doc->Root.AddChild( nuTagDiv );
+				div->StyleParse( "width: 100px; height: 100px; border-radius: 15px; display: inline;" );
+				div->StyleParse( "margin: 3px;" );
 			}
-			doc->Root.ChildByIndex(0)->Style.Parse( "background: #e00e" );
-			doc->Root.ChildByIndex(1)->Style.Parse( "background: #0e0e" );
-			doc->Root.ChildByIndex(2)->Style.Parse( "background: #00ee" );
+			doc->Root.ChildByIndex(0)->StyleParse( "background: #e00e" );
+			doc->Root.ChildByIndex(1)->StyleParse( "background: #0e0e" );
+			doc->Root.ChildByIndex(2)->StyleParse( "background: #00ee" );
 
 			NUTRACE( "Hello 3" );
 
 			nuDomEl* greybox = doc->Root.ChildByIndex(3);
-			greybox->Style.Parse( "background: #aaaa; position: absolute; left: 100px; top: 100px;" );
+			greybox->StyleParse( "background: #aaaa; position: absolute; left: 100px; top: 100px;" );
 			//greybox->OnTouch( touch );
 			doc->Root.OnMouseMove( touch, greybox );
 			doc->Root.OnTouch( touch, greybox );
@@ -53,6 +51,6 @@ void nuMain( nuMainEvent ev )
 bool touch( const nuEvent& ev )
 {
 	nuDomEl* greybox = (nuDomEl*) ev.Context;
-	greybox->Style.Parsef( "left: %fpx; top: %fpx;", ev.Points[0].x - 50.0, ev.Points[0].y - 50.0 );
+	greybox->StyleParsef( "left: %fpx; top: %fpx;", ev.Points[0].x - 50.0, ev.Points[0].y - 50.0 );
 	return true;
 }

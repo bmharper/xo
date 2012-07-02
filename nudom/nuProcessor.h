@@ -3,13 +3,13 @@
 
 // Process UI input. Schedule rendering.
 // Coordinates between DOM and Render threads.
+// RENAME: nuDocGroup
 class NUAPI nuProcessor
 {
 public:
 	nuDoc*				Doc;
 	nuSysWnd*			Wnd;
 	nuRenderDoc*		RenderDoc;
-	volatile uint32		MessagesSinceLastRender;
 
 			nuProcessor();
 			~nuProcessor();
@@ -24,11 +24,11 @@ public:
 	void			ProcessEvent( nuEvent& ev );		// This is always called from the UI thread
 
 protected:
-	AbcCriticalSection	DocLock;
+	AbcCriticalSection	DocLock;	// Mutation of 'Doc'
 
 	bool	CopyDoc();
 	void	CopyDocAndQueueRender();
 	void	CopyDocAndRenderNow();
 	void	FindTarget( const nuVec2& p, pvect<nuRenderDomEl*>& chain );
-	void	BubbleEvent( nuEvent& ev );
+	bool	BubbleEvent( nuEvent& ev );
 };

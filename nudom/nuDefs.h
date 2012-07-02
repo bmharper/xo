@@ -20,6 +20,7 @@ class nuEvent;
 typedef int32 nuPos;
 typedef int32 nuInternalID;
 
+// 24:8 fixed point coordinates used during layout
 static const u32 nuPosShift = 8;
 
 inline int32	nuRealToPos( float real )		{ return int32(real * (1 << nuPosShift)); }
@@ -42,6 +43,7 @@ enum nuMainEvent
 
 enum nuRenderResult
 {
+	// SYNC-JAVA
 	nuRenderResultNeedMore,
 	nuRenderResultIdle
 };
@@ -101,20 +103,30 @@ struct nuStyleID
 	operator uint32 () const { return StyleID; }
 };
 
+struct nuJob
+{
+	void*	JobData;
+	void (*JobFunc)( void* jobdata );
+};
+
 struct nuGlobalStruct
 {
 	int							TargetFPS;
+	int							NumWorkerThreads;	// Read-only. Set during nuInitialize().
 	pvect<nuProcessor*>			Docs;				// Only Main thread is allowed to touch this.
 	TAbcQueue<nuProcessor*>		DocAddQueue;		// Documents requesting addition
 	TAbcQueue<nuProcessor*>		DocRemoveQueue;		// Documents requesting removal
 	TAbcQueue<nuEvent>			EventQueue;			// Global event queue, consumed by the one-and-only UI thread
+	TAbcQueue<nuJob>			JobQueue;			// Global job queue, consumed by the worker thread pool
 };
 
 NUAPI nuGlobalStruct*	nuGlobal();
 NUAPI void				nuInitialize();
 NUAPI void				nuShutdown();
 NUAPI nuStyle**			nuDefaultTagStyles();
-//NUAPI void			nuQueueRender( nuProcessor* proc );
 NUAPI void				nuParseFail( const char* msg, ... );
 NUAPI void				NUTRACE( const char* msg, ... );
+#if NU_WIN_DESKTOP
+NUAPI void				nuRunWin32MessageLoop();
+#endif
 

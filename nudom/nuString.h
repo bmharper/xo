@@ -17,13 +17,13 @@ public:
 	void	Discard();
 	u32		GetHashCode() const;
 
-	bool operator==( const char* b ) const;
-	bool operator==( const nuStringRaw& b ) const;
+	bool	operator==( const char* b ) const;
+	bool	operator==( const nuStringRaw& b ) const;
 
 protected:
 	static nuStringRaw Temp( const char* b );
 
-	void Alloc( size_t chars );
+	void	Alloc( size_t chars );
 };
 
 FHASH_SETUP_CLASS_GETHASHCODE( nuStringRaw, nuStringRaw );
@@ -31,15 +31,16 @@ FHASH_SETUP_CLASS_GETHASHCODE( nuStringRaw, nuStringRaw );
 class NUAPI nuString : public nuStringRaw
 {
 public:
-	nuString();
-	nuString( const nuString& b );
-	~nuString();
+				nuString();
+				nuString( const nuString& b );
+	explicit	nuString( const char* z );
+				~nuString();
 
-	void	MakeTemp( const char* z );
-	void	KillTemp();
+	void		MakeTemp( const char* z );
+	void		KillTemp();
 
-	nuString& operator=( const nuStringRaw& b );
-	nuString& operator=( const char* b );
+	nuString&	operator=( const nuStringRaw& b );
+	nuString&	operator=( const char* b );
 
 };
 

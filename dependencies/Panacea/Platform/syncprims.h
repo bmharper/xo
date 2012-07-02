@@ -1,5 +1,7 @@
 #pragma once
 
+struct AbcMachineInformation;
+
 #ifdef _WIN32
 typedef HANDLE					AbcMutex;
 typedef CRITICAL_SECTION		AbcCriticalSection;
@@ -28,11 +30,16 @@ PAPI void		AbcMutexCreate( AbcMutex& mutex, bool initialowner, LPCSTR name );
 PAPI void		AbcMutexDestroy( AbcMutex mutex );
 PAPI DWORD		AbcMutexWait( AbcMutex mutex, DWORD milliseconds );
 PAPI void		AbcMutexRelease( AbcMutex mutex );
+
+// On Windows CRITICAL_SECTION is re-enterable, but not so on linux (where we use a pthread mutex).
+// So don't write re-entering code.
+// This is a good principle to abide by regardless of your platform: http://cbloomrants.blogspot.com/2012/06/06-19-12-two-learnings.html
 PAPI void		AbcCriticalSectionInitialize( AbcCriticalSection& cs, unsigned int spinCount = 0 );
 PAPI void		AbcCriticalSectionDestroy( AbcCriticalSection& cs );
 PAPI bool		AbcCriticalSectionTryEnter( AbcCriticalSection& cs );
 PAPI void		AbcCriticalSectionEnter( AbcCriticalSection& cs );
 PAPI void		AbcCriticalSectionLeave( AbcCriticalSection& cs );
+
 PAPI void		AbcSemaphoreInitialize( AbcSemaphore& sem );
 PAPI void		AbcSemaphoreDestroy( AbcSemaphore& sem );
 PAPI bool		AbcSemaphoreWait( AbcSemaphore& sem, DWORD waitMS );
@@ -44,6 +51,7 @@ PAPI void		AbcThreadCloseHandle( AbcThreadHandle handle );
 
 PAPI void		AbcSleep( int milliseconds );
 
+// Process doesn't really belong inside syncprims. Belongs in the same place as AbcMachindIdentify.
 PAPI bool		AbcProcessCreate( const char* cmd, AbcForkedProcessHandle* handle, AbcProcessID* pid );
 PAPI bool		AbcProcessWait( AbcForkedProcessHandle handle, int* exitCode );
 PAPI void 		AbcProcessCloseHandle( AbcForkedProcessHandle handle );
@@ -52,6 +60,18 @@ PAPI void		AbcProcessGetPath( wchar_t* path, size_t maxPath );		// Return full p
 PAPI XString	AbcProcessGetPath();									// Return full path of executing process, for example "c:\programs\notepad.exe"
 #endif
 PAPI void		AbcEnumProcesses( podvec<AbcProcessID>& pids );
+
+// AbcMachindIdentify doesn't really belong here. Should be in same place as AbcProcess calls
+PAPI void		AbcMachineInformationGet( AbcMachineInformation& info );
+
+#ifdef _WIN32
+inline void AbcInterlockedSet( volatile unsigned int* p, int newval )		{ InterlockedExchange( p, newval ); }
+#else
+// Clang has __sync_swap(), which is what you want here when compiling with Clang
+#	ifdef ANDROID
+inline void AbcInterlockedSet( volatile unsigned int* p, int newval )		{ __atomic_swap( newval, (volatile int*) p ); }
+#	endif
+#endif
 
 /// Scope-based critical section acquisition
 class TakeCriticalSection
@@ -83,4 +103,9 @@ struct AbcMutexStackEnter
 	{
 		AbcMutexRelease( *Mutex );
 	}
+};
+
+struct AbcMachineInformation
+{
+	int CPUCount;
 };

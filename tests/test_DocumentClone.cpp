@@ -12,6 +12,7 @@ static AbcThreadReturnType AbcKernelCallbackDecl ui_thread( void* tp )
 
 static AbcThreadReturnType AbcKernelCallbackDecl rend_thread( void* tp )
 {
+	/*
 	int niter = 10000;
 	nuDoc* srcDoc = (nuDoc*) tp;
 	nuRenderDoc rdoc;
@@ -20,6 +21,7 @@ static AbcThreadReturnType AbcKernelCallbackDecl rend_thread( void* tp )
 	{
 		rdoc.UpdateDoc( *srcDoc );
 	}
+	*/
 	return 0;
 }
 

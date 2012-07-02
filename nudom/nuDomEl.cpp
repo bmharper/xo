@@ -8,6 +8,7 @@ nuDomEl::nuDomEl()
 	Doc = NULL;
 	AllEventMask = 0;
 	InternalID = 0;
+	Version = 0;
 }
 
 nuDomEl::~nuDomEl()
@@ -19,13 +20,13 @@ void nuDomEl::CloneFastInto( nuDomEl& c, nuPool* pool, uint cloneFlags ) const
 {
 	c.InternalID = InternalID;
 	c.Tag = Tag;
+	c.Version = Version;
 	Style.CloneFastInto( c.Style, pool );
 
 	// copy classes
-	nuClonePodvecPrepare( c.Classes, Classes, pool );
-	memcpy( c.Classes.data, Classes.data, sizeof(Classes[0]) * Classes.size() );
+	nuClonePodvecWithMemCopy( c.Classes, Classes, pool );
 
-	// alloc pointer list of chilren
+	// alloc pointer list of children
 	nuClonePvectPrepare( c.Children, Children, pool );
 	
 	// alloc children
@@ -40,14 +41,20 @@ void nuDomEl::CloneFastInto( nuDomEl& c, nuPool* pool, uint cloneFlags ) const
 		NUPANIC("clone events is TODO");
 }
 
-void nuDomEl::AddChild( nuDomEl* c )
+nuDomEl* nuDomEl::AddChild( nuTag tag )
 {
+	IncVersion();
+	nuDomEl* c = new nuDomEl();
+	c->Tag = tag;
+	c->Doc = Doc;
 	Children += c;
 	Doc->ChildAdded( c );
+	return c;
 }
 
 void nuDomEl::RemoveChild( nuDomEl* c )
 {
+	IncVersion();
 	if ( !c ) return;
 	intp ix = Children.find( c );
 	NUASSERT( ix != -1 );
@@ -66,19 +73,46 @@ void nuDomEl::Discard()
 {
 	InternalID = 0;
 	AllEventMask = 0;
+	Version = 0;
 	Style.Discard();
 	Classes.hack( 0, 0, NULL );
 	Children.hack( 0, 0, NULL );
 	Handlers.hack( 0, 0, NULL );
 }
 
+bool nuDomEl::StyleParsef( const char* t, ... )
+{
+	char buff[8192] = "";
+	va_list va;
+	va_start( va, t );
+	uint r = vsnprintf( buff, arraysize(buff), t, va );
+	va_end( va );
+	if ( r < arraysize(buff) )
+	{
+		return StyleParse( buff );
+	}
+	else
+	{
+		NUASSERTDEBUG(false);
+		return false;
+	}
+}
+
 void nuDomEl::AddClass( const char* klass )
 {
-
+	IncVersion();
+	nuStyleID id = Doc->Styles.GetStyleID( klass );
+	if ( Classes.find( id ) == -1 )
+		Classes += id;
 }
 
 void nuDomEl::RemoveClass( const char* klass )
 {
+	IncVersion();
+	nuStyleID id = Doc->Styles.GetStyleID( klass );
+	intp index = Classes.find( id );
+	if ( index != -1 )
+		Classes.erase( index );
 }
 
 void nuDomEl::AddHandler( nuEvents ev, nuEventHandlerF func, void* context )
@@ -108,24 +142,3 @@ void nuDomEl::RecalcAllEventMask()
 }
 
 
-nuRenderDomEl::nuRenderDomEl( nuPool* pool )
-{
-	SetPool( pool );
-}
-
-nuRenderDomEl::~nuRenderDomEl()
-{
-	Discard();
-}
-
-void nuRenderDomEl::SetPool( nuPool* pool )
-{
-	Children.Pool = pool;
-}
-
-void nuRenderDomEl::Discard()
-{
-	InternalID = 0;
-	Style.Discard();
-	Children.clear();
-}

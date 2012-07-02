@@ -158,7 +158,18 @@ PAPI void		AbcEnumProcesses( podvec<AbcProcessID>& pids )
 		free(id);
 }
 
-#else
+PAPI void		AbcMachineInformationGet( AbcMachineInformation& info )
+{
+	SYSTEM_INFO inf;
+	GetSystemInfo( &inf );
+	info.CPUCount = inf.dwNumberOfProcessors;
+}
+
+#else // End Win32
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Linux
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void MillisecondsToAbsTimespec( DWORD ms, timespec& t )
 {
@@ -174,11 +185,11 @@ static void MillisecondsToAbsTimespec( DWORD ms, timespec& t )
 
 PAPI void		AbcCriticalSectionInitialize( AbcCriticalSection& cs, unsigned int spinCount )
 {
-	pthread_mutex_init( &cs, NULL );
+	AbcVerify( 0 == pthread_mutex_init( &cs, NULL ) );
 }
 PAPI void		AbcCriticalSectionDestroy( AbcCriticalSection& cs )
 {
-	pthread_mutex_destroy( &cs );
+	AbcVerify( 0 == pthread_mutex_destroy( &cs ) );
 }
 PAPI bool		AbcCriticalSectionTryEnter( AbcCriticalSection& cs )
 {
@@ -195,11 +206,11 @@ PAPI void		AbcCriticalSectionLeave( AbcCriticalSection& cs )
 
 PAPI void		AbcSemaphoreInitialize( AbcSemaphore& sem )
 {
-	sem_init( &sem, 0, 0 );
+	AbcVerify( 0 == sem_init( &sem, 0, 0 ) );
 }
 PAPI void		AbcSemaphoreDestroy( AbcSemaphore& sem )
 {
-	sem_destroy( &sem );
+	AbcVerify( 0 == sem_destroy( &sem ) );
 }
 PAPI bool		AbcSemaphoreWait( AbcSemaphore& sem, DWORD waitMS )
 {
@@ -244,7 +255,7 @@ PAPI void		AbcSleep( int milliseconds )
 	timespec t;
 	t.tv_nsec = nano % 1000000000; 
 	t.tv_sec = (nano - t.tv_nsec) / 1000000000;
-	nanosleep( &t );
+	nanosleep( &t, NULL );
 }
 
 PAPI bool		AbcProcessCreate( const char* cmd, AbcForkedProcessHandle* handle, AbcProcessID* pid )
@@ -274,6 +285,10 @@ PAPI void		AbcProcessGetPath( wchar_t* path, size_t maxPath )
 PAPI void		AbcEnumProcesses( podvec<AbcProcessID>& pids )
 {
 	AbcAssert(false);
+}
+PAPI void		AbcMachineInformationGet( AbcMachineInformation& info )
+{
+	info.CPUCount = sysconf( _SC_NPROCESSORS_ONLN );
 }
 
 #endif

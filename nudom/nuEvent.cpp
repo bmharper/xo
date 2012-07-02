@@ -14,3 +14,10 @@ nuEvent::nuEvent()
 nuEvent::~nuEvent()
 {
 }
+
+void nuEvent::MakeWindowSize( int w, int h )
+{
+	Type = nuEventWindowSize;
+	Points[0].x = (float) w;
+	Points[0].y = (float) h;
+}

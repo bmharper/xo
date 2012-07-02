@@ -13,7 +13,8 @@ public class NuLib {
      * @param height the current view height
      */
      public static native void init(int width, int height);
-     public static native void step();
+     public static native void surfacelost();
+     public static native int step();
      public static native void destroy(int iskilling);
 
      public static native void input(int type, float[] x, float[] y);
