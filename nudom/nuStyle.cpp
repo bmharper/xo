@@ -194,6 +194,12 @@ void nuStyleAttrib::SetFont( const char* font, nuDoc* doc )
 	SetString( nuCatFontFamily, font, doc );
 }
 
+void nuStyleAttrib::SetInherit( nuStyleCategories cat )
+{
+	Category = cat;
+	Flags = FlagInherit;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -425,6 +431,172 @@ NUSTYLE_SETTERS_1P
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+nuStyleSet::nuStyleSet()
+{
+	Lookup = NULL;
+	Attribs = NULL;
+	Count = 0;
+	BitsPerSlot = 0;
+	Capacity = 0;
+	GetSlotF = NULL;
+	SetSlotF = NULL;
+}
+
+nuStyleSet::~nuStyleSet()
+{
+}
+
+void nuStyleSet::Grow( nuPool* pool )
+{
+	NUASSERT( BitsPerSlot != 8 );
+	uint32 newbits = BitsPerSlot == 0 ? InitialBitsPerSlot : BitsPerSlot * 2;
+	uint32 totalBits = newbits * nuCatEND;
+	void*			newlookup = pool->Alloc( (totalBits + 7) / 8, true );
+	nuStyleAttrib*	newattribs = pool->AllocNT<nuStyleAttrib>( CapacityAt(newbits), false ); 
+	if ( BitsPerSlot )
+	{
+		if ( newbits == 4 )			MigrateLookup( Lookup, newlookup, &GetSlot2, &SetSlot4 );
+		else if ( newbits == 8 )	MigrateLookup( Lookup, newlookup, &GetSlot4, &SetSlot8 );
+
+		memcpy( newattribs, Attribs, CapacityAt(BitsPerSlot) * sizeof(nuStyleAttrib) );
+	}
+	Capacity = CapacityAt(newbits);
+	Lookup = newlookup;
+	Attribs = newattribs;
+	BitsPerSlot = newbits;
+	if ( newbits == 2 )			{ SetSlotF = &SetSlot2; GetSlotF = &GetSlot2; }
+	else if ( newbits == 4 )	{ SetSlotF = &SetSlot4; GetSlotF = &GetSlot4; }
+	else if ( newbits == 8 )	{ SetSlotF = &SetSlot8; GetSlotF = &GetSlot8; }
+}
+
+void nuStyleSet::Set( int n, const nuStyleAttrib* attribs, nuPool* pool )
+{
+	for ( int i = 0; i < n; i++ )
+		Set( attribs[i], pool );
+}
+
+void nuStyleSet::Set( const nuStyleAttrib& attrib, nuPool* pool )
+{
+	int32 slot = GetSlot( attrib.GetCategory() );
+	if ( slot != 0 )
+	{
+		Attribs[slot] = attrib;
+		return;
+	}
+	if ( Count >= Capacity )
+		Grow( pool );
+	Attribs[Count] = attrib;
+	SetSlot( attrib.GetCategory(), Count + SlotOffset );
+	Count++;
+}
+
+nuStyleAttrib nuStyleSet::Get( nuStyleCategories cat ) const
+{
+	int32 slot = GetSlot( cat ) - SlotOffset;
+	if ( slot == -1 ) return nuStyleAttrib();
+	return Attribs[slot];
+}
+
+bool nuStyleSet::Contains( nuStyleCategories cat ) const
+{
+	return GetSlot( cat ) != 0;
+}
+
+void nuStyleSet::Reset()
+{
+	Lookup = NULL;
+	Attribs = NULL;
+	Capacity = 0;
+	BitsPerSlot = 0;
+	Count = 0;
+	SetSlotF = NULL;
+	GetSlotF = NULL;
+}
+
+void nuStyleSet::MigrateLookup( const void* lutsrc, void* lutdst, GetSlotFunc getter, SetSlotFunc setter )
+{
+	for ( int i = nuCatFIRST; i < nuCatEND; i++ )
+	{
+		int32 slot = getter( lutsrc, (nuStyleCategories) i );
+		if ( slot != 0 )
+			setter( lutdst, (nuStyleCategories) i, slot );
+	}
+}
+
+int32 nuStyleSet::GetSlot( nuStyleCategories cat ) const
+{
+	if ( !GetSlotF ) return 0;
+	return GetSlotF( Lookup, cat );
+}
+
+void nuStyleSet::SetSlot( nuStyleCategories cat, int32 slot )
+{
+	SetSlotF( Lookup, cat, slot );
+}
+
+template<uint32 BITS_PER_SLOT>
+void nuStyleSet::TSetSlot( void* lookup, nuStyleCategories cat, int32 slot )
+{
+	const uint32	mask	= (1 << BITS_PER_SLOT) - 1;
+	uint8*			lookup8	= (uint8*) lookup;
+
+	if ( BITS_PER_SLOT == 8 )
+	{
+		lookup8[cat] = slot;
+	}
+	else
+	{
+		uint32	intra_byte_mask;
+		uint32	ibyte;
+		if ( BITS_PER_SLOT == 2 )		{ ibyte = ((uint32) cat) >> 2;	intra_byte_mask = 3; }
+		else if ( BITS_PER_SLOT == 4 )	{ ibyte = ((uint32) cat) >> 1;	intra_byte_mask = 1; }
+
+		uint8	v = lookup8[ibyte];
+		uint8	islotinbyte = ((uint32) cat) & intra_byte_mask;
+		uint8	ishift = islotinbyte * BITS_PER_SLOT;
+		uint8	shiftedmask = mask << ishift;
+		v = v & ~shiftedmask;
+		v = v | (((uint32) slot) << ishift);
+		lookup8[ibyte] = v;
+	}
+}
+
+template<uint32 BITS_PER_SLOT>
+int32 nuStyleSet::TGetSlot( const void* lookup, nuStyleCategories cat )
+{
+	const uint32 mask		= (1 << BITS_PER_SLOT) - 1;
+	const uint8* lookup8	= (const uint8*) lookup;
+
+	if ( BITS_PER_SLOT == 8 )
+	{
+		return lookup8[cat];
+	}
+	else
+	{
+		uint32	intra_byte_mask;
+		uint32	ibyte;
+		if ( BITS_PER_SLOT == 2 )		{ ibyte = ((uint32) cat) >> 2;	intra_byte_mask = 3; }
+		else if ( BITS_PER_SLOT == 4 )	{ ibyte = ((uint32) cat) >> 1;	intra_byte_mask = 1; }
+
+		uint8	v = lookup8[ibyte];
+		uint8	islotinbyte = ((uint32) cat) & intra_byte_mask;
+		uint8	ishift = islotinbyte * BITS_PER_SLOT;
+		uint8	shiftedmask = mask << ishift;
+		v = (v & shiftedmask) >> ishift;
+		return v;
+	}
+}
+
+int32 nuStyleSet::GetSlot2( const void* lookup, nuStyleCategories cat ) { return TGetSlot<2>( lookup, cat ); }
+int32 nuStyleSet::GetSlot4( const void* lookup, nuStyleCategories cat ) { return TGetSlot<4>( lookup, cat ); }
+int32 nuStyleSet::GetSlot8( const void* lookup, nuStyleCategories cat ) { return TGetSlot<8>( lookup, cat ); }
+
+void nuStyleSet::SetSlot2( void* lookup, nuStyleCategories cat, int32 slot ) { TSetSlot<2>( lookup, cat, slot ); }
+void nuStyleSet::SetSlot4( void* lookup, nuStyleCategories cat, int32 slot ) { TSetSlot<4>( lookup, cat, slot ); }
+void nuStyleSet::SetSlot8( void* lookup, nuStyleCategories cat, int32 slot ) { TSetSlot<8>( lookup, cat, slot ); }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 nuStyleTable::nuStyleTable()
 {
 }
@@ -438,6 +610,11 @@ void nuStyleTable::Discard()
 	Styles.hack( 0, 0, NULL );
 	Names.hack( 0, 0, NULL );
 	NUASSERT( UnusedSlots.size() == 0 && NameToIndex.size() == 0 );
+}
+
+const nuStyle* nuStyleTable::GetByID( nuStyleID id ) const
+{
+	return &Styles[id];
 }
 
 nuStyle* nuStyleTable::GetOrCreate( const char* name )

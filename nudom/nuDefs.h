@@ -1,6 +1,5 @@
 #pragma once
 
-#include "nuApiDecl.h"
 #include "nuPlatform.h"
 
 class nuDoc;
@@ -17,11 +16,14 @@ class nuStyle;
 class nuSysWnd;
 class nuEvent;
 
-typedef int32 nuPos;
-typedef int32 nuInternalID;
 
-// 24:8 fixed point coordinates used during layout
-static const u32 nuPosShift = 8;
+typedef int32 nuPos;					// fixed-point position
+static const u32 nuPosShift = 8;		// 24:8 fixed point coordinates used during layout
+
+// An ID that is internal to nudom - i.e. it is not controllable by external code.
+typedef int32 nuInternalID;		
+static const nuInternalID nuInternalIDNull = 0;
+
 
 inline int32	nuRealToPos( float real )		{ return int32(real * (1 << nuPosShift)); }
 inline int32	nuDoubleToPos( double real )	{ return int32(real * (1 << nuPosShift)); }
@@ -73,6 +75,17 @@ struct nuVec3
 };
 inline nuVec3 NUVEC3(float x, float y, float z) { nuVec3 v = {x,y,z}; return v; }
 
+class NUAPI nuPoint
+{
+public:
+	nuPos	X, Y;
+
+	nuPoint() : X(0), Y(0) {}
+	nuPoint( nuPos x, nuPos y ) : X(x), Y(y) {}
+
+	void	SetInt( int32 x, int32 y ) { X = nuRealToPos((float) x); Y = nuRealToPos((float) y); }
+};
+
 class NUAPI nuBox
 {
 public:
@@ -85,6 +98,7 @@ public:
 	nuPos	Width() const	{ return Right - Left; }
 	nuPos	Height() const	{ return Bottom - Top; }
 	void	Offset( int32 x, int32 y ) { Left += x; Right += x; Top += y; Bottom += y; }
+	bool	IsInsideMe( const nuPoint& p ) const { return p.X >= Left && p.Y >= Top && p.X < Right && p.Y < Bottom; }
 };
 
 class NUAPI nuBoxF
@@ -98,9 +112,12 @@ public:
 
 struct nuStyleID
 {
-	uint32	StyleID;
-	explicit nuStyleID( uint32 id ) : StyleID(id) {}
-	operator uint32 () const { return StyleID; }
+	uint32		StyleID;
+
+				nuStyleID()				: StyleID(0)	{}
+	explicit	nuStyleID( uint32 id )	: StyleID(id)	{}
+
+	operator	uint32 () const { return StyleID; }
 };
 
 struct nuJob
@@ -113,6 +130,13 @@ struct nuGlobalStruct
 {
 	int							TargetFPS;
 	int							NumWorkerThreads;	// Read-only. Set during nuInitialize().
+
+	// Debugging flags. Enabling these should make debugging easier.
+	// Some of them may turn out to have a small enough performance hit that you can
+	// leave them turned on always.
+	// NOPE.. it's just too confusing to have this optional. It's always on.
+	//bool						DebugZeroClonedChildList;	// During a document clone, zero out ChildByInternalID before populating. This will ensure that gaps are NULL instead of random memory.
+
 	pvect<nuProcessor*>			Docs;				// Only Main thread is allowed to touch this.
 	TAbcQueue<nuProcessor*>		DocAddQueue;		// Documents requesting addition
 	TAbcQueue<nuProcessor*>		DocRemoveQueue;		// Documents requesting removal

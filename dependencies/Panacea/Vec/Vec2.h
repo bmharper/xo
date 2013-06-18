@@ -1,29 +1,20 @@
 #pragma once
 
+/*
+Why do we have VecBase2T and Vec2T ?
+VecBase2T exists so that we can include it inside unions. Thus, it defines no constructors.
+Users of these classes should not need to know about VecBase2T. They should simply use Vec2T.
+Unless, of course, they need to include these things inside unions. In that case the facade breaks
+down.
+*/
+
 #include "VecPrim.h"
 
 #ifndef DEFINED_Vec2
 #define DEFINED_Vec2
 #include "VecDef.h"
 
-/*
-A note about our hideous namespace hack:
-C++ is stupid in the sense that if one defines any non-trivial constructor, then
-one no longer has a default constructor for that object. Consequently, you define
-your default constructor as an empty thing. The ensuing chaos is that you can't
-place this class inside a union!
-So what we do is we make a static function called Vec2(double x, double y),
-which returns a Vec2. In order to avoid name collisions, we need to place
-the Vec class in it's own namespace.
-
-MSVC doesn't mind trivial constructors in anonymous structs, so we can still constructors
-there.
-*/
-
-namespace AbCoreVec
-{
-
-template <class vreal>
+template <typename vreal>
 class Vec2Traits
 {
 public:
@@ -50,136 +41,27 @@ public:
 	static const char* StringAFormatBare() { return "%.10g %.10g"; }
 };
 
-template <class vreal>
-class Vec2T
+// The "Base" class has no constructor, so that it can be included inside a union
+// Inside the base class, we do not expose any functions that leak our type
+// For example, we cannot expose component-wise multiply, because that would
+// leak VecBase2T to the outside world.
+template <typename vreal>
+class VecBase2T
 {
 public:
-
 	static const int Dimensions = 2;
 	typedef vreal FT;
 
 	vreal x, y;
 
-#ifdef _MSC_VER
-	Vec2T() {}
-	Vec2T( vreal _x, vreal _y ) { x = _x; y = _y; }
-#endif
-
-	/*Vec2T(const vreal *_v) 
-	{
-		x = _v[0];
-		y = _v[1];
-	}*/
-
-	static Vec2T Create( vreal x, vreal y )
-	{
-		Vec2T v;
-		v.x = x;
-		v.y = y;
-		return v;
-	}
+	/////////////////////////////////////////////////////////////////////////////////////////////
+	// Mutating operations
+	/////////////////////////////////////////////////////////////////////////////////////////////
 
 	void set(const vreal _x, const vreal _y) 
 	{
 		x = _x;
 		y = _y;
-	}
-	/*void set(const vreal *_v) 
-	{
-		x = _v[0];
-		y = _v[1];
-	}*/
-
-	/// Returns a vector that is [cos(angle), sin(angle)]
-	static Vec2T AtAngle( vreal angle ) 
-	{
-		return Vec2T( cos(angle), sin(angle) );
-	}
-
-	// I don't know how to do this better.
-	const Vec2T& AsVec2() const { return *this; }
-				Vec2T& AsVec2()			{ return *this; }
-
-	vreal operator&(const Vec2T &b) const {
-		return x*b.x + y*b.y;
-	}
-	vreal dot(const Vec2T &b) const {
-		return x*b.x + y*b.y;
-	}
-
-	Vec2T operator*(const vreal d) const {
-		return Vec2T(x*d, y*d);
-	}
-	Vec2T operator*(const Vec2T &b) const {
-		return Vec2T(x*b.x, y*b.y);
-	}
-	Vec2T operator+(const Vec2T &b) const {
-		return Vec2T(x+b.x, y+b.y);
-	}
-	Vec2T operator-(const Vec2T &b) const {
-		return Vec2T(x-b.x, y-b.y);
-	}
-	Vec2T operator/(const Vec2T &b) const {
-		return Vec2T(x/b.x, y/b.y);
-	}
-	vreal sizeSquared() const {
-		return x*x + y*y;
-	}
-	vreal size() const 
-	{
-		return sqrt(x*x + y*y);
-	}
-	
-	vreal distance(const Vec2T &b) const	{ return sqrt((x-b.x)*(x-b.x) + (y-b.y)*(y-b.y)); }
-	vreal distance2d(const Vec2T &b) const	{ return sqrt((x-b.x)*(x-b.x) + (y-b.y)*(y-b.y)); }
-	vreal distance3d(const Vec2T &b) const	{ return sqrt((x-b.x)*(x-b.x) + (y-b.y)*(y-b.y)); }
-	vreal distanceSQ(const Vec2T &b) const	{ return (x-b.x)*(x-b.x) + (y-b.y)*(y-b.y); }
-
-	vreal distance2dSQ(const Vec2T &b) const	{ return (x-b.x)*(x-b.x) + (y-b.y)*(y-b.y); }
-	vreal distance3dSQ(const Vec2T &b) const	{ return (x-b.x)*(x-b.x) + (y-b.y)*(y-b.y); }
-
-	Vec2T& operator-=(const Vec2T &b) 
-	{
-		x -= b.x;
-		y -= b.y;
-		return *this;
-	}
-	Vec2T& operator+=(const Vec2T &b) 
-	{
-		x += b.x;
-		y += b.y;
-		return *this;
-	}
-	Vec2T& operator*=(const Vec2T &b) 
-	{
-		x *= b.x;
-		y *= b.y;
-		return *this;
-	}
-	Vec2T& operator/=(const Vec2T &b) 
-	{
-		x /= b.x;
-		y /= b.y;
-		return *this;
-	}
-	Vec2T& operator/=(const vreal d) 
-	{
-		double r = 1.0 / d;
-		x *= r;
-		y *= r;
-		return *this;
-	}
-	Vec2T& operator*=(float s) 
-	{
-		x *= s;
-		y *= s;
-		return *this;
-	}
-	Vec2T& operator*=(double s) 
-	{
-		x *= s;
-		y *= s;
-		return *this;
 	}
 
 	void normalize()
@@ -189,12 +71,58 @@ public:
 		y *= r;
 	}
 
-	Vec2T normalized() const
+	void normalizeIfNotZero()
 	{
-		Vec2T copy = *this;
-		copy.normalize();
-		return copy;
+		double lenSq = x * x + y * y;
+		if ( lenSq != 0 )
+		{
+			double r = 1.0 / sqrt(lenSq);
+			x *= r;
+			y *= r;
+		}
 	}
+
+	void scale(vreal _scale)
+	{
+		x *= _scale;
+		y *= _scale;
+	}
+
+	/////////////////////////////////////////////////////////////////////////////////////////////
+	// const operations
+	/////////////////////////////////////////////////////////////////////////////////////////////
+
+	vreal operator&(const VecBase2T &b) const {
+		return x*b.x + y*b.y;
+	}
+	vreal dot(const VecBase2T &b) const {
+		return x*b.x + y*b.y;
+	}
+
+	// comparison operators
+	bool operator==(const VecBase2T& v) const
+	{
+		return x == v.x && y == v.y;
+	}
+	bool operator!=(const VecBase2T& v) const 
+	{
+		return x != v.x || y != v.y;
+	}
+
+	vreal sizeSquared() const {
+		return x*x + y*y;
+	}
+	vreal size() const {
+		return sqrt(x*x + y*y);
+	}
+	
+	vreal distance(const VecBase2T &b) const	{ return sqrt((x-b.x)*(x-b.x) + (y-b.y)*(y-b.y)); }
+	vreal distance2d(const VecBase2T &b) const	{ return sqrt((x-b.x)*(x-b.x) + (y-b.y)*(y-b.y)); }
+	vreal distance3d(const VecBase2T &b) const	{ return sqrt((x-b.x)*(x-b.x) + (y-b.y)*(y-b.y)); }
+	vreal distanceSQ(const VecBase2T &b) const	{ return (x-b.x)*(x-b.x) + (y-b.y)*(y-b.y); }
+
+	vreal distance2dSQ(const VecBase2T &b) const	{ return (x-b.x)*(x-b.x) + (y-b.y)*(y-b.y); }
+	vreal distance3dSQ(const VecBase2T &b) const	{ return (x-b.x)*(x-b.x) + (y-b.y)*(y-b.y); }
 
 	// makes sure all members are finite
 	bool checkNaN() const
@@ -207,7 +135,7 @@ public:
 	bool checkFloatOverflow() const
 	{
 		if (	x > FLT_MAX || x < -FLT_MAX ||
-					y > FLT_MAX || y < -FLT_MAX ) return false;
+				y > FLT_MAX || y < -FLT_MAX ) return false;
 		return true;
 	}
 
@@ -217,29 +145,75 @@ public:
 		dst[1] = y;
 	}
 
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Duplicated inside Vec2T
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VecBase2T& operator-=(const VecBase2T &b)	{ x -= b.x; y -= b.y; return *this; }
+	VecBase2T& operator+=(const VecBase2T &b)	{ x += b.x; y += b.y; return *this; }
+	VecBase2T& operator*=(const VecBase2T &b)	{ x *= b.x; y *= b.y; return *this; }
+	VecBase2T& operator/=(const VecBase2T &b)	{ x /= b.x; y /= b.y; return *this; }
+	VecBase2T& operator/=(vreal s)				{ vreal r = 1.0 / s; 	x *= r; y *= r;	return *this; }
+	VecBase2T& operator*=(vreal s)				{						x *= s; y *= s; return *this; }
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+};
+
+template <typename vreal>
+class Vec2T : public VecBase2T<vreal>
+{
+public:
+	typedef vreal FT;
+	using VecBase2T<vreal>::x;
+	using VecBase2T<vreal>::y;
+
+	Vec2T()													{}
+	Vec2T( vreal _x, vreal _y )								{ x = _x; y = _y; }
+	Vec2T( const VecBase2T<vreal>& b )						{ x = b.x; y = b.y; }
+
+	static Vec2T Create( vreal x, vreal y )
+	{
+		Vec2T v;
+		v.x = x;
+		v.y = y;
+		return v;
+	}
+
+	/// Returns a vector that is [cos(angle), sin(angle)]
+	static Vec2T AtAngle( vreal angle ) 
+	{
+		return Vec2T::Create( cos(angle), sin(angle) );
+	}
+
+	const Vec2T& AsVec2() const { return *this; }
+	      Vec2T& AsVec2()       { return *this; }
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Duplicated inside VecBase2T
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	Vec2T& operator-=(const Vec2T &b)		{ x -= b.x; y -= b.y; return *this; }
+	Vec2T& operator+=(const Vec2T &b)		{ x += b.x; y += b.y; return *this; }
+	Vec2T& operator*=(const Vec2T &b)		{ x *= b.x; y *= b.y; return *this; }
+	Vec2T& operator/=(const Vec2T &b)		{ x /= b.x; y /= b.y; return *this; }
+	Vec2T& operator/=(vreal s)				{ vreal r = 1.0 / s; 	x *= r; y *= r;	return *this; }
+	Vec2T& operator*=(vreal s)				{						x *= s; y *= s; return *this; }
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	Vec2T normalized() const
+	{
+		Vec2T copy = *this;
+		copy.normalize();
+		return copy;
+	}
+
+	Vec2T normalizedIfNotZero() const
+	{
+		Vec2T copy = *this;
+		copy.normalizeIfNotZero();
+		return copy;
+	}
+
 	// unary
 	Vec2T operator-() const  {  return Vec2T(-x, -y);  }
-
-
-	// comparision operators
-	bool operator==(const Vec2T& v) const
-	{
-		return x == v.x && y == v.y;
-	}
-	bool operator!=(const Vec2T& v) const 
-	{
-		return x != v.x || y != v.y;
-	}
-
-	//friend bool operator < (const Vec2T& v1, const Vec2T& v2);
-	//friend bool operator <= (const Vec2T& v1, const Vec2T& v2);
-	//friend bool operator > (const Vec2T& v1, const Vec2T& v2);
-	//friend bool operator >= (const Vec2T& v1, const Vec2T& v2);
-	//friend Vec2T operator+(const Vec2T &a, const Vec2T &b);
-	//friend Vec2T operator*(const float d, const Vec2T &v);
-	//friend Vec2T operator*(const double d, const Vec2T &v);
-	//friend Vec2T operator/(const Vec2T &v, const vreal d);
-	//friend Vec2T operator/(const vreal d, const Vec2T &v);
 
 	/// Returns the result of sprintf
 	int ToStringABare( char* buff, size_t buffChars ) const
@@ -318,99 +292,47 @@ public:
 
 };
 
+template<typename vreal> inline Vec2T<vreal> operator*(const VecBase2T<vreal> &a, vreal s)							{ return Vec2T<vreal>(a.x * s,   a.y * s); }
+template<typename vreal> inline Vec2T<vreal> operator*(vreal s, const VecBase2T<vreal> &a)							{ return Vec2T<vreal>(a.x * s,   a.y * s); }
+template<typename vreal> inline Vec2T<vreal> operator*(const VecBase2T<vreal> &a, const VecBase2T<vreal> &b)		{ return Vec2T<vreal>(a.x * b.x, a.y * b.y); }
+template<typename vreal> inline Vec2T<vreal> operator+(const VecBase2T<vreal> &a, const VecBase2T<vreal> &b)		{ return Vec2T<vreal>(a.x + b.x, a.y + b.y); }
+template<typename vreal> inline Vec2T<vreal> operator-(const VecBase2T<vreal> &a, const VecBase2T<vreal> &b)		{ return Vec2T<vreal>(a.x - b.x, a.y - b.y); }
+template<typename vreal> inline Vec2T<vreal> operator/(const VecBase2T<vreal> &a, const VecBase2T<vreal> &b)		{ return Vec2T<vreal>(a.x / b.x, a.y / b.y); }
+template<typename vreal> inline Vec2T<vreal> operator/(const vreal s, const Vec2T<vreal> &b)						{ return Vec2T<vreal>(s   / b.x, s   / b.y ); }
+template<typename vreal> inline vreal        dot(const VecBase2T<vreal>& a, const VecBase2T<vreal>& b)				{ return a.x * b.x + a.y * b.y; }
+template<typename vreal> inline Vec2T<vreal> operator/(const VecBase2T<vreal> &a, const vreal s)					{ vreal rec = (vreal) 1.0 / s; return Vec2T<vreal>(a.x * rec, a.y * rec); }
+template<typename vreal> inline Vec2T<vreal> normalize(const VecBase2T<vreal>& a)									{ Vec2T<vreal> copy = a; copy.normalized(); return copy; }
+template<typename vreal> inline vreal        length(const VecBase2T<vreal>& a)										{ return a.size(); }
+template<typename vreal> inline vreal        lengthSQ(const VecBase2T<vreal>& a)									{ return a.sizeSquared(); }
+
 template <class vreal> INLINE bool
 operator <= (const Vec2T<vreal>& v1, const Vec2T<vreal>& v2)
 {
-		return v1.x <= v2.x && v1.y <= v2.y;
+	return v1.x <= v2.x && v1.y <= v2.y;
 }
 
 template <class vreal> INLINE bool
 operator < (const Vec2T<vreal>& v1, const Vec2T<vreal>& v2)
 {
-		return v1.x < v2.x && v1.y < v2.y;
+	return v1.x < v2.x && v1.y < v2.y;
 }
 
 
 template <class vreal> INLINE bool
 operator > (const Vec2T<vreal>& v1, const Vec2T<vreal>& v2)
 {
-		return v1.x > v2.x && v1.y > v2.y;
+	return v1.x > v2.x && v1.y > v2.y;
 }
 
 template <class vreal> INLINE bool
 operator >= (const Vec2T<vreal>& v1, const Vec2T<vreal>& v2)
 {
-		return v1.x >= v2.x && v1.y >= v2.y;
+	return v1.x >= v2.x && v1.y >= v2.y;
 }
 
-template <class vreal> INLINE Vec2T<vreal>
-operator*(const float d, const Vec2T<vreal> &v) 
-{
-	return Vec2T<vreal>(v.x*d, v.y*d);
-}
-
-template <class vreal> INLINE Vec2T<vreal>
-operator*(const double d, const Vec2T<vreal> &v) 
-{
-	return Vec2T<vreal>(v.x*d, v.y*d);
-}
-
-template <class vreal> INLINE Vec2T<vreal>
-operator/(const Vec2T<vreal> &v, const vreal d)
-{
-	vreal rec = 1.0 / d;
-	return Vec2T<vreal>(v.x * rec, v.y * rec);
-}
-
-template <class vreal> INLINE Vec2T<vreal>
-operator/(const vreal d, const Vec2T<vreal> &v)
-{
-	return Vec2T<vreal>( d / v.x, d / v.y );
-}
-
-template <class vreal> INLINE Vec2T<vreal>
-operator/(const Vec2T<vreal> &a, const Vec2T<vreal> &b)
-{
-	return Vec2T<vreal>( a.x / b.x, a.y / b.y );
-}
-
-template <class vreal> INLINE vreal
-dot (const Vec2T<vreal>& v1, const Vec2T<vreal>& v2)
-{
-		return v1.x*v2.x + v1.y*v2.y;
-}
-
-/*template <class vreal> INLINE Vec2T<vreal> operator+(const Vec2T<vreal> &a, const Vec2T<vreal> &b)
-{
-	return Vec2T<vreal>(a.x + b.x, a.y + b.y);
-}*/
-
-template <class vreal> INLINE Vec2T<vreal>
-normalize( const Vec2T<vreal>& a )
-{
-	return a.normalized();
-}
-
-template <class vreal> INLINE vreal
-length( const Vec2T<vreal>& a )
-{
-	return a.size();
-}
-
-template <class vreal> INLINE vreal
-lengthSQ( const Vec2T<vreal>& a )
-{
-	return a.sizeSquared();
-}
-
-typedef Vec2T< double > Vec2d;
-typedef Vec2T< float > Vec2f;
+typedef Vec2T<double> Vec2d;
+typedef Vec2T<float> Vec2f;
 typedef Vec2d Vec2;
-
-} // namespace AbCoreVec
-
-// pollution.
-using namespace AbCoreVec;
 
 #ifdef DVECT_DEFINED
 typedef dvect< Vec2f > Vec2fVect;

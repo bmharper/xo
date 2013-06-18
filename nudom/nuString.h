@@ -1,6 +1,13 @@
 #pragma once
 
-#include "nuDefs.h"
+//#include "nuDefs.h"
+
+#ifdef _WIN32
+#pragma warning( push )
+#pragma warning( disable: 4345 )	// POD constructed with () is default-initialized
+#endif
+
+class nuPool;
 
 // This has no constructors or destructors so that we can put it in unions, etc. We know that there is no implicit
 // memory management going on here.
@@ -28,6 +35,7 @@ protected:
 
 FHASH_SETUP_CLASS_GETHASHCODE( nuStringRaw, nuStringRaw );
 
+// This is the classic thing you'd expect from a string. The destructor will free the memory.
 class NUAPI nuString : public nuStringRaw
 {
 public:
@@ -53,3 +61,7 @@ public:
 	nuTempString( const char* z );
 	~nuTempString();
 };
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif

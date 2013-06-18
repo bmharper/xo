@@ -207,6 +207,7 @@ NUAPI void nuInitialize()
 	nuGlobals = new nuGlobalStruct();
 	nuGlobals->TargetFPS = 60;
 	nuGlobals->NumWorkerThreads = min( minf.CPUCount, MAX_WORKER_THREADS );
+	//nuGlobals->DebugZeroClonedChildList = true;
 	nuGlobals->DocAddQueue.Initialize( false );
 	nuGlobals->DocRemoveQueue.Initialize( false );
 	nuGlobals->EventQueue.Initialize( true );

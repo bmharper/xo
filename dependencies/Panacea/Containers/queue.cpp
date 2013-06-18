@@ -50,7 +50,7 @@ void AbcQueue::Add( const void* item )
 	Increment( Head );
 
 	if ( HaveSemaphore )
-		AbcSemaphoreRelease( Semaphore );
+		AbcSemaphoreRelease( Semaphore, 1 );
 }
 
 bool AbcQueue::PopTail( void* item )

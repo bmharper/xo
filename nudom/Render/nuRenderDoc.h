@@ -3,10 +3,6 @@
 #include "../nuDoc.h"
 #include "nuRenderDomEl.h"
 
-struct NUAPI nuRenderNodePairs
-{
-	
-};
 
 /* Document used by renderer.
 This includes a complete clone of the original document.
@@ -14,22 +10,24 @@ This includes a complete clone of the original document.
 class NUAPI nuRenderDoc
 {
 public:
+	nuDoc						Doc;
+
 	// Rendered state
 	nuRenderDomEl				RenderRoot;
 	nuPool						RenderPool;
 
-	podvec<nuRenderNodePairs>	Nodes;		// Indexed by nuInternalID
-
-	// Input
-	nuDoc						Doc;
+	podvec<nuInternalID>		ModifiedNodeIDs;
 
 			nuRenderDoc();
 			~nuRenderDoc();
 
-	void	Render( nuRenderGL* rgl );
-	void	UpdateDoc( const nuDoc& original );
+	void			Render( nuRenderGL* rgl );
+	void			CopyFromCanonical( const nuDoc& original );
+	nuInternalID	FindElement( nuPoint pos );
 
 protected:
+	void			ResetRenderData();
+	nuInternalID	FindElement( const nuRenderDomEl& el, nuPoint pos );
+	static void		FindAlteredNodes( const nuDoc* original, const nuDoc* modified, podvec<nuInternalID>& alteredNodeIDs );
 
-	void	ResetRenderData();
 };

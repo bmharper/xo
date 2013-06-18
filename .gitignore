@@ -1,3 +1,5 @@
+.tundra2.*
+t2-output
 samples/Android/bin/*
 samples/Android/libs/*
 samples/Android/obj/*

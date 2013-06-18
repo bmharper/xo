@@ -18,21 +18,25 @@ and if the two differ, it knows that it needs to update.
 class NUAPI nuDoc
 {
 public:
-	nuDomEl							Root;							// Root element of the document tree
-	//nuStyleSet						Styles;							// All styles defined in this document
-	nuStyleTable					Styles;							// All styles defined in this document
-	uint32							WindowWidth, WindowHeight;		// Device pixels
-	nuStringTable					Strings;						// Generic string table
+	nuDomEl						Root;							// Root element of the document tree
+	nuStyleTable				ClassStyles;					// All style classes defined in this document
+	nuStyle						TagStyles[nuTagEND];			// Styles of tags. For example, the style of <p>, or the style of <h1>.
+	uint32						WindowWidth, WindowHeight;		// Device pixels. [Not sure this belongs here]
+	nuStringTable				Strings;						// Generic string table
 
 					nuDoc();
 					~nuDoc();
 	void			Reset();
 	void			IncVersion();
 	uint32			GetVersion()		{ return Version; }					// Renderers use purposefully loose MT semantics on this.
-	void			RenderSync();											// All of our dependent renderers have been updated, we can move FreeIDs over to UsableIDs.
+	void			MakeFreeIDsUsable();									// All of our dependent renderers have been updated, we can move FreeIDs over to UsableIDs.
 	void			CloneFastInto( nuDoc& c, uint cloneFlags ) const;		// Used to make a read-only clone for the renderer.
 	void			ChildAdded( nuDomEl* el );
+	void			ChildAddedFromDocumentClone( nuDomEl* el );
 	void			ChildRemoved( nuDomEl* el );
+	intp			ChildByInternalIDListSize() const				{ return ChildByInternalID.size(); }
+	const nuDomEl**	ChildByInternalIDList() const					{ return (const nuDomEl**) ChildByInternalID.data; }
+	const nuDomEl*	GetChildByInternalID( nuInternalID id ) const	{ return ChildByInternalID[id]; }
 
 protected:
 	volatile uint32				Version;

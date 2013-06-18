@@ -2,6 +2,11 @@
 #include "nuDefs.h"
 #include "nuMem.h"
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 6001)		// using uninitialized memory. False static analysis warning
+#endif
+
 nuPool::nuPool()
 {
 	ChunkSize = 64 * 1024;
@@ -29,8 +34,7 @@ void* nuPool::Alloc( size_t bytes, bool zeroInit )
 	NUASSERT(bytes != 0);
 	if ( bytes > ChunkSize )
 	{
-		BigBlocks += malloc( bytes );
-		NUCHECKALLOC( BigBlocks.back() );
+		BigBlocks += nuMallocOrDie( bytes );
 		if ( zeroInit ) memset( BigBlocks.back(), 0, bytes );
 		return BigBlocks.back();
 	}
@@ -38,8 +42,7 @@ void* nuPool::Alloc( size_t bytes, bool zeroInit )
 	{
 		if ( (intp) (TopRemain - bytes) < 0 )
 		{
-			Chunks += malloc( ChunkSize );
-			NUCHECKALLOC( Chunks.back() );
+			Chunks += nuMallocOrDie( ChunkSize );
 			TopRemain = ChunkSize;
 		}
 		byte* p = ((byte*) Chunks.back()) + ChunkSize - TopRemain;
@@ -48,3 +51,7 @@ void* nuPool::Alloc( size_t bytes, bool zeroInit )
 		return p;
 	}
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif

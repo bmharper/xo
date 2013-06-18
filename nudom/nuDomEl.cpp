@@ -26,7 +26,7 @@ void nuDomEl::CloneFastInto( nuDomEl& c, nuPool* pool, uint cloneFlags ) const
 	// copy classes
 	nuClonePodvecWithMemCopy( c.Classes, Classes, pool );
 
-	// alloc pointer list of children
+	// alloc list of pointers to children
 	nuClonePvectPrepare( c.Children, Children, pool );
 	
 	// alloc children
@@ -35,10 +35,15 @@ void nuDomEl::CloneFastInto( nuDomEl& c, nuPool* pool, uint cloneFlags ) const
 	
 	// copy children
 	for ( int i = 0; i < Children.size(); i++ )
+	{
+		c.Children[i]->Doc = c.Doc;
 		Children[i]->CloneFastInto( *c.Children[i], pool, cloneFlags );
+	}
 
 	if ( !!(cloneFlags & nuCloneFlagEvents) )
 		NUPANIC("clone events is TODO");
+
+	c.GetDoc()->ChildAddedFromDocumentClone( &c );
 }
 
 nuDomEl* nuDomEl::AddChild( nuTag tag )
@@ -101,7 +106,7 @@ bool nuDomEl::StyleParsef( const char* t, ... )
 void nuDomEl::AddClass( const char* klass )
 {
 	IncVersion();
-	nuStyleID id = Doc->Styles.GetStyleID( klass );
+	nuStyleID id = Doc->ClassStyles.GetStyleID( klass );
 	if ( Classes.find( id ) == -1 )
 		Classes += id;
 }
@@ -109,7 +114,7 @@ void nuDomEl::AddClass( const char* klass )
 void nuDomEl::RemoveClass( const char* klass )
 {
 	IncVersion();
-	nuStyleID id = Doc->Styles.GetStyleID( klass );
+	nuStyleID id = Doc->ClassStyles.GetStyleID( klass );
 	intp index = Classes.find( id );
 	if ( index != -1 )
 		Classes.erase( index );

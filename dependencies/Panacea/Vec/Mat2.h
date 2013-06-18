@@ -9,11 +9,8 @@
 template <class FT>
 class Mat2T
 {
-		
 public:
 
-// GCC doesn't allow wrapping objects with non-trivial constructors inside anonymous structs.
-#ifdef _MSC_VER
 	union
 	{
 		struct
@@ -24,12 +21,9 @@ public:
 
 		struct 
 		{
-			Vec2T<FT> row[2];
+			VecBase2T<FT> row[2];
 		};
 	};
-#else
-	Vec2T<FT> row[2];
-#endif
 
 	Mat2T() {}
 
@@ -80,8 +74,8 @@ public:
 
 	Mat2T& operator*=( double v )
 	{
-		row[0] *= v;
-		row[1] *= v;
+		row[0].scale(v);
+		row[1].scale(v);
 		return *this;
 	}
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #define PROJECT_NUDOM 1
+#include "nuApiDecl.h"
 
 #include "nuBase.h"
 
@@ -10,6 +11,5 @@
 
 using namespace std;
 
-#include "nuApiDecl.h"
 #include "nuPlatform.h"
 #include "nuMem.h"

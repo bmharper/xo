@@ -118,7 +118,8 @@ void vect_remove_duplicates( TVect& target )
 template< typename TVect, typename TData >
 int vect_least( const TVect& items )
 {
-	if ( items.size() == 0 ) { ASSERT(false); return -1; }
+	if ( items.size() == 0 )
+		return -1;
 	TData v = items[0];
 	int index = 0;
 	for ( intp i = 0; i < items.size(); i++ )
@@ -139,7 +140,8 @@ int vect_least( const TVect& items )
 template< typename TVect, typename TData >
 int vect_greatest( const TVect& items )
 {
-	if ( items.size() == 0 ) { ASSERT(false); return -1; }
+	if ( items.size() == 0 )
+		return -1;
 	TData v = items[0];
 	int index = 0;
 	for ( intp i = 0; i < items.size(); i++ )
@@ -190,7 +192,9 @@ void vect_sort_cx( TData* target, intp i, intp j, void* context, int (*compare) 
 	// choose alternate pivot if we detect that the list is inversely sorted.
 	// not doing so will produce a stack overflow with even a relatively small set.
 	//TData pivot = target[(i + j) / 2];
-	TData* pivot = target + (i + j) / 2;
+	//TData* pivot = target + (i + j) / 2;
+	// [W.W.A Oliver] Prevent buffer overflow.
+	TData* pivot = target + i + ((j - i) / 2);
 	if ( stackDepth > 40 ) 
 		//pivot = target[ i + (rand() % (1 + j - i)) ];
 		pivot = target + i + (rand() % (1 + j - i));

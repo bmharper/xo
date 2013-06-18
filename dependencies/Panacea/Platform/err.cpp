@@ -20,8 +20,9 @@ PAPI int AbcPanicMsg(LPCSTR file, int line, LPCSTR msg)
 	}
 	else
 	{
-		puts( "AbcPanicMsg: " );
-		puts( buf );
+		fputs( "AbcPanicMsg: ", stdout );
+		fputs( buf, stdout );
+		fflush( stdout );
 	}
 	return 0;
 }
@@ -63,7 +64,7 @@ PAPI bool AbcWindowStationVisible()
 {
 	bool interactive = true;
 
-#if defined(_INC_WINDOWS)
+#ifdef _INC_WINDOWS
 	HWINSTA hWinStation = GetProcessWindowStation();
 	if ( hWinStation )
 	{

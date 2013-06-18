@@ -10,7 +10,10 @@ public:
 	
 	template<typename T>
 	T*		AllocT( bool zeroInit ) { return (T*) Alloc( sizeof(T), zeroInit ); }
-	
+
+	template<typename T>
+	T*		AllocNT( size_t count, bool zeroInit ) { return (T*) Alloc( count * sizeof(T), zeroInit ); }
+
 	void	FreeAll();
 
 protected:
@@ -45,6 +48,11 @@ public:
 	}
 
 	T& operator[]( intp _i )
+	{
+		return Data[_i];
+	}
+
+	const T& operator[]( intp _i ) const
 	{
 		return Data[_i];
 	}

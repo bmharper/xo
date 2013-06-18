@@ -113,7 +113,7 @@ JNIEXPORT int JNICALL Java_com_android_nudom_NuLib_step(JNIEnv * env, jobject ob
 	if ( MainWnd )
 	{
 		//LOGI("render 1 %d %d", Proc->Doc->WindowWidth, Proc->Doc->WindowHeight );
-		//MainWnd->Processor->RenderDoc->UpdateDoc( *MainWnd->Processor->Doc );
+		//MainWnd->Processor->RenderDoc->CopyFromCanonical( *MainWnd->Processor->Doc );
 
 		//LOGI("render 2");
 		//MainWnd->Processor->RenderDoc->Render( MainWnd->RGL );

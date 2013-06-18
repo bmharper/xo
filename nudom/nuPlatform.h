@@ -20,6 +20,8 @@ typedef int				int32;
 #define NUASSERTDEBUG(x)	((void)0)
 #endif
 
+void* nuMallocOrDie( size_t bytes );
+
 #define NUCHECKALLOC(x)		NUASSERT((x) != NULL)
 #define NUPANIC(msg)		AbcPanic(msg)
 #define NUTODO				NUPANIC("not yet implemented") 

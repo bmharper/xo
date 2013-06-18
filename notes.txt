@@ -1,5 +1,4 @@
 
-
 Laconic code for generating HTML DOM from javascript:
 $.el.table(
   $.el.tr(
@@ -10,4 +9,4 @@ $.el.table(
     $.el.td('Stelmach'))
 ).appendTo(document.body);
 
-I quite like that - we should be able to do something similar inside C++ with nudom.
+I quite like that - it might be nice to do something similar inside C++ with nudom, probably with a C++ DSL.

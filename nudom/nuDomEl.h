@@ -9,8 +9,8 @@
 class NUAPI nuDomEl
 {
 public:
-				nuDomEl();
-				~nuDomEl();
+					nuDomEl();
+					~nuDomEl();
 
 	const pvect<nuDomEl*>&			GetChildren() const			{ return Children; }
 	const podvec<nuStyleID>&		GetClasses() const			{ return Classes; }
@@ -20,6 +20,7 @@ public:
 	nuInternalID					GetInternalID() const		{ return InternalID; }
 	nuTag							GetTag() const				{ return Tag; }
 	nuDoc*							GetDoc() const				{ return Doc; }
+	uint32							GetVersion() const			{ return Version; }
 
 	nuDomEl*		AddChild( nuTag tag );
 	void			RemoveChild( nuDomEl* c );
@@ -58,7 +59,7 @@ protected:
 	uint32					AllEventMask;
 	pvect<nuDomEl*>			Children;
 
-	void		RecalcAllEventMask();
-	void		IncVersion()				{ Version++; }
+	void			RecalcAllEventMask();
+	void			IncVersion()				{ Version++; }
 
 };

@@ -32,3 +32,10 @@ void nuClonePodvecWithMemCopy( podvec<T>& dst, const podvec<T>& src, nuPool* poo
 	nuClonePodvecPrepare( dst, src, pool );
 	memcpy( dst.data, src.data, src.size() * sizeof(T) );
 }
+
+template<typename T, size_t N>
+void nuCloneStaticArrayWithCloneFastInto( T (&dst)[N], const T (&src)[N], nuPool* pool )
+{
+	for ( size_t i = 0; i < N; i++ )
+		src[i].CloneFastInto( dst[i], pool );
+}

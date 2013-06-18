@@ -214,9 +214,9 @@ void nuSysWnd::FinishRender()
 {
 #if NU_WIN_DESKTOP
 	SwapBuffers( DC );
-	DC = NULL;
 	wglMakeCurrent( NULL, NULL );
 	ReleaseDC( SysWnd, DC );
+	DC = NULL;
 #endif
 }
 

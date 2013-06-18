@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nuApiDecl.h"
 #include "nuBase.h"
 
 #ifdef _WIN32

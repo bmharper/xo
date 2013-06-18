@@ -12,8 +12,7 @@ template <class FT>
 class Mat4T
 {
 public:
-	Vec4T<FT> row[4];
-
+	VecBase4T<FT> row[4];
 
 	Mat4T(void)
 	{

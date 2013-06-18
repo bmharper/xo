@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Other/lmstdint.h"
+#include "../Platform/stdint.h"
 
 #ifdef _WIN32
 inline i64 AbcTimeAsFileTime()

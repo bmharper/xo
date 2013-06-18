@@ -3,7 +3,6 @@
 #ifdef _WIN32
 	#define _CRT_SECURE_NO_WARNINGS 1
 	#include "../dependencies/biggle.h"
-	//#include <biggle/biggle.h>
 	#include <windows.h>
 #else
 	typedef const wchar_t* LPCTSTR;
@@ -67,6 +66,7 @@ typedef char TCHAR;
 #include "../dependencies/Panacea/coredefs.h"
 #include "../dependencies/Panacea/Platform/err.h"
 #include "../dependencies/Panacea/Other/lmstdint.h"
+#include "../dependencies/Panacea/Other/StackAllocators.h"
 #include "../dependencies/Panacea/Containers/pvect.h"
 #include "../dependencies/Panacea/Containers/podvec.h"
 #include "../dependencies/Panacea/Containers/queue.h"
@@ -75,6 +75,10 @@ typedef char TCHAR;
 #include "../dependencies/Panacea/Platform/syncprims.h"
 #include "../dependencies/Panacea/Platform/timeprims.h"
 #include "../dependencies/Panacea/Vec/Mat4.h"
+
+#include "nuString.h"
+#define FMT_STRING nuString
+#include "../dependencies/Panacea/Strings/fmt.h"
 
 #ifdef TEMP_ASSERT
 	#undef TEMP_ASSERT

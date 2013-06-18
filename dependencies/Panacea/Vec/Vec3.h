@@ -7,10 +7,7 @@
 #define DEFINED_Vec3
 #include "VecDef.h"
 
-namespace AbCoreVec
-{
-
-template <class vreal>
+template <typename vreal>
 class Vec3Traits
 {
 public:
@@ -37,11 +34,14 @@ public:
 	static const char* StringAFormatBare() { return "%.10g %.10g %.10g"; }
 };
 
-template <class vreal>
-class Vec3T
+// The "Base" class has no constructor, so that it can be included inside a union
+// Inside the base class, we do not expose any functions that leak our type
+// For example, we cannot expose component-wise multiply, because that would
+// leak VecBase3T to the outside world.
+template <typename vreal>
+class VecBase3T
 {
 public:
-
 	static const int Dimensions = 3;
 	typedef vreal FT;
 
@@ -57,8 +57,7 @@ public:
 		};
 		struct
 		{
-			Vec2T<vreal> vec2;
-			vreal zdummy;
+			VecBase2T<vreal> vec2;
 		};
 		struct 
 		{
@@ -66,106 +65,37 @@ public:
 		};
 	};
 
-#ifdef _MSC_VER
-	Vec3T() {}
-
-	// fills all with _uniform
-	explicit Vec3T( const vreal _uniform ) 	{	x = _uniform;	y = _uniform;	z = _uniform;	}
-
-	Vec3T(const vreal _x, const vreal _y, const vreal _z) 	{	x = _x;		y = _y;		z = _z;	}
-
-	Vec3T(const Vec2T<vreal> v2, const vreal _z) 
-	{
-		vec2 = v2;
-		z = _z;
-	}
-#endif
-
-	static Vec3T Create( vreal x, vreal y, vreal z )
-	{
-		Vec3T v;
-		v.x = x;
-		v.y = y;
-		v.z = z;
-		return v;
-	}
-
-	static Vec3T null() 
-	{
-		Vec3T v;
-		v.setNull();
-		return v;
-	}
-
-	/// Returns a vector that is [cos(angle), sin(angle), 0]
-	static Vec3T AtAngle( vreal angle ) 
-	{
-		return Vec3T( cos(angle), sin(angle), 0 );
-	}
-
-	const Vec2T<FT>& AsVec2() const { return vec2; }
-				Vec2T<FT>& AsVec2()			{ return vec2; }
-	const Vec3T<FT>& AsVec3() const { return *this; }
-				Vec3T<FT>& AsVec3()			{ return *this; }
-
-	//explicit Vec3T(const vreal *_v) 	{	x = _v[0];		y = _v[1];		z = _v[2];	}
+	static VecBase3T create(vreal _x, vreal _y, vreal _z) { VecBase3T b = {_x,_y,_z}; return b; }
 
 	void set(const vreal _x, const vreal _y, const vreal _z) {		x = _x;		y = _y;		z = _z;	}
 
 	// fills all with _uniform
 	void set( const vreal _uniform ) 	{	x = _uniform;	y = _uniform;	z = _uniform;	}
 
-	//void set(const vreal *_v) 
-	//{
-	//	x = _v[0];
-	//	y = _v[1];
-	//	z = _v[2];
-	//}
-
-	/*Vec3T operator*(const vreal d) const {
-		return Vec3T(x*d, y*d, z*d);
-	}
-	Vec3T operator*(const Vec3T &b) const {
-		return Vec3T(x*b.x, y*b.y, z*b.z);
-	}
-	Vec3T operator+(const Vec3T &b) const {
-		return Vec3T(x+b.x, y+b.y, z+b.z);
-	}
-	Vec3T operator-(const Vec3T &b) const {
-		return Vec3T(x-b.x, y-b.y, z-b.z);
-	}
-	Vec3T operator/(const Vec3T &b) const {
-		return Vec3T(x/b.x, y/b.y, z/b.z);
-	} */
-	Vec3T operator-() const {
-		return Vec3T(-x, -y, -z);
-	}
-	vreal size() const {
-		return sqrt(x*x + y*y + z*z);
-	}
-	vreal sizeSquared() const {
-		return x*x + y*y + z*z;
-	}
-	vreal size2Squared() const {
-		return x*x + y*y;
-	}
-	vreal distanceSQ(const Vec3T &b) const {
-		return (x-b.x)*(x-b.x) + (y-b.y)*(y-b.y) + (z-b.z)*(z-b.z);
-	}
-	
-	vreal distance(const Vec3T &b) const		{ return sqrt((x-b.x)*(x-b.x) + (y-b.y)*(y-b.y) + (z-b.z)*(z-b.z)); }
-	vreal distance3d(const Vec3T &b) const		{ return sqrt((x-b.x)*(x-b.x) + (y-b.y)*(y-b.y) + (z-b.z)*(z-b.z)); }
-	vreal distance2d(const Vec3T &b) const		{ return sqrt((b.x-x)*(b.x-x) + (b.y-y)*(b.y-y)); }
-	vreal distance3dSQ(const Vec3T &b) const	{ return (x-b.x)*(x-b.x) + (y-b.y)*(y-b.y) + (z-b.z)*(z-b.z); }
-	vreal distance2dSQ(const Vec3T &b) const	{ return (b.x-x)*(b.x-x) + (b.y-y)*(b.y-y); }
-
-	Vec3T projectionOn3dLine(const Vec3T &p1, const Vec3T &p2) const
+	void scale(vreal _scale)
 	{
-		double u = ((*this - p1) & (p2 - p1)) / (p2 - p1).sizeSquared();
-		return p1 + u*(p2-p1);
+		x *= _scale;
+		y *= _scale;
+		z *= _scale;
 	}
 
-	void cross(const Vec3T &u, const Vec3T &v)
+	vreal size() const								{ return sqrt(x*x + y*y + z*z); }
+	vreal sizeSquared() const						{ return x*x + y*y + z*z; }
+	vreal size2Squared() const						{ return x*x + y*y; }
+	vreal distance(const VecBase3T &b) const		{ return sqrt((x-b.x)*(x-b.x) + (y-b.y)*(y-b.y) + (z-b.z)*(z-b.z)); }
+	vreal distance3d(const VecBase3T &b) const		{ return sqrt((x-b.x)*(x-b.x) + (y-b.y)*(y-b.y) + (z-b.z)*(z-b.z)); }
+	vreal distance2d(const VecBase3T &b) const		{ return sqrt((b.x-x)*(b.x-x) + (b.y-y)*(b.y-y)); }
+	vreal distance3dSQ(const VecBase3T &b) const	{ return (x-b.x)*(x-b.x) + (y-b.y)*(y-b.y) + (z-b.z)*(z-b.z); }
+	vreal distanceSQ(const VecBase3T &b) const		{ return (x-b.x)*(x-b.x) + (y-b.y)*(y-b.y) + (z-b.z)*(z-b.z); }
+	vreal distance2dSQ(const VecBase3T &b) const	{ return (b.x-x)*(b.x-x) + (b.y-y)*(b.y-y); }
+
+	vreal	operator[](int i) const { return v[i]; }
+	vreal&	operator[](int i)		{ return v[i]; }
+
+	vreal	operator()(int i) const { return v[i]; }
+	vreal&	operator()(int i)		{ return v[i]; }
+
+	void cross(const VecBase3T &u, const VecBase3T &v)
 	{
 		x = u.y * v.z - u.z * v.y;
 		y = u.z * v.x - u.x * v.z;
@@ -181,7 +111,11 @@ public:
 	}
 
 	// checks that all members are not infinite or NaNs
-	bool checkNaN() const;
+	bool checkNaN() const
+	{
+		if ( _isnan(x) || _isnan(y) || _isnan(z) ) return false;
+		return true;
+	}
 
 	/// Returns true if any member is a NaN.
 	bool IsNan() const
@@ -189,12 +123,12 @@ public:
 		return _isnan(x) || _isnan(y) || _isnan(z);
 	}
 
-	/// Only valid for Vec3T<double>. Checks whether we won't overflow if converted to float.
+	/// Only valid for VecBase3T<double>. Checks whether we won't overflow if converted to float.
 	bool checkFloatOverflow() const
 	{
 		if (	x > FLT_MAX || x < -FLT_MAX ||
-					y > FLT_MAX || y < -FLT_MAX ||
-					z > FLT_MAX || z < -FLT_MAX ) return false;
+				y > FLT_MAX || y < -FLT_MAX ||
+				z > FLT_MAX || z < -FLT_MAX ) return false;
 		return true;
 	}
 
@@ -213,17 +147,10 @@ public:
 
 	void normalize() 
 	{
-		double s = 1.0 / sqrt(sizeSquared());
+		vreal s = (vreal) 1.0 / sqrt(sizeSquared());
 		x *= s;
 		y *= s;
 		z *= s;
-	}
-
-	Vec3T normalized() const
-	{
-		Vec3T copy = *this;
-		copy.normalize();
-		return copy;
 	}
 
 	void copyTo( vreal *dst ) const
@@ -233,12 +160,11 @@ public:
 		dst[2] = z;
 	}
 
-
 	// only normalizes if size is not zero. Returns 0 if size() > 0
 	// Sets vector to (1,0,0) if size is 0, and returns -1.
 	int normalizeCheck() 
 	{
-		double s = sizeSquared();
+		vreal s = sizeSquared();
 		if (s == 0) 
 		{
 			x = 1;
@@ -246,93 +172,116 @@ public:
 			z = 0;
 			return -1;
 		}
-		s = 1.0 / sqrt(s);
+		s = (vreal) 1.0 / sqrt(s);
 		x *= s;
 		y *= s;
 		z *= s;
 		return 0;
 	}
-	Vec3T& operator+=(const Vec3T &b) {
-		x += b.x;
-		y += b.y;
-		z += b.z;
-		return *this;
-	}
-	Vec3T& operator-=(const Vec3T &b) {
-		x -= b.x;
-		y -= b.y;
-		z -= b.z;
-		return *this;
-	}
-	Vec3T& operator*=(const vreal d) {
-		x *= d;
-		y *= d;
-		z *= d;
-		return *this;
-	}
-	Vec3T& operator*=(const Vec3T &b) {
-		x *= b.x;
-		y *= b.y;
-		z *= b.z;
-		return *this;
-	}
-	Vec3T& operator/=(const vreal d) {
-		double r = 1.0 / d;
-		x *= r;
-		y *= r;
-		z *= r;
-		return *this;
-	}
-	vreal operator[](int i) const { return v[i]; }
-	vreal& operator[](int i) { return v[i]; }
 
-	vreal operator()(int i) const { return v[i]; }
-	vreal& operator()(int i) { return v[i]; }
+	VecBase3T operator-() const { return VecBase3T::create(-x, -y, -z); }
 
-	
-	// comparision operators
-	bool operator==(const Vec3T& v) const {
-		return x == v.x && y == v.y && z == v.z;
+	// comparison operators
+	bool operator==(const VecBase3T& v) const { return x == v.x && y == v.y && z == v.z; }
+	bool operator!=(const VecBase3T& v) const { return x != v.x || y != v.y || z != v.z; }
+
+	vreal dot(const VecBase3T& b) const { return x * b.x + y * b.y + z * b.z; }
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Duplicated inside Vec3T
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	VecBase3T& operator+=(const VecBase3T &b)	{ x += b.x; y += b.y; z += b.z;						return *this; }
+	VecBase3T& operator-=(const VecBase3T &b)	{ x -= b.x; y -= b.y; z -= b.z;						return *this; }
+	VecBase3T& operator*=(const VecBase3T &b)	{ x *= b.x; y *= b.y; z *= b.z;						return *this; }
+	VecBase3T& operator*=(const vreal d)		{ 						x *= d;	y *= d; z *= d;		return *this; }
+	VecBase3T& operator/=(const vreal d)		{ vreal r = 1.0 / d;	x *= r; y *= r; z *= r;		return *this; }
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+};
+
+template <typename vreal>
+class Vec3T : public VecBase3T<vreal>
+{
+public:
+	typedef vreal FT;
+	using VecBase3T<vreal>::x;
+	using VecBase3T<vreal>::y;
+	using VecBase3T<vreal>::z;
+	using VecBase3T<vreal>::v;
+	using VecBase3T<vreal>::vec2;
+	using VecBase3T<vreal>::n;
+	using VecBase3T<vreal>::normalizeCheck;
+
+	Vec3T()													{}
+	Vec3T( vreal _x, vreal _y, vreal _z )					{ x = _x; y = _y; z = _z; }
+	Vec3T( const VecBase3T<vreal>& b )						{ x = b.x; y = b.y; z = b.z; }
+	Vec3T( const VecBase2T<vreal>& v2, const vreal _z )		{ x = v2.x, y = v2.y, z = _z; }
+	explicit Vec3T( vreal _uniform )						{ x = y = z = _uniform; }
+
+	static Vec3T Create( vreal x, vreal y, vreal z )
+	{
+		Vec3T v;
+		v.x = x;
+		v.y = y;
+		v.z = z;
+		return v;
 	}
-	bool operator!=(const Vec3T& v) const {
-		return x != v.x || y != v.y || z != v.z;
+
+	static Vec3T null()
+	{
+		Vec3T v;
+		v.setNull();
+		return v;
 	}
-	vreal dot(const Vec3T& b) const {
-		return x * b.x + y * b.y + z * b.z;
+
+	/// Returns a vector that is [cos(angle), sin(angle), 0]
+	static Vec3T AtAngle( vreal angle ) 
+	{
+		return Vec3T::Create( cos(angle), sin(angle), 0 );
 	}
-	
+
+	const Vec2T<vreal>& AsVec2() const    	{ return (const Vec2T<vreal>&) vec2; }
+	      Vec2T<vreal>& AsVec2()          	{ return (Vec2T<vreal>&) vec2; }
+	const Vec3T<vreal>& AsVec3() const		{ return *this; }
+	      Vec3T<vreal>& AsVec3()			{ return *this; }
+
+	Vec3T operator-() const { return Vec3T(-x, -y, -z); }
+
+	Vec3T projectionOn3dLine(const VecBase3T<vreal> &p1, const VecBase3T<vreal> &p2) const
+	{
+		double u = ((*this - p1) & (p2 - p1)) / (p2 - p1).sizeSquared();
+		return p1 + u*(p2-p1);
+	}
+
+	Vec3T normalized() const
+	{
+		Vec3T copy = *this;
+		copy.normalize();
+		return copy;
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Duplicated inside VecBase3T
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	Vec3T& operator+=(const Vec3T &b)	{ x += b.x; y += b.y; z += b.z;						return *this; }
+	Vec3T& operator-=(const Vec3T &b)	{ x -= b.x; y -= b.y; z -= b.z;						return *this; }
+	Vec3T& operator*=(const Vec3T &b)	{ x *= b.x; y *= b.y; z *= b.z;						return *this; }
+	Vec3T& operator*=(const vreal d)	{ 						x *= d;	y *= d; z *= d;		return *this; }
+	Vec3T& operator/=(const vreal d)	{ vreal r = 1.0 / d;	x *= r; y *= r; z *= r;		return *this; }
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	// some swizzlers... i doubt these are used much
 	Vec2T<vreal>	xx() const		{ return Vec2T<vreal>(x, x); }
 	Vec2T<vreal>	yy() const		{ return Vec2T<vreal>(y, y); }
 	Vec2T<vreal>	xy() const		{ return Vec2T<vreal>(x, y); }
 	Vec2T<vreal>	yx() const		{ return Vec2T<vreal>(y, x); }
-	Vec3T			xxx() const		{ return Vec3T(x, x, x); }
-	Vec3T			yyy() const		{ return Vec3T(y, y, y); }
-	Vec3T			zzz() const		{ return Vec3T(z, z, z); }
-	Vec3T			zyx() const		{ return Vec3T(z, y, x); }
+	Vec3T			xxx() const		{ return Vec3T::Create(x, x, x); }
+	Vec3T			yyy() const		{ return Vec3T::Create(y, y, y); }
+	Vec3T			zzz() const		{ return Vec3T::Create(z, z, z); }
+	Vec3T			zyx() const		{ return Vec3T::Create(z, y, x); }
 
-
-	//friend Vec3T operator + (const Vec3T& v1, const Vec3T& v2);
-	//friend Vec3T operator - (const Vec3T& v1, const Vec3T& v2);
-	//friend bool operator < (const Vec3T& v1, const Vec3T& v2);
-	//friend bool operator <= (const Vec3T& v1, const Vec3T& v2);
-	//friend bool operator > (const Vec3T& v1, const Vec3T& v2);
-	//friend bool operator >= (const Vec3T& v1, const Vec3T& v2);
-	
-	//#if _MFC_VER >= 0x0700
-	//template< class U, class V > friend Vec3T<U> operator * (const V& d, const Vec3T<U> &v);
-	//template< class U, class V > friend Vec3T<U> operator * (const Vec3T<U> &v, const V& d);
-	//#endif
-
-	/// Component divide
-	//friend Vec3T operator / (const Vec3T &a, const Vec3T &b);
-
-	/// Component multiply
-	//friend Vec3T operator * (const Vec3T &a, const Vec3T &b);
-
-	//friend vreal operator & (const Vec3T& v1, const Vec3T& v2);    // dot product
-	Vec3T        operator^(const Vec3T<vreal>& v) const;
-	int MakeOrthonormalBasis(Vec3T & base1, Vec3T & base2);
+	Vec3T        operator^(const VecBase3T<vreal>& v) const;
+	int MakeOrthonormalBasis(VecBase3T<vreal> & base1, VecBase3T<vreal> & base2);
 
 	int ToStringABare( char* buff, size_t buffChars ) const
 	{
@@ -411,101 +360,56 @@ public:
 };
 
 
-template <class vreal> inline Vec3T<vreal>
-operator + (const Vec3T<vreal>& v1, const Vec3T<vreal>& v2)
-{
-	return Vec3T<vreal>( v1.x + v2.x, v1.y + v2.y, v1.z + v2.z );
-}
-
-template <class vreal> INLINE Vec3T<vreal>
-operator - (const Vec3T<vreal>& v1, const Vec3T<vreal>& v2)
-{
-	return Vec3T<vreal>( v1.x - v2.x, v1.y - v2.y, v1.z - v2.z );
-}
-
-
-template <class vreal> INLINE vreal
-dot (const Vec3T<vreal>& v1, const Vec3T<vreal>& v2)
-{
-		return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
-}
-
-template <class vreal> INLINE vreal
-operator & (const Vec3T<vreal>& v1, const Vec3T<vreal>& v2)
-{
-	return dot(v1,v2);
-}
-
-
 template <class vreal> INLINE bool
-operator < (const Vec3T<vreal>& v1, const Vec3T<vreal>& v2)
+operator < (const VecBase3T<vreal>& v1, const VecBase3T<vreal>& v2)
 {
 		return v1.x < v2.x && v1.y < v2.y && v1.z < v2.z;
 }
 
 template <class vreal> INLINE bool
-operator <= (const Vec3T<vreal>& v1, const Vec3T<vreal>& v2)
+operator <= (const VecBase3T<vreal>& v1, const VecBase3T<vreal>& v2)
 {
 		return v1.x <= v2.x && v1.y <= v2.y && v1.z <= v2.z;
 }
 
 
 template <class vreal> INLINE bool
-operator > (const Vec3T<vreal>& v1, const Vec3T<vreal>& v2)
+operator > (const VecBase3T<vreal>& v1, const VecBase3T<vreal>& v2)
 {
 		return v1.x > v2.x && v1.y > v2.y && v1.z > v2.z;
 }
 
 template <class vreal> INLINE bool
-operator >= (const Vec3T<vreal>& v1, const Vec3T<vreal>& v2)
+operator >= (const VecBase3T<vreal>& v1, const VecBase3T<vreal>& v2)
 {
 		return v1.x >= v2.x && v1.y >= v2.y && v1.z >= v2.z;
 }
 
-
-template <class U, class V>
-INLINE Vec3T<U> operator*(const V& d, const Vec3T<U> &v) 
-{
-	return Vec3T<U>(v.x*d, v.y*d, v.z*d);
-}
-
-template <class U, class V>
-INLINE Vec3T<U> operator*(const Vec3T<U> &v, const V& d) 
-{
-	return Vec3T<U>(v.x*d, v.y*d, v.z*d);
-}
-
-template <class vreal>
-INLINE Vec3T<vreal> operator*(const Vec3T<vreal> &a, const Vec3T<vreal> &b) 
-{
-	return Vec3T<vreal>(a.x * b.x, a.y * b.y, a.z * b.z);
-}
-
-template <class vreal>
-INLINE Vec3T<vreal> operator / (const Vec3T<vreal> &a, const Vec3T<vreal> &b) 
-{
-	return Vec3T<vreal>(a.x / b.x, a.y / b.y, a.z / b.z);
-}
-
-template <class vreal>
-INLINE Vec3T<vreal> operator / ( const Vec3T<vreal> &a, const vreal &b ) 
-{
-	return Vec3T<vreal>(a.x / b, a.y / b, a.z / b);
-}
+template<typename vreal> inline Vec3T<vreal> operator*(vreal s, const VecBase3T<vreal> &v)							{ return Vec3T<vreal>(v.x * s, v.y * s, v.z * s); }
+template<typename vreal> inline Vec3T<vreal> operator*(const VecBase3T<vreal> &v, vreal s)							{ return Vec3T<vreal>(v.x * s, v.y * s, v.z * s); }
+template<typename vreal> inline Vec3T<vreal> operator*(const VecBase3T<vreal> &a, const VecBase3T<vreal> &b)		{ return Vec3T<vreal>(a.x * b.x, a.y * b.y, a.z * b.z); }
+template<typename vreal> inline Vec3T<vreal> operator/(const VecBase3T<vreal> &a, const VecBase3T<vreal> &b)		{ return Vec3T<vreal>(a.x / b.x, a.y / b.y, a.z / b.z); }
+template<typename vreal> inline Vec3T<vreal> operator/(const VecBase3T<vreal> &a, vreal s)							{ vreal r = (vreal) 1.0 / s; return Vec3T<vreal>(a.x * r, a.y * r, a.z * r); }
+template<typename vreal> inline Vec3T<vreal> operator+(const VecBase3T<vreal>& a, const VecBase3T<vreal>& b)		{ return Vec3T<vreal>(a.x + b.x, a.y + b.y, a.z + b.z ); }
+template<typename vreal> inline Vec3T<vreal> operator-(const VecBase3T<vreal>& a, const VecBase3T<vreal>& b)		{ return Vec3T<vreal>(a.x - b.x, a.y - b.y, a.z - b.z ); }
+template<typename vreal> inline vreal        dot(const VecBase3T<vreal>& a, const VecBase3T<vreal>& b)				{ return a.x * b.x + a.y * b.y + a.z * b.z; }
+template<typename vreal> inline vreal        operator&(const VecBase3T<vreal>& a, const VecBase3T<vreal>& b)		{ return dot(a,b); }
+template<typename vreal> inline Vec3T<vreal> normalize(const VecBase3T<vreal>& a)									{ Vec3T<vreal> copy = a; copy.normalize(); return copy; }
+template<typename vreal> inline vreal        length(const VecBase3T<vreal>& a) 										{ return a.size(); }
+template<typename vreal> inline vreal        lengthSQ(const VecBase3T<vreal>& a) 									{ return a.sizeSquared(); }
 
 // cross
-template <class vreal>
-INLINE Vec3T<vreal> Vec3T<vreal>::operator^(const Vec3T<vreal>& v) const
+template<typename vreal> inline
+Vec3T<vreal> Vec3T<vreal>::operator^(const VecBase3T<vreal>& v) const
 {
-		Vec3T<vreal> w( n[1]*v[2] - v[1]*n[2],
-										-n[0]*v[2] + v[0]*n[2],
-										n[0]*v[1] - v[0]*n[1] );
-		return w;
+		return Vec3T<vreal>::Create( n[1]*v[2] - v[1]*n[2],
+									-n[0]*v[2] + v[0]*n[2],
+									 n[0]*v[1] - v[0]*n[1] );
 }
 
 
 template <class vreal>
-INLINE int Vec3T<vreal>::MakeOrthonormalBasis(Vec3T<vreal> & base1, Vec3T<vreal> & base2)
+INLINE int Vec3T<vreal>::MakeOrthonormalBasis(VecBase3T<vreal> & base1, VecBase3T<vreal> & base2)
 {
 
 	if (base1.normalizeCheck())
@@ -529,39 +433,9 @@ INLINE int Vec3T<vreal>::MakeOrthonormalBasis(Vec3T<vreal> & base1, Vec3T<vreal>
 	return 0;
 }
 
-template <class vreal> INLINE Vec3T<vreal>
-normalize( const Vec3T<vreal>& a )
-{
-	return a.normalized();
-}
-
-template <class vreal> INLINE vreal
-length( const Vec3T<vreal>& a )
-{
-	return a.size();
-}
-
-template <class vreal> INLINE vreal
-lengthSQ( const Vec3T<vreal>& a )
-{
-	return a.sizeSquared();
-}
-
-
-template <class vreal> INLINE bool Vec3T<vreal>::checkNaN() const
-{
-	if ( _isnan(x) || _isnan(y) || _isnan(z) ) return false;
-	return true;
-}
-
 typedef Vec3T<double> Vec3d;
 typedef Vec3T<float> Vec3f;
 typedef Vec3d Vec3;
-
-} // namespace AbCoreVec
-
-// pollution.
-using namespace AbCoreVec;
 
 #ifdef OHASH_DEFINED
 namespace ohash
@@ -570,7 +444,7 @@ namespace ohash
 	class ohashfunc_Vec3T
 	{
 	public:
-		static ohash::hashkey_t gethashcode( const Vec3T<vreal>& elem )
+		static ohash::hashkey_t gethashcode( const VecBase3T<vreal>& elem )
 		{
 			vreal sum = elem.x + elem.y + elem.z;
 			ohash::hashkey_t* hard = (ohash::hashkey_t*) &sum;
@@ -584,8 +458,8 @@ namespace ohash
 }
 #endif
 
-inline Vec3		ToVec3( Vec3f v ) { return Vec3::Create( v.x, v.y, v.z ); }
-inline Vec3f	ToVec3f( Vec3 v ) { return Vec3f::Create( (float) v.x, (float) v.y, (float) v.z ); }
+inline Vec3		ToVec3( Vec3f v ) { return Vec3( v.x, v.y, v.z ); }
+inline Vec3f	ToVec3f( Vec3 v ) { return Vec3f( (float) v.x, (float) v.y, (float) v.z ); }
 
 #include "VecUndef.h"
 #endif // DEFINED_Vec3

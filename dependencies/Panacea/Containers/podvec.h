@@ -1,7 +1,13 @@
 #pragma once
 
-#include "../Other/lmstdint.h"
+#include "../Platform/stdint.h"
 #include "cont_utils.h"
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4345)	// POD type is default-initialized with () syntax
+#endif
+
 
 /*
 
@@ -154,7 +160,8 @@ struct podvec
 			grow();
 			if ( count != capacity ) dtorz_block( 1, data + count );
 			memmove( data + pos + 1, data + pos, (count - pos) * sizeof(T) );
-			memset( data + pos, 0, sizeof(T) );
+			//memset( data + pos, 0, sizeof(T) );
+			ctor( data[pos] );
 			data[pos] = copy;
 		}
 		else
@@ -162,7 +169,8 @@ struct podvec
 			grow();
 			if ( count != capacity ) dtorz_block( 1, data + count );
 			memmove( data + pos + 1, data + pos, (count - pos) * sizeof(T) );
-			memset( data + pos, 0, sizeof(T) );
+			//memset( data + pos, 0, sizeof(T) );
+			ctor( data[pos] );
 			data[pos] = v;
 		}
 		count++;
@@ -239,13 +247,34 @@ protected:
 	}
 	void dtor( T& v )
 	{
-		if (!ispod()) v.T::~T();
+		if ( !ispod() )
+			v.T::~T();
 	}
 	void dtorz_block( uintp n, T* block )
 	{
-		if (ispod()) return;
-		for ( uintp i = 0; i < n; i++ ) block[i].T::~T();
+		if ( ispod() ) return;
+		for ( uintp i = 0; i < n; i++ )
+			block[i].T::~T();
 		memset( block, 0, sizeof(T) * n );
+	}
+	void ctor( T& v )
+	{
+		//if ( ispod() )
+		//	memset( &v, 0, sizeof(T) );
+		//else
+		//	new (&v) T();
+		// On debug builds the memset is awful
+		new (&v) T();
+	}
+	void ctor_block( uintp n, T* block )
+	{
+		if ( ispod() )
+			memset( block, 0, sizeof(T) * n );
+		else
+		{
+			for ( uintp i = 0; i < n; i++ )
+				new (&block[i]) T();
+		}
 	}
 	
 	bool isinternal( const T* p ) const
@@ -297,12 +326,17 @@ protected:
 
 	bool try_resizeto( uintp newcap, bool initmem )
 	{
-		if ( newcap == 0 ) return true;
-		data = (T*) realloc( data, newcap * sizeof(T) );
-		if ( data == NULL )
+		if ( newcap == 0 )
+			return true;
+		T* newdata = (T*) realloc( data, newcap * sizeof(T) );
+		if ( newdata == NULL )
 			return false;
+		data = newdata;
 		if ( newcap > capacity && initmem )
-			memset( data + capacity, 0, (newcap - capacity) * sizeof(T) );
+		{
+			//memset( data + capacity, 0, (newcap - capacity) * sizeof(T) );
+			ctor_block( newcap - capacity, data + capacity );
+		}
 		capacity = newcap;
 		return true;
 	}
@@ -360,5 +394,9 @@ namespace std
 	}
 }
 
-
 INSTANTIATE_VECTOR_FUNCTIONS(podvec)
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+

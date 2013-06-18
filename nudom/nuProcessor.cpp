@@ -52,12 +52,12 @@ nuRenderResult nuProcessor::Render()
 	else
 	{
 		NUTRACE( "Render Version %u\n", Doc->GetVersion() );
-		RenderDoc->UpdateDoc( *Doc );
+		RenderDoc->CopyFromCanonical( *Doc );
 		
 		// Assume we are the only renderer of 'Doc'. If this assumption were not true, then you would need to update
 		// all renderers simultaneously, so that you can guarantee that UsableIDs all go to FreeIDs atomically.
-		//NUTRACE( "RenderSync\n" );
-		Doc->RenderSync();
+		//NUTRACE( "MakeFreeIDsUsable\n" );
+		Doc->MakeFreeIDsUsable();
 
 		AbcCriticalSectionLeave( DocLock );
 
@@ -103,6 +103,9 @@ bool nuProcessor::BubbleEvent( nuEvent& ev )
 	// A return value of false means "cancel the bubble".
 	// But ah.... downward bubbling is necessary for things like shortcut
 	// keys. I'm not sure how one does that with HTML.
+	// Right.. so "capturing" is the method where the event propagates inwards.
+	// IE does not support capturing though, so nobody really use it.
+	// We simply ignore the question of how to do shortcut keys for now.
 
 	nuDomEl* el = &Doc->Root;
 	bool stop = false;

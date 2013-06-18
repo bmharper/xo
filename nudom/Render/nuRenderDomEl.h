@@ -13,9 +13,10 @@ public:
 	void		SetPool( nuPool* pool );
 	void		Discard();
 
-	nuInternalID				InternalID;			// A safe way of getting back to our original nuDomEl
+	nuInternalID				InternalID;			// Reference to our original nuDomEl
 	nuBox						Pos;
 	float						BorderRadius;
-	nuStyle						Style;
+	nuStyle						Style;				// old & dead
+	nuStyleSet					ResolvedStyle;		// new & good
 	nuPoolArray<nuRenderDomEl*>	Children;
 };

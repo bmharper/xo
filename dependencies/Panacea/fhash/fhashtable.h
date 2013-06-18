@@ -91,7 +91,7 @@ typedef unsigned short		uint16;
 typedef          int		int32;
 typedef unsigned int		uint32;
 
-#ifdef _MSV_VER
+#ifdef _MSC_VER
 typedef          __int64	int64;
 typedef unsigned __int64	uint64;
 #else
@@ -192,8 +192,11 @@ void FHASH_CALL fhash_type_copy_pair(void* dst, const void* src, size_t obj_size
 	*vdst = *vsrc;
 }
 
-template< typename TPod >
+template<typename TPod>
 int FHASH_CALL fhash_pod_keycmp(const void* a, const void* b) { return !(*((const TPod*)a) == *((const TPod*)b)); }
+
+template<typename T>
+int FHASH_CALL fhash_keycmp(const void* a, const void* b) { return fhash_pod_keycmp<T>(a,b); }
 
 inline uint32 fhash_gethash_int32(const void* obj) { return *((const uint32*)obj); }
 inline uint32 fhash_gethash_int64(const void* obj) { uint64 v = *((const uint64*)obj); return uint32(v ^ (v >> 32)); }
@@ -207,6 +210,10 @@ inline uint32 fhash_gethash_ptr(const void* ptr) { return reinterpret_cast<uint3
 // Provide a specialization of these for your type
 template< typename T > uint32 fhash_gethash(const T& obj);
 
+template<> inline uint32 fhash_gethash(const int8& v)		{ return (uint32) v; }
+template<> inline uint32 fhash_gethash(const uint8& v)		{ return (uint32) v; }
+template<> inline uint32 fhash_gethash(const int16& v)		{ return (uint32) v; }
+template<> inline uint32 fhash_gethash(const uint16& v)		{ return (uint32) v; }
 template<> inline uint32 fhash_gethash(const int32& v)		{ return fhash_gethash_int32(&v); }
 template<> inline uint32 fhash_gethash(const uint32& v)		{ return fhash_gethash_int32(&v); }
 template<> inline uint32 fhash_gethash(const int64& v)		{ return fhash_gethash_int64(&v); }
@@ -262,21 +269,28 @@ FHASH_SETUP_POD(uint16)
 FHASH_SETUP_POD(uint32)
 FHASH_SETUP_POD(uint64)
 
+// Setup for a class that has an "int GetHashCode() const" function,
+// but doesn't need to be constructed or destructed. The omission of
+// the constructor and destructor calls is a performance optimization.
 #define FHASH_SETUP_POD_GETHASHCODE(T) \
 	FHASH_SETUP_TOR_NOP(T) \
 	template<> inline uint32 fhash_gethash(const T& obj) { return obj.GetHashCode(); }
 
 // Setup for a class that has a regular constructor and destructor
+// This is usable then as fhashmap<TheClass,Value>
+// See also FHASH_SETUP_POINTER_GETHASHCODE, if you want to use a pointer to the class as the key
 #define FHASH_SETUP_CLASS_GETHASHCODE(NST,T) \
 	FHASH_SETUP_CLASS_CTOR_DTOR(NST,T) \
 	template<> inline uint32 fhash_gethash(const NST& obj) { return obj.GetHashCode(); }
 
-//#define FHASH_SETUP_POD_GETHASHCODE_ZEROS(T) \
-//	FHASH_SETUP_POD_GETHASHCODE(T) \
-//	template<> inline bool fhash_ctor_with_zero<T>() { return true; }
-
-template< typename K > void FHASH_CALL fhash_type_ctor(void* obj) { fhash_ctor( *((K*) obj) ); }
-template< typename K > void FHASH_CALL fhash_type_dtor(void* obj) { fhash_dtor( *((K*) obj) ); }
+// Pointer to object that has an "int GetHashCode() const" function
+// This is usable then as fhashmap<TheClass*,Value>
+#define FHASH_SETUP_POINTER_GETHASHCODE(T) \
+	template<> inline void fhash_ctor<T*>(T*& obj)		{} \
+	template<> inline void fhash_dtor<T*>(T*& obj)		{} \
+	template<> inline uint32 fhash_gethash<T*>(T* const &obj)										{ return obj->GetHashCode();} \
+	template<> inline void fhash_tor_types<T*>( fhash_tor_type& ctor, fhash_tor_type& dtor )		{ ctor = fhash_TOR_NOP; dtor = fhash_TOR_NOP; } \
+	template<> inline int FHASH_CALL fhash_keycmp<T*>(const void* a, const void* b)					{ return **((T**) a) == **((T**) b) ? 0 : 1; }
 
 // Pointer = object identity (and therefore hash value)
 #define FHASH_SETUP_POINTER_ADDRESS(T) \
@@ -285,14 +299,8 @@ template< typename K > void FHASH_CALL fhash_type_dtor(void* obj) { fhash_dtor( 
 	template<> inline uint32 fhash_gethash<T*>(T* const &obj)										{ return fhash_gethash_ptr(obj);} \
 	template<> inline void fhash_tor_types<T*>( fhash_tor_type& ctor, fhash_tor_type& dtor )		{ ctor = fhash_TOR_NOP; dtor = fhash_TOR_NOP; }
 
-// Point objects, but dereference for hash code
-/*
-#define FHASH_SETUP_POINTER_VALUE(T) \
-	template<> void fhash_ctor<T*>(T*& obj)		{ obj = NULL; } \
-	template<> void fhash_dtor<T*>(T*& obj)		{} \
-	template<> uint32 fhash_gethash<T*>(T* const &obj) { return fhash_gethash(*obj);}
-	template<> uint32 fhash_gethash<T*>(T* const &obj) { return fhash_gethash(*obj);}
-	*/
+template< typename K > void FHASH_CALL fhash_type_ctor(void* obj) { fhash_ctor( *((K*) obj) ); }
+template< typename K > void FHASH_CALL fhash_type_dtor(void* obj) { fhash_dtor( *((K*) obj) ); }
 
 template< typename K, typename V >
 void FHASH_CALL fhash_type_ctor_pair(void* obj)
@@ -871,12 +879,13 @@ protected:
 
 		fhashkey_t hkey = get_hash_code( obj );
 
-		uint i = 0;
+		// We insert at the first deleted slot, or the first null slot, whichever comes first
+		// However, we must scan until (1. Find existing) or (2. Scanned entire table)
 		size_t pos = fhash_npos;
-		size_t pos_ins = fhash_npos;
-		while ( true )
+		size_t pos_ins = fhash_npos; // remember the first fhash_Deleted position, because that is where we will insert, if we're not already existent
+		for ( uint i = 0; i != mSize; i++ )
 		{
-			pos = table_pos( hkey, i++ );
+			pos = table_pos( hkey, i );
 			fhash_key_states ks = fhash_get_state( mState, pos );
 			if ( ks == fhash_Full )
 			{
@@ -989,25 +998,42 @@ protected:
 	/// The hash function (optimization of generic table_pos with i = 0)
 	size_t table_pos( fhashkey_t key ) const
 	{
-		return (size_t) (key & mMask);
+		return (size_t) (fold(key) & mMask);
 	}
 
 	/// probe (when i = 0, this function must be identical to table_pos(key))
 	size_t table_pos( fhashkey_t key, uint i ) const
 	{
-		//uint mul = (key & 0xffff) ^ ((uint) key >> 16);
+		key = fold(key);
 		uint mul = key >> 1;
-		//uint mul = key;
 		mul |= 1; // ensure multiplier is odd
-		// This offset particularly helps speed up failed lookups when our table is a dense array of integers (consecutive hashes).
-		// The layout in that case is that half of the table is completely occupied, and the other half (remember our fill factor -- there is always an 'other half')
-		// is completely empty. This probe offset immediately sends us into the territory of the 'other half', thereby reducing the time that we spend walking through
-		// the populated half.
+		return (size_t) ((key + i * mul) & mMask);
+	}
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// NOTE: This code used to be inside table_pos, but it is invalid. It violates our "visit every slot exactly once" rule.
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//// This offset particularly helps speed up failed lookups when our table is a dense array of integers (consecutive hashes).
+	//// The layout in that case is that half of the table is completely occupied, and the other half (remember our fill factor -- there is always an 'other half')
+	//// is completely empty. This probe offset immediately sends us into the territory of the 'other half', thereby reducing the time that we spend walking through
+	//// the populated half.
 
-		// The difference here seems to be negligible, but the simpler version should be better for future compilers.
-		uint offset = i == 0 ? 0 : (uint) mProbeOffset; 
-		//uint offset = ~(int(i - 1) >> 31) & mProbeOffset; // branch-less version
-		return (size_t) ((key + offset + i * mul) & mMask);
+	//// The difference here seems to be negligible, but the simpler version should be better for future compilers.
+	//uint offset = i == 0 ? 0 : (uint) mProbeOffset; 
+	////uint offset = ~(int(i - 1) >> 31) & mProbeOffset; // branch-less version
+	//return (size_t) ((key + offset + i * mul) & mMask);
+	///////////////////////////////////////////////////////////////////////////////
+
+
+	// Very simple mix function that at least gives us better behaviour when the only entropy is higher than our mask.
+	// This simplistic function probably causes evil behaviour in certain pathological cases, but it's better than not having it at all.
+	// This mixing solves cases such as values of the form 0x03000000, 0x04000000, 0x05000000. Without this folding
+	// function, those keys would all end up with the same table position, unless the table was larger than 0x0fffffff.
+	static fhashkey_t fold( fhashkey_t k )
+	{
+		uint32 u = k;
+		u = u ^ (u >> 16);
+		u = u ^ (u >> 8);
+		return u;
 	}
 
 	void autoshrink()
@@ -1086,7 +1112,7 @@ void fhash_setup_set( fhash_iface& f )
 	f.Delete = &fhash_type_dtor<TKey>;
 	f.Copy = &fhash_type_copy<TKey>;
 	f.Move = &fhash_pod_move;
-	f.KeyCmp = &fhash_pod_keycmp<TKey>;
+	f.KeyCmp = &fhash_keycmp<TKey>;
 	f.GetHash = &fhash_gethash_gen_wrap<TKey>;
 }
 
@@ -1112,7 +1138,7 @@ void fhash_setup_map( fhash_iface& f, size_t msize )
 	f.Delete = &fhash_type_dtor_pair<TKey, TVal>;
 	f.Copy = &fhash_type_copy_pair<TKey, TVal>;
 	f.Move = &fhash_pod_move;
-	f.KeyCmp = &fhash_pod_keycmp<TKey>;
+	f.KeyCmp = &fhash_keycmp<TKey>;
 	f.GetHash = &fhash_gethash_gen_wrap<TKey>;
 }
 

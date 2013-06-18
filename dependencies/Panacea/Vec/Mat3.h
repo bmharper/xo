@@ -10,11 +10,8 @@
 template <class FT>
 class Mat3T
 {
-		
 public:
 
-// GCC doesn't allow wrapping objects with non-trivial constructors inside anonymous structs. C++ suxors.
-#ifdef _MSC_VER
 	union
 	{
 		struct
@@ -26,16 +23,10 @@ public:
 
 		struct 
 		{
-			Vec3T<FT> row[3];
+			VecBase3T<FT> row[3];
 		};
 	};
-#else
-	Vec3T<FT> row[3];
-#endif
 
-		
-public:
-		
 		//double invert(Mat3T& inv);
 		Mat3T transpose();
 		void clear() 
@@ -338,7 +329,7 @@ void ulInvertMatrix(Mat3T<FT> & a)
 template <class FT> INLINE
 int ulInvertMatrixArbitrary(const Mat3T<FT> &a, Mat3T<FT> & b)  
 {
-	const FT EPS = 1e-12;
+	const FT EPS = (FT) 1e-12;
 
 	double fDetInv = a(0, 0) * ( a(1, 1) * a(2, 2) - a(1, 2) * a(2, 1) ) -
 		a(0, 1) * ( a(1, 0) * a(2, 2) - a(1, 2) * a(2, 0) ) +

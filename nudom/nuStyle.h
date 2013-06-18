@@ -19,7 +19,7 @@ struct NUAPI nuSize
 // Convenience struct used during layout computation
 struct NUAPI nuStyleBox
 {
-	// This order must be consistent with the order presented inside NU_STYLE_DEFINE
+	// This order (left,top,right,bottom) must be consistent with the order presented inside NU_STYLE_DEFINE
 	union
 	{
 		struct 
@@ -52,10 +52,14 @@ struct NUAPI nuRGBA
 	};
 };
 
+// This is non-premultipled alpha
 struct NUAPI nuColor
 {
 	void	Set( uint8 _r, uint8 _g, uint8 _b, uint8 _a ) { r = _r; g = _g; b = _b; a = _a; }
 	uint32	GetRGBA() const { nuRGBA x; x.r = r; x.g = g; x.b = b; x.a = a; return x.u; }
+
+	bool	operator==( const nuColor& x ) const { return u == x.u; }
+	bool	operator!=( const nuColor& x ) const { return u != x.u; }
 
 	static nuColor Parse( const char* s, intp len );
 	static nuColor RGBA( uint8 _r, uint8 _g, uint8 _b, uint8 _a )		{ nuColor c; c.Set(_r,_g,_b,_a); return c; }
@@ -90,7 +94,7 @@ enum nuPositionType
 	nuPositionFixed,
 };
 
-// The order of the boxes must be consistent with the order in nuStyleBox
+// The order of the box components (left,top,right,bottom) must be consistent with the order in nuStyleBox
 #define NU_STYLE_DEFINE \
 XX(NULL, 0) \
 XY(Color) \
@@ -124,6 +128,7 @@ XY(END)
 #define XY(a) nuCat##a,
 enum nuStyleCategories {
 	NU_STYLE_DEFINE
+	nuCatFIRST = nuCatColor,
 };
 #undef XX
 #undef XY
@@ -132,13 +137,22 @@ static_assert( nuCatMargin_Left == 4, "Start of boxes must be multiple of 4" );
 
 inline nuStyleCategories nuCatMakeBaseBox( nuStyleCategories c ) { return (nuStyleCategories) (c & ~3); }
 
-// This must be zero-initializable
+/* Single style attribute (such as Margin-Left, Width, FontSize, etc).
+This must be zero-initializable.
+It must remain small.
+Currently, sizeof(nuStyleAttrib) = 8.
+*/
 class NUAPI nuStyleAttrib
 {
 public:
-	uint8				Category;		// nuStyleCategory
+	enum Flag
+	{
+		FlagInherit = 1
+	};
+
+	uint8				Category;		// type nuStyleCategories
 	uint8				SubType;
-	uint8				Unused1;
+	uint8				Flags;
 	uint8				Unused2;
 	union
 	{
@@ -154,7 +168,10 @@ public:
 	void SetBorderRadius( nuSize val );
 	void SetPosition( nuPositionType val );
 	void SetFont( const char* font, nuDoc* doc );
+	void SetInherit( nuStyleCategories cat );
 
+	bool				IsNull() const			{ return Category != nuCatNULL; }
+	bool				IsInherit() const		{ return Flags == FlagInherit; }
 	nuStyleCategories	GetCategory() const		{ return (nuStyleCategories) Category; }
 	nuSize				GetSize() const			{ return nuSize::Make( (nuSize::Types) SubType, ValF ); }
 	nuColor				GetColor() const		{ return nuColor::Make( ValU32 ); }
@@ -169,7 +186,11 @@ protected:
 
 };
 
-// Collection of styles (border-width-left, color, etc)
+/* Collection of style attributes (border-width-left, color, etc)
+This container is simple and list-based.
+There is a different container called nuStyleSet that is more performant,
+built for use during rendering.
+*/
 class NUAPI nuStyle
 {
 public:
@@ -213,13 +234,81 @@ protected:
 
 FHASH_SETUP_CLASS_CTOR_DTOR(nuStyle, nuStyle);
 
-/* Store all styles in one table, that is owned by one document.
+/* A bag of styles in a performant container.
+
+Analysis of storage (assuming nuCatEND = 128)
+
+	Number of attributes	Size of Lookup			Size of Attribs		Total marginal size
+	1 << 2 = 4				128 * 2 / 8 = 32		4 * 8   = 32		32 + 32    = 64
+	1 << 4 = 16				128 * 4 / 8 = 64		16 * 8  = 128		64 + 128   = 192
+	1 << 8 = 256			128 * 8 / 8 = 128		256 * 8 = 2048		128 + 2048 = 2176
+
+One very significant optimization that remains here is to not grow Attrib[] so heavily.
+Growing from 16 to 256 is an insane leap.
+
+Idea: There are some attributes that need only a few bits. Instead of packing each of these
+into 8 bytes, we can instead store groups of attributes in special 8 byte blocks.
+
+*/
+class NUAPI nuStyleSet
+{
+public:
+	static const uint32 InitialBitsPerSlot = 2;		// 1 << 2 = 4, is our lowest non-empty size
+	static const uint32 SlotOffset = 1;				// We need to reserve zero for the "empty" state of a slot
+
+					nuStyleSet();
+					~nuStyleSet();
+
+	void			Set( int n, const nuStyleAttrib* attribs, nuPool* pool );
+	void			Set( const nuStyleAttrib& attrib, nuPool* pool );
+	nuStyleAttrib	Get( nuStyleCategories cat ) const;
+	bool			Contains( nuStyleCategories cat ) const;
+	void			Reset();
+
+protected:
+	typedef void  (*SetSlotFunc) ( void* lookup, nuStyleCategories cat, int32 slot );
+	typedef int32 (*GetSlotFunc) ( const void* lookup, nuStyleCategories cat );
+
+	void*			Lookup;			// Variable bit-width table that indexes into Attribs. Size is always nuCatEND.
+	nuStyleAttrib*	Attribs;		// The Category field in here is wasted.
+	int32			Capacity;		// Capacity of Attribs
+	uint32			BitsPerSlot;	// Number of bits in each slot of Lookup. Our possible sizes are 2,4,8.
+	int32			Count;			// Size of Attribs
+	SetSlotFunc		SetSlotF;
+	GetSlotFunc		GetSlotF;
+
+	void			Grow( nuPool* pool );
+	int32			GetSlot( nuStyleCategories cat ) const;
+	void			SetSlot( nuStyleCategories cat, int32 slot );
+
+	static void		MigrateLookup( const void* lutsrc, void* lutdst, GetSlotFunc getter, SetSlotFunc setter );
+
+	template<uint32 BITS_PER_SLOT>
+	static void		TSetSlot( void* lookup, nuStyleCategories cat, int32 slot );
+
+	template<uint32 BITS_PER_SLOT>
+	static int32	TGetSlot( const void* lookup, nuStyleCategories cat );
+
+	static int32	GetSlot2( const void* lookup, nuStyleCategories cat );
+	static int32	GetSlot4( const void* lookup, nuStyleCategories cat );
+	static int32	GetSlot8( const void* lookup, nuStyleCategories cat );
+	static void		SetSlot2( void* lookup, nuStyleCategories cat, int32 slot );
+	static void		SetSlot4( void* lookup, nuStyleCategories cat, int32 slot );
+	static void		SetSlot8( void* lookup, nuStyleCategories cat, int32 slot );
+
+	// The -1 here is for SlotOffset
+	static int32	CapacityAt( uint32 bitsPerSlot )	{ return (1 << bitsPerSlot) - 1; }
+
+};
+
+/* Store all style classes in one table, that is owned by one document.
 This allows us to reference styles by a 32-bit integer ID instead of by name.
 
 NOTE: I wrote GarbageCollect before realizing that this function will probably NEVER be used.
 Why would you want to garbage collect your styles? You define them up front, and just because
 you're not using them at the moment, doesn't mean you're not going to want to use them in future.
 If time passes, and this function is never used, then get rid of the code.
+The garbage collection code has never been tested.
 
 */
 class NUAPI nuStyleTable
@@ -230,6 +319,7 @@ public:
 
 	void			Discard();
 	nuStyle*		GetOrCreate( const char* name );
+	const nuStyle*	GetByID( nuStyleID id ) const;
 	nuStyleID		GetStyleID( const char* name );
 	void			GarbageCollect( nuDomEl* root );						// Discover unused styles and mark them as unused
 	void			CloneFastInto( nuStyleTable& c, nuPool* pool ) const;	// Does not clone NameToIndex or UnusedSlots
@@ -246,6 +336,7 @@ protected:
 	static void		CompactR( const nuStyleID* old2newID, nuDomEl* node );
 
 };
+
 
 NUAPI bool nuDisplayTypeParse( const char* s, intp len, nuDisplayType& t );
 NUAPI bool nuPositionTypeParse( const char* s, intp len, nuPositionType& t );
