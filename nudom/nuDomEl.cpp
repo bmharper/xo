@@ -83,13 +83,13 @@ nuDomEl* nuDomEl::AddChild( nuTag tag )
 
 void nuDomEl::RemoveChild( nuDomEl* c )
 {
-	IncVersion();
 	if ( !c ) return;
+	IncVersion();
 	intp ix = Children.find( c );
 	NUASSERT( ix != -1 );
 	Children.erase(ix);
 	Doc->ChildRemoved( c );
-	delete c;
+	Doc->FreeChild( c );
 }
 
 nuDomEl* nuDomEl::ChildByIndex( intp index )

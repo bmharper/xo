@@ -57,8 +57,8 @@ TESTFUNC(DocumentClone)
 	g.Doc->WindowHeight = 16;
 	TTASSERT( g.RenderStats.Clone_NumEls == 0 );
 	nuDoc* d = g.Doc;
-	nuDomEl* div1 = d->Root.AddChild( nuTagDiv );
 
+	nuDomEl* div1 = d->Root.AddChild( nuTagDiv );
 	for ( int i = 0; i < 5; i++ )
 	{
 		g.Render();
@@ -66,6 +66,16 @@ TESTFUNC(DocumentClone)
 	}
 
 	div1->StyleParsef( "left: 10px;" );
-	g.Render();
-	TTASSERT( g.RenderStats.Clone_NumEls == 3 ); // div1
+	for ( int i = 0; i < 5; i++ )
+	{
+		g.Render();
+		TTASSERT( g.RenderStats.Clone_NumEls == 3 ); // div1
+	}
+
+	d->Root.RemoveChild( div1 );
+	for ( int i = 0; i < 5; i++ )
+	{
+		g.Render();
+		TTASSERT( g.RenderStats.Clone_NumEls == 5 ); // root and div1
+	}
 }

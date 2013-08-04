@@ -152,11 +152,13 @@ void nuDoc::ChildAddedFromDocumentClone( nuDomEl* el )
 void nuDoc::ChildRemoved( nuDomEl* el )
 {
 	nuInternalID elID = el->GetInternalID();
-	NUASSERT(el->GetDoc() == this);
 	NUASSERT(elID != 0);
-	ChildByInternalID[el->GetInternalID()] = NULL;
+	NUASSERT(el->GetDoc() == this);
+	IncVersion();
+	SetChildModified( elID );
+	ChildByInternalID[elID] = NULL;
 	el->SetDoc( NULL );
-	el->SetInternalID( 0 );
+	el->SetInternalID( nuInternalIDNull );
 	FreeIDs += elID;
 }
 

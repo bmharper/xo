@@ -165,7 +165,7 @@ local tinytest_app = Program {
 local Test = Program {
 	Name = "Test",
 	SourceDir = ".",
-	Includes = { "nudom", "dependencies" },
+	--Includes = { "nudom" },
 	Depends = {
 		nudom,
 		crt,

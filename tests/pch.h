@@ -12,5 +12,5 @@
 #include "../nuDom/nuDom.h"
 
 #define TT_MODULE_NAME nudom
-#include <TinyTest/TinyTest.h>
+#include "../dependencies/TinyTest/TinyTest.h"
 #define TESTFUNC(f) TT_TEST_FUNC(NULL, NULL, TTSizeSmall, f, TT_PARALLEL_DONTCARE)
