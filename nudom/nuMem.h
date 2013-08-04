@@ -86,3 +86,24 @@ protected:
 		Data = ndata;
 	}
 };
+
+/* A very simple heap that is specialized for one type of object only.
+When you free an object, it goes into the 'free list'. Allocations are
+first made from the free list, before resorting to growing the linear array.
+*/
+// I started making this for a Doc's list of nuDomEl objects, but I think I'll defer that
+// until it's clear that we're really winning over the generic heap.
+/*
+template<typename T>
+class nuSpecialHeap
+{
+public:
+	T* Alloc()
+	{
+	}
+
+
+private:
+	podvec<T>	List;
+};
+*/

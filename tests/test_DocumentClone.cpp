@@ -1,5 +1,8 @@
 #include "pch.h"
 
+// erg.... intellisense on VS 2012 is broken without this bogus include here
+#include "../nudom/nuDoc.h"
+
 static AbcThreadReturnType AbcKernelCallbackDecl ui_thread( void* tp )
 {
 	int niter = 10000;
@@ -26,7 +29,7 @@ static AbcThreadReturnType AbcKernelCallbackDecl rend_thread( void* tp )
 }
 
 // Simulate a single document that is mutated by a UI thread, and a renderer thread that continually consumes it.
-TESTFUNC(DocumentClone)
+TESTFUNC(DocumentClone_Junk)
 {
 	nuDoc d1;
 	nuDomEl* div = d1.Root.AddChild( nuTagDiv );
@@ -43,4 +46,26 @@ TESTFUNC(DocumentClone)
 
 	//nuDoc d2;
 	//d1.CloneFastInto( d2, 0 );
+}
+
+TESTFUNC(DocumentClone)
+{
+	nuDocGroup g;
+	g.Doc = new nuDoc();
+	g.Render();
+	g.Doc->WindowWidth = 16;
+	g.Doc->WindowHeight = 16;
+	TTASSERT( g.RenderStats.Clone_NumEls == 0 );
+	nuDoc* d = g.Doc;
+	nuDomEl* div1 = d->Root.AddChild( nuTagDiv );
+
+	for ( int i = 0; i < 5; i++ )
+	{
+		g.Render();
+		TTASSERT( g.RenderStats.Clone_NumEls == 2 ); // root and div1
+	}
+
+	div1->StyleParsef( "left: 10px;" );
+	g.Render();
+	TTASSERT( g.RenderStats.Clone_NumEls == 3 ); // div1
 }

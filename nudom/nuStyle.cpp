@@ -414,6 +414,11 @@ void nuStyle::Discard()
 	//Name.Discard();
 }
 
+void nuStyle::CloneSlowInto( nuStyle& c ) const
+{
+	c.Attribs = Attribs;
+}
+
 void nuStyle::CloneFastInto( nuStyle& c, nuPool* pool ) const
 {
 	//Name.CloneFastInto( c.Name, pool );
@@ -681,6 +686,12 @@ void nuStyleTable::GarbageCollect( nuDomEl* root )
 	{
 		Compact( used, root );
 	}
+}
+
+void nuStyleTable::CloneSlowInto( nuStyleTable& c ) const
+{
+	// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
+	c.Styles = Styles;
 }
 
 void nuStyleTable::CloneFastInto( nuStyleTable& c, nuPool* pool ) const

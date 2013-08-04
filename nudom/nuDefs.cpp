@@ -26,6 +26,11 @@ void nuBox::SetInt( int32 left, int32 top, int32 right, int32 bottom )
 	Bottom = nuRealToPos((float) bottom);
 }
 
+void nuRenderStats::Reset()
+{
+	memset( this, 0, sizeof(*this) );
+}
+
 // add or remove documents that are queued for addition or removal
 static void ProcessDocQueue()
 {

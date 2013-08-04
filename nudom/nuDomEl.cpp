@@ -13,11 +13,34 @@ nuDomEl::nuDomEl()
 
 nuDomEl::~nuDomEl()
 {
-	delete_all( Children );
+	for ( intp i = 0; i < Children.size(); i++ )
+		Doc->FreeChild( Children[i] );
+	Children.clear();
 }
 
+// memory allocations come from the regular heap. This also happens to not be recursive.
+void nuDomEl::CloneSlowInto( nuDomEl& c, uint cloneFlags ) const
+{
+	nuDoc* cDoc = c.GetDoc();
+	c.InternalID = InternalID;
+	c.Tag = Tag;
+	c.Version = Version;
+	
+	Style.CloneSlowInto( c.Style );
+	c.Classes = Classes;
+
+	c.Children.clear_noalloc();
+	for ( intp i = 0; i < Children.size(); i++ )
+		c.Children += cDoc->GetChildByInternalIDMutable( Children[i]->InternalID );
+
+	if ( !!(cloneFlags & nuCloneFlagEvents) )
+		NUPANIC("clone events is TODO");
+}
+
+// all memory allocations come from the pool. The also happens to be recursive.
 void nuDomEl::CloneFastInto( nuDomEl& c, nuPool* pool, uint cloneFlags ) const
 {
+	nuDoc* cDoc = c.GetDoc();
 	c.InternalID = InternalID;
 	c.Tag = Tag;
 	c.Version = Version;
@@ -26,6 +49,7 @@ void nuDomEl::CloneFastInto( nuDomEl& c, nuPool* pool, uint cloneFlags ) const
 	// copy classes
 	nuClonePodvecWithMemCopy( c.Classes, Classes, pool );
 
+	// old style, where we would wipe the entire cloned document every time
 	// alloc list of pointers to children
 	nuClonePvectPrepare( c.Children, Children, pool );
 	
@@ -43,13 +67,13 @@ void nuDomEl::CloneFastInto( nuDomEl& c, nuPool* pool, uint cloneFlags ) const
 	if ( !!(cloneFlags & nuCloneFlagEvents) )
 		NUPANIC("clone events is TODO");
 
-	c.GetDoc()->ChildAddedFromDocumentClone( &c );
+	cDoc->ChildAddedFromDocumentClone( &c );
 }
 
 nuDomEl* nuDomEl::AddChild( nuTag tag )
 {
 	IncVersion();
-	nuDomEl* c = new nuDomEl();
+	nuDomEl* c = Doc->AllocChild();
 	c->Tag = tag;
 	c->Doc = Doc;
 	Children += c;
@@ -83,6 +107,11 @@ void nuDomEl::Discard()
 	Classes.hack( 0, 0, NULL );
 	Children.hack( 0, 0, NULL );
 	Handlers.hack( 0, 0, NULL );
+}
+
+void nuDomEl::ForgetChildren()
+{
+	Children.clear_noalloc();
 }
 
 bool nuDomEl::StyleParsef( const char* t, ... )
@@ -166,4 +195,9 @@ void nuDomEl::RecalcAllEventMask()
 	AllEventMask = m;
 }
 
+void nuDomEl::IncVersion()
+{
+	Version++;
+	Doc->SetChildModified( InternalID );
+}
 

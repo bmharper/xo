@@ -28,8 +28,10 @@ public:
 	void			RemoveChild( nuDomEl* c );
 	intp			ChildCount() const { return Children.size(); }
 	nuDomEl*		ChildByIndex( intp index );
+	void			CloneSlowInto( nuDomEl& c, uint cloneFlags ) const;
 	void			CloneFastInto( nuDomEl& c, nuPool* pool, uint cloneFlags ) const;
 	void			Discard();
+	void			ForgetChildren();
 
 	void			SetInternalID( nuInternalID id )			{ InternalID = id; }	// Used by nuDoc at element creation time.
 	void			SetDoc( nuDoc* doc )						{ Doc = doc; }			// Used by nuDoc at element creation and destruction time.
@@ -75,6 +77,6 @@ protected:
 	void			RecalcAllEventMask();
 	void			AddHandler( nuEvents ev, nuEventHandlerF func, bool isLambda, void* context );
 
-	void			IncVersion()				{ Version++; }
+	void			IncVersion();
 
 };

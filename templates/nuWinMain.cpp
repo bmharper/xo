@@ -27,7 +27,7 @@ int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmd
 
 static int __cdecl CrtAllocHook( int allocType, void *pvData, size_t size, int blockUse, long request, const unsigned char *filename, int fileLine )
 {
-	if ( request > 300 && size == 128 )
+	if ( request >= 292 && size == 128 )
 		int abc = 123;
 	return TRUE;
 }

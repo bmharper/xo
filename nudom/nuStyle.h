@@ -212,6 +212,7 @@ public:
 	void					Set( const nuStyleAttrib& attrib );
 	void					Compute( const nuDoc& doc, const nuDomEl& node );
 	void					Discard();
+	void					CloneSlowInto( nuStyle& c ) const;
 	void					CloneFastInto( nuStyle& c, nuPool* pool ) const;
 
 // Setter functions with 2 parameters
@@ -331,6 +332,7 @@ public:
 	const nuStyle*	GetByID( nuStyleID id ) const;
 	nuStyleID		GetStyleID( const char* name );
 	void			GarbageCollect( nuDomEl* root );						// Discover unused styles and mark them as unused
+	void			CloneSlowInto( nuStyleTable& c ) const;					// Does not clone NameToIndex or UnusedSlots
 	void			CloneFastInto( nuStyleTable& c, nuPool* pool ) const;	// Does not clone NameToIndex or UnusedSlots
 
 protected:

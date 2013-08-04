@@ -14,6 +14,7 @@ nuDocGroup::nuDocGroup()
 	Doc = NULL;
 	Wnd = NULL;
 	RenderDoc = new nuRenderDoc();
+	RenderStats.Reset();
 }
 
 nuDocGroup::~nuDocGroup()
@@ -55,15 +56,19 @@ nuRenderResult nuDocGroup::Render()
 	else
 	{
 		//NUTRACE( "Render Version %u\n", Doc->GetVersion() );
-		RenderDoc->CopyFromCanonical( *Doc );
+		RenderDoc->CopyFromCanonical( *Doc, RenderStats );
 		
 		// Assume we are the only renderer of 'Doc'. If this assumption were not true, then you would need to update
 		// all renderers simultaneously, so that you can guarantee that UsableIDs all go to FreeIDs atomically.
 		//NUTRACE( "MakeFreeIDsUsable\n" );
 		Doc->MakeFreeIDsUsable();
+		Doc->ResetModifiedBitmap();			// AbcBitMap has an absolutely awful implementation of this (byte-filled)
 
 		AbcCriticalSectionLeave( DocLock );
+	}
 
+	if ( !idle && Wnd != NULL )
+	{
 		//NUTRACE( "BeginRender\n" );
 		if ( !Wnd->BeginRender() )
 		{

@@ -23,8 +23,10 @@ typedef int32 nuPos;					// fixed-point position
 static const u32 nuPosShift = 8;		// 24:8 fixed point coordinates used during layout
 
 // An ID that is internal to nudom - i.e. it is not controllable by external code.
+// This ID is an integer that you can use to reference a DOM element. These IDs are recycled.
 typedef int32 nuInternalID;		
-static const nuInternalID nuInternalIDNull = 0;
+static const nuInternalID nuInternalIDNull = 0;		// Zero is always an invalid DOM element ID
+static const nuInternalID nuInternalIDRoot = 1;		// The root of the DOM tree always has ID = 1
 
 
 inline int32	nuRealToPos( float real )		{ return int32(real * (1 << nuPosShift)); }
@@ -126,6 +128,13 @@ struct nuJob
 {
 	void*	JobData;
 	void (*JobFunc)( void* jobdata );
+};
+
+struct NUAPI nuRenderStats
+{
+	uint32	Clone_NumEls;		// Number of DOM elements cloned
+
+	void Reset();
 };
 
 struct nuGlobalStruct

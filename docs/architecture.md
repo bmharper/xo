@@ -58,3 +58,18 @@ Box Model
 
 Right now I'm toying with implementing the Flex Box model first, and the traditional
 (Block, Inline) ones later.
+
+
+Coding Style
+------------
+Inside .h:
+
+	void	Function();		// A one-liner description
+
+Inside .cpp:
+
+// More detailed multi-line descriptions go here.
+// Don't duplicate the one-liner from the .h file here.
+void Klass::Function()
+{
+}

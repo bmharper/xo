@@ -13,6 +13,8 @@ public:
 	nuRenderDoc*		RenderDoc;
 	bool				DestroyDocWithProcessor;
 
+	nuRenderStats		RenderStats;
+
 					nuDocGroup();
 					~nuDocGroup();
 
@@ -28,9 +30,6 @@ public:
 protected:
 	AbcCriticalSection	DocLock;	// Mutation of 'Doc'
 
-	bool	CopyDoc();
-	void	CopyDocAndQueueRender();
-	void	CopyDocAndRenderNow();
 	void	FindTarget( const nuVec2& p, pvect<nuRenderDomEl*>& chain );
 	bool	BubbleEvent( nuEvent& ev );
 };

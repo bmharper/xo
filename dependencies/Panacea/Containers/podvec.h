@@ -230,8 +230,11 @@ struct podvec
 
 	void operator=( const podvec& b )
 	{
-		clear();
-		resizeto( b.count, !ispod() );
+		if ( count != b.count )
+		{
+			clear();
+			resizeto( b.count, !ispod() );
+		}
 		count = b.count;
 		if ( ispod() )	{ memcpy( data, b.data, count * sizeof(T) ); }
 		else			{ for ( uintp i = 0; i < b.count; i++ ) data[i] = b.data[i]; }

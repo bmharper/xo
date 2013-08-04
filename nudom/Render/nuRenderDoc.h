@@ -16,13 +16,13 @@ public:
 	nuRenderDomEl				RenderRoot;
 	nuPool						RenderPool;
 
-	podvec<nuInternalID>		ModifiedNodeIDs;
+	//podvec<nuInternalID>		ModifiedNodeIDs;
 
 			nuRenderDoc();
 			~nuRenderDoc();
 
 	void			Render( nuRenderGL* rgl );
-	void			CopyFromCanonical( const nuDoc& original );
+	void			CopyFromCanonical( const nuDoc& canonical, nuRenderStats& stats );
 	nuInternalID	FindElement( nuPoint pos );
 
 protected:
@@ -32,6 +32,6 @@ protected:
 
 	void			ResetRenderData();
 	nuInternalID	FindElement( const nuRenderDomEl& el, nuPoint pos );
-	static void		FindAlteredNodes( const nuDoc* original, const nuDoc* modified, podvec<nuInternalID>& alteredNodeIDs );
+	//static void		FindAlteredNodes( const nuDoc* original, const nuDoc* modified, podvec<nuInternalID>& alteredNodeIDs );
 
 };

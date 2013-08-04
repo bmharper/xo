@@ -10,6 +10,7 @@
 
 #include "nuDefs.h"
 #include "nuDoc.h"
+#include "nuDocGroup.h"
 #include "nuLayout.h"
 #include "Render/nuRenderer.h"
 #include "Image/nuImageStore.h"

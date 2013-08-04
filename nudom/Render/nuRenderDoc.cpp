@@ -33,18 +33,17 @@ void nuRenderDoc::Render( nuRenderGL* rgl )
 	rend.Render( &ClonedImages, &ClonedStrings, rgl, &RenderRoot, Doc.WindowWidth, Doc.WindowHeight );
 }
 
-void nuRenderDoc::CopyFromCanonical( const nuDoc& original )
+void nuRenderDoc::CopyFromCanonical( const nuDoc& canonical, nuRenderStats& stats )
 {
 	// Find nodes that have changed, so that we can apply transitions
-	ModifiedNodeIDs.clear();
-	FindAlteredNodes( &Doc, &original, ModifiedNodeIDs );
+	//ModifiedNodeIDs.clear();
+	//FindAlteredNodes( &Doc, &canonical, ModifiedNodeIDs );
 
-	Doc.Reset();
-	original.CloneFastInto( Doc, 0 );
+	canonical.CloneSlowInto( Doc, 0, stats );
 
 	// TODO: Don't do this dumb copying.
-	ClonedStrings.CloneFrom( original.Strings );
-	ClonedImages.CloneFrom( original.Images );
+	ClonedStrings.CloneFrom( canonical.Strings );
+	ClonedImages.CloneFrom( canonical.Images );
 }
 
 nuInternalID nuRenderDoc::FindElement( const nuRenderDomEl& el, nuPoint pos )
@@ -65,6 +64,7 @@ nuInternalID nuRenderDoc::FindElement( const nuRenderDomEl& el, nuPoint pos )
 	return nuInternalIDNull;
 }
 
+/*
 void nuRenderDoc::FindAlteredNodes( const nuDoc* original, const nuDoc* modified, podvec<nuInternalID>& alteredNodeIDs )
 {
 	int top = (int) min( original->ChildByInternalIDListSize(), modified->ChildByInternalIDListSize() );
@@ -79,3 +79,4 @@ void nuRenderDoc::FindAlteredNodes( const nuDoc* original, const nuDoc* modified
 		}
 	}
 }
+*/

@@ -30,15 +30,23 @@ public:
 					~nuDoc();
 	void			Reset();
 	void			IncVersion();
-	uint32			GetVersion()		{ return Version; }					// Renderers use purposefully loose MT semantics on this.
-	void			MakeFreeIDsUsable();									// All of our dependent renderers have been updated, we can move FreeIDs over to UsableIDs.
-	void			CloneFastInto( nuDoc& c, uint cloneFlags ) const;		// Used to make a read-only clone for the renderer.
+	uint32			GetVersion()		{ return Version; }									// Renderers use purposefully loose MT semantics on this.
+	void			ResetModifiedBitmap();													// Reset the 'ismodified' bitmap of all DOM elements.
+	void			MakeFreeIDsUsable();													// All of our dependent renderers have been updated, we can move FreeIDs over to UsableIDs.
+	void			CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) const;	// Used to make a read-only clone for the renderer. Preserves existing.
+	void			CloneFastInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) const;	// Used to make a read-only clone for the renderer. Starts from scratch.
+
+	nuDomEl*		AllocChild();
+	void			FreeChild( const nuDomEl* el );
+
 	void			ChildAdded( nuDomEl* el );
 	void			ChildAddedFromDocumentClone( nuDomEl* el );
 	void			ChildRemoved( nuDomEl* el );
+	void			SetChildModified( nuInternalID id );
 	intp			ChildByInternalIDListSize() const				{ return ChildByInternalID.size(); }
 	const nuDomEl**	ChildByInternalIDList() const					{ return (const nuDomEl**) ChildByInternalID.data; }
-	const nuDomEl*	GetChildByInternalID( nuInternalID id ) const	{ return ChildByInternalID[id]; }
+	const nuDomEl*	GetChildByInternalID( nuInternalID id ) const	{ return ChildByInternalID[id]; }						// A NULL result means this child has been deleted
+	nuDomEl*		GetChildByInternalIDMutable( nuInternalID id )	{ return ChildByInternalID[id]; }
 
 protected:
 	volatile uint32				Version;

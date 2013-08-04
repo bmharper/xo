@@ -16,12 +16,13 @@ In order to build, you'll need the latest version of tundra2 (github.com/depline
 Design goals
 
 * Keep the entire library small. Right now the goal is 1MB of compiled code.
-* Depend upon the GPU.
+* Depend upon the GPU (OpenGL ES 2.0, or DirectX 10+).
 * Parallelize layout and rendering (the pre-GPU phases).
 * Strive to make keep latency low.
 * Make it easy for games to integrate nudom.
 * Separate the *DOM manipulation* and *render* threads. This allows animations to run on the render thread
 at 60 hz, while you're free to take significantly more time than 16ms to perform your computation and update the DOM.
+* Try to come up with a re-imagined CSS that is simple and predictable.
 
 Target platforms
 
@@ -38,7 +39,7 @@ Sample
 ------
 
 	nuDomEl* btn = doc->Append( "<div class='button'>Click Me</div>" );
-	btn->OnClick( [](nuEvent* ev) => { /* do something */ } );
+	btn->OnClick( [](const nuEvent& ev) -> bool { /* do something */ } );
 
 Status
 ------
@@ -52,6 +53,9 @@ Why?
 ----
 
 We want to write an application once, and have it run on many platforms.
+
+This project is well and truly irrational. The rational thing to do would be to stick to the
+browser as your UI medium.
 
 Why not ... ?
 -------------
