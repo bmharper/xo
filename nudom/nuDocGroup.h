@@ -1,10 +1,11 @@
 #pragma once
 #include "nuDefs.h"
 
-// Process UI input. Schedule rendering.
-// Coordinates between DOM and Render threads.
-// RENAME: nuDocGroup
-class NUAPI nuProcessor
+// The umbrella class that houses a DOM tree.
+// This processes UI input.
+// It schedules rendering.
+// It coordinates between DOM and Render threads.
+class NUAPI nuDocGroup
 {
 public:
 	nuDoc*				Doc;
@@ -12,8 +13,8 @@ public:
 	nuRenderDoc*		RenderDoc;
 	bool				DestroyDocWithProcessor;
 
-			nuProcessor();
-			~nuProcessor();
+					nuDocGroup();
+					~nuDocGroup();
 
 #if NU_WIN_DESKTOP
 	static LRESULT CALLBACK StaticWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam );

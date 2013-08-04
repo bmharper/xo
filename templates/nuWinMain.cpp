@@ -1,5 +1,5 @@
 #include "nuDom.h"
-#include "nuProcessor.h"
+#include "nuDocGroup.h"
 
 // This file should be compiled and linked into your exe
 

@@ -16,7 +16,7 @@ enum nuEvents
 class NUAPI nuEvent
 {
 public:
-	nuProcessor*	Processor;
+	nuDocGroup*	Processor;
 	void*			Context;
 	nuDomEl*		Target;
 	nuEvents		Type;

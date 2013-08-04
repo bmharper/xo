@@ -1,16 +1,17 @@
 #include "pch.h"
 #include "nuDoc.h"
-#include "nuProcessor.h"
+#include "nuDocGroup.h"
 
-LRESULT CALLBACK nuProcessor::StaticWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
+LRESULT CALLBACK nuDocGroup::StaticWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-	nuProcessor* proc = (nuProcessor*) GetWindowLongPtr( hWnd, GWLP_USERDATA );
+	nuDocGroup* proc = (nuDocGroup*) GetWindowLongPtr( hWnd, GWLP_USERDATA );
 	if ( proc && proc->Doc )
 	{
 		return proc->WndProc( hWnd, message, wParam, lParam );
 	}
 	else
 	{
+		// This path gets hit before we can issue our SetWindowLongPtr() to set GWLP_USERDATA to the nuDocGroup*
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 }
@@ -34,7 +35,7 @@ enum Timers
 	TimerGenericEvent				= 2,
 };
 
-LRESULT nuProcessor::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
+LRESULT nuDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
 	NUASSERT( Doc != NULL );
 	PAINTSTRUCT ps;

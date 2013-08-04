@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "nuDefs.h"
-#include "nuProcessor.h"
+#include "nuDocGroup.h"
 #include "nuDoc.h"
 #include "nuSysWnd.h"
 #include "Render/nuRenderGL.h"
@@ -29,7 +29,7 @@ void nuBox::SetInt( int32 left, int32 top, int32 right, int32 bottom )
 // add or remove documents that are queued for addition or removal
 static void ProcessDocQueue()
 {
-	nuProcessor* p = NULL;
+	nuDocGroup* p = NULL;
 
 	while ( p = nuGlobal()->DocRemoveQueue.PopTailR() )
 		erase_delete( nuGlobal()->Docs, nuGlobal()->Docs.find(p) );

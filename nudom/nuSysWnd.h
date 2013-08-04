@@ -11,7 +11,7 @@ public:
 	HWND			SysWnd;
 	HGLRC			GLRC;
 #endif
-	nuProcessor*	Processor;
+	nuDocGroup*	Processor;
 	nuRenderGL*		RGL;
 
 	nuSysWnd();

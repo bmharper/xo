@@ -4,7 +4,7 @@
 #include "Render/nuRenderer.h"
 #include "Render/nuRenderGL.h"
 #include "Render/nuRenderDoc.h"
-#include "nuProcessor.h"
+#include "nuDocGroup.h"
 #include "nuEvent.h"
 #include "nuSysWnd.h"
 #include <stdlib.h>
@@ -18,7 +18,7 @@
 //static float		BLUE = 0;
 static bool			Initialized = false;
 //static nuRenderGL*	RGL = NULL;
-//static nuProcessor*	Proc = NULL;
+//static nuDocGroup*	Proc = NULL;
 extern nuSysWnd*	MainWnd;
 void nuMain( nuMainEvent ev );
 

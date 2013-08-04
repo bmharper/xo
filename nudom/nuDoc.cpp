@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "nuDoc.h"
-#include "nuProcessor.h"
+#include "nuDocGroup.h"
 #include "nuLayout.h"
 #include "Render/nuRenderer.h"
 #include "nuCloneHelpers.h"

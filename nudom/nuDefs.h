@@ -9,7 +9,7 @@ class nuImage;
 class nuImageStore;
 class nuLayout;
 class nuPool;
-class nuProcessor;
+class nuDocGroup;
 class nuRenderDoc;
 class nuRenderer;
 class nuRenderDomEl;
@@ -139,9 +139,9 @@ struct nuGlobalStruct
 	// NOPE.. it's just too confusing to have this optional. It's always on.
 	//bool						DebugZeroClonedChildList;	// During a document clone, zero out ChildByInternalID before populating. This will ensure that gaps are NULL instead of random memory.
 
-	pvect<nuProcessor*>			Docs;				// Only Main thread is allowed to touch this.
-	TAbcQueue<nuProcessor*>		DocAddQueue;		// Documents requesting addition
-	TAbcQueue<nuProcessor*>		DocRemoveQueue;		// Documents requesting removal
+	pvect<nuDocGroup*>			Docs;				// Only Main thread is allowed to touch this.
+	TAbcQueue<nuDocGroup*>		DocAddQueue;		// Documents requesting addition
+	TAbcQueue<nuDocGroup*>		DocRemoveQueue;		// Documents requesting removal
 	TAbcQueue<nuEvent>			EventQueue;			// Global event queue, consumed by the one-and-only UI thread
 	TAbcQueue<nuJob>			JobQueue;			// Global job queue, consumed by the worker thread pool
 };

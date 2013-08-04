@@ -1,13 +1,13 @@
 #include "pch.h"
 #include "nuDoc.h"
-#include "nuProcessor.h"
+#include "nuDocGroup.h"
 #include "nuLayout.h"
 #include "nuSysWnd.h"
 #include "Render/nuRenderer.h"
 #include "Render/nuRenderDoc.h"
 #include "Render/nuRenderDomEl.h"
 
-nuProcessor::nuProcessor()
+nuDocGroup::nuDocGroup()
 {
 	AbcCriticalSectionInitialize( DocLock );
 	DestroyDocWithProcessor = false;
@@ -16,7 +16,7 @@ nuProcessor::nuProcessor()
 	RenderDoc = new nuRenderDoc();
 }
 
-nuProcessor::~nuProcessor()
+nuDocGroup::~nuDocGroup()
 {
 	delete RenderDoc;
 	if ( DestroyDocWithProcessor )
@@ -25,7 +25,7 @@ nuProcessor::~nuProcessor()
 }
 
 // This is always called from the Render thread
-nuRenderResult nuProcessor::Render()
+nuRenderResult nuDocGroup::Render()
 {
 	bool haveLock = false;
 	// I'm not quite sure how we should handle this. The idea is that you don't want to go without a UI update
@@ -82,7 +82,7 @@ nuRenderResult nuProcessor::Render()
 }
 
 // This is always called from the UI thread
-void nuProcessor::ProcessEvent( nuEvent& ev )
+void nuDocGroup::ProcessEvent( nuEvent& ev )
 {
 	TakeCriticalSection lock( DocLock );
 	switch ( ev.Type )
@@ -99,7 +99,7 @@ void nuProcessor::ProcessEvent( nuEvent& ev )
 }
 
 // Returns true if the event was handled
-bool nuProcessor::BubbleEvent( nuEvent& ev )
+bool nuDocGroup::BubbleEvent( nuEvent& ev )
 {
 	// TODO. My plan is to go with upward bubbling only. The inner-most
 	// control gets the event first, then outward.
@@ -136,7 +136,7 @@ bool nuProcessor::BubbleEvent( nuEvent& ev )
 	return handled;
 }
 
-void nuProcessor::FindTarget( const nuVec2& p, pvect<nuRenderDomEl*>& chain )
+void nuDocGroup::FindTarget( const nuVec2& p, pvect<nuRenderDomEl*>& chain )
 {
 	chain += &RenderDoc->RenderRoot;
 	while ( true )

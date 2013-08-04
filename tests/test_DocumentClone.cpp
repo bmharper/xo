@@ -29,10 +29,8 @@ static AbcThreadReturnType AbcKernelCallbackDecl rend_thread( void* tp )
 TESTFUNC(DocumentClone)
 {
 	nuDoc d1;
-	nuDomEl* div = new nuDomEl();
-	div->Tag = nuTagDiv;
-	div->Style.Parse( "margin: 3px;" );
-	d1.Root.AddChild( div );
+	nuDomEl* div = d1.Root.AddChild( nuTagDiv );
+	div->StyleParse( "margin: 3px;" );
 
 	AbcThreadHandle t_ui, t_render;
 	AbcThreadCreate( &ui_thread, &d1, t_ui );

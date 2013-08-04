@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "nuSysWnd.h"
-#include "nuProcessor.h"
+#include "nuDocGroup.h"
 #include "nuDoc.h"
 #include "Render/nuRenderGL.h"
 
@@ -86,7 +86,7 @@ void nuSysWnd::PlatformInitialize()
 	wcex.cbSize = sizeof(WNDCLASSEX);
 
 	wcex.style			= 0;//CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-	wcex.lpfnWndProc	= nuProcessor::StaticWndProc;
+	wcex.lpfnWndProc	= nuDocGroup::StaticWndProc;
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
 	wcex.hInstance		= GetModuleHandle(NULL);
@@ -110,7 +110,7 @@ nuSysWnd::nuSysWnd()
 #if NU_ANDROID
 	MainWnd = this;
 #endif
-	Processor = new nuProcessor();
+	Processor = new nuDocGroup();
 	Processor->Wnd = this;
 	RGL = new nuRenderGL();
 }
