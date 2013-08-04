@@ -103,6 +103,12 @@ bool nuDomEl::StyleParsef( const char* t, ... )
 	}
 }
 
+void nuDomEl::HackSetStyle( const nuStyle& style )
+{
+	IncVersion();
+	Style = style;
+}
+
 void nuDomEl::AddClass( const char* klass )
 {
 	IncVersion();
@@ -120,12 +126,13 @@ void nuDomEl::RemoveClass( const char* klass )
 		Classes.erase( index );
 }
 
-void nuDomEl::AddHandler( nuEvents ev, nuEventHandlerF func, void* context )
+void nuDomEl::AddHandler( nuEvents ev, nuEventHandlerF func, bool isLambda, void* context )
 {
 	for ( intp i = 0; i < Handlers.size(); i++ )
 	{
 		if ( Handlers[i].Context == context && Handlers[i].Func == func )
 		{
+			NUASSERT(isLambda == Handlers[i].IsLambda());
 			Handlers[i].Mask |= ev;
 			RecalcAllEventMask();
 			return;
@@ -135,7 +142,20 @@ void nuDomEl::AddHandler( nuEvents ev, nuEventHandlerF func, void* context )
 	h.Context = context;
 	h.Func = func;
 	h.Mask = ev;
+	if ( isLambda )
+		h.SetLambda();
 	RecalcAllEventMask();
+}
+
+void nuDomEl::AddHandler( nuEvents ev, nuEventHandlerLambda lambda )
+{
+	nuEventHandlerLambda* copy = new nuEventHandlerLambda( lambda );
+	AddHandler( ev, nuEventHandler_LambdaStaticFunc, true, copy );
+}
+
+void nuDomEl::AddHandler( nuEvents ev, nuEventHandlerF func, void* context )
+{
+	AddHandler( ev, func, false, context );
 }
 
 void nuDomEl::RecalcAllEventMask()

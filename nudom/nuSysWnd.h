@@ -12,7 +12,6 @@ public:
 	HGLRC			GLRC;
 #endif
 	nuProcessor*	Processor;
-	bool			DestroyDocWithWindow;
 	nuRenderGL*		RGL;
 
 	nuSysWnd();
@@ -22,7 +21,7 @@ public:
 	static nuSysWnd*	CreateWithDoc();
 	static void			PlatformInitialize();
 
-	void	Attach( nuDoc* doc, bool destroyDocWithWindow );
+	void	Attach( nuDoc* doc, bool destroyDocWithProcessor );
 	void	Show();
 	nuDoc*	Doc();
 	bool	BeginRender();		// Basically wglMakeCurrent()

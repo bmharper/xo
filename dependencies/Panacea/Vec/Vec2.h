@@ -124,10 +124,11 @@ public:
 	vreal distance2dSQ(const VecBase2T &b) const	{ return (x-b.x)*(x-b.x) + (y-b.y)*(y-b.y); }
 	vreal distance3dSQ(const VecBase2T &b) const	{ return (x-b.x)*(x-b.x) + (y-b.y)*(y-b.y); }
 
-	// makes sure all members are finite
+	// makes sure all members are not NaN
 	bool checkNaN() const
 	{
-		if ( !_finite(x) || !_finite(y) ) return false;
+		if ( vec_IsNaN(x) || vec_IsNaN(y) )
+			return false;
 		return true;
 	}
 

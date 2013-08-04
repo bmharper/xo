@@ -7,6 +7,7 @@ PAPI int AbcPanicMsg(LPCSTR file, int line, LPCSTR msg)
 	char buf[1024];
 	if ( msg )	sprintf( buf, "Critical Error: %s(%d)\n%s", file, line, msg);
 	else		sprintf( buf, "Critical Error: %s(%d)", file, line);
+	buf[arraysize(buf) - 1] = 0;
 	bool showGui = AllowGUI;
 #if !defined(MessageBox)
 	showGui = false;

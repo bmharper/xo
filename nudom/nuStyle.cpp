@@ -52,6 +52,7 @@ nuSize nuSize::Parse( const char* s, intp len )
 		digits[nondig] = s[nondig];
 		if ( !IsNumeric(s[nondig]) ) break;
 	}
+	digits[nondig] = 0;
 	x.Val = (float) atof( digits );
 	if ( nondig == len )
 	{
@@ -194,10 +195,20 @@ void nuStyleAttrib::SetFont( const char* font, nuDoc* doc )
 	SetString( nuCatFontFamily, font, doc );
 }
 
+void nuStyleAttrib::SetBackgroundImage( const char* image, nuDoc* doc )
+{
+	SetString( nuCatBackgroundImage, image, doc );
+}
+
 void nuStyleAttrib::SetInherit( nuStyleCategories cat )
 {
 	Category = cat;
 	Flags = FlagInherit;
+}
+
+const char* nuStyleAttrib::GetBackgroundImage( nuStringTable* strings ) const
+{
+	return strings->GetStr( ValU32 );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

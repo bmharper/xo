@@ -4,7 +4,7 @@
 
 nuStringTable::nuStringTable()
 {
-	IdToName += nuString("");
+	IdToName += nuTempString("");
 	NameToId.insert( IdToName[0], 0 );
 }
 nuStringTable::~nuStringTable()
@@ -24,7 +24,13 @@ int nuStringTable::GetId( const char* str )
 	int v = 0;
 	if ( NameToId.get( s, v ) )
 		return v;
-	IdToName += nuString(str);
-	NameToId.insert( nuString(str), (int) IdToName.size() - 1 );
+	IdToName += s;
+	NameToId.insert( s, (int) IdToName.size() - 1 );
 	return (int) IdToName.size() - 1;
+}
+
+void nuStringTable::CloneFrom( const nuStringTable& src )
+{
+	IdToName = src.IdToName;
+	NameToId = src.NameToId;
 }

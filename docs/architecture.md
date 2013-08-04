@@ -15,7 +15,7 @@ nudom code. It never runs 'user' code, which is what the UI thread is for.
 The UI thread fetches input messages from the OS, and calls the appropriate event
 handlers. These event handlers are what we call 'user' code, because this is code
 that is not part of nudom. The document is only mutated from the UI thread.
-The Renderer never alters the document - it merely creates structures necessar
+The Renderer never alters the document - it merely creates structures necessary
 to perform it's job. As far as the renderer is concerned, the document is immutable.
 
 Why split the system up into two thread groups?
@@ -43,6 +43,8 @@ we have 700 / 60 = 11.6 MB/frame. Of course we need to do a lot of other work,
 so let's say a conservative estimate for total document size then is 1 MB.
 sizeof(nuDomEl) = 128.
 1 MB / 128 = 8192 naked document elements fit into a 1 MB document.
+
+Update: An S3 has very similar memory bandwidth - around 800 MB/s.
 
 
 Locks

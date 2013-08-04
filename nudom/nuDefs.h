@@ -2,8 +2,11 @@
 
 #include "nuPlatform.h"
 
-class nuDoc;
 class nuDomEl;
+class nuDoc;
+class nuEvent;
+class nuImage;
+class nuImageStore;
 class nuLayout;
 class nuPool;
 class nuProcessor;
@@ -12,10 +15,9 @@ class nuRenderer;
 class nuRenderDomEl;
 class nuRenderGL;
 class nuString;
+class nuStringTable;
 class nuStyle;
 class nuSysWnd;
-class nuEvent;
-
 
 typedef int32 nuPos;					// fixed-point position
 static const u32 nuPosShift = 8;		// 24:8 fixed point coordinates used during layout

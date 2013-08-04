@@ -209,7 +209,7 @@ namespace AbCore
 		template< typename T >
 		void AddItem( const T& v )
 		{
-			memcpy( Add(sizeof(v)), &v, sizeof(v) );
+			Add( &v, sizeof(v) );
 		}
 
 	};

@@ -1,50 +1,24 @@
 #pragma once
 
-/*
-Declare a thread function as follows:
-	AbcThreadReturnType AbcKernelCallbackDecl MyFunction( void* threadContext )
-
-*/
-
 #ifndef _WIN32
 #include <semaphore.h>
 #endif
-
-struct AbcMachineInformation;
 
 #ifdef _WIN32
 typedef HANDLE					AbcMutex;
 typedef CRITICAL_SECTION		AbcCriticalSection;
 typedef HANDLE					AbcSemaphore;
-typedef HANDLE					AbcThreadHandle;
-typedef DWORD					AbcThreadReturnType;
-typedef LPTHREAD_START_ROUTINE	AbcThreadFunc;
 typedef HANDLE					AbcForkedProcessHandle;
 typedef DWORD					AbcProcessID;
-#define AbcKernelCallbackDecl	WINAPI
 #define AbcINFINITE				INFINITE
 #else
 typedef pthread_mutex_t			AbcMutex;
 typedef pthread_mutex_t			AbcCriticalSection;
 typedef sem_t					AbcSemaphore;
-typedef pthread_t				AbcThreadHandle;
-typedef void*					AbcThreadReturnType;
-typedef void* (*AbcThreadFunc)(void*);
 typedef FILE*					AbcForkedProcessHandle;
 typedef pid_t					AbcProcessID;
-#define AbcKernelCallbackDecl
 #define AbcINFINITE				-1
 #endif
-
-// All of these are currently ignored on linux
-enum AbcThreadPriority
-{
-	AbcThreadPriorityIdle,
-	AbcThreadPriorityNormal,
-	AbcThreadPriorityHigh,
-	AbcThreadPriorityBackgroundBegin,
-	AbcThreadPriorityBackgroundEnd,
-};
 
 PAPI void				AbcMutexCreate( AbcMutex& mutex, LPCSTR name );
 PAPI void				AbcMutexDestroy( AbcMutex& mutex );
@@ -68,38 +42,22 @@ PAPI bool				AbcSemaphoreWait( AbcSemaphore& sem, DWORD waitMS );
 // Also, this operation is O(count) on linux.
 PAPI void				AbcSemaphoreRelease( AbcSemaphore& sem, DWORD count );
 
-PAPI bool				AbcThreadCreate( AbcThreadFunc threadfunc, void* context, AbcThreadHandle& handle );
-PAPI bool				AbcThreadJoin( AbcThreadHandle handle );
-PAPI void				AbcThreadCloseHandle( AbcThreadHandle handle );
-PAPI AbcThreadHandle	AbcThreadCurrent();
-// This is currently a no-op on linux
-PAPI void				AbcThreadSetPriority( AbcThreadHandle handle, AbcThreadPriority priority );
-
 PAPI void				AbcSleep( int milliseconds );
 
-// Process doesn't really belong inside syncprims. Belongs in the same place as AbcMachindIdentify.
-PAPI bool				AbcProcessCreate( const char* cmd, AbcForkedProcessHandle* handle, AbcProcessID* pid );
-PAPI bool				AbcProcessWait( AbcForkedProcessHandle handle, int* exitCode );
-PAPI void 				AbcProcessCloseHandle( AbcForkedProcessHandle handle );
-PAPI AbcProcessID		AbcProcessGetPID();
-PAPI void				AbcProcessGetPath( wchar_t* path, size_t maxPath );		// Return full path of executing process, for example "c:\programs\notepad.exe"
-#ifdef XSTRING_DEFINED
-PAPI XString			AbcProcessGetPath();									// Return full path of executing process, for example "c:\programs\notepad.exe"
-#endif
-PAPI void				AbcEnumProcesses( podvec<AbcProcessID>& pids );
-
-// AbcMachindIdentify doesn't really belong here. Should be in same place as AbcProcess calls
-PAPI void				AbcMachineInformationGet( AbcMachineInformation& info );
-
 // AbcInterlockedAdd		returns the PREVIOUS value
+// AbcInterlockedOr			returns the PREVIOUS value
+// AbcInterlockedAnd		returns the PREVIOUS value
 // AbcInterlockedIncrement	returns the NEW value
 // AbcInterlockedDecrement	returns the NEW value
 // AbcCmpXChg				returns the PREVIOUS value
 #ifdef _WIN32
 inline void			AbcInterlockedSet( volatile unsigned int* p, int newval )				{ _InterlockedExchange( (volatile long*) p, (long) newval ); }
 inline unsigned int	AbcInterlockedAdd( volatile unsigned int* p, int addval )				{ return (unsigned int) _InterlockedExchangeAdd( (volatile long*) p, (long) addval ); }
+inline unsigned int	AbcInterlockedOr( volatile unsigned int* p, int orval )					{ return (unsigned int) _InterlockedOr( (volatile long*) p, (long) orval ); }
+inline unsigned int	AbcInterlockedAnd( volatile unsigned int* p, int andval )				{ return (unsigned int) _InterlockedAnd( (volatile long*) p, (long) andval ); }
+inline unsigned int	AbcInterlockedXor( volatile unsigned int* p, int xorval )				{ return (unsigned int) _InterlockedXor( (volatile long*) p, (long) xorval ); }
 inline void			AbcSetWithRelease( volatile unsigned int* p, int newval )				{ *p = newval; _WriteBarrier(); }
-inline unsigned int AbcCmpXChg( volatile unsigned int* p, int newval, int oldval )			{ return _InterlockedCompareExchange( (volatile long*) p, (long) newval, (long) oldval ); }
+inline unsigned int	AbcCmpXChg( volatile unsigned int* p, int newval, int oldval )			{ return _InterlockedCompareExchange( (volatile long*) p, (long) newval, (long) oldval ); }
 inline unsigned int	AbcInterlockedIncrement( volatile unsigned int* p )						{ return (unsigned int) _InterlockedIncrement( (volatile long*) p ); }
 inline unsigned int	AbcInterlockedDecrement( volatile unsigned int* p )						{ return (unsigned int) _InterlockedDecrement( (volatile long*) p ); }
 #else
@@ -110,6 +68,9 @@ inline void			AbcSetWithRelease( volatile unsigned int* p, int newval )				{ __a
 #	elif __GNUC__
 inline void			AbcInterlockedSet( volatile unsigned int* p, int newval )				{ *p = newval; }
 inline unsigned int	AbcInterlockedAdd( volatile unsigned int* p, int addval )				{ return __sync_fetch_and_add( p, addval ); }
+inline unsigned int	AbcInterlockedOr( volatile unsigned int* p, int orval )					{ return __sync_fetch_and_or( p, orval ); }
+inline unsigned int	AbcInterlockedAnd( volatile unsigned int* p, int andval )				{ return __sync_fetch_and_and( p, andval ); }
+inline unsigned int	AbcInterlockedXor( volatile unsigned int* p, int xorval )				{ return __sync_fetch_and_xor( p, xorval ); }
 inline void			AbcSetWithRelease( volatile unsigned int* p, int newval )				{ *p = newval; __sync_synchronize(); }
 inline unsigned int AbcCmpXChg( volatile unsigned int* p, int newval, int oldval )			{ return __sync_val_compare_and_swap( p, oldval, newval ); }
 inline unsigned int	AbcInterlockedIncrement( volatile unsigned int* p )						{ return __sync_add_and_fetch( p, 1 ); }
@@ -232,7 +193,3 @@ struct PAPI AbcSyncEvent
 	bool Wait( DWORD waitMS );
 };
 
-struct AbcMachineInformation
-{
-	int CPUCount;
-};

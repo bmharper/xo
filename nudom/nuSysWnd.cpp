@@ -113,7 +113,6 @@ nuSysWnd::nuSysWnd()
 	Processor = new nuProcessor();
 	Processor->Wnd = this;
 	RGL = new nuRenderGL();
-	DestroyDocWithWindow = false;
 }
 
 nuSysWnd::~nuSysWnd()
@@ -188,10 +187,10 @@ nuDoc* nuSysWnd::Doc()
 	return Processor->Doc;
 }
 
-void nuSysWnd::Attach( nuDoc* doc, bool destroyDocWithWindow )
+void nuSysWnd::Attach( nuDoc* doc, bool destroyDocWithProcessor )
 {
 	Processor->Doc = doc;
-	DestroyDocWithWindow = destroyDocWithWindow;
+	Processor->DestroyDocWithProcessor = destroyDocWithProcessor;
 }
 
 bool nuSysWnd::BeginRender()

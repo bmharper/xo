@@ -66,121 +66,10 @@ PAPI void			AbcSemaphoreRelease( AbcSemaphore& sem, DWORD count )
 	ReleaseSemaphore( sem, (LONG) count, NULL );
 }
 
-PAPI bool			AbcThreadCreate( AbcThreadFunc threadfunc, void* context, AbcThreadHandle& handle )
-{
-	handle = CreateThread( NULL, 0, threadfunc, context, 0, NULL );
-	return NULL != handle;
-}
-PAPI bool			AbcThreadJoin( AbcThreadHandle handle )
-{
-	return WaitForSingleObject( handle, INFINITE ) == WAIT_OBJECT_0;
-}
-PAPI void			AbcThreadCloseHandle( AbcThreadHandle handle )
-{
-	CloseHandle( handle );
-}
-PAPI AbcThreadHandle AbcThreadCurrent()
-{
-	return GetCurrentThread();
-}
-PAPI void			AbcThreadSetPriority( AbcThreadHandle handle, AbcThreadPriority priority )
-{
-	DWORD p = THREAD_PRIORITY_NORMAL;
-	switch( priority )
-	{
-	case AbcThreadPriorityIdle:				p = THREAD_PRIORITY_IDLE; break;
-	case AbcThreadPriorityNormal:			p = THREAD_PRIORITY_NORMAL; break;
-	case AbcThreadPriorityHigh:				p = THREAD_PRIORITY_HIGHEST; break;
-	case AbcThreadPriorityBackgroundBegin:	p = THREAD_MODE_BACKGROUND_BEGIN; break;
-	case AbcThreadPriorityBackgroundEnd:	p = THREAD_MODE_BACKGROUND_END; break;
-	}
-	SetThreadPriority( handle, p );
-}
 PAPI void			AbcSleep( int milliseconds )
 {
+	YieldProcessor();
 	Sleep( milliseconds );	
-}
-#if XSTRING_DEFINED
-PAPI bool			AbcProcessCreate( const char* cmd, AbcForkedProcessHandle* handle, AbcProcessID* pid )
-{
-	XStringW c = cmd;
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
-	memset(&si, 0, sizeof(si));
-	memset(&pi, 0, sizeof(pi));
-	si.cb = sizeof(si);
-	if ( !CreateProcess( NULL, c.GetRawBuffer(), NULL, NULL, false, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi ) )
-		return false;
-	CloseHandle( pi.hThread );
-	if ( handle )
-		*handle = pi.hProcess;
-	else
-		CloseHandle( pi.hProcess );
-	if ( pid )
-		*pid = pi.dwProcessId;
-	return true;
-}
-#endif
-PAPI bool			AbcProcessWait( AbcForkedProcessHandle handle, int* exitCode )
-{
-	if ( WaitForSingleObject( handle, INFINITE ) != WAIT_OBJECT_0 )
-	{
-		if ( exitCode )
-		{
-			DWORD code = 0;
-			GetExitCodeProcess( handle, &code );
-			*exitCode = code;
-		}
-		return true;
-	}
-	return false;
-}
-PAPI void 			AbcProcessCloseHandle( AbcForkedProcessHandle handle )
-{
-	CloseHandle( handle );
-}
-PAPI AbcProcessID	AbcProcessGetPID()
-{
-	return GetCurrentProcessId();
-}
-PAPI void			AbcProcessGetPath( wchar_t* path, size_t maxPath )
-{
-	GetModuleFileNameW( NULL, path, (DWORD) maxPath );
-}
-PAPI void			AbcEnumProcesses( podvec<AbcProcessID>& pids )
-{
-	DWORD id_static[1024];
-	DWORD* id = id_static;
-	DWORD id_size = sizeof(id_static);
-	DWORD id_used = 0;
-	while ( true )
-	{
-		id_used = 0;
-		EnumProcesses( id, id_size, &id_used );
-		if ( id_used == id_size )
-		{
-			// likely need more space
-			if ( id == id_static )
-				id = (DWORD*) AbcMallocOrDie( id_size );
-			else
-				id = (DWORD*) AbcReallocOrDie( id, id_size );
-		}
-		else
-		{
-			break;
-		}
-	}
-	pids.resize_uninitialized( id_used / sizeof(DWORD) );
-	memcpy( &pids[0], id, id_used );
-	if ( id != id_static )
-		free(id);
-}
-
-PAPI void			AbcMachineInformationGet( AbcMachineInformation& info )
-{
-	SYSTEM_INFO inf;
-	GetSystemInfo( &inf );
-	info.CPUCount = inf.dwNumberOfProcessors;
 }
 
 #else // End Win32
@@ -276,32 +165,6 @@ PAPI void			AbcSemaphoreRelease( AbcSemaphore& sem, DWORD count )
 		sem_post( &sem );
 }
 
-PAPI bool			AbcThreadCreate( AbcThreadFunc threadfunc, void* context, AbcThreadHandle& handle )
-{
-	pthread_attr_t attr;
-	handle = 0;
-	AbcVerify( 0 == pthread_attr_init( &attr ) );
-	bool ok = pthread_create( &handle, &attr, threadfunc, context );
-	AbcVerify( 0 == pthread_attr_destroy( &attr ) );
-	return ok;
-}
-PAPI bool			AbcThreadJoin( AbcThreadHandle handle )
-{
-	void* rval;
-	return 0 == pthread_join( handle, &rval );
-}
-PAPI void			AbcThreadCloseHandle( AbcThreadHandle handle )
-{
-	// pthread has no equivalent/requirement of this
-}
-PAPI AbcThreadHandle AbcThreadCurrent()
-{
-	return pthread_self();
-}
-PAPI void			AbcThreadSetPriority( AbcThreadHandle handle, AbcThreadPriority priority )
-{
-	// On linux, pthread_setschedprio is only applicable to threads on the realtime scheduling policy
-}
 
 PAPI void			AbcSleep( int milliseconds )
 {
@@ -310,43 +173,6 @@ PAPI void			AbcSleep( int milliseconds )
 	t.tv_nsec = nano % 1000000000; 
 	t.tv_sec = (nano - t.tv_nsec) / 1000000000;
 	nanosleep( &t, NULL );
-}
-
-PAPI bool			AbcProcessCreate( const char* cmd, AbcForkedProcessHandle* handle, AbcProcessID* pid )
-{
-	AbcAssert(false);
-}
-PAPI bool			AbcProcessWait( AbcForkedProcessHandle handle, int* exitCode )
-{
-	AbcAssert(false);
-}
-PAPI void			AbcProcessCloseHandle( AbcForkedProcessHandle handle )
-{
-	AbcAssert(false);
-}
-PAPI AbcProcessID	AbcProcessGetPID()
-{
-	return getpid();
-}
-PAPI void			AbcProcessGetPath( wchar_t* path, size_t maxPath )
-{
-	AbcAssert(false); // untested code
-	if ( maxPath == 0 ) return;
-	char buf[256];
-	path[0] = 0;
-    size_t r = readlink( "/proc/self/exe", buf, arraysize(buf) - 1 );
-	if ( r == -1 )
-		return;
-	buf[r] = 0;
-	mbstowcs( path, buf, maxPath - 1 );
-}
-PAPI void			AbcEnumProcesses( podvec<AbcProcessID>& pids )
-{
-	AbcAssert(false);
-}
-PAPI void			AbcMachineInformationGet( AbcMachineInformation& info )
-{
-	info.CPUCount = sysconf( _SC_NPROCESSORS_ONLN );
 }
 
 #endif
@@ -366,16 +192,6 @@ PAPI void		AbcSpinLockRelease( volatile unsigned int* p )
 	AbcAssert( *p == 1 );
 	AbcInterlockedSet( p, 0 );
 }
-
-#if XSTRING_DEFINED
-PAPI XString		AbcProcessGetPath()
-{
-	wchar_t p[MAX_PATH];
-	AbcProcessGetPath( p, arraysize(p) );
-	p[MAX_PATH - 1] = 0;
-	return p;
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

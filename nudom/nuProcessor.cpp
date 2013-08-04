@@ -10,6 +10,7 @@
 nuProcessor::nuProcessor()
 {
 	AbcCriticalSectionInitialize( DocLock );
+	DestroyDocWithProcessor = false;
 	Doc = NULL;
 	Wnd = NULL;
 	RenderDoc = new nuRenderDoc();
@@ -18,6 +19,8 @@ nuProcessor::nuProcessor()
 nuProcessor::~nuProcessor()
 {
 	delete RenderDoc;
+	if ( DestroyDocWithProcessor )
+		delete Doc;
 	AbcCriticalSectionDestroy( DocLock );
 }
 
@@ -51,7 +54,7 @@ nuRenderResult nuProcessor::Render()
 	}
 	else
 	{
-		NUTRACE( "Render Version %u\n", Doc->GetVersion() );
+		//NUTRACE( "Render Version %u\n", Doc->GetVersion() );
 		RenderDoc->CopyFromCanonical( *Doc );
 		
 		// Assume we are the only renderer of 'Doc'. If this assumption were not true, then you would need to update

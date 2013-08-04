@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "nuRenderGL.h"
+#include "../Image/nuImage.h"
 
 #define Z(s) #s
 
@@ -21,6 +22,32 @@ static const char* pFillFrag = Z(
 	void main()
 	{
 		gl_FragColor = color;
+	}
+);
+
+static const char* pFillTexVert = Z(
+	uniform		mat4	mvproj;
+	attribute	vec4	vpos;
+	attribute	vec4	vcolor;
+	attribute	vec2	vtexuv0;
+	varying		vec4	color;
+	varying		vec2	texuv0;
+	void main()
+	{
+		gl_Position = mvproj * vpos;
+		texuv0 = vtexuv0;
+		color = vcolor;
+	}
+);
+
+static const char* pFillTexFrag = Z(
+	precision mediump float;
+	uniform sampler2D	tex0;
+	varying vec4		color;
+	varying vec2		texuv0;
+	void main()
+	{
+		gl_FragColor = color * texture2D(tex0, texuv0.st);
 	}
 );
 
@@ -91,6 +118,9 @@ static const char* pCurveVert = Z(
 	}
 );
 
+// This is from Jim Blinn and Charles Loop's paper "Resolution Independent Curve Rendering using Programmable Graphics Hardware"
+// We don't need this complexity here.. and if I recall correctly, this technique aliases under minification faster than
+// our simpler rounded-rectangle alternative.
 static const char* pCurveFrag = Z(
 	varying vec4 pos;
 	varying vec2 texuv0;
@@ -145,8 +175,18 @@ void nuRenderGL::Reset()
 
 bool nuRenderGL::CreateShaders()
 {
-	if ( !LoadProgram( PFill, pFillVert, pFillFrag ) ) return false;
+	Check();
+
+	if ( SingleTex2D == 0 )
+		glGenTextures( 1, &SingleTex2D );
+	glActiveTexture( GL_TEXTURE0 );
+	glBindTexture( GL_TEXTURE_2D, SingleTex2D );
+
+	Check();
+
 	if ( !LoadProgram( PRect, pRectVert, pRectFrag ) ) return false;
+	if ( !LoadProgram( PFill, pFillVert, pFillFrag ) ) return false;
+	if ( !LoadProgram( PFillTex, pFillTexVert, pFillTexFrag ) ) return false;
 	//if ( !LoadProgram( PCurve, pCurveVert, pCurveFrag ) ) return false;
 
 	//glUseProgram( PRect.Prog );
@@ -163,9 +203,22 @@ bool nuRenderGL::CreateShaders()
 	VarFillVPos = glGetAttribLocation( PFill.Prog, "vpos" );
 	VarFillVColor = glGetAttribLocation( PFill.Prog, "vcolor" );
 
+	//glUseProgram( PFillTex.Prog );
+	VarFillTexMVProj = glGetUniformLocation( PFillTex.Prog, "mvproj" );
+	VarFillTexVPos = glGetAttribLocation( PFillTex.Prog, "vpos" );
+	VarFillTexVColor = glGetAttribLocation( PFillTex.Prog, "vcolor" );
+	VarFillTexVUV = glGetAttribLocation( PFillTex.Prog, "vtexuv0" );
+	VarFillTex0 = glGetUniformLocation( PFillTex.Prog, "tex0" );
+
 	NUTRACE( "VarFillMVProj = %d\n", VarFillMVProj );
 	NUTRACE( "VarFillVPos = %d\n", VarFillVPos );
 	NUTRACE( "VarFillVColor = %d\n", VarFillVColor );
+
+	NUTRACE( "VarFillTexMVProj = %d\n", VarFillTexMVProj );
+	NUTRACE( "VarFillTexVPos = %d\n", VarFillTexVPos );
+	NUTRACE( "VarFillTexVColor = %d\n", VarFillTexVColor );
+	NUTRACE( "VarFillTexVUV = %d\n", VarFillTexVUV );
+	NUTRACE( "VarFillTex0 = %d\n", VarFillTex0 );
 
 	//glUseProgram( 0 );
 	
@@ -176,8 +229,15 @@ bool nuRenderGL::CreateShaders()
 
 void nuRenderGL::DeleteShaders()
 {
+	glActiveTexture( GL_TEXTURE0 );
+	glBindTexture( GL_TEXTURE_2D, 0 );
+	if ( SingleTex2D != 0 )
+		glDeleteTextures( 1, &SingleTex2D );
+	SingleTex2D = 0;
+
 	glUseProgram( 0 );
 	DeleteProgram( PFill );
+	DeleteProgram( PFillTex );
 	DeleteProgram( PRect );
 	DeleteProgram( PCurve );
 }
@@ -264,14 +324,21 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 	Check();
 
 	ActivateProgram( PFill );
-	
+
 	//NUTRACE( "PreRender 4 (%d)\n", VarFillMVProj );
 	Check();
 
 	glUniformMatrix4fv( VarFillMVProj, 1, false, &mvproj.row[0].x );
-	
+
 	//NUTRACE( "PreRender 5\n" );
 	Check();
+
+	ActivateProgram( PFillTex );
+
+	//NUTRACE( "PreRender 6 (%d)\n", VarFillTexMVProj );
+	Check();
+
+	glUniformMatrix4fv( VarFillTexMVProj, 1, false, &mvproj.row[0].x );
 
 	//NUTRACE( "PreRender done\n" );
 
@@ -294,14 +361,41 @@ void nuRenderGL::DrawQuad( const void* v )
 
 	int stride = sizeof(nuVx_PTC);
 	const byte* vbyte = (const byte*) v;
-	GLint varvpos = (ActiveProgram == &PRect) ? VarRectVPos : VarFillVPos;
-	GLint varvcol = (ActiveProgram == &PRect) ? VarRectVColor : VarFillVColor;
+
+	GLint varvpos = 0;
+	GLint varvcol = 0;
+	GLint varvtex0 = 0;
+	GLint vartex0 = 0;
+	if ( ActiveProgram == &PRect )
+	{
+		varvpos = VarRectVPos;
+		varvcol = VarRectVColor;
+	}
+	else if ( ActiveProgram == &PFill )
+	{
+		varvpos = VarFillVPos;
+		varvcol = VarFillVColor;
+	}
+	else if ( ActiveProgram == &PFillTex )
+	{
+		varvpos = VarFillTexVPos;
+		varvcol = VarFillTexVColor;
+		varvtex0 = VarFillTexVUV;
+		vartex0 = VarFillTex0;
+	}
+
 	glVertexAttribPointer( varvpos, 3, GL_FLOAT, false, stride, vbyte );
 	glEnableVertexAttribArray( varvpos );
 	
 	glVertexAttribPointer( varvcol, 4, GL_UNSIGNED_BYTE, true, stride, vbyte + offsetof(nuVx_PTC, Color) );
 	glEnableVertexAttribArray( varvcol );
-	
+
+	if ( varvtex0 != 0 )
+	{
+		glUniform1i( vartex0, 0 );
+		glVertexAttribPointer( varvtex0, 2, GL_FLOAT, true, stride, vbyte + offsetof(nuVx_PTC, UV) );
+		glEnableVertexAttribArray( varvtex0 );
+	}
 	//glVertexPointer( 3, GL_FLOAT, stride, vbyte );
 	//glEnableClientState( GL_VERTEX_ARRAY );
 
@@ -339,6 +433,16 @@ void nuRenderGL::DrawTriangles( int nvert, const void* v, const uint16* indices 
 	//glColorPointer( GL_BGRA, GL_UNSIGNED_BYTE, stride, vbyte + offsetof(nuVx_PTC, Color) );
 	glDrawElements( GL_TRIANGLES, nvert, GL_UNSIGNED_SHORT, indices );
 	Check();
+}
+
+void nuRenderGL::LoadTexture( const nuImage* img )
+{
+	if ( SingleTex2D == 0 )
+		glGenTextures( 1, &SingleTex2D );
+	glActiveTexture( GL_TEXTURE0 );
+	glBindTexture( GL_TEXTURE_2D, SingleTex2D );
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, img->GetWidth(), img->GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img->GetData() );
+	glGenerateMipmap( GL_TEXTURE_2D );
 }
 
 void nuRenderGL::DeleteProgram( nuGLProg& prog )

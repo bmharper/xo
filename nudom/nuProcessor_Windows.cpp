@@ -30,7 +30,8 @@ Since rendering happens on the main window message thread, we're not violating a
 
 enum Timers
 {
-	TimerRenderOutsideMainMsgPump = 1
+	TimerRenderOutsideMainMsgPump	= 1,
+	TimerGenericEvent				= 2,
 };
 
 LRESULT nuProcessor::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
@@ -44,10 +45,16 @@ LRESULT nuProcessor::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
 	switch (message)
 	{
+	// NOTE: You will not receive WM_CREATE here, because we have not yet set the USERDATA for this window
 	case WM_ERASEBKGND:
 		return 1;
 
 	case WM_PAINT:
+		// TODO: Adjust this on the fly, using the minimum interval of all generic timer subscribers
+		// Also.. find a better place to put this
+		//SetTimer( hWnd, TimerGenericEvent, 15, NULL );
+		SetTimer( hWnd, TimerGenericEvent, 150, NULL );
+
 		dc = BeginPaint(hWnd, &ps);
 		EndPaint(hWnd, &ps);
 		break;
@@ -60,6 +67,11 @@ LRESULT nuProcessor::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	case WM_TIMER:
 		if ( wParam == TimerRenderOutsideMainMsgPump )
 			Render();
+		else if ( wParam == TimerGenericEvent )
+		{
+			ev.Type = nuEventTimer;
+			nuGlobal()->EventQueue.Add( ev );
+		}
 		break;
 
 	case WM_NCLBUTTONDOWN:

@@ -8,6 +8,7 @@ enum nuEvents
 	nuEventTouch		= BIT(0),
 	nuEventMouseMove	= BIT(1),
 	nuEventWindowSize	= BIT(2),
+	nuEventTimer		= BIT(3),
 };
 
 /* User interface event (keyboard, mouse, touch, etc).
@@ -30,15 +31,31 @@ public:
 
 // The Android ecosystem is just not up to this yet. It is a pity, because lambdas make such good event handlers.
 // I haven't even looked at iOS yet.
-// typedef std::function<bool(const nuEvent& ev)> nuEventHandler;
+#if NU_LAMBDA
+typedef std::function<bool(const nuEvent& ev)> nuEventHandlerLambda;
+#endif
 
 typedef bool (*nuEventHandlerF)(const nuEvent& ev);
 
-struct NUAPI nuEventHandler
+NUAPI bool nuEventHandler_LambdaStaticFunc(const nuEvent& ev);
+
+enum nuEventHandlerFlags
 {
+	nuEventHandlerFlag_IsLambda = 1,
+};
+
+class NUAPI nuEventHandler
+{
+public:
 	uint32				Mask;
+	uint32				Flags;
 	void*				Context;
 	nuEventHandlerF		Func;
 
-	bool Handles( nuEvents ev ) const { return !!(Mask & ev); }
+			nuEventHandler();
+			~nuEventHandler();
+
+	bool	Handles( nuEvents ev ) const	{ return !!(Mask & ev); }
+	bool	IsLambda() const				{ return !!(Flags & nuEventHandlerFlag_IsLambda); }
+	void	SetLambda()						{ Flags |= nuEventHandlerFlag_IsLambda; }
 };

@@ -10,6 +10,7 @@ typedef int				int32;
 #define BIT(x) (1 << (x))
 #endif
 
+// This executes in ALL BUILDS (not just debug).
 #define NUASSERT(x)			AbcAssert(x)
 
 #ifdef _DEBUG
@@ -27,6 +28,7 @@ void* nuMallocOrDie( size_t bytes );
 #define NUTODO				NUPANIC("not yet implemented") 
 
 #ifdef _WIN32
+#define NU_LAMBDA 1
 #define NU_WIN_DESKTOP 1
 #define NUTRACE_WRITE OutputDebugStringA
 #else
@@ -34,6 +36,7 @@ void* nuMallocOrDie( size_t bytes );
 #endif
 
 #ifndef _WIN32
+#define NU_LAMBDA 0
 #define NU_ANDROID 1
 #define NUTRACE_WRITE(msg) __android_log_write(ANDROID_LOG_INFO, "nudom", msg)
 #else

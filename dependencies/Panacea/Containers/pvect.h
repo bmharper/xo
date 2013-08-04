@@ -46,7 +46,9 @@ public:
 		if (b.count > 0)
 		{
 			reserve(b.count);
-			memcpy(data, b.data, sizeof(void*)*b.count);
+			// The data != NULL check is superfluous, but necessary to satisfy the VS 2012 static analyzer
+			if (data != NULL)
+				memcpy(data, b.data, sizeof(void*)*b.count);
 		}
 		count = b.count;
 	}
@@ -280,16 +282,16 @@ public:
 	bool operator==( const pvoidvect& b ) const { return Base::operator==(b); }
 	bool operator!=( const pvoidvect& b ) const { return Base::operator!=(b); }
 
-	void set(intp pos, const T a) { Base::set(pos,a); }
+	void set(intp pos, const T a) { Base::set(pos, (const void*) a); }
 
-	void insert(intp pos, const T a) { Base::insert(pos, a); }
+	void insert(intp pos, const T a) { Base::insert(pos, (const void*) a); }
 
 	void erase(intp pos1, intp pos2 = -1) { Base::erase(pos1, pos2); }
 
 	T pop_back()	{ return static_cast<T>(Base::pop_back()); }
 	T pop()			{ return static_cast<T>(Base::pop_back()); }
 
-	void push_back( const T a ) { Base::push_back(a); }
+	void push_back( const T a ) { Base::push_back( (const void*) a ); }
 
 	void addn( intp n, const T* p ) { Base::addn(n, (void**) p); }
 
@@ -314,7 +316,7 @@ public:
 	const T front() const { return (const T) Base::front(); }
 	T& front() { return (T&) Base::front(); }
 
-	intp find( const T a ) const { return Base::find(a); }
+	intp find( const T a ) const { return Base::find((const void*) a); }
 
 	void clear() { Base::clear(); }
 

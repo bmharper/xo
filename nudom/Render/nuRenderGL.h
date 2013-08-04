@@ -22,8 +22,9 @@ struct NUAPI nuVx_PTC
 class NUAPI nuRenderGL
 {
 public:
-	nuGLProg	PFill;
 	nuGLProg	PRect;
+	nuGLProg	PFill;
+	nuGLProg	PFillTex;
 	nuGLProg	PCurve;
 
 	GLint		VarRectBox;
@@ -36,6 +37,12 @@ public:
 	GLint		VarFillMVProj;
 	GLint		VarFillVColor;
 	GLint		VarFillVPos;
+
+	GLint		VarFillTexMVProj;
+	GLint		VarFillTexVColor;
+	GLint		VarFillTexVPos;
+	GLint		VarFillTexVUV;
+	GLint		VarFillTex0;
 
 	//GLint		VarRectCornerRadius;
 	//GLint		VarCurveTex0;
@@ -50,10 +57,12 @@ public:
 	void			PostRenderCleanup();
 	void			DrawQuad( const void* v );
 	void			DrawTriangles( int nvert, const void* v, const uint16* indices );
+	void			LoadTexture( const nuImage* img );
 
 protected:
 	nuGLProg*	ActiveProgram;
 	int			FBWidth, FBHeight;
+	GLuint		SingleTex2D;
 
 	void			DeleteProgram( nuGLProg& prog );
 	bool			LoadProgram( nuGLProg& prog, const char* vsrc, const char* fsrc );

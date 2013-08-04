@@ -108,7 +108,8 @@ public:
 
 	bool checkNaN() const
 	{
-		if ( !_finite(x) || !_finite(y) || !_finite(z) || !_finite(w)) return false;
+		if ( vec_IsNaN(x) || vec_IsNaN(y) || vec_IsNaN(z) || vec_IsNaN(w))
+			return false;
 		return true;
 	}
 
@@ -331,7 +332,7 @@ public:
 		{
 			if ( _stscanf_s( str, _T("%lf %lf %lf %lf"), &a, &b, &c, &d ) != 4 )
 			{
-				if ( _stscanf_s( str, _T("%lf, %lf, %lf, %lf"), &a, &b, &c ) != 4 )
+				if ( _stscanf_s( str, _T("%lf, %lf, %lf, %lf"), &a, &b, &c, &d ) != 4 )
 				{
 					return false;
 				}
@@ -342,7 +343,7 @@ public:
 		{
 			if ( _stscanf( str, "%lf %lf %lf %lf", &a, &b, &c, &d ) != 4 )
 			{
-				if ( _stscanf( str, "%lf, %lf, %lf, %lf", &a, &b, &c ) != 4 )
+				if ( _stscanf( str, "%lf, %lf, %lf, %lf", &a, &b, &c, &d ) != 4 )
 				{
 					return false;
 				}

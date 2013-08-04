@@ -3,6 +3,7 @@
 #include "nuDomEl.h"
 #include "nuMem.h"
 #include "nuStringTable.h"
+#include "Image/nuImageStore.h"
 
 /* Document.
 
@@ -22,7 +23,8 @@ public:
 	nuStyleTable				ClassStyles;					// All style classes defined in this document
 	nuStyle						TagStyles[nuTagEND];			// Styles of tags. For example, the style of <p>, or the style of <h1>.
 	uint32						WindowWidth, WindowHeight;		// Device pixels. [Not sure this belongs here]
-	nuStringTable				Strings;						// Generic string table
+	nuStringTable				Strings;						// Generic string table.
+	nuImageStore				Images;							// All images. Some day we may want to be able to share these amongst different documents.
 
 					nuDoc();
 					~nuDoc();
@@ -43,6 +45,7 @@ protected:
 	nuPool						Pool;					// Used only when making a clone via CloneFast()
 	bool						IsReadOnly;				// Read-only clone used for rendering
 	pvect<nuDomEl*>				ChildByInternalID;
+	BitMap						ChildIsModified;		// Bit is set if child has been modified since we last synced with the renderer
 	podvec<nuInternalID>		UsableIDs;				// When we do a render sync, then FreeIDs are moved into UsableIDs
 	podvec<nuInternalID>		FreeIDs;
 

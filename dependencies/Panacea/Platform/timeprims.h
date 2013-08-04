@@ -9,6 +9,12 @@ inline i64 AbcTimeAsFileTime()
 	GetSystemTimeAsFileTime( &ft );
 	return ((u64) ft.dwHighDateTime << 32) | ft.dwLowDateTime;
 }
+inline i64 AbcFileTimeToMicroseconds( const FILETIME& ft )
+{
+	u64 time = ((u64) ft.dwHighDateTime << 32) | ft.dwLowDateTime;
+	i64 stime = (i64) time;
+	return stime / 10;
+}
 #endif
 
 // Return time suitable for 120hz

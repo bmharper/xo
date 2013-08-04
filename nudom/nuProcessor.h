@@ -10,6 +10,7 @@ public:
 	nuDoc*				Doc;
 	nuSysWnd*			Wnd;
 	nuRenderDoc*		RenderDoc;
+	bool				DestroyDocWithProcessor;
 
 			nuProcessor();
 			~nuProcessor();

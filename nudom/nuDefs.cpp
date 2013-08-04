@@ -76,6 +76,9 @@ static void nuInitialize_Win32()
 
 static void nuShutdown_Win32()
 {
+	// allow documents scheduled for deletion to be deleted
+	ProcessDocQueue();
+
 	if ( UIThread != NULL )
 	{
 		nuGlobal()->EventQueue.Add( nuEvent() );
@@ -88,8 +91,8 @@ static void nuShutdown_Win32()
 	}
 }
 
-#define MSGTRACE NUTRACE
-//#define MSGTRACE __noop
+//#define MSGTRACE NUTRACE
+#define MSGTRACE(...)
 
 void nuRunWin32MessageLoop()
 {

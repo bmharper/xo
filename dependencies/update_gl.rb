@@ -1,24 +1,27 @@
 funcs = %w(
-glUniform1f
-glUniform4f
-glGetAttribLocation
-glGetUniformLocation
-glUseProgram
-glUniformMatrix4fv
-glUniform2f
-glEnableVertexAttribArray
-glVertexAttribPointer
+glActiveTexture
+glAttachShader
+glCompileShader
+glCreateProgram
+glCreateShader
 glDeleteShader
+glEnableVertexAttribArray
+glGenerateMipmap
+glGetAttribLocation
 glGetProgramInfoLog
 glGetProgramiv
-glLinkProgram
-glAttachShader
-glCreateProgram
 glGetShaderInfoLog
 glGetShaderiv
-glCompileShader
+glGetUniformLocation
+glLinkProgram
 glShaderSource
-glCreateShader
+glUniform1f
+glUniform1i
+glUniform2f
+glUniform4f
+glUniformMatrix4fv
+glUseProgram
+glVertexAttribPointer
 )
 
 out = ""

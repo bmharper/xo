@@ -19,7 +19,7 @@ void nuStringRaw::Set( const nuStringRaw& b )
 			// add a null terminator, always, but don't assume that source has a null terminator
 			Alloc( b.Len + 1 );
 			memcpy( Z, b.Z, b.Len );
-			Z[b.Len] = 1;
+			Z[b.Len] = 0;
 		}
 		Len = b.Len;
 	}
@@ -131,6 +131,12 @@ void nuString::MakeTemp( const char* z )
 void nuString::KillTemp()
 {
 	Discard();
+}
+
+nuString& nuString::operator=( const nuString& b )
+{
+	Set( b );
+	return *this;
 }
 
 nuString& nuString::operator=( const nuStringRaw& b )

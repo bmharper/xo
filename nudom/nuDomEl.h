@@ -5,6 +5,8 @@
 #include "nuEvent.h"
 
 /* DOM node in the tree.
+It is vital that this data structure does not grow much bigger than this.
+Right now it's 120 bytes on Windows x64.
 */
 class NUAPI nuDomEl
 {
@@ -35,6 +37,8 @@ public:
 
 	bool			StyleParse( const char* t )					{ IncVersion(); return Style.Parse( t ); }
 	bool			StyleParsef( const char* t, ... );
+	// This is here for experiments. Future work needs a better performing method for setting just one attribute of the style.
+	void			HackSetStyle( const nuStyle& style );
 
 	// Classes
 	void			AddClass( const char* klass );
@@ -42,10 +46,19 @@ public:
 
 	// Events
 	void			AddHandler( nuEvents ev, nuEventHandlerF func, void* context = NULL );
+#if NU_LAMBDA
+	void			AddHandler( nuEvents ev, nuEventHandlerLambda lambda );
+#endif
 	bool			HandlesEvent( nuEvents ev ) const { return !!(AllEventMask & ev); }
 
 	void			OnTouch( nuEventHandlerF func, void* context = NULL )		{ AddHandler( nuEventTouch, func, context ); }
 	void			OnMouseMove( nuEventHandlerF func, void* context = NULL )	{ AddHandler( nuEventMouseMove, func, context ); }
+	void			OnTimer( nuEventHandlerF func, void* context = NULL )		{ AddHandler( nuEventTimer, func, context ); }
+
+#if NU_LAMBDA
+	void			OnTouch( nuEventHandlerLambda lambda )						{ AddHandler( nuEventTouch, lambda ); }
+	void			OnMouseMove( nuEventHandlerLambda lambda )					{ AddHandler( nuEventMouseMove, lambda ); }
+#endif
 
 protected:
 	nuDoc*					Doc;			// Owning document
@@ -60,6 +73,8 @@ protected:
 	pvect<nuDomEl*>			Children;
 
 	void			RecalcAllEventMask();
+	void			AddHandler( nuEvents ev, nuEventHandlerF func, bool isLambda, void* context );
+
 	void			IncVersion()				{ Version++; }
 
 };

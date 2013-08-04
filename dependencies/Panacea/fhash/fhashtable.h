@@ -60,6 +60,14 @@ BMH
 #include <malloc.h>
 #include <memory.h>
 
+#ifndef FHASH_NORETURN
+#	ifdef _MSC_VER
+#		define FHASH_NORETURN __declspec(noreturn)
+#	else
+#		define FHASH_NORETURN __attribute__ ((noreturn))
+#	endif
+#endif
+
 #ifndef PAPI
 #define PAPI
 #endif
@@ -112,6 +120,11 @@ inline size_t fhash_next_power_of_2( size_t v )
 	size_t s = 1;
 	while ( s < v ) s <<= 1;
 	return s;
+}
+
+inline FHASH_NORETURN void fhash_die()
+{
+	*((int*)0) = 0;
 }
 
 // _tor is ctor or dtor
@@ -530,8 +543,12 @@ public:
 		{
 			size_t statesize = sizeof(fhashstate_t) * fhash_state_array_size(mSize);
 			mState = (fhashstate_t*) malloc( statesize );
+			if ( mState == NULL )
+				fhash_die();
 			memcpy( mState, copy.mState, statesize );
 			mData = (byte*) malloc( mConfig.Stride * mSize );
+			if ( mData == NULL )
+				fhash_die();
 
 			for ( size_t i = 0; i < mSize; i++ )
 			{
@@ -633,6 +650,8 @@ public:
 		// allocate the new keys
 		mData = (byte*) malloc( newsize * mConfig.Stride );
 		mState = (fhashstate_t*) malloc( fhash_state_array_size(newsize) );
+		if ( mData == NULL || mState == NULL )
+			fhash_die();
 
 		// Make all the states null
 		memset( mState, 0, fhash_state_array_size(newsize) );

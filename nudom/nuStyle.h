@@ -50,7 +50,10 @@ struct NUAPI nuRGBA
 		};
 		uint32 u;
 	};
+	static nuRGBA RGBA(uint8 r, uint8 g, uint8 b, uint8 a) { nuRGBA c; c.r = r; c.g = g; c.b = b; c.a = a; return c; }
 };
+
+#define NURGBA(r, g, b, a) ((a) << 24 | (b) << 16 | (g) << 8 | (r))
 
 // This is non-premultipled alpha
 struct NUAPI nuColor
@@ -100,6 +103,10 @@ XX(NULL, 0) \
 XY(Color) \
 XY(Display) \
 XY(Background) \
+XY(BackgroundImage) \
+XY(Dummy1_UseMe) \
+XY(Dummy2_UseMe) \
+XY(Dummy3_UseMe) \
 XY(Margin_Left) \
 XY(Margin_Top) \
 XY(Margin_Right) \
@@ -133,7 +140,7 @@ enum nuStyleCategories {
 #undef XX
 #undef XY
 
-static_assert( nuCatMargin_Left == 4, "Start of boxes must be multiple of 4" );
+static_assert( nuCatMargin_Left % 4 == 0, "Start of boxes must be multiple of 4" );
 
 inline nuStyleCategories nuCatMakeBaseBox( nuStyleCategories c ) { return (nuStyleCategories) (c & ~3); }
 
@@ -168,6 +175,7 @@ public:
 	void SetBorderRadius( nuSize val );
 	void SetPosition( nuPositionType val );
 	void SetFont( const char* font, nuDoc* doc );
+	void SetBackgroundImage( const char* image, nuDoc* doc );
 	void SetInherit( nuStyleCategories cat );
 
 	bool				IsNull() const			{ return Category != nuCatNULL; }
@@ -177,6 +185,7 @@ public:
 	nuColor				GetColor() const		{ return nuColor::Make( ValU32 ); }
 	nuDisplayType		GetDisplayType() const	{ return (nuDisplayType) ValU32; }
 	nuPositionType		GetPositionType() const	{ return (nuPositionType) ValU32; }
+	const char*			GetBackgroundImage( nuStringTable* strings ) const;
 
 protected:
 	void SetString( nuStyleCategories cat, const char* str, nuDoc* doc );

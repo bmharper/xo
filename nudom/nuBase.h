@@ -3,7 +3,11 @@
 #ifdef _WIN32
 	#define _CRT_SECURE_NO_WARNINGS 1
 	#include "../dependencies/biggle.h"
-	#include <windows.h>
+	#ifdef _DEBUG
+		#include <stdlib.h>
+		#include <crtdbg.h>
+	#endif
+#include <windows.h>
 #else
 	typedef const wchar_t* LPCTSTR;
 	typedef const char* LPCSTR;
@@ -64,16 +68,18 @@ typedef char TCHAR;
 #endif
 
 #include "../dependencies/Panacea/coredefs.h"
+#include "../dependencies/Panacea/Platform/stdint.h"
+#include "../dependencies/Panacea/Platform/cpu.h"
 #include "../dependencies/Panacea/Platform/err.h"
-#include "../dependencies/Panacea/Other/lmstdint.h"
+#include "../dependencies/Panacea/Platform/syncprims.h"
+#include "../dependencies/Panacea/Platform/timeprims.h"
+#include "../dependencies/Panacea/Platform/thread.h"
 #include "../dependencies/Panacea/Other/StackAllocators.h"
 #include "../dependencies/Panacea/Containers/pvect.h"
 #include "../dependencies/Panacea/Containers/podvec.h"
 #include "../dependencies/Panacea/Containers/queue.h"
 #include "../dependencies/Panacea/Bits/BitMap.h"
 #include "../dependencies/Panacea/fhash/fhashtable.h"
-#include "../dependencies/Panacea/Platform/syncprims.h"
-#include "../dependencies/Panacea/Platform/timeprims.h"
 #include "../dependencies/Panacea/Vec/Mat4.h"
 
 #include "nuString.h"

@@ -110,17 +110,16 @@ public:
 		z = CLAMP( z, vmin, vmax );
 	}
 
-	// checks that all members are not infinite or NaNs
+	// Returns false if any member is a NaN.
 	bool checkNaN() const
 	{
-		if ( _isnan(x) || _isnan(y) || _isnan(z) ) return false;
-		return true;
+		return !IsNan();
 	}
 
 	/// Returns true if any member is a NaN.
 	bool IsNan() const
 	{
-		return _isnan(x) || _isnan(y) || _isnan(z);
+		return vec_IsNaN(x) || vec_IsNaN(y) || vec_IsNaN(z);
 	}
 
 	/// Only valid for VecBase3T<double>. Checks whether we won't overflow if converted to float.
@@ -196,7 +195,6 @@ public:
 	VecBase3T& operator*=(const vreal d)		{ 						x *= d;	y *= d; z *= d;		return *this; }
 	VecBase3T& operator/=(const vreal d)		{ vreal r = 1.0 / d;	x *= r; y *= r; z *= r;		return *this; }
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 };
 
 template <typename vreal>

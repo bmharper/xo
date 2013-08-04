@@ -91,11 +91,21 @@ typedef UINT32 DWORD;
 #endif
 
 // Don't use these. Instead, use %lld and %llu. Those work for all platforms. Note that the 'd' and 'u' are essential.
+// HOWEVER, if you need to scanf a 64-bit hex string, then you have to use PRIx64
 #ifdef _WIN32
 //#define PRIu64 "I64u"
 //#define PRId64 "I64d"
-#define PRIu64 ((void) static_assert(false, "Use %llu instead"))
-#define PRId64 ((void) static_assert(false, "Use %lld instead"))
+#	ifndef PRIu64
+#		define PRIu64 ((void) static_assert(false, "Use %llu instead"))
+#	endif
+#	ifndef PRIu64
+#		define PRId64 ((void) static_assert(false, "Use %lld instead"))
+#	endif
+#	ifndef PRIX64
+#		define  PRIX64 "I64X"
+#		define wPRIX64 L"I64X"
+// #		define PRIx64 "llx" -- linux
+#	endif
 #endif
 
 

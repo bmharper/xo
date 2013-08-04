@@ -14,12 +14,16 @@ xcopy /y %1\proj\Panacea\Containers\queue.h dependencies\Panacea\Containers\
 xcopy /y %1\proj\Panacea\Containers\cont_utils.h dependencies\Panacea\Containers\
 xcopy /y %1\proj\Panacea\fhash\fhashtable.h dependencies\Panacea\fhash\
 xcopy /y %1\proj\Panacea\Platform\compiler.h dependencies\Panacea\Platform\
+xcopy /y %1\proj\Panacea\Platform\cpu.cpp dependencies\Panacea\Platform\
+xcopy /y %1\proj\Panacea\Platform\cpu.h dependencies\Panacea\Platform\
 xcopy /y %1\proj\Panacea\Platform\err.cpp dependencies\Panacea\Platform\
 xcopy /y %1\proj\Panacea\Platform\err.h dependencies\Panacea\Platform\
 xcopy /y %1\proj\Panacea\Platform\stdint.h dependencies\Panacea\Platform\
 xcopy /y %1\proj\Panacea\Platform\syncprims.cpp dependencies\Panacea\Platform\
 xcopy /y %1\proj\Panacea\Platform\syncprims.h dependencies\Panacea\Platform\
 xcopy /y %1\proj\Panacea\Platform\timeprims.h dependencies\Panacea\Platform\
+xcopy /y %1\proj\Panacea\Platform\thread.cpp dependencies\Panacea\Platform\
+xcopy /y %1\proj\Panacea\Platform\thread.h dependencies\Panacea\Platform\
 xcopy /y %1\proj\Panacea\Strings\fmt.cpp dependencies\Panacea\Strings\
 xcopy /y %1\proj\Panacea\Strings\fmt.h dependencies\Panacea\Strings\
 xcopy /y %1\proj\Panacea\Vec\Vec2.h dependencies\Panacea\Vec\

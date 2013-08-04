@@ -30,9 +30,17 @@ void nuMain( nuMainEvent ev )
 
 			nuDomEl* greybox = doc->Root.ChildByIndex(3);
 			greybox->StyleParse( "background: #aaaa; position: absolute; left: 100px; top: 100px;" );
-			//greybox->OnTouch( touch );
+
+#if NU_LAMBDA
+			auto onMoveOrTouch = [greybox](const nuEvent& ev) -> bool {
+				greybox->StyleParsef( "left: %fpx; top: %fpx;", ev.Points[0].x - 50.0, ev.Points[0].y - 50.0 );
+				return true;
+			};
+			doc->Root.OnMouseMove( onMoveOrTouch );
+#else
 			doc->Root.OnMouseMove( touch, greybox );
 			doc->Root.OnTouch( touch, greybox );
+#endif
 
 			NUTRACE( "Hello 4" );
 

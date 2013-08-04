@@ -29,7 +29,8 @@ void nuRenderDoc::Render( nuRenderGL* rgl )
 
 	//NUTRACE( "RenderDoc: Render\n" );
 	nuRenderer rend;
-	rend.Render( rgl, &RenderRoot, Doc.WindowWidth, Doc.WindowHeight );
+	// TODO: Don't use Doc.Images - use a locked temp copy
+	rend.Render( &ClonedImages, &ClonedStrings, rgl, &RenderRoot, Doc.WindowWidth, Doc.WindowHeight );
 }
 
 void nuRenderDoc::CopyFromCanonical( const nuDoc& original )
@@ -40,6 +41,10 @@ void nuRenderDoc::CopyFromCanonical( const nuDoc& original )
 
 	Doc.Reset();
 	original.CloneFastInto( Doc, 0 );
+
+	// TODO: Don't do this dumb copying.
+	ClonedStrings.CloneFrom( original.Strings );
+	ClonedImages.CloneFrom( original.Images );
 }
 
 nuInternalID nuRenderDoc::FindElement( const nuRenderDomEl& el, nuPoint pos )
