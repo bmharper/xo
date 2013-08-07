@@ -212,6 +212,7 @@ bool nuSysWnd::BeginRender()
 void nuSysWnd::FinishRender()
 {
 #if NU_WIN_DESKTOP
+	NUTIME( "SwapBuffers\n" );
 	SwapBuffers( DC );
 	wglMakeCurrent( NULL, NULL );
 	ReleaseDC( SysWnd, DC );

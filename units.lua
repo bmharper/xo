@@ -78,6 +78,7 @@ local nudom = SharedLibrary {
 		"nudom/nuEvent.cpp",
 		"nudom/nuLayout.cpp",
 		"nudom/nuMem.cpp",
+		"nudom/nuMsgLoop_Windows.cpp",
 		"nudom/nuPlatform.cpp",
 		"nudom/nuString.cpp",
 		"nudom/nuStringTable.cpp",

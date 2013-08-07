@@ -26,9 +26,11 @@ public:
 	// These are our only two entry points into our content
 	nuRenderResult	Render();							// This is always called from the Render thread
 	void			ProcessEvent( nuEvent& ev );		// This is always called from the UI thread
+	
+	bool			IsDocNewerThanRenderer() const;
 
 protected:
-	AbcCriticalSection	DocLock;	// Mutation of 'Doc'
+	AbcCriticalSection	DocLock;		// Mutation of 'Doc', or cloning of 'Doc' for the renderer
 
 	void	FindTarget( const nuVec2& p, pvect<nuRenderDomEl*>& chain );
 	bool	BubbleEvent( nuEvent& ev );

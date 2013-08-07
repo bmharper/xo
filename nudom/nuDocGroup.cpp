@@ -69,6 +69,7 @@ nuRenderResult nuDocGroup::Render()
 
 	if ( !idle && Wnd != NULL )
 	{
+		NUTIME( "Render start\n" );
 		//NUTRACE( "BeginRender\n" );
 		if ( !Wnd->BeginRender() )
 		{
@@ -90,6 +91,9 @@ nuRenderResult nuDocGroup::Render()
 void nuDocGroup::ProcessEvent( nuEvent& ev )
 {
 	TakeCriticalSection lock( DocLock );
+	uint32 initialVersion = Doc->GetVersion();
+	if ( ev.Type != nuEventTimer )
+		NUTIME("ProcessEvent (not a timer)\n");
 	switch ( ev.Type )
 	{
 	case nuEventWindowSize:
@@ -152,4 +156,9 @@ void nuDocGroup::FindTarget( const nuVec2& p, pvect<nuRenderDomEl*>& chain )
 			//if ( top->Children[i]->Pos )
 		}
 	}
+}
+
+bool nuDocGroup::IsDocNewerThanRenderer() const
+{
+	return Doc->GetVersion() > RenderDoc->Doc.GetVersion();
 }
