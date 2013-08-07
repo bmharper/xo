@@ -37,7 +37,7 @@ public:
 	void			SetDoc( nuDoc* doc )						{ Doc = doc; }			// Used by nuDoc at element creation and destruction time.
 	void			SetDocRoot()								{ Tag = nuTagBody; }	// Used by nuDoc at initialization time.
 
-	bool			StyleParse( const char* t )					{ IncVersion(); return Style.Parse( t ); }
+	bool			StyleParse( const char* t );
 	bool			StyleParsef( const char* t, ... );
 	// This is here for experiments. Future work needs a better performing method for setting just one attribute of the style.
 	void			HackSetStyle( const nuStyle& style );

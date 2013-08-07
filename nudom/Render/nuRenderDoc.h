@@ -15,7 +15,6 @@ public:
 	// Rendered state
 	nuRenderDomEl				RenderRoot;
 	nuPool						RenderPool;
-
 	//podvec<nuInternalID>		ModifiedNodeIDs;
 
 			nuRenderDoc();

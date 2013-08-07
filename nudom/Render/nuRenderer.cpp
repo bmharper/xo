@@ -19,7 +19,7 @@ void nuRenderer::Render( nuImageStore* images, nuStringTable* strings, nuRenderG
 
 void nuRenderer::RenderNode( nuRenderDomEl* node )
 {
-	nuStyle& style = node->Style;
+	nuStyleRender* style = &node->Style;
 	float bottom = nuPosToReal( node->Pos.Bottom );
 	float top = nuPosToReal( node->Pos.Top );
 	float left = nuPosToReal( node->Pos.Left );
@@ -35,7 +35,7 @@ void nuRenderer::RenderNode( nuRenderDomEl* node )
 	corners[2].UV = NUVEC2(1, 1);
 	corners[3].UV = NUVEC2(1, 0);
 
-	float radius = node->BorderRadius;
+	float radius = style->BorderRadius;
 
 	float width = right - left;
 	float height = bottom - top;
@@ -45,12 +45,14 @@ void nuRenderer::RenderNode( nuRenderDomEl* node )
 
 	//NUTRACE( "node %f\n", left );
 
-	auto bg = style.Get( nuCatBackground );
-	auto bgImage = style.Get( nuCatBackgroundImage );
-	if ( bg && bg->GetColor().a != 0 )
+	//auto bg = style.Get( nuCatBackground );
+	//auto bgImage = style.Get( nuCatBackgroundImage );
+	nuColor bg = style->BackgroundColor;
+	const char* bgImage = Strings->GetStr( style->BackgroundImageID );
+	if ( bg.a != 0 )
 	{
 		for ( int i = 0; i < 4; i++ )
-			corners[i].Color = bg->GetColor().GetRGBA();
+			corners[i].Color = bg.GetRGBA();
 
 		if ( radius != 0 )
 		{
@@ -61,11 +63,10 @@ void nuRenderer::RenderNode( nuRenderDomEl* node )
 		}
 		else
 		{
-			if ( bgImage )
+			if ( bgImage[0] != 0 )
 			{
 				GL->ActivateProgram( GL->PFillTex );
-				const char* iname = bgImage->GetBackgroundImage( Strings );
-				GL->LoadTexture( Images->GetOrNull( iname ) );
+				GL->LoadTexture( Images->GetOrNull( bgImage ) );
 				GL->DrawQuad( corners );
 			}
 			else

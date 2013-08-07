@@ -3,6 +3,8 @@
 #include "nuStyle.h"
 #include "nuMem.h"
 
+class nuRenderStack;
+
 // Element that is ready for rendering
 class NUAPI nuRenderDomEl
 {
@@ -12,11 +14,10 @@ public:
 
 	void		SetPool( nuPool* pool );
 	void		Discard();
+	void		SetStyle( nuRenderStack& stack );
 
 	nuInternalID				InternalID;			// Reference to our original nuDomEl
 	nuBox						Pos;
-	float						BorderRadius;
-	nuStyle						Style;				// old & dead
-	nuStyleSet					ResolvedStyle;		// new & good
+	nuStyleRender				Style;
 	nuPoolArray<nuRenderDomEl*>	Children;
 };

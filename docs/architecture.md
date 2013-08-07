@@ -45,7 +45,25 @@ sizeof(nuDomEl) = 128.
 1 MB / 128 = 8192 naked document elements fit into a 1 MB document.
 
 Update: An S3 has very similar memory bandwidth - around 800 MB/s.
+Update: The latest (late 2013) Intel Atom devices are repored to have
+up to 17 GB/s memory bandwidth.
 
+Style resolution
+----------------
+
+Style resolution is the process of resolving the full set of style attributes
+for every DOM element. I don't know how best to do this. One solution is to
+perform a pass over all elements and store a resolved list of attributes for
+every node, but I'm pretty sure that approach will burn too much RAM bandwidth.
+Remember that each attributes is around 8 bytes, and we'll easily have 256
+such attributes, which comes to 2048 bytes per DOM element. Let's say our target
+DOM size is 10k, then that comes to 20 MB, which I'm pretty sure is going to be
+worse than incrementally calculating the style for each element as we go.
+
+Remember that we need to support attributes that are inherited by child
+DOM elements. Font-family is one such attribute. If you set font-family on
+the root level ('body' in HTML) element, then all children inherit that same
+font by default.
 
 Locks
 -----
@@ -57,8 +75,8 @@ Box Model
 ---------
 
 Right now I'm toying with implementing the Flex Box model first, and the traditional
-(Block, Inline) ones later.
-
+(Block, Inline) ones later. Eh.. screw it maybe there is something simpler that
+can cater for both styles. Maybe.
 
 Coding Style
 ------------

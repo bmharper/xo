@@ -4,6 +4,7 @@
 #include "nuString.h"
 
 // Represents a size that is zero, pixels, points, percent. TODO: em
+// Zero is represented as 0 pixels
 struct NUAPI nuSize
 {
 	enum	Types { NONE = 0, PX, PT, PERCENT };
@@ -12,7 +13,9 @@ struct NUAPI nuSize
 
 	static nuSize Make( Types t, float v )	{ nuSize s = {v, t}; return s; }
 	static nuSize Percent( float v )		{ nuSize s = {v, PERCENT}; return s; }
+	static nuSize Points( float v )			{ nuSize s = {v, PT}; return s; }
 	static nuSize Pixels( float v )			{ nuSize s = {v, PX}; return s; }
+	static nuSize Zero()					{ nuSize s = {0, PX}; return s; }
 	static nuSize Parse( const char* s, intp len );
 };
 
@@ -91,10 +94,11 @@ enum nuDisplayType
 
 enum nuPositionType
 {
-	nuPositionStatic,
-	nuPositionAbsolute,
-	nuPositionRelative,
-	nuPositionFixed,
+	// All of these definitions are the same as HTML's
+	nuPositionStatic,		// Default, regular position
+	nuPositionAbsolute,		// Absolute, relative to previous explicitly parent that was anything other than "Static". Does not affect flow of subsequent siblings.
+	nuPositionRelative,		// Like Absolute, but does affect flow. Flow is the "ghost" of where we would have been, before being moved relatively.
+	nuPositionFixed,		// Fixed, according to root device coordinate system. In other words, completely independent of DOM hierarchy.
 };
 
 // The order of the box components (left,top,right,bottom) must be consistent with the order in nuStyleBox
@@ -144,8 +148,12 @@ static_assert( nuCatMargin_Left % 4 == 0, "Start of boxes must be multiple of 4"
 
 inline nuStyleCategories nuCatMakeBaseBox( nuStyleCategories c ) { return (nuStyleCategories) (c & ~3); }
 
+// Styles that are inherited by default
+const int						nuNumInheritedStyleCategories = 1;
+extern const nuStyleCategories	nuInheritedStyleCategories[nuNumInheritedStyleCategories];
+
 /* Single style attribute (such as Margin-Left, Width, FontSize, etc).
-This must be zero-initializable.
+This must be zero-initializable (ie with memset(0)).
 It must remain small.
 Currently, sizeof(nuStyleAttrib) = 8.
 */
@@ -154,7 +162,9 @@ class NUAPI nuStyleAttrib
 public:
 	enum Flag
 	{
-		FlagInherit = 1
+		// This means that the attribute takes its value from its closest ancestor in the DOM tree.
+		// Some styles are inherited by default (the list specified inside nuInheritedStyleCategories).
+		FlagInherit = 1		
 	};
 
 	uint8				Category;		// type nuStyleCategories
@@ -178,13 +188,14 @@ public:
 	void SetBackgroundImage( const char* image, nuDoc* doc );
 	void SetInherit( nuStyleCategories cat );
 
-	bool				IsNull() const			{ return Category != nuCatNULL; }
+	bool				IsNull() const			{ return Category == nuCatNULL; }
 	bool				IsInherit() const		{ return Flags == FlagInherit; }
 	nuStyleCategories	GetCategory() const		{ return (nuStyleCategories) Category; }
 	nuSize				GetSize() const			{ return nuSize::Make( (nuSize::Types) SubType, ValF ); }
 	nuColor				GetColor() const		{ return nuColor::Make( ValU32 ); }
 	nuDisplayType		GetDisplayType() const	{ return (nuDisplayType) ValU32; }
 	nuPositionType		GetPositionType() const	{ return (nuPositionType) ValU32; }
+	int					GetStringID() const		{ return (int) ValU32; }
 	const char*			GetBackgroundImage( nuStringTable* strings ) const;
 
 protected:
@@ -205,12 +216,12 @@ class NUAPI nuStyle
 public:
 	podvec<nuStyleAttrib>	Attribs;
 
-	bool					Parse( const char* t );
+	bool					Parse( const char* t, nuDoc* doc );
 	const nuStyleAttrib*	Get( nuStyleCategories cat ) const;
 	void					SetBox( nuStyleCategories cat, nuStyleBox val );
 	void					GetBox( nuStyleCategories cat, nuStyleBox& box ) const;
 	void					Set( const nuStyleAttrib& attrib );
-	void					Compute( const nuDoc& doc, const nuDomEl& node );
+	//void					Compute( const nuDoc& doc, const nuDomEl& node );
 	void					Discard();
 	void					CloneSlowInto( nuStyle& c ) const;
 	void					CloneFastInto( nuStyle& c, nuPool* pool ) const;
@@ -238,7 +249,7 @@ public:
 #undef XX
 
 protected:
-	void					MergeInZeroCopy( int n, const nuStyle** src );
+	//void					MergeInZeroCopy( int n, const nuStyle** src );
 	void					SetBoxInternal( nuStyleCategories catBase, nuStyleBox val );
 };
 
@@ -258,6 +269,9 @@ Growing from 16 to 256 is an insane leap.
 
 Idea: There are some attributes that need only a few bits. Instead of packing each of these
 into 8 bytes, we can instead store groups of attributes in special 8 byte blocks.
+
+More Idea: I think I might end up writing a very specialized container for this stuff.. where we
+separate things out into really tight bags of properties. But we'll wait until it's a bottleneck.
 
 */
 class NUAPI nuStyleSet
@@ -281,15 +295,16 @@ protected:
 
 	void*			Lookup;			// Variable bit-width table that indexes into Attribs. Size is always nuCatEND.
 	nuStyleAttrib*	Attribs;		// The Category field in here is wasted.
+	int32			Count;			// Size of Attribs
 	int32			Capacity;		// Capacity of Attribs
 	uint32			BitsPerSlot;	// Number of bits in each slot of Lookup. Our possible sizes are 2,4,8.
-	int32			Count;			// Size of Attribs
 	SetSlotFunc		SetSlotF;
 	GetSlotFunc		GetSlotF;
 
 	void			Grow( nuPool* pool );
 	int32			GetSlot( nuStyleCategories cat ) const;
 	void			SetSlot( nuStyleCategories cat, int32 slot );
+	void			DebugCheckSanity() const;
 
 	static void		MigrateLookup( const void* lutsrc, void* lutdst, GetSlotFunc getter, SetSlotFunc setter );
 
@@ -309,6 +324,18 @@ protected:
 	// The -1 here is for SlotOffset
 	static int32	CapacityAt( uint32 bitsPerSlot )	{ return (1 << bitsPerSlot) - 1; }
 
+};
+
+// The set of style information that is used by the renderer
+// This is baked in by the Layout engine.
+class NUAPI nuStyleRender
+{
+public:
+	nuColor BackgroundColor;
+	int		BackgroundImageID;
+	float	BorderRadius;
+
+	nuStyleRender() { memset(this, 0, sizeof(*this)); }
 };
 
 /* Store all style classes in one table, that is owned by one document.

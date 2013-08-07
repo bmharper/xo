@@ -62,7 +62,7 @@ nuRenderResult nuDocGroup::Render()
 		// all renderers simultaneously, so that you can guarantee that UsableIDs all go to FreeIDs atomically.
 		//NUTRACE( "MakeFreeIDsUsable\n" );
 		Doc->MakeFreeIDsUsable();
-		Doc->ResetModifiedBitmap();			// AbcBitMap has an absolutely awful implementation of this (byte-filled)
+		Doc->ResetModifiedBitmap();			// AbcBitMap has an absolutely awful implementation of this (byte-filled vs SSE or at least pointer-word-size-filled)
 
 		AbcCriticalSectionLeave( DocLock );
 	}

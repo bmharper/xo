@@ -173,32 +173,6 @@ void nuRunWin32MessageLoop()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void nuInitializeDefaultTagStyles()
-{
-	// These definitions must follow the ordering of NU_TAGS_DEFINE
-
-	auto make = [](const char* z) -> nuStyle* {
-		nuStyle* s = new nuStyle();
-		NUVERIFY(s->Parse(z));
-		return s;
-	};
-
-	// NULL
-	DefaultTagStyles[0] = new nuStyle();
-	
-	// body
-	DefaultTagStyles[1] = make( "background: #fff; width: 100%; height: 100%;" );
-
-	// div
-	DefaultTagStyles[2] = make( "display: block;" );
-
-	const nuStyleAttrib* bodybg = DefaultTagStyles[1]->Get( nuCatBackground );
-	//NUTRACE( "body background: %x\n", bodybg ? bodybg->Color.u : 0xdeadbeef );
-
-	static_assert(2 == nuTagEND - 1, "add default style for new tag");
-}
-
-
 NUAPI nuGlobalStruct* nuGlobal()
 {
 	return nuGlobals;
@@ -220,7 +194,6 @@ NUAPI void nuInitialize()
 	nuGlobals->DocRemoveQueue.Initialize( false );
 	nuGlobals->EventQueue.Initialize( true );
 	nuGlobals->JobQueue.Initialize( true );
-	nuInitializeDefaultTagStyles();
 	nuSysWnd::PlatformInitialize();
 #if NU_WIN_DESKTOP
 	nuInitialize_Win32();

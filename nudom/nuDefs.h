@@ -158,7 +158,6 @@ struct nuGlobalStruct
 NUAPI nuGlobalStruct*	nuGlobal();
 NUAPI void				nuInitialize();
 NUAPI void				nuShutdown();
-NUAPI nuStyle**			nuDefaultTagStyles();
 NUAPI void				nuParseFail( const char* msg, ... );
 NUAPI void				NUTRACE( const char* msg, ... );
 #if NU_WIN_DESKTOP

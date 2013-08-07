@@ -32,7 +32,6 @@ public:
 	uintp		Count;
 	uintp		Capacity;
 
-
 	nuPoolArray()
 	{
 		Pool = NULL;
@@ -43,7 +42,7 @@ public:
 
 	nuPoolArray& operator+=( const T& v )
 	{
-		add() = v;
+		add( &v );
 		return *this;
 	}
 
@@ -57,11 +56,32 @@ public:
 		return Data[_i];
 	}
 
-	T& add()
+	T& back()
+	{
+		return Data[Count - 1];
+	}
+
+	const T& back() const
+	{
+		return Data[Count - 1];
+	}
+
+	void pop()
+	{
+		NUASSERTDEBUG(Count > 0);
+		Count--;
+	}
+
+	T& add( const T* v = NULL )
 	{
 		if ( Count == Capacity )
 			grow();
-		Data[Count++] = T();
+
+		if ( v )
+			Data[Count++] = *v;
+		else
+			Data[Count++] = T();
+
 		return Data[Count - 1];
 	}
 

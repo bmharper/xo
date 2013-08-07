@@ -58,4 +58,5 @@ protected:
 	podvec<nuInternalID>		FreeIDs;
 
 	void	ResetInternalIDs();
+	void	InitializeDefaultTagStyles();
 };

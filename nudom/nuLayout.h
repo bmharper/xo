@@ -2,6 +2,7 @@
 
 #include "nuDefs.h"
 #include "nuStyle.h"
+#include "Render/nuRenderStack.h"
 
 /* A box that has been laid out.
 */
@@ -31,16 +32,21 @@ protected:
 
 	const nuDoc*	Doc;
 	nuPool*			Pool;
+	nuRenderStack	Stack;
 	float			PtToPixel;
 	nuStyleAttrib	DefaultWidth, DefaultHeight, DefaultBorderRadius, DefaultDisplay, DefaultPosition;
 	nuStyleBox		DefaultPadding, DefaultMargin;
 
 	nuPos	ComputeDimension( nuPos container, nuSize size );
 	nuBox	ComputeBox( nuBox container, nuStyleBox box );
-	nuBox	ComputeSpecifiedPosition( const NodeState& s, const nuStyle& style );
-	void	ComputeRelativeOffset( const NodeState& s, const nuStyle& style, nuBox& box );
+	nuBox	ComputeSpecifiedPosition( const NodeState& s );
+	void	ComputeRelativeOffset( const NodeState& s, nuBox& box );
 
 	void	Reset();
 	void	Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode );
 
 };
+
+
+
+

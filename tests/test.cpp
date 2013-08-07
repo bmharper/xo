@@ -6,6 +6,12 @@ int main( int argc, char** argv )
 {
 	nuInitialize();
 
+	nuStyleAttrib a;
+	a.GetCategory();
+	nuStyleSet ss;
+	ss.Get( nuCatWidth );
+	ss.Get( nuCatHeight );
+
 	int retval = 0;
 	if ( TTRun( argc, argv, &retval ) )
 		return retval;

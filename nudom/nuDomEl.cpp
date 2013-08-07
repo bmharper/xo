@@ -114,19 +114,29 @@ void nuDomEl::ForgetChildren()
 	Children.clear_noalloc();
 }
 
+bool nuDomEl::StyleParse( const char* t )
+{
+	IncVersion();
+	return Style.Parse( t, Doc );
+}
+
 bool nuDomEl::StyleParsef( const char* t, ... )
 {
-	char buff[8192] = "";
+	char buff[8192];
 	va_list va;
 	va_start( va, t );
 	uint r = vsnprintf( buff, arraysize(buff), t, va );
 	va_end( va );
+	buff[arraysize(buff) - 1] = 0;
 	if ( r < arraysize(buff) )
 	{
 		return StyleParse( buff );
 	}
 	else
 	{
+		nuString str = nuString(t);
+		str.Z[50] = 0;
+		nuParseFail( "Parse string is too long for StyleParsef: %s...", str.Z );
 		NUASSERTDEBUG(false);
 		return false;
 	}

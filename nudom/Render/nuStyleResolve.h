@@ -3,7 +3,13 @@
 #include "../nuDoc.h"
 #include "nuRenderDomEl.h"
 
+class nuRenderStack;
+
 /* This is responsible for producing an exact list of style attributes for every DOM element.
+
+[This whole rambling on parallelizing this was from before the time that I
+created the nuRenderStack. The parallelization discussion now belongs at a higher
+level that just here]
 
 I'm not sure how best to parallelize this. I suspect there is some well known algorithm
 for parallelizing a tree/DAG computation such as this.
@@ -21,21 +27,18 @@ which nodes to process in your queue. I'm pretty sure that the ideal queue would
 initially of the root node, and then a further N nodes only, where N is your number of
 threads.
 
+NOTE: All of the protected functions assume that the style busy being resolved is on the top
+of the stack. Our only public function "Resolve" adds this blank style to the top of the stack
+before passing control to the other functions.
 */
 class NUAPI nuStyleResolver
 {
 public:
-	static const int				NumInherited = 1;
-	static const nuStyleCategories	Inherited[NumInherited];	// Styles that are inherited by default
-
-	void		Resolve( nuDoc* doc, nuRenderDomEl* root, nuPool* pool );
+	// Resolves the given node, and places its style on the top of the stack
+	static void		ResolveAndPush( nuRenderStack& stack, const nuDomEl* node );
 
 protected:
-	nuDoc*		Doc;
-	nuPool*		Pool;
-
-	void		ResolveNode( nuRenderDomEl* parentRNode, nuRenderDomEl* rnode );
-	void		Set( nuRenderDomEl* parentRNode, nuRenderDomEl* rnode, int n, const nuStyleAttrib* vals );
-	void		Set( nuRenderDomEl* parentRNode, nuRenderDomEl* rnode, const nuStyle& style );
-
+	static void		Set( nuRenderStack& stack, const nuDomEl* node, intp n, const nuStyleAttrib* vals );
+	static void		Set( nuRenderStack& stack, const nuDomEl* node, const nuStyle& style );
+	static void		SetInherited( nuRenderStack& stack, const nuDomEl* node, nuStyleCategories cat );
 };

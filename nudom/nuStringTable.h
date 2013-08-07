@@ -8,7 +8,7 @@ public:
 					nuStringTable();
 					~nuStringTable();
 
-	const char*		GetStr( int id ) const;
+	const char*		GetStr( int id ) const;		// Returns an empty string if the id is invalid or zero.
 	int				GetId( const char* str );
 
 	// temp hack. should probably not be here.

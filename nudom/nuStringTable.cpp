@@ -4,7 +4,7 @@
 
 nuStringTable::nuStringTable()
 {
-	IdToName += nuTempString("");
+	IdToName += nuTempString(""); // this will end up as a blank string with no heap alloc
 	NameToId.insert( IdToName[0], 0 );
 }
 nuStringTable::~nuStringTable()
@@ -15,7 +15,7 @@ const char* nuStringTable::GetStr( int id ) const
 {
 	if ( (uint32) id >= (uint32) IdToName.size() )
 		return "";
-	return IdToName[id].Z;
+	return IdToName[id].Z != NULL ? IdToName[id].Z : "";
 }
 
 int nuStringTable::GetId( const char* str )

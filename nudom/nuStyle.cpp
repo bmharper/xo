@@ -5,6 +5,11 @@
 
 #define EQ(a,b) (strcmp(a,b) == 0)
 
+// Styles that are inherited by default
+const nuStyleCategories nuInheritedStyleCategories[nuNumInheritedStyleCategories] = {
+	nuCatFontFamily,
+};
+
 static bool MATCH( const char* s, intp start, intp end, const char* truth )
 {
 	for ( ; start != end; truth++, start++ )
@@ -237,7 +242,7 @@ static bool Parse1( const char* s, intp len, bool (*parseFunc)(const char* s, in
 	}
 }
 
-bool nuStyle::Parse( const char* t )
+bool nuStyle::Parse( const char* t, nuDoc* doc )
 {
 	// "background: #8f8; width: 100%; height: 100%;"
 #define TSTART	(t + startv)
@@ -294,6 +299,7 @@ bool nuStyle::Parse( const char* t )
 #undef TLEN
 }
 
+/*
 void nuStyle::Compute( const nuDoc& doc, const nuDomEl& node )
 {
 	NUASSERT( Attribs.size() == 0 );
@@ -307,6 +313,7 @@ void nuStyle::Compute( const nuDoc& doc, const nuDomEl& node )
 	};
 	MergeInZeroCopy( arraysize(styles), styles );
 }
+*/
 
 const nuStyleAttrib* nuStyle::Get( nuStyleCategories cat ) const
 {
@@ -359,6 +366,7 @@ void nuStyle::Set( const nuStyleAttrib& attrib )
 	Attribs += attrib;
 }
 
+/*
 void nuStyle::MergeInZeroCopy( int n, const nuStyle** src )
 {
 	if ( n == 0 ) return;
@@ -407,6 +415,7 @@ void nuStyle::MergeInZeroCopy( int n, const nuStyle** src )
 		}
 	}
 }
+*/
 
 void nuStyle::Discard()
 {
@@ -496,7 +505,7 @@ void nuStyleSet::Set( const nuStyleAttrib& attrib, nuPool* pool )
 	int32 slot = GetSlot( attrib.GetCategory() );
 	if ( slot != 0 )
 	{
-		Attribs[slot] = attrib;
+		Attribs[slot - 1] = attrib;
 		return;
 	}
 	if ( Count >= Capacity )
@@ -504,13 +513,25 @@ void nuStyleSet::Set( const nuStyleAttrib& attrib, nuPool* pool )
 	Attribs[Count] = attrib;
 	SetSlot( attrib.GetCategory(), Count + SlotOffset );
 	Count++;
+	//DebugCheckSanity();
 }
 
 nuStyleAttrib nuStyleSet::Get( nuStyleCategories cat ) const
 {
 	int32 slot = GetSlot( cat ) - SlotOffset;
-	if ( slot == -1 ) return nuStyleAttrib();
+	if ( slot == -1 )
+		return nuStyleAttrib();
 	return Attribs[slot];
+}
+
+void nuStyleSet::DebugCheckSanity() const
+{
+	for ( int i = nuCatFIRST; i < nuCatEND; i++ )
+	{
+		nuStyleCategories cat = (nuStyleCategories) i;
+		nuStyleAttrib val = Get( cat );
+		NUASSERTDEBUG( val.IsNull() || val.Category == cat );
+	}
 }
 
 bool nuStyleSet::Contains( nuStyleCategories cat ) const

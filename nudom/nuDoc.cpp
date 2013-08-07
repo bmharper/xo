@@ -13,6 +13,7 @@ nuDoc::nuDoc()
 	Root.SetDoc( this );
 	Root.SetDocRoot();
 	ResetInternalIDs();
+	InitializeDefaultTagStyles();
 }
 
 nuDoc::~nuDoc()
@@ -194,4 +195,12 @@ void nuDoc::ResetInternalIDs()
 	ChildByInternalID += NULL;	// zero is NULL
 	ChildAdded( &Root );
 	NUASSERT( Root.GetInternalID() == nuInternalIDRoot );
+}
+
+void nuDoc::InitializeDefaultTagStyles()
+{
+	TagStyles[nuTagBody].Parse( "background: #fff; width: 100%; height: 100%;", this );
+	TagStyles[nuTagDiv].Parse( "display: block;", this );
+
+	static_assert(nuTagDiv == nuTagEND - 1, "add default style for new tag");
 }

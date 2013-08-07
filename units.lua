@@ -78,7 +78,6 @@ local nudom = SharedLibrary {
 		"nudom/nuEvent.cpp",
 		"nudom/nuLayout.cpp",
 		"nudom/nuMem.cpp",
-		"nudom/nuQueue.cpp",
 		"nudom/nuPlatform.cpp",
 		"nudom/nuString.cpp",
 		"nudom/nuStringTable.cpp",
@@ -93,6 +92,7 @@ local nudom = SharedLibrary {
 		"nudom/Render/nuRenderGL.cpp",
 		"nudom/Render/nuRenderDoc.cpp",
 		"nudom/Render/nuRenderDomEl.cpp",
+		"nudom/Render/nuRenderStack.cpp",
 		"nudom/Render/nuStyleResolve.cpp",
 		"nudom/Text/nuTextCache.cpp",
 		"nudom/Text/nuTextDefs.cpp",
@@ -180,6 +180,7 @@ local Test = Program {
 		"tests/test.cpp",
 		"tests/test_DocumentClone.cpp",
 		"tests/test_Stats.cpp",
+		"tests/test_Styles.cpp",
 	}
 }
 
