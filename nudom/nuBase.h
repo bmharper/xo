@@ -7,7 +7,8 @@
 		#include <stdlib.h>
 		#include <crtdbg.h>
 	#endif
-#include <windows.h>
+	#include <windows.h>
+	#include <mmsystem.h>
 #else
 	typedef const wchar_t* LPCTSTR;
 	typedef const char* LPCSTR;

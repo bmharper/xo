@@ -49,7 +49,7 @@ local unicode = ExternalLibrary {
 
 local nudom = SharedLibrary {
 	Name = "nudom",
-	Libs = { "opengl32.lib", "user32.lib", "gdi32.lib" },
+	Libs = { "opengl32.lib", "user32.lib", "gdi32.lib", "winmm.lib" },
 	SourceDir = ".",
 	Includes = { "nudom" },
 	Depends = { crt },

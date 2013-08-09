@@ -54,7 +54,7 @@ LRESULT nuDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		// TODO: Adjust this on the fly, using the minimum interval of all generic timer subscribers
 		// Also.. find a better place to put this
 		//SetTimer( hWnd, TimerGenericEvent, 15, NULL );
-		SetTimer( hWnd, TimerGenericEvent, 150, NULL );
+		//SetTimer( hWnd, TimerGenericEvent, 150, NULL );
 
 		dc = BeginPaint(hWnd, &ps);
 		EndPaint(hWnd, &ps);

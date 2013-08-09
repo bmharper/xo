@@ -28,6 +28,9 @@ NUAPI void nuRunWin32MessageLoop()
 	// Of course, this is NOT true for IO that is busy occurring on the UI thread.
 	// We'll have to devise a way (probably just a process-global custom window message) of causing the main loop to wake up.
 	bool renderIdle = false;
+	
+	// Trying various things to get latency down to the same level as GDI, but I just can't do it.
+	//timeBeginPeriod( 5 );
 
 	while ( true )
 	{
@@ -36,6 +39,7 @@ NUAPI void nuRunWin32MessageLoop()
 		bool haveMsg = true;
 		if ( renderIdle && !AnyDocsDirty() && AbcTimeAccurateRTSeconds() - lastHeatAt > HEAT_TIME )
 		{
+			NUTIME("Render cold\n");
 			MSGTRACE( "Render cold\n" );
 			if ( !GetMessage( &msg, NULL, 0, 0 ) )
 				break;
@@ -43,6 +47,7 @@ NUAPI void nuRunWin32MessageLoop()
 		}
 		else
 		{
+			//NUTIME("Render hot\n");
 			MSGTRACE( "Render hot\n" );
 			haveMsg = !!PeekMessage( &msg, NULL, 0, 0, PM_REMOVE );
 		}
@@ -83,6 +88,8 @@ NUAPI void nuRunWin32MessageLoop()
 
 		nuProcessDocQueue();
 	}
+
+	//timeEndPeriod( 5 );
 }
 
 #endif
