@@ -299,6 +299,11 @@ PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const f
 	return fmtcore( fs, 16, args );
 }
 
+PAPI size_t fmt_write( FILE* file, const FMT_STRING& s )
+{
+	return fwrite( FMT_STRING_BUF(s), 1, FMT_STRING_LEN(s), file );
+}
+
 static inline int fmt_translate_snprintf_return_value( int r, size_t count )
 {
 	if ( r < 0 || (size_t) r >= count )

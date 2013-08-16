@@ -1,2 +1,0 @@
-#undef max
-#undef min

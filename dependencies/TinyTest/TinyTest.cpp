@@ -8,30 +8,46 @@
 #define DIR_SEP '/'
 #endif
 
+#if defined(__X86_64__) || defined(_M_X64)
+typedef long long intp;
+#else
+typedef int intp;
+#endif
+
 struct Test;
 struct TestContext;
 struct OutputDev;
+
+using namespace std;
 
 extern const char* HtmlHeadTxt;
 extern const char* HtmlTailTxt;
 extern const char* JUnitTailTxt;
 
-void		Run( XStringA path, XStringA testcmd, XStringA testname );
-XStringA	EscapeHtml( XStringA s );
-XStringA	EscapeXml( XStringA s );
+string			EscapeHtml( const string& s );
+string			EscapeXml( const string& s );
+podvec<string>	DiscardEmpties( const podvec<string>& s );
+podvec<string>	Split( const string& s, char delim );
+string			Trim( const string& s );
+string			FilenameOnly( const string& s );
+bool			MatchWildcardNocase( const string& s, const string& p );
+bool			MatchWildcardNocase( const char* s, const char* p );
+bool			WriteWholeFile( const string& filename, const string& s );
+string			IntToStr( int64 i );
+double			TimeSeconds();
 
 struct Test
 {
 	TestContext*	Context;
-	XStringA		Name;
-	XStringA		Output;
-	XStringA		TrimmedOutput;
+	string			Name;
+	string			Output;
+	string			TrimmedOutput;
 	TTSizes			Size;
 	bool			Ignored;
 	bool			Pass;
 	double			Time;
 
-	explicit Test( TestContext* context, XStringA name, TTSizes size ) 
+	explicit Test( TestContext* context, string name, TTSizes size ) 
 	{
 		Construct();
 		Context = context;
@@ -50,42 +66,42 @@ struct Test
 struct OutputDev
 {
 	virtual bool		ImmediateOut() { return false; }
-	virtual XStringA	OutputFilename( XStringA base ) { return ""; }
-	virtual XStringA	HeadPre( TestContext& c ) { return ""; }
-	virtual XStringA	HeadPost( TestContext& c ) { return ""; }
-	virtual XStringA	Tail() = 0;
-	virtual XStringA	ItemPre( const Test& t ) { return ""; }
-	virtual XStringA	ItemPost( const Test& t ) = 0;
+	virtual string		OutputFilename( string base ) { return ""; }
+	virtual string		HeadPre( TestContext& c ) { return ""; }
+	virtual string		HeadPost( TestContext& c ) { return ""; }
+	virtual string		Tail() = 0;
+	virtual string		ItemPre( const Test& t ) { return ""; }
+	virtual string		ItemPost( const Test& t ) = 0;
 };
 
 struct TestContext
 {
-	XStringA			ExePath;
-	XStringA			Name;
-	XStringA			Ident;
-	XStringA			Options;
-	XStringA			OutDir;
-	XStringA			OutText;
+	string				ExePath;
+	string				Name;
+	string				Ident;
+	string				Options;
+	string				OutDir;
+	string				OutText;
 	OutputDev*			Out;
 	bool				OutputBare;
 	bool				RunLargeTests;
 	podvec<Test>		Tests;
-	podvec<XStringA>	Include;
-	podvec<XStringA>	Exclude;
+	podvec<string>		Include;
+	podvec<string>		Exclude;
 	podvec<HANDLE>		SubProcesses;		// Sub processes launched by the currently executing test
 	unsigned int		CurrentChildPID;	// ProcessID of the currently executing test
 
 				TestContext();
 				~TestContext();
 
-	int			EnumAndRun( XStringA exepath, int argc, char** argv );
+	int			EnumAndRun( string exepath, int argc, char** argv );
 
 	int			CountPass()	const		{ int c = 0; for ( intp i = 0; i < Tests.size(); i++ ) c += Tests[i].Pass ? 1 : 0; return c; }
 	int			CountIgnored() const	{ int c = 0; for ( intp i = 0; i < Tests.size(); i++ ) c += Tests[i].Ignored ? 1 : 0; return c; }
 	int			CountFail() const		{ return (int) Tests.size() - CountPass() - CountIgnored(); }
 	int			CountRun() const		{ return (int) Tests.size() - CountIgnored(); }
 	double		TotalTime() const		{ double t = 0; for ( intp i = 0; i < Tests.size(); i++ ) t += Tests[i].Time; return t; }
-	XStringA	FullName() const		{ return Name + "-" + Ident; }
+	string		FullName() const		{ return Name + "-" + Ident; }
 
 	void		SetOutText();
 	void		SetOutJUnit();
@@ -93,7 +109,7 @@ struct TestContext
 
 protected:
 	int			Run();
-	XStringA	ExecProcess( XStringA exec, XStringA& output, double timeoutSeconds, int& result );
+	string		ExecProcess( string exec, string& output, double timeoutSeconds, int& result );
 	bool		EnumTests();
 	bool		TestMatchesFilter( const Test& t );
 	void		FlushOutput();
@@ -105,13 +121,13 @@ protected:
 struct OutputDevText : public OutputDev
 {
 	virtual bool		ImmediateOut()					{ return true; }
-	virtual XStringA	HeadPre( TestContext& c )		{ return fmt("%s %s\n", c.Name, c.Ident); }
-	virtual XStringA	HeadPost( TestContext& c )		{ return fmt("%d/%d passed\n", c.CountPass(), c.CountRun()); }
-	virtual XStringA	Tail()							{ return ""; }
-	virtual XStringA	ItemPre( const Test& t )		{ return fmt( "%-35s", t.Name ); }
-	virtual XStringA	ItemPost( const Test& t )
+	virtual string		HeadPre( TestContext& c )		{ return fmt("%s %s\n", c.Name, c.Ident); }
+	virtual string		HeadPost( TestContext& c )		{ return fmt("%d/%d passed\n", c.CountPass(), c.CountRun()); }
+	virtual string		Tail()							{ return ""; }
+	virtual string		ItemPre( const Test& t )		{ return fmt( "%-35s", t.Name ); }
+	virtual string		ItemPost( const Test& t )
 	{
-		XStringA r = fmt( "%s", t.Pass ? "PASS" : "FAIL" );
+		string r = fmt( "%s", t.Pass ? "PASS" : "FAIL" );
 		if ( !t.Pass )
 			r += "\n" + t.TrimmedOutput;
 		r += "\n";
@@ -121,10 +137,10 @@ struct OutputDevText : public OutputDev
 
 struct OutputDevHtml : public OutputDev
 {
-	virtual XStringA	OutputFilename( XStringA base ) { return base + ".html"; }
-	virtual XStringA	HeadPre( TestContext& c )		{ return HtmlHeadTxt; }
-	virtual XStringA	Tail()							{ return HtmlTailTxt; }
-	virtual XStringA	ItemPost( const Test& t )
+	virtual string		OutputFilename( string base )	{ return base + ".html"; }
+	virtual string		HeadPre( TestContext& c )		{ return HtmlHeadTxt; }
+	virtual string		Tail()							{ return HtmlTailTxt; }
+	virtual string		ItemPost( const Test& t )
 	{
 		if ( t.Pass )	return fmt( "<div class='test pass'>%s</div>\n", EscapeHtml(t.Name) );
 		else			return fmt( "<div class='test fail'>%s<pre class='detail'>%s</pre></div>\n", EscapeHtml(t.Name), EscapeHtml(t.TrimmedOutput) );
@@ -133,8 +149,8 @@ struct OutputDevHtml : public OutputDev
 
 struct OutputDevJUnit : public OutputDev
 {
-	virtual XStringA	OutputFilename( XStringA base ) { return base + ".xml"; }
-	virtual XStringA	HeadPost( TestContext& c )
+	virtual string		OutputFilename( string base ) { return base + ".xml"; }
+	virtual string		HeadPost( TestContext& c )
 	{
 		//return fmt( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		//			"<testrun name=\"%v\" project=\"%v\" tests=\"%d\" started=\"%d\" failures=\"%d\" errors=\"%d\" ignored=\"%d\">\n"
@@ -143,8 +159,8 @@ struct OutputDevJUnit : public OutputDev
 		return fmt( "<testsuite name=\"%v\" time=\"%f\">\n",
 					c.FullName(), c.TotalTime() );
 	}
-	virtual XStringA	Tail()		{ return JUnitTailTxt; }
-	virtual XStringA	ItemPost( const Test& t )
+	virtual string		Tail()		{ return JUnitTailTxt; }
+	virtual string		ItemPost( const Test& t )
 	{
 		if ( t.Pass )	return fmt( "\t\t<testcase name=\"%v\" classname=\"%v\" time=\"%f\"/>\n", EscapeHtml(t.Name), t.Context->FullName(), t.Time );
 		else			return fmt( "\t\t<testcase name=\"%v\" classname=\"%v\" time=\"%f\">\n"
@@ -194,10 +210,10 @@ int main(int argc, char* argv[])
 
 	if ( argc >= 3 && strcmp(argv[0], "run") == 0 )
 	{
-		XStringA exepath = argv[1];
-		exepath.Replace( '/', DIR_SEP );
-		exepath.Replace( '\\', DIR_SEP );
-		XStringA throwaway = argv[2];		// "test"
+		string exepath = argv[1];
+		std::replace( exepath.begin(), exepath.end(), '/', DIR_SEP );
+		std::replace( exepath.begin(), exepath.end(), '\\', DIR_SEP );
+		string throwaway = argv[2];		// "test"
 		argc -= 3;
 		argv += 3;
 		return cx.EnumAndRun( exepath, argc, argv );
@@ -226,36 +242,35 @@ TestContext::~TestContext()
 bool TestContext::EnumTests()
 {
 	//printf( "EnumTests\n" );
-	FILE* pipe = _popen( ExePath + " " + TT_TOKEN_INVOKE, "rb" );
-	if ( !pipe ) { fprintf( stderr, "Failed to popen(%s)\n", (const char*) ExePath ); return false; }
+	FILE* pipe = _popen( (ExePath + " " + TT_TOKEN_INVOKE).c_str(), "rb" );
+	if ( !pipe ) { fprintf( stderr, "Failed to popen(%s)\n", ExePath.c_str() ); return false; }
 
 	size_t read = 0;
 	char buf[1024];
-	XStringA all;
+	podvec<char> all;
 	while ( read = fread( buf, 1, sizeof(buf), pipe ) )
-		all.AppendExact( buf, (int) read );
+		all.addn( buf, read );
 	fclose( pipe );
+	all += 0;
 
-	podvec<XStringA> lines;
-	Split( all, '\n', lines );
+	podvec<string> lines = Split( string(&all[0]), '\n' );
 	bool eat = false;
 	for ( intp i = 0; i < lines.size(); i++ )
 	{
-		XStringA trim = lines[i].Trimmed();
+		string trim = Trim(lines[i]);
 		if ( trim == "" ) continue;
 		if ( eat )
 		{
-			podvec<XStringA> parts;
-			Split( trim, ' ', parts, true );
+			podvec<string> parts = DiscardEmpties( Split( trim, ' ' ) );
 			if ( parts.size() != 2 || (parts[1] != TT_SIZE_SMALL_NAME && parts[1] != TT_SIZE_LARGE_NAME) )
 			{
-				fmtoutf( stderr, "Expected 'testname small|large' from test enumeration line. Instead '%s'\n", trim );
+				fmtoutf( stderr, "Expected 'testname small|large' from test enumeration line. Instead '%s'\n", trim.c_str() );
 				return false;
 			}
 			Tests += Test( this, parts[0], parts[1] == TT_SIZE_SMALL_NAME ? TTSizeSmall : TTSizeLarge );
 			//printf( "Discovered test '%s'\n", (const char*) tests.back() );
 		}
-		else if ( trim == XStringA(TT_LIST_LINE_END).Trimmed() )
+		else if ( trim == Trim(TT_LIST_LINE_END) )
 		{
 			eat = true;
 			continue;
@@ -265,32 +280,33 @@ bool TestContext::EnumTests()
 	return true;
 }
 
-int TestContext::EnumAndRun( XStringA exepath, int argc, char** argv )
+int TestContext::EnumAndRun( string exepath, int argc, char** argv )
 {
 	ExePath = exepath;
-	Name = FileNameOnly( exepath.ToWideFromUtf8() ).ToUtf8();
+	Name = FilenameOnly( exepath );
 	for ( int i = 0; i < argc; i++ )
 	{
-		XStringA opt = argv[i];
+		string opt = argv[i];
 		if ( opt[0] == '-' )
 		{
-			if ( opt == "-tt-html" )			{ SetOutHtml(); }
-			else if ( opt == "-tt-junit" )		{ SetOutJUnit(); }
-			else if ( opt == "-tt-small" )		{ RunLargeTests = false; }
-			else if ( opt == "-tt-bare" )		{ OutputBare = true; }
-			else if ( opt == "-tt-head" )		{ fputs( HtmlHeadTxt, stdout ); return 0; }
-			else if ( opt == "-tt-tail" )		{ fputs( HtmlTailTxt, stdout ); return 0; }
-			else if ( opt == "-tt-out" )		{ OutDir = argv[i + 1]; i++; }
-			else if ( opt == "-tt-ident" )		{ Ident = argv[i + 1]; i++; }
-			else if ( opt.Left(2) == "-x" )		{ Exclude += opt.Mid(2); }
-			else								{ Options += opt + " "; }
+			if ( opt == "-tt-html" )				{ SetOutHtml(); }
+			else if ( opt == "-tt-junit" )			{ SetOutJUnit(); }
+			else if ( opt == "-tt-small" )			{ RunLargeTests = false; }
+			else if ( opt == "-tt-bare" )			{ OutputBare = true; }
+			else if ( opt == "-tt-head" )			{ fputs( HtmlHeadTxt, stdout ); return 0; }
+			else if ( opt == "-tt-tail" )			{ fputs( HtmlTailTxt, stdout ); return 0; }
+			else if ( opt == "-tt-out" )			{ OutDir = argv[i + 1]; i++; }
+			else if ( opt == "-tt-ident" )			{ Ident = argv[i + 1]; i++; }
+			else if ( opt.substr(0, 2) == "-x" )	{ Exclude += opt.substr(2); }
+			else									{ Options += opt + " "; }
 		}
 		else
 		{
 			Include += opt;
 		}
 	}
-	Options.Chop();
+	if ( Options.size() != 0 )
+		Options.pop_back();
 
 	if ( !EnumTests() )
 		return 1;
@@ -298,7 +314,7 @@ int TestContext::EnumAndRun( XStringA exepath, int argc, char** argv )
 	if ( Include.size() == 0 && Exclude.size() == 0 )
 	{
 		for ( int i = 0; i < Tests.size(); i++ )
-			printf("  %s\n", (const char*) Tests[i].Name );
+			printf("  %s\n", Tests[i].Name.c_str() );
 		return 0;
 	}
 	else
@@ -317,12 +333,12 @@ bool TestContext::TestMatchesFilter( const Test& t )
 	{
 		if ( Include[i] == TT_TOKEN_ALL_TESTS )
 			pass = true;
-		else if ( MatchWildcard( t.Name, Include[i], false ) )
+		else if ( MatchWildcardNocase( t.Name, Include[i] ) )
 			pass = true;
 	}
 	for ( intp i = 0; i < Exclude.size(); i++ )
 	{
-		if ( MatchWildcard( t.Name, Exclude[i], false ) )
+		if ( MatchWildcardNocase( t.Name, Exclude[i] ) )
 			pass = false;
 	}
 	return pass;
@@ -332,18 +348,18 @@ void TestContext::FlushOutput()
 {
 	if ( Out->ImmediateOut() )
 	{
-		fputs( OutText, stdout );
-		OutText.Clear();
+		fputs( OutText.c_str(), stdout );
+		OutText = "";
 	}
 }
 
 void TestContext::WriteOutputToFile()
 {
-	XStringA outf;
+	string outf;
 	if ( OutDir != "" )
 	{
 		outf = OutDir;
-		if ( !outf.EndsWith(DIR_SEP) ) outf += DIR_SEP;
+		if ( outf.back() != DIR_SEP ) outf += DIR_SEP;
 		outf += Name;
 		outf += "-" + Ident;
 		outf = Out->OutputFilename(outf);
@@ -351,9 +367,9 @@ void TestContext::WriteOutputToFile()
 	if ( !Out->ImmediateOut() )
 	{
 		if ( outf != "" )
-			Panacea::IO::WriteWholeFile( outf.ToWideFromUtf8(), OutText );
+			WriteWholeFile( outf, OutText );
 		else
-			fputs( OutText, stdout );
+			fputs( OutText.c_str(), stdout );
 	}
 }
 
@@ -383,23 +399,23 @@ int TestContext::Run()
 		OutText += Out->ItemPre( t );
 		FlushOutput();
 
-		XStringA exec = ExePath + " " + TT_PREFIX_RUNNER_PID + IntToXStringA(TTGetProcessID()) + " " + TT_TOKEN_INVOKE + " :" + t.Name + " " + Options;
+		string exec = ExePath + " " + TT_PREFIX_RUNNER_PID + IntToStr(TTGetProcessID()) + " " + TT_TOKEN_INVOKE + " :" + t.Name + " " + Options;
 
-		XStringA oput;
+		string oput;
 		int pstatus = 0;
-		double tstart = AbcTimeAccurateRTSeconds();
-		XStringA execError = ExecProcess( exec, oput, t.TimeoutSeconds(), pstatus );
+		double tstart = TimeSeconds();
+		string execError = ExecProcess( exec, oput, t.TimeoutSeconds(), pstatus );
 		if ( execError != "" )
 		{
 			pstatus = 1;
 			oput = "TinyTest ExecProcess Error: " + execError;
 		}
 
-		t.Time = AbcTimeAccurateRTSeconds() - tstart;
+		t.Time = TimeSeconds() - tstart;
 		t.Output = oput;
 		t.TrimmedOutput = oput;
-		if ( t.TrimmedOutput.Length() > 1000 )
-			t.TrimmedOutput = "..." + t.TrimmedOutput.Right(1000);
+		if ( t.TrimmedOutput.length() > 1000 )
+			t.TrimmedOutput = "..." + t.TrimmedOutput.substr( t.TrimmedOutput.length() - 1000 );
 		t.Pass = pstatus == 0;
 
 		OutText += Out->ItemPost( t );
@@ -428,20 +444,22 @@ int TestContext::Run()
 
 void TestContext::CloseZombieProcesses()
 {
+#ifdef _WIN32
 	for ( intp i = 0; i < SubProcesses.size(); i++ )
 	{
 		if ( WaitForSingleObject(SubProcesses[i], 0) != WAIT_OBJECT_0 )
 			TerminateProcess( SubProcesses[i], 1 );
 		CloseHandle( SubProcesses[i] );
 	}
+#endif
 	SubProcesses.clear();
 }
 
-static void DisplayError( XStringA msg )
+static void DisplayError( string msg )
 {
 }
 
-static void ErrorExit( XString msg )
+static void ErrorExit( string msg )
 {
 }
 
@@ -485,7 +503,7 @@ void TestContext::ReadIPC( uint waitMS )
 
 // TODO: Isolate this beast
 
-XStringA TestContext::ExecProcess( XStringA exec, XStringA& output, double timeoutSeconds, int& result )
+string TestContext::ExecProcess( string exec, string& output, double timeoutSeconds, int& result )
 {
 	CurrentChildPID = 0;
 
@@ -538,11 +556,14 @@ XStringA TestContext::ExecProcess( XStringA exec, XStringA& output, double timeo
 	si.hStdOutput = g_hChildStd_OUT_Wr;
 	si.dwFlags = STARTF_USESTDHANDLES;
 
-	if ( !CreateProcessA( NULL, exec.GetRawBuffer(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi ) )
+	char execPath[2048];
+	strcpy( execPath, exec.c_str() );
+
+	if ( !CreateProcessA( NULL, execPath, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi ) )
 	{
 		//fprintf( stderr, "Failed to popen(%s): %d\n", (const char*) exec, (int) GetLastError() );
 		result = 1;
-		return fmt( "Failed to popen(%s): %d\n", (const char*) exec, (int) GetLastError() );
+		return fmt( "Failed to popen(%s): %d\n", exec.c_str(), (int) GetLastError() );
 	}
 
 	CurrentChildPID = pi.dwProcessId;
@@ -570,7 +591,7 @@ XStringA TestContext::ExecProcess( XStringA exec, XStringA& output, double timeo
 	// Read from the standard output of the child process. 
 	char buf[1024];
 	DWORD nread = 0;
-	double start = AbcRTC();
+	double start = TimeSeconds();
 	while ( true )
 	{
 		DWORD avail = 0;
@@ -579,7 +600,7 @@ XStringA TestContext::ExecProcess( XStringA exec, XStringA& output, double timeo
 			break;
 		if ( avail == 0 )
 		{
-			if ( AbcRTC() - start > timeoutSeconds )
+			if ( TimeSeconds() - start > timeoutSeconds )
 				break;
 			ReadIPC( 16 );
 			//Sleep( 16 );
@@ -593,10 +614,10 @@ XStringA TestContext::ExecProcess( XStringA exec, XStringA& output, double timeo
 				output += fmt( "TinyTest: Unexpected ReadFile error on child process pipe: %d \n", (int) GetLastError() );
 			break;
 		}
-		output.AppendExact( buf, nread );
+		output.append( buf, nread );
 	}
 
-	double timeRemaining = timeoutSeconds - (AbcRTC() - start);
+	double timeRemaining = timeoutSeconds - (TimeSeconds() - start);
 	timeRemaining = std::max(timeRemaining, 0.0);
 	bool timeout = WaitForSingleObject( pi.hProcess, DWORD(timeRemaining * 1000) ) != WAIT_OBJECT_0;
 
@@ -611,7 +632,7 @@ XStringA TestContext::ExecProcess( XStringA exec, XStringA& output, double timeo
 
 	if ( timeout )
 		output += fmt( "\nTest timed out (max time %v seconds)", timeoutSeconds );
-	else if ( exitcode != 0 && output.Trimmed().Length() == 0 )
+	else if ( exitcode != 0 && Trim(output).length() == 0 )
 		output += fmt( "\nExit code %d, but test produced no output", exitcode );
   
 	CloseHandleAndZero( pi.hProcess );
@@ -628,10 +649,10 @@ XStringA TestContext::ExecProcess( XStringA exec, XStringA& output, double timeo
 	return "";
 }
 
-XStringA Escape( bool xml, XStringA s )
+string Escape( bool xml, const string& s )
 {
-	XStringA r;
-	for ( int i = 0; i < s.Length(); i++ )
+	string r;
+	for ( size_t i = 0; i < s.length(); i++ )
 	{
 		if ( s[i] == '<' ) r += "&lt;";
 		else if ( s[i] == '>' ) r += "&gt;";
@@ -643,15 +664,129 @@ XStringA Escape( bool xml, XStringA s )
 	return r;
 }
 
-XStringA EscapeHtml( XStringA s )
+string EscapeHtml( const string& s )
 {
 	return Escape( false, s );
 }
 
-XStringA EscapeXml( XStringA s )
+string EscapeXml( const string& s )
 {
 	return Escape( true, s );
 }
+
+podvec<string> DiscardEmpties( const podvec<string>& s )
+{
+	podvec<string> result;
+	for ( intp i = 0; i < s.size(); i++ )
+	{
+		if ( s[i] != "" )
+			result += s[i];
+	}
+	return result;
+}
+
+podvec<string> Split( const string& s, char delim )
+{
+	podvec<string> res;
+	size_t start = 0;
+	size_t end = 0;
+	for ( ; end < s.length(); end++ )
+	{
+		if ( s[end] == delim )
+		{
+			res += s.substr( start, end - start );
+			start = end + 1;
+		}
+	}
+	if ( end - start > 0 || start != 0 )
+		res += s.substr( start, end - start );
+	return res;
+}
+
+string Trim( const string& s )
+{
+	size_t i = 0;
+	size_t j = s.length() - 1;
+	while ( i != s.length()	&& (s[i] == 9 || s[i] == 10 || s[i] == 13 || s[i] == 32) ) i++;
+	while ( j != -1			&& (s[j] == 9 || s[j] == 10 || s[j] == 13 || s[j] == 32) ) j--;
+	ptrdiff_t len = 1 + j - i;
+	if ( len > 0 )
+		return s.substr( i, len );
+	else
+		return "";
+}
+
+string FilenameOnly( const string& s )
+{
+	size_t dot = s.length();
+	size_t i = s.length() - 1;
+	for ( ; i != -1; i-- )
+	{
+		if ( s[i] == '.' )
+			dot = i;
+		if ( s[i] == '/' || s[i] == '\\' )
+			break;
+	}
+	return s.substr( i + 1, dot - i - 1 );
+}
+
+bool MatchWildcardNocase( const string& s, const string& p )
+{
+	return MatchWildcardNocase( s.c_str(), p.c_str() );
+}
+
+bool MatchWildcardNocase( const char *s, const char *p )
+{
+	if ( *p == '*' )
+	{
+		while( *p == '*' )									++p;
+		if ( *p == '\0' )									return true;
+		while( *s != '\0' && !MatchWildcardNocase(s, p) )	++s;                
+		return *s != '\0';
+	}
+	else if ( *p == '\0' || *s == '\0' )					return tolower(*p) == tolower(*s);
+	else if ( tolower(*p) == tolower(*s) || *p == '?' )		return MatchWildcardNocase( ++s, ++p );
+	else									return false;
+}
+
+bool WriteWholeFile( const string& filename, const string& s )
+{
+	bool good = false;
+	FILE* f = fopen( filename.c_str(), "wb" );
+	if ( f )
+	{
+		if ( s.length() != 0 )
+			good = fwrite( &s[0], s.length(), 1, f ) == 1;
+		else
+			good = true;
+		fclose(f);
+	}
+	return good;
+}
+
+string IntToStr( int64 i )
+{
+	char buf[100];
+	sprintf( buf, "%lld", i );
+	return buf;
+}
+
+#ifdef _WIN32
+double TimeSeconds()
+{
+	LARGE_INTEGER t, f;
+	QueryPerformanceCounter( &t );
+	QueryPerformanceFrequency( &f );
+	return t.QuadPart / (double) f.QuadPart;
+}
+#else
+double TimeSeconds()
+{
+	timespec t;
+	clock_gettime( CLOCK_MONOTONIC, &t );
+	return t.tv_sec + t.tv_nsec * (1.0 / 1000000000);
+}
+#endif
 
 #define S(x) #x
 
@@ -689,7 +824,7 @@ const char* JUnitTailTxt = S((
 
 		size_t read = 0;
 		char buf[1024];
-		XStringA oput;
+		string oput;
 		while ( !feof(pipe) )
 		{
 			read = fread( buf, 1, sizeof(buf), pipe );

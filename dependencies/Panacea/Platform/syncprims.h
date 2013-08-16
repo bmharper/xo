@@ -44,6 +44,10 @@ PAPI void				AbcSemaphoreRelease( AbcSemaphore& sem, DWORD count );
 
 PAPI void				AbcSleep( int milliseconds );
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: Consider using mintomic here.
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // AbcInterlockedAdd		returns the PREVIOUS value
 // AbcInterlockedOr			returns the PREVIOUS value
 // AbcInterlockedAnd		returns the PREVIOUS value
@@ -74,7 +78,7 @@ inline unsigned int	AbcInterlockedAdd( volatile unsigned int* p, int addval )			
 inline unsigned int	AbcInterlockedOr( volatile unsigned int* p, int orval )					{ return __sync_fetch_and_or( p, orval ); }
 inline unsigned int	AbcInterlockedAnd( volatile unsigned int* p, int andval )				{ return __sync_fetch_and_and( p, andval ); }
 inline unsigned int	AbcInterlockedXor( volatile unsigned int* p, int xorval )				{ return __sync_fetch_and_xor( p, xorval ); }
-inline void			AbcSetWithRelease( volatile unsigned int* p, int newval )				{ *p = newval; __sync_synchronize(); }
+inline void			AbcSetWithRelease( volatile unsigned int* p, int newval )				{ *p = newval; __sync_synchronize(); } // I think there is a better implementation of this, using __sync_lock_test_and_set followed by __sync_lock_release
 inline unsigned int AbcCmpXChg( volatile unsigned int* p, int newval, int oldval )			{ return __sync_val_compare_and_swap( p, oldval, newval ); }
 inline unsigned int	AbcInterlockedIncrement( volatile unsigned int* p )						{ return __sync_add_and_fetch( p, 1 ); }
 inline unsigned int	AbcInterlockedDecrement( volatile unsigned int* p )						{ return __sync_sub_and_fetch( p, 1 ); }

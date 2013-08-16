@@ -125,7 +125,7 @@ inline size_t fhash_next_power_of_2( size_t v )
 inline FHASH_NORETURN void fhash_die()
 {
 	*((int*)0) = 0;
-	while (1) {} // satisfy GCC: 'noreturn' function does return
+	while (1) {} // necessary to satisfy GCC
 }
 
 // _tor is ctor or dtor

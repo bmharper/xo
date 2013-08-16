@@ -2,9 +2,17 @@
 
 // If you don't want to use XStringA, then you must define FMT_STRING to be some kind of string class
 // that can construct itself from const char*.
+
+// To use std::string, do the following before including fmt.h:
+// #define FMT_STRING          std::string
+// #define FMT_STRING_BUF(s)   (s).c_str()
+// #define FMT_STRING_LEN(s)   (s).Length()
+
 #ifndef FMT_STRING
 #include "XString.h"
-#define FMT_STRING XStringA
+#define FMT_STRING			XStringA
+#define FMT_STRING_BUF(s)	static_cast<const char*>(s)
+#define FMT_STRING_LEN(s)	(s).Length()
 #endif
 
 
@@ -99,8 +107,17 @@ PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const f
 
 // Clang will need -Wno-variadic-macros
 // I believe the use of __VA_ARGS__ is cross-platform enough for our needs
-#define fmtout( fs, ... )			fputs(fmt(fs, __VA_ARGS__), stdout)
-#define fmtoutf( file, fs, ... )	fputs(fmt(fs, __VA_ARGS__), file)
+#define fmtout( fs, ... )			fmt_write(stdout, fmt(fs, __VA_ARGS__))
+#define fmtoutf( file, fs, ... )	fmt_write(file, fmt(fs, __VA_ARGS__))
+
+// We cannot do fmtout and fmtoutf with macros, because you cannot use __VA_ARGS__ inside a nested macro.
+// It's hard to explain in a few short words, but this was the old version, an it's pre-processed output
+// #define fmtout( fs, ... )           fputs(FMT_STRING_TO_C(fmt(fs, __VA_ARGS__)), stdout)		--> fputs(static_cast<const char*>(fmt("Hello!", )), (&__iob_func()[1]));
+// Notice the trailing comma. That trailing comma is NOT present if you don't have the FMT_STRING_TO_C there.
+
+// The approach of making this proper function has the added advantage that we can write strings with null characters in them
+// Returns the number of characters written (ie the result of fwrite).
+PAPI size_t fmt_write( FILE* file, const FMT_STRING& s );
 
 /*  cross-platform "snprintf"
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Platform/stdint.h"
+#include "../Platform/err.h"
 #include "cont_utils.h"
 
 #ifdef _MSC_VER

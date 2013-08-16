@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../platform/compiler.h"
+#include "../Platform/compiler.h"
+#include "../Platform/err.h"
 
 namespace AbCore
 {
@@ -96,14 +97,14 @@ namespace AbCore
 
 		void Reserve( int n )
 		{
-			ASSERT( Capacity == 0 && Data == NULL );
+			ABCASSERT( Capacity == 0 && Data == NULL );
 			Data = (TData*) Allocator->Alloc( n * sizeof(TData) );
 			Capacity = n;
 		}
 
 		void Resize( int n )
 		{
-			ASSERT( Count == 0 );
+			ABCASSERT( Count == 0 );
 			if ( (TRef) n > Capacity )
 				Grow( n );
 			Count = n;
@@ -117,7 +118,7 @@ namespace AbCore
 
 		void Pop()
 		{
-			ASSERT( Count > 0 );
+			ABCASSERT( Count > 0 );
 			Count--;
 		}
 
@@ -192,7 +193,7 @@ namespace AbCore
 		template< typename T >
 		int TSize() const				{ return int(Pos / sizeof(T)); }
 
-		void MoveCurrentPos( intp bytes )	{ Pos += bytes; ASSERT(Pos <= Capacity); }
+		void MoveCurrentPos( intp bytes )	{ Pos += bytes; ABCASSERT(Pos <= Capacity); }
 
 		byte* Add( size_t bytes )
 		{

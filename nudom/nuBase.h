@@ -70,7 +70,7 @@ typedef char TCHAR;
 	#endif
 #endif
 
-#include "../dependencies/Panacea/coredefs.h"
+#include "../dependencies/Panacea/Platform/coredefs.h"
 #include "../dependencies/Panacea/Platform/stdint.h"
 #include "../dependencies/Panacea/Platform/cpu.h"
 #include "../dependencies/Panacea/Platform/err.h"
@@ -87,6 +87,8 @@ typedef char TCHAR;
 
 #include "nuString.h"
 #define FMT_STRING nuString
+#define FMT_STRING_BUF(s)	(s.Z)
+#define FMT_STRING_LEN(s)	(s.Len)
 #include "../dependencies/Panacea/Strings/fmt.h"
 
 #ifdef TEMP_ASSERT

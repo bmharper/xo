@@ -12,6 +12,12 @@ PAPI NORETURN	void		AbcDie();
 #define AbcPanicSilent()		(void) (AbcPanicMsg(__FILE__,__LINE__,""), AbcDie())						// Compiled in all builds
 #define AbcTodo()				(void) (AbcPanicMsg(__FILE__,__LINE__,"Not yet implemented"), AbcDie())		// Compiled in all builds
 
+#ifdef _DEBUG
+#define ABCASSERT(f) AbcAssert(f)
+#else
+#define ABCASSERT(f) ((void)0)
+#endif
+
 #define AbcCheckNULL( obj )					if ( !(obj) )	{ AbcPanicSilent(); }
 #define AbcCheckAlloc( buf )				if ( !(buf) )	{ AbcPanic("Out of memory"); }
 #define AbcMemoryExhausted()				AbcPanic("Out of memory")

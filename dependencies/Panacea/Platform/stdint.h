@@ -5,6 +5,8 @@
 #define __STDC_LIMIT_MACROS
 #endif
 
+#include "coredefs.h"
+
 #ifdef _WIN32
 	// This block here is necessary to quiet macro redefinition warnings from including stdint.h and intsafe.h.
 	// Issue https://connect.microsoft.com/VisualStudio/feedback/details/621653/including-stdint-after-intsafe-generates-warnings
@@ -63,7 +65,8 @@ typedef uint64_t	UINT64;
 // These are suggestions by Charles Bloom:
 // intr: size of register
 // intp: size of pointer
-// intp and intr are the same on Windows x86/x64, but not true for all architectures
+// intp and intr are the same on Windows x86/x64, but not true for all architectures.
+// Here we assume that pointer and register sizes are always the same.
 #if ARCH_64
 typedef int64 intr;
 typedef int64 intp;
