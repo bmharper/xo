@@ -62,10 +62,13 @@ inline unsigned int	AbcInterlockedIncrement( volatile unsigned int* p )						{ r
 inline unsigned int	AbcInterlockedDecrement( volatile unsigned int* p )						{ return (unsigned int) _InterlockedDecrement( (volatile long*) p ); }
 #else
 // Clang has __sync_swap(), which is what you want here when compiling with Clang
-#	ifdef ANDROID
-inline void			AbcInterlockedSet( volatile unsigned int* p, int newval )				{ __atomic_swap( newval, (volatile int*) p ); }
-inline void			AbcSetWithRelease( volatile unsigned int* p, int newval )				{ __atomic_store_4( p, newval, __ATOMIC_RELEASE ); }
-#	elif __GNUC__
+// #	ifdef ANDROID
+// //inline void			AbcInterlockedSet( volatile unsigned int* p, int newval )				{ __atomic_swap( newval, (volatile int*) p ); }
+// //inline void			AbcSetWithRelease( volatile unsigned int* p, int newval )				{ __atomic_store_n( p, newval, __ATOMIC_RELEASE ); }
+// inline void			AbcInterlockedSet( volatile unsigned int* p, int newval )				{ *p = newval; }
+// inline void			AbcSetWithRelease( volatile unsigned int* p, int newval )				{ *p = newval; __sync_synchronize(); }
+// inline unsigned int AbcCmpXChg( volatile unsigned int* p, int newval, int oldval )			{ return __sync_val_compare_and_swap( p, oldval, newval ); }
+// #	elif __GNUC__
 inline void			AbcInterlockedSet( volatile unsigned int* p, int newval )				{ *p = newval; }
 inline unsigned int	AbcInterlockedAdd( volatile unsigned int* p, int addval )				{ return __sync_fetch_and_add( p, addval ); }
 inline unsigned int	AbcInterlockedOr( volatile unsigned int* p, int orval )					{ return __sync_fetch_and_or( p, orval ); }
@@ -75,7 +78,7 @@ inline void			AbcSetWithRelease( volatile unsigned int* p, int newval )				{ *p 
 inline unsigned int AbcCmpXChg( volatile unsigned int* p, int newval, int oldval )			{ return __sync_val_compare_and_swap( p, oldval, newval ); }
 inline unsigned int	AbcInterlockedIncrement( volatile unsigned int* p )						{ return __sync_add_and_fetch( p, 1 ); }
 inline unsigned int	AbcInterlockedDecrement( volatile unsigned int* p )						{ return __sync_sub_and_fetch( p, 1 ); }
-#	endif
+//#	endif
 #endif
 
 

@@ -94,7 +94,7 @@ bool PackFile::AddFile( LPCWSTR nameInPakFile, LPCWSTR filepath )
 int PackFile::AddPath( const XStringW& root, const XStringW& relpath, const XStringW& wildcard, const vector< XStringW >& ignore, vector< XStringW >& files, vector< int >& filesizes )
 {
 	dvect<XString> relativePaths;
-	Panacea::IO::Path::FindFilesOnly( root + DIR_SEP_WS + L"*", relativePaths, Panacea::IO::FindRecursiveOnAllFolders );
+	Panacea::IO::Path::FindFilesOnly( root + DIR_SEP_WS + L"*", relativePaths, Panacea::IO::FindRecursiveOnAllDirectories );
 	int nadded = 0;
 	for ( int i = 0; i < relativePaths.size(); i++ )
 	{

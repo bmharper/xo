@@ -72,8 +72,8 @@ struct TestContext
 	podvec<Test>		Tests;
 	podvec<XStringA>	Include;
 	podvec<XStringA>	Exclude;
-	podvec<HANDLE>		SubProcesses;	// Sub processes launched by the currently executing test
-	TT_IPC_Block		IPC;
+	podvec<HANDLE>		SubProcesses;		// Sub processes launched by the currently executing test
+	unsigned int		CurrentChildPID;	// ProcessID of the currently executing test
 
 				TestContext();
 				~TestContext();
@@ -215,6 +215,7 @@ TestContext::TestContext()
 {
 	Out = NULL;
 	RunLargeTests = true;
+	CurrentChildPID = 0;
 }
 
 TestContext::~TestContext()
@@ -363,7 +364,6 @@ void TestContext::SetOutHtml()	{ delete Out; Out = new OutputDevHtml; }
 int TestContext::Run()
 {
 	if ( !OutputBare ) OutText += Out->HeadPre( *this );
-	IPC.Initialize( AbcProcessGetPID() );
 	FlushOutput();
 
 	//if ( HtmlMode )	fputs( "<div class='tests'>\n", stdout );
@@ -383,7 +383,7 @@ int TestContext::Run()
 		OutText += Out->ItemPre( t );
 		FlushOutput();
 
-		XStringA exec = ExePath + " " + TT_PREFIX_RUNNER_PID + IntToXStringA(AbcProcessGetPID()) + " " + TT_TOKEN_INVOKE + " :" + t.Name + " " + Options;
+		XStringA exec = ExePath + " " + TT_PREFIX_RUNNER_PID + IntToXStringA(TTGetProcessID()) + " " + TT_TOKEN_INVOKE + " :" + t.Name + " " + Options;
 
 		XStringA oput;
 		int pstatus = 0;
@@ -421,7 +421,6 @@ int TestContext::Run()
 		FlushOutput();
 	}
 
-	IPC.Close();
 	WriteOutputToFile();
 
 	return npass == nrun ? 0 : 1;
@@ -438,15 +437,15 @@ void TestContext::CloseZombieProcesses()
 	SubProcesses.clear();
 }
 
-void DisplayError( XStringA msg )
+static void DisplayError( XStringA msg )
 {
 }
 
-void ErrorExit( XString msg )
+static void ErrorExit( XString msg )
 {
 }
 
-BOOL CloseHandleAndZero( HANDLE& h )
+static BOOL CloseHandleAndZero( HANDLE& h )
 {
 	BOOL c = CloseHandle(h);
 	h = NULL;
@@ -455,11 +454,19 @@ BOOL CloseHandleAndZero( HANDLE& h )
 
 void TestContext::ReadIPC( uint waitMS )
 {
-	if ( WaitForSingleObject( IPC.DataReady, waitMS ) == WAIT_OBJECT_0 )
+	char raw[TT_IPC_MEM_SIZE];
+	memset( raw, 0, sizeof(raw) );
+
+	char filename[256];
+	TT_IPC_Filename( true, TTGetProcessID(), CurrentChildPID, filename );
+	bool haveData = TT_IPC_Read_Raw( waitMS, filename, raw );
+
+	if ( haveData )
 	{
+		raw[TT_IPC_MEM_SIZE - 1] = 0;
 		char cmd[200];
 		uint u_p0 = 0;
-		if ( sscanf( IPC.FileMapPtr, "%200s %u", &cmd, &u_p0 ) == 2 )
+		if ( sscanf( raw, "%200s %u", &cmd, &u_p0 ) == 2 )
 		{
 			// This has potential to fail, if the process has already terminated by the time we get here.
 			// I'm assuming that if we can't open the process, then it has already died, and all is well.
@@ -471,7 +478,6 @@ void TestContext::ReadIPC( uint waitMS )
 		{
 			fprintf( stderr, "TinyTest: Unrecognized IPC command\n" );
 		}
-		SetEvent( IPC.DataFetched );
 	}
 }
 
@@ -481,6 +487,8 @@ void TestContext::ReadIPC( uint waitMS )
 
 XStringA TestContext::ExecProcess( XStringA exec, XStringA& output, double timeoutSeconds, int& result )
 {
+	CurrentChildPID = 0;
+
 	HANDLE g_hChildStd_IN_Rd = NULL;
 	HANDLE g_hChildStd_IN_Wr = NULL;
 	HANDLE g_hChildStd_OUT_Rd = NULL;
@@ -536,6 +544,8 @@ XStringA TestContext::ExecProcess( XStringA exec, XStringA& output, double timeo
 		result = 1;
 		return fmt( "Failed to popen(%s): %d\n", (const char*) exec, (int) GetLastError() );
 	}
+
+	CurrentChildPID = pi.dwProcessId;
 
 	// Write to the pipe that is the standard input for a child process. 
 	// Data is written to the pipe's buffers, so it is not necessary to wait

@@ -1,12 +1,12 @@
-#include "pch.h"
-#include "nuDefs.h"
-#include "nuDoc.h"
-#include "Render/nuRenderer.h"
-#include "Render/nuRenderGL.h"
-#include "Render/nuRenderDoc.h"
-#include "nuDocGroup.h"
-#include "nuEvent.h"
-#include "nuSysWnd.h"
+#include "../nudom/pch.h"
+#include "../nudom/nuDefs.h"
+#include "../nudom/nuDoc.h"
+#include "../nudom/Render/nuRenderer.h"
+#include "../nudom/Render/nuRenderGL.h"
+#include "../nudom/Render/nuRenderDoc.h"
+#include "../nudom/nuDocGroup.h"
+#include "../nudom/nuEvent.h"
+#include "../nudom/nuSysWnd.h"
 #include <stdlib.h>
 
 #define  LOG_TAG    "nudom"
@@ -46,6 +46,7 @@ static void ProcessAllEvents()
 {
 	while ( true )
 	{
+		nuProcessDocQueue();
 		if ( !AbcSemaphoreWait( nuGlobal()->EventQueue.SemaphoreObj(), 0 ) )
 			break;
 		nuEvent ev;
@@ -104,6 +105,7 @@ JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_destroy(JNIEnv * env, jint i
 
 JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_surfacelost(JNIEnv * env, jobject obj)
 {
+	LOGI("NuLib_surfacelost");
 	if ( MainWnd )
 		MainWnd->SurfaceLost();
 }
@@ -139,7 +141,7 @@ JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_input(JNIEnv * env, jobject 
 	*/
 	if ( MainWnd )
 	{
-	    LOGI("dispatching touch input 123");
+	    LOGI("dispatching touch input %d", type);
 
 		nuEvent ev = MakeEvent();
 		ev.Type = nuEventTouch;

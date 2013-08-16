@@ -281,7 +281,7 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 {
 	Check();
 
-	//NUTRACE( "PreRender %d %d\n", fbwidth, fbheight );
+	NUTRACE_RENDER( "PreRender %d %d\n", fbwidth, fbheight );
 	Check();
 
 	FBWidth = fbwidth;
@@ -301,7 +301,7 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 	//glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
-	//NUTRACE( "PreRender 2\n" );
+	NUTRACE_RENDER( "PreRender 2\n" );
 	Check();
 
 	// Enable CULL_FACE because it will make sure that we are consistent about vertex orientation
@@ -311,7 +311,7 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
-	//NUTRACE( "PreRender 3\n" );
+	NUTRACE_RENDER( "PreRender 3\n" );
 	Check();
 
 	Mat4f mvproj;
@@ -327,22 +327,22 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 
 	ActivateProgram( PFill );
 
-	//NUTRACE( "PreRender 4 (%d)\n", VarFillMVProj );
+	NUTRACE_RENDER( "PreRender 4 (%d)\n", VarFillMVProj );
 	Check();
 
 	glUniformMatrix4fv( VarFillMVProj, 1, false, &mvproj.row[0].x );
 
-	//NUTRACE( "PreRender 5\n" );
+	NUTRACE_RENDER( "PreRender 5\n" );
 	Check();
 
 	ActivateProgram( PFillTex );
 
-	//NUTRACE( "PreRender 6 (%d)\n", VarFillTexMVProj );
+	NUTRACE_RENDER( "PreRender 6 (%d)\n", VarFillTexMVProj );
 	Check();
 
 	glUniformMatrix4fv( VarFillTexMVProj, 1, false, &mvproj.row[0].x );
 
-	//NUTRACE( "PreRender done\n" );
+	NUTRACE_RENDER( "PreRender done\n" );
 
 	//glEnableClientState( GL_TEXTURE_COORD_ARRAY );
 	//glEnableClientState( GL_COLOR_ARRAY );
@@ -359,7 +359,7 @@ void nuRenderGL::PostRenderCleanup()
 
 void nuRenderGL::DrawQuad( const void* v )
 {
-	//NUTRACE( "DrawQuad\n" );
+	NUTRACE_RENDER( "DrawQuad\n" );
 
 	int stride = sizeof(nuVx_PTC);
 	const byte* vbyte = (const byte*) v;
@@ -413,7 +413,7 @@ void nuRenderGL::DrawQuad( const void* v )
 	glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices );
 	//glDrawArrays( GL_TRIANGLES, 0, 3 );
 
-	//NUTRACE( "DrawQuad done\n" );
+	NUTRACE_RENDER( "DrawQuad done\n" );
 
 	/*
 	glBegin( GL_TRIANGLES );

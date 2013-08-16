@@ -1,5 +1,7 @@
 .tundra2.*
+.metadata
 t2-output
 samples/Android/bin/*
 samples/Android/libs/*
 samples/Android/obj/*
+samples/Android/gen/*

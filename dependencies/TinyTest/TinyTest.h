@@ -100,10 +100,6 @@ struct TTException;
 #define TT_TOKEN_INVOKE			"test"
 #define TT_TOKEN_ALL_TESTS		"all"
 #define TT_PREFIX_RUNNER_PID	"ttpid="
-#define TT_IPC_PREFIX_READY		"tinytest_ready_"	// followed by PID of runner process
-#define TT_IPC_PREFIX_FETCHED	"tinytest_fetched_"	// followed by PID of runner process
-#define TT_IPC_PREFIX_LOCK		"tinytest_lock_"	// followed by PID of runner process
-#define TT_IPC_PREFIX_MEM		"tinytest_mem_"		// followed by PID of runner process
 #define TT_IPC_CMD_SUBP_RUN		"subprocess-launch"
 #define TT_LIST_LINE_1			"Tests:"
 #define TT_LIST_LINE_2			"  " TT_TOKEN_ALL_TESTS " (run all tests)"
@@ -114,13 +110,26 @@ static const int TT_MAX_CMDLINE_ARGS = 10;	// Maximum number of command-line arg
 
 TT_NORETURN void TTAssertFailed( const char* expression, const char* filename, int line_number, bool die );
 
-void		TTLog( const char* msg, ... );
-bool		TTIsDead();								// Returns true if a TT assertion has failed, and exit(1) has been called
-TTModes		TTMode();								// Returns TTModeAutomatedTest if this is an automated test run by a build bot or something like that
-void		TTSetProcessIdle();						// Sets the process' priority to IDLE. This is just convenient if you're running tests while working on your dev machine.
-void		TTNotifySubProcess( unsigned int pid );	// Notify the test runner that you have launched a sub-process
-void		TTListTests( const TT_TestList& tests );
-char**		TTArgs();								// Retrieve the command-line parameters that were passed in to this test specifically. Terminates with a NULL.
+void			TTLog( const char* msg, ... );
+bool			TTIsDead();								// Returns true if a TT assertion has failed, and exit(1) has been called
+TTModes			TTMode();								// Returns TTModeAutomatedTest if this is an automated test run by a build bot or something like that
+void			TTSetProcessIdle();						// Sets the process' priority to IDLE. This is just convenient if you're running tests while working on your dev machine.
+void			TTNotifySubProcess( unsigned int pid );	// Notify the test runner that you have launched a sub-process
+void			TTListTests( const TT_TestList& tests );
+unsigned int	TTGetProcessID();						// Get Process ID of this process
+void			TTSleep( unsigned int milliseconds );
+char**			TTArgs();								// Retrieve the command-line parameters that were passed in to this test specifically. Terminates with a NULL.
+
+// Generate the filename used for IPC between the executor and the tested app
+// up: If true, then this is the channel from tested app to test harness app (aka the executor)
+//     If false, then this is the channel from the executor to the tested app
+void		TT_IPC_Filename( bool up, unsigned int executorPID, unsigned int testedPID, char (&filename)[256] );
+
+// Write an IPC message. Fails by killing the app.
+void		TT_IPC_Write_Raw( char (&filename)[256], const char* msg );
+
+// Read an IPC message. Returns true if a full message was found and consumed.
+bool		TT_IPC_Read_Raw( unsigned int waitMS, char (&filename)[256], char (&msg)[TT_IPC_MEM_SIZE] );
 
 // Returns true if TT handled this call. In this case, call exit( *retval ). If false returned, continue as usual.
 // Use the TTRun macro to call this
@@ -132,21 +141,6 @@ bool		TTRun_InternalW( const TT_TestList& tests, int argc, wchar_t** argv, int* 
 
 // Generally I use this so that I don't have to uncomment the full suite of tests when I'm fooling around with one small component, and want to run only its tests from the IDE.
 inline bool TTIsAutomatedTest() { return TTMode() == TTModeAutomatedTest; }
-
-// Handles used by IPC mechanism
-struct TT_IPC_Block
-{
-#ifdef _WIN32
-	HANDLE	WriteLock;		// Write to FileMapPtr
-	HANDLE	DataReady;		// Data is waiting in FileMapPtr
-	HANDLE	DataFetched;	// Supervisor has finished reading data from FileMapPtr. DataReady has been unset.
-	HANDLE	FileMapping;
-	char*	FileMapPtr;
-#endif
-
-	void Initialize( unsigned int executorPID );
-	void Close();
-};
 
 struct TTException
 {

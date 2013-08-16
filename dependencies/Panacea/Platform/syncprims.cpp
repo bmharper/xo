@@ -90,6 +90,20 @@ static void MillisecondsToAbsTimespec( DWORD ms, timespec& t )
 	}
 }
 
+// Android (at ndk-r9) does not have pthread_mutex_timedlock.
+// This is an absolutely horrible workaround.
+static bool pthread_mutex_timedlock_emulate_ms( AbcMutex& mutex, DWORD waitMS )
+{
+	AbcAssert( waitMS > 0 );
+	for ( DWORD ms = 0; ms < waitMS; ms++ )
+	{
+		if ( 0 == pthread_mutex_trylock( &mutex ) )
+			return true;
+		AbcSleep( 1 );
+	}
+	return false;
+}
+
 PAPI void			AbcMutexCreate( AbcMutex& mutex, LPCSTR name )
 {
 	AbcAssert( name == NULL || name[0] == 0 );
@@ -107,9 +121,13 @@ PAPI bool			AbcMutexWait( AbcMutex& mutex, DWORD waitMS )
 		return 0 == pthread_mutex_lock( &mutex );
 	else
 	{
+#ifdef ANDROID
+		return pthread_mutex_timedlock_emulate_ms( mutex, waitMS );
+#else
 		timespec t;
 		MillisecondsToAbsTimespec( waitMS, t );
 		return 0 == pthread_mutex_timedlock( &mutex, &t );
+#endif
 	}
 }
 PAPI void			AbcMutexRelease( AbcMutex& mutex )

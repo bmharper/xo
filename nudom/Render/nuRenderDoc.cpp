@@ -20,14 +20,14 @@ void nuRenderDoc::ResetRenderData()
 
 void nuRenderDoc::Render( nuRenderGL* rgl )
 {
-	//NUTRACE( "RenderDoc: Reset\n" );
+	NUTRACE_RENDER( "RenderDoc: Reset\n" );
 	ResetRenderData();
 	
-	//NUTRACE( "RenderDoc: Layout\n" );
+	NUTRACE_RENDER( "RenderDoc: Layout\n" );
 	nuLayout lay;
 	lay.Layout( Doc, RenderRoot, &RenderPool );
 
-	//NUTRACE( "RenderDoc: Render\n" );
+	NUTRACE_RENDER( "RenderDoc: Render\n" );
 	nuRenderer rend;
 	// TODO: Don't use Doc.Images - use a locked temp copy
 	rend.Render( &ClonedImages, &ClonedStrings, rgl, &RenderRoot, Doc.WindowWidth, Doc.WindowHeight );

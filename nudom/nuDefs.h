@@ -90,12 +90,18 @@ public:
 	void	SetInt( int32 x, int32 y ) { X = nuRealToPos((float) x); Y = nuRealToPos((float) y); }
 };
 
+/*
+Why does this class have a copy constructor and assignment operator?
+Without those, we get data alignment exceptions (signal 7) when running on my Galaxy S3.
+I tried explicitly raising the alignment of nuBox to 8 and 16 bytes, but that did not help.
+*/
 class NUAPI nuBox
 {
 public:
 	nuPos	Left, Right, Top, Bottom;
 
 	nuBox() : Left(0), Right(0), Top(0), Bottom(0) {}
+	nuBox( const nuBox& b ) : Left(b.Left), Right(b.Right), Top(b.Top), Bottom(b.Bottom) {}
 	nuBox( nuPos left, nuPos top, nuPos right, nuPos bottom ) : Left(left), Right(right), Top(top), Bottom(bottom) {}
 
 	void	SetInt( int32 left, int32 top, int32 right, int32 bottom );
@@ -103,6 +109,8 @@ public:
 	nuPos	Height() const	{ return Bottom - Top; }
 	void	Offset( int32 x, int32 y ) { Left += x; Right += x; Top += y; Bottom += y; }
 	bool	IsInsideMe( const nuPoint& p ) const { return p.X >= Left && p.Y >= Top && p.X < Right && p.Y < Bottom; }
+
+	nuBox&	operator=( const nuBox& b ) { Left = b.Left; Right = b.Right; Top = b.Top; Bottom = b.Bottom; return *this; }
 };
 
 class NUAPI nuBoxF
@@ -166,3 +174,32 @@ NUAPI void				NUTIME( const char* msg, ... );
 NUAPI void				nuRunWin32MessageLoop();
 #endif
 
+// Various tracing options. Uncomment these to enable tracing of that class of events.
+//#define NUTRACE_RENDER_ENABLE
+//#define NUTRACE_LAYOUT_ENABLE
+//#define NUTRACE_EVENTS_ENABLE
+//#define NUTRACE_LATENCY_ENABLE
+
+#ifdef NUTRACE_RENDER_ENABLE
+	#define NUTRACE_RENDER(msg, ...) NUTIME(msg, ##__VA_ARGS__)
+#else
+	#define NUTRACE_RENDER(msg, ...) ((void)0)
+#endif
+
+#ifdef NUTRACE_LAYOUT_ENABLE
+	#define NUTRACE_LAYOUT(msg, ...) NUTIME(msg, ##__VA_ARGS__)
+#else
+	#define NUTRACE_LAYOUT(msg, ...) ((void)0)
+#endif
+
+#ifdef NUTRACE_EVENTS_ENABLE
+	#define NUTRACE_EVENTS(msg, ...) NUTIME(msg, ##__VA_ARGS__)
+#else
+	#define NUTRACE_EVENTS(msg, ...) ((void)0)
+#endif
+
+#ifdef NUTRACE_LATENCY_ENABLE
+	#define NUTRACE_LATENCY(msg, ...) NUTIME(msg, ##__VA_ARGS__)
+#else
+	#define NUTRACE_LATENCY(msg, ...) ((void)0)
+#endif

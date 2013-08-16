@@ -4,28 +4,19 @@
 #include "Render/nuRenderDomEl.h"
 #include "Render/nuStyleResolve.h"
 
-void nuLayout::Reset()
-{
-	DefaultWidth.SetSize( nuCatWidth, nuSize::Percent(100) );
-	DefaultHeight.SetSize( nuCatHeight, nuSize::Percent(100) );
-	DefaultPadding.SetZero();
-	DefaultMargin.SetZero();
-	DefaultBorderRadius.SetSize( nuCatBorderRadius, nuSize::Pixels(0) );
-	DefaultDisplay.SetDisplay( nuDisplayInline );
-	DefaultPosition.SetPosition( nuPositionStatic );
-}
-
 void nuLayout::Layout( const nuDoc& doc, nuRenderDomEl& root, nuPool* pool )
 {
-	Reset();
-
 	PtToPixel = 1.0;	// TODO
+
+	NUTRACE_LAYOUT( "Layout 1\n" );
 
 	Doc = &doc;
 	Pool = pool;
 	Pool->FreeAll();
 	root.Children.clear();
 	Stack.Initialize( Doc, Pool );
+
+	NUTRACE_LAYOUT( "Layout 2\n" );
 
 	// Add root dummy element to the stack
 	//Stack.Stack.add();
@@ -36,42 +27,34 @@ void nuLayout::Layout( const nuDoc& doc, nuRenderDomEl& root, nuPool* pool )
 	s.PosX = s.ParentContentBox.Left;
 	s.PosY = s.ParentContentBox.Top;
 
+	NUTRACE_LAYOUT( "Layout 3\n" );
+
 	Run( s, doc.Root, &root );
+
+	NUTRACE_LAYOUT( "Layout done\n" );
 }
 
 void nuLayout::Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode )
 {
-	if ( node.GetInternalID() == 5 )
-		int adsadsa = 23232;
+	NUTRACE_LAYOUT( "Layout (%d) Run 1\n", node.GetInternalID() );
 
 	nuStyleResolver::ResolveAndPush( Stack, &node );
 	rnode->SetStyle( Stack );
 	
-	//nuStyle& style = rnode->Style;
-	//style.Discard();
-	//style.Compute( *Doc, node );
+	NUTRACE_LAYOUT( "Layout (%d) Run 2\n", node.GetInternalID() );
 
 	rnode->InternalID = node.GetInternalID();
 
 	nuStyleBox margin;
 	nuStyleBox padding;
-	//nuStyleBox margin = DefaultMargin;
-	//nuStyleBox padding = DefaultPadding;
 	Stack.GetBox( nuCatMargin_Left, margin );
 	Stack.GetBox( nuCatPadding_Left, padding );
 
-	//style.GetBox( nuCatMargin_Left, margin );
-	//style.GetBox( nuCatPadding_Left, padding );
 	auto width = Stack.Get( nuCatWidth );
 	auto height = Stack.Get( nuCatHeight );
 	auto borderRadius = Stack.Get( nuCatBorderRadius );
 	auto display = Stack.Get( nuCatDisplay );
 	auto position = Stack.Get( nuCatPosition );
-	//if ( !width ) width = &DefaultWidth;
-	//if ( !height ) height = &DefaultHeight;
-	//if ( !borderRadius ) borderRadius = &DefaultBorderRadius;
-	//if ( !display ) display = &DefaultDisplay;
-	//if ( !position ) position = &DefaultPosition;
 	nuPos cwidth = ComputeDimension( s.ParentContentBox.Width(), width.GetSize() );
 	nuPos cheight = ComputeDimension( s.ParentContentBox.Height(), height.GetSize() );
 	nuPos cborderRadius = ComputeDimension( s.ParentContentBox.Width(), borderRadius.GetSize() );
@@ -116,6 +99,8 @@ void nuLayout::Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode )
 	else													cs.PositionedAncestor = s.ParentContentBox;
 	cs.PosX = cs.ParentContentBox.Left;
 	cs.PosY = cs.ParentContentBox.Top;
+
+	NUTRACE_LAYOUT( "Layout (%d) Run 3\n", node.GetInternalID() );
 
 	const auto& nodeChildren = node.GetChildren();
 	for ( int i = 0; i < nodeChildren.size(); i++ )

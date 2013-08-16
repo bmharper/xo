@@ -533,6 +533,13 @@ bool CompoundFile::WriteSub( LPCWSTR fname, const void* buffer, INT64 bytes )
 			return false;
 		}
 	}
+	else
+	{
+		// Unfortunately this thing doesn't support writing more than once. When you do that, 
+		// files get clobbered. We would need a way to re-allocate a file, and manage dead space,
+		// etc, etc. Just use a damn .zip file!
+		ASSERT( !bWrite );
+	}
 
 	if ( bModify && !NewSubFiles.contains( s ) && (SubSeekPos[ index ] + bytes > s->size) )
 	{

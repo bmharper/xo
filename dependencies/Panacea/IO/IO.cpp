@@ -189,7 +189,7 @@ namespace Panacea
 
 			pvect<FileFindItem*> all;
 			int ff_flags = FindFullPath;
-			if ( recursive ) ff_flags |= FindRecursiveOnAllFolders;
+			if ( recursive ) ff_flags |= FindRecursiveOnAllDirectories;
 			Panacea::IO::Path::FindFiles( root + wildcard, all, ff_flags );
 
 			int64 size = 0;
@@ -238,7 +238,7 @@ namespace Panacea
 			HashSHA1 h;
 
 			pvect<FileFindItem*> all;
-			int ff_flags = FindRecursiveOnAllFolders;
+			int ff_flags = FindRecursiveOnAllDirectories;
 			Panacea::IO::Path::FindFiles( root + L"*", all, ff_flags );
 			for ( intp i = 0; i < all.size(); i++ )
 			{

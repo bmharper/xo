@@ -78,8 +78,7 @@ namespace Panacea
 		{
 			FindIgnoreHidden = 1,
 			FindIgnoreSystem = 2,
-			FindRecursiveOnWildcard = 4,		///< c:\mypath\*.cpp   will only recurse into folders with a .cpp extension.
-			FindRecursiveOnAllFolders = 8,		///< c:\mypath\*.cpp   will recurse into all folders, looking for files with a .cpp extension.
+			FindRecursiveOnAllDirectories = 8,	///< c:\mypath\*.cpp   will recurse into all directories, looking for files with a .cpp extension.
 			FindFullPath = 16,					///< Return full paths, instead of paths relative to base directory.
 		};
 

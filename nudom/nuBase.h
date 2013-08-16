@@ -12,11 +12,13 @@
 #else
 	typedef const wchar_t* LPCTSTR;
 	typedef const char* LPCSTR;
-	// Android
-	#include <jni.h>
+	#ifdef ANDROID
+		// Android
+		#include <jni.h>
+		#include <android/log.h>
+	#endif
 	#include <GLES2/gl2.h>
 	#include <GLES2/gl2ext.h>
-	#include <android/log.h>
 	#include <sys/atomics.h>
 	#include <pthread.h>
 	#include <semaphore.h>

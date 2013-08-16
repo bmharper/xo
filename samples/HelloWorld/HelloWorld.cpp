@@ -37,6 +37,7 @@ void nuMain( nuMainEvent ev )
 				return true;
 			};
 			doc->Root.OnMouseMove( onMoveOrTouch );
+			doc->Root.OnTouch( onMoveOrTouch );
 #else
 			doc->Root.OnMouseMove( touch, greybox );
 			doc->Root.OnTouch( touch, greybox );

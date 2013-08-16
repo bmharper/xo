@@ -1,4 +1,8 @@
 #include <pch.h>
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 6011) // Looks like an /analyze false positive in VS 2010
+#endif
 /* -*- mode: c++; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*- */
 /* vi: set expandtab shiftwidth=4 tabstop=4: */
 
@@ -227,3 +231,7 @@ MODP_API size_t modp_burl_decode_raw(char* dest, const char* s, size_t len)
     *dest = '\0';
     return (size_t)(dest - deststart); // compute "strlen" of dest.
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif

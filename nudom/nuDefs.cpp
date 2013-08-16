@@ -81,9 +81,6 @@ static void nuInitialize_Win32()
 
 static void nuShutdown_Win32()
 {
-	// allow documents scheduled for deletion to be deleted
-	nuProcessDocQueue();
-
 	if ( UIThread != NULL )
 	{
 		nuGlobal()->EventQueue.Add( nuEvent() );
@@ -151,6 +148,9 @@ NUAPI void nuShutdown()
 
 	for ( int i = 0; i < nuTagEND; i++ )
 		delete DefaultTagStyles[i];
+
+	// allow documents scheduled for deletion to be deleted
+	nuProcessDocQueue();
 
 #if NU_WIN_DESKTOP
 	nuShutdown_Win32();

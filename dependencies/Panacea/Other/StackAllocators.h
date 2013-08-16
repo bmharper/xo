@@ -128,7 +128,8 @@ namespace AbCore
 			TRef ocap = Capacity;
 			if ( Capacity == 0 ) Capacity = 1;
 			else Capacity = Capacity * 2;
-			Capacity = max(Capacity, needed);
+			if ( needed > Capacity )
+				Capacity = needed;
 			TData* d = (TData*) Allocator->Alloc( Capacity * sizeof(TData) );
 			memcpy( d, Data, ocap * sizeof(TData) );
 			Allocator->Free( Data );

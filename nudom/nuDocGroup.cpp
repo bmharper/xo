@@ -42,7 +42,7 @@ nuRenderResult nuDocGroup::Render()
 
 	if ( !haveLock )
 	{
-		NUTRACE( "Render: Failed to acquire DocLock\n" );
+		NUTIME( "Render: Failed to acquire DocLock\n" );
 		return nuRenderResultNeedMore;
 	}
 
@@ -69,18 +69,17 @@ nuRenderResult nuDocGroup::Render()
 
 	if ( !idle && Wnd != NULL )
 	{
-		NUTIME( "Render start\n" );
-		//NUTRACE( "BeginRender\n" );
+		//NUTIME( "Render start\n" );
 		if ( !Wnd->BeginRender() )
 		{
-			NUTRACE( "BeginRender failed\n" );
+			NUTIME( "BeginRender failed\n" );
 			return nuRenderResultNeedMore;
 		}
 
-		//NUTRACE( "Render DO\n" );
+		//NUTIME( "Render DO\n" );
 		RenderDoc->Render( Wnd->RGL );
 
-		//NUTRACE( "Render Finish\n" );
+		//NUTIME( "Render Finish\n" );
 		Wnd->FinishRender();
 	}
 
@@ -93,14 +92,14 @@ void nuDocGroup::ProcessEvent( nuEvent& ev )
 	TakeCriticalSection lock( DocLock );
 	uint32 initialVersion = Doc->GetVersion();
 	if ( ev.Type != nuEventTimer )
-		NUTIME("ProcessEvent (not a timer)\n");
+		NUTRACE_LATENCY("ProcessEvent (not a timer)\n");
 	switch ( ev.Type )
 	{
 	case nuEventWindowSize:
 		Doc->WindowWidth = (uint32) ev.Points[0].x;
 		Doc->WindowHeight = (uint32) ev.Points[0].y;
 		Doc->IncVersion();
-		NUTRACE( "Processed WindowSize event. Document at version %d\n", Doc->GetVersion() );
+		NUTIME( "Processed WindowSize event. Document at version %d\n", Doc->GetVersion() );
 		break;
 	}
 	if ( BubbleEvent( ev ) )
@@ -119,6 +118,8 @@ bool nuDocGroup::BubbleEvent( nuEvent& ev )
 	// IE does not support capturing though, so nobody really use it.
 	// We simply ignore the question of how to do shortcut keys for now.
 
+	NUTRACE_EVENTS( "BubbleEvent type=%d\n", (int) ev.Type );
+
 	nuDomEl* el = &Doc->Root;
 	bool stop = false;
 	bool handled = false;
@@ -126,6 +127,7 @@ bool nuDocGroup::BubbleEvent( nuEvent& ev )
 	if ( el->HandlesEvent(ev.Type) )
 	{
 		const podvec<nuEventHandler>& h = el->GetHandlers();
+		NUTRACE_EVENTS( "BubbleEvent found %d event handlers\n", (int) h.size() );
 		for ( intp i = 0; i < h.size() && !stop; i++ )
 		{
 			if ( h[i].Handles( ev.Type ) )

@@ -3,7 +3,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.android.nudom">
     <application
-            android:label="@string/gl2jni_activity">
+            android:label="@string/gl2jni_activity"
+            android:debuggable="true"
+            >
         <activity android:name="NuActivity"
                 android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             	android:launchMode="singleTask"

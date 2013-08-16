@@ -90,7 +90,7 @@ LRESULT nuDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		ev.Type = nuEventMouseMove;
 		ev.PointCount = 1;
 		ev.Points[0] = NUVEC2( LOWORD(lParam), HIWORD(lParam) );
-		NUTIME("MouseMove\n");
+		NUTRACE_LATENCY("MouseMove\n");
 		nuGlobal()->EventQueue.Add( ev );
 		break;
 

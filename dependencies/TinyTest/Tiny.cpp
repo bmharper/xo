@@ -1,14 +1,19 @@
 #include "pch.h"
 #include "TinyTest.h"
 #ifdef _WIN32
+#include <direct.h>
 #include "StackWalker.h"
+#else
+#include <unistd.h>
 #endif
+
+typedef long long int64;
+typedef unsigned int uint;
 
 const wchar_t* EvMarkerDead = L"TinyTest_Marker_Dead";
 
 static bool			IsExecutingUnderGuidance = false;
 static int			ExecutorPID = 0;
-static TT_IPC_Block	IPC;
 static char*		TestCmdLineArgs[TT_MAX_CMDLINE_ARGS + 1]; // +1 for the null terminator
 
 void TTException::CopyStr( size_t n, char* dst, const char* src )
@@ -161,6 +166,28 @@ void TTListTests( const TT_TestList& tests )
 	printf( "%s\n", TT_LIST_LINE_2 );
 	for ( int i = 0; i < tests.size(); i++ )
 		printf( "  %-40s %-20s\n", tests[i].Name, tests[i].Size == TTSizeSmall ? TT_SIZE_SMALL_NAME : TT_SIZE_LARGE_NAME );
+}
+
+unsigned int TTGetProcessID()
+{
+#ifdef _WIN32
+	return (uint) GetCurrentProcessId();
+#else
+	return (uint) getpid()
+#endif
+}
+
+void TTSleep( unsigned int milliseconds )
+{
+#ifdef _WIN32
+	Sleep( milliseconds );
+#else
+	int64 nano = milliseconds * (int64) 1000;
+	timespec t;
+	t.tv_nsec = nano % 1000000000; 
+	t.tv_sec = (nano - t.tv_nsec) / 1000000000;
+	nanosleep( &t, NULL );
+#endif
 }
 
 char** TTArgs()
@@ -416,82 +443,85 @@ static void TTSignalHandler(int signal)
 	Die();
 }
 
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable: 6309 6387 )
-#endif
-
-void TT_IPC_Block::Initialize( unsigned int executorPID )
+void TT_IPC_Filename( bool up, unsigned int executorPID, unsigned int testedPID, char (&filename)[256] )
 {
 #ifdef _WIN32
-	char ready[256];
-	char fetched[256];
-	char lock[256];
-	char mem[256];
-	sprintf( ready, "%s%u", TT_IPC_PREFIX_READY, executorPID );
-	sprintf( fetched, "%s%u", TT_IPC_PREFIX_FETCHED, executorPID );
-	sprintf( lock, "%s%u", TT_IPC_PREFIX_LOCK, executorPID );
-	sprintf( mem, "%s%u", TT_IPC_PREFIX_MEM, executorPID );
-	DataReady = CreateEventA( NULL, false, false, ready );
-	DataFetched = CreateEventA( NULL, false, false, fetched );
-	WriteLock = CreateMutexA( NULL, false, lock );
-	FileMapping = CreateFileMappingA( NULL, NULL, PAGE_READWRITE, 0, TT_IPC_MEM_SIZE, mem );
-	FileMapPtr = (char*) MapViewOfFile( FileMapping, FILE_MAP_WRITE, 0, 0, TT_IPC_MEM_SIZE );
+	// We prefer c:\temp over obscure stuff inside the "proper" temp directory, because that tends to fill up with stuff you never see.
+	_mkdir( "c:\\temp" );
+	sprintf( filename, "c:\\temp\\tiny_test_ipc_%s_%u_%u", up ? "up" : "down", executorPID, testedPID );
+#else
+	sprintf( filename, "/tmp/tiny_test_ipc_%s_%u_%u", up ? "up" : "down", executorPID, testedPID );
 #endif
 }
 
-void TT_IPC_Block::Close()
+bool TT_IPC_Read_Raw( unsigned int waitMS, char (&filename)[256], char (&msg)[TT_IPC_MEM_SIZE] )
 {
-#ifdef _WIN32
-	UnmapViewOfFile( FileMapPtr );
-	CloseHandle( DataFetched );
-	CloseHandle( DataReady );
-	CloseHandle( WriteLock );
-	CloseHandle( FileMapping );
-	DataFetched = NULL;
-	DataReady = NULL;
-	WriteLock = NULL;
-	FileMapping = NULL;
-	FileMapPtr = NULL;
-#endif
+	memset( msg, 0, sizeof(msg) );
+	FILE* file = fopen( filename, "rb" );
+	if ( file == NULL )
+	{
+		TTSleep( waitMS );
+		return false;
+	}
+
+	uint length = 0;
+	bool good = false;
+	if ( fread( &length, sizeof(length), 1, file ) == 1 )
+		good = fread( &msg, length, 1, file ) == 1;
+
+	fclose( file );
+	// We acknowledge receipt by deleting the file
+	if ( good )
+		remove( filename );
+	return good;
 }
 
-#ifdef _MSC_VER
-#pragma warning( pop )
-#endif
-
-static void TT_IPC_Raw( const char* msg )
+void TT_IPC_Write_Raw( char (&filename)[256], const char* msg )
 {
-#ifdef _WIN32
 	// Disable IPC if we're not being run as an automated test.
 	// Typical use case is to run a single test from a debugger.
-	// Erg... this is a hack, because I haven't yet figured out a clean way to do differentiate auto vs manual invoke.
+	// Erg... this is a hack, because I haven't yet figured out a clean way to differentiate auto vs manual invoke.
 	if ( IsDebuggerPresent() )
 		return;
 
-	WaitForSingleObject( IPC.WriteLock, INFINITE );
-	
-	if ( strlen(msg) >= TT_IPC_MEM_SIZE )
-		TTAssertFailed( "TT_IPC message size is too large", "internal", 0, true );
-	else
+	char buf[512];
+	unsigned int length = (unsigned int) strlen(msg);
+	FILE* file = fopen( filename, "wb" );
+	if ( file == NULL )
 	{
-		memcpy( IPC.FileMapPtr, msg, strlen(msg) + 1 );
-		SetEvent( IPC.DataReady );
-		WaitForSingleObject( IPC.DataFetched, INFINITE );
+		sprintf( buf, "TT_IPC failed to open %s", filename );
+		TTAssertFailed( buf, "internal", 0, true );
 	}
-
-	ReleaseMutex( IPC.WriteLock );
-#endif
+	fwrite( &length, sizeof(length), 1, file );
+	fwrite( msg, length, 1, file );
+	fclose( file );
+	// The other side acknowledges this transmission by deleting the file
+	uint sleepMS = 30;
+	for ( uint nwait = 0; nwait < 5 * 1000 / sleepMS; nwait++ )
+	{
+		TTSleep( sleepMS );
+		FILE* file = fopen( filename, "rb" );
+		if ( file == NULL )
+			return;
+		fclose(file);
+	}
+	sprintf( buf, "TT_IPC executor failed to acknowledge read on %s", filename );
+	TTAssertFailed( buf, "internal", 0, true );
 }
 
 static void TT_IPC( const char* msg, ... )
 {
+	// This is one-way communication, from the tested app to the test harness app
+	char filename[256];
+	TT_IPC_Filename( true, ExecutorPID, TTGetProcessID(), filename );
+
 	char buf[8192];
 	va_list va;
 	va_start( va, msg );
 	vsprintf( buf, msg, va );
 	va_end( va ); 
-	TT_IPC_Raw( buf );
+
+	TT_IPC_Write_Raw( filename, buf );
 }
 
 void TTNotifySubProcess( unsigned int pid )
@@ -501,7 +531,6 @@ void TTNotifySubProcess( unsigned int pid )
 
 static void TTRun_PrepareExecutionEnvironment()
 {
-	IPC.Initialize( ExecutorPID );
 #ifdef _WIN32
 	SetUnhandledExceptionFilter( TTExceptionHandler );
 #endif
@@ -517,7 +546,6 @@ static void TTRun_PrepareExecutionEnvironment()
 
 static void TTRun_CloseExecutionEnvironment()
 {
-	IPC.Close();
 }
 
 static int TTRun_Internal_Mode2_Execute( const TT_TestList& tests, const char* testname )

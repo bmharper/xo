@@ -212,12 +212,12 @@ bool nuSysWnd::BeginRender()
 void nuSysWnd::FinishRender()
 {
 #if NU_WIN_DESKTOP
-	NUTIME( "SwapBuffers (begin)\n" );
+	NUTRACE_LATENCY( "SwapBuffers (begin)\n" );
 	SwapBuffers( DC );
 	wglMakeCurrent( NULL, NULL );
 	ReleaseDC( SysWnd, DC );
 	DC = NULL;
-	NUTIME( "SwapBuffers (done)\n" );
+	NUTRACE_LATENCY( "SwapBuffers (done)\n" );
 #endif
 }
 

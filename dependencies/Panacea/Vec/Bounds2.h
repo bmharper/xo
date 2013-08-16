@@ -303,6 +303,15 @@ public:
 		return (overlapX && touchY) || (overlapY && touchX);
 	}
 
+	/// Clip to another rectangle.
+	void ClipTo( const Bounds2T& clipTo )
+	{
+		x1 = std::max(x1, clipTo.x1);
+		y1 = std::max(y1, clipTo.y1);
+		x2 = std::min(x2, clipTo.x2);
+		y2 = std::min(y2, clipTo.y2);
+	}
+
 	bool IsInsideMe( const Bounds2T& b ) const
 	{
 		return	b.x1 >= x1 && b.y1 >= y1 &&

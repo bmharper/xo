@@ -223,7 +223,7 @@ namespace Panacea
 			// Separate out into [base directory] + [wildcard]
 
 			// For recurseAll, we do the wildcard matching ourselves
-			bool recurseAll = !!(flags & FindRecursiveOnAllFolders);
+			bool recurseAll = !!(flags & FindRecursiveOnAllDirectories);
 			bool fullPath = !!(flags & FindFullPath);
 			wchar_t sep = DirSep( searchWildcard );
 
@@ -284,14 +284,12 @@ namespace Panacea
 						bool ignore = false;
 						if ( !!(fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) && !!(flags & FindIgnoreHidden) ) ignore = true;
 						if ( !!(fd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM) && !!(flags & FindIgnoreSystem) ) ignore = true;
-						if ( isDir && !!(flags & (FindRecursiveOnWildcard | FindRecursiveOnAllFolders)) )
+						if ( isDir && recurseAll )
 						{
 							dirStack += lbase + fd.cFileName + XStringW(sep);
 						}
-						if ( recurseAll )
-						{
-							if ( !MatchWildcard( fd.cFileName, wildcard, false ) ) ignore = true;
-						}
+						if ( recurseAll && !MatchWildcard( fd.cFileName, wildcard, false ) )
+							ignore = true;
 						if ( !ignore )
 						{
 							FileFindItem* it = new FileFindItem();
@@ -307,10 +305,6 @@ namespace Panacea
 							else			it->Name = localBase  + fd.cFileName;
 							it->Size = (((u64) fd.nFileSizeHigh) << 32) | fd.nFileSizeLow;
 							items.push_back( it );
-							if ( it->Directory && !!(flags & (FindRecursiveOnWildcard | FindRecursiveOnAllFolders)) )
-							{
-								dirStack += lbase + it->Name + XStringW(sep);
-							}
 							found++;
 						}
 					}
