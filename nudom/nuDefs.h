@@ -115,6 +115,7 @@ Why does this class have a copy constructor and assignment operator?
 Without those, we get data alignment exceptions (signal 7) when running on my Galaxy S3.
 I tried explicitly raising the alignment of nuBox to 8 and 16 bytes, but that did not help.
 Unfortunately I have not yet had the energy to open up the assembly and see what the compiler is doing wrong.
+This is documented inside nudom/docs/android.md
 */
 class NUAPI nuBox
 {
@@ -131,6 +132,7 @@ public:
 	void	Offset( int32 x, int32 y ) { Left += x; Right += x; Top += y; Bottom += y; }
 	bool	IsInsideMe( const nuPoint& p ) const { return p.X >= Left && p.Y >= Top && p.X < Right && p.Y < Bottom; }
 
+	// $NU_GCC_ALIGN_BUG
 	nuBox&	operator=( const nuBox& b ) { Left = b.Left; Right = b.Right; Top = b.Top; Bottom = b.Bottom; return *this; }
 };
 

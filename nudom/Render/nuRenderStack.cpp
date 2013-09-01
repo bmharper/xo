@@ -1,6 +1,31 @@
 #include "pch.h"
 #include "nuRenderStack.h"
 
+void nuRenderStackEl::Reset()
+{
+	Styles.Reset();
+	Pool = NULL;
+}
+
+nuRenderStackEl& nuRenderStackEl::operator=( const nuRenderStackEl& b )
+{
+	memcpy( this, &b, sizeof(*this) );
+	return *this;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+nuRenderStack::nuRenderStack()
+{
+}
+
+nuRenderStack::~nuRenderStack()
+{
+	delete_all( Stack_Pools );
+}
+
 void nuRenderStack::Initialize( const nuDoc* doc, nuPool* pool )
 {
 	Doc = doc;
@@ -66,4 +91,23 @@ void nuRenderStack::GetBox( nuStyleCategories cat, nuStyleBox& box ) const
 	box.Top = Get( (nuStyleCategories) (base + 1) ).GetSize();
 	box.Right = Get( (nuStyleCategories) (base + 2) ).GetSize();
 	box.Bottom = Get( (nuStyleCategories) (base + 3) ).GetSize();
+}
+
+void nuRenderStack::StackPop()
+{
+	// Stack_Pools never gets downsized
+	Stack_Pools.back()->FreeAllExceptOne();
+	Stack.pop();
+}
+
+nuRenderStackEl& nuRenderStack::StackPush()
+{
+	nuRenderStackEl& el = Stack.add();
+	while ( Stack_Pools.size() < Stack.size() )
+	{
+		Stack_Pools += new nuPool();
+		Stack_Pools.back()->SetChunkSize( 8 * 1024 ); // this is mentioned in nuRenderStack docs, so keep that up to date if you change this
+	}
+	el.Pool = Stack_Pools[Stack.size() - 1];
+	return el;
 }

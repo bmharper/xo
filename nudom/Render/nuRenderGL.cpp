@@ -53,6 +53,8 @@ static const char* pFillTexFrag = Z(
 	}
 );
 
+#if NU_WIN_DESKTOP
+
 static const char* pTextRGBVert = Z(
 	uniform		mat4	mvproj;
 	attribute	vec4	vpos;
@@ -113,23 +115,38 @@ static const char* pTextRGBFrag = Z(
 		//gl_FragColor = vec4(aR, aG, aB, avgA);
 		outputColor0 = vec4(color.r, color.g, color.b, avgA);
 		outputColor1 = vec4(aR, aG, aB, avgA);
-
-		/*
-		float t = max(max(red,green),blue);
-		vec4 color2 = vec4( color.rgb, (red + green + blue) / 3.0);
-		color2 = t*color2 + (1.0 - t) * vec4(red, green, blue, min(min(red, green), blue));
-		gl_FragColor = vec4( color2.rgb, color.a * color2.a );
-		*/
-
-		/*
-		No filtering
-		float red = texture2D(tex0, vec2(uv.s - offset, uv.t));
-		float green = texture2D(tex0, vec2(uv.s, uv.t));
-		float blue = texture2D(tex0, vec2(uv.s + offset, uv.t));
-		gl_FragColor = color * vec4(red, green, blue, 1);
-		*/
 	}
 );
+
+#else
+// These are just dummy programs to satisfy the Android NDK Compiler (GCC),
+// which sees #version 330 as a compiler directive. I need a shader management thingy.
+static const char* pTextRGBVert = Z(
+	uniform		mat4	mvproj;
+	attribute	vec4	vpos;
+	attribute	vec4	vcolor;
+	attribute	vec2	vtexuv0;
+	varying		vec4	color;
+	varying		vec2	texuv0;
+	void main()
+	{
+		gl_Position = mvproj * vpos;
+		texuv0 = vtexuv0;
+		color = vcolor;
+	}
+);
+
+static const char* pTextRGBFrag = Z(
+	precision mediump float;
+	uniform sampler2D	tex0;
+	varying vec4		color;
+	varying vec2		texuv0;
+	void main()
+	{
+		gl_FragColor = color * texture2D(tex0, texuv0.st);
+	}
+);
+#endif
 
 static const char* pTextWholeVert = Z(
 	uniform		mat4	mvproj;
@@ -295,7 +312,7 @@ bool nuRenderGL::CreateShaders()
 	Check();
 
 	nuString textRGBFrag(pTextRGBFrag);
-	textRGBFrag.ReplaceAll( "ATLAS_SIZE", fmt("%v", nuGlyphCache::AtlasSize).Z );
+	textRGBFrag.ReplaceAll( "ATLAS_SIZE", fmt("%v", nuGlyphAtlasSize).Z );
 
 	if ( !LoadProgram( PRect, pRectVert, pRectFrag ) ) return false;
 	if ( !LoadProgram( PFill, pFillVert, pFillFrag ) ) return false;
@@ -331,6 +348,7 @@ bool nuRenderGL::CreateShaders()
 	VarTextRGBVUV = glGetAttribLocation( PTextRGB.Prog, "vtexuv0" );
 	VarTextRGBVClamp = glGetAttribLocation( PTextRGB.Prog, "vtexClamp" );
 	VarTextRGBTex0 = glGetUniformLocation( PTextRGB.Prog, "tex0" );
+#if NU_WIN_DESKTOP
 	glBindFragDataLocation( PTextRGB.Prog, 0, "outputColor0" );
 	glBindFragDataLocation( PTextRGB.Prog, 1, "outputColor1" );
 	Check();
@@ -338,6 +356,7 @@ bool nuRenderGL::CreateShaders()
 	GLint c1 = glGetFragDataLocation( PTextRGB.Prog, "outputColor1" );
 	GLint c2 = glGetFragDataLocation( PTextRGB.Prog, "outputColor2" );
 	Check();
+#endif
 
 	VarTextWholeMVProj = glGetUniformLocation( PTextWhole.Prog, "mvproj" );
 	VarTextWholeVPos = glGetAttribLocation( PTextWhole.Prog, "vpos" );
@@ -657,10 +676,13 @@ void nuRenderGL::LoadTextureAtlas( const nuTextureAtlas* atlas )
 		glGenTextures( 1, &SingleTexAtlas2D );
 	glActiveTexture( GL_TEXTURE0 );
 	glBindTexture( GL_TEXTURE_2D, SingleTexAtlas2D );
-	//int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
-	//int format = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
+#if NU_WIN_DESKTOP
 	int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_SLUMINANCE8 : GL_RGB;
 	int format = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
+#else
+	int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
+	int format = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
+#endif
 	glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, atlas->GetWidth(), atlas->GetHeight(), 0, format, GL_UNSIGNED_BYTE, atlas->DataAt(0,0) );
 	// all assuming this is for a glyph atlas
 	//glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );

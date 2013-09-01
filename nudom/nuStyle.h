@@ -3,7 +3,9 @@
 #include "nuDefs.h"
 #include "nuString.h"
 
-// Represents a size that is zero, pixels, points, percent. TODO: em
+// Represents a size that is zero, pixels, points, percent.
+// TODO: em
+// TODO: lx (logical pixel)
 // Zero is represented as 0 pixels
 struct NUAPI nuSize
 {
@@ -280,8 +282,8 @@ public:
 	static const uint32 InitialBitsPerSlot = 2;		// 1 << 2 = 4, is our lowest non-empty size
 	static const uint32 SlotOffset = 1;				// We need to reserve zero for the "empty" state of a slot
 
-					nuStyleSet();
-					~nuStyleSet();
+					nuStyleSet();		// Simply calls Reset()
+					~nuStyleSet();		// Destructor does nothing
 
 	void			Set( int n, const nuStyleAttrib* attribs, nuPool* pool );
 	void			Set( const nuStyleAttrib& attrib, nuPool* pool );

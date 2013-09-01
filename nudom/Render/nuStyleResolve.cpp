@@ -6,8 +6,7 @@ void nuStyleResolver::ResolveAndPush( nuRenderStack& stack, const nuDomEl* node 
 {
 	if ( node->GetInternalID() == 5 )
 		int ewqeqw = 23232;
-	nuPool* pool = stack.Pool;
-	nuRenderStackEl& result = stack.Stack.add();
+	nuRenderStackEl& result = stack.StackPush();
 
 	// 1. Inherited by default
 	for ( int i = 0; i < nuNumInheritedStyleCategories; i++ )
@@ -32,27 +31,28 @@ void nuStyleResolver::Set( nuRenderStack& stack, const nuDomEl* node, const nuSt
 
 void nuStyleResolver::Set( nuRenderStack& stack, const nuDomEl* node, intp n, const nuStyleAttrib* vals )
 {
-	nuRenderStackEl& result = stack.Stack.back();
+	nuRenderStackEl& result = stack.StackBack();
 
 	for ( intp i = 0; i < n; i++ )
 	{
 		if ( vals[i].IsInherit() )
 			SetInherited( stack, node, vals[i].GetCategory() );
 		else
-			result.Styles.Set( vals[i], stack.Pool );
+			result.Styles.Set( vals[i], result.Pool );
 	}
 }
 
 void nuStyleResolver::SetInherited( nuRenderStack& stack, const nuDomEl* node, nuStyleCategories cat )
 {
-	nuRenderStackEl& result = stack.Stack.back();
+	nuRenderStackEl& result = stack.StackBack();
+	intp stackSize = stack.StackSize();
 
-	for ( intp j = stack.Stack.size() - 2; j >= 0; j-- )
+	for ( intp j = stackSize - 2; j >= 0; j-- )
 	{
-		nuStyleAttrib attrib = stack.Stack[j].Styles.Get( cat );
+		nuStyleAttrib attrib = stack.StackAt(j).Styles.Get( cat );
 		if ( !attrib.IsNull() )
 		{
-			result.Styles.Set( attrib, stack.Pool );
+			result.Styles.Set( attrib, result.Pool );
 			break;
 		}
 	}

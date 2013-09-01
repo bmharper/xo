@@ -18,6 +18,14 @@ nuPool::~nuPool()
 	FreeAll();
 }
 
+void nuPool::SetChunkSize( size_t size )
+{
+	// If this were not true, then FreeAllExceptOne would be wrong.
+	// Also, this just seems like sane behaviour (i.e. initializing chunk size a priori).
+	NUASSERT( Chunks.size() == 0 );
+	ChunkSize = size;
+}
+
 void nuPool::FreeAll()
 {
 	for ( intp i = 0; i < Chunks.size(); i++ )
@@ -27,6 +35,17 @@ void nuPool::FreeAll()
 	Chunks.clear();
 	BigBlocks.clear();
 	TopRemain = 0;
+}
+
+/* This is an optimization for a pool that is frequently re-used.
+The pool must have quite a predictable size for this to be effective.
+*/
+void nuPool::FreeAllExceptOne()
+{
+	if ( Chunks.size() == 1 && BigBlocks.size() == 0 )
+		TopRemain = ChunkSize;
+	else
+		FreeAll();
 }
 
 void* nuPool::Alloc( size_t bytes, bool zeroInit )

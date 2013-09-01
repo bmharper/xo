@@ -40,11 +40,11 @@ struct nuGlyphCacheKey
 };
 FHASH_SETUP_POD_GETHASHCODE(nuGlyphCacheKey);
 
+static const int nuGlyphAtlasSize = 256; // 256 x 256 x 8bit = 64k per atlas
+
 class NUAPI nuGlyphCache
 {
 public:
-	static const int AtlasSize = 256; // 256 x 256 x 8bit = 64k per atlas
-
 			nuGlyphCache();
 			~nuGlyphCache();
 

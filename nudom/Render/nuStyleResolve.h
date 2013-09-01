@@ -9,7 +9,7 @@ class nuRenderStack;
 
 [This whole rambling on parallelizing this was from before the time that I
 created the nuRenderStack. The parallelization discussion now belongs at a higher
-level that just here]
+level than just here]
 
 I'm not sure how best to parallelize this. I suspect there is some well known algorithm
 for parallelizing a tree/DAG computation such as this.

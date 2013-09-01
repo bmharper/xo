@@ -105,11 +105,11 @@ int nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key, const nuFont* font )
 		if ( Atlas.size() == 0 || pass != 0 )
 		{
 			nuTextureAtlas* newAtlas = new nuTextureAtlas();
-			newAtlas->Initialize( AtlasSize, AtlasSize, 1 );
+			newAtlas->Initialize( nuGlyphAtlasSize, nuGlyphAtlasSize, 1 );
 			Atlas += newAtlas;
 		}
 		atlas = Atlas.back();
-		NUASSERT( naturalWidth + horzPad * 2 <= AtlasSize );
+		NUASSERT( naturalWidth + horzPad * 2 <= nuGlyphAtlasSize );
 		if ( atlas->Alloc( naturalWidth + horzPad * 2, height, atlasX, atlasY ) )
 			break;
 	}

@@ -78,7 +78,7 @@ nuFontID nuFontStore::InsertByFacename( const nuString& facename )
 	FT_Error e = FT_New_Face( FTLibrary, filename, 0, &font.FTFace );
 	if ( e != 0 )
 	{
-		NUTRACE( "Failed to load font (facename=%s) (filename=%s)\n", facename, filename );
+		NUTRACE( "Failed to load font (facename=%s) (filename=%s)\n", facename.Z, filename );
 		return nuFontIDNull;
 	}
 
@@ -106,9 +106,15 @@ nuFontID nuFontStore::InsertInternal( const nuFont& font )
 
 const char* nuFontStore::FacenameToFilename( const nuString& facename )
 {
+#if NU_WIN_DESKTOP
 	if ( facename == "Arial" ) return "c:\\Windows\\Fonts\\arial.ttf";
 	if ( facename == "Times New Roman" ) return "c:\\Windows\\Fonts\\times.ttf";
 	if ( facename == "Consolas" ) return "c:\\Windows\\Fonts\\consola.ttf";
 	if ( facename == "Microsoft Sans Serif" ) return "c:\\Windows\\Fonts\\micross.ttf";
 	return "c:\\Windows\\Fonts\\arial.ttf";
+#else
+	if ( facename == "Droid Sans" ) return "/system/fonts/DroidSans.ttf";
+	if ( facename == "Droid Sans Mono" ) return "/system/fonts/DroidSansMono.ttf";
+	return "/system/fonts/DroidSans.ttf";
+#endif
 }

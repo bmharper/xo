@@ -27,7 +27,7 @@ void nuMain( nuMainEvent ev )
 			nuDomEl* txtBox = doc->Root.AddChild( nuTagDiv );
 			txtBox->StyleParse( "width: 90px; height: 90px; border-radius: 15px; background: #f0f0f0; margin: 3px; position: absolute;" );
 			//txtBox->SetText( "lllll" );
-			txtBox->SetText( "abcde" );
+			txtBox->SetText( "Abcde" );
 
 			doc->Root.ChildByIndex(0)->StyleParse( "background: #e00e" );
 			doc->Root.ChildByIndex(1)->StyleParse( "background: #0e0e" );

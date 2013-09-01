@@ -458,17 +458,22 @@ NUSTYLE_SETTERS_1P
 
 nuStyleSet::nuStyleSet()
 {
-	Lookup = NULL;
-	Attribs = NULL;
-	Count = 0;
-	BitsPerSlot = 0;
-	Capacity = 0;
-	GetSlotF = NULL;
-	SetSlotF = NULL;
+	Reset();
 }
 
 nuStyleSet::~nuStyleSet()
 {
+}
+
+void nuStyleSet::Reset()
+{
+	Lookup = NULL;
+	Attribs = NULL;
+	Count = 0;
+	Capacity = 0;
+	BitsPerSlot = 0;
+	SetSlotF = NULL;
+	GetSlotF = NULL;
 }
 
 void nuStyleSet::Grow( nuPool* pool )
@@ -537,17 +542,6 @@ void nuStyleSet::DebugCheckSanity() const
 bool nuStyleSet::Contains( nuStyleCategories cat ) const
 {
 	return GetSlot( cat ) != 0;
-}
-
-void nuStyleSet::Reset()
-{
-	Lookup = NULL;
-	Attribs = NULL;
-	Capacity = 0;
-	BitsPerSlot = 0;
-	Count = 0;
-	SetSlotF = NULL;
-	GetSlotF = NULL;
 }
 
 void nuStyleSet::MigrateLookup( const void* lutsrc, void* lutdst, GetSlotFunc getter, SetSlotFunc setter )

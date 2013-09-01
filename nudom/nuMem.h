@@ -6,6 +6,8 @@ public:
 	nuPool();
 	~nuPool();
 
+	void	SetChunkSize( size_t size );
+
 	void*	Alloc( size_t bytes, bool zeroInit );
 	
 	template<typename T>
@@ -15,6 +17,7 @@ public:
 	T*		AllocNT( size_t count, bool zeroInit ) { return (T*) Alloc( count * sizeof(T), zeroInit ); }
 
 	void	FreeAll();
+	void	FreeAllExceptOne();
 
 protected:
 	size_t			ChunkSize;
