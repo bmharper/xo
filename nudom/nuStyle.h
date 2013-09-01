@@ -335,6 +335,7 @@ public:
 	nuColor BackgroundColor;
 	int		BackgroundImageID;
 	float	BorderRadius;
+	uint8	FontSizePx;
 
 	nuStyleRender() { memset(this, 0, sizeof(*this)); }
 };

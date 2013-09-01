@@ -123,14 +123,19 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 {
 	NUTRACE_LAYOUT( "Layout (%d) Run txt.1\n", node.GetInternalID() );
 
+	//const char* zfont = "Microsoft Sans Serif";
+	const char* zfont = "Consolas";
+	//const char* zfont = "Times New Roman";
+
 	// total hack job
-	const nuFont* font = nuGlobal()->FontStore->GetByFacename( nuString("Arial") );
+	const nuFont* font = nuGlobal()->FontStore->GetByFacename( nuString(zfont) );
 	if ( font )
 		rnode->FontID = font->ID;
 	else
-		rnode->FontID = nuGlobal()->FontStore->InsertByFacename( nuString("Arial") );
+		rnode->FontID = nuGlobal()->FontStore->InsertByFacename( nuString(zfont) );
 
-	//rnode->Char = node.GetText().Z[0];
+	rnode->Style.FontSizePx = 14;
+
 	rnode->Text.resize( node.GetText().Len );
 	const char* txt = node.GetText().Z;
 

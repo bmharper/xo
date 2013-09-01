@@ -169,7 +169,10 @@ struct NUAPI nuRenderStats
 struct nuGlobalStruct
 {
 	int							TargetFPS;
-	int							NumWorkerThreads;	// Read-only. Set during nuInitialize().
+	int							NumWorkerThreads;		// Read-only. Set during nuInitialize().
+	bool						EnableSubpixelText;		// Enable sub-pixel text rendering. Assumes pixels are the standard RGB layout. Enabled by default on Windows desktop only.
+	float						SubPixelTextGamma;		// Tweak freetype's gamma when doing sub-pixel text rendering.
+	float						WholePixelTextGamma;	// Tweak freetype's gamma when doing whole-pixel text rendering.
 
 	// Debugging flags. Enabling these should make debugging easier.
 	// Some of them may turn out to have a small enough performance hit that you can

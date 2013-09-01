@@ -2,6 +2,7 @@
 #include "nuRenderGL.h"
 #include "../Image/nuImage.h"
 #include "nuTextureAtlas.h"
+#include "../Text/nuGlyphCache.h"
 
 #define Z(s) #s
 
@@ -77,16 +78,12 @@ static const char* pTextRGBFrag = Z(
 	varying vec4		color;
 	varying vec2		texuv0;
 	varying vec4		texClamp;
-	//out vec4 outputColor0;
-	//out vec4 outputColor1;
 	layout(location = 0, index = 0) out vec4 outputColor0;
 	layout(location = 0, index = 1) out vec4 outputColor1;
 	void main()
 	{
-		float offset = 1.0 / 64;
+		float offset = 1.0 / ATLAS_SIZE;
 		vec2 uv = texuv0;
-		//uv.s = clamp(texuv0.s, texClamp.x, texClamp.z);
-		//uv.t = clamp(texuv0.t, texClamp.y, texClamp.w);
 
 		float tap0 = texture2D(tex0, vec2(clamp(uv.s - offset * 3.0, texClamp.x, texClamp.z), uv.t));
 		float tap1 = texture2D(tex0, vec2(clamp(uv.s - offset * 2.0, texClamp.x, texClamp.z), uv.t));
@@ -95,17 +92,10 @@ static const char* pTextRGBFrag = Z(
 		float tap4 = texture2D(tex0, vec2(clamp(uv.s + offset * 1.0, texClamp.x, texClamp.z), uv.t));
 		float tap5 = texture2D(tex0, vec2(clamp(uv.s + offset * 2.0, texClamp.x, texClamp.z), uv.t));
 		float tap6 = texture2D(tex0, vec2(clamp(uv.s + offset * 3.0, texClamp.x, texClamp.z), uv.t));
-		// float tap0 = texture2D(tex0, vec2(max(uv.s - offset * 3.0, texClamp.x), uv.t));
-		// float tap1 = texture2D(tex0, vec2(max(uv.s - offset * 2.0, texClamp.x), uv.t));
-		// float tap2 = texture2D(tex0, vec2(max(uv.s - offset * 1.0, texClamp.x), uv.t));
-		// float tap3 = texture2D(tex0, vec2(    uv.s,                             uv.t));
-		// float tap4 = texture2D(tex0, vec2(min(uv.s + offset * 1.0, texClamp.z), uv.t));
-		// float tap5 = texture2D(tex0, vec2(min(uv.s + offset * 2.0, texClamp.z), uv.t));
-		// float tap6 = texture2D(tex0, vec2(min(uv.s + offset * 3.0, texClamp.z), uv.t));
 
-		float w0 = 0.45;
-		float w1 = 0.35;
-		float w2 = 0.2;
+		float w0 = 0.6;
+		float w1 = 0.3;
+		float w2 = 0.1;
 		//float w0 = 0.98;
 		//float w1 = 0.01;
 		//float w2 = 0.01;
@@ -138,6 +128,33 @@ static const char* pTextRGBFrag = Z(
 		float blue = texture2D(tex0, vec2(uv.s + offset, uv.t));
 		gl_FragColor = color * vec4(red, green, blue, 1);
 		*/
+	}
+);
+
+static const char* pTextWholeVert = Z(
+	uniform		mat4	mvproj;
+	attribute	vec4	vpos;
+	attribute	vec4	vcolor;
+	attribute	vec2	vtexuv0;
+	varying		vec4	color;
+	varying		vec2	texuv0;
+	void main()
+	{
+		gl_Position = mvproj * vpos;
+		texuv0 = vtexuv0;
+		color = vcolor;
+	}
+);
+
+static const char* pTextWholeFrag = Z(
+	precision mediump float;
+	uniform sampler2D	tex0;
+	varying vec4		color;
+	varying vec2		texuv0;
+	void main()
+	{
+		vec4 texCol = texture2D(tex0, texuv0.st);
+		gl_FragColor = color * texCol.rrrr;
 	}
 );
 
@@ -277,10 +294,14 @@ bool nuRenderGL::CreateShaders()
 
 	Check();
 
+	nuString textRGBFrag(pTextRGBFrag);
+	textRGBFrag.ReplaceAll( "ATLAS_SIZE", fmt("%v", nuGlyphCache::AtlasSize).Z );
+
 	if ( !LoadProgram( PRect, pRectVert, pRectFrag ) ) return false;
 	if ( !LoadProgram( PFill, pFillVert, pFillFrag ) ) return false;
 	if ( !LoadProgram( PFillTex, pFillTexVert, pFillTexFrag ) ) return false;
-	if ( !LoadProgram( PTextRGB, pTextRGBVert, pTextRGBFrag ) ) return false;
+	if ( !LoadProgram( PTextRGB, pTextRGBVert, textRGBFrag.Z ) ) return false;
+	if ( !LoadProgram( PTextWhole, pTextWholeVert, pTextWholeFrag ) ) return false;
 	//if ( !LoadProgram( PCurve, pCurveVert, pCurveFrag ) ) return false;
 
 	//glUseProgram( PRect.Prog );
@@ -317,6 +338,12 @@ bool nuRenderGL::CreateShaders()
 	GLint c1 = glGetFragDataLocation( PTextRGB.Prog, "outputColor1" );
 	GLint c2 = glGetFragDataLocation( PTextRGB.Prog, "outputColor2" );
 	Check();
+
+	VarTextWholeMVProj = glGetUniformLocation( PTextWhole.Prog, "mvproj" );
+	VarTextWholeVPos = glGetAttribLocation( PTextWhole.Prog, "vpos" );
+	VarTextWholeVColor = glGetAttribLocation( PTextWhole.Prog, "vcolor" );
+	VarTextWholeVUV = glGetAttribLocation( PTextWhole.Prog, "vtexuv0" );
+	VarTextWholeTex0 = glGetUniformLocation( PTextWhole.Prog, "tex0" );
 
 	NUTRACE( "VarFillMVProj = %d\n", VarFillMVProj );
 	NUTRACE( "VarFillVPos = %d\n", VarFillVPos );
@@ -356,6 +383,7 @@ void nuRenderGL::DeleteShaders()
 	DeleteProgram( PFill );
 	DeleteProgram( PFillTex );
 	DeleteProgram( PTextRGB );
+	DeleteProgram( PTextWhole );
 	DeleteProgram( PRect );
 	DeleteProgram( PCurve );
 }
@@ -366,6 +394,16 @@ void nuRenderGL::SurfaceLost()
 	CreateShaders();
 }
 
+#ifndef GL_SRC1_COLOR
+#define GL_SRC1_COLOR                                      0x88F9
+#endif
+#ifndef GL_ONE_MINUS_SRC1_COLOR
+#define GL_ONE_MINUS_SRC1_COLOR                            0x88FA
+#endif
+#ifndef GL_ONE_MINUS_SRC1_ALPHA
+#define GL_ONE_MINUS_SRC1_ALPHA                            0x88FB
+#endif
+
 void nuRenderGL::ActivateProgram( nuGLProg& p )
 {
 	if ( ActiveProgram == &p ) return;
@@ -374,17 +412,14 @@ void nuRenderGL::ActivateProgram( nuGLProg& p )
 	glUseProgram( p.Prog );
 	if ( ActiveProgram == &PTextRGB )
 	{
-#define GL_SRC1_COLOR                                      0x88F9
-#define GL_ONE_MINUS_SRC1_COLOR                            0x88FA
-#define GL_ONE_MINUS_SRC1_ALPHA                            0x88FB
 		// outputColor0 = vec4(color.r, color.g, color.b, avgA);
 		// outputColor1 = vec4(aR, aG, aB, avgA);
 		glBlendFuncSeparate( GL_SRC1_COLOR, GL_ONE_MINUS_SRC1_COLOR, GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
-		//glBlendFunc( GL_SRC_COLOR, GL_ONE_MINUS_SRC_ALPHA );
 	}
 	else
 	{
-		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );	// this is for non-premultiplied
+		//glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );			// this is premultiplied
 	}
 	Check();
 }
@@ -481,6 +516,13 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 
 	glUniformMatrix4fv( VarTextRGBMVProj, 1, false, &mvproj.row[0].x );
 
+	ActivateProgram( PTextWhole );
+
+	NUTRACE_RENDER( "PreRender 8 (%d)\n", VarTextWholeMVProj );
+	Check();
+
+	glUniformMatrix4fv( VarTextWholeMVProj, 1, false, &mvproj.row[0].x );
+
 	NUTRACE_RENDER( "PreRender done\n" );
 
 	//glEnableClientState( GL_TEXTURE_COORD_ARRAY );
@@ -533,6 +575,13 @@ void nuRenderGL::DrawQuad( const void* v )
 		varvtex0 = VarTextRGBVUV;
 		varvtexClamp = VarTextRGBVClamp;
 		vartex0 = VarTextRGBTex0;
+	}
+	else if ( ActiveProgram == &PTextWhole )
+	{
+		varvpos = VarTextWholeVPos;
+		varvcol = VarTextWholeVColor;
+		varvtex0 = VarTextWholeVUV;
+		vartex0 = VarTextWholeTex0;
 	}
 
 	// We assume here that nuVx_PTC and nuVx_PTCV4 share the same base layout
@@ -618,7 +667,9 @@ void nuRenderGL::LoadTextureAtlas( const nuTextureAtlas* atlas )
 	//glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	// Clamping should have no effect, since we clamp inside our fragment shader
+	// Clamping should have no effect for RGB text, since we clamp inside our fragment shader.
+	// Also, when rendering 'whole pixel' glyphs, we shouldn't need clamping either, because
+	// our UV coordinates are exact, and we always have a 1:1 texel:pixel ratio.
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	//glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );

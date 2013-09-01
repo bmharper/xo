@@ -37,12 +37,13 @@ public:
 	nuGLProg	PFill;
 	nuGLProg	PFillTex;
 	nuGLProg	PTextRGB;
+	nuGLProg	PTextWhole;
 	nuGLProg	PCurve;
 
+	GLint		VarRectMVProj;
 	GLint		VarRectBox;
 	GLint		VarRectRadius;
 	GLint		VarRectVPortHSize;
-	GLint		VarRectMVProj;
 	GLint		VarRectVColor;
 	GLint		VarRectVPos;
 
@@ -62,6 +63,12 @@ public:
 	GLint		VarTextRGBVUV;
 	GLint		VarTextRGBVClamp;
 	GLint		VarTextRGBTex0;
+
+	GLint		VarTextWholeMVProj;
+	GLint		VarTextWholeVColor;
+	GLint		VarTextWholeVPos;
+	GLint		VarTextWholeVUV;
+	GLint		VarTextWholeTex0;
 
 	//GLint		VarRectCornerRadius;
 	//GLint		VarCurveTex0;

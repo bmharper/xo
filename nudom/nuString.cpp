@@ -133,6 +133,20 @@ void nuString::KillTemp()
 	Discard();
 }
 
+void nuString::ReplaceAll( const char* find, const char* replace )
+{
+	size_t findLen = strlen(find);
+	size_t replaceLen = strlen(replace);
+	std::string self = Z;
+	size_t pos = 0;
+	while ( (pos = self.find( find, pos )) != std::string::npos )
+	{
+		self.replace( pos, findLen, replace );
+		pos += replaceLen;
+	}
+	*this = self.c_str();
+}
+
 nuString& nuString::operator=( const nuString& b )
 {
 	Set( b );

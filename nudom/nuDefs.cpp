@@ -5,7 +5,7 @@
 #include "nuSysWnd.h"
 #include "Render/nuRenderGL.h"
 #include "Text/nuFontStore.h"
-#include "Text/nuTextCache.h"
+#include "Text/nuGlyphCache.h"
 
 static const int					MAX_WORKER_THREADS = 32;
 static volatile uint32				ExitSignalled = 0;
@@ -119,6 +119,14 @@ NUAPI void nuInitialize()
 	nuGlobals = new nuGlobalStruct();
 	nuGlobals->TargetFPS = 60;
 	nuGlobals->NumWorkerThreads = min( minf.CPUCount, MAX_WORKER_THREADS );
+	nuGlobals->SubPixelTextGamma = 1.0f;
+	nuGlobals->WholePixelTextGamma = 1.0f;
+#if NU_WIN_DESKTOP
+	nuGlobals->EnableSubpixelText = true;
+	//nuGlobals->EnableSubpixelText = false;
+#else
+	nuGlobals->EnableSubpixelText = false;
+#endif
 	//nuGlobals->DebugZeroClonedChildList = true;
 	nuGlobals->DocAddQueue.Initialize( false );
 	nuGlobals->DocRemoveQueue.Initialize( false );

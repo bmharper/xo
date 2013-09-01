@@ -46,6 +46,7 @@ public:
 
 	void		MakeTemp( const char* z );
 	void		KillTemp();
+	void		ReplaceAll( const char* find, const char* replace );
 
 	nuString&	operator=( const nuStringRaw& b );
 	nuString&	operator=( const nuString& b );

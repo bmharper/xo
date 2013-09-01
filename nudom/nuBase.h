@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include <string>
 #include <algorithm>
 #include <limits>
 #include <functional>

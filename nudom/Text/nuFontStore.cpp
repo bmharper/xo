@@ -73,7 +73,7 @@ nuFontID nuFontStore::InsertByFacename( const nuString& facename )
 
 	nuFont font;
 	font.Facename = facename;
-	const char* filename = "c:\\Windows\\Fonts\\arial.ttf";
+	const char* filename = FacenameToFilename( facename );
 
 	FT_Error e = FT_New_Face( FTLibrary, filename, 0, &font.FTFace );
 	if ( e != 0 )
@@ -102,4 +102,13 @@ nuFontID nuFontStore::InsertInternal( const nuFont& font )
 	Fonts += copy;
 	FacenameToFontID.insert( copy->Facename, copy->ID );
 	return copy->ID;
+}
+
+const char* nuFontStore::FacenameToFilename( const nuString& facename )
+{
+	if ( facename == "Arial" ) return "c:\\Windows\\Fonts\\arial.ttf";
+	if ( facename == "Times New Roman" ) return "c:\\Windows\\Fonts\\times.ttf";
+	if ( facename == "Consolas" ) return "c:\\Windows\\Fonts\\consola.ttf";
+	if ( facename == "Microsoft Sans Serif" ) return "c:\\Windows\\Fonts\\micross.ttf";
+	return "c:\\Windows\\Fonts\\arial.ttf";
 }

@@ -4,7 +4,7 @@
 #include "nuRenderGL.h"
 #include "nuRenderDomEl.h"
 #include "nuTextureAtlas.h"
-#include "Text/nuTextCache.h"
+#include "Text/nuGlyphCache.h"
 
 void nuRenderer::Render( nuImageStore* images, nuStringTable* strings, nuRenderGL* gl, nuRenderDomEl* root, int width, int height )
 {
@@ -93,18 +93,22 @@ void nuRenderer::RenderNode( nuRenderDomEl* node )
 
 void nuRenderer::RenderTextNode( nuRenderDomEl* node )
 {
+	bool subPixel = nuGlobal()->EnableSubpixelText;
 	for ( intp i = 0; i < node->Text.size(); i++ )
 	{
-		RenderTextNodeChar( node, node->Text[i] );
+		if ( subPixel )
+			RenderTextNodeChar_SubPixel( node, node->Text[i] );
+		else
+			RenderTextNodeChar_WholePixel( node, node->Text[i] );
 	}
 }
 
-void nuRenderer::RenderTextNodeChar( nuRenderDomEl* node, const nuRenderTextEl& txtEl )
+void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRenderTextEl& txtEl )
 {
 	nuStyleRender* style = &node->Style;
 
 	nuGlyph glyph;
-	if ( !nuGlobal()->GlyphCache->GetGlyphFromChar( node->FontID, txtEl.Char, nuGlyphFlag_SubPixel_RGB, glyph ) )
+	if ( !nuGlobal()->GlyphCache->GetGlyphFromChar( node->FontID, txtEl.Char, style->FontSizePx, nuGlyphFlag_SubPixel_RGB, glyph ) )
 		return;
 
 	nuTextureAtlas* atlas = nuGlobal()->GlyphCache->HackGetAtlas(0);
@@ -164,8 +168,8 @@ void nuRenderer::RenderTextNodeChar( nuRenderDomEl* node, const nuRenderTextEl& 
 	nuVec4 clamp;
 	clamp.x = (glyph.X + 0.5f) * atlasScaleX;
 	clamp.y = (glyph.Y + 0.5f) * atlasScaleY;
-	clamp.z = (glyph.X + glyph.Width - 1.5f) * atlasScaleX;
-	clamp.w = (glyph.Y + glyph.Height - 1.5f) * atlasScaleY;
+	clamp.z = (glyph.X + glyph.Width - 0.5f) * atlasScaleX;
+	clamp.w = (glyph.Y + glyph.Height - 0.5f) * atlasScaleY;
 	for ( int i = 0; i < 4; i++ )
 	{
 		//corners[i].Color = NURGBA(0,0,0,255);
@@ -175,6 +179,51 @@ void nuRenderer::RenderTextNodeChar( nuRenderDomEl* node, const nuRenderTextEl& 
 	}
 
 	GL->ActivateProgram( GL->PTextRGB );
+	GL->LoadTextureAtlas( nuGlobal()->GlyphCache->HackGetAtlas(0) );
+	GL->DrawQuad( corners );
+}
+
+void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRenderTextEl& txtEl )
+{
+	nuStyleRender* style = &node->Style;
+
+	nuGlyph glyph;
+	if ( !nuGlobal()->GlyphCache->GetGlyphFromChar( node->FontID, txtEl.Char, style->FontSizePx, 0, glyph ) )
+		return;
+
+	nuTextureAtlas* atlas = nuGlobal()->GlyphCache->HackGetAtlas(0);
+	float atlasScaleX = 1.0f / atlas->GetWidth();
+	float atlasScaleY = 1.0f / atlas->GetHeight();
+
+	float top = nuPosToReal( txtEl.Y );
+	float left = nuPosToReal( txtEl.X );
+
+	left = (float) floor(left + 0.5f);
+	top = (float) floor(top + 0.5f);
+
+	float right = left + glyph.Width;
+	float bottom = top + glyph.Height;
+
+	nuVx_PTC corners[4];
+	corners[0].Pos = NUVEC3(left, top, 0);
+	corners[1].Pos = NUVEC3(left, bottom, 0);
+	corners[2].Pos = NUVEC3(right, bottom, 0);
+	corners[3].Pos = NUVEC3(right, top, 0);
+
+	float u0 = glyph.X * atlasScaleX;
+	float v0 = glyph.Y * atlasScaleY;
+	float u1 = (glyph.X + glyph.Width) * atlasScaleX;
+	float v1 = (glyph.Y + glyph.Height) * atlasScaleY;
+
+	corners[0].UV = NUVEC2(u0, v0);
+	corners[1].UV = NUVEC2(u0, v1);
+	corners[2].UV = NUVEC2(u1, v1);
+	corners[3].UV = NUVEC2(u1, v0);
+
+	for ( int i = 0; i < 4; i++ )
+		corners[i].Color = NURGBA(150,0,0,255);
+
+	GL->ActivateProgram( GL->PTextWhole );
 	GL->LoadTextureAtlas( nuGlobal()->GlyphCache->HackGetAtlas(0) );
 	GL->DrawQuad( corners );
 }

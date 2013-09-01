@@ -34,5 +34,6 @@ private:
 
 	const nuFont*	GetByFacenameInternal( const nuString& facename ) const;
 	nuFontID		InsertInternal( const nuFont& font );
+	const char*		FacenameToFilename( const nuString& facename );
 
 };

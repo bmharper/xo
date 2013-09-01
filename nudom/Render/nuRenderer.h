@@ -14,6 +14,7 @@ protected:
 
 	void			RenderNode( nuRenderDomEl* node );
 	void			RenderTextNode( nuRenderDomEl* node );
-	void			RenderTextNodeChar( nuRenderDomEl* node, const nuRenderTextEl& txtEl );
+	void			RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRenderTextEl& txtEl );
+	void			RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRenderTextEl& txtEl );
 
 };

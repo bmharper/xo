@@ -167,7 +167,7 @@ local nudom = SharedLibrary {
 		"nudom/Render/nuStyleResolve.cpp",
 		"nudom/Render/nuTextureAtlas.cpp",
 		"nudom/Text/nuFontStore.cpp",
-		"nudom/Text/nuTextCache.cpp",
+		"nudom/Text/nuGlyphCache.cpp",
 		"nudom/Text/nuTextDefs.cpp",
 		"dependencies/Panacea/Containers/queue.cpp",
 		"dependencies/Panacea/Platform/cpu.cpp",

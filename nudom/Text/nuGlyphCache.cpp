@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "nuTextCache.h"
+#include "nuGlyphCache.h"
 #include "nuFontStore.h"
 #include "Render/nuTextureAtlas.h"
 
@@ -23,7 +23,7 @@ void nuGlyphCache::Clear()
 	Table.clear();
 }
 
-bool nuGlyphCache::GetGlyphFromChar( const nuString& facename, int ch, uint32 flags, nuGlyph& glyph )
+bool nuGlyphCache::GetGlyphFromChar( const nuString& facename, int ch, uint8 size, uint8 flags, nuGlyph& glyph )
 {
 	nuFontID fontID = nuFontIDNull;
 	const nuFont* font = nuGlobal()->FontStore->GetByFacename( facename );
@@ -35,15 +35,15 @@ bool nuGlyphCache::GetGlyphFromChar( const nuString& facename, int ch, uint32 fl
 	else
 		fontID = font->ID;
 
-	return GetGlyphFromChar( fontID, ch, flags, glyph );
+	return GetGlyphFromChar( fontID, ch, size, flags, glyph );
 }
 
-bool nuGlyphCache::GetGlyphFromChar( nuFontID fontID, int ch, uint32 flags, nuGlyph& glyph )
+bool nuGlyphCache::GetGlyphFromChar( nuFontID fontID, int ch, uint8 size, uint8 flags, nuGlyph& glyph )
 {
 	// TODO: This needs a better threading model. Perhaps you render with fonts in read-only mode,
 	// and then collect all cache misses, then before next render you fill in all cache misses.
 
-	nuGlyphCacheKey key( fontID, ch, flags );
+	nuGlyphCacheKey key( fontID, ch, size, flags );
 	uint pos;
 	if ( !Table.get( key, pos ) )
 	{
@@ -63,9 +63,9 @@ int nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key, const nuFont* font )
 
 	bool isSubPixel = nuGlyphFlag_IsSubPixel(key.Flags);
 
-	uint32 pixSize = 15;
+	uint32 pixSize = key.Size;
 
-	FT_Error e = FT_Set_Pixel_Sizes( font->FTFace, nuSubPixelHintKillMultiplier * 3 * pixSize, pixSize );
+	FT_Error e = FT_Set_Pixel_Sizes( font->FTFace, isSubPixel ? nuSubPixelHintKillMultiplier * 3 * pixSize : pixSize, pixSize );
 	NUASSERT( e == 0 );
 
 	uint ftflags = FT_LOAD_RENDER;
@@ -105,17 +105,19 @@ int nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key, const nuFont* font )
 		if ( Atlas.size() == 0 || pass != 0 )
 		{
 			nuTextureAtlas* newAtlas = new nuTextureAtlas();
-			newAtlas->Initialize( 64, 64, 1 );
+			newAtlas->Initialize( AtlasSize, AtlasSize, 1 );
 			Atlas += newAtlas;
 		}
 		atlas = Atlas.back();
+		NUASSERT( naturalWidth + horzPad * 2 <= AtlasSize );
 		if ( atlas->Alloc( naturalWidth + horzPad * 2, height, atlasX, atlasY ) )
 			break;
 	}
 
-	// non-sub-pixel would use a simpler CopyBitmap
-	NUASSERT( isSubPixel );
-	FilterAndCopyBitmap( font, atlas->DataAt(atlasX, atlasY), atlas->GetStride() );
+	if ( isSubPixel )
+		FilterAndCopyBitmap( font, atlas->DataAt(atlasX, atlasY), atlas->GetStride() );
+	else
+		CopyBitmap( font, atlas->DataAt(atlasX, atlasY), atlas->GetStride() );
 
 	nuGlyph g;
 	g.Width = naturalWidth + horzPad * 2;
@@ -130,10 +132,10 @@ int nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key, const nuFont* font )
 
 void nuGlyphCache::FilterAndCopyBitmap( const nuFont* font, void* target, int target_stride )
 {
-	uint8* src = font->FTFace->glyph->bitmap.buffer;
-	uint8* dst = (uint8*) target;
 	uint32 width = font->FTFace->glyph->bitmap.width;
 	uint32 height = font->FTFace->glyph->bitmap.rows;
+
+	float gamma = nuGlobal()->SubPixelTextGamma;
 
 	for ( int py = 0; py < (int) height; py++ )
 	{
@@ -156,8 +158,45 @@ void nuGlyphCache::FilterAndCopyBitmap( const nuFont* font, void* target, int ta
 		for ( ; px < width; px++, src++ )
 			accum += *src;
 		accum = accum >> nuSubPixelHintKillShift;
+
+		if ( gamma != 1 )
+		{
+			float v = accum / 255.0f;
+			v = pow(v, gamma) * 255.0f;
+			v = std::min(v, 255.0f);
+			v = std::max(v, 0.0f);
+			accum = (uint32) v;
+		}
+
 		*dst++ = accum;
 		// single padding sample on the right side
 		*dst++ = 0;
+	}
+}
+
+void nuGlyphCache::CopyBitmap( const nuFont* font, void* target, int target_stride )
+{
+	uint32 width = font->FTFace->glyph->bitmap.width;
+	uint32 height = font->FTFace->glyph->bitmap.rows;
+
+	float gamma = nuGlobal()->WholePixelTextGamma;
+
+	for ( int py = 0; py < (int) height; py++ )
+	{
+		uint8* src = (uint8*) font->FTFace->glyph->bitmap.buffer + py * font->FTFace->glyph->bitmap.pitch;
+		uint8* dst = (uint8*) target + py * target_stride;
+		if ( gamma == 1 )
+			memcpy( dst, src, width );
+		else
+		{
+			for ( uint32 x = 0; x < width; x++ )
+			{
+				float v = src[x] / 255.0f;
+				v = pow(v, gamma) * 255.0f;
+				v = std::min(v, 255.0f);
+				v = std::max(v, 0.0f);
+				dst[x] = (uint8) v;
+			}
+		}
 	}
 }
