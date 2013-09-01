@@ -41,6 +41,7 @@ protected:
 	void	ComputeRelativeOffset( const NodeState& s, nuBox& box );
 
 	void	Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode );
+	void	RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode );
 
 };
 

@@ -25,10 +25,13 @@ void nuDomEl::CloneSlowInto( nuDomEl& c, uint cloneFlags ) const
 	c.InternalID = InternalID;
 	c.Tag = Tag;
 	c.Version = Version;
+	c.Text = Text;
 	
 	Style.CloneSlowInto( c.Style );
 	c.Classes = Classes;
 
+	// By the time we get here, all relevant DOM elements inside the destination document
+	// have already been created. That is why we are not recursive here.
 	c.Children.clear_noalloc();
 	for ( intp i = 0; i < Children.size(); i++ )
 		c.Children += cDoc->GetChildByInternalIDMutable( Children[i]->InternalID );
@@ -46,10 +49,11 @@ void nuDomEl::CloneFastInto( nuDomEl& c, nuPool* pool, uint cloneFlags ) const
 	c.Version = Version;
 	Style.CloneFastInto( c.Style, pool );
 
+	NUASSERT(false); // Text?
+
 	// copy classes
 	nuClonePodvecWithMemCopy( c.Classes, Classes, pool );
 
-	// old style, where we would wipe the entire cloned document every time
 	// alloc list of pointers to children
 	nuClonePvectPrepare( c.Children, Children, pool );
 	
@@ -92,6 +96,17 @@ void nuDomEl::RemoveChild( nuDomEl* c )
 	Doc->FreeChild( c );
 }
 
+void nuDomEl::RemoveAllChildren()
+{
+	IncVersion();
+	for ( intp i = 0; i < Children.size(); i++ )
+	{
+		Doc->ChildRemoved( Children[i] );
+		Doc->FreeChild( Children[i] );
+	}
+	Children.clear();
+}
+
 nuDomEl* nuDomEl::ChildByIndex( intp index )
 {
 	NUASSERT( (uintp) index < (uintp) Children.size() );
@@ -112,6 +127,40 @@ void nuDomEl::Discard()
 void nuDomEl::ForgetChildren()
 {
 	Children.clear_noalloc();
+}
+
+void nuDomEl::SetText( const char* txt )
+{
+	if ( Tag == nuTagText )
+	{
+		Text = txt;
+	}
+	else
+	{
+		if ( Children.size() != 1 || Children[0]->GetTag() != nuTagText )
+		{
+			RemoveAllChildren();
+			AddChild( nuTagText );
+		}
+		Children[0]->Text = txt;
+	}
+}
+
+const nuString&	nuDomEl::GetText() const
+{
+	if ( Tag == nuTagText )
+	{
+		return Text;
+	}
+	else if ( Children.size() == 1 && Children[0]->GetTag() == nuTagText )
+	{
+		return Children[0]->Text;
+	}
+	else
+	{
+		NUASSERT(Text.Len == 0);
+		return Text;
+	}
 }
 
 bool nuDomEl::StyleParse( const char* t )

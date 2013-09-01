@@ -1,5 +1,8 @@
 #pragma once
 
+// This is the bottom-level include file that many other nudom headers include. It should
+// strive to remain quite small.
+
 #include "nuPlatform.h"
 
 class nuDomEl;
@@ -13,11 +16,19 @@ class nuDocGroup;
 class nuRenderDoc;
 class nuRenderer;
 class nuRenderDomEl;
+struct nuRenderTextEl;
 class nuRenderGL;
 class nuString;
 class nuStringTable;
 class nuStyle;
 class nuSysWnd;
+class nuFont;
+class nuFontStore;
+class nuGlyphCache;
+class nuTextureAtlas;
+#ifndef NU_MAT4F_DEFINED
+class nuMat4f;
+#endif
 
 typedef int32 nuPos;					// fixed-point position
 static const u32 nuPosShift = 8;		// 24:8 fixed point coordinates used during layout
@@ -28,6 +39,8 @@ typedef int32 nuInternalID;
 static const nuInternalID nuInternalIDNull = 0;		// Zero is always an invalid DOM element ID
 static const nuInternalID nuInternalIDRoot = 1;		// The root of the DOM tree always has ID = 1
 
+typedef int32 nuFontID;
+static const nuFontID nuFontIDNull = 0;				// Zero is always an invalid Font ID
 
 inline int32	nuRealToPos( float real )		{ return int32(real * (1 << nuPosShift)); }
 inline int32	nuDoubleToPos( double real )	{ return int32(real * (1 << nuPosShift)); }
@@ -57,6 +70,7 @@ enum nuRenderResult
 #define NU_TAGS_DEFINE \
 XX(Body, 1) \
 XY(Div) \
+XY(Text) \
 XY(END) \
 
 #define XX(a,b) nuTag##a = b,
@@ -79,6 +93,12 @@ struct nuVec3
 };
 inline nuVec3 NUVEC3(float x, float y, float z) { nuVec3 v = {x,y,z}; return v; }
 
+struct nuVec4
+{
+	float x,y,z,w;
+};
+inline nuVec4 NUVEC4(float x, float y, float z, float w) { nuVec4 v = {x,y,z,w}; return v; }
+
 class NUAPI nuPoint
 {
 public:
@@ -94,6 +114,7 @@ public:
 Why does this class have a copy constructor and assignment operator?
 Without those, we get data alignment exceptions (signal 7) when running on my Galaxy S3.
 I tried explicitly raising the alignment of nuBox to 8 and 16 bytes, but that did not help.
+Unfortunately I have not yet had the energy to open up the assembly and see what the compiler is doing wrong.
 */
 class NUAPI nuBox
 {
@@ -161,6 +182,8 @@ struct nuGlobalStruct
 	TAbcQueue<nuDocGroup*>		DocRemoveQueue;		// Documents requesting removal
 	TAbcQueue<nuEvent>			EventQueue;			// Global event queue, consumed by the one-and-only UI thread
 	TAbcQueue<nuJob>			JobQueue;			// Global job queue, consumed by the worker thread pool
+	nuFontStore*				FontStore;			// All fonts known to the system.
+	nuGlyphCache*				GlyphCache;			// This might have to move into a less global domain.
 };
 
 NUAPI nuGlobalStruct*	nuGlobal();

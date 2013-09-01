@@ -26,12 +26,15 @@ public:
 
 	nuDomEl*		AddChild( nuTag tag );
 	void			RemoveChild( nuDomEl* c );
+	void			RemoveAllChildren();
 	intp			ChildCount() const { return Children.size(); }
 	nuDomEl*		ChildByIndex( intp index );
 	void			CloneSlowInto( nuDomEl& c, uint cloneFlags ) const;
 	void			CloneFastInto( nuDomEl& c, nuPool* pool, uint cloneFlags ) const;
 	void			Discard();
 	void			ForgetChildren();
+	void			SetText( const char* txt );		// Replace all children with a single nuTagText child, or set internal text if 'this' is nuTagText.
+	const nuString&	GetText() const;				// Reverse behaviour of SetText()
 
 	void			SetInternalID( nuInternalID id )			{ InternalID = id; }	// Used by nuDoc at element creation time.
 	void			SetDoc( nuDoc* doc )						{ Doc = doc; }			// Used by nuDoc at element creation and destruction time.
@@ -69,6 +72,7 @@ protected:
 	nuStyle					Style;			// Styles that override those referenced by the Tag and the Classes.
 	uint32					Version;		// Monotonic integer used to detect modified nodes
 	podvec<nuStyleID>		Classes;		// Classes of styles
+	nuString				Text;			// Applicable only to nuTagText elements
 
 	podvec<nuEventHandler>	Handlers;
 	uint32					AllEventMask;

@@ -47,12 +47,82 @@ local unicode = ExternalLibrary {
 	},
 }
 
+local freetype = StaticLibrary {
+	Name = "freetype",
+	Defines = {
+		"FT2_BUILD_LIBRARY",
+	},
+	Depends = { crt, },
+	SourceDir = "dependencies/freetype",
+	Includes = "dependencies/freetype/include",
+	Sources = {
+		"src/autofit/autofit.c",
+		"src/base/ftbase.c",
+		"src/base/ftbitmap.c",
+		"src/bdf/bdf.c",
+		"src/cff/cff.c",
+		"src/cache/ftcache.c",
+		"src/base/ftgasp.c",
+		"src/base/ftglyph.c",
+		"src/gzip/ftgzip.c",
+		"src/base/ftinit.c",
+		"src/base/ftlcdfil.c",
+		"src/lzw/ftlzw.c",
+		"src/base/ftstroke.c",
+		"src/base/ftsystem.c",
+		"src/smooth/smooth.c",
+		"src/base/ftbbox.c",
+		"src/base/ftmm.c",
+		"src/base/ftpfr.c",
+		"src/base/ftsynth.c",
+		"src/base/fttype1.c",
+		"src/base/ftwinfnt.c",
+		"src/pcf/pcf.c",
+		"src/pfr/pfr.c",
+		"src/psaux/psaux.c",
+		"src/pshinter/pshinter.c",
+		"src/psnames/psmodule.c",
+		"src/raster/raster.c",
+		"src/sfnt/sfnt.c",
+		"src/truetype/truetype.c",
+		"src/type1/type1.c",
+		"src/cid/type1cid.c",
+		"src/type42/type42.c",
+		"src/winfonts/winfnt.c",
+	}	
+}
+
+--[[
+local freetype_gl = StaticLibrary {
+	Name = "freetype_gl",
+	--Defines = {
+	--	"",
+	--},
+	SourceDir = "dependencies/freetype-gl",
+	Includes = "dependencies/freetype-gl",
+	Sources = {
+		"mat4.c",
+		"platform.c",
+		"shader.c",
+		"text-buffer.c",
+		"texture-atlas.c",
+		"texture-font.c",
+		"vector.c",
+		"vertex-attribute.c",
+		"vertex-buffer.c",
+	}	
+}
+--]]
+
 local nudom = SharedLibrary {
 	Name = "nudom",
-	Libs = { "opengl32.lib", "user32.lib", "gdi32.lib", "winmm.lib" },
+	Libs = { "opengl32.lib", "user32.lib", "gdi32.lib", "winmm.lib", "freetype.lib", },
 	SourceDir = ".",
-	Includes = { "nudom" },
-	Depends = { crt },
+	Includes = {
+		"nudom",
+		"dependencies/freetype/include"
+	},
+	Depends = { crt, freetype, },
 	PrecompiledHeader = {
 		Source = "nudom/pch.cpp",
 		Header = "pch.h",
@@ -95,6 +165,8 @@ local nudom = SharedLibrary {
 		"nudom/Render/nuRenderDomEl.cpp",
 		"nudom/Render/nuRenderStack.cpp",
 		"nudom/Render/nuStyleResolve.cpp",
+		"nudom/Render/nuTextureAtlas.cpp",
+		"nudom/Text/nuFontStore.cpp",
 		"nudom/Text/nuTextCache.cpp",
 		"nudom/Text/nuTextDefs.cpp",
 		"dependencies/Panacea/Containers/queue.cpp",

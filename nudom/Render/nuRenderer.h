@@ -13,5 +13,7 @@ protected:
 	nuStringTable*	Strings;
 
 	void			RenderNode( nuRenderDomEl* node );
+	void			RenderTextNode( nuRenderDomEl* node );
+	void			RenderTextNodeChar( nuRenderDomEl* node, const nuRenderTextEl& txtEl );
 
 };

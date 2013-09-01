@@ -81,7 +81,9 @@ void nuDoc::CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) con
 			if ( src && !dst )
 			{
 				// create in destination
-				c.ChildByInternalID[i] = c.AllocChild();
+				nuDomEl* newChild = c.AllocChild();
+				newChild->SetDoc( &c );
+				c.ChildByInternalID[i] = newChild;
 			}
 			else if ( !src && dst )
 			{
@@ -201,6 +203,8 @@ void nuDoc::InitializeDefaultTagStyles()
 {
 	TagStyles[nuTagBody].Parse( "background: #fff; width: 100%; height: 100%;", this );
 	TagStyles[nuTagDiv].Parse( "display: block;", this );
+	// Hack to give text some size
+	TagStyles[nuTagText].Parse( "width: 70px; height: 30px; background: #fff;", this );
 
-	static_assert(nuTagDiv == nuTagEND - 1, "add default style for new tag");
+	static_assert(nuTagText == nuTagEND - 1, "add default style for new tag");
 }

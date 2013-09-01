@@ -83,7 +83,6 @@ typedef char TCHAR;
 #include "../dependencies/Panacea/Containers/queue.h"
 #include "../dependencies/Panacea/Bits/BitMap.h"
 #include "../dependencies/Panacea/fhash/fhashtable.h"
-#include "../dependencies/Panacea/Vec/Mat4.h"
 
 #include "nuString.h"
 #define FMT_STRING nuString

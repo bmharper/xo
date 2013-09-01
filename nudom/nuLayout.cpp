@@ -3,6 +3,7 @@
 #include "nuDoc.h"
 #include "Render/nuRenderDomEl.h"
 #include "Render/nuStyleResolve.h"
+#include "Text/nuFontStore.h"
 
 void nuLayout::Layout( const nuDoc& doc, nuRenderDomEl& root, nuPool* pool )
 {
@@ -37,13 +38,17 @@ void nuLayout::Layout( const nuDoc& doc, nuRenderDomEl& root, nuPool* pool )
 void nuLayout::Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode )
 {
 	NUTRACE_LAYOUT( "Layout (%d) Run 1\n", node.GetInternalID() );
-
 	nuStyleResolver::ResolveAndPush( Stack, &node );
 	rnode->SetStyle( Stack );
 	
 	NUTRACE_LAYOUT( "Layout (%d) Run 2\n", node.GetInternalID() );
 
 	rnode->InternalID = node.GetInternalID();
+
+	if ( node.GetTag() == nuTagText )
+	{
+		RunText( s, node, rnode );
+	}
 
 	nuStyleBox margin;
 	nuStyleBox padding;
@@ -112,6 +117,30 @@ void nuLayout::Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode )
 	}
 
 	Stack.Stack.pop();
+}
+
+void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode )
+{
+	NUTRACE_LAYOUT( "Layout (%d) Run txt.1\n", node.GetInternalID() );
+
+	// total hack job
+	const nuFont* font = nuGlobal()->FontStore->GetByFacename( nuString("Arial") );
+	if ( font )
+		rnode->FontID = font->ID;
+	else
+		rnode->FontID = nuGlobal()->FontStore->InsertByFacename( nuString("Arial") );
+
+	//rnode->Char = node.GetText().Z[0];
+	rnode->Text.resize( node.GetText().Len );
+	const char* txt = node.GetText().Z;
+
+	for ( intp i = 0; txt[i]; i++ )
+	{
+		rnode->Text[i].Char = txt[i];
+		rnode->Text[i].X = s.PosX + nuRealToPos(10);
+		rnode->Text[i].Y = s.PosY + nuRealToPos(10);
+		s.PosX += nuRealToPos( 15 );
+	}
 }
 
 nuPos nuLayout::ComputeDimension( nuPos container, nuSize size )

@@ -4,6 +4,8 @@
 
 nuRenderDomEl::nuRenderDomEl( nuPool* pool )
 {
+	FontID = nuFontIDNull;
+	Char = 0;
 	SetPool( pool );
 }
 
@@ -15,12 +17,14 @@ nuRenderDomEl::~nuRenderDomEl()
 void nuRenderDomEl::SetPool( nuPool* pool )
 {
 	Children.Pool = pool;
+	Text.Pool = pool;
 }
 
 void nuRenderDomEl::Discard()
 {
 	InternalID = 0;
 	Children.clear();
+	Text.clear();
 }
 
 void nuRenderDomEl::SetStyle( nuRenderStack& stack )

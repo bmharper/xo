@@ -1,6 +1,8 @@
 #include "pch.h"
 PFNGLACTIVETEXTUREPROC glActiveTexture;
 PFNGLATTACHSHADERPROC glAttachShader;
+PFNGLBINDFRAGDATALOCATIONPROC glBindFragDataLocation;
+PFNGLBLENDFUNCSEPARATEPROC glBlendFuncSeparate;
 PFNGLCOMPILESHADERPROC glCompileShader;
 PFNGLCREATEPROGRAMPROC glCreateProgram;
 PFNGLCREATESHADERPROC glCreateShader;
@@ -8,6 +10,7 @@ PFNGLDELETESHADERPROC glDeleteShader;
 PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
 PFNGLGENERATEMIPMAPPROC glGenerateMipmap;
 PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation;
+PFNGLGETFRAGDATALOCATIONPROC glGetFragDataLocation;
 PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
 PFNGLGETPROGRAMIVPROC glGetProgramiv;
 PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog;
@@ -25,6 +28,8 @@ PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
 void initGLExt() {
 glActiveTexture = (PFNGLACTIVETEXTUREPROC) wglGetProcAddress( "glActiveTexture" );
 glAttachShader = (PFNGLATTACHSHADERPROC) wglGetProcAddress( "glAttachShader" );
+glBindFragDataLocation = (PFNGLBINDFRAGDATALOCATIONPROC) wglGetProcAddress( "glBindFragDataLocation" );
+glBlendFuncSeparate = (PFNGLBLENDFUNCSEPARATEPROC) wglGetProcAddress( "glBlendFuncSeparate" );
 glCompileShader = (PFNGLCOMPILESHADERPROC) wglGetProcAddress( "glCompileShader" );
 glCreateProgram = (PFNGLCREATEPROGRAMPROC) wglGetProcAddress( "glCreateProgram" );
 glCreateShader = (PFNGLCREATESHADERPROC) wglGetProcAddress( "glCreateShader" );
@@ -32,6 +37,7 @@ glDeleteShader = (PFNGLDELETESHADERPROC) wglGetProcAddress( "glDeleteShader" );
 glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC) wglGetProcAddress( "glEnableVertexAttribArray" );
 glGenerateMipmap = (PFNGLGENERATEMIPMAPPROC) wglGetProcAddress( "glGenerateMipmap" );
 glGetAttribLocation = (PFNGLGETATTRIBLOCATIONPROC) wglGetProcAddress( "glGetAttribLocation" );
+glGetFragDataLocation = (PFNGLGETFRAGDATALOCATIONPROC) wglGetProcAddress( "glGetFragDataLocation" );
 glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC) wglGetProcAddress( "glGetProgramInfoLog" );
 glGetProgramiv = (PFNGLGETPROGRAMIVPROC) wglGetProcAddress( "glGetProgramiv" );
 glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC) wglGetProcAddress( "glGetShaderInfoLog" );

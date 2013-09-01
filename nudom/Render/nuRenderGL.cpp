@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "nuRenderGL.h"
 #include "../Image/nuImage.h"
+#include "nuTextureAtlas.h"
 
 #define Z(s) #s
 
@@ -48,6 +49,95 @@ static const char* pFillTexFrag = Z(
 	void main()
 	{
 		gl_FragColor = color * texture2D(tex0, texuv0.st);
+	}
+);
+
+static const char* pTextRGBVert = Z(
+	uniform		mat4	mvproj;
+	attribute	vec4	vpos;
+	attribute	vec4	vcolor;
+	attribute	vec2	vtexuv0;
+	attribute	vec4	vtexClamp;
+	varying		vec4	color;
+	varying		vec2	texuv0;
+	varying		vec4	texClamp;
+	void main()
+	{
+		gl_Position = mvproj * vpos;
+		texuv0 = vtexuv0;
+		texClamp = vtexClamp;
+		color = vcolor;
+	}
+);
+
+static const char* pTextRGBFrag = Z(
+	#version 330\n
+	precision mediump float;
+	uniform sampler2D	tex0;
+	varying vec4		color;
+	varying vec2		texuv0;
+	varying vec4		texClamp;
+	//out vec4 outputColor0;
+	//out vec4 outputColor1;
+	layout(location = 0, index = 0) out vec4 outputColor0;
+	layout(location = 0, index = 1) out vec4 outputColor1;
+	void main()
+	{
+		float offset = 1.0 / 64;
+		vec2 uv = texuv0;
+		//uv.s = clamp(texuv0.s, texClamp.x, texClamp.z);
+		//uv.t = clamp(texuv0.t, texClamp.y, texClamp.w);
+
+		float tap0 = texture2D(tex0, vec2(clamp(uv.s - offset * 3.0, texClamp.x, texClamp.z), uv.t));
+		float tap1 = texture2D(tex0, vec2(clamp(uv.s - offset * 2.0, texClamp.x, texClamp.z), uv.t));
+		float tap2 = texture2D(tex0, vec2(clamp(uv.s - offset * 1.0, texClamp.x, texClamp.z), uv.t));
+		float tap3 = texture2D(tex0, vec2(clamp(uv.s             ,   texClamp.x, texClamp.z), uv.t));
+		float tap4 = texture2D(tex0, vec2(clamp(uv.s + offset * 1.0, texClamp.x, texClamp.z), uv.t));
+		float tap5 = texture2D(tex0, vec2(clamp(uv.s + offset * 2.0, texClamp.x, texClamp.z), uv.t));
+		float tap6 = texture2D(tex0, vec2(clamp(uv.s + offset * 3.0, texClamp.x, texClamp.z), uv.t));
+		// float tap0 = texture2D(tex0, vec2(max(uv.s - offset * 3.0, texClamp.x), uv.t));
+		// float tap1 = texture2D(tex0, vec2(max(uv.s - offset * 2.0, texClamp.x), uv.t));
+		// float tap2 = texture2D(tex0, vec2(max(uv.s - offset * 1.0, texClamp.x), uv.t));
+		// float tap3 = texture2D(tex0, vec2(    uv.s,                             uv.t));
+		// float tap4 = texture2D(tex0, vec2(min(uv.s + offset * 1.0, texClamp.z), uv.t));
+		// float tap5 = texture2D(tex0, vec2(min(uv.s + offset * 2.0, texClamp.z), uv.t));
+		// float tap6 = texture2D(tex0, vec2(min(uv.s + offset * 3.0, texClamp.z), uv.t));
+
+		float w0 = 0.45;
+		float w1 = 0.35;
+		float w2 = 0.2;
+		//float w0 = 0.98;
+		//float w1 = 0.01;
+		//float w2 = 0.01;
+
+		float r = (w2 * tap0 + w1 * tap1 + w0 * tap2 + w1 * tap3 + w2 * tap4);
+		float g = (w2 * tap1 + w1 * tap2 + w0 * tap3 + w1 * tap4 + w2 * tap5);
+		float b = (w2 * tap2 + w1 * tap3 + w0 * tap4 + w1 * tap5 + w2 * tap6);
+		float aR = r * color.a;
+		float aG = g * color.a;
+		float aB = b * color.a;
+		float avgA = (r + g + b) / 3.0;
+		//float minA = min(r,g,min(g,b));
+		// ONE MINUS SRC COLOR
+		//float alpha = min(min(red, green), blue);
+		//gl_FragColor = vec4(aR, aG, aB, avgA);
+		outputColor0 = vec4(color.r, color.g, color.b, avgA);
+		outputColor1 = vec4(aR, aG, aB, avgA);
+
+		/*
+		float t = max(max(red,green),blue);
+		vec4 color2 = vec4( color.rgb, (red + green + blue) / 3.0);
+		color2 = t*color2 + (1.0 - t) * vec4(red, green, blue, min(min(red, green), blue));
+		gl_FragColor = vec4( color2.rgb, color.a * color2.a );
+		*/
+
+		/*
+		No filtering
+		float red = texture2D(tex0, vec2(uv.s - offset, uv.t));
+		float green = texture2D(tex0, vec2(uv.s, uv.t));
+		float blue = texture2D(tex0, vec2(uv.s + offset, uv.t));
+		gl_FragColor = color * vec4(red, green, blue, 1);
+		*/
 	}
 );
 
@@ -179,6 +269,9 @@ bool nuRenderGL::CreateShaders()
 
 	if ( SingleTex2D == 0 )
 		glGenTextures( 1, &SingleTex2D );
+	if ( SingleTexAtlas2D == 0 )
+		glGenTextures( 1, &SingleTexAtlas2D );
+
 	glActiveTexture( GL_TEXTURE0 );
 	glBindTexture( GL_TEXTURE_2D, SingleTex2D );
 
@@ -187,6 +280,7 @@ bool nuRenderGL::CreateShaders()
 	if ( !LoadProgram( PRect, pRectVert, pRectFrag ) ) return false;
 	if ( !LoadProgram( PFill, pFillVert, pFillFrag ) ) return false;
 	if ( !LoadProgram( PFillTex, pFillTexVert, pFillTexFrag ) ) return false;
+	if ( !LoadProgram( PTextRGB, pTextRGBVert, pTextRGBFrag ) ) return false;
 	//if ( !LoadProgram( PCurve, pCurveVert, pCurveFrag ) ) return false;
 
 	//glUseProgram( PRect.Prog );
@@ -210,6 +304,20 @@ bool nuRenderGL::CreateShaders()
 	VarFillTexVUV = glGetAttribLocation( PFillTex.Prog, "vtexuv0" );
 	VarFillTex0 = glGetUniformLocation( PFillTex.Prog, "tex0" );
 
+	VarTextRGBMVProj = glGetUniformLocation( PTextRGB.Prog, "mvproj" );
+	VarTextRGBVPos = glGetAttribLocation( PTextRGB.Prog, "vpos" );
+	VarTextRGBVColor = glGetAttribLocation( PTextRGB.Prog, "vcolor" );
+	VarTextRGBVUV = glGetAttribLocation( PTextRGB.Prog, "vtexuv0" );
+	VarTextRGBVClamp = glGetAttribLocation( PTextRGB.Prog, "vtexClamp" );
+	VarTextRGBTex0 = glGetUniformLocation( PTextRGB.Prog, "tex0" );
+	glBindFragDataLocation( PTextRGB.Prog, 0, "outputColor0" );
+	glBindFragDataLocation( PTextRGB.Prog, 1, "outputColor1" );
+	Check();
+	GLint c0 = glGetFragDataLocation( PTextRGB.Prog, "outputColor0" );
+	GLint c1 = glGetFragDataLocation( PTextRGB.Prog, "outputColor1" );
+	GLint c2 = glGetFragDataLocation( PTextRGB.Prog, "outputColor2" );
+	Check();
+
 	NUTRACE( "VarFillMVProj = %d\n", VarFillMVProj );
 	NUTRACE( "VarFillVPos = %d\n", VarFillVPos );
 	NUTRACE( "VarFillVColor = %d\n", VarFillVColor );
@@ -219,6 +327,13 @@ bool nuRenderGL::CreateShaders()
 	NUTRACE( "VarFillTexVColor = %d\n", VarFillTexVColor );
 	NUTRACE( "VarFillTexVUV = %d\n", VarFillTexVUV );
 	NUTRACE( "VarFillTex0 = %d\n", VarFillTex0 );
+
+	NUTRACE( "VarTextRGBMVProj = %d\n", VarTextRGBMVProj );
+	NUTRACE( "VarTextRGBVPos = %d\n", VarTextRGBVPos );
+	NUTRACE( "VarTextRGBVColor = %d\n", VarTextRGBVColor );
+	NUTRACE( "VarTextRGBVUV = %d\n", VarTextRGBVUV );
+	NUTRACE( "VarTextRGBVClamp = %d\n", VarTextRGBVClamp );
+	NUTRACE( "VarTextRGBTex0 = %d\n", VarTextRGBTex0 );
 
 	//glUseProgram( 0 );
 	
@@ -234,10 +349,13 @@ void nuRenderGL::DeleteShaders()
 	if ( SingleTex2D != 0 )
 		glDeleteTextures( 1, &SingleTex2D );
 	SingleTex2D = 0;
+	if ( SingleTexAtlas2D != 0 )
+		glDeleteTextures( 1, &SingleTexAtlas2D );
 
 	glUseProgram( 0 );
 	DeleteProgram( PFill );
 	DeleteProgram( PFillTex );
+	DeleteProgram( PTextRGB );
 	DeleteProgram( PRect );
 	DeleteProgram( PCurve );
 }
@@ -254,12 +372,26 @@ void nuRenderGL::ActivateProgram( nuGLProg& p )
 	ActiveProgram = &p;
 	NUASSERT( p.Prog != 0 );
 	glUseProgram( p.Prog );
+	if ( ActiveProgram == &PTextRGB )
+	{
+#define GL_SRC1_COLOR                                      0x88F9
+#define GL_ONE_MINUS_SRC1_COLOR                            0x88FA
+#define GL_ONE_MINUS_SRC1_ALPHA                            0x88FB
+		// outputColor0 = vec4(color.r, color.g, color.b, avgA);
+		// outputColor1 = vec4(aR, aG, aB, avgA);
+		glBlendFuncSeparate( GL_SRC1_COLOR, GL_ONE_MINUS_SRC1_COLOR, GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
+		//glBlendFunc( GL_SRC_COLOR, GL_ONE_MINUS_SRC_ALPHA );
+	}
+	else
+	{
+		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+	}
 	Check();
 }
 
-void nuRenderGL::Ortho( Mat4f &imat, double left, double right, double bottom, double top, double znear, double zfar )
+void nuRenderGL::Ortho( nuMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar )
 {
-	Mat4f m;
+	nuMat4f m;
 	m.Zero();
 	double A = 2 / (right - left);
 	double B = 2 / (top - bottom);
@@ -314,7 +446,7 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 	NUTRACE_RENDER( "PreRender 3\n" );
 	Check();
 
-	Mat4f mvproj;
+	nuMat4f mvproj;
 	mvproj.Identity();
 	Ortho( mvproj, 0, fbwidth, fbheight, 0, 0, 1 );
 	// GLES doesn't support TRANSPOSE = TRUE
@@ -342,6 +474,13 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 
 	glUniformMatrix4fv( VarFillTexMVProj, 1, false, &mvproj.row[0].x );
 
+	ActivateProgram( PTextRGB );
+
+	NUTRACE_RENDER( "PreRender 7 (%d)\n", VarTextRGBMVProj );
+	Check();
+
+	glUniformMatrix4fv( VarTextRGBMVProj, 1, false, &mvproj.row[0].x );
+
 	NUTRACE_RENDER( "PreRender done\n" );
 
 	//glEnableClientState( GL_TEXTURE_COORD_ARRAY );
@@ -367,6 +506,7 @@ void nuRenderGL::DrawQuad( const void* v )
 	GLint varvpos = 0;
 	GLint varvcol = 0;
 	GLint varvtex0 = 0;
+	GLint varvtexClamp = 0;
 	GLint vartex0 = 0;
 	if ( ActiveProgram == &PRect )
 	{
@@ -385,7 +525,17 @@ void nuRenderGL::DrawQuad( const void* v )
 		varvtex0 = VarFillTexVUV;
 		vartex0 = VarFillTex0;
 	}
+	else if ( ActiveProgram == &PTextRGB )
+	{
+		stride = sizeof(nuVx_PTCV4);
+		varvpos = VarTextRGBVPos;
+		varvcol = VarTextRGBVColor;
+		varvtex0 = VarTextRGBVUV;
+		varvtexClamp = VarTextRGBVClamp;
+		vartex0 = VarTextRGBTex0;
+	}
 
+	// We assume here that nuVx_PTC and nuVx_PTCV4 share the same base layout
 	glVertexAttribPointer( varvpos, 3, GL_FLOAT, false, stride, vbyte );
 	glEnableVertexAttribArray( varvpos );
 	
@@ -397,6 +547,11 @@ void nuRenderGL::DrawQuad( const void* v )
 		glUniform1i( vartex0, 0 );
 		glVertexAttribPointer( varvtex0, 2, GL_FLOAT, true, stride, vbyte + offsetof(nuVx_PTC, UV) );
 		glEnableVertexAttribArray( varvtex0 );
+	}
+	if ( varvtexClamp != 0 )
+	{
+		glVertexAttribPointer( varvtexClamp, 4, GL_FLOAT, true, stride, vbyte + offsetof(nuVx_PTCV4, V4) );
+		glEnableVertexAttribArray( varvtexClamp );
 	}
 	//glVertexPointer( 3, GL_FLOAT, stride, vbyte );
 	//glEnableClientState( GL_VERTEX_ARRAY );
@@ -445,6 +600,31 @@ void nuRenderGL::LoadTexture( const nuImage* img )
 	glBindTexture( GL_TEXTURE_2D, SingleTex2D );
 	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, img->GetWidth(), img->GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img->GetData() );
 	glGenerateMipmap( GL_TEXTURE_2D );
+}
+
+void nuRenderGL::LoadTextureAtlas( const nuTextureAtlas* atlas )
+{
+	if ( SingleTexAtlas2D == 0 )
+		glGenTextures( 1, &SingleTexAtlas2D );
+	glActiveTexture( GL_TEXTURE0 );
+	glBindTexture( GL_TEXTURE_2D, SingleTexAtlas2D );
+	//int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
+	//int format = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
+	int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_SLUMINANCE8 : GL_RGB;
+	int format = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
+	glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, atlas->GetWidth(), atlas->GetHeight(), 0, format, GL_UNSIGNED_BYTE, atlas->DataAt(0,0) );
+	// all assuming this is for a glyph atlas
+	//glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	//glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	// Clamping should have no effect, since we clamp inside our fragment shader
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	//glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+	//glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+	// not necessary for text where we sample NN
+	//glGenerateMipmap( GL_TEXTURE_2D );
 }
 
 void nuRenderGL::DeleteProgram( nuGLProg& prog )

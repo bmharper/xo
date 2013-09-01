@@ -4,6 +4,8 @@
 #include "nuDoc.h"
 #include "nuSysWnd.h"
 #include "Render/nuRenderGL.h"
+#include "Text/nuFontStore.h"
+#include "Text/nuTextCache.h"
 
 static const int					MAX_WORKER_THREADS = 32;
 static volatile uint32				ExitSignalled = 0;
@@ -122,6 +124,9 @@ NUAPI void nuInitialize()
 	nuGlobals->DocRemoveQueue.Initialize( false );
 	nuGlobals->EventQueue.Initialize( true );
 	nuGlobals->JobQueue.Initialize( true );
+	nuGlobals->FontStore = new nuFontStore();
+	nuGlobals->FontStore->InitializeFreetype();
+	nuGlobals->GlyphCache = new nuGlyphCache();
 	nuSysWnd::PlatformInitialize();
 #if NU_WIN_DESKTOP
 	nuInitialize_Win32();
@@ -164,6 +169,15 @@ NUAPI void nuShutdown()
 	// wait for each thread in turn
 	for ( int i = 0; i < nuGlobal()->NumWorkerThreads; i++ )
 		NUVERIFY( AbcThreadJoin( WorkerThreads[i] ) );
+
+	nuGlobals->GlyphCache->Clear();
+	delete nuGlobals->GlyphCache;
+	nuGlobals->GlyphCache = NULL;
+
+	nuGlobals->FontStore->Clear();
+	nuGlobals->FontStore->ShutdownFreetype();
+	delete nuGlobals->FontStore;
+	nuGlobals->FontStore = NULL;
 
 	delete nuGlobals;
 }

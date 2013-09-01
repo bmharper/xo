@@ -1,6 +1,8 @@
 funcs = %w(
 glActiveTexture
 glAttachShader
+glBindFragDataLocation
+glBlendFuncSeparate
 glCompileShader
 glCreateProgram
 glCreateShader
@@ -8,6 +10,7 @@ glDeleteShader
 glEnableVertexAttribArray
 glGenerateMipmap
 glGetAttribLocation
+glGetFragDataLocation
 glGetProgramInfoLog
 glGetProgramiv
 glGetShaderInfoLog

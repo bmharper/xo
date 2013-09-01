@@ -87,6 +87,19 @@ public:
 
 	intp size() const { return Count; }
 
+	void resize( intp n )
+	{
+		if ( n != Count )
+		{
+			clear();
+			if ( n != 0 )
+			{
+				growto( n );
+				Count = n;
+			}
+		}
+	}
+
 	void clear()
 	{
 		Data = NULL;
@@ -98,6 +111,11 @@ protected:
 	void grow()
 	{
 		uintp ncap = std::max(Capacity * 2, (uintp) 2);
+		growto( ncap );
+	}
+
+	void growto( uintp ncap )
+	{
 		T* ndata = (T*) Pool->Alloc( sizeof(T) * ncap, false );
 		NUCHECKALLOC(ndata);
 		memcpy( ndata, Data, sizeof(T) * Capacity );

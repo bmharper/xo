@@ -2,9 +2,11 @@
 
 typedef unsigned char	byte;
 typedef unsigned char	u8;
+typedef unsigned char	uint8;
 typedef unsigned int	u32;
 typedef unsigned int	uint32;
 typedef int				int32;
+typedef unsigned short	uint16;
 
 #ifndef BIT
 	#define BIT(x) (1 << (x))

@@ -328,6 +328,7 @@ protected:
 
 // The set of style information that is used by the renderer
 // This is baked in by the Layout engine.
+// This struct is present in every single nuRenderDomEl, so it pays to keep it tight.
 class NUAPI nuStyleRender
 {
 public:
