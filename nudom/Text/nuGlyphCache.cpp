@@ -64,11 +64,14 @@ int nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key, const nuFont* font )
 	bool isSubPixel = nuGlyphFlag_IsSubPixel(key.Flags);
 
 	uint32 pixSize = key.Size;
+	int32 combinedHorzMultiplier = 1;
+	if ( isSubPixel )
+		combinedHorzMultiplier = nuSubPixelHintKillMultiplier * 3;
 
-	FT_Error e = FT_Set_Pixel_Sizes( font->FTFace, isSubPixel ? nuSubPixelHintKillMultiplier * 3 * pixSize : pixSize, pixSize );
+	FT_Error e = FT_Set_Pixel_Sizes( font->FTFace, combinedHorzMultiplier * pixSize, pixSize );
 	NUASSERT( e == 0 );
 
-	uint ftflags = FT_LOAD_RENDER;
+	uint ftflags = FT_LOAD_RENDER | FT_LOAD_LINEAR_DESIGN;
 	if ( isSubPixel )
 		ftflags |= FT_LOAD_FORCE_AUTOHINT;
 
@@ -125,6 +128,9 @@ int nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key, const nuFont* font )
 	g.X = atlasX;
 	g.Y = atlasY;
 	g.TextureID = 0; // TODO
+	g.MetricLeftx256 = font->FTFace->glyph->bitmap_left * 256/ combinedHorzMultiplier;
+	g.MetricTop = font->FTFace->glyph->bitmap_top;
+	g.MetricLinearHoriAdvance = font->FTFace->glyph->linearHoriAdvance / 2048.0f;
 	Table.insert( key, (uint) Glyphs.size() );
 	Glyphs += g;
 	return (int) (Glyphs.size() - 1);
@@ -151,6 +157,8 @@ void nuGlyphCache::FilterAndCopyBitmap( const nuFont* font, void* target, int ta
 			for ( int i = 0; i < nuSubPixelHintKillMultiplier; i++, src++ )
 				accum += *src;
 			accum = accum >> nuSubPixelHintKillShift;
+			if ( gamma != 1 )
+				accum = (uint32) (pow(accum / 255.0f, gamma) * 255.0f);
 			*dst++ = accum;
 		}
 		// last texel, which may not have the full 'nuSubPixelHintKillMultiplier' number of samples
@@ -158,16 +166,8 @@ void nuGlyphCache::FilterAndCopyBitmap( const nuFont* font, void* target, int ta
 		for ( ; px < width; px++, src++ )
 			accum += *src;
 		accum = accum >> nuSubPixelHintKillShift;
-
 		if ( gamma != 1 )
-		{
-			float v = accum / 255.0f;
-			v = pow(v, gamma) * 255.0f;
-			v = std::min(v, 255.0f);
-			v = std::max(v, 0.0f);
-			accum = (uint32) v;
-		}
-
+			accum = (uint32) (pow(accum / 255.0f, gamma) * 255.0f);
 		*dst++ = accum;
 		// single padding sample on the right side
 		*dst++ = 0;

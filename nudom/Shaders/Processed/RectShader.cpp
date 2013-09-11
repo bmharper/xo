@@ -1,0 +1,121 @@
+#include "pch.h"
+#include "RectShader.h"
+
+nuGLProg_Rect::nuGLProg_Rect()
+{
+	Reset();
+}
+
+void nuGLProg_Rect::Reset()
+{
+	ResetBase();
+	v_mvproj = -1;
+	v_vpos = -1;
+	v_vcolor = -1;
+	v_radius = -1;
+	v_box = -1;
+	v_vport_hsize = -1;
+}
+
+const char* nuGLProg_Rect::VertSrc()
+{
+	return
+"	uniform		mat4	mvproj;\n"
+"	attribute	vec4	vpos;\n"
+"	attribute	vec4	vcolor;\n"
+"	varying		vec4	pos;\n"
+"	varying		vec4	color;\n"
+"	void main()\n"
+"	{\n"
+"		pos = mvproj * vpos;\n"
+"		//pos = mvproj * gl_Vertex;\n"
+"		//pos = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
+"		//pos = vpos;\n"
+"		gl_Position = pos;\n"
+"		//gl_FrontColor = vcolor;\n"
+"		//color = vcolor;\n"
+"		//color = pow( vcolor, 2.2 );\n"
+"		color.rgb = pow( vcolor.rgb, 2.2 );\n"
+"		color.a = vcolor.a;\n"
+"	}\n"
+;
+}
+
+const char* nuGLProg_Rect::FragSrc()
+{
+	return
+"	precision mediump float;\n"
+"	varying vec4	pos;\n"
+"	varying vec4	color;\n"
+"	uniform float	radius;\n"
+"	uniform vec4	box;\n"
+"	uniform vec2	vport_hsize;\n"
+"	\n"
+"	vec2 to_screen( vec2 unit_pt )\n"
+"	{\n"
+"		return (vec2(unit_pt.x, -unit_pt.y) + vec2(1,1)) * vport_hsize;\n"
+"	}\n"
+"	\n"
+"	void main()\n"
+"	{\n"
+"		vec2 screenxy = to_screen(pos.xy);\n"
+"		float left = box.x + radius;\n"
+"		float right = box.z - radius;\n"
+"		float top = box.y + radius;\n"
+"		float bottom = box.w - radius;\n"
+"		vec2 cent = screenxy;\n"
+"		float iradius = radius;\n"
+"		if (		screenxy.x < left && screenxy.y < top )		{ cent = vec2(left, top); }\n"
+"		else if (	screenxy.x < left && screenxy.y > bottom )	{ cent = vec2(left, bottom); }\n"
+"		else if (	screenxy.x > right && screenxy.y < top )	{ cent = vec2(right, top); }\n"
+"		else if (	screenxy.x > right && screenxy.y > bottom )	{ cent = vec2(right, bottom); }\n"
+"		else iradius = 10.0;\n"
+"	\n"
+"		// If you draw the pixels out on paper, and take cognisance of the fact that\n"
+"		// our samples are at pixel centers, then this -0.5 offset makes perfect sense.\n"
+"		// This offset is correct regardless of whether you're blending linearly or in gamma space.\n"
+"		float dist = length( screenxy - cent ) - 0.5;\n"
+"	\n"
+"		gl_FragColor = color;\n"
+"		gl_FragColor.a *= clamp(iradius - dist, 0.0, 1.0);\n"
+"	\n"
+"		//gl_FragColor.rgb = vec3(1.0, 0, 0);\n"
+"		//gl_FragColor.a = pow(0.25, 2.2);\n"
+"	\n"
+"		//gl_FragColor.rgb = color.rgb;\n"
+"		//gl_FragColor.a = 0.25;\n"
+"	\n"
+"		//gl_FragColor.r += 0.3;\n"
+"		//gl_FragColor.a += 0.3;\n"
+"	}\n"
+;
+}
+
+const char* nuGLProg_Rect::Name()
+{
+	return "Rect";
+}
+
+
+bool nuGLProg_Rect::LoadVariablePositions()
+{
+	int nfail = 0;
+
+	nfail += (v_mvproj = glGetUniformLocation( Prog, "mvproj" )) == -1;
+	nfail += (v_vpos = glGetAttribLocation( Prog, "vpos" )) == -1;
+	nfail += (v_vcolor = glGetAttribLocation( Prog, "vcolor" )) == -1;
+	nfail += (v_radius = glGetUniformLocation( Prog, "radius" )) == -1;
+	nfail += (v_box = glGetUniformLocation( Prog, "box" )) == -1;
+	nfail += (v_vport_hsize = glGetUniformLocation( Prog, "vport_hsize" )) == -1;
+	if ( nfail != 0 )
+		NUTRACE( "Failed to bind %d variables of shader Rect\n", nfail );
+
+	return nfail == 0;
+}
+
+uint32 nuGLProg_Rect::PlatformMask()
+{
+	return nuPlatform_All;
+}
+
+

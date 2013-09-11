@@ -30,8 +30,9 @@ class nuTextureAtlas;
 class nuMat4f;
 #endif
 
-typedef int32 nuPos;					// fixed-point position
-static const u32 nuPosShift = 8;		// 24:8 fixed point coordinates used during layout
+typedef int32 nuPos;								// fixed-point position
+static const u32 nuPosShift = 8;					// 24:8 fixed point coordinates used during layout
+static const u32 nuPosMask = (1 << nuPosShift) - 1;	// 255
 
 // An ID that is internal to nudom - i.e. it is not controllable by external code.
 // This ID is an integer that you can use to reference a DOM element. These IDs are recycled.
@@ -46,6 +47,7 @@ inline int32	nuRealToPos( float real )		{ return int32(real * (1 << nuPosShift))
 inline int32	nuDoubleToPos( double real )	{ return int32(real * (1 << nuPosShift)); }
 inline float	nuPosToReal( int32 pos )		{ return pos * (1.0f / (1 << nuPosShift)); }
 inline double	nuPosToDouble( int32 pos )		{ return pos * (1.0 / (1 << nuPosShift)); }
+inline int32	nuPosRound( int32 pos )			{ return pos + (1 << (nuPosShift-1)) & ~nuPosMask; }
 
 enum nuCloneFlags
 {
@@ -173,6 +175,7 @@ struct nuGlobalStruct
 	int							TargetFPS;
 	int							NumWorkerThreads;		// Read-only. Set during nuInitialize().
 	bool						EnableSubpixelText;		// Enable sub-pixel text rendering. Assumes pixels are the standard RGB layout. Enabled by default on Windows desktop only.
+	bool						EnableSRGBFramebuffer;	// Enable sRGB framebuffer (implies linear blending)
 	float						SubPixelTextGamma;		// Tweak freetype's gamma when doing sub-pixel text rendering.
 	float						WholePixelTextGamma;	// Tweak freetype's gamma when doing whole-pixel text rendering.
 

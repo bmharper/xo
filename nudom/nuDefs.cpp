@@ -119,13 +119,18 @@ NUAPI void nuInitialize()
 	nuGlobals = new nuGlobalStruct();
 	nuGlobals->TargetFPS = 60;
 	nuGlobals->NumWorkerThreads = min( minf.CPUCount, MAX_WORKER_THREADS );
+	//nuGlobals->SubPixelTextGamma = 0.6f; // 0.5 is good for sRGB framebuffer
+	// Ah....... Freetype's output is linear, so if treat our freetype texture as GL_LUMINANCE
+	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get prefect results without
+	// doing any tweaking to the freetype glyphs.
 	nuGlobals->SubPixelTextGamma = 1.0f;
 	nuGlobals->WholePixelTextGamma = 1.0f;
 #if NU_WIN_DESKTOP
 	nuGlobals->EnableSubpixelText = true;
-	//nuGlobals->EnableSubpixelText = false;
+	nuGlobals->EnableSRGBFramebuffer = true;
 #else
 	nuGlobals->EnableSubpixelText = false;
+	nuGlobals->EnableSRGBFramebuffer = false;
 #endif
 	//nuGlobals->DebugZeroClonedChildList = true;
 	nuGlobals->DocAddQueue.Initialize( false );

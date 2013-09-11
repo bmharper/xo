@@ -4,287 +4,15 @@
 #include "nuTextureAtlas.h"
 #include "../Text/nuGlyphCache.h"
 
-#define Z(s) #s
-
-static const char* pFillVert = Z(
-	uniform		mat4	mvproj;
-	attribute	vec4	vpos;
-	attribute	vec4	vcolor;
-	varying		vec4	color;
-	void main()
-	{
-		gl_Position = mvproj * vpos;
-		color = vcolor;
-	}
-);
-
-static const char* pFillFrag = Z(
-	precision mediump float;
-	varying vec4	color;
-	void main()
-	{
-		gl_FragColor = color;
-	}
-);
-
-static const char* pFillTexVert = Z(
-	uniform		mat4	mvproj;
-	attribute	vec4	vpos;
-	attribute	vec4	vcolor;
-	attribute	vec2	vtexuv0;
-	varying		vec4	color;
-	varying		vec2	texuv0;
-	void main()
-	{
-		gl_Position = mvproj * vpos;
-		texuv0 = vtexuv0;
-		color = vcolor;
-	}
-);
-
-static const char* pFillTexFrag = Z(
-	precision mediump float;
-	uniform sampler2D	tex0;
-	varying vec4		color;
-	varying vec2		texuv0;
-	void main()
-	{
-		gl_FragColor = color * texture2D(tex0, texuv0.st);
-	}
-);
-
-#if NU_WIN_DESKTOP
-
-static const char* pTextRGBVert = Z(
-	uniform		mat4	mvproj;
-	attribute	vec4	vpos;
-	attribute	vec4	vcolor;
-	attribute	vec2	vtexuv0;
-	attribute	vec4	vtexClamp;
-	varying		vec4	color;
-	varying		vec2	texuv0;
-	varying		vec4	texClamp;
-	void main()
-	{
-		gl_Position = mvproj * vpos;
-		texuv0 = vtexuv0;
-		texClamp = vtexClamp;
-		color = vcolor;
-	}
-);
-
-static const char* pTextRGBFrag = Z(
-	#version 330\n
-	precision mediump float;
-	uniform sampler2D	tex0;
-	varying vec4		color;
-	varying vec2		texuv0;
-	varying vec4		texClamp;
-	layout(location = 0, index = 0) out vec4 outputColor0;
-	layout(location = 0, index = 1) out vec4 outputColor1;
-	void main()
-	{
-		float offset = 1.0 / ATLAS_SIZE;
-		vec2 uv = texuv0;
-
-		float tap0 = texture2D(tex0, vec2(clamp(uv.s - offset * 3.0, texClamp.x, texClamp.z), uv.t));
-		float tap1 = texture2D(tex0, vec2(clamp(uv.s - offset * 2.0, texClamp.x, texClamp.z), uv.t));
-		float tap2 = texture2D(tex0, vec2(clamp(uv.s - offset * 1.0, texClamp.x, texClamp.z), uv.t));
-		float tap3 = texture2D(tex0, vec2(clamp(uv.s             ,   texClamp.x, texClamp.z), uv.t));
-		float tap4 = texture2D(tex0, vec2(clamp(uv.s + offset * 1.0, texClamp.x, texClamp.z), uv.t));
-		float tap5 = texture2D(tex0, vec2(clamp(uv.s + offset * 2.0, texClamp.x, texClamp.z), uv.t));
-		float tap6 = texture2D(tex0, vec2(clamp(uv.s + offset * 3.0, texClamp.x, texClamp.z), uv.t));
-
-		float w0 = 0.6;
-		float w1 = 0.3;
-		float w2 = 0.1;
-		//float w0 = 0.98;
-		//float w1 = 0.01;
-		//float w2 = 0.01;
-
-		float r = (w2 * tap0 + w1 * tap1 + w0 * tap2 + w1 * tap3 + w2 * tap4);
-		float g = (w2 * tap1 + w1 * tap2 + w0 * tap3 + w1 * tap4 + w2 * tap5);
-		float b = (w2 * tap2 + w1 * tap3 + w0 * tap4 + w1 * tap5 + w2 * tap6);
-		float aR = r * color.a;
-		float aG = g * color.a;
-		float aB = b * color.a;
-		float avgA = (r + g + b) / 3.0;
-		//float minA = min(r,g,min(g,b));
-		// ONE MINUS SRC COLOR
-		//float alpha = min(min(red, green), blue);
-		//gl_FragColor = vec4(aR, aG, aB, avgA);
-		outputColor0 = vec4(color.r, color.g, color.b, avgA);
-		outputColor1 = vec4(aR, aG, aB, avgA);
-	}
-);
-
-#else
-// These are just dummy programs to satisfy the Android NDK Compiler (GCC),
-// which sees #version 330 as a compiler directive. I need a shader management thingy.
-static const char* pTextRGBVert = Z(
-	uniform		mat4	mvproj;
-	attribute	vec4	vpos;
-	attribute	vec4	vcolor;
-	attribute	vec2	vtexuv0;
-	varying		vec4	color;
-	varying		vec2	texuv0;
-	void main()
-	{
-		gl_Position = mvproj * vpos;
-		texuv0 = vtexuv0;
-		color = vcolor;
-	}
-);
-
-static const char* pTextRGBFrag = Z(
-	precision mediump float;
-	uniform sampler2D	tex0;
-	varying vec4		color;
-	varying vec2		texuv0;
-	void main()
-	{
-		gl_FragColor = color * texture2D(tex0, texuv0.st);
-	}
-);
-#endif
-
-static const char* pTextWholeVert = Z(
-	uniform		mat4	mvproj;
-	attribute	vec4	vpos;
-	attribute	vec4	vcolor;
-	attribute	vec2	vtexuv0;
-	varying		vec4	color;
-	varying		vec2	texuv0;
-	void main()
-	{
-		gl_Position = mvproj * vpos;
-		texuv0 = vtexuv0;
-		color = vcolor;
-	}
-);
-
-static const char* pTextWholeFrag = Z(
-	precision mediump float;
-	uniform sampler2D	tex0;
-	varying vec4		color;
-	varying vec2		texuv0;
-	void main()
-	{
-		vec4 texCol = texture2D(tex0, texuv0.st);
-		gl_FragColor = color * texCol.rrrr;
-	}
-);
-
-static const char* pRectVert = Z(
-	uniform		mat4	mvproj;
-	attribute	vec4	vpos;
-	attribute	vec4	vcolor;
-	varying		vec4	pos;
-	varying		vec4	color;
-	void main()
-	{
-		pos = mvproj * vpos;
-		//pos = mvproj * gl_Vertex;
-		//pos = gl_ModelViewProjectionMatrix * gl_Vertex;
-		//pos = vpos;
-		gl_Position = pos;
-		//gl_FrontColor = vcolor;
-		color = vcolor;
-	}
-);
-
-static const char* pRectFrag = Z(
-	precision mediump float;
-	varying vec4	pos;
-	varying vec4	color;
-	uniform float	radius;
-	uniform vec4	box;
-	uniform vec2	vport_hsize;
-
-	vec2 to_screen( vec2 unit_pt )
-	{
-		return (vec2(unit_pt.x, -unit_pt.y) + vec2(1,1)) * vport_hsize;
-	}
-
-	void main()
-	{
-		vec2 screenxy = to_screen(pos.xy);
-		float left = box.x + radius;
-		float right = box.z - radius;
-		float top = box.y + radius;
-		float bottom = box.w - radius;
-		vec2 cent = screenxy;
-		float iradius = radius;
-		if (		screenxy.x < left && screenxy.y < top )		{ cent = vec2(left, top); }
-		else if (	screenxy.x < left && screenxy.y > bottom )	{ cent = vec2(left, bottom); }
-		else if (	screenxy.x > right && screenxy.y < top )	{ cent = vec2(right, top); }
-		else if (	screenxy.x > right && screenxy.y > bottom )	{ cent = vec2(right, bottom); }
-		else iradius = 10.0;
-
-		float dist = length( screenxy - cent );
-
-		gl_FragColor = color;
-		gl_FragColor.a *= clamp(iradius - dist, 0.0, 1.0);
-		//gl_FragColor.r += 0.3;
-		//gl_FragColor.a += 0.3;
-	}
-);
-
-static const char* pCurveVert = Z(
-	varying vec4 pos;
-	varying vec2 texuv0;
-	void main()
-	{
-		gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
-		gl_FrontColor = gl_Color;
-		pos = gl_Position;
-		texuv0 = gl_MultiTexCoord0.xy;
-	}
-);
-
-// This is from Jim Blinn and Charles Loop's paper "Resolution Independent Curve Rendering using Programmable Graphics Hardware"
-// We don't need this complexity here.. and if I recall correctly, this technique aliases under minification faster than
-// our simpler rounded-rectangle alternative.
-static const char* pCurveFrag = Z(
-	varying vec4 pos;
-	varying vec2 texuv0;
-
-	void main()
-	{
-		vec2 p = texuv0;
-
-		// Gradients
-		vec2 px = dFdx(p);
-		vec2 py = dFdy(p);
-
-		// Chain rule
-		float fx = (2 * p.x) * px.x - px.y;
-		float fy = (2 * p.x) * py.x - py.y;
-
-		// Signed distance
-		float sd = (p.x * p.x - p.y) / sqrt(fx * fx + fy * fy);
-
-		// Linear alpha
-		float alpha = 0.5 - sd;
-
-		gl_FragColor = gl_Color;
-
-		if ( alpha > 1 )
-			gl_FragColor.a = 1;
-		else if ( alpha < 0 )
-			discard;
-		else
-			gl_FragColor.a = alpha;
-	}
-);
-
-nuGLProg::nuGLProg()
-{
-	memset(this, 0, sizeof(*this));
-}
-
 nuRenderGL::nuRenderGL()
 {
+	AllProgs[0] = &PRect;
+	AllProgs[1] = &PFill;
+	AllProgs[2] = &PFillTex;
+	AllProgs[3] = &PTextRGB;
+	AllProgs[4] = &PTextWhole;
+	AllProgs[5] = &PCurve;
+	static_assert(NumProgs == 6, "Add your new shader here");
 	Reset();
 }
 
@@ -294,7 +22,8 @@ nuRenderGL::~nuRenderGL()
 
 void nuRenderGL::Reset()
 {
-	memset( this, 0, sizeof(*this) );
+	for ( int i = 0; i < NumProgs; i++ )
+		AllProgs[i]->Reset();
 }
 
 bool nuRenderGL::CreateShaders()
@@ -311,9 +40,17 @@ bool nuRenderGL::CreateShaders()
 
 	Check();
 
-	nuString textRGBFrag(pTextRGBFrag);
-	textRGBFrag.ReplaceAll( "ATLAS_SIZE", fmt("%v", nuGlyphAtlasSize).Z );
+	for ( int i = 0; i < NumProgs; i++ )
+	{
+		if ( AllProgs[i]->UseOnThisPlatform() )
+		{
+			if ( !LoadProgram( *AllProgs[i] ) ) return false;
+			if ( !AllProgs[i]->LoadVariablePositions() ) return false;
+		}
+	}
 
+	/*
+	// old manual
 	if ( !LoadProgram( PRect, pRectVert, pRectFrag ) ) return false;
 	if ( !LoadProgram( PFill, pFillVert, pFillFrag ) ) return false;
 	if ( !LoadProgram( PFillTex, pFillTexVert, pFillTexFrag ) ) return false;
@@ -380,6 +117,7 @@ bool nuRenderGL::CreateShaders()
 	NUTRACE( "VarTextRGBVUV = %d\n", VarTextRGBVUV );
 	NUTRACE( "VarTextRGBVClamp = %d\n", VarTextRGBVClamp );
 	NUTRACE( "VarTextRGBTex0 = %d\n", VarTextRGBTex0 );
+	*/
 
 	//glUseProgram( 0 );
 	
@@ -399,12 +137,16 @@ void nuRenderGL::DeleteShaders()
 		glDeleteTextures( 1, &SingleTexAtlas2D );
 
 	glUseProgram( 0 );
-	DeleteProgram( PFill );
-	DeleteProgram( PFillTex );
-	DeleteProgram( PTextRGB );
-	DeleteProgram( PTextWhole );
-	DeleteProgram( PRect );
-	DeleteProgram( PCurve );
+	for ( int i = 0; i < NumProgs; i++ )
+	{
+		DeleteProgram( *AllProgs[i] );
+	}
+	// DeleteProgram( PFill );
+	// DeleteProgram( PFillTex );
+	// DeleteProgram( PTextRGB );
+	// DeleteProgram( PTextWhole );
+	// DeleteProgram( PRect );
+	// DeleteProgram( PCurve );
 }
 
 void nuRenderGL::SurfaceLost()
@@ -487,6 +229,9 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 	//glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
+	if ( nuGlobal()->EnableSRGBFramebuffer )
+		glEnable( GL_FRAMEBUFFER_SRGB );
+
 	NUTRACE_RENDER( "PreRender 2\n" );
 	Check();
 
@@ -506,9 +251,12 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 	// GLES doesn't support TRANSPOSE = TRUE
 	mvproj = mvproj.Transposed();
 
+	//ActivateProgram( PRect );
+	//glUniform2f( VarRectVPortHSize, FBWidth / 2.0f, FBHeight / 2.0f );
+	//glUniformMatrix4fv( VarRectMVProj, 1, false, &mvproj.row[0].x );
 	ActivateProgram( PRect );
-	glUniform2f( VarRectVPortHSize, FBWidth / 2.0f, FBHeight / 2.0f );
-	glUniformMatrix4fv( VarRectMVProj, 1, false, &mvproj.row[0].x );
+	glUniform2f( PRect.v_vport_hsize, FBWidth / 2.0f, FBHeight / 2.0f );
+	glUniformMatrix4fv( PRect.v_mvproj, 1, false, &mvproj.row[0].x );
 	Check();
 
 	ActivateProgram( PFill );
@@ -516,31 +264,31 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 	NUTRACE_RENDER( "PreRender 4 (%d)\n", VarFillMVProj );
 	Check();
 
-	glUniformMatrix4fv( VarFillMVProj, 1, false, &mvproj.row[0].x );
+	glUniformMatrix4fv( PFill.v_mvproj, 1, false, &mvproj.row[0].x );
 
 	NUTRACE_RENDER( "PreRender 5\n" );
 	Check();
 
 	ActivateProgram( PFillTex );
 
-	NUTRACE_RENDER( "PreRender 6 (%d)\n", VarFillTexMVProj );
+	NUTRACE_RENDER( "PreRender 6 (%d)\n", PFillTex.v_mvproj );
 	Check();
 
-	glUniformMatrix4fv( VarFillTexMVProj, 1, false, &mvproj.row[0].x );
+	glUniformMatrix4fv( PFillTex.v_mvproj, 1, false, &mvproj.row[0].x );
 
 	ActivateProgram( PTextRGB );
 
-	NUTRACE_RENDER( "PreRender 7 (%d)\n", VarTextRGBMVProj );
+	NUTRACE_RENDER( "PreRender 7 (%d)\n", PTextRGB.v_mvproj );
 	Check();
 
-	glUniformMatrix4fv( VarTextRGBMVProj, 1, false, &mvproj.row[0].x );
+	glUniformMatrix4fv( PTextRGB.v_mvproj, 1, false, &mvproj.row[0].x );
 
 	ActivateProgram( PTextWhole );
 
-	NUTRACE_RENDER( "PreRender 8 (%d)\n", VarTextWholeMVProj );
+	NUTRACE_RENDER( "PreRender 8 (%d)\n", PTextWhole.v_mvproj );
 	Check();
 
-	glUniformMatrix4fv( VarTextWholeMVProj, 1, false, &mvproj.row[0].x );
+	glUniformMatrix4fv( PTextWhole.v_mvproj, 1, false, &mvproj.row[0].x );
 
 	NUTRACE_RENDER( "PreRender done\n" );
 
@@ -571,36 +319,36 @@ void nuRenderGL::DrawQuad( const void* v )
 	GLint vartex0 = 0;
 	if ( ActiveProgram == &PRect )
 	{
-		varvpos = VarRectVPos;
-		varvcol = VarRectVColor;
+		varvpos = PRect.v_vpos;
+		varvcol = PRect.v_vcolor;
 	}
 	else if ( ActiveProgram == &PFill )
 	{
-		varvpos = VarFillVPos;
-		varvcol = VarFillVColor;
+		varvpos = PFill.v_vpos;
+		varvcol = PFill.v_vcolor;
 	}
 	else if ( ActiveProgram == &PFillTex )
 	{
-		varvpos = VarFillTexVPos;
-		varvcol = VarFillTexVColor;
-		varvtex0 = VarFillTexVUV;
-		vartex0 = VarFillTex0;
+		varvpos = PFillTex.v_vpos;
+		varvcol = PFillTex.v_vcolor;
+		varvtex0 = PFillTex.v_vtexuv0;
+		vartex0 = PFillTex.v_tex0;
 	}
 	else if ( ActiveProgram == &PTextRGB )
 	{
 		stride = sizeof(nuVx_PTCV4);
-		varvpos = VarTextRGBVPos;
-		varvcol = VarTextRGBVColor;
-		varvtex0 = VarTextRGBVUV;
-		varvtexClamp = VarTextRGBVClamp;
-		vartex0 = VarTextRGBTex0;
+		varvpos = PTextRGB.v_vpos;
+		varvcol = PTextRGB.v_vcolor;
+		varvtex0 = PTextRGB.v_vtexuv0;
+		varvtexClamp = PTextRGB.v_vtexClamp;
+		vartex0 = PTextRGB.v_tex0;
 	}
 	else if ( ActiveProgram == &PTextWhole )
 	{
-		varvpos = VarTextWholeVPos;
-		varvcol = VarTextWholeVColor;
-		varvtex0 = VarTextWholeVUV;
-		vartex0 = VarTextWholeTex0;
+		varvpos = PTextWhole.v_vpos;
+		varvcol = PTextWhole.v_vcolor;
+		varvtex0 = PTextWhole.v_vtexuv0;
+		vartex0 = PTextWhole.v_tex0;
 	}
 
 	// We assume here that nuVx_PTC and nuVx_PTCV4 share the same base layout
@@ -677,7 +425,8 @@ void nuRenderGL::LoadTextureAtlas( const nuTextureAtlas* atlas )
 	glActiveTexture( GL_TEXTURE0 );
 	glBindTexture( GL_TEXTURE_2D, SingleTexAtlas2D );
 #if NU_WIN_DESKTOP
-	int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_SLUMINANCE8 : GL_RGB;
+	//int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_SLUMINANCE8 : GL_RGB;
+	int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
 	int format = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
 #else
 	int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
@@ -706,6 +455,11 @@ void nuRenderGL::DeleteProgram( nuGLProg& prog )
 	if ( prog.Vert ) glDeleteShader( prog.Vert );
 	if ( prog.Frag ) glDeleteShader( prog.Frag );
 	prog = nuGLProg();
+}
+
+bool nuRenderGL::LoadProgram( nuGLProg& prog )
+{
+	return LoadProgram( prog.Vert, prog.Frag, prog.Prog, prog.VertSrc(), prog.FragSrc() );
 }
 
 bool nuRenderGL::LoadProgram( nuGLProg& prog, const char* vsrc, const char* fsrc )
@@ -741,14 +495,17 @@ bool nuRenderGL::LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, cons
 	return glGetError() == GL_NO_ERROR;
 }
 
-bool nuRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* src )
+bool nuRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* raw_src )
 {
 	NUASSERT(glGetError() == GL_NO_ERROR);
 
 	shader = glCreateShader( shaderType );
 
+	nuString processed(raw_src);
+	processed.ReplaceAll( "NU_GLYPH_ATLAS_SIZE", fmt("%v", nuGlyphAtlasSize).Z );
+
 	GLchar* vstring[1];
-	vstring[0] = (GLchar*) src;
+	vstring[0] = (GLchar*) processed.Z;
 
 	glShaderSource( shader, 1, (const GLchar**) vstring, NULL );
 	

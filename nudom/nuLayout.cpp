@@ -4,6 +4,7 @@
 #include "Render/nuRenderDomEl.h"
 #include "Render/nuStyleResolve.h"
 #include "Text/nuFontStore.h"
+#include "Text/nuGlyphCache.h"
 
 void nuLayout::Layout( const nuDoc& doc, nuRenderDomEl& root, nuPool* pool )
 {
@@ -126,10 +127,15 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 #if NU_WIN_DESKTOP
 	//const char* zfont = "Microsoft Sans Serif";
 	//const char* zfont = "Consolas";
-	const char* zfont = "Times New Roman";
+	//const char* zfont = "Times New Roman";
+	//const char* zfont = "Verdana";
+	const char* zfont = "Tahoma";
 #else
 	const char* zfont = "Droid Sans";
 #endif
+
+	bool subPixel = nuGlobal()->EnableSubpixelText;
+	uint8 glyphFlags = subPixel ? nuGlyphFlag_SubPixel_RGB : 0;
 
 	// total hack job
 	const nuFont* font = nuGlobal()->FontStore->GetByFacename( nuString(zfont) );
@@ -138,17 +144,25 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 	else
 		rnode->FontID = nuGlobal()->FontStore->InsertByFacename( nuString(zfont) );
 
-	rnode->Style.FontSizePx = 24;
+	nuGlyphCache* glyphCache = nuGlobal()->GlyphCache;
+
+	float fontSizePx = 12;
+	rnode->Style.FontSizePx = (uint8) fontSizePx;
 
 	rnode->Text.resize( node.GetText().Len );
 	const char* txt = node.GetText().Z;
 
 	for ( intp i = 0; txt[i]; i++ )
 	{
+		nuGlyph glyph;
+		if ( !glyphCache->GetGlyphFromChar( rnode->FontID, txt[i], rnode->Style.FontSizePx, glyphFlags, glyph ) )
+		{
+			// TODO: Handle missing glyph
+		}
 		rnode->Text[i].Char = txt[i];
-		rnode->Text[i].X = s.PosX + nuRealToPos(10);
-		rnode->Text[i].Y = s.PosY + nuRealToPos(10);
-		s.PosX += nuRealToPos( 21 );
+		rnode->Text[i].X = s.PosX + nuRealToPos(glyph.MetricLeftx256 / 256.0f);
+		rnode->Text[i].Y = s.PosY - nuRealToPos(glyph.MetricTop);
+		s.PosX += nuRealToPos(glyph.MetricLinearHoriAdvance * fontSizePx);
 	}
 }
 

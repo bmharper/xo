@@ -19,6 +19,9 @@ struct nuGlyph
 	uint16	Y;
 	uint16	Width;
 	uint16	Height;
+	int16	MetricLeftx256;	// low 8 bits are sub-pixel
+	int16	MetricTop;
+	float	MetricLinearHoriAdvance;
 };
 
 struct nuGlyphCacheKey

@@ -65,8 +65,8 @@ void nuRenderer::RenderNode( nuRenderDomEl* node )
 		if ( radius != 0 )
 		{
 			GL->ActivateProgram( GL->PRect );
-			glUniform4f( GL->VarRectBox, left, top, right, bottom );
-			glUniform1f( GL->VarRectRadius, radius );
+			glUniform4f( GL->PRect.v_box, left, top, right, bottom );
+			glUniform1f( GL->PRect.v_radius, radius );
 			GL->DrawQuad( corners );
 		}
 		else
@@ -115,7 +115,7 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 	float atlasScaleX = 1.0f / atlas->GetWidth();
 	float atlasScaleY = 1.0f / atlas->GetHeight();
 
-	float top = nuPosToReal( txtEl.Y );
+	float top = nuPosToReal( nuPosRound(txtEl.Y) );
 	float left = nuPosToReal( txtEl.X );
 
 	// Our glyph has a single column on the left and right side, so that our clamped texture
@@ -133,7 +133,7 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 	// is correct regardless, and since we clobber all horizontal hinting, horizontal
 	// grid-fitting should have little effect.
 	//left = (float) floor(left * 3 + 0.5) / 3.0f;
-	top = (float) floor(top + 0.5);
+	//top = (float) floor(top + 0.5); -- vertical rounding is moved to fixed point
 
 	float right = left + roundedWidth;
 	float bottom = top + glyph.Height;
@@ -174,7 +174,8 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 	{
 		//corners[i].Color = NURGBA(0,0,0,255);
 		//corners[i].Color = NURGBA(255,255,255,255);
-		corners[i].Color = NURGBA(50,50,220,255);
+		//corners[i].Color = NURGBA(0,0,0,255);
+		corners[i].Color = NURGBA(10,10,10,255);
 		corners[i].V4 = clamp;
 	}
 

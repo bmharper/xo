@@ -26,12 +26,16 @@ void nuMain( nuMainEvent ev )
 			// block with text inside it
 			nuDomEl* txtBox = doc->Root.AddChild( nuTagDiv );
 			txtBox->StyleParse( "width: 90px; height: 90px; border-radius: 15px; background: #f0f0f0; margin: 3px; position: absolute;" );
-			//txtBox->SetText( "lllll" );
-			txtBox->SetText( "Abcde" );
+			//txtBox->SetText( "from ethnic minorities" );
+			txtBox->SetText( "| The quick brown fox JUMPS |" );
+			//txtBox->SetText( "fox" );
 
-			doc->Root.ChildByIndex(0)->StyleParse( "background: #e00e" );
-			doc->Root.ChildByIndex(1)->StyleParse( "background: #0e0e" );
-			doc->Root.ChildByIndex(2)->StyleParse( "background: #00ee" );
+			//doc->Root.ChildByIndex(0)->StyleParse( "background: #e00e" );
+			//doc->Root.ChildByIndex(1)->StyleParse( "background: #0e0e" );
+			//doc->Root.ChildByIndex(2)->StyleParse( "background: #00ee" );
+			doc->Root.ChildByIndex(0)->StyleParse( "background: #ff000040" );
+			doc->Root.ChildByIndex(1)->StyleParse( "background: #00e500ff" );
+			doc->Root.ChildByIndex(2)->StyleParse( "background: #0000e5ff" );
 
 			NUTRACE( "Hello 3\n" );
 

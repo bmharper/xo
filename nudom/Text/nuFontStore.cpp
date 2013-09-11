@@ -111,6 +111,8 @@ const char* nuFontStore::FacenameToFilename( const nuString& facename )
 	if ( facename == "Times New Roman" ) return "c:\\Windows\\Fonts\\times.ttf";
 	if ( facename == "Consolas" ) return "c:\\Windows\\Fonts\\consola.ttf";
 	if ( facename == "Microsoft Sans Serif" ) return "c:\\Windows\\Fonts\\micross.ttf";
+	if ( facename == "Verdana" ) return "c:\\Windows\\Fonts\\verdana.ttf";
+	if ( facename == "Tahoma" ) return "c:\\Windows\\Fonts\\tahoma.ttf";
 	return "c:\\Windows\\Fonts\\arial.ttf";
 #else
 	if ( facename == "Droid Sans" ) return "/system/fonts/DroidSans.ttf";

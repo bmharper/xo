@@ -1,45 +1,26 @@
 #pragma once
 
-#include "nuDefs.h"
-
-struct NUAPI nuGLProg
-{
-	nuGLProg();
-
-	GLuint Vert;
-	GLuint Frag;
-	GLuint Prog;
-};
-
-// Position, UV, Color
-struct NUAPI nuVx_PTC
-{
-	// Note that nuRenderGL::DrawQuad assumes that we share our base layout with nuVx_PTCV4
-	nuVec3	Pos;
-	nuVec2	UV;
-	uint32	Color;
-};
-
-// Position, UV, Color, Vec4
-struct NUAPI nuVx_PTCV4
-{
-	// Note that nuRenderGL::DrawQuad assumes that we share our base layout with nuVx_PTC
-	nuVec3	Pos;
-	nuVec2	UV;
-	uint32	Color;
-	nuVec4	V4;
-};
+#include "nuRenderGL_Defs.h"
+#include "../Shaders/Processed/CurveShader.h"
+#include "../Shaders/Processed/FillShader.h"
+#include "../Shaders/Processed/FillTexShader.h"
+#include "../Shaders/Processed/RectShader.h"
+#include "../Shaders/Processed/TextRGBShader.h"
+#include "../Shaders/Processed/TextWholeShader.h"
 
 class NUAPI nuRenderGL
 {
 public:
-	nuGLProg	PRect;
-	nuGLProg	PFill;
-	nuGLProg	PFillTex;
-	nuGLProg	PTextRGB;
-	nuGLProg	PTextWhole;
-	nuGLProg	PCurve;
+	nuGLProg_Rect		PRect;
+	nuGLProg_Fill		PFill;
+	nuGLProg_FillTex	PFillTex;
+	nuGLProg_TextRGB	PTextRGB;
+	nuGLProg_TextWhole	PTextWhole;
+	nuGLProg_Curve		PCurve;
+	static const int	NumProgs = 6;
+	nuGLProg*			AllProgs[NumProgs];	// All of the above programs
 
+	/*
 	GLint		VarRectMVProj;
 	GLint		VarRectBox;
 	GLint		VarRectRadius;
@@ -69,6 +50,7 @@ public:
 	GLint		VarTextWholeVPos;
 	GLint		VarTextWholeVUV;
 	GLint		VarTextWholeTex0;
+	*/
 
 	//GLint		VarRectCornerRadius;
 	//GLint		VarCurveTex0;
@@ -87,15 +69,16 @@ public:
 	void			LoadTextureAtlas( const nuTextureAtlas* atlas );
 
 protected:
-	nuGLProg*	ActiveProgram;
-	int			FBWidth, FBHeight;
-	GLuint		SingleTex2D;
-	GLuint		SingleTexAtlas2D;
+	nuGLProg*		ActiveProgram;
+	int				FBWidth, FBHeight;
+	GLuint			SingleTex2D;
+	GLuint			SingleTexAtlas2D;
 
 	void			DeleteProgram( nuGLProg& prog );
+	bool			LoadProgram( nuGLProg& prog );
 	bool			LoadProgram( nuGLProg& prog, const char* vsrc, const char* fsrc );
 	bool			LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, const char* vsrc, const char* fsrc );
-	bool			LoadShader( GLenum shaderType, GLuint& shader, const char* src );
+	bool			LoadShader( GLenum shaderType, GLuint& shader, const char* raw_src );
 	void			Check();
 	void			Ortho( nuMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar );
 	void			Reset();
