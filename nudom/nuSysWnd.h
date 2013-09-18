@@ -7,7 +7,7 @@
 class NUAPI nuSysWnd
 {
 public:
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	HWND			SysWnd;
 	HGLRC			GLRC;
 #endif
@@ -29,7 +29,7 @@ public:
 	void	SurfaceLost();		// Surface lost, and now regained. Reinitialize GL state (textures, shaders, etc).
 
 protected:
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	HDC		DC;
 #endif
 };

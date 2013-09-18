@@ -176,6 +176,7 @@ local nudom = SharedLibrary {
 		"nudom/Shaders/Processed/RectShader.cpp",
 		"nudom/Shaders/Processed/TextRGBShader.cpp",
 		"nudom/Shaders/Processed/TextWholeShader.cpp",
+		"nudom/Shaders/Helpers/nuPreprocessor.cpp",
 		"dependencies/Panacea/Containers/queue.cpp",
 		"dependencies/Panacea/Platform/cpu.cpp",
 		"dependencies/Panacea/Platform/err.cpp",
@@ -259,6 +260,7 @@ local Test = Program {
 	Sources = {
 		"tests/test.cpp",
 		"tests/test_DocumentClone.cpp",
+		"tests/test_Preprocessor.cpp",
 		"tests/test_Stats.cpp",
 		"tests/test_Styles.cpp",
 	}

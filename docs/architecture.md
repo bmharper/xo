@@ -45,8 +45,8 @@ sizeof(nuDomEl) = 128.
 1 MB / 128 = 8192 naked document elements fit into a 1 MB document.
 
 Update: An S3 has very similar memory bandwidth - around 800 MB/s.
-Update: The latest (late 2013) Intel Atom devices are repored to have
-up to 17 GB/s memory bandwidth.
+Update: (August 2013) Intel Atom devices are repored to have up to 17 GB/s memory bandwidth.
+Update: The iPhone 5S has 5 GB/s memory bandwidth.
 
 Style resolution
 ----------------

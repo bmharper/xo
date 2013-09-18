@@ -106,7 +106,7 @@ nuFontID nuFontStore::InsertInternal( const nuFont& font )
 
 const char* nuFontStore::FacenameToFilename( const nuString& facename )
 {
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	if ( facename == "Arial" ) return "c:\\Windows\\Fonts\\arial.ttf";
 	if ( facename == "Times New Roman" ) return "c:\\Windows\\Fonts\\times.ttf";
 	if ( facename == "Consolas" ) return "c:\\Windows\\Fonts\\consola.ttf";

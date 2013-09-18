@@ -25,7 +25,9 @@ public:
 	u32		GetHashCode() const;
 
 	bool	operator==( const char* b ) const;
+	bool	operator!=( const char* b ) const			{ return !(*this == b); }
 	bool	operator==( const nuStringRaw& b ) const;
+	bool	operator!=( const nuStringRaw& b ) const	{ return !(*this == b); }
 
 protected:
 	static nuStringRaw Temp( const char* b );
@@ -41,7 +43,7 @@ class NUAPI nuString : public nuStringRaw
 public:
 				nuString();
 				nuString( const nuString& b );
-	explicit	nuString( const char* z );
+				nuString( const char* z );
 				~nuString();
 
 	void		MakeTemp( const char* z );

@@ -17,6 +17,7 @@
 #include "Image/nuImage.h"
 #include "nuSysWnd.h"
 #include "nuEvent.h"
+#include "Shaders/Helpers/nuPreprocessor.h"
 
 #ifdef _WIN32
 #pragma warning( pop )

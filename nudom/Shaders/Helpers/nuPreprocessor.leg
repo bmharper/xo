@@ -1,0 +1,158 @@
+%{
+#include "pch.h"
+#include "nuPreprocessor.h"
+#ifdef _MSC_VER
+	#define long ptrdiff_t
+#endif
+//#define YY_DEBUG
+#define YY_CTX_LOCAL
+#define YY_CTX_MEMBERS \
+	const char*			Src; \
+	int					SrcPos; \
+	int					SrcLen; \
+	podvec<char>		Out; \
+	nuString			Error; \
+	nuPreprocessor*		PP; \
+	podvec<bool>		OnStack; \
+	podvec<nuString>	Expression; \
+	bool				Negate; \
+	void				WriteIfDir( const char* txt ); \
+	void				SetError( const char* txt ) { if ( Error.Len == 0 ) Error = txt; } \
+	void				If(); \
+	void				IfDef( const char* txt ); \
+	void				Else(); \
+	void				EndIf(); \
+	void				Not( const char* txt ); \
+	void				Defined( const char* ident ); \
+	void				LogicalOr(); \
+	void				LogicalAnd();
+
+#define YY_INPUT(yy, buf, result, max_size)		\
+{							\
+	result = yy->SrcLen - yy->SrcPos; \
+	if ( result > max_size ) result = max_size; \
+	memcpy(buf, yy->Src + yy->SrcPos, result); \
+	yy->SrcPos += result; \
+}
+%}
+
+start		= (ifdef | if | elif | else | endif | Line | EmptyLine)+
+if			= - '#if' - Expression - EOL				{ yy->If(); }
+ifdef		= - '#ifdef' - <Identifier> - EOL			{ yy->IfDef(yytext); }
+elif		= - '#elif' - Expression - EOL
+else		= - '#else' - EOL							{ yy->Else(); }
+endif		= - '#endif' - EOLorEND						{ yy->EndIf(); }
+
+Line		= < (!EOL .)+ EOLorEND >					{ yy->WriteIfDir(yytext); }
+EmptyLine	= < EOL >									{ yy->WriteIfDir(yytext); }
+Expression	= (Defined - BoolOp)* - Defined
+Defined		=	-
+				<Not?>									{ yy->Not(yytext); }
+				-								
+				'defined' - '(' - <Identifier> - ')'	{ yy->Defined(yytext); }
+Not			= '!'
+BoolOp		= LogicalOr | LogicalAnd
+LogicalOr	= '||'										{ yy->LogicalOr(); }
+LogicalAnd	= '&&'										{ yy->LogicalAnd(); }
+Identifier	= [a-zA-Z_] [a-zA-Z0-9_]*
+-			= [ \t]*
+EOL			= '\n' | '\r\n' | '\r'
+EOLorEND	= EOL | !.
+
+%%
+
+void yycontext::WriteIfDir( const char* txt )
+{
+	if ( !OnStack.back() )
+		return;
+
+	for ( int i = 0; txt[i]; i++ )
+		Out += txt[i];
+}
+
+void yycontext::If()
+{
+	// uber lazy not to do a parse tree here
+	for ( intp i = 3; i < Expression.size() - 1; i++ )
+	{
+		if ( Expression[i] != Expression[1] )
+		{
+			SetError( "All boolean operators in an #if statement must be the same :(" );
+			return;
+		}
+	}
+	bool res = PP->Macros.contains(Expression[0]);
+	for ( intp i = 2; i < Expression.size(); i += 2 )
+	{
+		if ( Expression[1] == "&&" )
+			res = res && PP->Macros.contains(Expression[i]);
+		else
+			res = res || PP->Macros.contains(Expression[i]);
+
+	}
+	OnStack += res;
+}
+
+void yycontext::IfDef( const char* txt )
+{
+	OnStack += PP->Macros.contains( txt );
+}
+
+void yycontext::Else()
+{
+	if ( OnStack.size() == 1 )
+		SetError( "#else without matching #if or #ifdef" );
+	else
+		OnStack.back() = !OnStack.back();
+}
+
+void yycontext::EndIf()
+{
+	if ( OnStack.size() == 1 )
+		SetError( "#endif without matching #if or #ifdef" );
+	else
+		OnStack.pop();
+}
+
+void yycontext::Not( const char* txt )
+{
+	if ( txt[0] != 0 )
+		Negate = true;
+}
+
+void yycontext::Defined( const char* ident )
+{
+	Expression += ident;
+}
+
+void yycontext::LogicalOr()
+{
+	Expression += "||";
+}
+
+void yycontext::LogicalAnd()
+{
+	Expression += "&&";
+}
+
+nuString nuPreprocessor::Run( const char* raw )
+{
+	yycontext ctx;
+	memset( &ctx, 0, sizeof(ctx) );
+	ctx.PP = this;
+	ctx.OnStack += true;
+	ctx.Src = raw;
+	ctx.SrcPos = 0;
+	ctx.SrcLen = (int) strlen(raw);
+	ctx.Negate = false;
+	while ( yyparse(&ctx) );
+	ctx.Out += 0;
+	
+	if ( ctx.OnStack.size() != 1 )
+		ctx.SetError( "Unterminated #if or #ifdef" );
+
+	if ( ctx.Error.Len != 0 )
+		return fmt( "Error: %v", ctx.Error.Z );
+	else
+		return nuString( &ctx.Out[0] );
+}

@@ -38,25 +38,20 @@ enum nuPlatform
 
 #define NU_LAMBDA 1
 
-#ifdef _WIN32
-	//#define NU_LAMBDA 1
-	#define NU_WIN_DESKTOP		1
-	#define NU_PLATFORM			nuPlatform_WinDesktop
-	#define NUTRACE_WRITE		OutputDebugStringA
+#if defined(_WIN32)
+	#define NU_PLATFORM_ANDROID			0
+	#define NU_PLATFORM_WIN_DESKTOP		1
+	#define NU_PLATFORM					nuPlatform_WinDesktop
+	#define NUTRACE_WRITE				OutputDebugStringA
+#elif defined(ANDROID)
+	#define NU_PLATFORM_ANDROID			1
+	#define NU_PLATFORM_WIN_DESKTOP		0
+	#define NU_PLATFORM					nuPlatform_Android
+	#define NUTRACE_WRITE(msg)			__android_log_write(ANDROID_LOG_INFO, "nudom", msg)
 #else
-	#define NU_WIN_DESKTOP		0
-#endif
-
-#ifdef _WIN32
-	#define NU_ANDROID 0
-#else
-	#ifdef ANDROID
-		//#define NU_LAMBDA 0
-		#define NU_ANDROID			1
-		#define NU_PLATFORM			nuPlatform_Android
-		#define NUTRACE_WRITE(msg)	__android_log_write(ANDROID_LOG_INFO, "nudom", msg)
+	#ifdef _MSC_VER
+		#pragma error( "Unknown nuDom platform" )
 	#else
-		#define NU_ANDROID 0
-		#define NUTRACE_WRITE(msg) ((void)0)
+		#error Unknown nuDom platform
 	#endif
 #endif

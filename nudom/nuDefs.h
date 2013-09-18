@@ -176,6 +176,7 @@ struct nuGlobalStruct
 	int							NumWorkerThreads;		// Read-only. Set during nuInitialize().
 	bool						EnableSubpixelText;		// Enable sub-pixel text rendering. Assumes pixels are the standard RGB layout. Enabled by default on Windows desktop only.
 	bool						EnableSRGBFramebuffer;	// Enable sRGB framebuffer (implies linear blending)
+	bool						EmulateGammaBlending;	// Only applicable when EnableSRGBFramebuffer = true, this tries to emulate gamma-space blending. You would turn this on to get consistent blending on all devices.
 	float						SubPixelTextGamma;		// Tweak freetype's gamma when doing sub-pixel text rendering.
 	float						WholePixelTextGamma;	// Tweak freetype's gamma when doing whole-pixel text rendering.
 
@@ -201,7 +202,7 @@ NUAPI void				nuProcessDocQueue();
 NUAPI void				nuParseFail( const char* msg, ... );
 NUAPI void				NUTRACE( const char* msg, ... );
 NUAPI void				NUTIME( const char* msg, ... );
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 NUAPI void				nuRunWin32MessageLoop();
 #endif
 

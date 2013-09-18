@@ -9,11 +9,11 @@ void initGLExt();
 static const char*		WClass = "nuDom";
 static bool				GLExtInitialized = false;
 
-#if NU_ANDROID
+#if NU_PLATFORM_ANDROID
 nuSysWnd*				MainWnd = NULL;
 #endif
 
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 static HGLRC nuInitGL( HWND wnd, nuRenderGL* rgl )
 {
 	bool allGood = false;
@@ -80,7 +80,7 @@ static HGLRC nuInitGL( HWND wnd, nuRenderGL* rgl )
 
 void nuSysWnd::PlatformInitialize()
 {
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	WNDCLASSEX wcex;
 
 	wcex.cbSize = sizeof(WNDCLASSEX);
@@ -103,11 +103,10 @@ void nuSysWnd::PlatformInitialize()
 
 nuSysWnd::nuSysWnd()
 {
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	SysWnd = NULL;
 	DC = NULL;
-#endif
-#if NU_ANDROID
+#elif NU_PLATFORM_ANDROID
 	MainWnd = this;
 #endif
 	Processor = new nuDocGroup();
@@ -117,7 +116,7 @@ nuSysWnd::nuSysWnd()
 
 nuSysWnd::~nuSysWnd()
 {
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	if ( GLRC )
 	{
 		HDC dc = GetDC( SysWnd );
@@ -127,8 +126,7 @@ nuSysWnd::~nuSysWnd()
 		ReleaseDC( SysWnd, dc );
 	}
 	DestroyWindow( SysWnd );
-#endif
-#if NU_ANDROID
+#elif NU_PLATFORM_ANDROID
 	MainWnd = NULL;
 #endif
 	nuGlobal()->DocRemoveQueue.Add( Processor );
@@ -139,7 +137,7 @@ nuSysWnd::~nuSysWnd()
 
 nuSysWnd* nuSysWnd::Create()
 {
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	bool ok = false;
 	nuSysWnd* w = new nuSysWnd();
 	w->SysWnd = CreateWindow( WClass, "nuDom", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
@@ -158,8 +156,7 @@ nuSysWnd* nuSysWnd::Create()
 		w = NULL;
 	}
 	return w;
-#endif
-#if NU_ANDROID
+#elif NU_PLATFORM_ANDROID
 	nuSysWnd* w = new nuSysWnd();
 	w->RGL->CreateShaders();
 	return w;
@@ -177,7 +174,7 @@ nuSysWnd* nuSysWnd::CreateWithDoc()
 
 void nuSysWnd::Show()
 {
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	ShowWindow( SysWnd, SW_SHOW );
 #endif
 }
@@ -195,7 +192,7 @@ void nuSysWnd::Attach( nuDoc* doc, bool destroyDocWithProcessor )
 
 bool nuSysWnd::BeginRender()
 {
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	if ( GLRC )
 	{
 		DC = GetDC( SysWnd );
@@ -211,7 +208,7 @@ bool nuSysWnd::BeginRender()
 
 void nuSysWnd::FinishRender()
 {
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	NUTRACE_LATENCY( "SwapBuffers (begin)\n" );
 	SwapBuffers( DC );
 	wglMakeCurrent( NULL, NULL );

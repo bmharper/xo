@@ -85,7 +85,7 @@ bool nuRenderGL::CreateShaders()
 	VarTextRGBVUV = glGetAttribLocation( PTextRGB.Prog, "vtexuv0" );
 	VarTextRGBVClamp = glGetAttribLocation( PTextRGB.Prog, "vtexClamp" );
 	VarTextRGBTex0 = glGetUniformLocation( PTextRGB.Prog, "tex0" );
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	glBindFragDataLocation( PTextRGB.Prog, 0, "outputColor0" );
 	glBindFragDataLocation( PTextRGB.Prog, 1, "outputColor1" );
 	Check();
@@ -424,7 +424,7 @@ void nuRenderGL::LoadTextureAtlas( const nuTextureAtlas* atlas )
 		glGenTextures( 1, &SingleTexAtlas2D );
 	glActiveTexture( GL_TEXTURE0 );
 	glBindTexture( GL_TEXTURE_2D, SingleTexAtlas2D );
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	//int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_SLUMINANCE8 : GL_RGB;
 	int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
 	int format = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;

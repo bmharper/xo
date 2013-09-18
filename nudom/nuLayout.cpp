@@ -124,7 +124,7 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 {
 	NUTRACE_LAYOUT( "Layout (%d) Run txt.1\n", node.GetInternalID() );
 
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	//const char* zfont = "Microsoft Sans Serif";
 	//const char* zfont = "Consolas";
 	//const char* zfont = "Times New Roman";

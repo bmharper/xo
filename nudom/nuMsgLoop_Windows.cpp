@@ -2,7 +2,7 @@
 #include "nuDefs.h"
 #include "nuDocGroup.h"
 
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 
 //#define MSGTRACE NUTRACE
 #define MSGTRACE(...)

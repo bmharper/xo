@@ -3,7 +3,7 @@
 
 // This file should be compiled and linked into your exe
 
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 
 // This is your "main" function, which you define in your own code
 void nuMain( nuMainEvent ev );

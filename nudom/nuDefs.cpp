@@ -13,7 +13,7 @@ static int							InitializeCount = 0;
 static nuStyle*						DefaultTagStyles[nuTagEND];
 static AbcThreadHandle				WorkerThreads[MAX_WORKER_THREADS];
 
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 static AbcThreadHandle				UIThread = NULL;
 #endif
 
@@ -60,7 +60,7 @@ AbcThreadReturnType AbcKernelCallbackDecl nuWorkerThreadFunc( void* threadContex
 	return 0;
 }
 
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 
 AbcThreadReturnType AbcKernelCallbackDecl nuUIThread( void* threadContext )
 {
@@ -125,12 +125,14 @@ NUAPI void nuInitialize()
 	// doing any tweaking to the freetype glyphs.
 	nuGlobals->SubPixelTextGamma = 1.0f;
 	nuGlobals->WholePixelTextGamma = 1.0f;
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	nuGlobals->EnableSubpixelText = true;
 	nuGlobals->EnableSRGBFramebuffer = true;
+	nuGlobals->EmulateGammaBlending = false;
 #else
 	nuGlobals->EnableSubpixelText = false;
 	nuGlobals->EnableSRGBFramebuffer = false;
+	nuGlobals->EmulateGammaBlending = false;
 #endif
 	//nuGlobals->DebugZeroClonedChildList = true;
 	nuGlobals->DocAddQueue.Initialize( false );
@@ -141,7 +143,7 @@ NUAPI void nuInitialize()
 	nuGlobals->FontStore->InitializeFreetype();
 	nuGlobals->GlyphCache = new nuGlyphCache();
 	nuSysWnd::PlatformInitialize();
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	nuInitialize_Win32();
 #endif
 	NUTRACE( "Using %d/%d processors.\n", (int) nuGlobals->NumWorkerThreads, (int) minf.CPUCount );
@@ -170,7 +172,7 @@ NUAPI void nuShutdown()
 	// allow documents scheduled for deletion to be deleted
 	nuProcessDocQueue();
 
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	nuShutdown_Win32();
 #endif
 

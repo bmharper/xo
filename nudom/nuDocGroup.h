@@ -18,7 +18,7 @@ public:
 					nuDocGroup();
 					~nuDocGroup();
 
-#if NU_WIN_DESKTOP
+#if NU_PLATFORM_WIN_DESKTOP
 	static LRESULT CALLBACK StaticWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam );
 	LRESULT WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam );
 #endif
