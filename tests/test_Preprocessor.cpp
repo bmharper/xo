@@ -49,32 +49,49 @@ TESTFUNC(Preprocessor)
 
 	TTASSERT( p.Run(IfDef1) == "The first line\nI am not blah\n" );
 	
-	p.Macros.insert( "BLAH", "" );
+	p.SetMacro( "BLAH", "" );
 	TTASSERT( p.Run(IfDef1) == "The first line\nI am blah\n" );
 
-	p.Macros.clear();
+	p.ClearMacros();
 	TTASSERT( p.Run(IfDefined1) == "The first line\nI am not blah\n" );
 
-	p.Macros.insert( "BLAH", "" );
+	p.SetMacro( "BLAH", "" );
 	TTASSERT( p.Run(IfDefined1) == "The first line\nI am blah\n" );
 
-	p.Macros.clear();
+	p.ClearMacros();
 	TTASSERT( p.Run(IfDefined2) == "The first line\nI am not blah\n" );
 	TTASSERT( p.Run(IfDefined3) == "The first line\nI am not blah\n" );
 
-	p.Macros.insert( "FOO", "" );
+	p.SetMacro( "FOO", "" );
 	TTASSERT( p.Run(IfDefined2) == "The first line\nI am blah\n" );
 	TTASSERT( p.Run(IfDefined3) == "The first line\nI am not blah\n" );
 
-	p.Macros.clear();
-	p.Macros.insert( "BAR", "" );
+	p.ClearMacros();
+	p.SetMacro( "BAR", "" );
 	TTASSERT( p.Run(IfDefined2) == "The first line\nI am blah\n" );
 	TTASSERT( p.Run(IfDefined3) == "The first line\nI am not blah\n" );
 
-	p.Macros.insert( "FOO", "" );
-	p.Macros.insert( "BAR", "" );
+	p.ClearMacros();
+	p.SetMacro( "FOO", "" );
+	p.SetMacro( "BAR", "" );
 	TTASSERT( p.Run(IfDefined2) == "The first line\nI am blah\n" );
 	TTASSERT( p.Run(IfDefined3) == "The first line\nI am blah\n" );
+
+	p.ClearMacros();
+	p.SetMacro( "MACRO", "macro" );
+	TTASSERT( p.Run("Hello MACRO") == "Hello macro" );
+	TTASSERT( p.Run("Hello MACROMACRO") == "Hello MACROMACRO" );
+
+	p.ClearMacros();
+	p.SetMacro( "MACRO", "macro" );
+	p.SetMacro( "MACROS", "macros" );
+	p.SetMacro( "MACROSES", "macroses" );
+	p.SetMacro( "MACROSESEZ", "macrosesez" );
+	TTASSERT( p.Run("Hello MACRO MACROS MACROSES MACROSESEZ") == "Hello macro macros macroses macrosesez" );
+	TTASSERT( p.Run("_MACRO") == "_MACRO" );
+	TTASSERT( p.Run("MACRO_") == "MACRO_" );
+	TTASSERT( p.Run("0MACRO") == "0MACRO" );
+	TTASSERT( p.Run("MACRO0") == "MACRO0" );
 }
 
 

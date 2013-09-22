@@ -29,11 +29,7 @@ public:
 	void MakeWindowSize( int w, int h );
 };
 
-// The Android ecosystem is just not up to this yet. It is a pity, because lambdas make such good event handlers.
-// I haven't even looked at iOS yet.
-#if NU_LAMBDA
 typedef std::function<bool(const nuEvent& ev)> nuEventHandlerLambda;
-#endif
 
 typedef bool (*nuEventHandlerF)(const nuEvent& ev);
 

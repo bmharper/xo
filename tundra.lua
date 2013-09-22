@@ -39,6 +39,7 @@ Build {
 	Passes= {
 		PchGen = { Name = "Precompiled Header Generation", BuildOrder = 1 },
 	},
+	Variants = { "debug", "release" },
 	Configs = {
 		{
 			Name = "macosx-gcc",
@@ -62,6 +63,19 @@ Build {
 			Inherit = win_common,
 			Tools = { {"msvc-vs2012"; TargetArch = "x64"} },
 		},
+		-- Uncommenting the following two projects will enable building on VS 2010
+		--{
+		--	Name = "win32-msvc2010",
+		--	SupportedHosts = { "windows" },
+		--	Inherit = win_common,
+		--	Tools = { {"msvc-vs2010"; TargetArch = "x86"} },
+		--},
+		--{
+		--	Name = "win64-msvc2010",
+		--	SupportedHosts = { "windows" },
+		--	Inherit = win_common,
+		--	Tools = { {"msvc-vs2010"; TargetArch = "x64"} },
+		--},
 		--{
 		--	Name = "win32-mingw",
 		--	Tools = { "mingw" },
@@ -76,7 +90,9 @@ Build {
 			-- Remap config names to MSVC platform names (affects things like header scanning & debugging)
 			PlatformMappings = {
 				['win64-msvc'] = 'x64',
+				['win64-msvc2010'] = 'x64',
 				['win32-msvc'] = 'Win32',
+				['win32-msvc2010'] = 'Win32',
 			},
 			-- Remap variant names to MSVC friendly names
 			VariantMappings = {
@@ -84,6 +100,10 @@ Build {
 				['debug']      = 'Debug',
 				['production'] = 'Production',
 			},
+		},
+		-- Override solutions to generate and what units to put where.
+		MsvcSolutions = {
+			['nudom.sln'] = {}, -- receives all the units due to empty set
 		},
 	},
 }

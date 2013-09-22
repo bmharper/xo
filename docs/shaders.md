@@ -12,16 +12,27 @@ Adding a new shader
 
 Writing Shaders
 ---------------
-You can use the following pre-processor constructs inside your shaders:
+The shaders are run through an extremely limited pre-processor.
 
-### Constants
-	NU_GLYPH_ATLAS_SIZE		This is replaced by the fixed size of glyph texture atlasses.
+You can use the following:
 
-If any line in the shader contains a platform specifier string then the shader will be
-initialized and used on that platform.
-The only two currently supported are:
+#ifdef SOMETHING
+#else
+#endif
 
-	#NU_PLATFORM_WIN_DESKTOP
-	#NU_PLATFORM_ANDROID
+And also
+#if defined(SOMETHING) || defined(SOMETHING_ELSE)
 
-If you do not include any platform specifiers, then the shader is used on all platforms.
+...and that's it.
+
+There is also the heinous restriction that all logical operators in an #if statement
+must be || or &&. You cannot mix them, and you cannot use parentheses.
+
+All tokens that are #defined are done so outside of the script. You cannot #define
+something inside your script.
+
+The following constants are defined:
+
+	NU_PLATFORM_WIN_DESKTOP		Defined when target is Windows Desktop
+	NU_PLATFORM_ANDROID			Defined when target is Android
+	NU_GLYPH_ATLAS_SIZE			The size of glyph texture atlasses.

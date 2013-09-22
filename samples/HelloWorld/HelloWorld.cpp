@@ -2,8 +2,6 @@
 
 static nuSysWnd* MainWnd;
 
-bool touch( const nuEvent& ev );
-
 void nuMain( nuMainEvent ev )
 {
 	switch ( ev )
@@ -42,7 +40,6 @@ void nuMain( nuMainEvent ev )
 			nuDomEl* greybox = doc->Root.ChildByIndex(3);
 			greybox->StyleParse( "background: #aaaa; position: absolute; left: 90px; top: 90px;" );
 
-#if NU_LAMBDA
 			auto onMoveOrTouch = [greybox, txtBox](const nuEvent& ev) -> bool {
 				greybox->StyleParsef( "left: %fpx; top: %fpx;", ev.Points[0].x - 45.0, ev.Points[0].y - 45.0 );
 				txtBox->StyleParsef( "left: %fpx; top: %fpx;", ev.Points[0].x * 0.01 + 45.0, ev.Points[0].y * 0.01 + 150.0 );
@@ -50,10 +47,6 @@ void nuMain( nuMainEvent ev )
 			};
 			doc->Root.OnMouseMove( onMoveOrTouch );
 			doc->Root.OnTouch( onMoveOrTouch );
-#else
-			doc->Root.OnMouseMove( touch, greybox );
-			doc->Root.OnTouch( touch, greybox );
-#endif
 
 			NUTRACE( "Hello 4\n" );
 
@@ -67,11 +60,4 @@ void nuMain( nuMainEvent ev )
 		MainWnd = NULL;
 		break;
 	}
-}
-
-bool touch( const nuEvent& ev )
-{
-	nuDomEl* greybox = (nuDomEl*) ev.Context;
-	greybox->StyleParsef( "left: %fpx; top: %fpx;", ev.Points[0].x - 50.0, ev.Points[0].y - 50.0 );
-	return true;
 }

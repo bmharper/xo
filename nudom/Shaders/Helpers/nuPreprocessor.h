@@ -5,7 +5,17 @@
 class NUAPI nuPreprocessor
 {
 public:
+	friend struct _yycontext;
+
+	void		SetMacro( const char* name, const char* value );
+	void		ClearMacros();
+	nuString	Run( const char* raw );
+
+protected:
 	fhashmap<nuString, nuString>	Macros;
 
-	nuString Run( const char* raw );
+	static bool	Match( const char* buf, uintp bufPos, const nuString& find );
+	static bool	IsIdentChar( char c );
+
+	void		RunMacros( const char* raw, podvec<char>& out );
 };

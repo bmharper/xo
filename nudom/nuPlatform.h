@@ -36,8 +36,6 @@ enum nuPlatform
 	nuPlatform_All			= 1 | 2,
 };
 
-#define NU_LAMBDA 1
-
 #if defined(_WIN32)
 	#define NU_PLATFORM_ANDROID			0
 	#define NU_PLATFORM_WIN_DESKTOP		1

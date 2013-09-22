@@ -48,78 +48,6 @@ bool nuRenderGL::CreateShaders()
 			if ( !AllProgs[i]->LoadVariablePositions() ) return false;
 		}
 	}
-
-	/*
-	// old manual
-	if ( !LoadProgram( PRect, pRectVert, pRectFrag ) ) return false;
-	if ( !LoadProgram( PFill, pFillVert, pFillFrag ) ) return false;
-	if ( !LoadProgram( PFillTex, pFillTexVert, pFillTexFrag ) ) return false;
-	if ( !LoadProgram( PTextRGB, pTextRGBVert, textRGBFrag.Z ) ) return false;
-	if ( !LoadProgram( PTextWhole, pTextWholeVert, pTextWholeFrag ) ) return false;
-	//if ( !LoadProgram( PCurve, pCurveVert, pCurveFrag ) ) return false;
-
-	//glUseProgram( PRect.Prog );
-	VarRectBox = glGetUniformLocation( PRect.Prog, "box" );
-	VarRectRadius = glGetUniformLocation( PRect.Prog, "radius" );
-	VarRectVPortHSize = glGetUniformLocation( PRect.Prog, "vport_hsize" );
-	VarRectMVProj = glGetUniformLocation( PRect.Prog, "mvproj" );
-	VarRectVPos = glGetAttribLocation( PRect.Prog, "vpos" );
-	VarRectVColor = glGetAttribLocation( PRect.Prog, "vcolor" );
-	//VarCurveTex0 = glGetAttribLocation( PCurve.Prog, "vtex0" );
-
-	//glUseProgram( PFill.Prog );
-	VarFillMVProj = glGetUniformLocation( PFill.Prog, "mvproj" );
-	VarFillVPos = glGetAttribLocation( PFill.Prog, "vpos" );
-	VarFillVColor = glGetAttribLocation( PFill.Prog, "vcolor" );
-
-	//glUseProgram( PFillTex.Prog );
-	VarFillTexMVProj = glGetUniformLocation( PFillTex.Prog, "mvproj" );
-	VarFillTexVPos = glGetAttribLocation( PFillTex.Prog, "vpos" );
-	VarFillTexVColor = glGetAttribLocation( PFillTex.Prog, "vcolor" );
-	VarFillTexVUV = glGetAttribLocation( PFillTex.Prog, "vtexuv0" );
-	VarFillTex0 = glGetUniformLocation( PFillTex.Prog, "tex0" );
-
-	VarTextRGBMVProj = glGetUniformLocation( PTextRGB.Prog, "mvproj" );
-	VarTextRGBVPos = glGetAttribLocation( PTextRGB.Prog, "vpos" );
-	VarTextRGBVColor = glGetAttribLocation( PTextRGB.Prog, "vcolor" );
-	VarTextRGBVUV = glGetAttribLocation( PTextRGB.Prog, "vtexuv0" );
-	VarTextRGBVClamp = glGetAttribLocation( PTextRGB.Prog, "vtexClamp" );
-	VarTextRGBTex0 = glGetUniformLocation( PTextRGB.Prog, "tex0" );
-#if NU_PLATFORM_WIN_DESKTOP
-	glBindFragDataLocation( PTextRGB.Prog, 0, "outputColor0" );
-	glBindFragDataLocation( PTextRGB.Prog, 1, "outputColor1" );
-	Check();
-	GLint c0 = glGetFragDataLocation( PTextRGB.Prog, "outputColor0" );
-	GLint c1 = glGetFragDataLocation( PTextRGB.Prog, "outputColor1" );
-	GLint c2 = glGetFragDataLocation( PTextRGB.Prog, "outputColor2" );
-	Check();
-#endif
-
-	VarTextWholeMVProj = glGetUniformLocation( PTextWhole.Prog, "mvproj" );
-	VarTextWholeVPos = glGetAttribLocation( PTextWhole.Prog, "vpos" );
-	VarTextWholeVColor = glGetAttribLocation( PTextWhole.Prog, "vcolor" );
-	VarTextWholeVUV = glGetAttribLocation( PTextWhole.Prog, "vtexuv0" );
-	VarTextWholeTex0 = glGetUniformLocation( PTextWhole.Prog, "tex0" );
-
-	NUTRACE( "VarFillMVProj = %d\n", VarFillMVProj );
-	NUTRACE( "VarFillVPos = %d\n", VarFillVPos );
-	NUTRACE( "VarFillVColor = %d\n", VarFillVColor );
-
-	NUTRACE( "VarFillTexMVProj = %d\n", VarFillTexMVProj );
-	NUTRACE( "VarFillTexVPos = %d\n", VarFillTexVPos );
-	NUTRACE( "VarFillTexVColor = %d\n", VarFillTexVColor );
-	NUTRACE( "VarFillTexVUV = %d\n", VarFillTexVUV );
-	NUTRACE( "VarFillTex0 = %d\n", VarFillTex0 );
-
-	NUTRACE( "VarTextRGBMVProj = %d\n", VarTextRGBMVProj );
-	NUTRACE( "VarTextRGBVPos = %d\n", VarTextRGBVPos );
-	NUTRACE( "VarTextRGBVColor = %d\n", VarTextRGBVColor );
-	NUTRACE( "VarTextRGBVUV = %d\n", VarTextRGBVUV );
-	NUTRACE( "VarTextRGBVClamp = %d\n", VarTextRGBVClamp );
-	NUTRACE( "VarTextRGBTex0 = %d\n", VarTextRGBTex0 );
-	*/
-
-	//glUseProgram( 0 );
 	
 	Check();
 
@@ -130,23 +58,18 @@ void nuRenderGL::DeleteShaders()
 {
 	glActiveTexture( GL_TEXTURE0 );
 	glBindTexture( GL_TEXTURE_2D, 0 );
+
 	if ( SingleTex2D != 0 )
 		glDeleteTextures( 1, &SingleTex2D );
 	SingleTex2D = 0;
+
 	if ( SingleTexAtlas2D != 0 )
 		glDeleteTextures( 1, &SingleTexAtlas2D );
+	SingleTexAtlas2D = 0;
 
 	glUseProgram( 0 );
 	for ( int i = 0; i < NumProgs; i++ )
-	{
 		DeleteProgram( *AllProgs[i] );
-	}
-	// DeleteProgram( PFill );
-	// DeleteProgram( PFillTex );
-	// DeleteProgram( PTextRGB );
-	// DeleteProgram( PTextWhole );
-	// DeleteProgram( PRect );
-	// DeleteProgram( PCurve );
 }
 
 void nuRenderGL::SurfaceLost()

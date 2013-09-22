@@ -29,6 +29,8 @@ public:
 	bool	operator==( const nuStringRaw& b ) const;
 	bool	operator!=( const nuStringRaw& b ) const	{ return !(*this == b); }
 
+	bool	operator<( const nuStringRaw& b ) const		{ return strcmp(Z, b.Z) < 0; }
+
 protected:
 	static nuStringRaw Temp( const char* b );
 

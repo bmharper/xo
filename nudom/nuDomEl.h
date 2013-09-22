@@ -51,19 +51,15 @@ public:
 
 	// Events
 	void			AddHandler( nuEvents ev, nuEventHandlerF func, void* context = NULL );
-#if NU_LAMBDA
 	void			AddHandler( nuEvents ev, nuEventHandlerLambda lambda );
-#endif
 	bool			HandlesEvent( nuEvents ev ) const { return !!(AllEventMask & ev); }
 
 	void			OnTouch( nuEventHandlerF func, void* context = NULL )		{ AddHandler( nuEventTouch, func, context ); }
 	void			OnMouseMove( nuEventHandlerF func, void* context = NULL )	{ AddHandler( nuEventMouseMove, func, context ); }
 	void			OnTimer( nuEventHandlerF func, void* context = NULL )		{ AddHandler( nuEventTimer, func, context ); }
 
-#if NU_LAMBDA
 	void			OnTouch( nuEventHandlerLambda lambda )						{ AddHandler( nuEventTouch, lambda ); }
 	void			OnMouseMove( nuEventHandlerLambda lambda )					{ AddHandler( nuEventMouseMove, lambda ); }
-#endif
 
 protected:
 	nuDoc*					Doc;			// Owning document
