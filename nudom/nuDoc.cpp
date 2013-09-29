@@ -68,7 +68,7 @@ void nuDoc::CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) con
 		c.ChildByInternalID += nuInternalIDNull;
 
 	// Although it would be trivial to parallelize the following two passes, I think it is unlikely to be worth it,
-	// since I believe these passes are bandwidth limited.
+	// since I suspect these passes will be bandwidth limited.
 
 	// Pass 1: Ensure that all objects that are present in the source document have a valid pointer in the target document
 	for ( int i = 0; i < ChildIsModified.Size(); i++ )

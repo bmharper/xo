@@ -5,8 +5,9 @@
 #include "nuRenderDomEl.h"
 #include "nuTextureAtlas.h"
 #include "Text/nuGlyphCache.h"
+#include "../Image/nuImage.h"
 
-void nuRenderer::Render( nuImageStore* images, nuStringTable* strings, nuRenderGL* gl, nuRenderDomEl* root, int width, int height )
+nuRenderResult nuRenderer::Render( nuImageStore* images, nuStringTable* strings, nuRenderGL* gl, nuRenderDomEl* root, int width, int height )
 {
 	GL = gl;
 	Images = images;
@@ -14,9 +15,16 @@ void nuRenderer::Render( nuImageStore* images, nuStringTable* strings, nuRenderG
 
 	gl->PreRender( width, height );
 
+	// This phase is probably worth parallelizing
 	RenderNode( root );
+	// After RenderNode we are serial again.
 
 	gl->PostRenderCleanup();
+
+	bool needGlyphs = GlyphsNeeded.size() != 0;
+	RenderGlyphsNeeded();
+
+	return needGlyphs ? nuRenderResultNeedMore : nuRenderResultIdle;
 }
 
 void nuRenderer::RenderNode( nuRenderDomEl* node )
@@ -74,7 +82,7 @@ void nuRenderer::RenderNode( nuRenderDomEl* node )
 			if ( bgImage[0] != 0 )
 			{
 				GL->ActivateProgram( GL->PFillTex );
-				GL->LoadTexture( Images->GetOrNull( bgImage ) );
+				GL->LoadTexture( Images->GetOrNull( bgImage ), 0 );
 				GL->DrawQuad( corners );
 			}
 			else
@@ -107,11 +115,17 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 {
 	nuStyleRender* style = &node->Style;
 
-	nuGlyph glyph;
-	if ( !nuGlobal()->GlyphCache->GetGlyphFromChar( node->FontID, txtEl.Char, style->FontSizePx, nuGlyphFlag_SubPixel_RGB, glyph ) )
+	nuGlyphCacheKey glyphKey( node->FontID, txtEl.Char, style->FontSizePx, nuGlyphFlag_SubPixel_RGB );
+	const nuGlyph* glyph = nuGlobal()->GlyphCache->GetGlyph( glyphKey );
+	if ( !glyph )
+	{
+		GlyphsNeeded.insert( glyphKey );
 		return;
+	}
+	//if ( !nuGlobal()->GlyphCache->GetGlyphFromChar( node->FontID, txtEl.Char, style->FontSizePx, nuGlyphFlag_SubPixel_RGB, glyph ) )
+	//	return;
 
-	nuTextureAtlas* atlas = nuGlobal()->GlyphCache->HackGetAtlas(0);
+	nuTextureAtlas* atlas = nuGlobal()->GlyphCache->GetAtlasMutable( glyph->AtlasID );
 	float atlasScaleX = 1.0f / atlas->GetWidth();
 	float atlasScaleY = 1.0f / atlas->GetHeight();
 
@@ -121,7 +135,7 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 	// Our glyph has a single column on the left and right side, so that our clamped texture
 	// reads will pickup a zero when reading off beyond the edge of the glyph
 	int horzPad = 1;
-	int nonPaddedWidth = glyph.Width - horzPad * 2;
+	int nonPaddedWidth = glyph->Width - horzPad * 2;
 
 	// Our texture (minus the padding) can be missing 1 or 2 columns on its right side,
 	// but our proper width in pixels DOES include those 1 or 2 missing columns (they are simply black).
@@ -136,7 +150,7 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 	//top = (float) floor(top + 0.5); -- vertical rounding is moved to fixed point
 
 	float right = left + roundedWidth;
-	float bottom = top + glyph.Height;
+	float bottom = top + glyph->Height;
 
 	// We have to 'overdraw' on the left and right by 1 pixel, to ensure that we filter over
 	// the edges.
@@ -144,20 +158,16 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 	left -= overdraw;
 	right += overdraw;
 
-	// goofing around
-	// left += 2 / 3.0f; 
-	// right += 2 / 3.0f;
-
 	nuVx_PTCV4 corners[4];
 	corners[0].Pos = NUVEC3(left, top, 0);
 	corners[1].Pos = NUVEC3(left, bottom, 0);
 	corners[2].Pos = NUVEC3(right, bottom, 0);
 	corners[3].Pos = NUVEC3(right, top, 0);
 
-	float u0 = (glyph.X - overdraw * 3 + horzPad) * atlasScaleX;
-	float v0 = glyph.Y * atlasScaleY;
-	float u1 = (glyph.X + (roundedWidth + overdraw) * 3 - horzPad) * atlasScaleX;
-	float v1 = (glyph.Y + glyph.Height) * atlasScaleY;
+	float u0 = (glyph->X - overdraw * 3 + horzPad) * atlasScaleX;
+	float v0 = glyph->Y * atlasScaleY;
+	float u1 = (glyph->X + (roundedWidth + overdraw) * 3 - horzPad) * atlasScaleX;
+	float v1 = (glyph->Y + glyph->Height) * atlasScaleY;
 
 	corners[0].UV = NUVEC2(u0, v0);
 	corners[1].UV = NUVEC2(u0, v1);
@@ -166,21 +176,22 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 
 	// Obviously our clamping is not affected by overdraw. It remains our absolute texel limits.
 	nuVec4 clamp;
-	clamp.x = (glyph.X + 0.5f) * atlasScaleX;
-	clamp.y = (glyph.Y + 0.5f) * atlasScaleY;
-	clamp.z = (glyph.X + glyph.Width - 0.5f) * atlasScaleX;
-	clamp.w = (glyph.Y + glyph.Height - 0.5f) * atlasScaleY;
+	clamp.x = (glyph->X + 0.5f) * atlasScaleX;
+	clamp.y = (glyph->Y + 0.5f) * atlasScaleY;
+	clamp.z = (glyph->X + glyph->Width - 0.5f) * atlasScaleX;
+	clamp.w = (glyph->Y + glyph->Height - 0.5f) * atlasScaleY;
 	for ( int i = 0; i < 4; i++ )
 	{
 		//corners[i].Color = NURGBA(0,0,0,255);
 		//corners[i].Color = NURGBA(255,255,255,255);
 		//corners[i].Color = NURGBA(0,0,0,255);
-		corners[i].Color = NURGBA(10,10,10,255);
+		//corners[i].Color = NURGBA(10,10,10,255);
+		corners[i].Color = NURGBA(150,0,0,255);
 		corners[i].V4 = clamp;
 	}
 
 	GL->ActivateProgram( GL->PTextRGB );
-	GL->LoadTextureAtlas( nuGlobal()->GlyphCache->HackGetAtlas(0) );
+	GL->LoadTexture( atlas, 0 );
 	GL->DrawQuad( corners );
 }
 
@@ -188,11 +199,18 @@ void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRen
 {
 	nuStyleRender* style = &node->Style;
 
-	nuGlyph glyph;
-	if ( !nuGlobal()->GlyphCache->GetGlyphFromChar( node->FontID, txtEl.Char, style->FontSizePx, 0, glyph ) )
+	//nuGlyph glyph;
+	//if ( !nuGlobal()->GlyphCache->GetGlyphFromChar( node->FontID, txtEl.Char, style->FontSizePx, 0, glyph ) )
+	//	return;
+	nuGlyphCacheKey glyphKey( node->FontID, txtEl.Char, style->FontSizePx, 0 );
+	const nuGlyph* glyph = nuGlobal()->GlyphCache->GetGlyph( glyphKey );
+	if ( !glyph )
+	{
+		GlyphsNeeded.insert( glyphKey );
 		return;
+	}
 
-	nuTextureAtlas* atlas = nuGlobal()->GlyphCache->HackGetAtlas(0);
+	nuTextureAtlas* atlas = nuGlobal()->GlyphCache->GetAtlasMutable( glyph->AtlasID );
 	float atlasScaleX = 1.0f / atlas->GetWidth();
 	float atlasScaleY = 1.0f / atlas->GetHeight();
 
@@ -202,8 +220,8 @@ void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRen
 	left = (float) floor(left + 0.5f);
 	top = (float) floor(top + 0.5f);
 
-	float right = left + glyph.Width;
-	float bottom = top + glyph.Height;
+	float right = left + glyph->Width;
+	float bottom = top + glyph->Height;
 
 	nuVx_PTC corners[4];
 	corners[0].Pos = NUVEC3(left, top, 0);
@@ -211,10 +229,10 @@ void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRen
 	corners[2].Pos = NUVEC3(right, bottom, 0);
 	corners[3].Pos = NUVEC3(right, top, 0);
 
-	float u0 = glyph.X * atlasScaleX;
-	float v0 = glyph.Y * atlasScaleY;
-	float u1 = (glyph.X + glyph.Width) * atlasScaleX;
-	float v1 = (glyph.Y + glyph.Height) * atlasScaleY;
+	float u0 = glyph->X * atlasScaleX;
+	float v0 = glyph->Y * atlasScaleY;
+	float u1 = (glyph->X + glyph->Width) * atlasScaleX;
+	float v1 = (glyph->Y + glyph->Height) * atlasScaleY;
 
 	corners[0].UV = NUVEC2(u0, v0);
 	corners[1].UV = NUVEC2(u0, v1);
@@ -225,10 +243,16 @@ void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRen
 		corners[i].Color = NURGBA(150,0,0,255);
 
 	GL->ActivateProgram( GL->PTextWhole );
-	GL->LoadTextureAtlas( nuGlobal()->GlyphCache->HackGetAtlas(0) );
+	GL->LoadTexture( atlas, 0 );
 	GL->DrawQuad( corners );
 }
 
+void nuRenderer::RenderGlyphsNeeded()
+{
+	for ( auto it = GlyphsNeeded.begin(); it != GlyphsNeeded.end(); it++ )
+		nuGlobal()->GlyphCache->RenderGlyph( *it );
+	GlyphsNeeded.clear();
+}
 
 
 		/*

@@ -159,6 +159,7 @@ local nudom = SharedLibrary {
 		"nudom/nuDocGroup_Windows.cpp",
 		"nudom/Image/nuImage.cpp",
 		"nudom/Image/nuImageStore.cpp",
+		"nudom/Render/nuRenderBase.cpp",
 		"nudom/Render/nuRenderer.cpp",
 		"nudom/Render/nuRenderGL.cpp",
 		"nudom/Render/nuRenderGL_Defs.cpp",

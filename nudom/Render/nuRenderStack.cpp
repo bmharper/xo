@@ -75,6 +75,12 @@ void nuRenderStack::Initialize( const nuDoc* doc, nuPool* pool )
 	//XY(END)
 }
 
+void nuRenderStack::Reset()
+{
+	delete_all( Stack_Pools );
+	Stack.clear();
+}
+
 nuStyleAttrib nuRenderStack::Get( nuStyleCategories cat ) const
 {
 	nuStyleAttrib v = Stack.back().Styles.Get( cat );

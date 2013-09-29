@@ -12,27 +12,25 @@ Adding a new shader
 
 Writing Shaders
 ---------------
-The shaders are run through an extremely limited pre-processor.
+At the top of your script, you can use these lines
+#NU_PLATFORM_WIN_DESKTOP
+#NU_PLATFORM_ANDROID
+to specify that the shader is only used on those platforms. If you omit any such
+declaration, then the shader is used on all platforms.
+This approach won't work forever, especially if we start to support the new
+OpenGL ES 3+ devices out there.
 
-You can use the following:
-
-#ifdef SOMETHING
-#else
-#endif
-
-And also
-#if defined(SOMETHING) || defined(SOMETHING_ELSE)
-
-...and that's it.
-
-There is also the heinous restriction that all logical operators in an #if statement
-must be || or &&. You cannot mix them, and you cannot use parentheses.
-
-All tokens that are #defined are done so outside of the script. You cannot #define
-something inside your script.
+Before compiling shaders, they are prefixed with a bunch of #defines.
+You can use those tokens inside your shaders.
 
 The following constants are defined:
 
 	NU_PLATFORM_WIN_DESKTOP		Defined when target is Windows Desktop
 	NU_PLATFORM_ANDROID			Defined when target is Android
 	NU_GLYPH_ATLAS_SIZE			The size of glyph texture atlasses.
+	NU_SRGB_FRAMEBUFFER			glEnable(GL_FRAMEBUFFER_SRGB) has been called, and is available
+								on this platform (set via nuGlobal()->EnableSRGBFramebuffer).
+	
+	<DELETED - This is going to be too tricky>
+	NU_EMULATE_GAMMA_BLENDING	You should raise your alpha to 2.2 (set via nuGlobal()->EmulateGammaBlending).
+	<DELETED>

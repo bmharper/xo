@@ -1,6 +1,14 @@
 #NU_PLATFORM_WIN_DESKTOP
 #version 330
+
+#ifdef NU_PLATFORM_ANDROID
 precision mediump float;
+#endif
+
+// This looks absolutely terrible without sRGB blending, so we simply don't even try subpixel text
+// on those platforms. As it turns out, there is great correlation between low res screen (Windows)
+// and a GPU capable of sRGB blending.
+
 uniform sampler2D	tex0;
 varying vec4		color;
 varying vec2		texuv0;
@@ -38,6 +46,7 @@ void main()
 	// ONE MINUS SRC COLOR
 	//float alpha = min(min(red, green), blue);
 	//gl_FragColor = vec4(aR, aG, aB, avgA);
-	outputColor0 = vec4(color.r, color.g, color.b, avgA);
+
+	outputColor0 = vec4(color.rgb, avgA);
 	outputColor1 = vec4(aR, aG, aB, avgA);
 }

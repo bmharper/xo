@@ -7,35 +7,33 @@
 void initGLExt();
 
 static const char*		WClass = "nuDom";
-static bool				GLExtInitialized = false;
+static bool				GLIsBooted = false;
 
 #if NU_PLATFORM_ANDROID
 nuSysWnd*				MainWnd = NULL;
 #endif
 
 #if NU_PLATFORM_WIN_DESKTOP
-static HGLRC nuInitGL( HWND wnd, nuRenderGL* rgl )
+
+typedef BOOL (*_wglChoosePixelFormatARB) (HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
+
+static void nuBootGL_FillPFD( PIXELFORMATDESCRIPTOR& pfd )
 {
-	bool allGood = false;
+	const DWORD flags = 0
+		| PFD_DRAW_TO_WINDOW	// support window
+		| PFD_SUPPORT_OPENGL	// support OpenGL 
+		| PFD_DOUBLEBUFFER		// double buffer
+		| 0;
 
-	HGLRC rc = NULL;
-
-	HDC dc = GetDC( wnd );
-	if ( !dc ) return NULL;
-
-	DWORD flags = 0;
-	flags |= PFD_DRAW_TO_WINDOW;	// support window
-	flags |= PFD_SUPPORT_OPENGL;	// support OpenGL 
-	flags |= PFD_DOUBLEBUFFER;		// double buffer
-
-	PIXELFORMATDESCRIPTOR pfd = { 
+	// Note that this must match the attribs used by wglChoosePixelFormatARB (I find that strange).
+	PIXELFORMATDESCRIPTOR base = { 
 		sizeof(PIXELFORMATDESCRIPTOR),   // size of this pfd 
 		1,                     // version number 
 		flags,
 		PFD_TYPE_RGBA,         // RGBA type 
 		24,                    // color depth 
 		0, 0, 0, 0, 0, 0,      // color bits ignored 
-		0,                     // no alpha buffer 
+		0,                     // alpha bits
 		0,                     // shift bit ignored 
 		0,                     // no accumulation buffer 
 		0, 0, 0, 0,            // accum bits ignored 
@@ -47,23 +45,80 @@ static HGLRC nuInitGL( HWND wnd, nuRenderGL* rgl )
 		0, 0, 0                // layer masks ignored 
 	};
 
+	pfd = base;
+}
+
+static bool nuBootGL( HWND wnd )
+{
+	HDC dc = GetDC( wnd );
+
 	// get the best available match of pixel format for the device context  
+	PIXELFORMATDESCRIPTOR pfd;
+	nuBootGL_FillPFD( pfd );
 	int iPixelFormat = ChoosePixelFormat( dc, &pfd );
 
 	if ( iPixelFormat != 0 )
 	{
 		// make that the pixel format of the device context 
-		SetPixelFormat(dc, iPixelFormat, &pfd); 
-		rc = wglCreateContext( dc );
+		BOOL setOK = SetPixelFormat(dc, iPixelFormat, &pfd); 
+		HGLRC rc = wglCreateContext( dc );
 		wglMakeCurrent( dc, rc );
-		if ( !GLExtInitialized )
-		{
-			GLExtInitialized = true;
-			initGLExt();
-			//biggleInit();
-		}
-		allGood = rgl->CreateShaders();
+		initGLExt();
+		GLIsBooted = true;
+		//biggleInit();
 		wglMakeCurrent( NULL, NULL ); 
+		wglDeleteContext( rc );
+	}
+
+	ReleaseDC( wnd, dc );
+
+	return true;
+}
+
+static HGLRC nuInitGL( HWND wnd, nuRenderGL* rgl )
+{
+	if ( !GLIsBooted )
+	{
+		if ( !nuBootGL( wnd ) )
+			return NULL;
+	}
+
+	bool allGood = false;
+	HGLRC rc = NULL;
+	HDC dc = GetDC( wnd );
+	if ( !dc ) return NULL;
+
+	int attribs[] =
+	{
+		WGL_DRAW_TO_WINDOW_ARB,		1,
+		WGL_SUPPORT_OPENGL_ARB,		1,
+		WGL_DOUBLE_BUFFER_ARB,		1,
+		WGL_PIXEL_TYPE_ARB,			WGL_TYPE_RGBA_ARB,
+		WGL_COLOR_BITS_ARB,			24,
+		WGL_ALPHA_BITS_ARB,			0,
+		WGL_DEPTH_BITS_ARB,			16,
+		WGL_STENCIL_BITS_ARB,		0,
+		WGL_SWAP_METHOD_ARB,		WGL_SWAP_EXCHANGE_ARB,	// This was an attempt to lower latency on Windows 8.0, but it seems to have no effect
+		0
+	};
+	PIXELFORMATDESCRIPTOR pfd;
+	nuBootGL_FillPFD( pfd );
+	int formats[20];
+	uint numformats = 0;
+	BOOL chooseOK = wglChoosePixelFormatARB( dc, attribs, NULL, arraysize(formats), formats, &numformats );
+	if ( chooseOK && numformats != 0 )
+	{
+		if ( SetPixelFormat( dc, formats[0], &pfd ) )
+		{
+			rc = wglCreateContext( dc );
+			wglMakeCurrent( dc, rc );
+			allGood = rgl->CreateShaders();
+			wglMakeCurrent( NULL, NULL );
+		}
+		else
+		{
+			NUTRACE( "SetPixelFormat failed: %d\n", GetLastError() );
+		}
 	}
 
 	ReleaseDC( wnd, dc );
@@ -121,9 +176,11 @@ nuSysWnd::~nuSysWnd()
 	{
 		HDC dc = GetDC( SysWnd );
 		wglMakeCurrent( dc, GLRC );
-		RGL->DeleteShaders();
+		RGL->DeleteShadersAndTextures();
 		wglMakeCurrent( NULL, NULL );
+		wglDeleteContext( GLRC );
 		ReleaseDC( SysWnd, dc );
+		GLRC = NULL;
 	}
 	DestroyWindow( SysWnd );
 #elif NU_PLATFORM_ANDROID

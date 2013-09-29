@@ -8,6 +8,7 @@ static const uint32 nuSubPixelHintKillMultiplier = (1 << nuSubPixelHintKillShift
 
 nuGlyphCache::nuGlyphCache()
 {
+	Initialize();
 }
 
 nuGlyphCache::~nuGlyphCache()
@@ -16,13 +17,22 @@ nuGlyphCache::~nuGlyphCache()
 
 void nuGlyphCache::Clear()
 {
-	for ( intp i = 0; i < Atlas.size(); i++ )
-		Atlas[i]->Free();
-	delete_all(Atlas);
+	for ( intp i = 0; i < Atlasses.size(); i++ )
+		Atlasses[i]->Free();
+	delete_all(Atlasses);
 	Glyphs.clear();
 	Table.clear();
+	Initialize();
 }
 
+void nuGlyphCache::Initialize()
+{
+	NullGlyph.SetNull();
+	Glyphs += nuGlyph();
+	Glyphs.back().SetNull();
+}
+
+/*
 bool nuGlyphCache::GetGlyphFromChar( const nuString& facename, int ch, uint8 size, uint8 flags, nuGlyph& glyph )
 {
 	nuFontID fontID = nuFontIDNull;
@@ -48,7 +58,7 @@ bool nuGlyphCache::GetGlyphFromChar( nuFontID fontID, int ch, uint8 size, uint8 
 	if ( !Table.get( key, pos ) )
 	{
 		const nuFont* font = nuGlobal()->FontStore->GetByFontID( fontID );
-		pos = RenderGlyph( key, font );
+		pos = RenderGlyph( key );
 		if ( pos == -1 )
 			return false;
 	}
@@ -56,9 +66,21 @@ bool nuGlyphCache::GetGlyphFromChar( nuFontID fontID, int ch, uint8 size, uint8 
 
 	return true;
 }
+*/
 
-int nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key, const nuFont* font )
+const nuGlyph* nuGlyphCache::GetGlyph( const nuGlyphCacheKey& key ) const
 {
+	uint pos;
+	if ( Table.get( key, pos ) )
+		return &Glyphs[pos];
+	else
+		return NULL;
+}
+
+uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
+{
+	const nuFont* font = nuGlobal()->FontStore->GetByFontID( key.FontID );
+
 	FT_UInt iFTGlyph = FT_Get_Char_Index( font->FTFace, key.Char );
 
 	bool isSubPixel = nuGlyphFlag_IsSubPixel(key.Flags);
@@ -79,7 +101,8 @@ int nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key, const nuFont* font )
 	if ( e != 0 )
 	{
 		NUTRACE( "Failed to load glyph for character %d (%d)\n", key.Char, iFTGlyph );
-		return -1;
+		Table.insert( key, NullGlyphIndex );
+		return NullGlyphIndex;
 	}
 
 	int width = font->FTFace->glyph->bitmap.width;
@@ -105,13 +128,13 @@ int nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key, const nuFont* font )
 
 	for ( int pass = 0; true; pass++ )
 	{
-		if ( Atlas.size() == 0 || pass != 0 )
+		if ( Atlasses.size() == 0 || pass != 0 )
 		{
 			nuTextureAtlas* newAtlas = new nuTextureAtlas();
 			newAtlas->Initialize( nuGlyphAtlasSize, nuGlyphAtlasSize, 1 );
-			Atlas += newAtlas;
+			Atlasses += newAtlas;
 		}
-		atlas = Atlas.back();
+		atlas = Atlasses.back();
 		NUASSERT( naturalWidth + horzPad * 2 <= nuGlyphAtlasSize );
 		if ( atlas->Alloc( naturalWidth + horzPad * 2, height, atlasX, atlasY ) )
 			break;
@@ -127,13 +150,13 @@ int nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key, const nuFont* font )
 	g.Height = height;
 	g.X = atlasX;
 	g.Y = atlasY;
-	g.TextureID = 0; // TODO
-	g.MetricLeftx256 = font->FTFace->glyph->bitmap_left * 256/ combinedHorzMultiplier;
+	g.AtlasID = (uint) Atlasses.find( atlas );
+	g.MetricLeftx256 = font->FTFace->glyph->bitmap_left * 256 / combinedHorzMultiplier;
 	g.MetricTop = font->FTFace->glyph->bitmap_top;
 	g.MetricLinearHoriAdvance = font->FTFace->glyph->linearHoriAdvance / 2048.0f;
 	Table.insert( key, (uint) Glyphs.size() );
 	Glyphs += g;
-	return (int) (Glyphs.size() - 1);
+	return (uint) (Glyphs.size() - 1);
 }
 
 void nuGlyphCache::FilterAndCopyBitmap( const nuFont* font, void* target, int target_stride )

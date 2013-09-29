@@ -23,7 +23,7 @@ public:
 	LRESULT WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam );
 #endif
 
-	// These are our only two entry points into our content
+	// These are the only two entry points into our content
 	nuRenderResult	Render();							// This is always called from the Render thread
 	void			ProcessEvent( nuEvent& ev );		// This is always called from the UI thread
 	

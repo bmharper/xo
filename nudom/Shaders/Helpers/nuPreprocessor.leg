@@ -21,6 +21,7 @@
 	void				SetError( const char* txt ); \
 	void				If(); \
 	void				IfDef( const char* txt ); \
+	void				IfNDef( const char* txt ); \
 	void				Else(); \
 	void				EndIf(); \
 	void				Not( const char* txt ); \
@@ -37,9 +38,10 @@
 }
 %}
 
-start		= (ifdef | if | elif | else | endif | Line | EmptyLine)+
+start		= (ifdef | ifndef | if | elif | else | endif | Line | EmptyLine)+
 if			= - '#if' - Expression - EOL				{ yy->If(); }
 ifdef		= - '#ifdef' - <Identifier> - EOL			{ yy->IfDef(yytext); }
+ifndef		= - '#ifndef' - <Identifier> - EOL			{ yy->IfNDef(yytext); }
 elif		= - '#elif' - Expression - EOL
 else		= - '#else' - EOL							{ yy->Else(); }
 endif		= - '#endif' - EOLorEND						{ yy->EndIf(); }
@@ -106,6 +108,11 @@ void yycontext::If()
 void yycontext::IfDef( const char* txt )
 {
 	OnStack += PP->Macros.contains( txt );
+}
+
+void yycontext::IfNDef( const char* txt )
+{
+	OnStack += !PP->Macros.contains( txt );
 }
 
 void yycontext::Else()

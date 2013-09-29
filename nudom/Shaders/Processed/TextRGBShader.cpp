@@ -33,7 +33,9 @@ const char* nuGLProg_TextRGB::VertSrc()
 "		gl_Position = mvproj * vpos;\n"
 "		texuv0 = vtexuv0;\n"
 "		texClamp = vtexClamp;\n"
-"		color = vcolor;\n"
+"	\n"
+"		color.rgb = pow( vcolor.rgb, 2.2 );\n"
+"		color.a = vcolor.a;\n"
 "	}\n"
 ;
 }
@@ -42,7 +44,15 @@ const char* nuGLProg_TextRGB::FragSrc()
 {
 	return
 "	#version 330\n"
+"	\n"
+"	#ifdef NU_PLATFORM_ANDROID\n"
 "	precision mediump float;\n"
+"	#endif\n"
+"	\n"
+"	// This looks absolutely terrible without sRGB blending, so we simply don't even try subpixel text\n"
+"	// on those platforms. As it turns out, there is great correlation between low res screen (Windows)\n"
+"	// and a GPU capable of sRGB blending.\n"
+"	\n"
 "	uniform sampler2D	tex0;\n"
 "	varying vec4		color;\n"
 "	varying vec2		texuv0;\n"
@@ -80,7 +90,8 @@ const char* nuGLProg_TextRGB::FragSrc()
 "		// ONE MINUS SRC COLOR\n"
 "		//float alpha = min(min(red, green), blue);\n"
 "		//gl_FragColor = vec4(aR, aG, aB, avgA);\n"
-"		outputColor0 = vec4(color.r, color.g, color.b, avgA);\n"
+"	\n"
+"		outputColor0 = vec4(color.rgb, avgA);\n"
 "		outputColor1 = vec4(aR, aG, aB, avgA);\n"
 "	}\n"
 ;

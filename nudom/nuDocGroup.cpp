@@ -34,11 +34,16 @@ nuRenderResult nuDocGroup::Render()
 	uint32 rDocAge = Doc->GetVersion() - RenderDoc->Doc.GetVersion(); 
 	if ( rDocAge > 0 )
 	{
+		// If UI thread has performed many updated since we last rendered,
+		// then pause our thread until we can gain the DocLock
 		haveLock = true;
 		AbcCriticalSectionEnter( DocLock );
 	}
 	else
+	{
+		// The UI thread has not done much since we last rendered, so do not wait for the lock
 		haveLock = AbcCriticalSectionTryEnter( DocLock );
+	}
 
 	if ( !haveLock )
 	{
@@ -67,6 +72,8 @@ nuRenderResult nuDocGroup::Render()
 		AbcCriticalSectionLeave( DocLock );
 	}
 
+	nuRenderResult rendResult = nuRenderResultIdle;
+
 	if ( !idle && Wnd != NULL )
 	{
 		//NUTIME( "Render start\n" );
@@ -77,13 +84,13 @@ nuRenderResult nuDocGroup::Render()
 		}
 
 		//NUTIME( "Render DO\n" );
-		RenderDoc->Render( Wnd->RGL );
+		rendResult = RenderDoc->Render( Wnd->RGL );
 
 		//NUTIME( "Render Finish\n" );
 		Wnd->FinishRender();
 	}
 
-	return idle ? nuRenderResultIdle : nuRenderResultNeedMore;
+	return (idle && rendResult == nuRenderResultIdle) ? nuRenderResultIdle : nuRenderResultNeedMore;
 }
 
 // This is always called from the UI thread

@@ -28,6 +28,22 @@ void nuBox::SetInt( int32 left, int32 top, int32 right, int32 bottom )
 	Bottom = nuRealToPos((float) bottom);
 }
 
+void nuBox::ExpandToFit( const nuBox& expando )
+{
+	Left = std::min(Left, expando.Left);
+	Top = std::min(Top, expando.Top);
+	Right = std::max(Right, expando.Right);
+	Bottom = std::max(Bottom, expando.Bottom);
+}
+
+void nuBox::ClampTo( const nuBox& clamp )
+{
+	Left = std::max(Left, clamp.Left);
+	Top = std::max(Top, clamp.Top);
+	Right = std::min(Right, clamp.Right);
+	Bottom = std::min(Bottom, clamp.Bottom);
+}
+
 void nuRenderStats::Reset()
 {
 	memset( this, 0, sizeof(*this) );
@@ -128,13 +144,14 @@ NUAPI void nuInitialize()
 #if NU_PLATFORM_WIN_DESKTOP
 	nuGlobals->EnableSubpixelText = true;
 	nuGlobals->EnableSRGBFramebuffer = true;
-	nuGlobals->EmulateGammaBlending = false;
+	//nuGlobals->EmulateGammaBlending = true;
 #else
 	nuGlobals->EnableSubpixelText = false;
 	nuGlobals->EnableSRGBFramebuffer = false;
-	nuGlobals->EmulateGammaBlending = false;
+	//nuGlobals->EmulateGammaBlending = false;
 #endif
 	//nuGlobals->DebugZeroClonedChildList = true;
+	nuGlobals->MaxTextureID = ~((nuTextureID) 0);
 	nuGlobals->DocAddQueue.Initialize( false );
 	nuGlobals->DocRemoveQueue.Initialize( false );
 	nuGlobals->EventQueue.Initialize( true );

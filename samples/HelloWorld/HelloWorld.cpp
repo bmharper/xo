@@ -32,8 +32,8 @@ void nuMain( nuMainEvent ev )
 			//doc->Root.ChildByIndex(1)->StyleParse( "background: #0e0e" );
 			//doc->Root.ChildByIndex(2)->StyleParse( "background: #00ee" );
 			doc->Root.ChildByIndex(0)->StyleParse( "background: #ff000040" );
-			doc->Root.ChildByIndex(1)->StyleParse( "background: #00e500ff" );
-			doc->Root.ChildByIndex(2)->StyleParse( "background: #0000e5ff" );
+			doc->Root.ChildByIndex(1)->StyleParse( "background: #ff000080" );
+			doc->Root.ChildByIndex(2)->StyleParse( "background: #ff0000ff" );
 
 			NUTRACE( "Hello 3\n" );
 

@@ -103,6 +103,12 @@ public:
 		}
 	}
 
+	void reserve( intp n )
+	{
+		if ( n > (intp) Capacity )
+			growto( n );
+	}
+
 	void clear()
 	{
 		Data = NULL;

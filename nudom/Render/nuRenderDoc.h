@@ -20,7 +20,7 @@ public:
 			nuRenderDoc();
 			~nuRenderDoc();
 
-	void			Render( nuRenderGL* rgl );
+	nuRenderResult	Render( nuRenderGL* rgl );
 	void			CopyFromCanonical( const nuDoc& canonical, nuRenderStats& stats );
 	nuInternalID	FindElement( nuPoint pos );
 

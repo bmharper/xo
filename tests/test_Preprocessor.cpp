@@ -8,6 +8,13 @@ static const char* IfDef1 =
 "I am not blah\n"
 "#endif";
 
+static const char* IfNotDef =
+"#ifndef BLAH\n"
+"blah not defined\n"
+"#else\n"
+"blah defined\n"
+"#endif";
+
 static const char* IfDefined1 =
 "The first line\n"
 "#if defined(BLAH)\n"
@@ -48,9 +55,11 @@ TESTFUNC(Preprocessor)
 	IDENTITY("a\nb\nc");
 
 	TTASSERT( p.Run(IfDef1) == "The first line\nI am not blah\n" );
+	TTASSERT( p.Run(IfNotDef) == "blah not defined\n" );
 	
 	p.SetMacro( "BLAH", "" );
 	TTASSERT( p.Run(IfDef1) == "The first line\nI am blah\n" );
+	TTASSERT( p.Run(IfNotDef) == "blah defined\n" );
 
 	p.ClearMacros();
 	TTASSERT( p.Run(IfDefined1) == "The first line\nI am not blah\n" );

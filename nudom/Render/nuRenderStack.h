@@ -42,6 +42,7 @@ public:
 						~nuRenderStack();
 
 	void				Initialize( const nuDoc* doc, nuPool* pool );
+	void				Reset();
 	nuStyleAttrib		Get( nuStyleCategories cat ) const;
 	void				GetBox( nuStyleCategories cat, nuStyleBox& box ) const;
 	

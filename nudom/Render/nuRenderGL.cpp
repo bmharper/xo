@@ -6,6 +6,8 @@
 
 nuRenderGL::nuRenderGL()
 {
+	Have_Unpack_RowLength = false;
+	Have_sRGB_Framebuffer = false;
 	AllProgs[0] = &PRect;
 	AllProgs[1] = &PFill;
 	AllProgs[2] = &PFillTex;
@@ -24,19 +26,51 @@ void nuRenderGL::Reset()
 {
 	for ( int i = 0; i < NumProgs; i++ )
 		AllProgs[i]->Reset();
+	memset( BoundTextures, 0, sizeof(BoundTextures) );
+}
+
+void nuRenderGL::CheckExtensions()
+{
+	const char* ver = (const char*) glGetString( GL_VERSION );
+	const char* ext = (const char*) glGetString( GL_EXTENSIONS );
+	auto hasExtension = [ext]( const char* name ) -> bool
+	{
+		const char* pos = ext;
+		while ( true )
+		{
+			size_t len = strlen( name );
+			pos = strstr( pos, name );
+			if ( pos != NULL && pos[len] == ' ' || pos[len] == 0 )
+				return true;
+			else if ( pos == NULL )
+				return false;
+		}
+	};
+
+	// On my desktop Nvidia I get "4.3.0"
+
+	int dot = (int) (strstr(ver, ".") - ver);
+	int major = ver[dot - 1] - '0';
+	int minor = ver[dot + 1] - '0';
+	int version = major * 10 + minor;
+
+	if ( strstr(ver, "OpenGL ES-") )
+	{
+		Have_Unpack_RowLength = version >= 30 || hasExtension( "GL_EXT_unpack_subimage" );
+		Have_sRGB_Framebuffer = version >= 30 || hasExtension( "GL_EXT_sRGB" );
+	}
+	else
+	{
+		Have_Unpack_RowLength = true;
+		Have_sRGB_Framebuffer = version >= 40 || hasExtension( "ARB_framebuffer_sRGB" ) || hasExtension( "GL_EXT_framebuffer_sRGB" );
+	}
 }
 
 bool nuRenderGL::CreateShaders()
 {
 	Check();
 
-	if ( SingleTex2D == 0 )
-		glGenTextures( 1, &SingleTex2D );
-	if ( SingleTexAtlas2D == 0 )
-		glGenTextures( 1, &SingleTexAtlas2D );
-
-	glActiveTexture( GL_TEXTURE0 );
-	glBindTexture( GL_TEXTURE_2D, SingleTex2D );
+	CheckExtensions();
 
 	Check();
 
@@ -54,20 +88,22 @@ bool nuRenderGL::CreateShaders()
 	return true;
 }
 
-void nuRenderGL::DeleteShaders()
+void nuRenderGL::DeleteShadersAndTextures()
 {
-	glActiveTexture( GL_TEXTURE0 );
-	glBindTexture( GL_TEXTURE_2D, 0 );
+	for ( int i = nuMaxTextureUnits - 1; i >= 0; i-- )
+	{
+		glActiveTexture( GL_TEXTURE0 + i );
+		glBindTexture( GL_TEXTURE_2D, 0 );
+	}
 
-	if ( SingleTex2D != 0 )
-		glDeleteTextures( 1, &SingleTex2D );
-	SingleTex2D = 0;
+	podvec<GLuint> textures;
+	for ( intp i = 0; i < TexIDToNative.size(); i++ )
+		textures += GetTextureDeviceIDInt( FirstTextureID() + (nuTextureID) i );
 
-	if ( SingleTexAtlas2D != 0 )
-		glDeleteTextures( 1, &SingleTexAtlas2D );
-	SingleTexAtlas2D = 0;
+	glDeleteTextures( (GLsizei) textures.size(), &textures[0] );
 
 	glUseProgram( 0 );
+
 	for ( int i = 0; i < NumProgs; i++ )
 		DeleteProgram( *AllProgs[i] );
 }
@@ -75,6 +111,7 @@ void nuRenderGL::DeleteShaders()
 void nuRenderGL::SurfaceLost()
 {
 	Reset();
+	SurfaceLost_ForgetTextures();
 	CreateShaders();
 }
 
@@ -90,7 +127,8 @@ void nuRenderGL::SurfaceLost()
 
 void nuRenderGL::ActivateProgram( nuGLProg& p )
 {
-	if ( ActiveProgram == &p ) return;
+	if ( ActiveProgram == &p )
+		return;
 	ActiveProgram = &p;
 	NUASSERT( p.Prog != 0 );
 	glUseProgram( p.Prog );
@@ -152,15 +190,14 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 	//glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
-	if ( nuGlobal()->EnableSRGBFramebuffer )
+	if ( nuGlobal()->EnableSRGBFramebuffer && Have_sRGB_Framebuffer )
 		glEnable( GL_FRAMEBUFFER_SRGB );
 
 	NUTRACE_RENDER( "PreRender 2\n" );
 	Check();
 
 	// Enable CULL_FACE because it will make sure that we are consistent about vertex orientation
-	//glEnable( GL_CULL_FACE );
-	glDisable( GL_CULL_FACE );
+	glEnable( GL_CULL_FACE );
 	glDisable( GL_DEPTH_TEST );
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
@@ -174,9 +211,6 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 	// GLES doesn't support TRANSPOSE = TRUE
 	mvproj = mvproj.Transposed();
 
-	//ActivateProgram( PRect );
-	//glUniform2f( VarRectVPortHSize, FBWidth / 2.0f, FBHeight / 2.0f );
-	//glUniformMatrix4fv( VarRectMVProj, 1, false, &mvproj.row[0].x );
 	ActivateProgram( PRect );
 	glUniform2f( PRect.v_vport_hsize, FBWidth / 2.0f, FBHeight / 2.0f );
 	glUniformMatrix4fv( PRect.v_mvproj, 1, false, &mvproj.row[0].x );
@@ -214,16 +248,10 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 	glUniformMatrix4fv( PTextWhole.v_mvproj, 1, false, &mvproj.row[0].x );
 
 	NUTRACE_RENDER( "PreRender done\n" );
-
-	//glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-	//glEnableClientState( GL_COLOR_ARRAY );
 }
 
 void nuRenderGL::PostRenderCleanup()
 {
-	//glDisableVertexAttribArray( VarRectVPos );
-	//glDisableVertexAttribArray( VarRectVColor );
-	//glDisableVertexAttribArray( VarFillVPos );
 	glUseProgram( 0 );
 	ActiveProgram = NULL;
 }
@@ -239,7 +267,7 @@ void nuRenderGL::DrawQuad( const void* v )
 	GLint varvcol = 0;
 	GLint varvtex0 = 0;
 	GLint varvtexClamp = 0;
-	GLint vartex0 = 0;
+	GLint vartexUnit0 = 0;
 	if ( ActiveProgram == &PRect )
 	{
 		varvpos = PRect.v_vpos;
@@ -255,7 +283,7 @@ void nuRenderGL::DrawQuad( const void* v )
 		varvpos = PFillTex.v_vpos;
 		varvcol = PFillTex.v_vcolor;
 		varvtex0 = PFillTex.v_vtexuv0;
-		vartex0 = PFillTex.v_tex0;
+		vartexUnit0 = PFillTex.v_tex0;
 	}
 	else if ( ActiveProgram == &PTextRGB )
 	{
@@ -264,14 +292,14 @@ void nuRenderGL::DrawQuad( const void* v )
 		varvcol = PTextRGB.v_vcolor;
 		varvtex0 = PTextRGB.v_vtexuv0;
 		varvtexClamp = PTextRGB.v_vtexClamp;
-		vartex0 = PTextRGB.v_tex0;
+		vartexUnit0 = PTextRGB.v_tex0;
 	}
 	else if ( ActiveProgram == &PTextWhole )
 	{
 		varvpos = PTextWhole.v_vpos;
 		varvcol = PTextWhole.v_vcolor;
 		varvtex0 = PTextWhole.v_vtexuv0;
-		vartex0 = PTextWhole.v_tex0;
+		vartexUnit0 = PTextWhole.v_tex0;
 	}
 
 	// We assume here that nuVx_PTC and nuVx_PTCV4 share the same base layout
@@ -283,7 +311,7 @@ void nuRenderGL::DrawQuad( const void* v )
 
 	if ( varvtex0 != 0 )
 	{
-		glUniform1i( vartex0, 0 );
+		glUniform1i( vartexUnit0, 0 );
 		glVertexAttribPointer( varvtex0, 2, GL_FLOAT, true, stride, vbyte + offsetof(nuVx_PTC, UV) );
 		glEnableVertexAttribArray( varvtex0 );
 	}
@@ -292,11 +320,7 @@ void nuRenderGL::DrawQuad( const void* v )
 		glVertexAttribPointer( varvtexClamp, 4, GL_FLOAT, true, stride, vbyte + offsetof(nuVx_PTCV4, V4) );
 		glEnableVertexAttribArray( varvtexClamp );
 	}
-	//glVertexPointer( 3, GL_FLOAT, stride, vbyte );
-	//glEnableClientState( GL_VERTEX_ARRAY );
 
-	//glTexCoordPointer( 2, GL_FLOAT, stride, vbyte + offsetof(nuVx_PTC, UV) );
-	//glColorPointer( GL_BGRA, GL_UNSIGNED_BYTE, stride, vbyte + offsetof(nuVx_PTC, Color) );
 	uint16 indices[6];
 	indices[0] = 0;
 	indices[1] = 1;
@@ -305,18 +329,9 @@ void nuRenderGL::DrawQuad( const void* v )
 	indices[4] = 2;
 	indices[5] = 3;
 	glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices );
-	//glDrawArrays( GL_TRIANGLES, 0, 3 );
 
 	NUTRACE_RENDER( "DrawQuad done\n" );
 
-	/*
-	glBegin( GL_TRIANGLES );
-	glColor4f( 1, 0, 0, 1 );
-	glVertex3f( 0, 0, 0 );
-	glVertex3f( 0, 100, 0 );
-	glVertex3f( 100, 0, 0 );
-	glEnd();
-	*/
 	Check();
 }
 
@@ -324,13 +339,71 @@ void nuRenderGL::DrawTriangles( int nvert, const void* v, const uint16* indices 
 {
 	int stride = sizeof(nuVx_PTC);
 	const byte* vbyte = (const byte*) v;
-	//glVertexPointer( 3, GL_FLOAT, stride, vbyte );
-	//glTexCoordPointer( 2, GL_FLOAT, stride, vbyte + offsetof(nuVx_PTC, UV) );
-	//glColorPointer( GL_BGRA, GL_UNSIGNED_BYTE, stride, vbyte + offsetof(nuVx_PTC, Color) );
 	glDrawElements( GL_TRIANGLES, nvert, GL_UNSIGNED_SHORT, indices );
 	Check();
 }
 
+void nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
+{
+	NUASSERT( tex->TexWidth != 0 && tex->TexHeight != 0 );
+	NUASSERT( tex->TexChannelCount >= 1 && tex->TexChannelCount <= 4 );
+	NUASSERT( texUnit < nuMaxTextureUnits );
+	if ( !IsTextureValid( tex->TexID ) )
+	{
+		GLuint t;
+		glGenTextures( 1, &t );
+		tex->TexID = RegisterTextureInt( t );
+		tex->TexInvalidate();
+	}
+
+	GLuint glTexID = GetTextureDeviceIDInt( tex->TexID );
+	if ( BoundTextures[texUnit] == glTexID )
+		return;
+
+	glActiveTexture( GL_TEXTURE0 + texUnit );
+	glBindTexture( GL_TEXTURE_2D, glTexID );
+	BoundTextures[texUnit] = glTexID;
+
+	// If the texture has not been updated, then we are done
+	nuBox invRect = tex->TexInvalidRect;
+	nuBox fullRect = nuBox(0, 0, tex->TexWidth, tex->TexHeight);
+	invRect.ClampTo( fullRect );
+	if ( invRect.IsAreaZero() )
+		return;
+
+	int format = 0;
+	if ( tex->TexChannelCount == 1 ) format = GL_LUMINANCE;
+	else if ( tex->TexChannelCount == 2 ) format = GL_RG;
+	else if ( tex->TexChannelCount == 3 ) format = GL_RGB;
+	else if ( tex->TexChannelCount == 4 ) format = GL_RGBA;
+	int iformat = format;
+
+	if ( Have_Unpack_RowLength )
+		glPixelStorei( GL_UNPACK_ROW_LENGTH, tex->TexStride );
+
+	if ( !Have_Unpack_RowLength || invRect == fullRect )
+	{
+		glTexImage2D( GL_TEXTURE_2D, 0, iformat, tex->TexWidth, tex->TexHeight, 0, format, GL_UNSIGNED_BYTE, tex->TexData );
+
+		// all assuming this is for a glyph atlas
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		// Clamping should have no effect for RGB text, since we clamp inside our fragment shader.
+		// Also, when rendering 'whole pixel' glyphs, we shouldn't need clamping either, because
+		// our UV coordinates are exact, and we always have a 1:1 texel:pixel ratio.
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	}
+	else
+	{
+		glTexSubImage2D( GL_TEXTURE_2D, 0, invRect.Left, invRect.Top, invRect.Width(), invRect.Height(), format, GL_UNSIGNED_BYTE, tex->TexDataAt(invRect.Left, invRect.Top) );
+	}
+
+	if ( Have_Unpack_RowLength )
+		glPixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
+}
+
+/*
 void nuRenderGL::LoadTexture( const nuImage* img )
 {
 	if ( SingleTex2D == 0 )
@@ -343,10 +416,14 @@ void nuRenderGL::LoadTexture( const nuImage* img )
 
 void nuRenderGL::LoadTextureAtlas( const nuTextureAtlas* atlas )
 {
+	if ( atlas == BoundToTex0 )
+		return;
+
 	if ( SingleTexAtlas2D == 0 )
 		glGenTextures( 1, &SingleTexAtlas2D );
 	glActiveTexture( GL_TEXTURE0 );
 	glBindTexture( GL_TEXTURE_2D, SingleTexAtlas2D );
+
 #if NU_PLATFORM_WIN_DESKTOP
 	//int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_SLUMINANCE8 : GL_RGB;
 	int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
@@ -370,6 +447,42 @@ void nuRenderGL::LoadTextureAtlas( const nuTextureAtlas* atlas )
 	//glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
 	// not necessary for text where we sample NN
 	//glGenerateMipmap( GL_TEXTURE_2D );
+}
+*/
+
+void nuRenderGL::PreparePreprocessor()
+{
+	if ( BaseShader.size() != 0 )
+		return;
+
+#if NU_PLATFORM_WIN_DESKTOP
+	BaseShader.append( "#define NU_PLATFORM_WIN_DESKTOP\n" );
+#elif NU_PLATFORM_ANDROID
+	BaseShader.append( "#define NU_PLATFORM_ANDROID\n" );
+#else
+	#ifdef _MSC_VER
+		#pragma error( "Unknown nuDom platform" )
+	#else
+		#error Unknown nuDom platform
+	#endif
+#endif
+
+	BaseShader.append( fmt( "#define NU_GLYPH_ATLAS_SIZE %v\n", nuGlyphAtlasSize ).Z );
+	if ( nuGlobal()->EnableSRGBFramebuffer && Have_sRGB_Framebuffer )
+		BaseShader.append( "#define NU_SRGB_FRAMEBUFFER\n" );
+
+	/*
+	if ( Preprocessor.MacroCount() != 0 )
+		return;
+
+	Preprocessor.SetMacro( "NU_GLYPH_ATLAS_SIZE", fmt("%v", nuGlyphAtlasSize).Z );
+
+	if ( nuGlobal()->EnableSRGBFramebuffer )
+		Preprocessor.SetMacro( "NU_SRGB_FRAMEBUFFER", "" );
+		*/
+
+	//if ( nuGlobal()->EnableSRGBFramebuffer && nuGlobal()->EmulateGammaBlending )
+	//	Preprocessor.SetMacro( "NU_EMULATE_GAMMA_BLENDING", "" );
 }
 
 void nuRenderGL::DeleteProgram( nuGLProg& prog )
@@ -424,11 +537,14 @@ bool nuRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* raw_
 
 	shader = glCreateShader( shaderType );
 
-	nuString processed(raw_src);
-	processed.ReplaceAll( "NU_GLYPH_ATLAS_SIZE", fmt("%v", nuGlyphAtlasSize).Z );
+	PreparePreprocessor();
+	std::string processed = BaseShader + raw_src;
+	//nuString processed = Preprocessor.Run( raw_src );
+	//nuString processed(raw_src);
+	//processed.ReplaceAll( "NU_GLYPH_ATLAS_SIZE", fmt("%v", nuGlyphAtlasSize).Z );
 
 	GLchar* vstring[1];
-	vstring[0] = (GLchar*) processed.Z;
+	vstring[0] = (GLchar*) processed.c_str();
 
 	glShaderSource( shader, 1, (const GLchar**) vstring, NULL );
 	
@@ -442,7 +558,7 @@ bool nuRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* raw_
 	glGetShaderInfoLog( shader, maxBuff, &ilen, ibuff );
 	//glGetInfoLogARB( shader, maxBuff, &ilen, ibuff );
 	NUTRACE( ibuff );
-	if ( compileStat == 0 ) 
+	if ( compileStat == 0 )
 		return false;
 
 	return glGetError() == GL_NO_ERROR;

@@ -105,5 +105,6 @@ Build {
 		MsvcSolutions = {
 			['nudom.sln'] = {}, -- receives all the units due to empty set
 		},
+		BuildAllByDefault = true,
 	},
 }

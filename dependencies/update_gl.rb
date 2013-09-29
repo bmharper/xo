@@ -25,6 +25,7 @@ glUniform4f
 glUniformMatrix4fv
 glUseProgram
 glVertexAttribPointer
+wglChoosePixelFormatARB
 )
 
 out = ""

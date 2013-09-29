@@ -43,6 +43,18 @@ static const nuInternalID nuInternalIDRoot = 1;		// The root of the DOM tree alw
 typedef int32 nuFontID;
 static const nuFontID nuFontIDNull = 0;				// Zero is always an invalid Font ID
 
+// Handle to a texture that is (maybe) resident in the graphics driver.
+// nudom supports the concept of the graphics device being "lost", so just because you have
+// a non-zero nuTextureID, does not mean that the ID is valid. Prior to drawing the scene,
+// the texture loading functions must check whether the ID is still valid or not.
+// Note that there is a lot of unsigned arithmetic used by the texture management facilities,
+// so this data type must remain unsigned.
+typedef uint32 nuTextureID;
+static const nuTextureID nuTextureIDNull = 0;		// Zero is always an invalid Texture ID
+
+// Maximum number of texture units that we will try to use
+static const u32 nuMaxTextureUnits = 8;
+
 inline int32	nuRealToPos( float real )		{ return int32(real * (1 << nuPosShift)); }
 inline int32	nuDoubleToPos( double real )	{ return int32(real * (1 << nuPosShift)); }
 inline float	nuPosToReal( int32 pos )		{ return pos * (1.0f / (1 << nuPosShift)); }
@@ -129,10 +141,17 @@ public:
 	nuBox( nuPos left, nuPos top, nuPos right, nuPos bottom ) : Left(left), Right(right), Top(top), Bottom(bottom) {}
 
 	void	SetInt( int32 left, int32 top, int32 right, int32 bottom );
-	nuPos	Width() const	{ return Right - Left; }
-	nuPos	Height() const	{ return Bottom - Top; }
-	void	Offset( int32 x, int32 y ) { Left += x; Right += x; Top += y; Bottom += y; }
-	bool	IsInsideMe( const nuPoint& p ) const { return p.X >= Left && p.Y >= Top && p.X < Right && p.Y < Bottom; }
+	void	ExpandToFit( const nuBox& expando );
+	void	ClampTo( const nuBox& clamp );
+
+	nuPos	Width() const							{ return Right - Left; }
+	nuPos	Height() const							{ return Bottom - Top; }
+	void	Offset( int32 x, int32 y )				{ Left += x; Right += x; Top += y; Bottom += y; }
+	bool	IsInsideMe( const nuPoint& p ) const	{ return p.X >= Left && p.Y >= Top && p.X < Right && p.Y < Bottom; }
+	bool	IsAreaZero() const						{ return Width() == 0 || Height() == 0; }
+
+	bool operator==( const nuBox& b ) { return Left == b.Left && Right == b.Right && Top == b.Top && Bottom == b.Bottom; }
+	bool operator!=( const nuBox& b ) { return !(*this == b); }
 
 	// $NU_GCC_ALIGN_BUG
 	nuBox&	operator=( const nuBox& b ) { Left = b.Left; Right = b.Right; Top = b.Top; Bottom = b.Bottom; return *this; }
@@ -170,15 +189,38 @@ struct NUAPI nuRenderStats
 	void Reset();
 };
 
+/* Base of all textures
+This structure must remain zero-initializable
+Once a texture has been uploaded, you may not change width, height, or channel count.
+*/
+class NUAPI nuTexture
+{
+public:
+	uint32		TexWidth;
+	uint32		TexHeight;
+	nuBox		TexInvalidRect;		// Invalid rectangle, in integer texel coordinates.
+	nuTextureID	TexID;				// ID of texture in renderer.
+	int			TexChannelCount;
+	void*		TexData;
+	int			TexStride;
+
+			nuTexture()					{ TexWidth = TexHeight = 0; TexInvalidRect = nuBox(0,0,0,0); TexChannelCount = 0; TexID = nuTextureIDNull; TexData = NULL; TexStride = 0; }
+	void	TexInvalidate()				{ TexInvalidRect = nuBox(0, 0, TexWidth, TexHeight); }
+	void	TexValidate()				{ TexInvalidRect = nuBox(0, 0, 0, 0); }
+	void*	TexDataAt( int x, int y )	{ return ((char*) TexData) + y * TexStride + x * TexChannelCount; }
+};
+
+// A single instance of this is accessible via nuGlobal()
 struct nuGlobalStruct
 {
 	int							TargetFPS;
 	int							NumWorkerThreads;		// Read-only. Set during nuInitialize().
 	bool						EnableSubpixelText;		// Enable sub-pixel text rendering. Assumes pixels are the standard RGB layout. Enabled by default on Windows desktop only.
 	bool						EnableSRGBFramebuffer;	// Enable sRGB framebuffer (implies linear blending)
-	bool						EmulateGammaBlending;	// Only applicable when EnableSRGBFramebuffer = true, this tries to emulate gamma-space blending. You would turn this on to get consistent blending on all devices.
+	//bool						EmulateGammaBlending;	// Only applicable when EnableSRGBFramebuffer = true, this tries to emulate gamma-space blending. You would turn this on to get consistent blending on all devices.
 	float						SubPixelTextGamma;		// Tweak freetype's gamma when doing sub-pixel text rendering.
 	float						WholePixelTextGamma;	// Tweak freetype's gamma when doing whole-pixel text rendering.
+	nuTextureID					MaxTextureID;			// Used to test texture ID wrap-around
 
 	// Debugging flags. Enabling these should make debugging easier.
 	// Some of them may turn out to have a small enough performance hit that you can

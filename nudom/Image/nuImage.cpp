@@ -3,9 +3,9 @@
 
 nuImage::nuImage()
 {
-	Width = 0;
-	Height = 0;
-	Bytes = NULL;
+	//Width = 0;
+	//Height = 0;
+	//Bytes = NULL;
 }
 
 nuImage::~nuImage()
@@ -16,30 +16,33 @@ nuImage::~nuImage()
 nuImage* nuImage::Clone() const
 {
 	nuImage* c = new nuImage();
-	c->Set( Width, Height, Bytes );
+	c->Set( GetWidth(), GetHeight(), GetData() );
 	return c;
 }
 
 void nuImage::Free()
 {
-	if ( Bytes )
+	if ( TexData )
 	{
-		AbcAlignedFree( Bytes );
-		Bytes = NULL;
+		AbcAlignedFree( TexData );
+		TexData = NULL;
 	}
+	TexID = nuTextureIDNull;
 }
 
 void nuImage::Set( u32 width, u32 height, const void* bytes )
 {
-	if ( Width != width || Height != height )
+	if ( TexWidth != width || TexWidth != height )
 		Free();
-	Width = width;
-	Height = height;
-	if ( Width != 0 && Height != 0 && bytes != NULL )
+	TexWidth = width;
+	TexHeight = height;
+	if ( TexWidth != 0 && TexHeight != 0 && bytes != NULL )
 	{
-		size_t size = Width * Height * 4;
-		Bytes = AbcAlignedMalloc( size, 16 );
-		AbcCheckAlloc( Bytes );
-		memcpy( Bytes, bytes, size );
+		TexInvalidate();
+		size_t size = TexWidth * TexHeight * 4;
+		TexData = AbcAlignedMalloc( size, 16 );
+		TexStride = TexWidth * 4;
+		AbcCheckAlloc( TexData );
+		memcpy( TexData, bytes, size );
 	}
 }

@@ -6,17 +6,46 @@
 #include "Text/nuFontStore.h"
 #include "Text/nuGlyphCache.h"
 
+/* This is called serially.
+
+Why do we perform layout in multiple passes, loading all missing glyphs at the end of each pass?
+The reason is because we eventually want to be able to parallelize layout.
+
+Missing glyphs are a once-off cost, so it's not worth trying to use a mutable glyph cache.
+
+*/
 void nuLayout::Layout( const nuDoc& doc, nuRenderDomEl& root, nuPool* pool )
+{
+	Doc = &doc;
+	Pool = pool;
+	Stack.Initialize( Doc, Pool );
+
+	while ( true )
+	{
+		LayoutInternal( root );
+
+		if ( GlyphsNeeded.size() == 0 )
+		{
+			NUTRACE_LAYOUT( "Layout done\n" );
+			break;
+		}
+		else
+		{
+			NUTRACE_LAYOUT( "Layout done (but need another pass for missing glyphs)\n" );
+			RenderGlyphsNeeded();
+		}
+	}
+}
+
+void nuLayout::LayoutInternal( nuRenderDomEl& root )
 {
 	PtToPixel = 1.0;	// TODO
 
 	NUTRACE_LAYOUT( "Layout 1\n" );
 
-	Doc = &doc;
-	Pool = pool;
 	Pool->FreeAll();
 	root.Children.clear();
-	Stack.Initialize( Doc, Pool );
+	Stack.Reset();
 
 	NUTRACE_LAYOUT( "Layout 2\n" );
 
@@ -31,9 +60,7 @@ void nuLayout::Layout( const nuDoc& doc, nuRenderDomEl& root, nuPool* pool )
 
 	NUTRACE_LAYOUT( "Layout 3\n" );
 
-	Run( s, doc.Root, &root );
-
-	NUTRACE_LAYOUT( "Layout done\n" );
+	Run( s, Doc->Root, &root );
 }
 
 void nuLayout::Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode )
@@ -149,21 +176,40 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 	float fontSizePx = 12;
 	rnode->Style.FontSizePx = (uint8) fontSizePx;
 
-	rnode->Text.resize( node.GetText().Len );
-	const char* txt = node.GetText().Z;
+	const nuString& str = node.GetText();
+	rnode->Text.reserve( str.Len );
+	const char* txt = str.Z;
+
+	nuGlyphCacheKey key( rnode->FontID, 0, rnode->Style.FontSizePx, glyphFlags );
 
 	for ( intp i = 0; txt[i]; i++ )
 	{
-		nuGlyph glyph;
-		if ( !glyphCache->GetGlyphFromChar( rnode->FontID, txt[i], rnode->Style.FontSizePx, glyphFlags, glyph ) )
+		key.Char = txt[i];
+		const nuGlyph* glyph = glyphCache->GetGlyph( key );
+		if ( !glyph )
 		{
-			// TODO: Handle missing glyph
+			GlyphsNeeded.insert( key );
+			continue;
 		}
-		rnode->Text[i].Char = txt[i];
-		rnode->Text[i].X = s.PosX + nuRealToPos(glyph.MetricLeftx256 / 256.0f);
-		rnode->Text[i].Y = s.PosY - nuRealToPos(glyph.MetricTop);
-		s.PosX += nuRealToPos(glyph.MetricLinearHoriAdvance * fontSizePx);
+		if ( glyph->IsNull() )
+		{
+			// TODO: Handle missing glyph by drawing a rectangle or something
+			continue;
+		}
+		rnode->Text.Count++;
+		nuRenderTextEl& rtxt = rnode->Text.back();
+		rtxt.Char = key.Char;
+		rtxt.X = s.PosX + nuRealToPos(glyph->MetricLeftx256 / 256.0f);
+		rtxt.Y = s.PosY - nuRealToPos(glyph->MetricTop);
+		s.PosX += nuRealToPos(glyph->MetricLinearHoriAdvance * fontSizePx);
 	}
+}
+
+void nuLayout::RenderGlyphsNeeded()
+{
+	for ( auto it = GlyphsNeeded.begin(); it != GlyphsNeeded.end(); it++ )
+		nuGlobal()->GlyphCache->RenderGlyph( *it );
+	GlyphsNeeded.clear();
 }
 
 nuPos nuLayout::ComputeDimension( nuPos container, nuSize size )

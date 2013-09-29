@@ -18,7 +18,7 @@ void nuRenderDoc::ResetRenderData()
 	RenderPool.FreeAll();
 }
 
-void nuRenderDoc::Render( nuRenderGL* rgl )
+nuRenderResult nuRenderDoc::Render( nuRenderGL* rgl )
 {
 	NUTRACE_RENDER( "RenderDoc: Reset\n" );
 	ResetRenderData();
@@ -29,8 +29,9 @@ void nuRenderDoc::Render( nuRenderGL* rgl )
 
 	NUTRACE_RENDER( "RenderDoc: Render\n" );
 	nuRenderer rend;
-	// TODO: Don't use Doc.Images - use a locked temp copy
-	rend.Render( &ClonedImages, &ClonedStrings, rgl, &RenderRoot, Doc.WindowWidth, Doc.WindowHeight );
+	nuRenderResult res = rend.Render( &ClonedImages, &ClonedStrings, rgl, &RenderRoot, Doc.WindowWidth, Doc.WindowHeight );
+
+	return res;
 }
 
 void nuRenderDoc::CopyFromCanonical( const nuDoc& canonical, nuRenderStats& stats )

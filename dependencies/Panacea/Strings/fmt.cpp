@@ -39,6 +39,7 @@ FMT_STRING fmtcore( const char* fmt, intp nargs, const fmtarg** args )
 	bool no_args_remaining;
 	bool spec_too_long;
 	bool disallowed;
+	const intp MaxOutputSize = 1 * 1024 * 1024;
 
 	char staticbuf[8192];
 	AbCore::StackBuffer output( staticbuf );
@@ -146,7 +147,7 @@ FMT_STRING fmtcore( const char* fmt, intp nargs, const fmtarg** args )
 							break;
 						case fmtarg::TWStr:
 							SETTYPE2(wcharPrefix, wcharType);
-							written = fmt_snprintf( outbuf, outputSize, argbuf, arg->CStr );
+							written = fmt_snprintf( outbuf, outputSize, argbuf, arg->WStr );
 							break;
 						case fmtarg::TI32:
 							if (tokenint)	{ SETTYPE2("", fmt[i]); }
@@ -177,6 +178,11 @@ FMT_STRING fmtcore( const char* fmt, intp nargs, const fmtarg** args )
 						if ( written >= 0 && written < outputSize )
 						{
 							output.MoveCurrentPos( written - outputSize );
+							break;
+						}
+						else if ( outputSize >= MaxOutputSize )
+						{
+							// give up. I first saw this on the Microsoft CRT when trying to write the "mu" symbol to an ascii string.
 							break;
 						}
 						// discard and try again with a larger buffer

@@ -269,7 +269,8 @@ protected:
 template < class T > class PVECT_DECL_SPEC pvect : public pvoidvect
 {
 public:
-	typedef pvoidvect Base;
+	typedef pvoidvect	Base;
+	typedef typename T	TElem;
 
 	pvect() : Base() {}
 

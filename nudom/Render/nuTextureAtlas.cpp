@@ -12,14 +12,15 @@ nuTextureAtlas::~nuTextureAtlas()
 
 void nuTextureAtlas::Initialize( uint width, uint height, uint bytes_per_texel )
 {
-	Width = width;
-	Height = height;
+	TexWidth = width;
+	TexHeight = height;
 	BytesPerTexel = bytes_per_texel;
 	size_t nbytes = width * height * bytes_per_texel;
-	Data = (byte*) nuMallocOrDie( nbytes );
+	TexData = (byte*) nuMallocOrDie( nbytes );
 	//memset( Data, 0xcc, nbytes );
 	//memset( Data, 0, nbytes );
-	Stride = width * bytes_per_texel;
+	TexStride = width * bytes_per_texel;
+	TexChannelCount = 1;
 	PosTop = 0;
 	PosBottom = 0;
 	PosRight = 0;
@@ -27,26 +28,28 @@ void nuTextureAtlas::Initialize( uint width, uint height, uint bytes_per_texel )
 
 void nuTextureAtlas::Free()
 {
-	free(Data);
+	free(TexData);
 	memset( this, 0, sizeof(*this) );
+	TexID = nuTextureIDNull;
 }
 
 bool nuTextureAtlas::Alloc( uint16 width, uint16 height, uint16& x, uint16& y )
 {
-	if ( width > Width )
+	if ( width > TexWidth )
 		return false;
-	if ( PosRight + width > Width )
+	if ( PosRight + width > TexWidth )
 	{
 		// move onto next line
 		PosTop = PosBottom;
 		PosRight = 0;
 	}
 	// can't fit vertically
-	if ( PosTop + height > Height )
+	if ( PosTop + height > TexHeight )
 		return false;
 	x = PosRight;
 	y = PosTop;
 	PosRight += width;
 	PosBottom = std::max(PosBottom, PosTop + height);
+	TexInvalidRect.ExpandToFit( nuBox(x, y, x + width, y + height) );
 	return true;
 }

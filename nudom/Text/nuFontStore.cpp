@@ -47,7 +47,7 @@ const nuFont* nuFontStore::GetByFontID( nuFontID fontID )
 const nuFont* nuFontStore::GetByFacename( const nuString& facename )
 {
 	TakeCriticalSection lock(Lock);
-	return GetByFacenameInternal( facename );
+	return GetByFacename_Internal( facename );
 }
 
 nuFontID nuFontStore::Insert( const nuFont& font )
@@ -56,18 +56,18 @@ nuFontID nuFontStore::Insert( const nuFont& font )
 	NUASSERT( font.Facename.Len != 0 );
 	TakeCriticalSection lock(Lock);
 	
-	const nuFont* existing = GetByFacenameInternal( font.Facename );
+	const nuFont* existing = GetByFacename_Internal( font.Facename );
 	if ( existing )
 		return existing->ID;
 
-	return InsertInternal( font );
+	return Insert_Internal( font );
 }
 
 nuFontID nuFontStore::InsertByFacename( const nuString& facename )
 {
 	TakeCriticalSection lock(Lock);
 
-	const nuFont* existing = GetByFacenameInternal( facename );
+	const nuFont* existing = GetByFacename_Internal( facename );
 	if ( existing )
 		return existing->ID;
 
@@ -82,10 +82,10 @@ nuFontID nuFontStore::InsertByFacename( const nuString& facename )
 		return nuFontIDNull;
 	}
 
-	return InsertInternal( font );
+	return Insert_Internal( font );
 }
 
-const nuFont* nuFontStore::GetByFacenameInternal( const nuString& facename ) const
+const nuFont* nuFontStore::GetByFacename_Internal( const nuString& facename ) const
 {
 	nuFontID id;
 	if ( FacenameToFontID.get( facename, id ) )
@@ -94,7 +94,7 @@ const nuFont* nuFontStore::GetByFacenameInternal( const nuString& facename ) con
 		return NULL;
 }
 
-nuFontID nuFontStore::InsertInternal( const nuFont& font )
+nuFontID nuFontStore::Insert_Internal( const nuFont& font )
 {
 	nuFont* copy = new nuFont();
 	*copy = font;

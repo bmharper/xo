@@ -55,6 +55,7 @@ public:
 	nuString&	operator=( const nuStringRaw& b );
 	nuString&	operator=( const nuString& b );
 	nuString&	operator=( const char* b );
+	nuString&	operator+=( const nuString& b );
 
 };
 

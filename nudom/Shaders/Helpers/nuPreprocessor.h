@@ -9,6 +9,7 @@ public:
 
 	void		SetMacro( const char* name, const char* value );
 	void		ClearMacros();
+	intp		MacroCount() { return Macros.size(); }
 	nuString	Run( const char* raw );
 
 protected:

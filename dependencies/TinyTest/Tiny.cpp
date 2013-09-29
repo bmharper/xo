@@ -478,12 +478,6 @@ bool TT_IPC_Read_Raw( unsigned int waitMS, char (&filename)[256], char (&msg)[TT
 
 void TT_IPC_Write_Raw( char (&filename)[256], const char* msg )
 {
-	// Disable IPC if we're not being run as an automated test.
-	// Typical use case is to run a single test from a debugger.
-	// Erg... this is a hack, because I haven't yet figured out a clean way to differentiate auto vs manual invoke.
-	if ( IsDebuggerPresent() )
-		return;
-
 	char buf[512];
 	unsigned int length = (unsigned int) strlen(msg);
 	FILE* file = fopen( filename, "wb" );
@@ -512,6 +506,16 @@ void TT_IPC_Write_Raw( char (&filename)[256], const char* msg )
 static void TT_IPC( const char* msg, ... )
 {
 	// This is one-way communication, from the tested app to the test harness app
+
+	// Disable IPC if we're not being run as an automated test.
+	// Typical use case is to run a single test from a debugger.
+	// Erg... this is a hack, because I haven't yet figured out a clean way to differentiate auto vs manual invoke.
+	//if ( IsDebuggerPresent() )
+	//	return;
+	// Damn stupid that previous statement! This is a trivial way to detect if we're being run under administration:
+	if ( ExecutorPID == 0 )
+		return;
+
 	char filename[256];
 	TT_IPC_Filename( true, ExecutorPID, TTGetProcessID(), filename );
 

@@ -14,7 +14,7 @@ inline bool nuGlyphFlag_IsSubPixel( uint32 flags ) { return !!(flags & nuGlyphFl
 
 struct nuGlyph
 {
-	uint	TextureID;
+	uint	AtlasID;
 	uint16	X;
 	uint16	Y;
 	uint16	Width;
@@ -22,6 +22,10 @@ struct nuGlyph
 	int16	MetricLeftx256;	// low 8 bits are sub-pixel
 	int16	MetricTop;
 	float	MetricLinearHoriAdvance;
+
+	// A Null glyph is one that could not be found in the font
+	bool IsNull() const { return Width == 0; }
+	void SetNull()		{ memset(this, 0, sizeof(*this)); }
 };
 
 struct nuGlyphCacheKey
@@ -43,8 +47,14 @@ struct nuGlyphCacheKey
 };
 FHASH_SETUP_POD_GETHASHCODE(nuGlyphCacheKey);
 
-static const int nuGlyphAtlasSize = 256; // 256 x 256 x 8bit = 64k per atlas
+static const int nuGlyphAtlasSize = 512; // 512 x 512 x 8bit = 256k per atlas
 
+/* Maintains a cache of all information (including textures) that is needed to render text.
+During a render, the cache is read-only. After rendering, we go in and resolve all the cache
+misses. On the next render, those glyphs will get rendered.
+
+If a glyph render fails, then the resulting nuGlyph will have .IsNull() == true.
+*/
 class NUAPI nuGlyphCache
 {
 public:
@@ -52,16 +62,26 @@ public:
 			~nuGlyphCache();
 
 	void			Clear();
-	bool			GetGlyphFromChar( const nuString& facename, int ch, uint8 size, uint8 flags, nuGlyph& glyph );
-	bool			GetGlyphFromChar( nuFontID fontID, int ch, uint8 size, uint8 flags, nuGlyph& glyph );
-	nuTextureAtlas* HackGetAtlas( int i ) { return Atlas[i]; }
+	//bool			GetGlyphFromChar( const nuString& facename, int ch, uint8 size, uint8 flags, nuGlyph& glyph );
+	//bool			GetGlyphFromChar( nuFontID fontID, int ch, uint8 size, uint8 flags, nuGlyph& glyph );
+	
+	// Returns NULL if the glyph is not in the cache. Even if the glyph pointer is not NULL, you must still check
+	// whether it is the logical "null glyph", which is empty. You can detect that with nuGlyph.IsNull().
+	const nuGlyph*	GetGlyph( const nuGlyphCacheKey& key ) const;
+
+	uint			RenderGlyph( const nuGlyphCacheKey& key );
+
+	const nuTextureAtlas*	GetAtlas( uint i ) const		{ return Atlasses[i]; }
+	nuTextureAtlas*			GetAtlasMutable( uint i )		{ return Atlasses[i]; }
 
 protected:
-	pvect<nuTextureAtlas*>				Atlas;
+	static const uint					NullGlyphIndex = 0;	// Our first element in 'Glyphs' is always the null glyph
+	pvect<nuTextureAtlas*>				Atlasses;
 	podvec<nuGlyph>						Glyphs;
 	fhashmap<nuGlyphCacheKey, uint>		Table;
+	nuGlyph								NullGlyph;
 
-	int		RenderGlyph( const nuGlyphCacheKey& key, const nuFont* font );
+	void	Initialize();
 	void	FilterAndCopyBitmap( const nuFont* font, void* target, int target_stride );
 	void	CopyBitmap( const nuFont* font, void* target, int target_stride );
 };

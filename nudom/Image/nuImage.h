@@ -1,6 +1,8 @@
 #pragma once
 
-class NUAPI nuImage
+#include "../nuDefs.h"
+
+class NUAPI nuImage : public nuTexture
 {
 public:
 					nuImage();
@@ -8,15 +10,15 @@ public:
 	
 	nuImage*		Clone() const;
 	void			Free();
-	void			Set( u32 width, u32 height, const void* bytes );
-	u32				GetWidth() const { return Width; }
-	u32				GetHeight() const { return Height; }
-	const void*		GetData() const { return Bytes; }
+	void			Set( u32 width, u32 height, const void* bytes ); // set RGBA 8888
+	u32				GetWidth() const { return TexWidth; }
+	u32				GetHeight() const { return TexHeight; }
+	const void*		GetData() const { return TexData; }
 
 protected:
-	u32				Width;
-	u32				Height;
-	void*			Bytes;
+	//u32				Width;
+	//u32				Height;
+	//void*			Bytes;
 
 };
 
