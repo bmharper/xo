@@ -4,6 +4,25 @@
 #include "nuTextureAtlas.h"
 #include "../Text/nuGlyphCache.h"
 
+#ifndef GL_FRAMEBUFFER_SRGB
+#define GL_FRAMEBUFFER_SRGB                 0x8DB9
+#endif
+#ifndef GL_RG
+#define GL_RG                               0x8227
+#endif
+#ifndef GL_UNPACK_ROW_LENGTH
+#define GL_UNPACK_ROW_LENGTH                0x0CF2
+#endif
+#ifndef GL_SRC1_COLOR
+#define GL_SRC1_COLOR                       0x88F9
+#endif
+#ifndef GL_ONE_MINUS_SRC1_COLOR
+#define GL_ONE_MINUS_SRC1_COLOR             0x88FA
+#endif
+#ifndef GL_ONE_MINUS_SRC1_ALPHA
+#define GL_ONE_MINUS_SRC1_ALPHA             0x88FB
+#endif
+
 nuRenderGL::nuRenderGL()
 {
 	Have_Unpack_RowLength = false;
@@ -40,13 +59,14 @@ void nuRenderGL::CheckExtensions()
 		{
 			size_t len = strlen( name );
 			pos = strstr( pos, name );
-			if ( pos != NULL && pos[len] == ' ' || pos[len] == 0 )
+			if ( pos != NULL && (pos[len] == ' ' || pos[len] == 0) )
 				return true;
 			else if ( pos == NULL )
 				return false;
 		}
 	};
 
+	NUTRACE( "Checking OpenGL extensions\n" );
 	// On my desktop Nvidia I get "4.3.0"
 
 	int dot = (int) (strstr(ver, ".") - ver);
@@ -54,13 +74,18 @@ void nuRenderGL::CheckExtensions()
 	int minor = ver[dot + 1] - '0';
 	int version = major * 10 + minor;
 
-	if ( strstr(ver, "OpenGL ES-") )
+	NUTRACE( "OpenGL version: %s\n", ver );
+	NUTRACE( "OpenGL extensions: %s\n", ext );
+
+	if ( strstr(ver, "OpenGL ES") )
 	{
 		Have_Unpack_RowLength = version >= 30 || hasExtension( "GL_EXT_unpack_subimage" );
 		Have_sRGB_Framebuffer = version >= 30 || hasExtension( "GL_EXT_sRGB" );
+		NUTRACE( "OpenGL ES (UNPACK_SUBIMAGE=%d, sRGB_FrameBuffer=%d)\n", Have_Unpack_RowLength ? 1 : 0, Have_sRGB_Framebuffer ? 1 : 0 );
 	}
 	else
 	{
+		NUTRACE( "OpenGL Regular (non-ES)\n" );
 		Have_Unpack_RowLength = true;
 		Have_sRGB_Framebuffer = version >= 40 || hasExtension( "ARB_framebuffer_sRGB" ) || hasExtension( "GL_EXT_framebuffer_sRGB" );
 	}
@@ -114,16 +139,6 @@ void nuRenderGL::SurfaceLost()
 	SurfaceLost_ForgetTextures();
 	CreateShaders();
 }
-
-#ifndef GL_SRC1_COLOR
-#define GL_SRC1_COLOR                                      0x88F9
-#endif
-#ifndef GL_ONE_MINUS_SRC1_COLOR
-#define GL_ONE_MINUS_SRC1_COLOR                            0x88FA
-#endif
-#ifndef GL_ONE_MINUS_SRC1_ALPHA
-#define GL_ONE_MINUS_SRC1_ALPHA                            0x88FB
-#endif
 
 void nuRenderGL::ActivateProgram( nuGLProg& p )
 {
@@ -218,12 +233,12 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 
 	ActivateProgram( PFill );
 
-	NUTRACE_RENDER( "PreRender 4 (%d)\n", VarFillMVProj );
+	NUTRACE_RENDER( "PreRender 4 (%d)\n", PFill.v_mvproj );
 	Check();
 
 	glUniformMatrix4fv( PFill.v_mvproj, 1, false, &mvproj.row[0].x );
 
-	NUTRACE_RENDER( "PreRender 5\n" );
+	NUTRACE_RENDER( "PreRender 5 (%d)\n", PFillTex.Prog );
 	Check();
 
 	ActivateProgram( PFillTex );
@@ -233,12 +248,17 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 
 	glUniformMatrix4fv( PFillTex.v_mvproj, 1, false, &mvproj.row[0].x );
 
-	ActivateProgram( PTextRGB );
+	if ( PTextRGB.UseOnThisPlatform() )
+	{
+		NUTRACE_RENDER( "PreRender 7a (%d)\n", PTextRGB.Prog );
 
-	NUTRACE_RENDER( "PreRender 7 (%d)\n", PTextRGB.v_mvproj );
-	Check();
+		ActivateProgram( PTextRGB );
 
-	glUniformMatrix4fv( PTextRGB.v_mvproj, 1, false, &mvproj.row[0].x );
+		NUTRACE_RENDER( "PreRender 7b (%d)\n", PTextRGB.v_mvproj );
+		Check();
+
+		glUniformMatrix4fv( PTextRGB.v_mvproj, 1, false, &mvproj.row[0].x );
+	}
 
 	ActivateProgram( PTextWhole );
 
@@ -495,20 +515,20 @@ void nuRenderGL::DeleteProgram( nuGLProg& prog )
 
 bool nuRenderGL::LoadProgram( nuGLProg& prog )
 {
-	return LoadProgram( prog.Vert, prog.Frag, prog.Prog, prog.VertSrc(), prog.FragSrc() );
+	return LoadProgram( prog.Vert, prog.Frag, prog.Prog, prog.Name(), prog.VertSrc(), prog.FragSrc() );
 }
 
-bool nuRenderGL::LoadProgram( nuGLProg& prog, const char* vsrc, const char* fsrc )
+bool nuRenderGL::LoadProgram( nuGLProg& prog, const char* name, const char* vsrc, const char* fsrc )
 {
-	return LoadProgram( prog.Vert, prog.Frag, prog.Prog, vsrc, fsrc );
+	return LoadProgram( prog.Vert, prog.Frag, prog.Prog, name, vsrc, fsrc );
 }
 
-bool nuRenderGL::LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, const char* vsrc, const char* fsrc )
+bool nuRenderGL::LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, const char* name, const char* vsrc, const char* fsrc )
 {
 	NUASSERT(glGetError() == GL_NO_ERROR);
 
-	if ( !LoadShader( GL_VERTEX_SHADER, vshade, vsrc ) ) return false;
-	if ( !LoadShader( GL_FRAGMENT_SHADER, fshade, fsrc ) ) return false;
+	if ( !LoadShader( GL_VERTEX_SHADER, vshade, name, vsrc ) ) return false;
+	if ( !LoadShader( GL_FRAGMENT_SHADER, fshade, name, fsrc ) ) return false;
 
 	prog = glCreateProgram();
 
@@ -523,15 +543,19 @@ bool nuRenderGL::LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, cons
 	GLint linkStat;
 	glGetProgramiv( prog, GL_LINK_STATUS, &linkStat );
 	glGetProgramInfoLog( prog, maxBuff, &ilen, ibuff );
-	NUTRACE( ibuff );
-	if ( ibuff[0] != 0 ) NUTRACE( "\n" );
+	if ( ibuff[0] != 0 )
+	{
+		NUTRACE( "Shader: %s\n", name );
+		NUTRACE( ibuff );
+		NUTRACE( "\n" );
+	}
 	if ( linkStat == 0 ) 
 		return false;
 
 	return glGetError() == GL_NO_ERROR;
 }
 
-bool nuRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* raw_src )
+bool nuRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* name, const char* raw_src )
 {
 	NUASSERT(glGetError() == GL_NO_ERROR);
 
@@ -557,7 +581,11 @@ bool nuRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* raw_
 	glGetShaderiv( shader, GL_COMPILE_STATUS, &compileStat );
 	glGetShaderInfoLog( shader, maxBuff, &ilen, ibuff );
 	//glGetInfoLogARB( shader, maxBuff, &ilen, ibuff );
-	NUTRACE( ibuff );
+	if ( ibuff[0] != 0 )
+	{
+		NUTRACE( "Shader %s (%s)\n", name, shaderType == GL_FRAGMENT_SHADER ? "frag" : "vert" );
+		NUTRACE( ibuff );
+	}
 	if ( compileStat == 0 )
 		return false;
 

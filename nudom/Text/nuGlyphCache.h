@@ -24,7 +24,7 @@ struct nuGlyph
 	float	MetricLinearHoriAdvance;
 
 	// A Null glyph is one that could not be found in the font
-	bool IsNull() const { return Width == 0; }
+	bool IsNull() const { return Width == 0 && MetricLinearHoriAdvance == 0; }
 	void SetNull()		{ memset(this, 0, sizeof(*this)); }
 };
 
@@ -74,8 +74,9 @@ public:
 	const nuTextureAtlas*	GetAtlas( uint i ) const		{ return Atlasses[i]; }
 	nuTextureAtlas*			GetAtlasMutable( uint i )		{ return Atlasses[i]; }
 
+	static const uint					NullGlyphIndex;	// = 0. Our first element in 'Glyphs' is always the null glyph (GCC 4.6 won't allow us to write =0 here)
+
 protected:
-	static const uint					NullGlyphIndex = 0;	// Our first element in 'Glyphs' is always the null glyph
 	pvect<nuTextureAtlas*>				Atlasses;
 	podvec<nuGlyph>						Glyphs;
 	fhashmap<nuGlyphCacheKey, uint>		Table;

@@ -1,3 +1,4 @@
+#NU_PLATFORM_WIN_DESKTOP
 // This is from Jim Blinn and Charles Loop's paper "Resolution Independent Curve Rendering using Programmable Graphics Hardware"
 // We don't need this complexity here.. and if I recall correctly, this technique aliases under minification faster than
 // our simpler rounded-rectangle alternative.

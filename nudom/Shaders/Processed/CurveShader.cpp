@@ -86,7 +86,7 @@ bool nuGLProg_Curve::LoadVariablePositions()
 
 uint32 nuGLProg_Curve::PlatformMask()
 {
-	return nuPlatform_All;
+	return nuPlatform_WinDesktop;
 }
 
 

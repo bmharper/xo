@@ -30,12 +30,14 @@ void main()
 	// This offset is correct regardless of whether you're blending linearly or in gamma space.
 	float dist = length( screenxy - cent ) - 0.5;
 
-	color.a *= clamp(iradius - dist, 0.0, 1.0);
+	vec4 outcolor = color;
+	outcolor.a *= clamp(iradius - dist, 0.0, 1.0);
 
 #ifdef NU_SRGB_FRAMEBUFFER
-	gl_FragColor = color;
+	gl_FragColor = outcolor;
 #else
-	gl_FragColor.rgb = pow(color, vec3(1.0/2.2));
-	gl_FragColor.a = color.a;
+	float igamma = 1.0/2.2;
+	gl_FragColor.rgb = pow(outcolor.rgb, vec3(igamma, igamma, igamma));
+	gl_FragColor.a = outcolor.a;
 #endif
 }

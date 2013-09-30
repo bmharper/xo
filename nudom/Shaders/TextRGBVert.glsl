@@ -12,6 +12,6 @@ void main()
 	texuv0 = vtexuv0;
 	texClamp = vtexClamp;
 
-	color.rgb = pow( vcolor.rgb, vec3(2.2) );
+	color.rgb = pow( vcolor.rgb, vec3(2.2, 2.2, 2.2) );
 	color.a = vcolor.a;
 }

@@ -270,7 +270,7 @@ template < class T > class PVECT_DECL_SPEC pvect : public pvoidvect
 {
 public:
 	typedef pvoidvect	Base;
-	typedef typename T	TElem;
+	typedef T			TElem;
 
 	pvect() : Base() {}
 

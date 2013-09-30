@@ -6,6 +6,9 @@
 static const uint32 nuSubPixelHintKillShift = 4;
 static const uint32 nuSubPixelHintKillMultiplier = (1 << nuSubPixelHintKillShift);
 
+// GCC 4.6 for Android forces us to set the value of this constant in the .cpp file, not in the .h file.
+const uint nuGlyphCache::NullGlyphIndex = 0;	// Our first element in 'Glyphs' is always the null glyph
+
 nuGlyphCache::nuGlyphCache()
 {
 	Initialize();
@@ -85,6 +88,9 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 
 	bool isSubPixel = nuGlyphFlag_IsSubPixel(key.Flags);
 
+	if ( key.Char == 32 )
+		int abc = 123;
+
 	uint32 pixSize = key.Size;
 	int32 combinedHorzMultiplier = 1;
 	if ( isSubPixel )
@@ -109,7 +115,8 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	int height = font->FTFace->glyph->bitmap.rows;
 	int naturalWidth = width;
 	int horzPad = 0;
-	if ( isSubPixel )
+	bool isEmpty = (width | height) == 0;
+	if ( isSubPixel && !isEmpty )
 	{
 		// Note that Freetype's rasterized width is not necessarily divisible by nuSubPixelHintKillMultiplier.
 		// We need to round our resulting width up so that is is divisible by nuSubPixelHintKillMultiplier,
@@ -146,7 +153,7 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 		CopyBitmap( font, atlas->DataAt(atlasX, atlasY), atlas->GetStride() );
 
 	nuGlyph g;
-	g.Width = naturalWidth + horzPad * 2;
+	g.Width = isEmpty ? 0 : naturalWidth + horzPad * 2;
 	g.Height = height;
 	g.X = atlasX;
 	g.Y = atlasY;

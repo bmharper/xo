@@ -217,8 +217,13 @@ void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRen
 	float top = nuPosToReal( txtEl.Y );
 	float left = nuPosToReal( txtEl.X );
 
-	left = (float) floor(left + 0.5f);
-	top = (float) floor(top + 0.5f);
+	bool round = true;//style->FontSizePx < 16;
+
+	if ( round )
+	{
+		left = (float) floor(left + 0.5f);
+		top = (float) floor(top + 0.5f);
+	}
 
 	float right = left + glyph->Width;
 	float bottom = top + glyph->Height;

@@ -173,7 +173,7 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 
 	nuGlyphCache* glyphCache = nuGlobal()->GlyphCache;
 
-	float fontSizePx = 12;
+	float fontSizePx = 24;
 	rnode->Style.FontSizePx = (uint8) fontSizePx;
 
 	const nuString& str = node.GetText();

@@ -50,9 +50,9 @@ protected:
 	void			PreparePreprocessor();
 	void			DeleteProgram( nuGLProg& prog );
 	bool			LoadProgram( nuGLProg& prog );
-	bool			LoadProgram( nuGLProg& prog, const char* vsrc, const char* fsrc );
-	bool			LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, const char* vsrc, const char* fsrc );
-	bool			LoadShader( GLenum shaderType, GLuint& shader, const char* raw_src );
+	bool			LoadProgram( nuGLProg& prog, const char* name, const char* vsrc, const char* fsrc );
+	bool			LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, const char* name, const char* vsrc, const char* fsrc );
+	bool			LoadShader( GLenum shaderType, GLuint& shader, const char* name, const char* raw_src );
 	void			Check();
 	void			Ortho( nuMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar );
 	void			Reset();

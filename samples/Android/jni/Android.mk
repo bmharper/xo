@@ -55,7 +55,9 @@ NU_SRC = \
 ../../../nudom/Image/nuImage.cpp \
 ../../../nudom/Image/nuImageStore.cpp \
 ../../../nudom/Render/nuRenderer.cpp \
+../../../nudom/Render/nuRenderBase.cpp \
 ../../../nudom/Render/nuRenderGL.cpp \
+../../../nudom/Render/nuRenderGL_Defs.cpp \
 ../../../nudom/Render/nuRenderDoc.cpp \
 ../../../nudom/Render/nuRenderDomEl.cpp \
 ../../../nudom/Render/nuRenderStack.cpp \
@@ -64,6 +66,12 @@ NU_SRC = \
 ../../../nudom/Text/nuFontStore.cpp \
 ../../../nudom/Text/nuGlyphCache.cpp \
 ../../../nudom/Text/nuTextDefs.cpp \
+../../../nudom/Shaders/Processed/CurveShader.cpp \
+../../../nudom/Shaders/Processed/FillShader.cpp \
+../../../nudom/Shaders/Processed/FillTexShader.cpp \
+../../../nudom/Shaders/Processed/RectShader.cpp \
+../../../nudom/Shaders/Processed/TextRGBShader.cpp \
+../../../nudom/Shaders/Processed/TextWholeShader.cpp \
 ../../../dependencies/Panacea/Containers/queue.cpp \
 ../../../dependencies/Panacea/Platform/cpu.cpp \
 ../../../dependencies/Panacea/Platform/err.cpp \
