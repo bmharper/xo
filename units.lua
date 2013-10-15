@@ -129,19 +129,9 @@ local nudom = SharedLibrary {
 		Pass = "PchGen",
 	},
 	Sources = {
-		--[[
-		FGlob {
-			Dir = "nudom",
-			Extensions = { ".cpp", ".h" },
-			Recursive = true,
-			Filters = {
-				{ Pattern = "_Windows", Config = "win*" },
-				--{ Pattern = "pch", Config = "ignore" },
-			}
-		},
-		--Glob { Extensions = { ".h" }, Recursive = true, Dir = "../dependencies" },
-		--]]
-		Glob { Extensions = { ".h" }, Recursive = true, Dir = ".", },
+		Glob { Extensions = { ".h" }, Dir = "nudom", },
+		Glob { Extensions = { ".h" }, Dir = "dependencies", Recursive = false },
+		Glob { Extensions = { ".h" }, Dir = "dependencies/Panacea", },
 		"nudom/nuDefs.cpp",
 		"nudom/nuDoc.cpp",
 		"nudom/nuDomEl.cpp",
