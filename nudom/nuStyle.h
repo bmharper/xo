@@ -5,7 +5,7 @@
 
 // Represents a size that is zero, pixels, points, percent.
 // TODO: em
-// TODO: lx (logical pixel)
+// TODO: ap (angular pixel)
 // Zero is represented as 0 pixels
 struct NUAPI nuSize
 {
@@ -13,12 +13,13 @@ struct NUAPI nuSize
 	float 	Val;
 	Types 	Type;
 
-	static nuSize Make( Types t, float v )	{ nuSize s = {v, t}; return s; }
-	static nuSize Percent( float v )		{ nuSize s = {v, PERCENT}; return s; }
-	static nuSize Points( float v )			{ nuSize s = {v, PT}; return s; }
-	static nuSize Pixels( float v )			{ nuSize s = {v, PX}; return s; }
-	static nuSize Zero()					{ nuSize s = {0, PX}; return s; }
-	static nuSize Parse( const char* s, intp len );
+	static nuSize	Make( Types t, float v )	{ nuSize s = {v, t}; return s; }
+	static nuSize	Percent( float v )			{ nuSize s = {v, PERCENT}; return s; }
+	static nuSize	Points( float v )			{ nuSize s = {v, PT}; return s; }
+	static nuSize	Pixels( float v )			{ nuSize s = {v, PX}; return s; }
+	static nuSize	Zero()						{ nuSize s = {0, PX}; return s; }
+
+	static bool		Parse( const char* s, intp len, nuSize& v );
 };
 
 // Convenience struct used during layout computation
@@ -34,9 +35,9 @@ struct NUAPI nuStyleBox
 		nuSize All[4];
 	};
 
-	static nuStyleBox Parse( const char* s, intp len );
-	static nuStyleBox Make( nuSize left, nuSize top, nuSize right, nuSize bottom ) { nuStyleBox b; b.Left = left; b.Top = top; b.Right = right; b.Bottom = bottom; return b; }
-	static nuStyleBox MakeZero() { nuStyleBox b; b.SetZero(); return b; }
+	static bool			Parse( const char* s, intp len, nuStyleBox& v );
+	static nuStyleBox	Make( nuSize left, nuSize top, nuSize right, nuSize bottom ) { nuStyleBox b; b.Left = left; b.Top = top; b.Right = right; b.Bottom = bottom; return b; }
+	static nuStyleBox	MakeZero() { nuStyleBox b; b.SetZero(); return b; }
 	void SetZero() { Left = Top = Right = Bottom = nuSize::Pixels(0); }
 };
 
@@ -69,9 +70,9 @@ struct NUAPI nuColor
 	bool	operator==( const nuColor& x ) const { return u == x.u; }
 	bool	operator!=( const nuColor& x ) const { return u != x.u; }
 
-	static nuColor Parse( const char* s, intp len );
-	static nuColor RGBA( uint8 _r, uint8 _g, uint8 _b, uint8 _a )		{ nuColor c; c.Set(_r,_g,_b,_a); return c; }
-	static nuColor Make( uint32 _u )									{ nuColor c; c.u = _u; return c; }
+	static bool		Parse( const char* s, intp len, nuColor& v );
+	static nuColor	RGBA( uint8 _r, uint8 _g, uint8 _b, uint8 _a )		{ nuColor c; c.Set(_r,_g,_b,_a); return c; }
+	static nuColor	Make( uint32 _u )									{ nuColor c; c.u = _u; return c; }
 
 	union {
 		struct {
@@ -94,6 +95,18 @@ enum nuDisplayType
 	nuDisplayInline
 };
 
+enum nuFlowDirection
+{
+	nuFlowDirectionNormal,
+	nuFlowDirectionReversed
+};
+
+enum nuFlowAxis
+{
+	nuFlowAxisVertical,		// Vertical is the default
+	nuFlowAxisHorizontal
+};
+
 enum nuPositionType
 {
 	// All of these definitions are the same as HTML's
@@ -104,6 +117,8 @@ enum nuPositionType
 };
 
 // The order of the box components (left,top,right,bottom) must be consistent with the order in nuStyleBox
+// In addition, all 'box' types must fall between Margin_Left and Border_Bottom. This is simply for sanity. It is verified
+// inside nuStyle.SetBox()
 #define NU_STYLE_DEFINE \
 XX(NULL, 0) \
 XY(Color) \
@@ -135,6 +150,9 @@ XY(FontSize) \
 XY(FontFamily) \
 XY(BorderRadius) \
 XY(Position) \
+XY(Flow_Axis) \
+XY(Flow_Direction_Horizontal) \
+XY(Flow_Direction_Vertical) \
 XY(END)
 
 #define XX(a,b) nuCat##a = b,
@@ -155,7 +173,7 @@ const int						nuNumInheritedStyleCategories = 1;
 extern const nuStyleCategories	nuInheritedStyleCategories[nuNumInheritedStyleCategories];
 
 /* Single style attribute (such as Margin-Left, Width, FontSize, etc).
-This must be zero-initializable (ie with memset(0)).
+This must be zero-initializable (i.e. with memset(0)).
 It must remain small.
 Currently, sizeof(nuStyleAttrib) = 8.
 */
@@ -181,6 +199,8 @@ public:
 
 	nuStyleAttrib();
 
+	void SetInherit( nuStyleCategories cat );
+
 	void SetColor( nuStyleCategories cat, nuColor val );
 	void SetSize( nuStyleCategories cat, nuSize val );
 	void SetDisplay( nuDisplayType val );
@@ -188,16 +208,31 @@ public:
 	void SetPosition( nuPositionType val );
 	void SetFont( const char* font, nuDoc* doc );
 	void SetBackgroundImage( const char* image, nuDoc* doc );
-	void SetInherit( nuStyleCategories cat );
+	void SetFlowAxis( nuFlowAxis axis );
+	void SetFlowDirectionHorizonal( nuFlowDirection dir );
+	void SetFlowDirectionVertical( nuFlowDirection dir );
 
-	bool				IsNull() const			{ return Category == nuCatNULL; }
-	bool				IsInherit() const		{ return Flags == FlagInherit; }
-	nuStyleCategories	GetCategory() const		{ return (nuStyleCategories) Category; }
-	nuSize				GetSize() const			{ return nuSize::Make( (nuSize::Types) SubType, ValF ); }
-	nuColor				GetColor() const		{ return nuColor::Make( ValU32 ); }
-	nuDisplayType		GetDisplayType() const	{ return (nuDisplayType) ValU32; }
-	nuPositionType		GetPositionType() const	{ return (nuPositionType) ValU32; }
-	int					GetStringID() const		{ return (int) ValU32; }
+	// Generic Set() that is used by template code
+	void Set( nuStyleCategories cat, nuColor val )			{ SetColor( cat, val ); }
+	void Set( nuStyleCategories cat, nuSize val )			{ SetSize( cat, val ); }
+	void Set( nuStyleCategories cat, nuDisplayType val )	{ SetDisplay( val ); }
+	void Set( nuStyleCategories cat, nuPositionType val )	{ SetPosition( val ); }
+	void Set( nuStyleCategories cat, nuFlowAxis val )		{ SetFlowAxis( val ); }
+	void Set( nuStyleCategories cat, nuFlowDirection val )	{ SetU32( cat, val ); }
+
+	bool				IsNull() const					{ return Category == nuCatNULL; }
+	bool				IsInherit() const				{ return Flags == FlagInherit; }
+
+	nuStyleCategories	GetCategory() const				{ return (nuStyleCategories) Category; }
+	nuSize				GetSize() const					{ return nuSize::Make( (nuSize::Types) SubType, ValF ); }
+	nuColor				GetColor() const				{ return nuColor::Make( ValU32 ); }
+	nuDisplayType		GetDisplayType() const			{ return (nuDisplayType) ValU32; }
+	nuPositionType		GetPositionType() const			{ return (nuPositionType) ValU32; }
+	int					GetStringID() const				{ return (int) ValU32; }
+	nuFlowAxis			GetFlowAxis() const				{ return (nuFlowAxis) ValU32; }
+	nuFlowDirection		GetFlowDirectionMajor() const	{ return (nuFlowDirection) ValU32; }
+	nuFlowDirection		GetFlowDirectionMinor() const	{ return (nuFlowDirection) ValU32; }
+
 	const char*			GetBackgroundImage( nuStringTable* strings ) const;
 
 protected:
@@ -205,7 +240,6 @@ protected:
 	void SetU32( nuStyleCategories cat, uint32 val );
 	void SetWithSubtypeU32( nuStyleCategories cat, uint8 subtype, uint32 val );
 	void SetWithSubtypeF( nuStyleCategories cat, uint8 subtype, float val );
-
 };
 
 /* Collection of style attributes (border-width-left, color, etc)
@@ -223,6 +257,7 @@ public:
 	void					SetBox( nuStyleCategories cat, nuStyleBox val );
 	void					GetBox( nuStyleCategories cat, nuStyleBox& box ) const;
 	void					Set( const nuStyleAttrib& attrib );
+	void					Set( nuStyleCategories cat, nuStyleBox val );
 	//void					Compute( const nuDoc& doc, const nuDomEl& node );
 	void					Discard();
 	void					CloneSlowInto( nuStyle& c ) const;
@@ -382,3 +417,6 @@ protected:
 
 NUAPI bool nuDisplayTypeParse( const char* s, intp len, nuDisplayType& t );
 NUAPI bool nuPositionTypeParse( const char* s, intp len, nuPositionType& t );
+NUAPI bool nuFlowAxisParse( const char* s, intp len, nuFlowAxis& t );
+NUAPI bool nuFlowDirectionParse( const char* s, intp len, nuFlowDirection& t );
+

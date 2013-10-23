@@ -11,7 +11,8 @@
 Why do we perform layout in multiple passes, loading all missing glyphs at the end of each pass?
 The reason is because we eventually want to be able to parallelize layout.
 
-Missing glyphs are a once-off cost, so it's not worth trying to use a mutable glyph cache.
+Missing glyphs are a once-off cost (ie once per application instance),
+so it's not worth trying to use a mutable glyph cache.
 
 */
 void nuLayout::Layout( const nuDoc& doc, nuRenderDomEl& root, nuPool* pool )
@@ -173,7 +174,7 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 
 	nuGlyphCache* glyphCache = nuGlobal()->GlyphCache;
 
-	float fontSizePx = 24;
+	float fontSizePx = 13;
 	rnode->Style.FontSizePx = (uint8) fontSizePx;
 
 	const nuString& str = node.GetText();

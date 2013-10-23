@@ -42,20 +42,25 @@ inline bool IsNumeric( char c )
 	return (c >= '0' && c <= '9') || (c == '.') || (c == '-');
 }
 
-nuSize nuSize::Parse( const char* s, intp len )
+bool nuSize::Parse( const char* s, intp len, nuSize& v )
 {
 	// 1.23px
 	// 1.23pt
 	// 1.23%
 	// 0
 	char digits[100];
-	if ( len > 30 ) { nuParseFail( "Size too big" ); return nuSize::Pixels(0); }
+	if ( len > 30 )
+	{
+		nuParseFail( "Size too big" );
+		return false;
+	}
 	nuSize x = nuSize::Pixels(0);
 	intp nondig = 0;
 	for ( ; nondig < len; nondig++ )
 	{
 		digits[nondig] = s[nondig];
-		if ( !IsNumeric(s[nondig]) ) break;
+		if ( !IsNumeric(s[nondig]) )
+			break;
 	}
 	digits[nondig] = 0;
 	x.Val = (float) atof( digits );
@@ -65,33 +70,49 @@ nuSize nuSize::Parse( const char* s, intp len )
 		{
 			// ok
 		}
-		else nuParseFail( "Invalid size: %.*s", (int) len, s );
+		else
+		{
+			nuParseFail( "Invalid size: %.*s", (int) len, s );
+			return false;
+		}
 	}
 	else
 	{
 		if ( s[nondig] == '%' )
+		{
 			x.Type = nuSize::PERCENT;
+		}
 		else if ( s[nondig] == 'p' && len - nondig >= 2 )
 		{
 			if (		s[nondig + 1] == 'x' ) x.Type = nuSize::PX;
 			else if (	s[nondig + 1] == 't' ) x.Type = nuSize::PT;
-			else nuParseFail( "Invalid size: %.*s", (int) len, s );
+			else
+			{
+				nuParseFail( "Invalid size: %.*s", (int) len, s );
+				return false;
+			}
 		}
 	}
-	return x;
+	v = x;
+	return true;
 }
 
-nuStyleBox nuStyleBox::Parse( const char* s, intp len )
+bool nuStyleBox::Parse( const char* s, intp len, nuStyleBox& v )
 {
 	// 20px
-	// 1px 2px 3px 4px;
+	// 1px 2px 3px 4px (TODO)
 	nuStyleBox b;
-	nuSize a = nuSize::Parse( s, len );
-	b.Left = b.Top = b.Bottom = b.Right = a;
-	return b;
+	nuSize one;
+	if ( nuSize::Parse( s, len, one ) )
+	{
+		b.Left = b.Top = b.Bottom = b.Right = one;
+		v = b;
+		return true;
+	}
+	return false;
 }
 
-nuColor nuColor::Parse( const char* s, intp len )
+bool nuColor::Parse( const char* s, intp len, nuColor& v )
 {
 	nuColor c = nuColor::RGBA(0,0,0,0);
 	s++;
@@ -131,8 +152,10 @@ nuColor nuColor::Parse( const char* s, intp len )
 	else
 	{
 		nuParseFail( "Invalid color %.*s", (int) len, s );
+		return false;
 	}
-	return c;
+	v = c;
+	return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -205,6 +228,21 @@ void nuStyleAttrib::SetBackgroundImage( const char* image, nuDoc* doc )
 	SetString( nuCatBackgroundImage, image, doc );
 }
 
+void nuStyleAttrib::SetFlowAxis( nuFlowAxis axis )
+{
+	SetU32( nuCatFlow_Axis, axis );
+}
+
+void nuStyleAttrib::SetFlowDirectionHorizonal( nuFlowDirection dir )
+{
+	SetU32( nuCatFlow_Direction_Horizontal, dir );
+}
+
+void nuStyleAttrib::SetFlowDirectionVertical( nuFlowDirection dir )
+{
+	SetU32( nuCatFlow_Direction_Vertical, dir );
+}
+
 void nuStyleAttrib::SetInherit( nuStyleCategories cat )
 {
 	Category = cat;
@@ -220,19 +258,31 @@ const char* nuStyleAttrib::GetBackgroundImage( nuStringTable* strings ) const
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-template<typename T>	void nuStyleAttrib_SetT( nuStyleAttrib& attrib, const T& v )					{}
-template<>				void nuStyleAttrib_SetT( nuStyleAttrib& attrib, const nuDisplayType& v )		{ attrib.SetDisplay(v); }
-template<>				void nuStyleAttrib_SetT( nuStyleAttrib& attrib, const nuPositionType& v )		{ attrib.SetPosition(v); }
-
 template<typename T>
-//static bool Parse1( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, T& t), nuStyleCategories cat, nuStyleAttrib& attrib, T& attribVal )
-static bool Parse1( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, T& t), nuStyleCategories cat, nuStyleAttrib& attrib )
+static bool ParseSingleAttrib( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, T& t), nuStyleCategories cat, nuStyle& style )
 {
 	T val;
 	if ( parseFunc( s, len, val ) )
 	{
-		attrib.Category = cat;
-		nuStyleAttrib_SetT( attrib, val );
+		nuStyleAttrib attrib;
+		attrib.Set( cat, val );
+		style.Set( attrib );
+		return true;
+	}
+	else
+	{
+		nuParseFail( "Unknown: '%.*s'", (int) len, s );
+		return false;
+	}
+}
+
+template<typename T>
+static bool ParseCompound( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, T& t), nuStyleCategories cat, nuStyle& style )
+{
+	T val;
+	if ( parseFunc( s, len, val ) )
+	{
+		style.Set( cat, val );
 		return true;
 	}
 	else
@@ -257,30 +307,28 @@ bool nuStyle::Parse( const char* t, nuDoc* doc )
 		else if ( t[i] == ':' ) eq = i;
 		else if ( t[i] == ';' || (t[i] == 0 && startv != -1) )
 		{
-			nuStyleAttrib a;
 			bool ok = true;
-			bool done = false;
-			if ( MATCH(t, startk, eq, "background") )			{ a.SetColor( nuCatBackground, nuColor::Parse(TSTART, TLEN) ); }
-			else if ( MATCH(t, startk, eq, "width") )			{ a.SetSize( nuCatWidth, nuSize::Parse(TSTART, TLEN) ); }
-			else if ( MATCH(t, startk, eq, "height") )			{ a.SetSize( nuCatHeight, nuSize::Parse(TSTART, TLEN) ); }
-			else if ( MATCH(t, startk, eq, "padding") )			{ SetBox( nuCatPadding_Left, nuStyleBox::Parse(TSTART, TLEN) ); done = true; }
-			else if ( MATCH(t, startk, eq, "margin") )			{ SetBox( nuCatMargin_Left, nuStyleBox::Parse(TSTART, TLEN) ); done = true; }
-			else if ( MATCH(t, startk, eq, "display") )			{ ok = Parse1( TSTART, TLEN, &nuDisplayTypeParse, nuCatDisplay, a ); }
-			else if ( MATCH(t, startk, eq, "position") )		{ ok = Parse1( TSTART, TLEN, &nuPositionTypeParse, nuCatPosition, a ); }
-			else if ( MATCH(t, startk, eq, "border-radius") )	{ a.SetSize( nuCatBorderRadius, nuSize::Parse(TSTART, TLEN) ); }
-			else if ( MATCH(t, startk, eq, "left") )			{ a.SetSize( nuCatLeft, nuSize::Parse(TSTART, TLEN) ); }
-			else if ( MATCH(t, startk, eq, "right") )			{ a.SetSize( nuCatRight, nuSize::Parse(TSTART, TLEN) ); }
-			else if ( MATCH(t, startk, eq, "top") )				{ a.SetSize( nuCatTop, nuSize::Parse(TSTART, TLEN) ); }
-			else if ( MATCH(t, startk, eq, "bottom") )			{ a.SetSize( nuCatBottom, nuSize::Parse(TSTART, TLEN) ); }
+			if ( MATCH(t, startk, eq, "background") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuColor::Parse, nuCatBackground, *this ); }
+			else if ( MATCH(t, startk, eq, "width") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatWidth, *this ); }
+			else if ( MATCH(t, startk, eq, "height") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatHeight, *this ); }
+			else if ( MATCH(t, startk, eq, "padding") )						{ ok = ParseCompound( TSTART, TLEN, &nuStyleBox::Parse, nuCatPadding_Left, *this ); }
+			else if ( MATCH(t, startk, eq, "margin") )						{ ok = ParseCompound( TSTART, TLEN, &nuStyleBox::Parse, nuCatMargin_Left, *this ); }
+			else if ( MATCH(t, startk, eq, "display") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuDisplayTypeParse, nuCatDisplay, *this ); }
+			else if ( MATCH(t, startk, eq, "position") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuPositionTypeParse, nuCatPosition, *this ); }
+			else if ( MATCH(t, startk, eq, "border-radius") )				{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatBorderRadius, *this ); }
+			else if ( MATCH(t, startk, eq, "left") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatLeft, *this ); }
+			else if ( MATCH(t, startk, eq, "right") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatRight, *this ); }
+			else if ( MATCH(t, startk, eq, "top") )							{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatTop, *this ); }
+			else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatBottom, *this ); }
+			else if ( MATCH(t, startk, eq, "flow-axis") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowAxisParse, nuCatFlow_Axis, *this ); }
+			else if ( MATCH(t, startk, eq, "flow-direction-horizontal") )	{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Horizontal, *this ); }
+			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Vertical, *this ); }
 			else
 			{
 				ok = false;
 				nuParseFail( "Unknown: '%.*s'", int(eq - startk), t + startk );
 			}
-			if ( done ) {}
-			else if ( ok )
-				Set(a);
-			else
+			if ( !ok )
 				nerror++;
 			eq = -1;
 			startk = -1;
@@ -364,6 +412,11 @@ void nuStyle::Set( const nuStyleAttrib& attrib )
 		}
 	}
 	Attribs += attrib;
+}
+
+void nuStyle::Set( nuStyleCategories cat, nuStyleBox val )
+{
+	SetBox( cat, val );
 }
 
 /*
@@ -787,5 +840,19 @@ NUAPI bool nuPositionTypeParse( const char* s, intp len, nuPositionType& t )
 	if ( MATCH(s, 0, len, "absolute") ) { t = nuPositionAbsolute; return true; }
 	if ( MATCH(s, 0, len, "relative") ) { t = nuPositionRelative; return true; }
 	if ( MATCH(s, 0, len, "fixed") )	{ t = nuPositionFixed; return true; }
+	return false;
+}
+
+NUAPI bool nuFlowAxisParse( const char* s, intp len, nuFlowAxis& t )
+{
+	if ( MATCH(s, 0, len, "horizontal") )	{ t = nuFlowAxisHorizontal; return true; }
+	if ( MATCH(s, 0, len, "vertical") )		{ t = nuFlowAxisVertical; return true; }
+	return false;
+}
+
+NUAPI bool nuFlowDirectionParse( const char* s, intp len, nuFlowDirection& t )
+{
+	if ( MATCH(s, 0, len, "normal") )	{ t = nuFlowDirectionNormal; return true; }
+	if ( MATCH(s, 0, len, "reverse") )	{ t = nuFlowDirectionReversed; return true; }
 	return false;
 }
