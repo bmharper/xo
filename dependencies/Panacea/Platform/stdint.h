@@ -105,10 +105,16 @@ typedef UINT32 DWORD;
 #		define PRId64 ((void) static_assert(false, "Use %lld instead"))
 #	endif
 #	ifndef PRIX64
-#		define  PRIX64 "I64X"
+#		define  PRIX64  "I64X"
 #		define wPRIX64 L"I64X"
-// #		define PRIx64 "llx" -- linux
 #	endif
+	typedef  unsigned __int64 PRIX64_t;
+#else
+#	ifndef PRIX64
+#		define  PRIX64  "llX"
+#		define wPRIX64 L"llX"
+#	endif
+	typedef  long long unsigned int PRIX64_t;
 #endif
 
 

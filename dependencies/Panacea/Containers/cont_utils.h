@@ -191,12 +191,8 @@ void vect_sort_cx( TData* target, intp i, intp j, void* context, int (*compare) 
 
 	// choose alternate pivot if we detect that the list is inversely sorted.
 	// not doing so will produce a stack overflow with even a relatively small set.
-	//TData pivot = target[(i + j) / 2];
-	//TData* pivot = target + (i + j) / 2;
-	// [W.W.A Oliver] Prevent buffer overflow.
 	TData* pivot = target + i + ((j - i) / 2);
 	if ( stackDepth > 40 ) 
-		//pivot = target[ i + (rand() % (1 + j - i)) ];
 		pivot = target + i + (rand() % (1 + j - i));
 
 	intp inI = i;

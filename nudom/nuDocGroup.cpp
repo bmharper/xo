@@ -6,11 +6,13 @@
 #include "Render/nuRenderer.h"
 #include "Render/nuRenderDoc.h"
 #include "Render/nuRenderDomEl.h"
+#include "Render/nuRenderBase.h"
+#include "Render/nuRenderGL.h"
 
 nuDocGroup::nuDocGroup()
 {
 	AbcCriticalSectionInitialize( DocLock );
-	DestroyDocWithProcessor = false;
+	DestroyDocWithGroup = false;
 	Doc = NULL;
 	Wnd = NULL;
 	RenderDoc = new nuRenderDoc();
@@ -20,21 +22,36 @@ nuDocGroup::nuDocGroup()
 nuDocGroup::~nuDocGroup()
 {
 	delete RenderDoc;
-	if ( DestroyDocWithProcessor )
+	if ( DestroyDocWithGroup )
 		delete Doc;
 	AbcCriticalSectionDestroy( DocLock );
 }
 
-// This is always called from the Render thread
 nuRenderResult nuDocGroup::Render()
+{
+	return RenderInternal( NULL );
+}
+
+nuRenderResult nuDocGroup::RenderToImage( nuImage& image )
+{
+	// The 10 here is an arbitrary thumbsuck. We'll see if we ever need a controllable limit.
+	const int maxAttempts = 10;
+	nuRenderResult res = nuRenderResultNeedMore;
+	for ( int attempt = 0; res == nuRenderResultNeedMore && attempt < maxAttempts; attempt++ )
+		res = RenderInternal( &image );
+	return res;
+}
+
+// This is always called from the Render thread
+nuRenderResult nuDocGroup::RenderInternal( nuImage* targetImage )
 {
 	bool haveLock = false;
 	// I'm not quite sure how we should handle this. The idea is that you don't want to go without a UI update
 	// for too long, even if the UI thread is taking its time, and being bombarded with messages.
 	uint32 rDocAge = Doc->GetVersion() - RenderDoc->Doc.GetVersion(); 
-	if ( rDocAge > 0 )
+	if ( rDocAge > 0 || targetImage != NULL )
 	{
-		// If UI thread has performed many updated since we last rendered,
+		// If UI thread has performed many updates since we last rendered,
 		// then pause our thread until we can gain the DocLock
 		haveLock = true;
 		AbcCriticalSectionEnter( DocLock );
@@ -52,13 +69,10 @@ nuRenderResult nuDocGroup::Render()
 	}
 
 	// TODO: If AnyAnimationsRunning(), then we are not idle
-	bool idle = (Doc->WindowWidth == 0 || Doc->WindowHeight == 0) || Doc->GetVersion() == RenderDoc->Doc.GetVersion();
+	bool docValid = RenderDoc->WindowWidth != 0 && RenderDoc->WindowHeight != 0;
+	bool docModified = Doc->GetVersion() != RenderDoc->Doc.GetVersion();
 	
-	if ( idle )
-	{
-		AbcCriticalSectionLeave( DocLock );
-	}
-	else
+	if ( docModified && docValid )
 	{
 		//NUTRACE( "Render Version %u\n", Doc->GetVersion() );
 		RenderDoc->CopyFromCanonical( *Doc, RenderStats );
@@ -68,13 +82,12 @@ nuRenderResult nuDocGroup::Render()
 		//NUTRACE( "MakeFreeIDsUsable\n" );
 		Doc->MakeFreeIDsUsable();
 		Doc->ResetModifiedBitmap();			// AbcBitMap has an absolutely awful implementation of this (byte-filled vs SSE or at least pointer-word-size-filled)
-
-		AbcCriticalSectionLeave( DocLock );
 	}
+	AbcCriticalSectionLeave( DocLock );
 
 	nuRenderResult rendResult = nuRenderResultIdle;
 
-	if ( !idle && Wnd != NULL )
+	if ( (docModified || targetImage != NULL) && docValid && Wnd != NULL )
 	{
 		//NUTIME( "Render start\n" );
 		if ( !Wnd->BeginRender() )
@@ -86,11 +99,14 @@ nuRenderResult nuDocGroup::Render()
 		//NUTIME( "Render DO\n" );
 		rendResult = RenderDoc->Render( Wnd->RGL );
 
+		if ( targetImage != NULL )
+			Wnd->RGL->ReadBackbuffer( *targetImage );
+
 		//NUTIME( "Render Finish\n" );
 		Wnd->FinishRender();
 	}
 
-	return (idle && rendResult == nuRenderResultIdle) ? nuRenderResultIdle : nuRenderResultNeedMore;
+	return rendResult;
 }
 
 // This is always called from the UI thread
@@ -103,8 +119,8 @@ void nuDocGroup::ProcessEvent( nuEvent& ev )
 	switch ( ev.Type )
 	{
 	case nuEventWindowSize:
-		Doc->WindowWidth = (uint32) ev.Points[0].x;
-		Doc->WindowHeight = (uint32) ev.Points[0].y;
+		RenderDoc->WindowWidth = (uint32) ev.Points[0].x;
+		RenderDoc->WindowHeight = (uint32) ev.Points[0].y;
 		Doc->IncVersion();
 		NUTIME( "Processed WindowSize event. Document at version %d\n", Doc->GetVersion() );
 		break;
@@ -167,7 +183,7 @@ void nuDocGroup::FindTarget( const nuVec2& p, pvect<nuRenderDomEl*>& chain )
 	}
 }
 
-bool nuDocGroup::IsDocNewerThanRenderer() const
+bool nuDocGroup::IsDocVersionDifferentToRenderer() const
 {
-	return Doc->GetVersion() > RenderDoc->Doc.GetVersion();
+	return Doc->GetVersion() != RenderDoc->Doc.GetVersion();
 }

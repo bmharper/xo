@@ -2,7 +2,9 @@
 
 #define _CRT_SECURE_NO_WARNINGS 1
 
+#ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0600
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -36,13 +38,14 @@
 #include <Panacea/Containers/podvec.h>
 //#include <Panacea/Platform/stdint.h>
 //#include <Panacea/Platform/winheaders.h>
-//#include <Panacea/Platform/syncprims.h>
+#include <Panacea/Platform/syncprims.h>
 //#include <Panacea/Platform/process.h>
+#include <Panacea/Platform/thread.h>
+#include <Panacea/Platform/cpu.h>
 //#include <Panacea/Platform/timeprims.h>
 //#include <Panacea/Strings/strings.h>
 //#include <Panacea/Strings/wildcard.h>
 #include <Panacea/Strings/fmt.h>
 //#include <Panacea/IO/Path.h>
 //#include <Panacea/Other/profile.h>
-//#include <Panacea/Other/lmPlatform.h>
 //#include <Panacea/Windows/Win.h>

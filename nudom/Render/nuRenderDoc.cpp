@@ -5,6 +5,8 @@
 
 nuRenderDoc::nuRenderDoc()
 {
+	WindowWidth = 0;
+	WindowHeight = 0;
 	RenderRoot.SetPool( &RenderPool );
 }
 
@@ -25,11 +27,11 @@ nuRenderResult nuRenderDoc::Render( nuRenderGL* rgl )
 	
 	NUTRACE_RENDER( "RenderDoc: Layout\n" );
 	nuLayout lay;
-	lay.Layout( Doc, RenderRoot, &RenderPool );
+	lay.Layout( Doc, WindowWidth, WindowHeight, RenderRoot, &RenderPool );
 
 	NUTRACE_RENDER( "RenderDoc: Render\n" );
 	nuRenderer rend;
-	nuRenderResult res = rend.Render( &ClonedImages, &ClonedStrings, rgl, &RenderRoot, Doc.WindowWidth, Doc.WindowHeight );
+	nuRenderResult res = rend.Render( &ClonedImages, &ClonedStrings, rgl, &RenderRoot, WindowWidth, WindowHeight );
 
 	return res;
 }

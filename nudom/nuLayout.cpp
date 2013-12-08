@@ -15,9 +15,11 @@ Missing glyphs are a once-off cost (ie once per application instance),
 so it's not worth trying to use a mutable glyph cache.
 
 */
-void nuLayout::Layout( const nuDoc& doc, nuRenderDomEl& root, nuPool* pool )
+void nuLayout::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDomEl& root, nuPool* pool )
 {
 	Doc = &doc;
+	DocWidth = docWidth;
+	DocHeight = docHeight;
 	Pool = pool;
 	Stack.Initialize( Doc, Pool );
 
@@ -54,7 +56,7 @@ void nuLayout::LayoutInternal( nuRenderDomEl& root )
 	//Stack.Stack.add();
 
 	NodeState s;
-	s.ParentContentBox.SetInt( 0, 0, Doc->WindowWidth, Doc->WindowHeight );
+	s.ParentContentBox.SetInt( 0, 0, DocWidth, DocHeight );
 	s.PositionedAncestor = s.ParentContentBox;
 	s.PosX = s.ParentContentBox.Left;
 	s.PosY = s.ParentContentBox.Top;
@@ -153,11 +155,12 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 	NUTRACE_LAYOUT( "Layout (%d) Run txt.1\n", node.GetInternalID() );
 
 #if NU_PLATFORM_WIN_DESKTOP
+	const char* zfont = "Trebuchet MS";
 	//const char* zfont = "Microsoft Sans Serif";
 	//const char* zfont = "Consolas";
 	//const char* zfont = "Times New Roman";
 	//const char* zfont = "Verdana";
-	const char* zfont = "Tahoma";
+	//const char* zfont = "Tahoma";
 #else
 	const char* zfont = "Droid Sans";
 #endif
@@ -174,7 +177,7 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 
 	nuGlyphCache* glyphCache = nuGlobal()->GlyphCache;
 
-	float fontSizePx = 13;
+	float fontSizePx = 11;
 	rnode->Style.FontSizePx = (uint8) fontSizePx;
 
 	const nuString& str = node.GetText();

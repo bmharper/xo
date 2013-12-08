@@ -39,6 +39,7 @@ public:
 	uint			GetTextureDeviceIDInt( nuTextureID texID ) const	{ return reinterpret_cast<uint>(GetTextureDeviceID( texID )); }
 
 	virtual void	LoadTexture( nuTexture* tex, int texUnit ) = 0;
+	virtual void	ReadBackbuffer( nuImage& image ) = 0;
 
 protected:
 	static const nuTextureID	TEX_OFFSET_ONE = 1;	// This constant causes the nuTextureID that we expose to never be zero.

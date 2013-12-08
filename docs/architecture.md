@@ -34,19 +34,50 @@ Since the UI and Renderer thread groups operate at different cadences, we need
 to maintain two copies of the document. One of them is owned by the UI thread,
 and the other is owned by the Renderer thread. Because of this frequent copying,
 we make an effort to ensure that a document copy is pretty much limited by RAM
-bandwidth.
+bandwidth [This statement is no longer entirely true. Read on to see why.]
 
-An interlude with some numbers.
+My initial approach here was to have a "fast clone" path, which would allow
+a document to clone itself with very little heap overhead. Basically, every
+node in the document tree needed to support allocating its storage from a
+memory pool instead of from the heap. When I say "every node", I mean "every
+vector", "every string", etc. Basically, the only heap allocs that were allowed
+during a fast clone were the heap allocs that the memory pool was doing.
+
+I have subsequently gone back on this design though, and chosen instead to
+optimize for the incremental update case, where only a relatively small part
+of the document is changed frequently. This decision was based on the very low
+memory bandwidth of mobile devices. Basically, if you're going to clone the
+entire document 60 times per second, then you're limiting yourself to a fairly
+small document tree.
+
+The following calculations assume that we're doing the full document "fast clone"
+method (ie not incremental update):
+
 A Samsung Galaxy SII can do 700 MB/s of memcpy.
 Assuming the worst case of 'user' code altering the document 60 times a second,
 we have 700 / 60 = 11.6 MB/frame. Of course we need to do a lot of other work,
 so let's say a conservative estimate for total document size then is 1 MB.
-sizeof(nuDomEl) = 128.
-1 MB / 128 = 8192 naked document elements fit into a 1 MB document.
+At a document size of 1MB, we would use roughly a tenth of the total memory
+bandwidth just to copy the document over from UI thread to render thread.
+A single node in the DOM tree is represented by nuDomEl, and sizeof(nuDomEl) = 128.
+1 MB / 128 = 8192, so the largest practical document size that we want to
+target is one with 8192 nodes in the DOM. This seems pretty small.
 
 Update: An S3 has very similar memory bandwidth - around 800 MB/s.
 Update: (August 2013) Intel Atom devices are repored to have up to 17 GB/s memory bandwidth.
 Update: The iPhone 5S has 5 GB/s memory bandwidth.
+
+Why do we even care about optimizing for a full document clone per frame?
+The reason is because it allows one to do a purely functional UI, where
+you build up the entire UI from scratch, on every frame. This has its place
+(see IMGUI for an example and further discussions on the topic). The design
+of nuDom does not exactly lend itself to that style of UI code though, since if
+you throw away your entire DOM on every frame, then you're losing the
+ability to let the framework handle things like transition animations
+for you, as well as any other similar functionality that might exist inside
+the framework (something like drag & drop, perhaps). It might likely also make it
+a harsher environment for an ecosystem of widgets, although I haven't given
+much thought to that.
 
 Style resolution
 ----------------

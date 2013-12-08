@@ -3,7 +3,7 @@
 #include <assert.h>
 
 // The GCC docs show NORETURN after the function name, so I'm not sure that this works
-PAPI			int			AbcPanicMsg(LPCSTR file, int line, LPCSTR msg);
+PAPI			int			AbcPanicMsg(const char* file, int line, const char* msg);
 PAPI NORETURN	void		AbcDie();
 
 #define AbcAssert(f)			(void) ((f) || (AbcPanicMsg(__FILE__,__LINE__,#f), AbcDie(), 0) )			// Compiled in all builds

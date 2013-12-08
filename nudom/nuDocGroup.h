@@ -11,7 +11,7 @@ public:
 	nuDoc*				Doc;
 	nuSysWnd*			Wnd;
 	nuRenderDoc*		RenderDoc;
-	bool				DestroyDocWithProcessor;
+	bool				DestroyDocWithGroup;
 
 	nuRenderStats		RenderStats;
 
@@ -23,15 +23,17 @@ public:
 	LRESULT WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam );
 #endif
 
-	// These are the only two entry points into our content
+	// These are the only 3 entry points into our content
 	nuRenderResult	Render();							// This is always called from the Render thread
+	nuRenderResult	RenderToImage( nuImage& image );	// This is always called from the Render thread
 	void			ProcessEvent( nuEvent& ev );		// This is always called from the UI thread
 	
-	bool			IsDocNewerThanRenderer() const;
+	bool			IsDocVersionDifferentToRenderer() const;
 
 protected:
 	AbcCriticalSection	DocLock;		// Mutation of 'Doc', or cloning of 'Doc' for the renderer
 
-	void	FindTarget( const nuVec2& p, pvect<nuRenderDomEl*>& chain );
-	bool	BubbleEvent( nuEvent& ev );
+	nuRenderResult	RenderInternal( nuImage* targetImage );
+	void			FindTarget( const nuVec2& p, pvect<nuRenderDomEl*>& chain );
+	bool			BubbleEvent( nuEvent& ev );
 };

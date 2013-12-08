@@ -9,7 +9,6 @@ nuDoc::nuDoc()
 {
 	IsReadOnly = false;
 	Version = 0;
-	WindowWidth = WindowHeight = 0;
 	Root.SetDoc( this );
 	Root.SetDocRoot();
 	ResetInternalIDs();
@@ -110,8 +109,6 @@ void nuDoc::CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) con
 	ClassStyles.CloneSlowInto( c.ClassStyles );
 	nuCloneStaticArrayWithCloneSlowInto( c.TagStyles, TagStyles );
 
-	c.WindowWidth = WindowWidth;
-	c.WindowHeight = WindowHeight;
 	c.Version = Version;
 }
 
@@ -180,9 +177,7 @@ void nuDoc::Reset()
 		ClassStyles.Discard();
 	}
 	*/
-	WindowWidth = 0;
-	WindowHeight = 0;
-	Version = 0;
+	IncVersion();
 	Pool.FreeAll();
 	Root.SetInternalID( nuInternalIDNull );	// Root will be assigned nuInternalIDRoot when we call ChildAdded() on it.
 	ChildIsModified.Clear();

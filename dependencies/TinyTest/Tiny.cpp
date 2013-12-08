@@ -7,8 +7,17 @@
 #include <unistd.h>
 #endif
 
-typedef long long int64;
-typedef unsigned int uint;
+//typedef long long int64;
+//typedef unsigned int uint;
+
+#ifdef _WIN32
+#define DIRSEP			'\\'
+#define EXE_EXTENSION	".exe"
+#else
+#define DIRSEP			'/'
+#define EXE_EXTENSION	""
+#define MAX_PATH		255
+#endif
 
 const wchar_t* EvMarkerDead = L"TinyTest_Marker_Dead";
 
@@ -51,7 +60,7 @@ TT_TestList::TT_TestList()
 
 TT_TestList::~TT_TestList()
 {
-	free(List);
+	Clear();
 }
 
 void TT_TestList::Add( const TT_Test& t )
@@ -72,6 +81,14 @@ void TT_TestList::Add( const TT_Test& t )
 		List = newlist;
 	}
 	List[Count++] = t;
+}
+
+void TT_TestList::Clear()
+{
+	free(List);
+	List = NULL;
+	Count = 0;
+	Capacity = 0;
 }
 
 void TTSetDead()
@@ -158,6 +175,17 @@ void TTLog( const char* msg, ... )
 	}
 }
 
+static const char* ParallelName( TTParallel p )
+{
+	switch ( p )
+	{
+	case TTParallelDontCare: return TT_PARALLEL_DONTCARE;
+	case TTParallelWholeCore: return TT_PARALLEL_WHOLECORE;
+	case TTParallelSolo: return TT_PARALLEL_SOLO;
+	}
+	return NULL;
+}
+
 void TTListTests( const TT_TestList& tests )
 {
 	qsort( (void*) &tests[0], tests.size(), sizeof(TT_Test), (int(*)(const void*, const void*)) &TT_Test::CompareName );
@@ -165,7 +193,7 @@ void TTListTests( const TT_TestList& tests )
 	printf( "%s\n", TT_LIST_LINE_1 );
 	printf( "%s\n", TT_LIST_LINE_2 );
 	for ( int i = 0; i < tests.size(); i++ )
-		printf( "  %-40s %-20s\n", tests[i].Name, tests[i].Size == TTSizeSmall ? TT_SIZE_SMALL_NAME : TT_SIZE_LARGE_NAME );
+		printf( "  %-40s %-20s %-20s\n", tests[i].Name, tests[i].Size == TTSizeSmall ? TT_SIZE_SMALL_NAME : TT_SIZE_LARGE_NAME, ParallelName(tests[i].Parallel) );
 }
 
 unsigned int TTGetProcessID()
@@ -173,7 +201,7 @@ unsigned int TTGetProcessID()
 #ifdef _WIN32
 	return (uint) GetCurrentProcessId();
 #else
-	return (uint) getpid()
+	return (uint) getpid();
 #endif
 }
 
@@ -206,17 +234,9 @@ static void GetProcessPath( char* path )
 	strcpy( path, buf );
 }
 
-#ifdef _WIN32
-#define DIRSEP			'\\'
-#define EXE_EXTENSION	".exe"
-#else
-#define DIRSEP			'/'
-#define EXE_EXTENSION	""
-#endif
-
 const int MAXARGS = 30;
 
-bool TTRun_InternalW( const TT_TestList& tests, int argc, wchar_t** argv, int* retval )
+bool TTRun_WrapperW( TT_TestList& tests, int argc, wchar_t** argv, int* retval )
 {
 	const int ARGSIZE = 400;
 	char* argva[MAXARGS];
@@ -229,7 +249,7 @@ bool TTRun_InternalW( const TT_TestList& tests, int argc, wchar_t** argv, int* r
 	}
 	argva[argc] = NULL;
 
-	bool rv = TTRun_Internal( tests, argc, argva, retval );
+	bool rv = TTRun_Wrapper( tests, argc, argva, retval );
 
 	for ( int i = 0; i < argc; i++ )
 		free(argva[i]);
@@ -237,18 +257,32 @@ bool TTRun_InternalW( const TT_TestList& tests, int argc, wchar_t** argv, int* r
 	return rv;
 }
 
-static int TTRun_Internal_Mode1_Escape( const char* const* options, const char* testname );
-static int TTRun_Internal_Mode2_Execute( const TT_TestList& tests, const char* testname );
+static int	TTRun_Internal_Mode1_Escape( const char* const* options, const char* testname );
+static int	TTRun_Internal_Mode2_Execute( const TT_TestList& tests, const char* testname );
+static bool	TTRun_Internal( const TT_TestList& tests, int argc, char** argv, int* retval );
+
+bool TTRun_Wrapper( TT_TestList& tests, int argc, char** argv, int* retval )
+{
+	bool res = TTRun_Internal( tests, argc, argv, retval );
+	// ensure that there are no memory leaks by the time we return
+	tests.Clear();
+	return res;
+}
 
 /*
-TTRun has two modes. Let's assume that your test program is called "mytest.exe".
+TTRun has three modes. Let's assume that your test program is called "mytest.exe".
 
 	Mode 1	You run "mytest.exe [options] test all" to run all tests. This ends up calling "tinytest_app.exe path\to\mytest.exe test all".
 			tinytest_app is going to end up calling mytest.exe again, and this time it will end up in mode 2.
 
-	Mode 2	tinytest_app is calling mytest.exe. In this case, it calls it like so: "mytest.exe [options] test :testname". In this case,
+	Mode 2	tinytest_app is calling mytest.exe. In this case, it calls it like so: "mytest.exe [options] test =testname". In this case,
 			mytest.exe will actually run the test named "testname". The testname will never be "all". That "all" is enumerated by the
 			tinytest_app, and each test is called one by one.
+			In this mode, IsExecutingUnderGuidance = true.
+
+	Mode 3	You launch mytest.exe from the debugger. You do it like so: "mytext.exe test :testname". This causes slightly different
+			behaviour that makes it easier to debug tests.
+			In this mode, IsExecutingUnderGuidance = false.
 
 	NOTE: Options must start with a hyphen
 	
@@ -298,10 +332,17 @@ bool TTRun_Internal( const TT_TestList& tests, int argc, char** argv, int* retva
 		TTListTests( tests );
 		*retval = 0;
 	}
+	else if ( testname && testname[0] == '=' )
+	{
+		// Mode 2. ie.. we are being called by tinytest_app. We must actually run the test.
+		// Since we are executing under the guidance of tinytest_app, don't popup message boxes, etc.
+		// Rather send our failure message to stdout if we die, or exit(0) upon success.
+		IsExecutingUnderGuidance = true;
+		*retval = TTRun_Internal_Mode2_Execute( tests, testname + 1 );
+	}
 	else if ( testname && testname[0] == ':' )
 	{
-		// Mode 2. ie.. we are being called by tinytest_app (or invoked from an IDE, likely under a debugger).
-		// We must actually run the test.
+		// Mode 3. ie.. we are being called invoked from an IDE, likely under a debugger.
 		*retval = TTRun_Internal_Mode2_Execute( tests, testname + 1 );
 	}
 	else
@@ -341,11 +382,11 @@ static int TTRun_Internal_Mode1_Escape( const char* const* options, const char* 
 		args[narg++] = options[j];
 	args[narg++] = NULL;
 
-	//_execl( host, "run", mypath, testcmdname, testname, NULL );
 #ifdef _WIN32
-	_execv( host, args );
+	return _spawnv( _P_WAIT, host, args ) == 0 ? 0 : 1;
 #else
-	execv( host, (char *const*) args );
+	printf( "TODO: Implement spawn on linux\n" );
+	//execv( host, (char *const*) args );
 #endif
 
 	return 0;
@@ -360,7 +401,7 @@ static int TTRun_Internal_Mode1_Escape( const char* const* options, const char* 
 class StackWalker
 {
 protected:
-	virtual void OnOutput(bool isCallStackProper, LPCSTR szText) {}
+	virtual void OnOutput(bool isCallStackProper, const char* szText) {}
 };
 inline bool IsDebuggerPresent() { return false; }
 #endif
@@ -368,7 +409,7 @@ inline bool IsDebuggerPresent() { return false; }
 class StackWalkerToConsole : public StackWalker
 {
 protected:
-	virtual void OnOutput(bool isCallStackProper, LPCSTR szText)
+	virtual void OnOutput(bool isCallStackProper, const char* szText)
 	{
 		if ( isCallStackProper )
 			printf( "%s", szText );
@@ -548,17 +589,10 @@ static void TTRun_PrepareExecutionEnvironment()
 	signal( SIGABRT, TTSignalHandler );									// handle calls to abort()
 }
 
-static void TTRun_CloseExecutionEnvironment()
-{
-}
-
 static int TTRun_Internal_Mode2_Execute( const TT_TestList& tests, const char* testname )
 {
-	// We are executing under the guidance of tinytest_app, so don't popup message boxes, etc.
-	// Rather send our failure message if we die, or exit(0) upon success.
-	IsExecutingUnderGuidance = true;
-
-	TTRun_PrepareExecutionEnvironment();
+	if ( IsExecutingUnderGuidance )
+		TTRun_PrepareExecutionEnvironment();
 
 	for ( int i = 0; i < tests.size(); i++ )
 	{
@@ -576,8 +610,6 @@ static int TTRun_Internal_Mode2_Execute( const TT_TestList& tests, const char* t
 		}
 	}
 
-	TTRun_CloseExecutionEnvironment();
-
 	fprintf( stderr, "Test '%s' not found\n", testname );
 	return 1;
 }
@@ -590,13 +622,7 @@ void TTAssertFailed( const char* exp, const char* filename, int line_number, boo
 	fflush( stdout );
 	fflush( stderr );
 
-#ifdef _WIN32
-	bool debuggerPresent = !!IsDebuggerPresent();
-#else
-	bool debuggerPresent = false;
-#endif
-
-	if ( IsExecutingUnderGuidance && !debuggerPresent )
+	if ( IsExecutingUnderGuidance )
 	{
 #ifdef _WIN32
 		// Use TerminateProcess instead of exit(), because we don't want any C++ cleanup, or CRT cleanup code to run.
@@ -610,10 +636,7 @@ void TTAssertFailed( const char* exp, const char* filename, int line_number, boo
 	else
 	{
 #ifdef _WIN32
-		if ( debuggerPresent )
-			__debugbreak();
-		else
-			TerminateProcess( GetCurrentProcess(), 1 );
+		__debugbreak();
 #else
 		_exit(1);
 #endif

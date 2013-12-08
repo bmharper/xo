@@ -936,6 +936,7 @@ nuString nuPreprocessor::Run( const char* raw )
 	ctx.SrcLen = (int) strlen(raw);
 	ctx.Negate = false;
 	while ( yyparse(&ctx) );
+	yyrelease(&ctx);
 	ctx.Out += 0;
 	
 	if ( ctx.OnStack.size() != 1 )

@@ -8,7 +8,20 @@ PAPI void			AbcMachineInformationGet( AbcMachineInformation& info )
 	
 	SYSTEM_INFO inf;
 	GetSystemInfo( &inf );
-	info.CPUCount = inf.dwNumberOfProcessors;
+	info.LogicalCoreCount = inf.dwNumberOfProcessors;
+	info.PhysicalCoreCount = inf.dwNumberOfProcessors;
+
+	SYSTEM_LOGICAL_PROCESSOR_INFORMATION log[256];
+	DWORD logSize = sizeof(log);
+	if ( GetLogicalProcessorInformation( log, &logSize ) )
+	{
+		info.PhysicalCoreCount = 0;
+		for ( uint i = 0; i < logSize / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION); i++ )
+		{
+			if ( log[i].Relationship == RelationProcessorCore )
+				info.PhysicalCoreCount++;
+		}
+	}
 
 	MEMORYSTATUSEX stat;
 	stat.dwLength = sizeof(stat);
@@ -19,7 +32,8 @@ PAPI void			AbcMachineInformationGet( AbcMachineInformation& info )
 PAPI void			AbcMachineInformationGet( AbcMachineInformation& info )
 {
 	memset( &info, 0, sizeof(info) );
-	info.CPUCount = sysconf( _SC_NPROCESSORS_ONLN );
+	info.LogicalCoreCount = sysconf( _SC_NPROCESSORS_ONLN );
+	info.PhysicalCoreCount = sysconf( _SC_NPROCESSORS_ONLN );
 	uint64 ps = sysconf( _SC_PAGESIZE );
 	uint64 pn = sysconf( _SC_PHYS_PAGES );
 	info.PhysicalMemory = ps * pn;

@@ -25,7 +25,8 @@ void nuMain( nuMainEvent ev )
 			nuDomEl* txtBox = doc->Root.AddChild( nuTagDiv );
 			txtBox->StyleParse( "width: 90px; height: 90px; border-radius: 15px; background: #f0f0f0; margin: 3px; position: absolute;" );
 			//txtBox->SetText( "from ethnic minorities" );
-			txtBox->SetText( "| The quick brown fox JUMPS |" );
+			//txtBox->SetText( "| The quick brown fox JUMPS |" );
+			txtBox->SetText( "This widget spans over three rows in the GridLayout" );
 			//txtBox->SetText( "fox" );
 
 			//doc->Root.ChildByIndex(0)->StyleParse( "background: #e00e" );

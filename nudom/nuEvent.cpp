@@ -9,7 +9,7 @@ NUAPI bool nuEventHandler_LambdaStaticFunc(const nuEvent& ev)
 
 nuEvent::nuEvent()
 {
-	Processor = NULL;
+	DocGroup = NULL;
 	Context = NULL;
 	Target = NULL;
 	Type = nuEventMouseMove;

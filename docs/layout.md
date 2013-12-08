@@ -18,11 +18,14 @@ To set horizontal to reversed, use the following style:
 
 	flow-direction-horizontal: reverse
 
-To set vertical to normal, use the following style:
+To set horizontal to normal, use the following style:
 
-	flow-direction-vertical: normal
+	flow-direction-horizontal: normal
 
 "Display" types
 ---------------
 * __Block__ Block implies a line break before and after the element.
 * __Inline__ Inline has no implicit line break, before or after.
+
+Hang on - maybe we can get away without defining "block" or "inline",
+and rather implement those concepts with style classes.

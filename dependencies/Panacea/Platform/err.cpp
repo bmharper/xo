@@ -2,7 +2,7 @@
 
 static bool AllowGUI = true;
 
-PAPI int AbcPanicMsg(LPCSTR file, int line, LPCSTR msg)
+PAPI int AbcPanicMsg(const char* file, int line, const char* msg)
 {
 	char buf[1024];
 	if ( msg )	sprintf( buf, "Critical Error: %s(%d)\n%s", file, line, msg);

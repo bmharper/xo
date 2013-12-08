@@ -20,6 +20,54 @@ static AbcThreadHandle				UIThread = NULL;
 // Single globally accessible data
 static nuGlobalStruct*				nuGlobals = NULL;
 
+NUAPI size_t nuTexFormatChannelCount( nuTexFormat f )
+{
+	switch ( f )
+	{
+	case nuTexFormatInvalid:	return 0;
+	case nuTexFormatRGBA8:		return 4;
+	case nuTexFormatGrey8:		return 1;
+	default:
+		NUTODO;
+		return 0;
+	}
+}
+
+NUAPI size_t nuTexFormatBytesPerChannel( nuTexFormat f )
+{
+	switch ( f )
+	{
+	case nuTexFormatInvalid:	return 0;
+	case nuTexFormatRGBA8:		return 1;
+	case nuTexFormatGrey8:		return 1;
+	default:
+		NUTODO;
+		return 0;
+	}
+}
+
+NUAPI size_t nuTexFormatBytesPerPixel( nuTexFormat f )
+{
+	return nuTexFormatBytesPerChannel( f ) * nuTexFormatChannelCount( f );
+}
+
+void nuTexture::FlipVertical()
+{
+	byte sline[4096];
+	byte* line = sline;
+	size_t astride = std::abs(TexStride);
+	if ( astride > sizeof(sline) )
+		line = (byte*) AbcMallocOrDie( astride );
+	for ( uint32 i = 0; i < TexHeight / 2; i++ )
+	{
+		memcpy( line, TexDataAtLine(TexHeight - i - 1), astride );
+		memcpy( TexDataAtLine(TexHeight - i - 1), TexDataAtLine(i), astride );
+		memcpy( TexDataAtLine(i), line, astride );
+	}
+	if ( line != sline )
+		free( line );
+}
+
 void nuBox::SetInt( int32 left, int32 top, int32 right, int32 bottom )
 {
 	Left = nuRealToPos((float) left);
@@ -87,7 +135,7 @@ AbcThreadReturnType AbcKernelCallbackDecl nuUIThread( void* threadContext )
 			break;
 		nuEvent ev;
 		NUVERIFY( nuGlobal()->EventQueue.PopTail( ev ) );
-		ev.Processor->ProcessEvent( ev );
+		ev.DocGroup->ProcessEvent( ev );
 	}
 	return 0;
 }
@@ -134,7 +182,7 @@ NUAPI void nuInitialize()
 
 	nuGlobals = new nuGlobalStruct();
 	nuGlobals->TargetFPS = 60;
-	nuGlobals->NumWorkerThreads = min( minf.CPUCount, MAX_WORKER_THREADS );
+	nuGlobals->NumWorkerThreads = min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
 	//nuGlobals->SubPixelTextGamma = 0.6f; // 0.5 is good for sRGB framebuffer
 	// Ah....... Freetype's output is linear, so if treat our freetype texture as GL_LUMINANCE
 	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get prefect results without
@@ -163,7 +211,7 @@ NUAPI void nuInitialize()
 #if NU_PLATFORM_WIN_DESKTOP
 	nuInitialize_Win32();
 #endif
-	NUTRACE( "Using %d/%d processors.\n", (int) nuGlobals->NumWorkerThreads, (int) minf.CPUCount );
+	NUTRACE( "Using %d/%d processors.\n", (int) nuGlobals->NumWorkerThreads, (int) minf.LogicalCoreCount );
 	for ( int i = 0; i < nuGlobals->NumWorkerThreads; i++ )
 	{
 		NUVERIFY( AbcThreadCreate( nuWorkerThreadFunc, NULL, WorkerThreads[i] ) );

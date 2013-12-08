@@ -11,7 +11,7 @@ nuImageStore::nuImageStore()
 		{0xffffffff, 0xff000000},
 		{0xff000000, 0xffffffff},
 	};
-	nimg->Set( 2, 2, ndata );
+	nimg->Set( nuTexFormatRGBA8, 2, 2, ndata );
 	NUASSERT( NullImageIndex == ImageList.size() );
 	Set( NullImageName, nimg );
 }

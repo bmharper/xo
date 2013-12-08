@@ -20,6 +20,14 @@ PAPI AbcThreadHandle AbcThreadCurrent()
 {
 	return GetCurrentThread();
 }
+PAPI AbcThreadID	AbcThreadCurrentID()
+{
+	return GetCurrentThreadId();
+}
+PAPI bool AbcThreadIDEqual( AbcThreadID a, AbcThreadID b )
+{
+	return a == b;
+}
 PAPI void			AbcThreadSetPriority( AbcThreadHandle handle, AbcThreadPriority priority )
 {
 	DWORD p = THREAD_PRIORITY_NORMAL;
@@ -59,9 +67,24 @@ PAPI AbcThreadHandle AbcThreadCurrent()
 {
 	return pthread_self();
 }
+PAPI AbcThreadID AbcThreadCurrentID()
+{
+	return pthread_self();
+}
+PAPI bool			AbcThreadIDEqual( AbcThreadID a, AbcThreadID b )
+{
+	return !!pthread_equal( a, b );
+}
 PAPI void			AbcThreadSetPriority( AbcThreadHandle handle, AbcThreadPriority priority )
 {
 	// On linux, pthread_setschedprio is only applicable to threads on the realtime scheduling policy
 }
 
 #endif
+
+PAPI bool			AbcThreadJoinAndCloseHandle( AbcThreadHandle handle )
+{
+	bool result = AbcThreadJoin( handle );
+	AbcThreadCloseHandle( handle );
+	return result;
+}

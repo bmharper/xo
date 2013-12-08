@@ -173,6 +173,8 @@ nuString& nuString::operator+=( const nuString& b )
 	memcpy( newZ + Len, b.Z, b.Len );
 	Len += b.Len;
 	newZ[Len] = 0;
+	free( Z );
+	Z = newZ;
 	return *this;
 }
 

@@ -140,6 +140,11 @@ public:
 	nuBox( const nuBox& b ) : Left(b.Left), Right(b.Right), Top(b.Top), Bottom(b.Bottom) {}
 	nuBox( nuPos left, nuPos top, nuPos right, nuPos bottom ) : Left(left), Right(right), Top(top), Bottom(bottom) {}
 
+#ifdef _WIN32
+	nuBox( RECT r ) : Left(r.left), Right(r.right), Top(r.top), Bottom(r.bottom) {}
+	operator RECT() const { RECT r = {Left, Top, Right, Bottom}; return r; }
+#endif
+
 	void	SetInt( int32 left, int32 top, int32 right, int32 bottom );
 	void	ExpandToFit( const nuBox& expando );
 	void	ClampTo( const nuBox& clamp );
@@ -189,6 +194,17 @@ struct NUAPI nuRenderStats
 	void Reset();
 };
 
+enum nuTexFormat
+{
+	nuTexFormatInvalid = 0,
+	nuTexFormatRGBA8 = 1,
+	nuTexFormatGrey8 = 2
+};
+
+NUAPI size_t nuTexFormatChannelCount( nuTexFormat f );
+NUAPI size_t nuTexFormatBytesPerChannel( nuTexFormat f );
+NUAPI size_t nuTexFormatBytesPerPixel( nuTexFormat f );
+
 /* Base of all textures
 This structure must remain zero-initializable
 Once a texture has been uploaded, you may not change width, height, or channel count.
@@ -200,14 +216,17 @@ public:
 	uint32		TexHeight;
 	nuBox		TexInvalidRect;		// Invalid rectangle, in integer texel coordinates.
 	nuTextureID	TexID;				// ID of texture in renderer.
-	int			TexChannelCount;
+	nuTexFormat	TexFormat;
 	void*		TexData;
 	int			TexStride;
 
-			nuTexture()					{ TexWidth = TexHeight = 0; TexInvalidRect = nuBox(0,0,0,0); TexChannelCount = 0; TexID = nuTextureIDNull; TexData = NULL; TexStride = 0; }
+			nuTexture()					{ TexWidth = TexHeight = 0; TexInvalidRect = nuBox(0,0,0,0); TexFormat = nuTexFormatInvalid; TexID = nuTextureIDNull; TexData = NULL; TexStride = 0; }
 	void	TexInvalidate()				{ TexInvalidRect = nuBox(0, 0, TexWidth, TexHeight); }
 	void	TexValidate()				{ TexInvalidRect = nuBox(0, 0, 0, 0); }
-	void*	TexDataAt( int x, int y )	{ return ((char*) TexData) + y * TexStride + x * TexChannelCount; }
+	void*	TexDataAt( int x, int y )	{ return ((char*) TexData) + y * TexStride + x * nuTexFormatBytesPerPixel(TexFormat); }
+	void*	TexDataAtLine( int y )		{ return ((char*) TexData) + y * TexStride; }
+	size_t	TexBytesPerPixel() const	{ return nuTexFormatBytesPerPixel(TexFormat); }
+	void	FlipVertical();
 };
 
 // A single instance of this is accessible via nuGlobal()

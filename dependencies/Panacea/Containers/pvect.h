@@ -394,8 +394,7 @@ template <typename T> int pvect_compare_operator_lt( void* context, const T& a, 
 template <typename T>
 int pvect_marshal_context_is_compare( void* context, const T& a, const T& b )
 {
-	// I have to use this decltype() hack here because I can't figure out how to pass pvect_marshal_context_is_compare<T> instead of pvect_marshal_context_is_compare<T*> to vect_sort_cx.
-	// GCC doesn't like this.
+	// It's easier to go from T* to TType than the other way around.
 	typedef decltype(*a) TType;
 	typedef int (*tcompare)(const TType& a, const TType& b);
 	return ((tcompare) context)( *a, *b );
@@ -411,7 +410,7 @@ struct pvect_double_context
 template <typename T>
 int pvect_double_marshal_context_is_compare( void* context, const T& a, const T& b )
 {
-	// save decltype() hack as above
+	// save decltype() technique as above
 	typedef decltype(*a) TType;
 	typedef int (*tcompare)(void* context, const TType& a, const TType& b);
 
@@ -427,7 +426,7 @@ template <typename T> void sort( pvect<T*>& target )
 
 template <typename T> void sort( pvect<T*>& target, int (*compare) (const T& a, const T& b) )
 {
-	vect_sort_cx<T*>( &target[0], 0, target.size() - 1, compare, pvect_marshal_context_is_compare<T*> );
+	vect_sort_cx<T*>( &target[0], 0, target.size() - 1, (void*) compare, pvect_marshal_context_is_compare<T*> );
 }
 
 template <typename T> void sort( pvect<T*>& target, void* context, int (*compare) (void* context, const T& a, const T& b) )

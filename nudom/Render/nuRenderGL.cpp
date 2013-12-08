@@ -366,7 +366,7 @@ void nuRenderGL::DrawTriangles( int nvert, const void* v, const uint16* indices 
 void nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
 {
 	NUASSERT( tex->TexWidth != 0 && tex->TexHeight != 0 );
-	NUASSERT( tex->TexChannelCount >= 1 && tex->TexChannelCount <= 4 );
+	NUASSERT( tex->TexFormat != nuTexFormatInvalid );
 	NUASSERT( texUnit < nuMaxTextureUnits );
 	if ( !IsTextureValid( tex->TexID ) )
 	{
@@ -392,10 +392,15 @@ void nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
 		return;
 
 	int format = 0;
-	if ( tex->TexChannelCount == 1 ) format = GL_LUMINANCE;
-	else if ( tex->TexChannelCount == 2 ) format = GL_RG;
-	else if ( tex->TexChannelCount == 3 ) format = GL_RGB;
-	else if ( tex->TexChannelCount == 4 ) format = GL_RGBA;
+	switch ( tex->TexFormat )
+	{
+	case nuTexFormatGrey8: format = GL_LUMINANCE; break;
+	//case : format = GL_RG;
+	//case : format = GL_RGB;
+	case nuTexFormatRGBA8: format = GL_RGBA; break;
+	default:
+		NUTODO;
+	}
 	int iformat = format;
 
 	if ( Have_Unpack_RowLength )
@@ -418,6 +423,22 @@ void nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
 	{
 		glTexSubImage2D( GL_TEXTURE_2D, 0, invRect.Left, invRect.Top, invRect.Width(), invRect.Height(), format, GL_UNSIGNED_BYTE, tex->TexDataAt(invRect.Left, invRect.Top) );
 	}
+
+	if ( Have_Unpack_RowLength )
+		glPixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
+}
+
+void nuRenderGL::ReadBackbuffer( nuImage& image )
+{
+	image.Alloc( nuTexFormatRGBA8, FBWidth, FBHeight );
+	if ( Have_Unpack_RowLength )
+		glPixelStorei( GL_UNPACK_ROW_LENGTH, image.TexStride / 4 );
+
+	glReadPixels( 0, 0, FBWidth, FBHeight, GL_RGBA, GL_UNSIGNED_BYTE, image.TexDataAtLine(0) );
+
+	// our image is top-down
+	// glReadPixels is bottom-up
+	image.FlipVertical();
 
 	if ( Have_Unpack_RowLength )
 		glPixelStorei( GL_UNPACK_ROW_LENGTH, 0 );

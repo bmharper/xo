@@ -54,6 +54,8 @@ template<typename T> bool podvec_ispod() { return false; }
 template<typename T>
 struct podvec
 {
+	typedef T TElem;
+
 	uintp	count;
 	uintp	capacity;
 	T*		data;

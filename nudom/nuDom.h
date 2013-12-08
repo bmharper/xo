@@ -13,6 +13,7 @@
 #include "nuDocGroup.h"
 #include "nuLayout.h"
 #include "Render/nuRenderer.h"
+#include "Render/nuRenderDoc.h"
 #include "Image/nuImageStore.h"
 #include "Image/nuImage.h"
 #include "nuSysWnd.h"

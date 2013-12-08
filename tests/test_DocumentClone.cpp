@@ -1,7 +1,7 @@
 #include "pch.h"
 
 // erg.... intellisense on VS 2012 is broken without this bogus include here
-#include "../nudom/nuDoc.h"
+//#include "../nudom/nuDoc.h"
 
 static AbcThreadReturnType AbcKernelCallbackDecl ui_thread( void* tp )
 {
@@ -52,9 +52,10 @@ TESTFUNC(DocumentClone)
 {
 	nuDocGroup g;
 	g.Doc = new nuDoc();
+	g.DestroyDocWithGroup = true;
 	g.Render();
-	g.Doc->WindowWidth = 16;
-	g.Doc->WindowHeight = 16;
+	g.RenderDoc->WindowWidth = 16;
+	g.RenderDoc->WindowHeight = 16;
 	TTASSERT( g.RenderStats.Clone_NumEls == 0 );
 	nuDoc* d = g.Doc;
 

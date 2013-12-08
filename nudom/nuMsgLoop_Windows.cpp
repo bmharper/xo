@@ -11,7 +11,7 @@ static bool AnyDocsDirty()
 {
 	for ( int i = 0; i < nuGlobal()->Docs.size(); i++ )
 	{
-		if ( nuGlobal()->Docs[i]->IsDocNewerThanRenderer() )
+		if ( nuGlobal()->Docs[i]->IsDocVersionDifferentToRenderer() )
 			return true;
 	}
 	return false;

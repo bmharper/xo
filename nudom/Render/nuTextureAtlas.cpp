@@ -20,7 +20,7 @@ void nuTextureAtlas::Initialize( uint width, uint height, uint bytes_per_texel )
 	//memset( Data, 0xcc, nbytes );
 	//memset( Data, 0, nbytes );
 	TexStride = width * bytes_per_texel;
-	TexChannelCount = 1;
+	TexFormat = nuTexFormatGrey8;
 	PosTop = 0;
 	PosBottom = 0;
 	PosRight = 0;

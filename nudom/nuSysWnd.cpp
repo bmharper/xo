@@ -164,8 +164,8 @@ nuSysWnd::nuSysWnd()
 #elif NU_PLATFORM_ANDROID
 	MainWnd = this;
 #endif
-	Processor = new nuDocGroup();
-	Processor->Wnd = this;
+	DocGroup = new nuDocGroup();
+	DocGroup->Wnd = this;
 	RGL = new nuRenderGL();
 }
 
@@ -186,8 +186,8 @@ nuSysWnd::~nuSysWnd()
 #elif NU_PLATFORM_ANDROID
 	MainWnd = NULL;
 #endif
-	nuGlobal()->DocRemoveQueue.Add( Processor );
-	Processor = NULL;
+	nuGlobal()->DocRemoveQueue.Add( DocGroup );
+	DocGroup = NULL;
 	delete RGL;
 	RGL = NULL;
 }
@@ -203,7 +203,7 @@ nuSysWnd* nuSysWnd::Create()
 		w->GLRC = nuInitGL( w->SysWnd, w->RGL );
 		if ( w->GLRC )
 		{
-			SetWindowLongPtr( w->SysWnd, GWLP_USERDATA, (LONG_PTR) w->Processor );
+			SetWindowLongPtr( w->SysWnd, GWLP_USERDATA, (LONG_PTR) w->DocGroup );
 			ok = true;
 		}
 	}
@@ -225,7 +225,7 @@ nuSysWnd* nuSysWnd::CreateWithDoc()
 	nuSysWnd* w = Create();
 	if ( !w ) return NULL;
 	w->Attach( new nuDoc(), true );
-	nuGlobal()->DocAddQueue.Add( w->Processor );
+	nuGlobal()->DocAddQueue.Add( w->DocGroup );
 	return w;
 }
 
@@ -238,13 +238,13 @@ void nuSysWnd::Show()
 
 nuDoc* nuSysWnd::Doc()
 {
-	return Processor->Doc;
+	return DocGroup->Doc;
 }
 
-void nuSysWnd::Attach( nuDoc* doc, bool destroyDocWithProcessor )
+void nuSysWnd::Attach( nuDoc* doc, bool destroyDocWithGroup )
 {
-	Processor->Doc = doc;
-	Processor->DestroyDocWithProcessor = destroyDocWithProcessor;
+	DocGroup->Doc = doc;
+	DocGroup->DestroyDocWithGroup = destroyDocWithGroup;
 }
 
 bool nuSysWnd::BeginRender()
@@ -278,4 +278,31 @@ void nuSysWnd::FinishRender()
 void nuSysWnd::SurfaceLost()
 {
 	if ( RGL ) RGL->SurfaceLost();
+}
+
+void nuSysWnd::SetPosition( nuBox box, uint setPosFlags )
+{
+#if NU_PLATFORM_WIN_DESKTOP
+	uint wflags = SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE;
+	if ( !!(setPosFlags & SetPosition_Move) ) wflags = wflags & ~SWP_NOMOVE;
+	if ( !!(setPosFlags & SetPosition_Size) ) wflags = wflags & ~SWP_NOSIZE;
+	SetWindowPos( SysWnd, NULL, box.Left, box.Top, box.Width(), box.Height(), wflags );
+#endif
+}
+
+nuBox nuSysWnd::GetRelativeClientRect()
+{
+#if NU_PLATFORM_WIN_DESKTOP
+	RECT r;
+	POINT p0 = {0,0};
+	ClientToScreen( SysWnd, &p0 );
+	GetClientRect( SysWnd, &r );
+	nuBox box = r;
+	box.Offset( p0.x, p0.y );
+	return box;
+#else
+	// TODO
+	nuBox box(0,0,0,0);
+	return box;
+#endif
 }

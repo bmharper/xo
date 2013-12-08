@@ -12,6 +12,9 @@
 #include <Panacea/Platform/err.cpp>
 //#include <Panacea/Platform/debuglib.cpp>
 //#include <Panacea/Platform/process.cpp>
+#include <Panacea/Platform/cpu.cpp>
+#include <Panacea/Platform/syncprims.cpp>
+#include <Panacea/Platform/thread.cpp>
 //#include <Panacea/Other/profile.cpp>
 //#include <Panacea/Other/UTC.cpp>
 //#include <Panacea/IO/Path.cpp>

@@ -171,10 +171,13 @@ local nudom = SharedLibrary {
 		"dependencies/Panacea/Containers/queue.cpp",
 		"dependencies/Panacea/Platform/cpu.cpp",
 		"dependencies/Panacea/Platform/err.cpp",
+		"dependencies/Panacea/Platform/process.cpp",
 		"dependencies/Panacea/Platform/syncprims.cpp",
 		"dependencies/Panacea/Platform/thread.cpp",
+		"dependencies/Panacea/Strings/ConvertUTF.cpp",
 		"dependencies/Panacea/Strings/fmt.cpp",
 		"dependencies/glext.cpp",
+		"dependencies/stb_image.cpp",
 	},
 }
 
@@ -249,11 +252,16 @@ local Test = Program {
 		Pass = "PchGen",
 	},
 	Sources = {
+		Glob { Extensions = { ".h" }, Dir = "tests", },
+		"dependencies/stb_image.cpp",
+		"dependencies/stb_image_write.h",
 		"tests/test.cpp",
 		"tests/test_DocumentClone.cpp",
+		"tests/test_Layout.cpp",
 		"tests/test_Preprocessor.cpp",
 		"tests/test_Stats.cpp",
 		"tests/test_Styles.cpp",
+		"tests/nuImageTester.cpp",
 	}
 }
 

@@ -37,6 +37,7 @@ public:
 	
 	// Implementation of nuRenderBase
 	virtual void	LoadTexture( nuTexture* tex, int texUnit );
+	virtual void	ReadBackbuffer( nuImage& image );
 
 protected:
 	nuGLProg*		ActiveProgram;

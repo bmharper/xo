@@ -8,15 +8,11 @@
 typedef HANDLE					AbcMutex;
 typedef CRITICAL_SECTION		AbcCriticalSection;
 typedef HANDLE					AbcSemaphore;
-typedef HANDLE					AbcForkedProcessHandle;
-typedef DWORD					AbcProcessID;
 #define AbcINFINITE				INFINITE
 #else
 typedef pthread_mutex_t			AbcMutex;
 typedef pthread_mutex_t			AbcCriticalSection;
 typedef sem_t					AbcSemaphore;
-typedef FILE*					AbcForkedProcessHandle;
-typedef pid_t					AbcProcessID;
 #define AbcINFINITE				-1
 #endif
 
@@ -45,7 +41,7 @@ PAPI void				AbcSemaphoreRelease( AbcSemaphore& sem, DWORD count );
 PAPI void				AbcSleep( int milliseconds );
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// TODO: Consider using mintomic here.
+// TODO: Get rid of these functions, and replace them with mintomic
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // AbcInterlockedAdd		returns the PREVIOUS value
@@ -138,6 +134,9 @@ struct AbcMutexStackEnter
 };
 
 /*
+
+	[2013-10-22 BMH] This thing needs proper testing. I am not sure that the semaphore semantics are as expected.
+
 	Simulates CreateEvent/SetEvent/Wait for linux.
 
 	I don't understand why people say you can use a condition variable to simulate a Windows Event.

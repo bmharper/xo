@@ -47,6 +47,7 @@ class PAPI fmtarg
 public:
 	enum Types
 	{
+		TNull,	// Used as a sentinel to indicate that no parameter was passed
 		TCStr,
 		TWStr,
 		TI32,
@@ -67,6 +68,7 @@ public:
 	};
 	Types Type;
 
+	fmtarg()								: Type(TNull), CStr(NULL) {}
 	fmtarg( const char* v )					: Type(TCStr), CStr(v) {}
 	fmtarg( const wchar_t* v )				: Type(TWStr), WStr(v) {}
 #ifdef XSTRING_DEFINED
@@ -87,6 +89,28 @@ public:
 
 };
 
+/* This can be used to add custom formatting tokens.
+The only supported characters that you can use are "Q" and "q". These were
+added for escaping SQL identifiers and strings.
+*/
+struct fmt_context
+{
+	// Return the number of characters written, or -1 if outBufSize is not large enough to hold
+	// the number of characters that you need to write. Do not write a null terminator.
+	typedef intp (*WriteSpecialFunc)( char* outBuf, intp outBufSize, const fmtarg& val );
+
+	WriteSpecialFunc Escape_Q;
+	WriteSpecialFunc Escape_q;
+
+	fmt_context()
+	{
+		Escape_Q = NULL;
+		Escape_q = NULL;
+	}
+};
+
+PAPI FMT_STRING fmt_core( const fmt_context& context, const char* fmt, intp nargs, const fmtarg** args );
+
 PAPI FMT_STRING fmt( const char* fs );
 PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1 );
 PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2 );
@@ -104,6 +128,26 @@ PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const f
 PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14 );
 PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14, const fmtarg& a15 );
 PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14, const fmtarg& a15, const fmtarg& a16 );
+
+/*
+PAPI FMT_STRING fmt( const char* fs,
+					const fmtarg& a1 = fmtarg(),
+					const fmtarg& a2 = fmtarg(),
+					const fmtarg& a3 = fmtarg(),
+					const fmtarg& a4 = fmtarg(),
+					const fmtarg& a5 = fmtarg(),
+					const fmtarg& a6 = fmtarg(),
+					const fmtarg& a7 = fmtarg(),
+					const fmtarg& a8 = fmtarg(),
+					const fmtarg& a9 = fmtarg(),
+					const fmtarg& a10 = fmtarg(),
+					const fmtarg& a11 = fmtarg(),
+					const fmtarg& a12 = fmtarg(),
+					const fmtarg& a13 = fmtarg(),
+					const fmtarg& a14 = fmtarg(),
+					const fmtarg& a15 = fmtarg(),
+					const fmtarg& a16 = fmtarg());
+*/
 
 // Clang will need -Wno-variadic-macros
 // I believe the use of __VA_ARGS__ is cross-platform enough for our needs

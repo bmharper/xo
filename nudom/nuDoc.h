@@ -22,7 +22,6 @@ public:
 	nuDomEl						Root;							// Root element of the document tree
 	nuStyleTable				ClassStyles;					// All style classes defined in this document
 	nuStyle						TagStyles[nuTagEND];			// Styles of tags. For example, the style of <p>, or the style of <h1>.
-	uint32						WindowWidth, WindowHeight;		// Device pixels. [Not sure this belongs here]
 	nuStringTable				Strings;						// Generic string table.
 	nuImageStore				Images;							// All images. Some day we may want to be able to share these amongst different documents.
 

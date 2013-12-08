@@ -10,15 +10,10 @@ public:
 	
 	nuImage*		Clone() const;
 	void			Free();
-	void			Set( u32 width, u32 height, const void* bytes ); // set RGBA 8888
-	u32				GetWidth() const { return TexWidth; }
-	u32				GetHeight() const { return TexHeight; }
-	const void*		GetData() const { return TexData; }
-
-protected:
-	//u32				Width;
-	//u32				Height;
-	//void*			Bytes;
-
+	void			Set( nuTexFormat format, u32 width, u32 height, const void* bytes );
+	void			Alloc( nuTexFormat format, u32 width, u32 height );
+	u32				GetWidth() const	{ return TexWidth; }
+	u32				GetHeight() const	{ return TexHeight; }
+	const void*		GetData() const		{ return TexData; }
 };
 

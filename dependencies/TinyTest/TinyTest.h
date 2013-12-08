@@ -11,7 +11,7 @@ Usage
 4. Inside int main( int argc, char** argv ), write:
 
 	int testretval = 0;
-	if ( TTRun( argc, argv, &testretval ) )
+	if ( TTRun( argc, argv, &testretval ) ) // This function can only be called once, becaue it frees the test list before returning
 		return testretval;
 
 5. In other cpp files, write TT_TEST_FUNC( initfunc, teardown, size, testname, parallel ) to define test functions, for example
@@ -34,11 +34,10 @@ enum TTModes
 };
 
 // Test size classification.
-// The idea is that you run 'small' tests on your continuous integration, and 'large' tests nightly.
 enum TTSizes
 {
-	TTSizeSmall,	// Runs for less than 1 minute
-	TTSizeLarge		// Runs for more than 1 minute
+	TTSizeSmall,	// Runs for less than 5 minutes
+	TTSizeLarge		// Runs for less than 15 minutes
 };
 #define TT_SIZE_SMALL_NAME		"small"
 #define TT_SIZE_LARGE_NAME		"large"
@@ -47,17 +46,26 @@ enum TTSizes
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Test parallelization
 
-// This test is independent of any other test, and doesn't need dedicated hardware resources
-#define TT_PARALLEL_DONTCARE	""
+enum TTParallel
+{
+	// Null value used as error code
+	TTParallel_Invalid_,
 
-// This test is independent of any other test, but do not run it on the same core as another test
-// Single-threaded performance tests should use this, so that they don't suffer from sharing
-// execution resources with another hyperthread.
-#define TT_PARALLEL_WHOLECORE	"!core"
+	// This test is independent of any other test, and doesn't need dedicated hardware resources
+	TTParallelDontCare,
 
-// This test must be run on its own. It could be a performance test that utilizes all cores,
-// or maybe it uses TCP ports, etc.
-#define TT_PARALLEL_SOLO		"!solo"
+	// This test is independent of any other test, but do not run it on the same core as another test
+	// Single-threaded performance tests should use this, so that they don't suffer from sharing
+	// execution resources with another hyperthread.
+	TTParallelWholeCore,
+
+	// This test must be run on its own. It could be a performance test that utilizes all cores,
+	// or maybe it uses TCP ports, etc.
+	TTParallelSolo,
+};
+#define TT_PARALLEL_DONTCARE	"any"
+#define TT_PARALLEL_WHOLECORE	"core"
+#define TT_PARALLEL_SOLO		"solo"
 
 /*
 Aside from these predefined values, you can specify any string as a group.
@@ -133,11 +141,14 @@ bool		TT_IPC_Read_Raw( unsigned int waitMS, char (&filename)[256], char (&msg)[T
 
 // Returns true if TT handled this call. In this case, call exit( *retval ). If false returned, continue as usual.
 // Use the TTRun macro to call this
-bool		TTRun_Internal( const TT_TestList& tests, int argc, char** argv, int* retval );
-bool		TTRun_InternalW( const TT_TestList& tests, int argc, wchar_t** argv, int* retval );
+// Before returning, these functions wipe all tests from the 'tests' parameter. This frees memory, causing zero memory leaks.
+// This means you can only run these functions once
+bool		TTRun_Wrapper( TT_TestList& tests, int argc, char** argv, int* retval );
+bool		TTRun_WrapperW( TT_TestList& tests, int argc, wchar_t** argv, int* retval );
 
-#define TTRun( argc, argv, retval ) TTRun_Internal( TT_TESTS_ALL, argc, argv, retval )
-#define TTRunW( argc, argv, retval ) TTRun_InternalW( TT_TESTS_ALL, argc, argv, retval )
+// You can only run this function once.
+#define TTRun( argc, argv, retval ) TTRun_Wrapper( TT_TESTS_ALL, argc, argv, retval )
+#define TTRunW( argc, argv, retval ) TTRun_WrapperW( TT_TESTS_ALL, argc, argv, retval )
 
 // Generally I use this so that I don't have to uncomment the full suite of tests when I'm fooling around with one small component, and want to run only its tests from the IDE.
 inline bool TTIsAutomatedTest() { return TTMode() == TTModeAutomatedTest; }
@@ -165,10 +176,10 @@ struct TT_Test
 	TTFuncBlank		Teardown;
 	TTFuncBlank		Blank;
 	const char*		Name;
-	const char*		Parallel;
 	TTSizes			Size;
+	TTParallel		Parallel;
 
-	TT_Test( TTFuncBlank init, TTFuncBlank teardown, TTFuncBlank func, TTSizes size, const char* name, const char* parallel ) : Init(init), Teardown(teardown),  Blank(func), Size(size), Name(name), Parallel(parallel) {}
+	TT_Test( TTFuncBlank init, TTFuncBlank teardown, TTFuncBlank func, TTSizes size, const char* name, TTParallel parallel ) : Init(init), Teardown(teardown),  Blank(func), Size(size), Name(name), Parallel(parallel) {}
 	TT_Test( const TT_Test& t ) { memcpy(this, &t, sizeof(t)); }
 
 	static int CompareName( const TT_Test* a, const TT_Test* b )
@@ -186,6 +197,7 @@ struct TT_TestList
 					TT_TestList();
 					~TT_TestList();
 	void			Add( const TT_Test& t );
+	void			Clear();
 	int				size() const { return Count; }
 	const TT_Test&	operator[]( int i ) const { return List[i]; }
 };

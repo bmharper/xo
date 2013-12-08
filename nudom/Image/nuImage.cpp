@@ -3,9 +3,6 @@
 
 nuImage::nuImage()
 {
-	//Width = 0;
-	//Height = 0;
-	//Bytes = NULL;
 }
 
 nuImage::~nuImage()
@@ -16,7 +13,7 @@ nuImage::~nuImage()
 nuImage* nuImage::Clone() const
 {
 	nuImage* c = new nuImage();
-	c->Set( GetWidth(), GetHeight(), GetData() );
+	c->Set( TexFormat, GetWidth(), GetHeight(), GetData() );
 	return c;
 }
 
@@ -30,19 +27,37 @@ void nuImage::Free()
 	TexID = nuTextureIDNull;
 }
 
-void nuImage::Set( u32 width, u32 height, const void* bytes )
+void nuImage::Set( nuTexFormat format, u32 width, u32 height, const void* bytes )
 {
+	Alloc( format, width, height );
+	size_t size = TexWidth * TexHeight * nuTexFormatBytesPerPixel(format);
+	if ( size != 0 )
+		memcpy( TexData, bytes, size );
+}
+
+void nuImage::Alloc( nuTexFormat format, u32 width, u32 height )
+{
+	size_t existingFormatBPP = nuTexFormatBytesPerPixel(TexFormat);
+	size_t requiredFormatBPP = nuTexFormatBytesPerPixel(format);
+
+	if ( width == TexWidth && height == TexHeight && existingFormatBPP == requiredFormatBPP )
+	{
+		if ( TexFormat != format )
+			TexFormat = format;
+		return;
+	}
+
 	if ( TexWidth != width || TexWidth != height )
 		Free();
 	TexWidth = width;
 	TexHeight = height;
-	if ( TexWidth != 0 && TexHeight != 0 && bytes != NULL )
+	TexFormat = format;
+	if ( TexWidth != 0 && TexHeight != 0 )
 	{
 		TexInvalidate();
-		size_t size = TexWidth * TexHeight * 4;
+		TexStride = TexWidth * (uint32) TexBytesPerPixel();
+		size_t size = TexHeight * TexStride;
 		TexData = AbcAlignedMalloc( size, 16 );
-		TexStride = TexWidth * 4;
 		AbcCheckAlloc( TexData );
-		memcpy( TexData, bytes, size );
 	}
 }

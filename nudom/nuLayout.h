@@ -19,7 +19,7 @@ class NUAPI nuLayout
 {
 public:
 
-	void Layout( const nuDoc& doc, nuRenderDomEl& root, nuPool* pool );
+	void Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDomEl& root, nuPool* pool );
 
 protected:
 
@@ -32,6 +32,7 @@ protected:
 	};
 
 	const nuDoc*				Doc;
+	u32							DocWidth, DocHeight;
 	nuPool*						Pool;
 	nuRenderStack				Stack;
 	float						PtToPixel;

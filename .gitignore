@@ -1,5 +1,6 @@
 .tundra2.*
 .metadata
+Thumbs.db
 t2-output
 samples/Android/bin/*
 samples/Android/libs/*

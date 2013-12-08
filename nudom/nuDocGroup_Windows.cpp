@@ -41,7 +41,7 @@ LRESULT nuDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 	PAINTSTRUCT ps;
 	HDC dc;
 	nuEvent ev;
-	ev.Processor = this;
+	ev.DocGroup = this;
 	LRESULT result = 0;
 
 	switch (message)

@@ -5,12 +5,14 @@
 
 
 /* Document used by renderer.
-This includes a complete clone of the original document.
+The 'Doc' member is a complete clone of the original document.
 */
 class NUAPI nuRenderDoc
 {
 public:
+	// Defining state
 	nuDoc						Doc;
+	uint32						WindowWidth, WindowHeight;		// Device pixels
 
 	// Rendered state
 	nuRenderDomEl				RenderRoot;

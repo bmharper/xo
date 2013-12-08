@@ -184,9 +184,9 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 	{
 		//corners[i].Color = NURGBA(0,0,0,255);
 		//corners[i].Color = NURGBA(255,255,255,255);
-		//corners[i].Color = NURGBA(0,0,0,255);
+		corners[i].Color = NURGBA(0,0,0,255);
 		//corners[i].Color = NURGBA(10,10,10,255);
-		corners[i].Color = NURGBA(150,0,0,255);
+		//corners[i].Color = NURGBA(150,0,0,255);
 		corners[i].V4 = clamp;
 	}
 

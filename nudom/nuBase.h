@@ -75,6 +75,7 @@ typedef char TCHAR;
 #include "../dependencies/Panacea/Platform/stdint.h"
 #include "../dependencies/Panacea/Platform/cpu.h"
 #include "../dependencies/Panacea/Platform/err.h"
+#include "../dependencies/Panacea/Platform/process.h"
 #include "../dependencies/Panacea/Platform/syncprims.h"
 #include "../dependencies/Panacea/Platform/timeprims.h"
 #include "../dependencies/Panacea/Platform/thread.h"

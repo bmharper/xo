@@ -14,6 +14,10 @@ typedef Mat4T<float> nuMat4f;
 #include "../dependencies/freetype/include/ft2build.h"
 #include FT_FREETYPE_H
 
+#define STBI_HEADER_FILE_ONLY
+#include "../dependencies/stb_image.c"
+#undef STBI_HEADER_FILE_ONLY
+
 #ifdef _WIN32
 	#pragma warning( disable: 4345 ) // POD initialized with ()
 #endif

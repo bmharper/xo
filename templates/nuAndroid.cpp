@@ -38,7 +38,7 @@ extern "C" {
 static nuEvent MakeEvent()
 {
 	nuEvent e;
-	e.Processor = MainWnd->Processor;
+	e.DocGroup = MainWnd->DocGroup;
 	return e;
 }
 
@@ -51,7 +51,7 @@ static void ProcessAllEvents()
 			break;
 		nuEvent ev;
 		NUVERIFY( nuGlobal()->EventQueue.PopTail( ev ) );
-		ev.Processor->ProcessEvent( ev );
+		ev.DocGroup->ProcessEvent( ev );
 	}
 }
 
@@ -115,13 +115,13 @@ JNIEXPORT int JNICALL Java_com_android_nudom_NuLib_step(JNIEnv * env, jobject ob
 	if ( MainWnd )
 	{
 		//LOGI("render 1 %d %d", Proc->Doc->WindowWidth, Proc->Doc->WindowHeight );
-		//MainWnd->Processor->RenderDoc->CopyFromCanonical( *MainWnd->Processor->Doc );
+		//MainWnd->DocGroup->RenderDoc->CopyFromCanonical( *MainWnd->DocGroup->Doc );
 
 		//LOGI("render 2");
-		//MainWnd->Processor->RenderDoc->Render( MainWnd->RGL );
+		//MainWnd->DocGroup->RenderDoc->Render( MainWnd->RGL );
 
 		//LOGI("render 3");
-		return MainWnd->Processor->Render();
+		return MainWnd->DocGroup->Render();
 	}
 	return nuRenderResultNeedMore;
 }

@@ -2,7 +2,8 @@
 
 struct AbcMachineInformation
 {
-	int		CPUCount;
+	int		PhysicalCoreCount;	// On linux this is wrong, and simply equal to LogicalCoreCount
+	int		LogicalCoreCount;
 	uint64	PhysicalMemory;
 };
 
