@@ -217,16 +217,24 @@ void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRen
 	float top = nuPosToReal( txtEl.Y );
 	float left = nuPosToReal( txtEl.X );
 
-	bool round = true;//style->FontSizePx < 16;
+	// a single pixel of padding is necessary to ensure that we're not short-sampling
+	// the edges of the glyphs
+	int pad = 1;
 
+	// We only use whole pixel rendering on high resolution devices, and glyph sizes, as measured
+	// in device pixels, are always high enough that we don't even need to round.
+	bool round = false;
 	if ( round )
 	{
 		left = (float) floor(left + 0.5f);
 		top = (float) floor(top + 0.5f);
 	}
 
-	float right = left + glyph->Width;
-	float bottom = top + glyph->Height;
+	left -= pad;
+	top -= pad;
+
+	float right = left + glyph->Width + pad * 2;
+	float bottom = top + glyph->Height + pad * 2;
 
 	nuVx_PTC corners[4];
 	corners[0].Pos = NUVEC3(left, top, 0);
@@ -234,10 +242,10 @@ void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRen
 	corners[2].Pos = NUVEC3(right, bottom, 0);
 	corners[3].Pos = NUVEC3(right, top, 0);
 
-	float u0 = glyph->X * atlasScaleX;
-	float v0 = glyph->Y * atlasScaleY;
-	float u1 = (glyph->X + glyph->Width) * atlasScaleX;
-	float v1 = (glyph->Y + glyph->Height) * atlasScaleY;
+	float u0 = (glyph->X - pad) * atlasScaleX;
+	float v0 = (glyph->Y - pad) * atlasScaleY;
+	float u1 = (glyph->X + glyph->Width + pad * 2) * atlasScaleX;
+	float v1 = (glyph->Y + glyph->Height + pad * 2) * atlasScaleY;
 
 	corners[0].UV = NUVEC2(u0, v0);
 	corners[1].UV = NUVEC2(u0, v1);

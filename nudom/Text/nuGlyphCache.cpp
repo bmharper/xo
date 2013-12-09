@@ -133,12 +133,17 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	uint16 atlasY = 0;
 	nuTextureAtlas* atlas = NULL;
 
+	// Sub-pixel shader does its own clamping, but the whole pixel shader is naive, and 
+	// each glyph needs 3 pixels of padding around it.
+	int glyphPadding = isSubPixel ? 0 : 3;
+
 	for ( int pass = 0; true; pass++ )
 	{
 		if ( Atlasses.size() == 0 || pass != 0 )
 		{
 			nuTextureAtlas* newAtlas = new nuTextureAtlas();
-			newAtlas->Initialize( nuGlyphAtlasSize, nuGlyphAtlasSize, 1 );
+			newAtlas->Initialize( nuGlyphAtlasSize, nuGlyphAtlasSize, nuTexFormatGrey8, glyphPadding );
+			newAtlas->Zero();
 			Atlasses += newAtlas;
 		}
 		atlas = Atlasses.back();
@@ -148,9 +153,9 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	}
 
 	if ( isSubPixel )
-		FilterAndCopyBitmap( font, atlas->DataAt(atlasX, atlasY), atlas->GetStride() );
+		FilterAndCopyBitmap( font, atlas->TexDataAt(atlasX, atlasY), atlas->GetStride() );
 	else
-		CopyBitmap( font, atlas->DataAt(atlasX, atlasY), atlas->GetStride() );
+		CopyBitmap( font, atlas->TexDataAt(atlasX, atlasY), atlas->GetStride() );
 
 	nuGlyph g;
 	g.Width = isEmpty ? 0 : naturalWidth + horzPad * 2;
