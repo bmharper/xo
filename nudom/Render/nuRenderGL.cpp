@@ -199,8 +199,8 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 	//glMatrixMode( GL_MODELVIEW );
 	//glLoadIdentity();
 
-	// Make our clear color a very noticeable purple, so you know when you've screwed up the root node
-	glClearColor( 0.7f, 0.0, 0.7f, 0 );
+	auto clear = nuGlobal()->ClearColor;
+	glClearColor( clear.r / 255.0f, clear.g / 255.0f, clear.b / 255.0f, clear.a / 255.0f );
 
 	//glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );

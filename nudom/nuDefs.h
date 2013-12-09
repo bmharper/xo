@@ -60,6 +60,7 @@ inline int32	nuDoubleToPos( double real )	{ return int32(real * (1 << nuPosShift
 inline float	nuPosToReal( int32 pos )		{ return pos * (1.0f / (1 << nuPosShift)); }
 inline double	nuPosToDouble( int32 pos )		{ return pos * (1.0 / (1 << nuPosShift)); }
 inline int32	nuPosRound( int32 pos )			{ return pos + (1 << (nuPosShift-1)) & ~nuPosMask; }
+inline float	nuRound( float real )			{ return floor(real + 0.5f); }
 
 enum nuCloneFlags
 {
@@ -171,6 +172,54 @@ public:
 	nuBoxF( float left, float top, float right, float bottom ) : Left(left), Right(right), Top(top), Bottom(bottom) {}
 };
 
+struct NUAPI nuRGBA
+{
+	union {
+		struct {
+#if ENDIANLITTLE
+			uint8 a, b, g, r;
+#else
+			uint8 r: 8;
+			uint8 g: 8;
+			uint8 b: 8;
+			uint8 a: 8;
+#endif
+		};
+		uint32 u;
+	};
+	static nuRGBA RGBA(uint8 r, uint8 g, uint8 b, uint8 a) { nuRGBA c; c.r = r; c.g = g; c.b = b; c.a = a; return c; }
+};
+
+#define NURGBA(r, g, b, a) ((a) << 24 | (b) << 16 | (g) << 8 | (r))
+
+// This is non-premultipled alpha
+struct NUAPI nuColor
+{
+	void	Set( uint8 _r, uint8 _g, uint8 _b, uint8 _a ) { r = _r; g = _g; b = _b; a = _a; }
+	uint32	GetRGBA() const { nuRGBA x; x.r = r; x.g = g; x.b = b; x.a = a; return x.u; }
+
+	bool	operator==( const nuColor& x ) const { return u == x.u; }
+	bool	operator!=( const nuColor& x ) const { return u != x.u; }
+
+	static bool		Parse( const char* s, intp len, nuColor& v );
+	static nuColor	RGBA( uint8 _r, uint8 _g, uint8 _b, uint8 _a )		{ nuColor c; c.Set(_r,_g,_b,_a); return c; }
+	static nuColor	Make( uint32 _u )									{ nuColor c; c.u = _u; return c; }
+
+	union {
+		struct {
+#if ENDIANLITTLE
+			uint8 b, g, r, a;
+#else
+			uint8 a: 8;
+			uint8 r: 8;
+			uint8 g: 8;
+			uint8 b: 8;
+#endif
+		};
+		uint32 u;
+	};
+};
+
 struct nuStyleID
 {
 	uint32		StyleID;
@@ -240,6 +289,7 @@ struct nuGlobalStruct
 	float						SubPixelTextGamma;		// Tweak freetype's gamma when doing sub-pixel text rendering.
 	float						WholePixelTextGamma;	// Tweak freetype's gamma when doing whole-pixel text rendering.
 	nuTextureID					MaxTextureID;			// Used to test texture ID wrap-around
+	nuColor						ClearColor;				// glClearColor
 
 	// Debugging flags. Enabling these should make debugging easier.
 	// Some of them may turn out to have a small enough performance hit that you can

@@ -200,6 +200,7 @@ NUAPI void nuInitialize()
 #endif
 	//nuGlobals->DebugZeroClonedChildList = true;
 	nuGlobals->MaxTextureID = ~((nuTextureID) 0);
+	nuGlobals->ClearColor.Set( 200, 0, 200, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node
 	nuGlobals->DocAddQueue.Initialize( false );
 	nuGlobals->DocRemoveQueue.Initialize( false );
 	nuGlobals->EventQueue.Initialize( true );

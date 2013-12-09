@@ -72,6 +72,7 @@ void nuRenderStack::Initialize( const nuDoc* doc, nuPool* pool )
 	//Defaults[nuCatFontFamily]
 	Defaults[nuCatBorderRadius].SetSize( nuCatBorderRadius, nuSize::Zero() );
 	Defaults[nuCatPosition].SetPosition( nuPositionStatic );
+	Defaults[nuCatBoxSizing].SetBoxSizing( nuBoxSizeBorder );	// HTML default is Content
 	//XY(END)
 }
 

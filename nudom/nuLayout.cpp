@@ -91,6 +91,7 @@ void nuLayout::Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode )
 	auto borderRadius = Stack.Get( nuCatBorderRadius );
 	auto display = Stack.Get( nuCatDisplay );
 	auto position = Stack.Get( nuCatPosition );
+	auto boxSizing = Stack.Get( nuCatBoxSizing );
 	nuPos cwidth = ComputeDimension( s.ParentContentBox.Width(), width.GetSize() );
 	nuPos cheight = ComputeDimension( s.ParentContentBox.Height(), height.GetSize() );
 	nuPos cborderRadius = ComputeDimension( s.ParentContentBox.Width(), borderRadius.GetSize() );
@@ -98,6 +99,18 @@ void nuLayout::Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode )
 	nuBox cpadding = ComputeBox( s.ParentContentBox, padding );
 	
 	rnode->Style.BorderRadius = nuPosToReal( cborderRadius );
+
+	if ( boxSizing.GetBoxSizing() == nuBoxSizeContent ) {}
+	else if ( boxSizing.GetBoxSizing() == nuBoxSizeBorder )
+	{
+		// TODO: subtract border and padding
+	}
+	else if ( boxSizing.GetBoxSizing() == nuBoxSizeMargin )
+	{
+		// TODO: subtract border and padding
+		cwidth -= cmargin.Left + cmargin.Right;
+		cheight -= cmargin.Top + cmargin.Bottom;
+	}
 
 	if ( position.GetPositionType() == nuPositionAbsolute )
 	{
@@ -178,7 +191,11 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 	nuGlyphCache* glyphCache = nuGlobal()->GlyphCache;
 
 	float fontSizePx = 11;
-	rnode->Style.FontSizePx = (uint8) fontSizePx;
+	
+	// round font size to integer units
+	rnode->Style.FontSizePx = (uint8) nuRound( fontSizePx );
+
+	nuPos fontHeight = nuRealToPos( rnode->Style.FontSizePx );
 
 	const nuString& str = node.GetText();
 	rnode->Text.reserve( str.Len );
@@ -204,7 +221,7 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 		nuRenderTextEl& rtxt = rnode->Text.back();
 		rtxt.Char = key.Char;
 		rtxt.X = s.PosX + nuRealToPos(glyph->MetricLeftx256 / 256.0f);
-		rtxt.Y = s.PosY - nuRealToPos(glyph->MetricTop);
+		rtxt.Y = s.PosY - nuRealToPos(glyph->MetricTop) + fontHeight;
 		s.PosX += nuRealToPos(glyph->MetricLinearHoriAdvance * fontSizePx);
 	}
 }

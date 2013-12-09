@@ -193,56 +193,6 @@ void nuStyleAttrib::SetString( nuStyleCategories cat, const char* str, nuDoc* do
 	ValU32 = doc->Strings.GetId( str );
 }
 
-void nuStyleAttrib::SetColor( nuStyleCategories cat, nuColor val )
-{
-	SetU32( cat, val.u );
-}
-
-void nuStyleAttrib::SetSize( nuStyleCategories cat, nuSize val )
-{
-	SetWithSubtypeF( cat, val.Type, val.Val );
-}
-
-void nuStyleAttrib::SetDisplay( nuDisplayType val )
-{
-	SetU32( nuCatDisplay, val );
-}
-
-void nuStyleAttrib::SetBorderRadius( nuSize val )
-{
-	SetSize( nuCatBorderRadius, val );
-}
-
-void nuStyleAttrib::SetPosition( nuPositionType val )
-{
-	SetU32( nuCatPosition, val );
-}
-
-void nuStyleAttrib::SetFont( const char* font, nuDoc* doc )
-{
-	SetString( nuCatFontFamily, font, doc );
-}
-
-void nuStyleAttrib::SetBackgroundImage( const char* image, nuDoc* doc )
-{
-	SetString( nuCatBackgroundImage, image, doc );
-}
-
-void nuStyleAttrib::SetFlowAxis( nuFlowAxis axis )
-{
-	SetU32( nuCatFlow_Axis, axis );
-}
-
-void nuStyleAttrib::SetFlowDirectionHorizonal( nuFlowDirection dir )
-{
-	SetU32( nuCatFlow_Direction_Horizontal, dir );
-}
-
-void nuStyleAttrib::SetFlowDirectionVertical( nuFlowDirection dir )
-{
-	SetU32( nuCatFlow_Direction_Vertical, dir );
-}
-
 void nuStyleAttrib::SetInherit( nuStyleCategories cat )
 {
 	Category = cat;
@@ -323,6 +273,7 @@ bool nuStyle::Parse( const char* t, nuDoc* doc )
 			else if ( MATCH(t, startk, eq, "flow-axis") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowAxisParse, nuCatFlow_Axis, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-direction-horizontal") )	{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Horizontal, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Vertical, *this ); }
+			else if ( MATCH(t, startk, eq, "box-sizing") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuBoxSizeParse, nuCatBoxSizing, *this ); }
 			else
 			{
 				ok = false;
@@ -854,5 +805,13 @@ NUAPI bool nuFlowDirectionParse( const char* s, intp len, nuFlowDirection& t )
 {
 	if ( MATCH(s, 0, len, "normal") )	{ t = nuFlowDirectionNormal; return true; }
 	if ( MATCH(s, 0, len, "reverse") )	{ t = nuFlowDirectionReversed; return true; }
+	return false;
+}
+
+NUAPI bool nuBoxSizeParse( const char* s, intp len, nuBoxSizeType& t )
+{
+	if ( MATCH(s, 0, len, "content") )	{ t = nuBoxSizeContent; return true; }
+	if ( MATCH(s, 0, len, "border") )	{ t = nuBoxSizeBorder; return true; }
+	if ( MATCH(s, 0, len, "margin") )	{ t = nuBoxSizeMargin; return true; }
 	return false;
 }

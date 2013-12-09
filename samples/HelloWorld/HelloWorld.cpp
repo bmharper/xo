@@ -11,7 +11,7 @@ void nuMain( nuMainEvent ev )
 			NUTRACE( "Hello 1\n" );
 			MainWnd = nuSysWnd::CreateWithDoc();
 			nuDoc* doc = MainWnd->Doc();
-	
+
 			NUTRACE( "Hello 2\n" );
 
 			for ( int i = 0; i < 4; i++ )

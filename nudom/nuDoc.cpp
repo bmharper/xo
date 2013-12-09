@@ -196,7 +196,7 @@ void nuDoc::ResetInternalIDs()
 
 void nuDoc::InitializeDefaultTagStyles()
 {
-	TagStyles[nuTagBody].Parse( "background: #fff; width: 100%; height: 100%;", this );
+	TagStyles[nuTagBody].Parse( "background: #fff; width: 100%; height: 100%; box-sizing: margin;", this );
 	//TagStyles[nuTagBody].Parse( "background: #000; width: 100%; height: 100%;", this );
 	TagStyles[nuTagDiv].Parse( "display: block;", this );
 	// Hack to give text some size
