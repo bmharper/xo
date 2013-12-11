@@ -11,6 +11,8 @@ void nuMain( nuMainEvent ev )
 			NUTRACE( "Hello 1\n" );
 			MainWnd = nuSysWnd::CreateWithDoc();
 			nuDoc* doc = MainWnd->Doc();
+			//doc->Root.StyleParse( "margin: 20px;" );
+			//doc->Root.StyleParse( "border-radius: 55px;" );
 
 			NUTRACE( "Hello 2\n" );
 
@@ -23,7 +25,7 @@ void nuMain( nuMainEvent ev )
 
 			// block with text inside it
 			nuDomEl* txtBox = doc->Root.AddChild( nuTagDiv );
-			txtBox->StyleParse( "width: 90px; height: 90px; border-radius: 15px; background: #f0f0f0; margin: 3px; position: absolute;" );
+			txtBox->StyleParse( "width: 90px; height: 90px; border-radius: 2px; background: #0c0; margin: 3px; position: absolute;" );
 			//txtBox->SetText( "from ethnic minorities" );
 			//txtBox->SetText( "| The quick brown fox JUMPS |" );
 			txtBox->SetText( "This widget spans over three rows in the GridLayout" );

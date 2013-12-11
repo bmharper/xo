@@ -18,20 +18,21 @@ void main()
 	float top = box.y + radius;
 	float bottom = box.w - radius;
 	vec2 cent = screenxy;
-	float iradius = radius;
-	if (		screenxy.x < left && screenxy.y < top )		{ cent = vec2(left, top); }
-	else if (	screenxy.x < left && screenxy.y > bottom )	{ cent = vec2(left, bottom); }
-	else if (	screenxy.x > right && screenxy.y < top )	{ cent = vec2(right, top); }
-	else if (	screenxy.x > right && screenxy.y > bottom )	{ cent = vec2(right, bottom); }
-	else iradius = 10.0;
+
+	cent.x = clamp(cent.x, left, right);
+	cent.y = clamp(cent.y, top, bottom);
 
 	// If you draw the pixels out on paper, and take cognisance of the fact that
 	// our samples are at pixel centers, then this -0.5 offset makes perfect sense.
 	// This offset is correct regardless of whether you're blending linearly or in gamma space.
-	float dist = length( screenxy - cent ) - 0.5;
+	// UPDATE: This is more subtle than it seems. By using a 0.5 offset here, and an additional 0.5 offset
+	// that is fed into the shader's "radius" uniform, we effectively get rectangles to be sharp
+	// when they are aligned to an integer grid. I haven't thought this through carefully enough,
+	// but it does feel right.
+	float dist = length(screenxy - cent) - 0.5;
 
 	vec4 outcolor = color;
-	outcolor.a *= clamp(iradius - dist, 0.0, 1.0);
+	outcolor.a *= clamp(radius - dist, 0.0, 1.0);
 
 #ifdef NU_SRGB_FRAMEBUFFER
 	gl_FragColor = outcolor;

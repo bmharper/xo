@@ -17,7 +17,8 @@ protected:
 	nuStringTable*				Strings;
 	fhashset<nuGlyphCacheKey>	GlyphsNeeded;
 
-	void			RenderNode( nuRenderDomEl* node );
+	void			RenderNodeOuter( nuRenderDomEl* node );
+	void			RenderNodeInner( nuRenderDomEl* node );
 	void			RenderTextNode( nuRenderDomEl* node );
 	void			RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRenderTextEl& txtEl );
 	void			RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRenderTextEl& txtEl );

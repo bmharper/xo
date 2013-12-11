@@ -16,7 +16,7 @@ nuRenderResult nuRenderer::Render( nuImageStore* images, nuStringTable* strings,
 	gl->PreRender( width, height );
 
 	// This phase is probably worth parallelizing
-	RenderNode( root );
+	RenderNodeOuter( root );
 	// After RenderNode we are serial again.
 
 	gl->PostRenderCleanup();
@@ -27,7 +27,7 @@ nuRenderResult nuRenderer::Render( nuImageStore* images, nuStringTable* strings,
 	return needGlyphs ? nuRenderResultNeedMore : nuRenderResultIdle;
 }
 
-void nuRenderer::RenderNode( nuRenderDomEl* node )
+void nuRenderer::RenderNodeOuter( nuRenderDomEl* node )
 {
 	if ( node->Text.size() != 0 )
 	{
@@ -35,21 +35,22 @@ void nuRenderer::RenderNode( nuRenderDomEl* node )
 		return;
 	}
 
+	RenderNodeInner( node );
+
+	for ( intp i = 0; i < node->Children.size(); i++ )
+		RenderNodeOuter( node->Children[i] );
+}
+
+void nuRenderer::RenderNodeInner( nuRenderDomEl* node )
+{
+	// always shade rectangles well
+	const bool alwaysGoodRects = true;
+
 	nuStyleRender* style = &node->Style;
 	float bottom = nuPosToReal( node->Pos.Bottom );
 	float top = nuPosToReal( node->Pos.Top );
 	float left = nuPosToReal( node->Pos.Left );
 	float right = nuPosToReal( node->Pos.Right );
-	nuVx_PTC corners[4];
-	corners[0].Pos = NUVEC3(left, top, 0);
-	corners[1].Pos = NUVEC3(left, bottom, 0);
-	corners[2].Pos = NUVEC3(right, bottom, 0);
-	corners[3].Pos = NUVEC3(right, top, 0);
-
-	corners[0].UV = NUVEC2(0, 0);
-	corners[1].UV = NUVEC2(0, 1);
-	corners[2].UV = NUVEC2(1, 1);
-	corners[3].UV = NUVEC2(1, 0);
 
 	float radius = style->BorderRadius;
 
@@ -58,6 +59,29 @@ void nuRenderer::RenderNode( nuRenderDomEl* node )
 	float mindim = min(width, height);
 	mindim = max(mindim, 0.0f);
 	radius = min(radius, mindim / 2);
+
+	if ( mindim <= 0 )
+		return;
+
+	float padU = 0;
+	float padV = 0;
+	float pad = (alwaysGoodRects || radius != 0) ? 1.0f : 0.0f;
+	if ( pad != 0 )
+	{
+		padU = pad / width;
+		padV = pad / height;
+	}
+
+	nuVx_PTC corners[4];
+	corners[0].Pos = NUVEC3(left - pad, top - pad, 0);
+	corners[1].Pos = NUVEC3(left - pad, bottom + pad, 0);
+	corners[2].Pos = NUVEC3(right + pad, bottom + pad, 0);
+	corners[3].Pos = NUVEC3(right + pad, top - pad, 0);
+
+	corners[0].UV = NUVEC2(-padU, -padV);
+	corners[1].UV = NUVEC2(-padU, 1 + padV);
+	corners[2].UV = NUVEC2(1 + padU, 1 + padV);
+	corners[3].UV = NUVEC2(1 + padU, -padV);
 
 	//NUTRACE( "node %f\n", left );
 
@@ -70,11 +94,11 @@ void nuRenderer::RenderNode( nuRenderDomEl* node )
 		for ( int i = 0; i < 4; i++ )
 			corners[i].Color = bg.GetRGBA();
 
-		if ( radius != 0 )
+		if ( alwaysGoodRects || radius != 0 )
 		{
 			GL->ActivateProgram( GL->PRect );
 			glUniform4f( GL->PRect.v_box, left, top, right, bottom );
-			glUniform1f( GL->PRect.v_radius, radius );
+			glUniform1f( GL->PRect.v_radius, radius + 0.5f ); // see the shader for an explanation of this 0.5
 			GL->DrawQuad( corners );
 		}
 		else
@@ -91,11 +115,6 @@ void nuRenderer::RenderNode( nuRenderDomEl* node )
 				GL->DrawQuad( corners );
 			}
 		}
-	}
-
-	for ( intp i = 0; i < node->Children.size(); i++ )
-	{
-		RenderNode( node->Children[i] );
 	}
 }
 
