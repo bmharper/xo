@@ -3,134 +3,12 @@
 #include "nuDocGroup.h"
 #include "nuDoc.h"
 #include "Render/nuRenderGL.h"
-
-void initGLExt();
+#include "Render/nuRenderDirectX.h"
 
 static const char*		WClass = "nuDom";
-static bool				GLIsBooted = false;
 
 #if NU_PLATFORM_ANDROID
 nuSysWnd*				MainWnd = NULL;
-#endif
-
-#if NU_PLATFORM_WIN_DESKTOP
-
-typedef BOOL (*_wglChoosePixelFormatARB) (HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
-
-static void nuBootGL_FillPFD( PIXELFORMATDESCRIPTOR& pfd )
-{
-	const DWORD flags = 0
-		| PFD_DRAW_TO_WINDOW	// support window
-		| PFD_SUPPORT_OPENGL	// support OpenGL 
-		| PFD_DOUBLEBUFFER		// double buffer
-		| 0;
-
-	// Note that this must match the attribs used by wglChoosePixelFormatARB (I find that strange).
-	PIXELFORMATDESCRIPTOR base = { 
-		sizeof(PIXELFORMATDESCRIPTOR),   // size of this pfd 
-		1,                     // version number 
-		flags,
-		PFD_TYPE_RGBA,         // RGBA type 
-		24,                    // color depth 
-		0, 0, 0, 0, 0, 0,      // color bits ignored 
-		0,                     // alpha bits
-		0,                     // shift bit ignored 
-		0,                     // no accumulation buffer 
-		0, 0, 0, 0,            // accum bits ignored 
-		16,                    // z-buffer 
-		0,                     // no stencil buffer 
-		0,                     // no auxiliary buffer 
-		PFD_MAIN_PLANE,        // main layer 
-		0,                     // reserved 
-		0, 0, 0                // layer masks ignored 
-	};
-
-	pfd = base;
-}
-
-static bool nuBootGL( HWND wnd )
-{
-	HDC dc = GetDC( wnd );
-
-	// get the best available match of pixel format for the device context  
-	PIXELFORMATDESCRIPTOR pfd;
-	nuBootGL_FillPFD( pfd );
-	int iPixelFormat = ChoosePixelFormat( dc, &pfd );
-
-	if ( iPixelFormat != 0 )
-	{
-		// make that the pixel format of the device context 
-		BOOL setOK = SetPixelFormat(dc, iPixelFormat, &pfd); 
-		HGLRC rc = wglCreateContext( dc );
-		wglMakeCurrent( dc, rc );
-		initGLExt();
-		GLIsBooted = true;
-		//biggleInit();
-		wglMakeCurrent( NULL, NULL ); 
-		wglDeleteContext( rc );
-	}
-
-	ReleaseDC( wnd, dc );
-
-	return true;
-}
-
-static HGLRC nuInitGL( HWND wnd, nuRenderGL* rgl )
-{
-	if ( !GLIsBooted )
-	{
-		if ( !nuBootGL( wnd ) )
-			return NULL;
-	}
-
-	bool allGood = false;
-	HGLRC rc = NULL;
-	HDC dc = GetDC( wnd );
-	if ( !dc ) return NULL;
-
-	int attribs[] =
-	{
-		WGL_DRAW_TO_WINDOW_ARB,		1,
-		WGL_SUPPORT_OPENGL_ARB,		1,
-		WGL_DOUBLE_BUFFER_ARB,		1,
-		WGL_PIXEL_TYPE_ARB,			WGL_TYPE_RGBA_ARB,
-		WGL_COLOR_BITS_ARB,			24,
-		WGL_ALPHA_BITS_ARB,			0,
-		WGL_DEPTH_BITS_ARB,			16,
-		WGL_STENCIL_BITS_ARB,		0,
-		WGL_SWAP_METHOD_ARB,		WGL_SWAP_EXCHANGE_ARB,	// This was an attempt to lower latency on Windows 8.0, but it seems to have no effect
-		0
-	};
-	PIXELFORMATDESCRIPTOR pfd;
-	nuBootGL_FillPFD( pfd );
-	int formats[20];
-	uint numformats = 0;
-	BOOL chooseOK = wglChoosePixelFormatARB( dc, attribs, NULL, arraysize(formats), formats, &numformats );
-	if ( chooseOK && numformats != 0 )
-	{
-		if ( SetPixelFormat( dc, formats[0], &pfd ) )
-		{
-			rc = wglCreateContext( dc );
-			wglMakeCurrent( dc, rc );
-			allGood = rgl->CreateShaders();
-			wglMakeCurrent( NULL, NULL );
-		}
-		else
-		{
-			NUTRACE( "SetPixelFormat failed: %d\n", GetLastError() );
-		}
-	}
-
-	ReleaseDC( wnd, dc );
-
-	if ( !allGood )
-	{
-		if ( rc ) wglDeleteContext( rc );
-		rc = NULL;
-	}
-
-	return rc;
-}
 #endif
 
 void nuSysWnd::PlatformInitialize()
@@ -160,27 +38,22 @@ nuSysWnd::nuSysWnd()
 {
 #if NU_PLATFORM_WIN_DESKTOP
 	SysWnd = NULL;
-	DC = NULL;
 #elif NU_PLATFORM_ANDROID
 	MainWnd = this;
 #endif
 	DocGroup = new nuDocGroup();
 	DocGroup->Wnd = this;
-	RGL = new nuRenderGL();
+	Renderer = NULL;
 }
 
 nuSysWnd::~nuSysWnd()
 {
 #if NU_PLATFORM_WIN_DESKTOP
-	if ( GLRC )
+	if ( Renderer )
 	{
-		HDC dc = GetDC( SysWnd );
-		wglMakeCurrent( dc, GLRC );
-		RGL->DeleteShadersAndTextures();
-		wglMakeCurrent( NULL, NULL );
-		wglDeleteContext( GLRC );
-		ReleaseDC( SysWnd, dc );
-		GLRC = NULL;
+		Renderer->DestroyDevice( *this );
+		delete Renderer;
+		Renderer = NULL;
 	}
 	DestroyWindow( SysWnd );
 #elif NU_PLATFORM_ANDROID
@@ -188,8 +61,6 @@ nuSysWnd::~nuSysWnd()
 #endif
 	nuGlobal()->DocRemoveQueue.Add( DocGroup );
 	DocGroup = NULL;
-	delete RGL;
-	RGL = NULL;
 }
 
 nuSysWnd* nuSysWnd::Create()
@@ -200,8 +71,7 @@ nuSysWnd* nuSysWnd::Create()
 	w->SysWnd = CreateWindow( WClass, "nuDom", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
 	if ( w->SysWnd )
 	{
-		w->GLRC = nuInitGL( w->SysWnd, w->RGL );
-		if ( w->GLRC )
+		if ( w->InitializeRenderer() )
 		{
 			SetWindowLongPtr( w->SysWnd, GWLP_USERDATA, (LONG_PTR) w->DocGroup );
 			ok = true;
@@ -223,7 +93,8 @@ nuSysWnd* nuSysWnd::Create()
 nuSysWnd* nuSysWnd::CreateWithDoc()
 {
 	nuSysWnd* w = Create();
-	if ( !w ) return NULL;
+	if ( !w )
+		return NULL;
 	w->Attach( new nuDoc(), true );
 	nuGlobal()->DocAddQueue.Add( w->DocGroup );
 	return w;
@@ -249,35 +120,22 @@ void nuSysWnd::Attach( nuDoc* doc, bool destroyDocWithGroup )
 
 bool nuSysWnd::BeginRender()
 {
-#if NU_PLATFORM_WIN_DESKTOP
-	if ( GLRC )
-	{
-		DC = GetDC( SysWnd );
-		if ( DC )
-		{
-			wglMakeCurrent( DC, GLRC );
-			return true;
-		}
-	}
-#endif
-	return true;
+	if ( Renderer )
+		return Renderer->BeginRender( *this );
+	else
+		return false;
 }
 
-void nuSysWnd::FinishRender()
+void nuSysWnd::EndRender()
 {
-#if NU_PLATFORM_WIN_DESKTOP
-	NUTRACE_LATENCY( "SwapBuffers (begin)\n" );
-	SwapBuffers( DC );
-	wglMakeCurrent( NULL, NULL );
-	ReleaseDC( SysWnd, DC );
-	DC = NULL;
-	NUTRACE_LATENCY( "SwapBuffers (done)\n" );
-#endif
+	if ( Renderer )
+		Renderer->EndRender( *this );
 }
 
 void nuSysWnd::SurfaceLost()
 {
-	if ( RGL ) RGL->SurfaceLost();
+	if ( Renderer )
+		Renderer->SurfaceLost();
 }
 
 void nuSysWnd::SetPosition( nuBox box, uint setPosFlags )
@@ -305,4 +163,35 @@ nuBox nuSysWnd::GetRelativeClientRect()
 	nuBox box(0,0,0,0);
 	return box;
 #endif
+}
+
+bool nuSysWnd::InitializeRenderer()
+{
+	if ( nuGlobal()->PreferOpenGL )
+	{
+		if ( InitializeRenderer_Any<nuRenderGL>( Renderer ) )
+			return true;
+		if ( InitializeRenderer_Any<nuRenderDirectX>( Renderer ) )
+			return true;
+	}
+	else
+	{
+		if ( InitializeRenderer_Any<nuRenderDirectX>( Renderer ) )
+			return true;
+		if ( InitializeRenderer_Any<nuRenderGL>( Renderer ) )
+			return true;
+	}
+	return false;
+}
+
+template<typename TRenderer>
+bool nuSysWnd::InitializeRenderer_Any( nuRenderBase*& renderer )
+{
+	renderer = new TRenderer();
+	if ( !renderer->InitializeDevice( *this ) )
+	{
+		delete renderer;
+		renderer = NULL;
+	}
+	return renderer != NULL;
 }

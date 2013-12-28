@@ -13,11 +13,10 @@ public:
 		SetPosition_Size = 2,
 	};
 #if NU_PLATFORM_WIN_DESKTOP
-	HWND			SysWnd;
-	HGLRC			GLRC;
+	HWND				SysWnd;
 #endif
-	nuDocGroup*		DocGroup;
-	nuRenderGL*		RGL;
+	nuDocGroup*			DocGroup;
+	nuRenderBase*		Renderer;
 
 	nuSysWnd();
 	~nuSysWnd();
@@ -30,13 +29,14 @@ public:
 	void	Show();
 	nuDoc*	Doc();
 	bool	BeginRender();				// Basically wglMakeCurrent()
-	void	FinishRender();				// SwapBuffers followed by wglMakeCurrent(NULL)
+	void	EndRender();				// SwapBuffers followed by wglMakeCurrent(NULL)
 	void	SurfaceLost();				// Surface lost, and now regained. Reinitialize GL state (textures, shaders, etc).
 	void	SetPosition( nuBox box, uint setPosFlags );
-	nuBox	GetRelativeClientRect();	// Returns the client rectangle, relative to the non-client window
+	nuBox	GetRelativeClientRect();	// Returns the client rectangle (in screen coordinates), relative to the non-client window
 
 protected:
-#if NU_PLATFORM_WIN_DESKTOP
-	HDC		DC;
-#endif
+	bool	InitializeRenderer();
+
+	template<typename TRenderer>
+	bool	InitializeRenderer_Any( nuRenderBase*& renderer );
 };

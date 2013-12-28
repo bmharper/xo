@@ -32,7 +32,9 @@ const char* nuGLProg_Fill::VertSrc()
 const char* nuGLProg_Fill::FragSrc()
 {
 	return
+"	#ifdef NU_PLATFORM_ANDROID\n"
 "	precision mediump float;\n"
+"	#endif\n"
 "	varying vec4	color;\n"
 "	void main()\n"
 "	{\n"

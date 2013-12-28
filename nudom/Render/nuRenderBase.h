@@ -27,6 +27,7 @@ class NUAPI nuRenderBase
 {
 public:
 					nuRenderBase();
+	virtual			~nuRenderBase();
 
 	void			SurfaceLost_ForgetTextures();
 	bool			IsTextureValid( nuTextureID texID ) const;
@@ -38,6 +39,13 @@ public:
 	void*			GetTextureDeviceID( nuTextureID texID ) const;
 	uint			GetTextureDeviceIDInt( nuTextureID texID ) const	{ return reinterpret_cast<uint>(GetTextureDeviceID( texID )); }
 
+	virtual bool	InitializeDevice( nuSysWnd& wnd ) = 0;	// Initialize this device
+	virtual void	DestroyDevice( nuSysWnd& wnd ) = 0;		// Destroy this device and all associated textures, etc
+	virtual void	SurfaceLost() = 0;
+	
+	virtual bool	BeginRender( nuSysWnd& wnd ) = 0;		// Start of a frame
+	virtual void	EndRender( nuSysWnd& wnd ) = 0;			// Frame is finished. Present it.
+
 	virtual void	LoadTexture( nuTexture* tex, int texUnit ) = 0;
 	virtual void	ReadBackbuffer( nuImage& image ) = 0;
 
@@ -45,6 +53,19 @@ protected:
 	static const nuTextureID	TEX_OFFSET_ONE = 1;	// This constant causes the nuTextureID that we expose to never be zero.
 	nuTextureID					TexIDOffset;
 	podvec<void*>				TexIDToNative;		// Maps from nuTextureID to native device texture (eg. GLuint or ID3D11Texture2D*). We're wasting 4 bytes here on OpenGL.
+};
 
+// This reduces the amount of #ifdef-ing needed
+class NUAPI nuRenderDummy
+{
+public:
+	virtual bool	InitializeDevice( nuSysWnd& wnd );
+	virtual void	DestroyDevice( nuSysWnd& wnd );
+	virtual void	SurfaceLost();
 	
+	virtual bool	BeginRender( nuSysWnd& wnd );
+	virtual void	EndRender( nuSysWnd& wnd );
+
+	virtual void	LoadTexture( nuTexture* tex, int texUnit );
+	virtual void	ReadBackbuffer( nuImage& image );
 };

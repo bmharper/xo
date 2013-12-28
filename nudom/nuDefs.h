@@ -17,7 +17,9 @@ class nuRenderDoc;
 class nuRenderer;
 class nuRenderDomEl;
 struct nuRenderTextEl;
+class nuRenderBase;
 class nuRenderGL;
+class nuRenderDirectX;
 class nuString;
 class nuStringTable;
 class nuStyle;
@@ -283,6 +285,7 @@ struct nuGlobalStruct
 {
 	int							TargetFPS;
 	int							NumWorkerThreads;		// Read-only. Set during nuInitialize().
+	bool						PreferOpenGL;			// Prefer OpenGL over DirectX
 	bool						EnableSubpixelText;		// Enable sub-pixel text rendering. Assumes pixels are the standard RGB layout. Enabled by default on Windows desktop only.
 	bool						EnableSRGBFramebuffer;	// Enable sRGB framebuffer (implies linear blending)
 	//bool						EmulateGammaBlending;	// Only applicable when EnableSRGBFramebuffer = true, this tries to emulate gamma-space blending. You would turn this on to get consistent blending on all devices.

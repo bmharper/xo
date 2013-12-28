@@ -6,6 +6,10 @@ nuRenderBase::nuRenderBase()
 	TexIDOffset = 0;
 }
 
+nuRenderBase::~nuRenderBase()
+{
+}
+
 void nuRenderBase::SurfaceLost_ForgetTextures()
 {
 	TexIDOffset++;
@@ -40,4 +44,31 @@ void* nuRenderBase::GetTextureDeviceID( nuTextureID texID ) const
 		return NULL;
 	}
 	return TexIDToNative[absolute];
+}
+
+
+bool nuRenderDummy::InitializeDevice( nuSysWnd& wnd )
+{
+	return false;
+}
+void nuRenderDummy::DestroyDevice( nuSysWnd& wnd )
+{
+}
+void nuRenderDummy::SurfaceLost()
+{
+}
+	 
+bool nuRenderDummy::BeginRender( nuSysWnd& wnd )
+{
+	return false;
+}
+void nuRenderDummy::EndRender( nuSysWnd& wnd )
+{
+}
+	 
+void nuRenderDummy::LoadTexture( nuTexture* tex, int texUnit )
+{
+}
+void nuRenderDummy::ReadBackbuffer( nuImage& image )
+{
 }

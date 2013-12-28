@@ -39,7 +39,9 @@ const char* nuGLProg_Rect::VertSrc()
 const char* nuGLProg_Rect::FragSrc()
 {
 	return
+"	#ifdef NU_PLATFORM_ANDROID\n"
 "	precision mediump float;\n"
+"	#endif\n"
 "	varying vec4	pos;\n"
 "	varying vec4	color;\n"
 "	uniform float	radius;\n"
@@ -68,11 +70,8 @@ const char* nuGLProg_Rect::FragSrc()
 "		// This offset is correct regardless of whether you're blending linearly or in gamma space.\n"
 "		// UPDATE: This is more subtle than it seems. By using a 0.5 offset here, and an additional 0.5 offset\n"
 "		// that is fed into the shader's \"radius\" uniform, we effectively get rectangles to be sharp\n"
-"		// when they are aligned to an integer grid. This may well be the wrong choice... The right choice\n"
-"		// might instead be to require rectangle coordinates to fall on pixel centers instead, in order to\n"
-"		// achieve sharp edges.\n"
-"		// I don't really like that solution though, because it conflicts with the rendering of text.\n"
-"		// Interesting problem this...\n"
+"		// when they are aligned to an integer grid. I haven't thought this through carefully enough,\n"
+"		// but it does feel right.\n"
 "		float dist = length(screenxy - cent) - 0.5;\n"
 "	\n"
 "		vec4 outcolor = color;\n"

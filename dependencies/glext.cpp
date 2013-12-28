@@ -2,6 +2,7 @@
 PFNGLACTIVETEXTUREPROC glActiveTexture;
 PFNGLATTACHSHADERPROC glAttachShader;
 PFNGLBINDFRAGDATALOCATIONPROC glBindFragDataLocation;
+PFNGLBINDFRAGDATALOCATIONINDEXEDPROC glBindFragDataLocationIndexed;
 PFNGLBLENDFUNCSEPARATEPROC glBlendFuncSeparate;
 PFNGLCOMPILESHADERPROC glCompileShader;
 PFNGLCREATEPROGRAMPROC glCreateProgram;
@@ -30,6 +31,7 @@ void initGLExt() {
 glActiveTexture = (PFNGLACTIVETEXTUREPROC) wglGetProcAddress( "glActiveTexture" );
 glAttachShader = (PFNGLATTACHSHADERPROC) wglGetProcAddress( "glAttachShader" );
 glBindFragDataLocation = (PFNGLBINDFRAGDATALOCATIONPROC) wglGetProcAddress( "glBindFragDataLocation" );
+glBindFragDataLocationIndexed = (PFNGLBINDFRAGDATALOCATIONINDEXEDPROC) wglGetProcAddress( "glBindFragDataLocationIndexed" );
 glBlendFuncSeparate = (PFNGLBLENDFUNCSEPARATEPROC) wglGetProcAddress( "glBlendFuncSeparate" );
 glCompileShader = (PFNGLCOMPILESHADERPROC) wglGetProcAddress( "glCompileShader" );
 glCreateProgram = (PFNGLCREATEPROGRAMPROC) wglGetProcAddress( "glCreateProgram" );

@@ -9,6 +9,7 @@ local winDllCRTRelease = tundra.util.merge_arrays( { "msvcrt.lib", "msvcprt.lib"
 
 local winDebugFilter = "win*-*-debug"
 local winReleaseFilter = "win*-*-release"
+local directxFilter = "win*"
 
 winDllCRTDebug.Config = winDebugFilter
 winDllCRTRelease.Config = winReleaseFilter
@@ -36,6 +37,15 @@ local crt = ExternalLibrary {
 		Libs = {
 			winDllCRTDebug,
 			winDllCRTRelease,
+		},
+	},
+}
+
+local directx = ExternalLibrary {
+	Name = "directx",
+	Propagate = {
+		Libs = {
+			{ "D3D11.lib", "d3dcompiler.lib", { Config = directxFilter } },
 		},
 	},
 }
@@ -114,15 +124,40 @@ local freetype_gl = StaticLibrary {
 }
 --]]
 
+local hlslang = Program {
+	Name = "hlslang",
+	SourceDir = ".",
+	Env = {
+		CXXOPTS = {
+			{ "/wd4267"; Config = "win*" },			-- loss of data
+			{ "/wd4018"; Config = "win*" },			-- signed/unsigned mismatch
+		}
+	},
+	Defines = {
+		"_CRT_SECURE_NO_WARNINGS",
+	},
+	Includes = {
+		"dependencies/hlslang/src/MachineIndependent",
+		{ "dependencies/hlslang/src/OSDependent/Windows"; Config = "win*" },
+	},
+	Depends = { crt, },
+	Sources = {
+		Glob { Extensions = { ".cpp", ".c" }, Dir = "dependencies/hlslang/src/GLSLCodeGen", },
+		Glob { Extensions = { ".cpp", ".c" }, Dir = "dependencies/hlslang/src/MachineIndependent", Recursive = true },
+		{ Glob { Extensions = { ".cpp", ".c" }, Dir = "dependencies/hlslang/src/OSDependent/Windows" }, Config = "win*" },
+		"dependencies/hlslang/src/hlslang.cpp",
+	}
+}
+
 local nudom = SharedLibrary {
 	Name = "nudom",
-	Libs = { "opengl32.lib", "user32.lib", "gdi32.lib", "winmm.lib", "freetype.lib", },
+	Libs = { "opengl32.lib", "user32.lib", "gdi32.lib", "winmm.lib", "freetype.lib" },
 	SourceDir = ".",
 	Includes = {
 		"nudom",
 		"dependencies/freetype/include"
 	},
-	Depends = { crt, freetype, },
+	Depends = { crt, freetype, directx, },
 	PrecompiledHeader = {
 		Source = "nudom/pch.cpp",
 		Header = "pch.h",
@@ -150,6 +185,7 @@ local nudom = SharedLibrary {
 		"nudom/Image/nuImage.cpp",
 		"nudom/Image/nuImageStore.cpp",
 		"nudom/Render/nuRenderBase.cpp",
+		"nudom/Render/nuRenderDirectX.cpp",
 		"nudom/Render/nuRenderer.cpp",
 		"nudom/Render/nuRenderGL.cpp",
 		"nudom/Render/nuRenderGL_Defs.cpp",
@@ -191,6 +227,16 @@ local HelloWorld = Program {
 	Sources = {
 		"templates/nuWinMain.cpp",
 		"samples/HelloWorld/HelloWorld.cpp",
+	}
+}
+
+local DirectXTest = Program {
+	Name = "DirectXTest",
+	Depends = {
+		crt,
+	},
+	Sources = {
+		"experiments/DirectXTest.cpp",
 	}
 }
 

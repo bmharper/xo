@@ -39,7 +39,9 @@ void nuImageTester::SetSize( u32 width, u32 height )
 
 void nuImageTester::TruthImage( const char* filename, std::function<void(nuDomEl& root)> setup )
 {
-	CreateOrVerifyTruthImage( false, filename, setup );
+	// The plan is to have an interactive GUI here someday where you get presented
+	// with the failing image pair, and you can choose whether to mark the new one as "correct".
+	CreateOrVerifyTruthImage( true, filename, setup );
 }
 
 void nuImageTester::VerifyWithImage( const char* filename, std::function<void(nuDomEl& root)> setup )

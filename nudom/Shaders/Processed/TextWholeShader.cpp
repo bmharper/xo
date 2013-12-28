@@ -37,7 +37,9 @@ const char* nuGLProg_TextWhole::VertSrc()
 const char* nuGLProg_TextWhole::FragSrc()
 {
 	return
+"	#ifdef NU_PLATFORM_ANDROID\n"
 "	precision mediump float;\n"
+"	#endif\n"
 "	uniform sampler2D	tex0;\n"
 "	varying vec4		color;\n"
 "	varying vec2		texuv0;\n"

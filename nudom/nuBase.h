@@ -3,6 +3,7 @@
 #ifdef _WIN32
 	#define _CRT_SECURE_NO_WARNINGS 1
 	#include "../dependencies/biggle.h"
+	#include "../dependencies/biggle_additions.h"
 	#ifdef _DEBUG
 		#include <stdlib.h>
 		#include <crtdbg.h>
@@ -23,6 +24,13 @@
 	#include <pthread.h>
 	#include <semaphore.h>
 	#include <math.h>
+#endif
+
+#if NU_BUILD_DIRECTX
+	#include <D3D11.h>
+	#include <d3dcompiler.h>
+	#include <directxmath.h>
+	#include <directxcolors.h>
 #endif
 
 #include <stdio.h>

@@ -2,6 +2,7 @@ funcs = %w(
 glActiveTexture
 glAttachShader
 glBindFragDataLocation
+glBindFragDataLocationIndexed
 glBlendFuncSeparate
 glCompileShader
 glCreateProgram

@@ -13,6 +13,11 @@
 class NUAPI nuRenderGL : public nuRenderBase
 {
 public:
+#if NU_PLATFORM_WIN_DESKTOP
+	HGLRC				GLRC;
+	HDC					DC;			// Valid between BeginFrame() and EndFrame()
+#endif
+
 	nuGLProg_Rect		PRect;
 	nuGLProg_Fill		PFill;
 	nuGLProg_FillTex	PFillTex;
@@ -24,18 +29,23 @@ public:
 
 					nuRenderGL();
 					~nuRenderGL();
+
 	bool			CreateShaders();
 	void			DeleteShadersAndTextures();
-	void			SurfaceLost();
 	void			ActivateProgram( nuGLProg& p );
 	void			PreRender( int fbwidth, int fbheight );
 	void			PostRenderCleanup();
 	void			DrawQuad( const void* v );
 	void			DrawTriangles( int nvert, const void* v, const uint16* indices );
-	//void			LoadTexture( const nuImage* img );
-	//void			LoadTextureAtlas( const nuTextureAtlas* atlas );
 	
 	// Implementation of nuRenderBase
+	virtual bool	InitializeDevice( nuSysWnd& wnd );
+	virtual void	DestroyDevice( nuSysWnd& wnd );
+	virtual void	SurfaceLost();
+
+	virtual bool	BeginRender( nuSysWnd& wnd );		// Gets DC and does a MakeCurrent
+	virtual void	EndRender( nuSysWnd& wnd );			// Releases DC and does a SwapBuffers
+
 	virtual void	LoadTexture( nuTexture* tex, int texUnit );
 	virtual void	ReadBackbuffer( nuImage& image );
 
@@ -47,6 +57,7 @@ protected:
 	std::string		BaseShader;
 	bool			Have_Unpack_RowLength;
 	bool			Have_sRGB_Framebuffer;
+	bool			Have_BlendFuncExtended;
 
 	void			PreparePreprocessor();
 	void			DeleteProgram( nuGLProg& prog );

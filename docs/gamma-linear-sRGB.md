@@ -24,7 +24,10 @@ your shader), and extensions such as ARB_framebuffer_sRGB, which
 perform non-linear scaling from your [0..1] shader outputs back
 into sRGB [0..255]. Another critical aspect of the ARB_framebuffer_sRGB
 extension is that it performs blending in linear space, before
-converting to sRGB.
+converting to sRGB. This means that the blender will read from the
+framebuffer, convert that from sRGB to linear, then perform the blend
+with your linear output, convert the result back into sRGB, and write
+that result into the sRGB framebuffer.
 
 So what does nuDom do with this? Where possible, we use an sRGB
 framebuffer, because linear blending yields better results. You
@@ -34,7 +37,7 @@ in order to get consistently good results, linear blending is the
 only way.
 
 Where an sRGB framebuffer is not available (Galaxy S3, i.e. Mali400),
-then we simply blend non-linearly.
+then we simply blend in gamma space.
 
 All vertex color inputs are non-premultiplied sRGB. The alpha, however,
 is linear. This is consistent with what Freetype produces, or indeed

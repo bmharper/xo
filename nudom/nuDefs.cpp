@@ -175,7 +175,8 @@ NUAPI nuGlobalStruct* nuGlobal()
 NUAPI void nuInitialize()
 {
 	InitializeCount++;
-	if ( InitializeCount != 1 ) return;
+	if ( InitializeCount != 1 )
+		return;
 
 	AbcMachineInformation minf;
 	AbcMachineInformationGet( minf );
@@ -183,6 +184,7 @@ NUAPI void nuInitialize()
 	nuGlobals = new nuGlobalStruct();
 	nuGlobals->TargetFPS = 60;
 	nuGlobals->NumWorkerThreads = min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
+	nuGlobals->PreferOpenGL = true;
 	//nuGlobals->SubPixelTextGamma = 0.6f; // 0.5 is good for sRGB framebuffer
 	// Ah....... Freetype's output is linear, so if treat our freetype texture as GL_LUMINANCE
 	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get prefect results without
@@ -190,6 +192,7 @@ NUAPI void nuInitialize()
 	nuGlobals->SubPixelTextGamma = 1.0f;
 	nuGlobals->WholePixelTextGamma = 1.0f;
 #if NU_PLATFORM_WIN_DESKTOP
+	//nuGlobals->EnableSubpixelText = true;
 	nuGlobals->EnableSubpixelText = true;
 	nuGlobals->EnableSRGBFramebuffer = true;
 	//nuGlobals->EmulateGammaBlending = true;
@@ -270,7 +273,7 @@ NUAPI nuStyle** nuDefaultTagStyles()
 
 NUAPI void nuParseFail( const char* msg, ... )
 {
-	char buff[1024] = "";
+	char buff[4096] = "";
 	va_list va;
 	va_start( va, msg );
 	uint r = vsnprintf( buff, arraysize(buff), msg, va );
@@ -281,7 +284,7 @@ NUAPI void nuParseFail( const char* msg, ... )
 
 NUAPI void NUTRACE( const char* msg, ... )
 {
-	char buff[1024] = "";
+	char buff[4096] = "";
 	va_list va;
 	va_start( va, msg );
 	uint r = vsnprintf( buff, arraysize(buff), msg, va );
@@ -293,7 +296,7 @@ NUAPI void NUTRACE( const char* msg, ... )
 NUAPI void NUTIME( const char* msg, ... )
 {
 	const int timeChars = 16;
-	char buff[1024] = "";
+	char buff[4096] = "";
 	sprintf( buff, "%-15.3f  ", AbcTimeAccurateRTSeconds() * 1000 );
 	va_list va;
 	va_start( va, msg );

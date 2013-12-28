@@ -97,13 +97,13 @@ nuRenderResult nuDocGroup::RenderInternal( nuImage* targetImage )
 		}
 
 		//NUTIME( "Render DO\n" );
-		rendResult = RenderDoc->Render( Wnd->RGL );
+		rendResult = RenderDoc->Render( static_cast<nuRenderGL*>(Wnd->Renderer) );
 
 		if ( targetImage != NULL )
-			Wnd->RGL->ReadBackbuffer( *targetImage );
+			Wnd->Renderer->ReadBackbuffer( *targetImage );
 
 		//NUTIME( "Render Finish\n" );
-		Wnd->FinishRender();
+		Wnd->EndRender();
 	}
 
 	return rendResult;

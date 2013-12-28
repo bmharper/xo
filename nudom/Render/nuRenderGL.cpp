@@ -3,6 +3,11 @@
 #include "../Image/nuImage.h"
 #include "nuTextureAtlas.h"
 #include "../Text/nuGlyphCache.h"
+#include "../nuSysWnd.h"
+
+void initGLExt();
+
+static bool GLIsBooted = false;
 
 #ifndef GL_FRAMEBUFFER_SRGB
 #define GL_FRAMEBUFFER_SRGB                 0x8DB9
@@ -25,8 +30,13 @@
 
 nuRenderGL::nuRenderGL()
 {
+#if NU_PLATFORM_WIN_DESKTOP
+	GLRC = NULL;
+	DC = NULL;
+#endif
 	Have_Unpack_RowLength = false;
 	Have_sRGB_Framebuffer = false;
+	Have_BlendFuncExtended = false;
 	AllProgs[0] = &PRect;
 	AllProgs[1] = &PFill;
 	AllProgs[2] = &PFillTex;
@@ -47,6 +57,129 @@ void nuRenderGL::Reset()
 		AllProgs[i]->Reset();
 	memset( BoundTextures, 0, sizeof(BoundTextures) );
 }
+
+#if NU_PLATFORM_WIN_DESKTOP
+
+typedef BOOL (*_wglChoosePixelFormatARB) (HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
+
+static void nuBootGL_FillPFD( PIXELFORMATDESCRIPTOR& pfd )
+{
+	const DWORD flags = 0
+		| PFD_DRAW_TO_WINDOW	// support window
+		| PFD_SUPPORT_OPENGL	// support OpenGL 
+		| PFD_DOUBLEBUFFER		// double buffer
+		| 0;
+
+	// Note that this must match the attribs used by wglChoosePixelFormatARB (I find that strange).
+	PIXELFORMATDESCRIPTOR base = { 
+		sizeof(PIXELFORMATDESCRIPTOR),   // size of this pfd 
+		1,                     // version number 
+		flags,
+		PFD_TYPE_RGBA,         // RGBA type 
+		24,                    // color depth 
+		0, 0, 0, 0, 0, 0,      // color bits ignored 
+		0,                     // alpha bits
+		0,                     // shift bit ignored 
+		0,                     // no accumulation buffer 
+		0, 0, 0, 0,            // accum bits ignored 
+		16,                    // z-buffer 
+		0,                     // no stencil buffer 
+		0,                     // no auxiliary buffer 
+		PFD_MAIN_PLANE,        // main layer 
+		0,                     // reserved 
+		0, 0, 0                // layer masks ignored 
+	};
+
+	pfd = base;
+}
+
+static bool nuBootGL( HWND wnd )
+{
+	HDC dc = GetDC( wnd );
+
+	// get the best available match of pixel format for the device context  
+	PIXELFORMATDESCRIPTOR pfd;
+	nuBootGL_FillPFD( pfd );
+	int iPixelFormat = ChoosePixelFormat( dc, &pfd );
+
+	if ( iPixelFormat != 0 )
+	{
+		// make that the pixel format of the device context 
+		BOOL setOK = SetPixelFormat(dc, iPixelFormat, &pfd); 
+		HGLRC rc = wglCreateContext( dc );
+		wglMakeCurrent( dc, rc );
+		initGLExt();
+		GLIsBooted = true;
+		//biggleInit();
+		wglMakeCurrent( NULL, NULL ); 
+		wglDeleteContext( rc );
+	}
+
+	ReleaseDC( wnd, dc );
+
+	return true;
+}
+
+bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
+{
+	if ( !GLIsBooted )
+	{
+		if ( !nuBootGL( wnd.SysWnd ) )
+			return false;
+	}
+
+	bool allGood = false;
+	HGLRC rc = NULL;
+	HDC dc = GetDC( wnd.SysWnd );
+	if ( !dc )
+		return false;
+
+	int attribs[] =
+	{
+		WGL_DRAW_TO_WINDOW_ARB,		1,
+		WGL_SUPPORT_OPENGL_ARB,		1,
+		WGL_DOUBLE_BUFFER_ARB,		1,
+		WGL_PIXEL_TYPE_ARB,			WGL_TYPE_RGBA_ARB,
+		WGL_COLOR_BITS_ARB,			24,
+		WGL_ALPHA_BITS_ARB,			0,
+		WGL_DEPTH_BITS_ARB,			16,
+		WGL_STENCIL_BITS_ARB,		0,
+		WGL_SWAP_METHOD_ARB,		WGL_SWAP_EXCHANGE_ARB,	// This was an attempt to lower latency on Windows 8.0, but it seems to have no effect
+		0
+	};
+	PIXELFORMATDESCRIPTOR pfd;
+	nuBootGL_FillPFD( pfd );
+	int formats[20];
+	uint numformats = 0;
+	BOOL chooseOK = wglChoosePixelFormatARB( dc, attribs, NULL, arraysize(formats), formats, &numformats );
+	if ( chooseOK && numformats != 0 )
+	{
+		if ( SetPixelFormat( dc, formats[0], &pfd ) )
+		{
+			rc = wglCreateContext( dc );
+			wglMakeCurrent( dc, rc );
+			allGood = CreateShaders();
+			wglMakeCurrent( NULL, NULL );
+		}
+		else
+		{
+			NUTRACE( "SetPixelFormat failed: %d\n", GetLastError() );
+		}
+	}
+
+	ReleaseDC( wnd.SysWnd, dc );
+
+	if ( !allGood )
+	{
+		if ( rc )
+			wglDeleteContext( rc );
+		rc = NULL;
+	}
+
+	GLRC = rc;
+	return GLRC != NULL;
+}
+#endif
 
 void nuRenderGL::CheckExtensions()
 {
@@ -79,9 +212,9 @@ void nuRenderGL::CheckExtensions()
 
 	if ( strstr(ver, "OpenGL ES") )
 	{
+		NUTRACE( "OpenGL ES\n" );
 		Have_Unpack_RowLength = version >= 30 || hasExtension( "GL_EXT_unpack_subimage" );
 		Have_sRGB_Framebuffer = version >= 30 || hasExtension( "GL_EXT_sRGB" );
-		NUTRACE( "OpenGL ES (UNPACK_SUBIMAGE=%d, sRGB_FrameBuffer=%d)\n", Have_Unpack_RowLength ? 1 : 0, Have_sRGB_Framebuffer ? 1 : 0 );
 	}
 	else
 	{
@@ -89,6 +222,16 @@ void nuRenderGL::CheckExtensions()
 		Have_Unpack_RowLength = true;
 		Have_sRGB_Framebuffer = version >= 40 || hasExtension( "ARB_framebuffer_sRGB" ) || hasExtension( "GL_EXT_framebuffer_sRGB" );
 	}
+
+	Have_BlendFuncExtended = hasExtension( "GL_ARB_blend_func_extended" );
+	NUTRACE( "OpenGL ES ("
+		"UNPACK_SUBIMAGE=%d, "
+		"sRGB_FrameBuffer=%d, "
+		"blend_func_extended=%d"
+		")\n",
+		Have_Unpack_RowLength ? 1 : 0,
+		Have_sRGB_Framebuffer ? 1 : 0,
+		Have_BlendFuncExtended ? 1 : 0);
 }
 
 bool nuRenderGL::CreateShaders()
@@ -103,8 +246,10 @@ bool nuRenderGL::CreateShaders()
 	{
 		if ( AllProgs[i]->UseOnThisPlatform() )
 		{
-			if ( !LoadProgram( *AllProgs[i] ) ) return false;
-			if ( !AllProgs[i]->LoadVariablePositions() ) return false;
+			if ( !LoadProgram( *AllProgs[i] ) )
+				return false;
+			if ( !AllProgs[i]->LoadVariablePositions() )
+				return false;
 		}
 	}
 	
@@ -133,13 +278,6 @@ void nuRenderGL::DeleteShadersAndTextures()
 		DeleteProgram( *AllProgs[i] );
 }
 
-void nuRenderGL::SurfaceLost()
-{
-	Reset();
-	SurfaceLost_ForgetTextures();
-	CreateShaders();
-}
-
 void nuRenderGL::ActivateProgram( nuGLProg& p )
 {
 	if ( ActiveProgram == &p )
@@ -159,6 +297,58 @@ void nuRenderGL::ActivateProgram( nuGLProg& p )
 		//glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );			// this is premultiplied
 	}
 	Check();
+}
+
+void nuRenderGL::DestroyDevice( nuSysWnd& wnd )
+{
+	if ( GLRC != NULL )
+	{
+		DC = GetDC( wnd.SysWnd );
+		wglMakeCurrent( DC, GLRC );
+		DeleteShadersAndTextures();
+		wglMakeCurrent( NULL, NULL );
+		wglDeleteContext( GLRC );
+		ReleaseDC( wnd.SysWnd, DC );
+		DC = NULL;
+		GLRC = NULL;
+	}
+}
+
+void nuRenderGL::SurfaceLost()
+{
+	Reset();
+	SurfaceLost_ForgetTextures();
+	CreateShaders();
+}
+
+bool nuRenderGL::BeginRender( nuSysWnd& wnd )
+{
+#if NU_PLATFORM_WIN_DESKTOP
+	if ( GLRC )
+	{
+		DC = GetDC( wnd.SysWnd );
+		if ( DC )
+		{
+			wglMakeCurrent( DC, GLRC );
+			return true;
+		}
+	}
+	return false;
+#else
+	return true;
+#endif
+}
+
+void nuRenderGL::EndRender( nuSysWnd& wnd )
+{
+#if NU_PLATFORM_WIN_DESKTOP
+	NUTRACE_LATENCY( "SwapBuffers (begin)\n" );
+	SwapBuffers( DC );
+	wglMakeCurrent( NULL, NULL );
+	ReleaseDC( wnd.SysWnd, DC );
+	DC = NULL;
+	NUTRACE_LATENCY( "SwapBuffers (done)\n" );
+#endif
 }
 
 void nuRenderGL::Ortho( nuMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar )
@@ -444,53 +634,6 @@ void nuRenderGL::ReadBackbuffer( nuImage& image )
 		glPixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
 }
 
-/*
-void nuRenderGL::LoadTexture( const nuImage* img )
-{
-	if ( SingleTex2D == 0 )
-		glGenTextures( 1, &SingleTex2D );
-	glActiveTexture( GL_TEXTURE0 );
-	glBindTexture( GL_TEXTURE_2D, SingleTex2D );
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, img->GetWidth(), img->GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, img->GetData() );
-	glGenerateMipmap( GL_TEXTURE_2D );
-}
-
-void nuRenderGL::LoadTextureAtlas( const nuTextureAtlas* atlas )
-{
-	if ( atlas == BoundToTex0 )
-		return;
-
-	if ( SingleTexAtlas2D == 0 )
-		glGenTextures( 1, &SingleTexAtlas2D );
-	glActiveTexture( GL_TEXTURE0 );
-	glBindTexture( GL_TEXTURE_2D, SingleTexAtlas2D );
-
-#if NU_PLATFORM_WIN_DESKTOP
-	//int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_SLUMINANCE8 : GL_RGB;
-	int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
-	int format = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
-#else
-	int internalFormat = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
-	int format = atlas->GetBytesPerTexel() == 1 ? GL_LUMINANCE : GL_RGB;
-#endif
-	glTexImage2D( GL_TEXTURE_2D, 0, internalFormat, atlas->GetWidth(), atlas->GetHeight(), 0, format, GL_UNSIGNED_BYTE, atlas->DataAt(0,0) );
-	// all assuming this is for a glyph atlas
-	//glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-	//glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	// Clamping should have no effect for RGB text, since we clamp inside our fragment shader.
-	// Also, when rendering 'whole pixel' glyphs, we shouldn't need clamping either, because
-	// our UV coordinates are exact, and we always have a 1:1 texel:pixel ratio.
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
-	//glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-	//glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-	// not necessary for text where we sample NN
-	//glGenerateMipmap( GL_TEXTURE_2D );
-}
-*/
-
 void nuRenderGL::PreparePreprocessor()
 {
 	if ( BaseShader.size() != 0 )
@@ -548,6 +691,8 @@ bool nuRenderGL::LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, cons
 {
 	NUASSERT(glGetError() == GL_NO_ERROR);
 
+	bool isTextRGB = strcmp(name, "TextRGB") == 0;
+
 	if ( !LoadShader( GL_VERTEX_SHADER, vshade, name, vsrc ) ) return false;
 	if ( !LoadShader( GL_FRAGMENT_SHADER, fshade, name, fsrc ) ) return false;
 
@@ -555,6 +700,12 @@ bool nuRenderGL::LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, cons
 
 	glAttachShader( prog, vshade );
 	glAttachShader( prog, fshade );
+	if ( isTextRGB )
+	{
+		// NOTE: The following DOES WORK. It is unnecessary however, on the NVidia hardware that I have tested on.
+		//glBindFragDataLocationIndexed( prog, 0, 0, "outputColor0" );
+		//glBindFragDataLocationIndexed( prog, 0, 1, "outputColor1" );
+	}
 	glLinkProgram( prog );
 
 	int ilen;
@@ -570,10 +721,10 @@ bool nuRenderGL::LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, cons
 		NUTRACE( ibuff );
 		NUTRACE( "\n" );
 	}
-	if ( linkStat == 0 ) 
-		return false;
-
-	return glGetError() == GL_NO_ERROR;
+	bool ok = linkStat != 0 && glGetError() == GL_NO_ERROR;
+	if ( !ok )
+		NUTRACE( "Failed to load shader %s: glGetError = %d, linkStat = %d\n", name, glGetError(), linkStat );
+	return ok;
 }
 
 bool nuRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* name, const char* raw_src )

@@ -1,6 +1,13 @@
 #pragma once
 
 #define PROJECT_NUDOM 1
+
+#ifdef _WIN32
+	#define NU_BUILD_DIRECTX 1
+#else
+	#define NU_BUILD_DIRECTX 0
+#endif
+
 #include "nuApiDecl.h"
 
 #include "nuBase.h"
