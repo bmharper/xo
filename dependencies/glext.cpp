@@ -23,10 +23,12 @@ PFNGLUNIFORM1FPROC glUniform1f;
 PFNGLUNIFORM1IPROC glUniform1i;
 PFNGLUNIFORM2FPROC glUniform2f;
 PFNGLUNIFORM4FPROC glUniform4f;
+PFNGLUNIFORM4FVPROC glUniform4fv;
 PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 PFNGLUSEPROGRAMPROC glUseProgram;
 PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
 PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
+PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 void initGLExt() {
 glActiveTexture = (PFNGLACTIVETEXTUREPROC) wglGetProcAddress( "glActiveTexture" );
 glAttachShader = (PFNGLATTACHSHADERPROC) wglGetProcAddress( "glAttachShader" );
@@ -52,8 +54,10 @@ glUniform1f = (PFNGLUNIFORM1FPROC) wglGetProcAddress( "glUniform1f" );
 glUniform1i = (PFNGLUNIFORM1IPROC) wglGetProcAddress( "glUniform1i" );
 glUniform2f = (PFNGLUNIFORM2FPROC) wglGetProcAddress( "glUniform2f" );
 glUniform4f = (PFNGLUNIFORM4FPROC) wglGetProcAddress( "glUniform4f" );
+glUniform4fv = (PFNGLUNIFORM4FVPROC) wglGetProcAddress( "glUniform4fv" );
 glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC) wglGetProcAddress( "glUniformMatrix4fv" );
 glUseProgram = (PFNGLUSEPROGRAMPROC) wglGetProcAddress( "glUseProgram" );
 glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC) wglGetProcAddress( "glVertexAttribPointer" );
 wglChoosePixelFormatARB = (PFNWGLCHOOSEPIXELFORMATARBPROC) wglGetProcAddress( "wglChoosePixelFormatARB" );
+wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC) wglGetProcAddress( "wglSwapIntervalEXT" );
 }

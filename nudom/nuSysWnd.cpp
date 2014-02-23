@@ -3,7 +3,7 @@
 #include "nuDocGroup.h"
 #include "nuDoc.h"
 #include "Render/nuRenderGL.h"
-#include "Render/nuRenderDirectX.h"
+#include "Render/nuRenderDX.h"
 
 static const char*		WClass = "nuDom";
 
@@ -68,14 +68,12 @@ nuSysWnd* nuSysWnd::Create()
 #if NU_PLATFORM_WIN_DESKTOP
 	bool ok = false;
 	nuSysWnd* w = new nuSysWnd();
-	w->SysWnd = CreateWindow( WClass, "nuDom", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), NULL);
+	NUTRACE("DocGroup = %p\n", w->DocGroup);
+	w->SysWnd = CreateWindow( WClass, "nuDom", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup );
 	if ( w->SysWnd )
 	{
 		if ( w->InitializeRenderer() )
-		{
-			SetWindowLongPtr( w->SysWnd, GWLP_USERDATA, (LONG_PTR) w->DocGroup );
 			ok = true;
-		}
 	}
 	if ( !ok )
 	{
@@ -171,12 +169,12 @@ bool nuSysWnd::InitializeRenderer()
 	{
 		if ( InitializeRenderer_Any<nuRenderGL>( Renderer ) )
 			return true;
-		if ( InitializeRenderer_Any<nuRenderDirectX>( Renderer ) )
+		if ( InitializeRenderer_Any<nuRenderDX>( Renderer ) )
 			return true;
 	}
 	else
 	{
-		if ( InitializeRenderer_Any<nuRenderDirectX>( Renderer ) )
+		if ( InitializeRenderer_Any<nuRenderDX>( Renderer ) )
 			return true;
 		if ( InitializeRenderer_Any<nuRenderGL>( Renderer ) )
 			return true;

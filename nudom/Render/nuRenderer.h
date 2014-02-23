@@ -9,10 +9,10 @@ Any state that is persisted between renderings is stored in nuRenderGL.
 class NUAPI nuRenderer
 {
 public:
-	nuRenderResult	Render( nuImageStore* images, nuStringTable* strings, nuRenderGL* gl, nuRenderDomEl* root, int width, int height );
+	nuRenderResult	Render( nuImageStore* images, nuStringTable* strings, nuRenderBase* driver, nuRenderDomEl* root, int width, int height );
 
 protected:
-	nuRenderGL*					GL;
+	nuRenderBase*				Driver;
 	nuImageStore*				Images;
 	nuStringTable*				Strings;
 	fhashset<nuGlyphCacheKey>	GlyphsNeeded;

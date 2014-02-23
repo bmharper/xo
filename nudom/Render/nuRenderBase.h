@@ -2,6 +2,22 @@
 
 #include "../nuDefs.h"
 
+struct nuShaderPerFrame
+{
+	nuMat4f		MVProj;
+	nuVec2f		VPort_HSize;
+	float		Padding[2];
+};
+static_assert( (sizeof(nuShaderPerFrame) & 15) == 0, "nuShaderPerFrame size must be a multiple of 16 bytes (This is a DirectX constant buffer requirement)" );
+
+struct nuShaderPerObject
+{
+	nuVec4f		Box;
+	float		Radius;
+	float		Padding[3];
+};
+static_assert( (sizeof(nuShaderPerObject) & 15) == 0, "nuShaderPerFrame size must be a multiple of 16 bytes (This is a DirectX constant buffer requirement)" );
+
 /* Base class of device-specific renderer (such as GL or DX).
 
 Texture IDs
@@ -26,28 +42,42 @@ calamity becomes impossible.
 class NUAPI nuRenderBase
 {
 public:
+	nuShaderPerFrame		ShaderPerFrame;
+	nuShaderPerObject		ShaderPerObject;
+
 					nuRenderBase();
 	virtual			~nuRenderBase();
 
+	// Setup a matrix equivalent to glOrtho. The matrix 'imat' is multiplied by the ortho matrix.
+	void			Ortho( nuMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar );
+
 	void			SurfaceLost_ForgetTextures();
 	bool			IsTextureValid( nuTextureID texID ) const;
-	nuTextureID		FirstTextureID() const						{ return TexIDOffset + TEX_OFFSET_ONE; }
+	nuTextureID		FirstTextureID() const								{ return TexIDOffset + TEX_OFFSET_ONE; }
 
-	// Register a new texture. There no "unregister".
+	// Register a new texture. There is no "unregister".
 	nuTextureID		RegisterTexture( void* deviceTexID );
 	nuTextureID		RegisterTextureInt( uint deviceTexID )				{ return RegisterTexture( reinterpret_cast<void*>(deviceTexID) );  }
 	void*			GetTextureDeviceID( nuTextureID texID ) const;
 	uint			GetTextureDeviceIDInt( nuTextureID texID ) const	{ return reinterpret_cast<uint>(GetTextureDeviceID( texID )); }
 
-	virtual bool	InitializeDevice( nuSysWnd& wnd ) = 0;	// Initialize this device
-	virtual void	DestroyDevice( nuSysWnd& wnd ) = 0;		// Destroy this device and all associated textures, etc
-	virtual void	SurfaceLost() = 0;
+	virtual bool		InitializeDevice( nuSysWnd& wnd ) = 0;	// Initialize this device
+	virtual void		DestroyDevice( nuSysWnd& wnd ) = 0;		// Destroy this device and all associated textures, etc
+	virtual void		SurfaceLost() = 0;
 	
-	virtual bool	BeginRender( nuSysWnd& wnd ) = 0;		// Start of a frame
-	virtual void	EndRender( nuSysWnd& wnd ) = 0;			// Frame is finished. Present it.
+	virtual bool		BeginRender( nuSysWnd& wnd ) = 0;		// Start of a frame
+	virtual void		EndRender( nuSysWnd& wnd ) = 0;			// Frame is finished. Present it.
 
-	virtual void	LoadTexture( nuTexture* tex, int texUnit ) = 0;
-	virtual void	ReadBackbuffer( nuImage& image ) = 0;
+	virtual void		PreRender() = 0;
+	virtual void		PostRenderCleanup() = 0;
+
+	virtual nuProgBase* GetShader( nuShaders shader ) = 0;
+	virtual void		ActivateShader( nuShaders shader ) = 0;
+
+	virtual void		DrawQuad( const void* v ) = 0;
+
+	virtual void		LoadTexture( nuTexture* tex, int texUnit ) = 0;
+	virtual void		ReadBackbuffer( nuImage& image ) = 0;
 
 protected:
 	static const nuTextureID	TEX_OFFSET_ONE = 1;	// This constant causes the nuTextureID that we expose to never be zero.
@@ -55,17 +85,45 @@ protected:
 	podvec<void*>				TexIDToNative;		// Maps from nuTextureID to native device texture (eg. GLuint or ID3D11Texture2D*). We're wasting 4 bytes here on OpenGL.
 };
 
-// This reduces the amount of #ifdef-ing needed
+// This reduces the amount of #ifdef-ing needed, so that on non-Windows platforms
+// we can still have a nuRenderDX class defined.
 class NUAPI nuRenderDummy
 {
 public:
-	virtual bool	InitializeDevice( nuSysWnd& wnd );
-	virtual void	DestroyDevice( nuSysWnd& wnd );
-	virtual void	SurfaceLost();
+	virtual bool		InitializeDevice( nuSysWnd& wnd );
+	virtual void		DestroyDevice( nuSysWnd& wnd );
+	virtual void		SurfaceLost();
 	
-	virtual bool	BeginRender( nuSysWnd& wnd );
-	virtual void	EndRender( nuSysWnd& wnd );
+	virtual bool		BeginRender( nuSysWnd& wnd );
+	virtual void		EndRender( nuSysWnd& wnd );
 
-	virtual void	LoadTexture( nuTexture* tex, int texUnit );
-	virtual void	ReadBackbuffer( nuImage& image );
+	virtual void		PreRender();
+	virtual void		PostRenderCleanup();
+
+	virtual nuProgBase* GetShader( nuShaders shader );
+	virtual void		ActivateShader( nuShaders shader );
+
+	virtual void		DrawQuad( const void* v );
+
+	virtual void		LoadTexture( nuTexture* tex, int texUnit );
+	virtual void		ReadBackbuffer( nuImage& image );
+};
+
+// Position, UV, Color
+struct NUAPI nuVx_PTC
+{
+	// Note that nuRenderGL::DrawQuad assumes that we share our base layout with nuVx_PTCV4
+	nuVec3f		Pos;
+	nuVec2f		UV;
+	uint32		Color;
+};
+
+// Position, UV, Color, Vec4
+struct NUAPI nuVx_PTCV4
+{
+	// Note that nuRenderGL::DrawQuad assumes that we share our base layout with nuVx_PTC
+	nuVec3f		Pos;
+	nuVec2f		UV;
+	uint32		Color;
+	nuVec4f		V4;
 };

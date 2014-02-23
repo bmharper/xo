@@ -23,10 +23,12 @@ glUniform1f
 glUniform1i
 glUniform2f
 glUniform4f
+glUniform4fv
 glUniformMatrix4fv
 glUseProgram
 glVertexAttribPointer
 wglChoosePixelFormatARB
+wglSwapIntervalEXT
 )
 
 out = ""

@@ -168,9 +168,9 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 	NUTRACE_LAYOUT( "Layout (%d) Run txt.1\n", node.GetInternalID() );
 
 #if NU_PLATFORM_WIN_DESKTOP
-	const char* zfont = "Trebuchet MS";
+	//const char* zfont = "Trebuchet MS";
 	//const char* zfont = "Microsoft Sans Serif";
-	//const char* zfont = "Consolas";
+	const char* zfont = "Consolas";
 	//const char* zfont = "Times New Roman";
 	//const char* zfont = "Verdana";
 	//const char* zfont = "Tahoma";
@@ -190,7 +190,7 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 
 	nuGlyphCache* glyphCache = nuGlobal()->GlyphCache;
 
-	float fontSizePx = 11;
+	float fontSizePx = 12;
 	
 	// round font size to integer units
 	rnode->Style.FontSizePx = (uint8) nuRound( fontSizePx );

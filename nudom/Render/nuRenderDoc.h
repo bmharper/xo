@@ -22,7 +22,7 @@ public:
 			nuRenderDoc();
 			~nuRenderDoc();
 
-	nuRenderResult	Render( nuRenderGL* rgl );
+	nuRenderResult	Render( nuRenderBase* driver );
 	void			CopyFromCanonical( const nuDoc& canonical, nuRenderStats& stats );
 	nuInternalID	FindElement( nuPoint pos );
 

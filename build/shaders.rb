@@ -11,51 +11,15 @@ Eventually I'd like to incorporate this into the tundra build.
 
 =end
 
-def name_from_glsl(glsl, include_vert_or_frag = true)
-	if glsl =~ /\/(\w+)Vert\.glsl/
-		return $1 + (include_vert_or_frag ? "_" + "Vert" : "")
-	end
-	if glsl =~ /\/(\w+)Frag\.glsl/
-		return $1 + (include_vert_or_frag ? "_" + "Frag" : "")
-	end
-	raise "Do not understand how to name the shader #{glsl}"
-end
-
-# This is no longer used
-def gen_cpp(glsl)
-	name = name_from_glsl(glsl)
-	File.open(glsl.sub(".glsl", ".cpp"), "w") { |cpp|
-		cpp << "\#include \"pch.h\"\n"
-		cpp << "const char* NU_SHADER_#{name.upcase} = \n"
-		File.open(glsl) { |src|
-			src.each_line { |line|
-				cpp << "\"" + line.rstrip + "\\n\"\n"
-			}
-		}
-		cpp << ";"
-		cpp << "\n"
-	}
-end
-
-# This is no longer used
-def gen_h(glsl)
-	name = name_from_glsl(glsl)
-	File.open(glsl.sub(".glsl", ".h"), "w") { |doth|
-		doth << "\#pragma once\n"
-		doth << "static const char* NU_SHADER_#{name.upcase};\n"
-		doth << "\n"
-	}
-end
-
 CombinedBaseH = <<-END
 #pragma once
 
-#include "../../Render/nuRenderGL_Defs.h"
+#include "../../Render/nuRenderGLDX_Defs.h"
 
-class nuGLProg_NAME : public nuGLProg
+class nuGLDXProg_NAME : public nuGLDXProg
 {
 public:
-	nuGLProg_NAME();
+	nuGLDXProg_NAME();
 	virtual void		Reset();
 	virtual const char*	VertSrc();
 	virtual const char*	FragSrc();
@@ -69,36 +33,36 @@ CombinedBaseCpp = <<-END
 #include "pch.h"
 #include "NAMEShader.h"
 
-nuGLProg_NAME::nuGLProg_NAME()
+nuGLDXProg_NAME::nuGLDXProg_NAME()
 {
 	Reset();
 }
 
-void nuGLProg_NAME::Reset()
+void nuGLDXProg_NAME::Reset()
 {
 	ResetBase();
 RESET
 }
 
-const char* nuGLProg_NAME::VertSrc()
+const char* nuGLDXProg_NAME::VertSrc()
 {
 	return
 VERT_SRC;
 }
 
-const char* nuGLProg_NAME::FragSrc()
+const char* nuGLDXProg_NAME::FragSrc()
 {
 	return
 FRAG_SRC;
 }
 
-const char* nuGLProg_NAME::Name()
+const char* nuGLDXProg_NAME::Name()
 {
 	return "NAME";
 }
 
 
-bool nuGLProg_NAME::LoadVariablePositions()
+bool nuGLDXProg_NAME::LoadVariablePositions()
 {
 	int nfail = 0;
 
@@ -106,7 +70,7 @@ LOAD_FUNC_BODY
 	return nfail == 0;
 }
 
-uint32 nuGLProg_NAME::PlatformMask()
+uint32 nuGLDXProg_NAME::PlatformMask()
 {
 	return PLATFORM_MASK;
 }
@@ -124,6 +88,20 @@ class Variable
 	end
 end
 
+def name_from_shader_source(source, include_vert_or_frag = true)
+	if source =~ /\/(\w+)_Vert\..lsl/
+		return $1 + (include_vert_or_frag ? "_" + "Vert" : "")
+	end
+	if source =~ /\/(\w+)_Frag\..lsl/
+		return $1 + (include_vert_or_frag ? "_" + "Frag" : "")
+	end
+	raise "Do not understand how to name the shader #{source}"
+end
+
+def ext2name(ext)
+	return ext == "hlsl" ? "DX" : "GL"
+end
+
 def escape_txt(txt)
 	cpp = ""
 	txt.each_line { |line|
@@ -137,7 +115,7 @@ def escape_file(file)
 	return escape_txt( File.open(file) { |f| f.read } )
 end
 
-def gen_combined(vert, frag, name, filename_base)
+def gen_combined(ext, vert, frag, name, filename_base)
 	variables = []
 	platforms = {}
 	vert_src = File.open(vert) { |f| f.read }
@@ -176,6 +154,7 @@ def gen_combined(vert, frag, name, filename_base)
 		txt = CombinedBaseH + ""
 		txt.gsub!("NAMEUC", name.upcase)
 		txt.gsub!("NAME", name)
+		txt.gsub!("GLDX", ext2name(ext))
 		variables.each { |var|
 			txt << "\tGLint v_#{var.name}; #{' ' * (15 - var.name.length)} // #{var.nature} #{var.type}\n"
 		}
@@ -188,6 +167,7 @@ def gen_combined(vert, frag, name, filename_base)
 		txt = CombinedBaseCpp + ""
 		txt.gsub!("NAMEUC", name.upcase)
 		txt.gsub!("NAME", name)
+		txt.gsub!("GLDX", ext2name(ext))
 		txt.gsub!("VERT_SRC", escape_txt(vert_src))
 		txt.gsub!("FRAG_SRC", escape_txt(frag_src))
 		load_func_body = ""
@@ -213,27 +193,27 @@ def gen_combined(vert, frag, name, filename_base)
 	}
 end
 
-# vert and frag are paths to .glsl files
-def gen_pair(base_dir, vert, frag)
-	name = name_from_glsl(vert, false)
-	#gen_cpp(vert)
-	#gen_cpp(frag)
-	#gen_h(vert)
-	#gen_h(frag)
-	gen_combined(vert, frag, name, base_dir + "/Processed/#{name}Shader")
+# vert and frag are paths to .hlsl/.glsl files
+def gen_pair(base_dir, ext, vert, frag)
+	name = name_from_shader_source(vert, false)
+	gen_combined(ext, vert, frag, name, base_dir + "/Processed_#{ext}/#{name}Shader")
 end
 
-base_dir = "nudom/Shaders"
-shaders = Dir.glob("#{base_dir}/*.glsl")
-#print(shaders)
+def run_dir(base_dir, ext)
+	shaders = Dir.glob("#{base_dir}/*.#{ext}")
+	#print(shaders)
 
-# At present we expect pairs of "xyzFrag.glsl" and "xyzVert.glsl"
-# Maybe someday we could pair them up differently.. but this THIS DAY
-shaders.each { |candidate|
-	if candidate =~ /Vert\.glsl/
-		vert = candidate
-		frag = candidate.sub("Vert.glsl", "Frag.glsl")
-		#print(vert + " " + frag + "\n")
-		gen_pair(base_dir, vert, frag)
-	end
-}
+	# At present we expect pairs of "xyzFrag.glsl" and "xyzVert.glsl" (or .hlsl)
+	# Maybe someday we could pair them up differently.. but not THIS DAY
+	shaders.each { |candidate|
+		if candidate =~ /_Vert\.#{ext}/
+			vert = candidate
+			frag = candidate.sub("Vert.#{ext}", "Frag.#{ext}")
+			#print(vert + " " + frag + "\n")
+			gen_pair(base_dir, ext, vert, frag)
+		end
+	}
+end
+
+run_dir("nudom/Shaders", "glsl")
+run_dir("nudom/Shaders", "hlsl")

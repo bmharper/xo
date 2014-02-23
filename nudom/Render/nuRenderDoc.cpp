@@ -2,6 +2,8 @@
 #include "../nuLayout.h"
 #include "nuRenderDoc.h"
 #include "nuRenderer.h"
+#include "nuRenderDX.h"
+#include "nuRenderGL.h"
 
 nuRenderDoc::nuRenderDoc()
 {
@@ -20,7 +22,7 @@ void nuRenderDoc::ResetRenderData()
 	RenderPool.FreeAll();
 }
 
-nuRenderResult nuRenderDoc::Render( nuRenderGL* rgl )
+nuRenderResult nuRenderDoc::Render( nuRenderBase* driver )
 {
 	NUTRACE_RENDER( "RenderDoc: Reset\n" );
 	ResetRenderData();
@@ -31,7 +33,7 @@ nuRenderResult nuRenderDoc::Render( nuRenderGL* rgl )
 
 	NUTRACE_RENDER( "RenderDoc: Render\n" );
 	nuRenderer rend;
-	nuRenderResult res = rend.Render( &ClonedImages, &ClonedStrings, rgl, &RenderRoot, WindowWidth, WindowHeight );
+	nuRenderResult res = rend.Render( &ClonedImages, &ClonedStrings, driver, &RenderRoot, WindowWidth, WindowHeight );
 
 	return res;
 }

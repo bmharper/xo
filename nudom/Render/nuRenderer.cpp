@@ -7,19 +7,19 @@
 #include "Text/nuGlyphCache.h"
 #include "../Image/nuImage.h"
 
-nuRenderResult nuRenderer::Render( nuImageStore* images, nuStringTable* strings, nuRenderGL* gl, nuRenderDomEl* root, int width, int height )
+nuRenderResult nuRenderer::Render( nuImageStore* images, nuStringTable* strings, nuRenderBase* driver, nuRenderDomEl* root, int width, int height )
 {
-	GL = gl;
+	Driver = driver;
 	Images = images;
 	Strings = strings;
 
-	gl->PreRender( width, height );
+	Driver->PreRender();
 
 	// This phase is probably worth parallelizing
 	RenderNodeOuter( root );
 	// After RenderNode we are serial again.
 
-	gl->PostRenderCleanup();
+	Driver->PostRenderCleanup();
 
 	bool needGlyphs = GlyphsNeeded.size() != 0;
 	RenderGlyphsNeeded();
@@ -44,7 +44,7 @@ void nuRenderer::RenderNodeOuter( nuRenderDomEl* node )
 void nuRenderer::RenderNodeInner( nuRenderDomEl* node )
 {
 	// always shade rectangles well
-	const bool alwaysGoodRects = true;
+	const bool alwaysGoodRects = false; // TEMP - DX
 
 	nuStyleRender* style = &node->Style;
 	float bottom = nuPosToReal( node->Pos.Bottom );
@@ -53,6 +53,8 @@ void nuRenderer::RenderNodeInner( nuRenderDomEl* node )
 	float right = nuPosToReal( node->Pos.Right );
 
 	float radius = style->BorderRadius;
+	//radius = 0; // TEMP - try to get DirectX working
+	bool useRectShader = alwaysGoodRects || radius != 0;
 
 	float width = right - left;
 	float height = bottom - top;
@@ -65,7 +67,7 @@ void nuRenderer::RenderNodeInner( nuRenderDomEl* node )
 
 	float padU = 0;
 	float padV = 0;
-	float pad = (alwaysGoodRects || radius != 0) ? 1.0f : 0.0f;
+	float pad = useRectShader ? 1.0f : 0.0f;
 	if ( pad != 0 )
 	{
 		padU = pad / width;
@@ -83,6 +85,19 @@ void nuRenderer::RenderNodeInner( nuRenderDomEl* node )
 	corners[2].UV = NUVEC2(1 + padU, 1 + padV);
 	corners[3].UV = NUVEC2(1 + padU, -padV);
 
+	//for ( int i = 0; i < 4; i++ )
+	//	corners[i].Pos.z = 0.5f;
+
+	Mat4f tx = Driver->ShaderPerFrame.MVProj.Transposed();
+	for ( int i = 0; i < 4; i++ )
+	{
+		//corners[i].Pos = (tx * nuVec4f(corners[i].Pos, 1.0f)).vec3;
+		//corners[i].Pos.z = 0.5f;
+	}
+	//corners[0].Pos = NUVEC3( 0.0f, 0.5f, 0.5f );
+	//corners[1].Pos = NUVEC3( 0.5f, -0.5f, 0.5f );
+	//corners[2].Pos = NUVEC3( -0.5f, -0.5f, 0.5f );
+
 	//NUTRACE( "node %f\n", left );
 
 	//auto bg = style.Get( nuCatBackground );
@@ -94,25 +109,25 @@ void nuRenderer::RenderNodeInner( nuRenderDomEl* node )
 		for ( int i = 0; i < 4; i++ )
 			corners[i].Color = bg.GetRGBA();
 
-		if ( alwaysGoodRects || radius != 0 )
+		if ( useRectShader )
 		{
-			GL->ActivateProgram( GL->PRect );
-			glUniform4f( GL->PRect.v_box, left, top, right, bottom );
-			glUniform1f( GL->PRect.v_radius, radius + 0.5f ); // see the shader for an explanation of this 0.5
-			GL->DrawQuad( corners );
+			Driver->ActivateShader( nuShaderRect );
+			Driver->ShaderPerObject.Box = nuVec4f( left, top, right, bottom );
+			Driver->ShaderPerObject.Radius = radius + 0.5f; // see the shader for an explanation of this 0.5
+			Driver->DrawQuad( corners );
 		}
 		else
 		{
 			if ( bgImage[0] != 0 )
 			{
-				GL->ActivateProgram( GL->PFillTex );
-				GL->LoadTexture( Images->GetOrNull( bgImage ), 0 );
-				GL->DrawQuad( corners );
+				Driver->ActivateShader( nuShaderFillTex );
+				Driver->LoadTexture( Images->GetOrNull( bgImage ), 0 );
+				Driver->DrawQuad( corners );
 			}
 			else
 			{
-				GL->ActivateProgram( GL->PFill );
-				GL->DrawQuad( corners );
+				Driver->ActivateShader( nuShaderFill );
+				Driver->DrawQuad( corners );
 			}
 		}
 	}
@@ -194,7 +209,7 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 	corners[3].UV = NUVEC2(u1, v0);
 
 	// Obviously our clamping is not affected by overdraw. It remains our absolute texel limits.
-	nuVec4 clamp;
+	nuVec4f clamp;
 	clamp.x = (glyph->X + 0.5f) * atlasScaleX;
 	clamp.y = (glyph->Y + 0.5f) * atlasScaleY;
 	clamp.z = (glyph->X + glyph->Width - 0.5f) * atlasScaleX;
@@ -209,9 +224,9 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 		corners[i].V4 = clamp;
 	}
 
-	GL->ActivateProgram( GL->PTextRGB );
-	GL->LoadTexture( atlas, 0 );
-	GL->DrawQuad( corners );
+	Driver->ActivateShader( nuShaderTextRGB );
+	Driver->LoadTexture( atlas, 0 );
+	Driver->DrawQuad( corners );
 }
 
 void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRenderTextEl& txtEl )
@@ -274,9 +289,9 @@ void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRen
 	for ( int i = 0; i < 4; i++ )
 		corners[i].Color = NURGBA(150,0,0,255);
 
-	GL->ActivateProgram( GL->PTextWhole );
-	GL->LoadTexture( atlas, 0 );
-	GL->DrawQuad( corners );
+	Driver->ActivateShader( nuShaderTextWhole );
+	Driver->LoadTexture( atlas, 0 );
+	Driver->DrawQuad( corners );
 }
 
 void nuRenderer::RenderGlyphsNeeded()
@@ -292,7 +307,7 @@ void nuRenderer::RenderGlyphsNeeded()
 		//uint16 indices[12 * 4];
 		nuVx_PTC tri[12];
 
-		GL->ActivateProgram( GL->PCurve );
+		Driver->ActivateShader( nuShaderCurve );
 
 		const float A = radius;
 		const float B = SQRT_2 * 0.5 * A;
@@ -330,6 +345,6 @@ void nuRenderer::RenderGlyphsNeeded()
 			tri[10].Pos = NUVEC3(0,A,0);
 			tri[11].Pos = NUVEC3(A,A,0);
 
-			GL->DrawTriangles( 12, tri, indices );
+			Driver->DrawTriangles( 12, tri, indices );
 		}
 		*/

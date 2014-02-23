@@ -185,9 +185,10 @@ NUAPI void nuInitialize()
 	nuGlobals->TargetFPS = 60;
 	nuGlobals->NumWorkerThreads = min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
 	nuGlobals->PreferOpenGL = true;
+	nuGlobals->EnableVSync = false;
 	//nuGlobals->SubPixelTextGamma = 0.6f; // 0.5 is good for sRGB framebuffer
-	// Ah....... Freetype's output is linear, so if treat our freetype texture as GL_LUMINANCE
-	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get prefect results without
+	// Ah....... Freetype's output is linear coverage percentage, so if we treat our freetype texture as GL_LUMINANCE
+	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get perfect results without
 	// doing any tweaking to the freetype glyphs.
 	nuGlobals->SubPixelTextGamma = 1.0f;
 	nuGlobals->WholePixelTextGamma = 1.0f;

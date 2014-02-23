@@ -19,7 +19,7 @@ class nuRenderDomEl;
 struct nuRenderTextEl;
 class nuRenderBase;
 class nuRenderGL;
-class nuRenderDirectX;
+class nuRenderDX;
 class nuString;
 class nuStringTable;
 class nuStyle;
@@ -98,23 +98,23 @@ enum nuTag {
 #undef XX
 #undef XY
 
-struct nuVec2
-{
-	float x,y;
-};
-inline nuVec2 NUVEC2(float x, float y) { nuVec2 v = {x,y}; return v; }
+//struct nuVec2
+//{
+//	float x,y;
+//};
+inline nuVec2f NUVEC2(float x, float y) { return nuVec2f(x,y); }
 
-struct nuVec3
-{
-	float x,y,z;
-};
-inline nuVec3 NUVEC3(float x, float y, float z) { nuVec3 v = {x,y,z}; return v; }
+//struct nuVec3
+//{
+//	float x,y,z;
+//};
+inline nuVec3f NUVEC3(float x, float y, float z) { return nuVec3f(x,y,z); }
 
-struct nuVec4
-{
-	float x,y,z,w;
-};
-inline nuVec4 NUVEC4(float x, float y, float z, float w) { nuVec4 v = {x,y,z,w}; return v; }
+//struct nuVec4
+//{
+//	float x,y,z,w;
+//};
+inline nuVec4f NUVEC4(float x, float y, float z, float w) { return nuVec4f(x,y,z,w); }
 
 class NUAPI nuPoint
 {
@@ -280,12 +280,30 @@ public:
 	void	FlipVertical();
 };
 
+// Base of GL and DX shader programs
+class nuProgBase
+{
+public:
+};
+
+enum nuShaders
+{
+	nuShaderInvalid,
+	nuShaderFill,
+	nuShaderFillTex,
+	nuShaderRect,
+	nuShaderTextRGB,
+	nuShaderTextWhole
+	// We may someday want to have slots down here available for application-defined custom shaders
+};
+
 // A single instance of this is accessible via nuGlobal()
 struct nuGlobalStruct
 {
 	int							TargetFPS;
 	int							NumWorkerThreads;		// Read-only. Set during nuInitialize().
-	bool						PreferOpenGL;			// Prefer OpenGL over DirectX
+	bool						PreferOpenGL;			// Prefer OpenGL over DirectX. If this is true, then on Windows OpenGL will be tried first.
+	bool						EnableVSync;			// This is only respected during device initialization, so you must set it at application start. It raises latency noticeably. This has no effect on DirectX windowed rendering.
 	bool						EnableSubpixelText;		// Enable sub-pixel text rendering. Assumes pixels are the standard RGB layout. Enabled by default on Windows desktop only.
 	bool						EnableSRGBFramebuffer;	// Enable sRGB framebuffer (implies linear blending)
 	//bool						EmulateGammaBlending;	// Only applicable when EnableSRGBFramebuffer = true, this tries to emulate gamma-space blending. You would turn this on to get consistent blending on all devices.

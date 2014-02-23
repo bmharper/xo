@@ -93,6 +93,13 @@ typedef char TCHAR;
 #include "../dependencies/Panacea/Containers/queue.h"
 #include "../dependencies/Panacea/Bits/BitMap.h"
 #include "../dependencies/Panacea/fhash/fhashtable.h"
+#include "../dependencies/Panacea/Vec/Vec2.h"
+#include "../dependencies/Panacea/Vec/Vec3.h"
+#include "../dependencies/Panacea/Vec/Vec4.h"
+
+typedef Vec2T<float> nuVec2f;
+typedef Vec3T<float> nuVec3f;
+typedef Vec4T<float> nuVec4f;
 
 #include "nuString.h"
 #define FMT_STRING nuString

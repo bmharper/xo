@@ -5,13 +5,22 @@
 LRESULT CALLBACK nuDocGroup::StaticWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
 	nuDocGroup* proc = (nuDocGroup*) GetWindowLongPtr( hWnd, GWLP_USERDATA );
+	if ( proc == NULL && lParam != NULL && message == WM_NCCREATE )
+	{
+		// This is passed in via CreateWindow()
+		// The one message that we unfortunately miss is WM_GETMINMAXINFO, which gets sent before WM_NCCREATE
+		CREATESTRUCT* cs = (CREATESTRUCT*) lParam;
+		proc = (nuDocGroup*) cs->lpCreateParams;
+		SetWindowLongPtr( hWnd, GWLP_USERDATA, (LONG_PTR) proc );
+	}
+
 	if ( proc && proc->Doc )
 	{
 		return proc->WndProc( hWnd, message, wParam, lParam );
 	}
 	else
 	{
-		// This path gets hit before we can issue our SetWindowLongPtr() to set GWLP_USERDATA to the nuDocGroup*
+		// This path gets hit before WM_CREATE
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 }
@@ -46,7 +55,6 @@ LRESULT nuDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
 	switch (message)
 	{
-	// NOTE: You will not receive WM_CREATE here, because we have not yet set the USERDATA for this window
 	case WM_ERASEBKGND:
 		return 1;
 

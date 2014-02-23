@@ -56,6 +56,7 @@ void nuRenderGL::Reset()
 	for ( int i = 0; i < NumProgs; i++ )
 		AllProgs[i]->Reset();
 	memset( BoundTextures, 0, sizeof(BoundTextures) );
+	ActiveShader = nuShaderInvalid;
 }
 
 #if NU_PLATFORM_WIN_DESKTOP
@@ -158,6 +159,8 @@ bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
 		{
 			rc = wglCreateContext( dc );
 			wglMakeCurrent( dc, rc );
+			if ( wglSwapIntervalEXT )
+				wglSwapIntervalEXT( nuGlobal()->EnableVSync ? 1 : 0 );
 			allGood = CreateShaders();
 			wglMakeCurrent( NULL, NULL );
 		}
@@ -224,7 +227,7 @@ void nuRenderGL::CheckExtensions()
 	}
 
 	Have_BlendFuncExtended = hasExtension( "GL_ARB_blend_func_extended" );
-	NUTRACE( "OpenGL ES ("
+	NUTRACE( "OpenGL Extensions ("
 		"UNPACK_SUBIMAGE=%d, "
 		"sRGB_FrameBuffer=%d, "
 		"blend_func_extended=%d"
@@ -278,14 +281,30 @@ void nuRenderGL::DeleteShadersAndTextures()
 		DeleteProgram( *AllProgs[i] );
 }
 
-void nuRenderGL::ActivateProgram( nuGLProg& p )
+nuProgBase* nuRenderGL::GetShader( nuShaders shader )
 {
-	if ( ActiveProgram == &p )
+	switch ( shader )
+	{
+	case nuShaderFill:		return &PFill;
+	case nuShaderFillTex:	return &PFillTex;
+	case nuShaderRect:		return &PRect;
+	case nuShaderTextRGB:	return &PTextRGB;
+	case nuShaderTextWhole:	return &PTextWhole;
+	default:
+		NUASSERT(false);
+		return NULL;
+	}
+}
+
+void nuRenderGL::ActivateShader( nuShaders shader )
+{
+	if ( ActiveShader == shader )
 		return;
-	ActiveProgram = &p;
-	NUASSERT( p.Prog != 0 );
-	glUseProgram( p.Prog );
-	if ( ActiveProgram == &PTextRGB )
+	nuGLProg* p = (nuGLProg*) GetShader( shader );
+	ActiveShader = shader;
+	NUASSERT( p->Prog != 0 );
+	glUseProgram( p->Prog );
+	if ( ActiveShader == nuShaderTextRGB )
 	{
 		// outputColor0 = vec4(color.r, color.g, color.b, avgA);
 		// outputColor1 = vec4(aR, aG, aB, avgA);
@@ -323,6 +342,9 @@ void nuRenderGL::SurfaceLost()
 
 bool nuRenderGL::BeginRender( nuSysWnd& wnd )
 {
+	auto rect = wnd.GetRelativeClientRect();
+	FBWidth = rect.Width();
+	FBHeight = rect.Height();
 #if NU_PLATFORM_WIN_DESKTOP
 	if ( GLRC )
 	{
@@ -351,43 +373,14 @@ void nuRenderGL::EndRender( nuSysWnd& wnd )
 #endif
 }
 
-void nuRenderGL::Ortho( nuMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar )
-{
-	nuMat4f m;
-	m.Zero();
-	double A = 2 / (right - left);
-	double B = 2 / (top - bottom);
-	double C = -2 / (zfar - znear);
-	double tx = -(right + left) / (right - left);
-	double ty = -(top + bottom) / (top - bottom);
-	double tz = -(zfar + znear) / (zfar - znear);
-	m.m(0,0) = (float) A;
-	m.m(1,1) = (float) B;
-	m.m(2,2) = (float) C;
-	m.m(3,3) = 1;
-	m.m(0,3) = (float) tx;
-	m.m(1,3) = (float) ty;
-	m.m(2,3) = (float) tz;
-	imat = imat * m;
-}
-
-void nuRenderGL::PreRender( int fbwidth, int fbheight )
+void nuRenderGL::PreRender()
 {
 	Check();
 
-	NUTRACE_RENDER( "PreRender %d %d\n", fbwidth, fbheight );
+	NUTRACE_RENDER( "PreRender %d %d\n", FBWidth, FBHeight );
 	Check();
 
-	FBWidth = fbwidth;
-	FBHeight = fbheight;
-	glViewport( 0, 0, fbwidth, fbheight );
-
-	//glMatrixMode( GL_PROJECTION );
-	//glLoadIdentity();
-	//glOrtho( 0, fbwidth, fbheight, 0, 0, 1 );
-
-	//glMatrixMode( GL_MODELVIEW );
-	//glLoadIdentity();
+	glViewport( 0, 0, FBWidth, FBHeight );
 
 	auto clear = nuGlobal()->ClearColor;
 	glClearColor( clear.r / 255.0f, clear.g / 255.0f, clear.b / 255.0f, clear.a / 255.0f );
@@ -403,6 +396,7 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 
 	// Enable CULL_FACE because it will make sure that we are consistent about vertex orientation
 	glEnable( GL_CULL_FACE );
+	glFrontFace( GL_CCW );
 	glDisable( GL_DEPTH_TEST );
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
@@ -410,65 +404,66 @@ void nuRenderGL::PreRender( int fbwidth, int fbheight )
 	NUTRACE_RENDER( "PreRender 3\n" );
 	Check();
 
-	nuMat4f mvproj;
-	mvproj.Identity();
-	Ortho( mvproj, 0, fbwidth, fbheight, 0, 0, 1 );
-	// GLES doesn't support TRANSPOSE = TRUE
-	mvproj = mvproj.Transposed();
-
-	ActivateProgram( PRect );
-	glUniform2f( PRect.v_vport_hsize, FBWidth / 2.0f, FBHeight / 2.0f );
-	glUniformMatrix4fv( PRect.v_mvproj, 1, false, &mvproj.row[0].x );
-	Check();
-
-	ActivateProgram( PFill );
-
-	NUTRACE_RENDER( "PreRender 4 (%d)\n", PFill.v_mvproj );
-	Check();
-
-	glUniformMatrix4fv( PFill.v_mvproj, 1, false, &mvproj.row[0].x );
-
-	NUTRACE_RENDER( "PreRender 5 (%d)\n", PFillTex.Prog );
-	Check();
-
-	ActivateProgram( PFillTex );
-
-	NUTRACE_RENDER( "PreRender 6 (%d)\n", PFillTex.v_mvproj );
-	Check();
-
-	glUniformMatrix4fv( PFillTex.v_mvproj, 1, false, &mvproj.row[0].x );
-
-	if ( PTextRGB.UseOnThisPlatform() )
-	{
-		NUTRACE_RENDER( "PreRender 7a (%d)\n", PTextRGB.Prog );
-
-		ActivateProgram( PTextRGB );
-
-		NUTRACE_RENDER( "PreRender 7b (%d)\n", PTextRGB.v_mvproj );
-		Check();
-
-		glUniformMatrix4fv( PTextRGB.v_mvproj, 1, false, &mvproj.row[0].x );
-	}
-
-	ActivateProgram( PTextWhole );
-
-	NUTRACE_RENDER( "PreRender 8 (%d)\n", PTextWhole.v_mvproj );
-	Check();
-
-	glUniformMatrix4fv( PTextWhole.v_mvproj, 1, false, &mvproj.row[0].x );
+	SetShaderFrameUniforms();
 
 	NUTRACE_RENDER( "PreRender done\n" );
+}
+
+void nuRenderGL::SetShaderFrameUniforms()
+{
+	nuMat4f mvproj;
+	mvproj.Identity();
+	Ortho( mvproj, 0, FBWidth, FBHeight, 0, 1, 0 );
+	nuMat4f mvprojT = mvproj.Transposed();
+
+	if ( SetMVProj( nuShaderRect, PRect, mvprojT ) )
+		glUniform2f( PRect.v_vport_hsize, FBWidth / 2.0f, FBHeight / 2.0f );
+
+	SetMVProj( nuShaderFill, PFill, mvprojT );
+	SetMVProj( nuShaderFillTex, PFillTex, mvprojT );
+	SetMVProj( nuShaderTextRGB, PTextRGB, mvprojT );
+	SetMVProj( nuShaderTextWhole, PTextWhole, mvprojT );
+}
+
+void nuRenderGL::SetShaderObjectUniforms()
+{
+	if ( ActiveShader == nuShaderRect )
+	{
+		glUniform4fv( PRect.v_box, 1, &ShaderPerObject.Box.x );
+		glUniform1f( PRect.v_radius, ShaderPerObject.Radius );
+	}
+}
+
+template<typename TProg>
+bool nuRenderGL::SetMVProj( nuShaders shader, TProg& prog, const Mat4f& mvprojTransposed )
+{
+	if ( prog.Prog == 0 )
+	{
+		NUTRACE_RENDER( "SetMVProj skipping %s, because not compiled\n", (const char*) prog.Name() );
+		return false;
+	}
+	else
+	{
+		NUTRACE_RENDER( "SetMVProj %s (%d)\n", (const char*) prog.Name(), prog.v_mvproj );
+		ActivateShader( shader );
+		Check();
+		// GLES doesn't support TRANSPOSE = TRUE
+		glUniformMatrix4fv( prog.v_mvproj, 1, false, &mvprojTransposed.row[0].x );
+		return true;
+	}
 }
 
 void nuRenderGL::PostRenderCleanup()
 {
 	glUseProgram( 0 );
-	ActiveProgram = NULL;
+	ActiveShader = nuShaderInvalid;
 }
 
 void nuRenderGL::DrawQuad( const void* v )
 {
 	NUTRACE_RENDER( "DrawQuad\n" );
+
+	SetShaderObjectUniforms();
 
 	int stride = sizeof(nuVx_PTC);
 	const byte* vbyte = (const byte*) v;
@@ -478,38 +473,36 @@ void nuRenderGL::DrawQuad( const void* v )
 	GLint varvtex0 = 0;
 	GLint varvtexClamp = 0;
 	GLint vartexUnit0 = 0;
-	if ( ActiveProgram == &PRect )
+	switch ( ActiveShader )
 	{
+	case nuShaderRect:
 		varvpos = PRect.v_vpos;
 		varvcol = PRect.v_vcolor;
-	}
-	else if ( ActiveProgram == &PFill )
-	{
+		break;
+	case nuShaderFill:
 		varvpos = PFill.v_vpos;
 		varvcol = PFill.v_vcolor;
-	}
-	else if ( ActiveProgram == &PFillTex )
-	{
+		break;
+	case nuShaderFillTex:
 		varvpos = PFillTex.v_vpos;
 		varvcol = PFillTex.v_vcolor;
 		varvtex0 = PFillTex.v_vtexuv0;
 		vartexUnit0 = PFillTex.v_tex0;
-	}
-	else if ( ActiveProgram == &PTextRGB )
-	{
+		break;
+	case nuShaderTextRGB:
 		stride = sizeof(nuVx_PTCV4);
 		varvpos = PTextRGB.v_vpos;
 		varvcol = PTextRGB.v_vcolor;
 		varvtex0 = PTextRGB.v_vtexuv0;
 		varvtexClamp = PTextRGB.v_vtexClamp;
 		vartexUnit0 = PTextRGB.v_tex0;
-	}
-	else if ( ActiveProgram == &PTextWhole )
-	{
+		break;
+	case nuShaderTextWhole:
 		varvpos = PTextWhole.v_vpos;
 		varvcol = PTextWhole.v_vcolor;
 		varvtex0 = PTextWhole.v_vtexuv0;
 		vartexUnit0 = PTextWhole.v_tex0;
+		break;
 	}
 
 	// We assume here that nuVx_PTC and nuVx_PTCV4 share the same base layout
@@ -531,20 +524,19 @@ void nuRenderGL::DrawQuad( const void* v )
 		glEnableVertexAttribArray( varvtexClamp );
 	}
 
-	uint16 indices[6];
+	uint16 indices[4];
 	indices[0] = 0;
 	indices[1] = 1;
-	indices[2] = 2;
-	indices[3] = 0;
-	indices[4] = 2;
-	indices[5] = 3;
-	glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices );
+	indices[2] = 3;
+	indices[3] = 2;
+	glDrawElements( GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, indices );
 
 	NUTRACE_RENDER( "DrawQuad done\n" );
 
 	Check();
 }
 
+/*
 void nuRenderGL::DrawTriangles( int nvert, const void* v, const uint16* indices )
 {
 	int stride = sizeof(nuVx_PTC);
@@ -552,6 +544,7 @@ void nuRenderGL::DrawTriangles( int nvert, const void* v, const uint16* indices 
 	glDrawElements( GL_TRIANGLES, nvert, GL_UNSIGNED_SHORT, indices );
 	Check();
 }
+*/
 
 void nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
 {

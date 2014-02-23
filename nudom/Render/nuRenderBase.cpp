@@ -10,6 +10,26 @@ nuRenderBase::~nuRenderBase()
 {
 }
 
+void nuRenderBase::Ortho( nuMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar )
+{
+	nuMat4f m;
+	m.Zero();
+	double A = 2 / (right - left);
+	double B = 2 / (top - bottom);
+	double C = -2 / (zfar - znear);
+	double tx = -(right + left) / (right - left);
+	double ty = -(top + bottom) / (top - bottom);
+	double tz = -(zfar + znear) / (zfar - znear);
+	m.m(0,0) = (float) A;
+	m.m(1,1) = (float) B;
+	m.m(2,2) = (float) C;
+	m.m(3,3) = 1;
+	m.m(0,3) = (float) tx;
+	m.m(1,3) = (float) ty;
+	m.m(2,3) = (float) tz;
+	imat = imat * m;
+}
+
 void nuRenderBase::SurfaceLost_ForgetTextures()
 {
 	TexIDOffset++;
@@ -66,6 +86,25 @@ void nuRenderDummy::EndRender( nuSysWnd& wnd )
 {
 }
 	 
+void nuRenderDummy::PreRender()
+{
+}
+void nuRenderDummy::PostRenderCleanup()
+{
+}
+
+nuProgBase* nuRenderDummy::GetShader( nuShaders shader )
+{
+	return NULL;
+}
+void nuRenderDummy::ActivateShader( nuShaders shader )
+{
+}
+
+void nuRenderDummy::DrawQuad( const void* v )
+{
+}
+
 void nuRenderDummy::LoadTexture( nuTexture* tex, int texUnit )
 {
 }

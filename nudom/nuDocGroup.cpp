@@ -97,7 +97,7 @@ nuRenderResult nuDocGroup::RenderInternal( nuImage* targetImage )
 		}
 
 		//NUTIME( "Render DO\n" );
-		rendResult = RenderDoc->Render( static_cast<nuRenderGL*>(Wnd->Renderer) );
+		rendResult = RenderDoc->Render( Wnd->Renderer );
 
 		if ( targetImage != NULL )
 			Wnd->Renderer->ReadBackbuffer( *targetImage );
@@ -170,7 +170,7 @@ bool nuDocGroup::BubbleEvent( nuEvent& ev )
 	return handled;
 }
 
-void nuDocGroup::FindTarget( const nuVec2& p, pvect<nuRenderDomEl*>& chain )
+void nuDocGroup::FindTarget( const nuVec2f& p, pvect<nuRenderDomEl*>& chain )
 {
 	chain += &RenderDoc->RenderRoot;
 	while ( true )

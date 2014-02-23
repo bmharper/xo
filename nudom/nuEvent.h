@@ -21,7 +21,7 @@ public:
 	nuDomEl*		Target;
 	nuEvents		Type;
 	int				PointCount;					// Mouse = 1	Touch >= 1
-	nuVec2			Points[NU_MAX_TOUCHES];
+	nuVec2f			Points[NU_MAX_TOUCHES];
 
 	nuEvent();
 	~nuEvent();

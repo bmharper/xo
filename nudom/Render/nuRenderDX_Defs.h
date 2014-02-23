@@ -2,15 +2,15 @@
 
 #include "nuDefs.h"
 
-class NUAPI nuGLProg : public nuProgBase
+class NUAPI nuDXProg : public nuProgBase
 {
 public:
-	GLuint Vert;
-	GLuint Frag;
-	GLuint Prog;
+	ID3D11VertexShader*		Vert;
+	ID3D11PixelShader*		Frag;
+	ID3D11InputLayout*      VertLayout;
 
-							nuGLProg();
-	virtual					~nuGLProg();
+							nuDXProg();
+	virtual					~nuDXProg();
 	
 	// All of these virtual functions are overridden by auto-generated shader objects
 	virtual void			Reset();
@@ -25,4 +25,3 @@ public:
 protected:
 	void					ResetBase();
 };
-

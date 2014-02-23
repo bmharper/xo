@@ -19,7 +19,8 @@ void nuMain( nuMainEvent ev )
 			for ( int i = 0; i < 4; i++ )
 			{
 				nuDomEl* div = doc->Root.AddChild( nuTagDiv );
-				div->StyleParse( "width: 90px; height: 90px; border-radius: 15px; display: inline;" );
+				//div->StyleParse( "width: 90px; height: 90px; border-radius: 15px; display: inline;" );
+				div->StyleParse( fmt("width: 90px; height: 90px; border-radius: %vpx; display: inline;", 5 * i + 1).Z );
 				div->StyleParse( "margin: 3px;" );
 			}
 
@@ -28,7 +29,8 @@ void nuMain( nuMainEvent ev )
 			txtBox->StyleParse( "width: 90px; height: 90px; border-radius: 2px; background: #0c0; margin: 3px; position: absolute;" );
 			//txtBox->SetText( "from ethnic minorities" );
 			//txtBox->SetText( "| The quick brown fox JUMPS |" );
-			txtBox->SetText( "This widget spans over three rows in the GridLayout" );
+			//txtBox->SetText( "This widget spans over three rows in the GridLayout" );
+			txtBox->SetText( "This widget spans.. document->textDocument()->activeView()" );
 			//txtBox->SetText( "fox" );
 
 			//doc->Root.ChildByIndex(0)->StyleParse( "background: #e00e" );
