@@ -8,7 +8,7 @@ Possible performance enhancement on high res devices
 ----------------------------------------------------
 Instead of padding every glyph on high res devices with 3 texel on either side,
 use clamping in the pixel shader, the same way we do it for sub-pixel rendering.
-Given the rise of ALU/Bandwidth, this is likely the right choice.
+Given the rise of ALU/bandwidth ratio, this is likely the right choice.
 
 Sub-pixel rendering
 -------------------
