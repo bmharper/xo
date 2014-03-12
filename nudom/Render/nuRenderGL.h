@@ -50,7 +50,7 @@ public:
 	virtual nuProgBase* GetShader( nuShaders shader );
 	virtual void		ActivateShader( nuShaders shader );
 
-	virtual void		LoadTexture( nuTexture* tex, int texUnit );
+	virtual bool		LoadTexture( nuTexture* tex, int texUnit );
 	virtual void		ReadBackbuffer( nuImage& image );
 
 protected:

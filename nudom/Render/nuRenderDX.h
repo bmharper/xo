@@ -7,6 +7,7 @@
 
 #include "../Shaders/Processed_hlsl/FillShader.h"
 #include "../Shaders/Processed_hlsl/RectShader.h"
+#include "../Shaders/Processed_hlsl/TextWholeShader.h"
 
 class NUAPI nuRenderDX : public nuRenderBase
 {
@@ -23,6 +24,7 @@ private:
 		ID3D11RasterizerState*	Rasterizer;
 		ID3D11RenderTargetView*	RenderTargetView;
 		ID3D11BlendState*		BlendNormal;
+		ID3D11SamplerState*		SamplerLinear;
 		ID3D11Buffer*           VertBuffer;
 		ID3D11Buffer*           QuadIndexBuffer;
 		ID3D11Buffer*           ShaderPerFrameConstants;
@@ -34,8 +36,8 @@ private:
 	};
 
 public:
-					nuRenderDX();
-	virtual			~nuRenderDX();
+						nuRenderDX();
+	virtual				~nuRenderDX();
 
 	virtual bool		InitializeDevice( nuSysWnd& wnd );
 	virtual void		DestroyDevice( nuSysWnd& wnd );
@@ -52,28 +54,38 @@ public:
 
 	virtual void		DrawQuad( const void* v );
 
-	virtual void		LoadTexture( nuTexture* tex, int texUnit );
+	virtual bool		LoadTexture( nuTexture* tex, int texUnit );
 	virtual void		ReadBackbuffer( nuImage& image );
 
 private:
-	D3DState			D3D;
-	int					FBWidth, FBHeight;
+	struct Texture2D
+	{
+		ID3D11Texture2D*			Tex;
+		ID3D11ShaderResourceView*	View;
+	};
 
-	nuDXProg_Fill		PFill;
-	nuDXProg_Rect		PRect;
-	static const int	NumProgs = 2;
-	nuDXProg*			AllProgs[NumProgs];
+	D3DState				D3D;
+	int						FBWidth, FBHeight;
 
-	bool			InitializeDXDevice( nuSysWnd& wnd );
-	bool			InitializeDXSurface( nuSysWnd& wnd );
-	bool			WindowResized();
-	bool			CreateShaders();
-	bool			CreateShader( nuDXProg* prog );
-	bool			CompileShader( const char* name, const char* source, const char* shaderTarget, ID3DBlob** blob );
-	bool			SetupBuffers();
-	bool			SetShaderFrameUniforms();
-	bool			SetShaderObjectUniforms();
-	ID3D11Buffer*	CreateBuffer( size_t sizeBytes, D3D11_USAGE usage, D3D11_BIND_FLAG bind, uint cpuAccess, const void* initialContent );
+	nuDXProg_Fill			PFill;
+	nuDXProg_Rect			PRect;
+	nuDXProg_TextWhole		PTextWhole;
+	static const int		NumProgs = 3;
+	nuDXProg*				AllProgs[NumProgs];
+	pvect<Texture2D*>		Tex2D;
+
+	bool				InitializeDXDevice( nuSysWnd& wnd );
+	bool				InitializeDXSurface( nuSysWnd& wnd );
+	bool				WindowResized();
+	bool				CreateShaders();
+	bool				CreateShader( nuDXProg* prog );
+	bool				CompileShader( const char* name, const char* source, const char* shaderTarget, ID3DBlob** blob );
+	bool				SetupBuffers();
+	bool				SetShaderFrameUniforms();
+	bool				SetShaderObjectUniforms();
+	ID3D11Buffer*		CreateBuffer( size_t sizeBytes, D3D11_USAGE usage, D3D11_BIND_FLAG bind, uint cpuAccess, const void* initialContent );
+	int					CreateTexture2D( nuTexture* tex );
+	void				UpdateTexture2D( ID3D11Texture2D* dxTex, nuTexture* tex );
 
 };
 

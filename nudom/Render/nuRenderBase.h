@@ -45,21 +45,21 @@ public:
 	nuShaderPerFrame		ShaderPerFrame;
 	nuShaderPerObject		ShaderPerObject;
 
-					nuRenderBase();
-	virtual			~nuRenderBase();
+						nuRenderBase();
+	virtual				~nuRenderBase();
 
 	// Setup a matrix equivalent to glOrtho. The matrix 'imat' is multiplied by the ortho matrix.
-	void			Ortho( nuMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar );
+	void				Ortho( nuMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar );
 
-	void			SurfaceLost_ForgetTextures();
-	bool			IsTextureValid( nuTextureID texID ) const;
-	nuTextureID		FirstTextureID() const								{ return TexIDOffset + TEX_OFFSET_ONE; }
+	void				SurfaceLost_ForgetTextures();
+	bool				IsTextureValid( nuTextureID texID ) const;
+	nuTextureID			FirstTextureID() const								{ return TexIDOffset + TEX_OFFSET_ONE; }
 
 	// Register a new texture. There is no "unregister".
-	nuTextureID		RegisterTexture( void* deviceTexID );
-	nuTextureID		RegisterTextureInt( uint deviceTexID )				{ return RegisterTexture( reinterpret_cast<void*>(deviceTexID) );  }
-	void*			GetTextureDeviceID( nuTextureID texID ) const;
-	uint			GetTextureDeviceIDInt( nuTextureID texID ) const	{ return reinterpret_cast<uint>(GetTextureDeviceID( texID )); }
+	nuTextureID			RegisterTexture( void* deviceTexID );
+	nuTextureID			RegisterTextureInt( uint deviceTexID )				{ return RegisterTexture( reinterpret_cast<void*>(deviceTexID) );  }
+	void*				GetTextureDeviceID( nuTextureID texID ) const;
+	uint				GetTextureDeviceIDInt( nuTextureID texID ) const	{ return reinterpret_cast<uint>(GetTextureDeviceID( texID )); }
 
 	virtual bool		InitializeDevice( nuSysWnd& wnd ) = 0;	// Initialize this device
 	virtual void		DestroyDevice( nuSysWnd& wnd ) = 0;		// Destroy this device and all associated textures, etc
@@ -76,13 +76,15 @@ public:
 
 	virtual void		DrawQuad( const void* v ) = 0;
 
-	virtual void		LoadTexture( nuTexture* tex, int texUnit ) = 0;
+	virtual bool		LoadTexture( nuTexture* tex, int texUnit ) = 0;
 	virtual void		ReadBackbuffer( nuImage& image ) = 0;
 
 protected:
 	static const nuTextureID	TEX_OFFSET_ONE = 1;	// This constant causes the nuTextureID that we expose to never be zero.
 	nuTextureID					TexIDOffset;
 	podvec<void*>				TexIDToNative;		// Maps from nuTextureID to native device texture (eg. GLuint or ID3D11Texture2D*). We're wasting 4 bytes here on OpenGL.
+
+	void				EnsureTextureProperlyDefined( nuTexture* tex, int texUnit );
 };
 
 // This reduces the amount of #ifdef-ing needed, so that on non-Windows platforms
@@ -105,7 +107,7 @@ public:
 
 	virtual void		DrawQuad( const void* v );
 
-	virtual void		LoadTexture( nuTexture* tex, int texUnit );
+	virtual bool		LoadTexture( nuTexture* tex, int texUnit );
 	virtual void		ReadBackbuffer( nuImage& image );
 };
 

@@ -24,4 +24,6 @@ protected:
 	void			RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRenderTextEl& txtEl );
 	void			RenderGlyphsNeeded();
 
+	bool			LoadTexture( nuTexture* tex, int texUnit );		// Load a texture and reset invalid rectangle
+
 };

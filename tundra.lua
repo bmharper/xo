@@ -52,16 +52,28 @@ Build {
 			Tools = { "gcc" },
 		},
 		{
-			Name = "win32-msvc",
+			Name = "win32-msvc2012",
 			SupportedHosts = { "windows" },
 			Inherit = win_common,
 			Tools = { {"msvc-vs2012"; TargetArch = "x86"} },
 		},
 		{
-			Name = "win64-msvc",
-			DefaultOnHost = "windows",
+			Name = "win64-msvc2012",
+			SupportedHosts = { "windows" },
 			Inherit = win_common,
 			Tools = { {"msvc-vs2012"; TargetArch = "x64"} },
+		},
+		{
+			Name = "win32-msvc2013",
+			SupportedHosts = { "windows" },
+			Inherit = win_common,
+			Tools = { {"msvc-vs2013"; TargetArch = "x86"} },
+		},
+		{
+			Name = "win64-msvc2013",
+			DefaultOnHost = "windows",
+			Inherit = win_common,
+			Tools = { {"msvc-vs2013"; TargetArch = "x64"} },
 		},
 		-- Uncommenting the following two projects will enable building on VS 2010
 		--{
@@ -89,9 +101,11 @@ Build {
 		Msvc = {
 			-- Remap config names to MSVC platform names (affects things like header scanning & debugging)
 			PlatformMappings = {
-				['win64-msvc'] = 'x64',
+				['win64-msvc2013'] = 'x64',
+				['win64-msvc2012'] = 'x64',
 				['win64-msvc2010'] = 'x64',
-				['win32-msvc'] = 'Win32',
+				['win32-msvc2013'] = 'Win32',
+				['win32-msvc2012'] = 'Win32',
 				['win32-msvc2010'] = 'Win32',
 			},
 			-- Remap variant names to MSVC friendly names

@@ -46,7 +46,7 @@ const char* nuGLProg_TextWhole::FragSrc()
 "	void main()\n"
 "	{\n"
 "		vec4 texCol = texture2D(tex0, texuv0.st);\n"
-"		gl_FragColor = color * texCol.rrrr;\n"
+"		gl_FragColor = color * vec4(1,1,1, texCol.r);\n"
 "	}\n"
 "	\n"
 ;

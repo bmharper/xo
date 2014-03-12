@@ -12,7 +12,8 @@ nuRenderDX::nuRenderDX()
 	FBWidth = FBHeight = 0;
 	AllProgs[0] = &PFill;
 	AllProgs[1] = &PRect;
-	static_assert(NumProgs == 2, "Add new shader here");
+	AllProgs[2] = &PTextWhole;
+	static_assert(NumProgs == 3, "Add new shader here");
 }
 
 nuRenderDX::~nuRenderDX()
@@ -92,15 +93,33 @@ bool nuRenderDX::InitializeDXDevice( nuSysWnd& wnd )
 	blend.AlphaToCoverageEnable = FALSE;
 	blend.IndependentBlendEnable = FALSE;
 	blend.RenderTarget[0].BlendEnable = true;
-	blend.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-	blend.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-	blend.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-	blend.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blend.RenderTarget[0].SrcBlend       = D3D11_BLEND_SRC_ALPHA;
+	blend.RenderTarget[0].DestBlend      = D3D11_BLEND_INV_SRC_ALPHA;
+	blend.RenderTarget[0].BlendOp        = D3D11_BLEND_OP_ADD;
+	blend.RenderTarget[0].SrcBlendAlpha  = D3D11_BLEND_SRC_ALPHA;
 	blend.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-	blend.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blend.RenderTarget[0].BlendOpAlpha   = D3D11_BLEND_OP_ADD;
 	blend.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 	HRESULT eBlendNormal = D3D.Device->CreateBlendState( &blend, &D3D.BlendNormal );
 	CHECK_HR(eBlendNormal, "CreateBlendNormal");
+
+	D3D11_SAMPLER_DESC sampler;
+	memset( &sampler, 0, sizeof(sampler) );
+	sampler.Filter = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+	sampler.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampler.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampler.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	sampler.MipLODBias = 0.0f;
+	sampler.MaxAnisotropy = 1;
+	sampler.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+	sampler.BorderColor[0] = 0;
+	sampler.BorderColor[1] = 0;
+	sampler.BorderColor[2] = 0;
+	sampler.BorderColor[3] = 0;
+	sampler.MinLOD = 0;
+	sampler.MaxLOD = D3D11_FLOAT32_MAX;
+	HRESULT eSampler = D3D.Device->CreateSamplerState( &sampler, &D3D.SamplerLinear );
+	CHECK_HR(eBlendNormal, "CreateSamplerLinear");
 
 	return true;
 }
@@ -191,9 +210,9 @@ bool nuRenderDX::CreateShader( nuDXProg* prog )
 	// Vertex input layout
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,	0, offsetof(nuVx_PTC,Pos),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		//{ "TEXUV", 0, DXGI_FORMAT_R32G32_FLOAT,			0, offsetof(nuVx_PTC,UV),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM,		0, offsetof(nuVx_PTC,Color),	D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, offsetof(nuVx_PTC,Pos),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, offsetof(nuVx_PTC,UV),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR",		0, DXGI_FORMAT_R8G8B8A8_UNORM,		0, offsetof(nuVx_PTC,Color),	D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
 	hr = D3D.Device->CreateInputLayout( layout, arraysize(layout), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &prog->VertLayout );
@@ -359,6 +378,64 @@ ID3D11Buffer* nuRenderDX::CreateBuffer( size_t sizeBytes, D3D11_USAGE usage, D3D
 	return buffer;
 }
 
+int nuRenderDX::CreateTexture2D( nuTexture* tex )
+{
+	D3D11_TEXTURE2D_DESC desc;
+	memset( &desc, 0, sizeof(desc) );
+	desc.Width = tex->TexWidth;
+	desc.Height = tex->TexHeight;
+	desc.MipLevels = 1;					// 0 = generate all levels. 1 = just one level
+	desc.ArraySize = 1;
+	desc.SampleDesc.Count = 1;
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	desc.CPUAccessFlags = 0;
+	desc.MiscFlags = 0;
+	switch ( tex->TexFormat )
+	{
+	case nuTexFormatRGBA8:	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; break;
+	case nuTexFormatGrey8:	desc.Format = DXGI_FORMAT_R8_UNORM; break;
+	default:				NUPANIC("Unrecognized texture format");
+	}
+	ID3D11Texture2D* dxTex = NULL;
+	HRESULT hr = D3D.Device->CreateTexture2D( &desc, NULL, &dxTex );
+	if ( !SUCCEEDED(hr) )
+	{
+		NUTRACE( "CreateTexture2D failed: %08x", hr );
+		return -1;
+	}
+	Texture2D* t = new Texture2D();
+	t->Tex = dxTex;
+	hr = D3D.Device->CreateShaderResourceView( dxTex, NULL, &t->View );
+	if ( !SUCCEEDED(hr) )
+	{
+		NUTRACE( "CreateTexture2D.CreateShaderResourceView failed: %08x", hr );
+		delete t;
+		dxTex->Release();
+		return -1;
+	}
+	Tex2D += t;
+	return (int) Tex2D.size() - 1;
+}
+
+void nuRenderDX::UpdateTexture2D( ID3D11Texture2D* dxTex, nuTexture* tex )
+{
+	nuBox invRect = tex->TexInvalidRect;
+	nuBox fullRect = nuBox(0, 0, tex->TexWidth, tex->TexHeight);
+	invRect.ClampTo( fullRect );
+
+	if ( invRect.IsAreaZero() )
+		return;
+	D3D11_BOX box;
+	box.left = invRect.Left;
+	box.right = invRect.Right;
+	box.top = invRect.Top;
+	box.bottom = invRect.Bottom;
+	box.front = 0;
+	box.back = 1;
+	D3D.Context->UpdateSubresource( dxTex, 0, &box, tex->TexDataAt(invRect.Left, invRect.Top), tex->TexStride, 0 );
+}
+
 void nuRenderDX::PostRenderCleanup()
 {
 }
@@ -371,7 +448,7 @@ nuProgBase* nuRenderDX::GetShader( nuShaders shader )
 	//case nuShaderFillTex:	return &PFillTex;
 	case nuShaderRect:		return &PRect;
 	//case nuShaderTextRGB:	return &PTextRGB;
-	//case nuShaderTextWhole:	return &PTextWhole;
+	case nuShaderTextWhole:	return &PTextWhole;
 	default:
 		NUASSERT(false);
 		return NULL;
@@ -395,6 +472,7 @@ void nuRenderDX::ActivateShader( nuShaders shader )
 	uint sampleMask = 0xffffffff;
 	D3D.Context->OMSetBlendState( D3D.BlendNormal, blendFactors, sampleMask );
 
+	D3D.Context->PSSetSamplers( 0, 1, &D3D.SamplerLinear );
 }
 
 void nuRenderDX::DrawQuad( const void* v )
@@ -429,8 +507,30 @@ void nuRenderDX::DrawQuad( const void* v )
 	//D3D.Context->Draw( 3, 0 );
 }
 
-void nuRenderDX::LoadTexture( nuTexture* tex, int texUnit )
+bool nuRenderDX::LoadTexture( nuTexture* tex, int texUnit )
 {
+	EnsureTextureProperlyDefined( tex, texUnit );
+
+	// TODO: Why did I create TexIDToNative, and should we be using it here?
+
+	Texture2D* mytex = NULL;
+	if ( tex->TexID - 1 < (uint) Tex2D.size() )
+		mytex = Tex2D[tex->TexID - 1];
+
+	if ( mytex == NULL )
+	{
+		int index = CreateTexture2D( tex );
+		if ( index == -1 )
+			return false;
+		mytex = Tex2D[index];
+		tex->TexID = index + 1;
+	}
+
+	UpdateTexture2D( mytex->Tex, tex );
+
+	D3D.Context->PSSetShaderResources( 0, 1, &mytex->View );
+
+	return true;
 }
 
 void nuRenderDX::ReadBackbuffer( nuImage& image )

@@ -66,6 +66,14 @@ void* nuRenderBase::GetTextureDeviceID( nuTextureID texID ) const
 	return TexIDToNative[absolute];
 }
 
+void nuRenderBase::EnsureTextureProperlyDefined( nuTexture* tex, int texUnit )
+{
+	NUASSERT( tex->TexWidth != 0 && tex->TexHeight != 0 );
+	NUASSERT( tex->TexFormat != nuTexFormatInvalid );
+	NUASSERT( texUnit < nuMaxTextureUnits );
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool nuRenderDummy::InitializeDevice( nuSysWnd& wnd )
 {
@@ -105,8 +113,9 @@ void nuRenderDummy::DrawQuad( const void* v )
 {
 }
 
-void nuRenderDummy::LoadTexture( nuTexture* tex, int texUnit )
+bool nuRenderDummy::LoadTexture( nuTexture* tex, int texUnit )
 {
+	return true;
 }
 void nuRenderDummy::ReadBackbuffer( nuImage& image )
 {

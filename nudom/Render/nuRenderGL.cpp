@@ -546,11 +546,10 @@ void nuRenderGL::DrawTriangles( int nvert, const void* v, const uint16* indices 
 }
 */
 
-void nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
+bool nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
 {
-	NUASSERT( tex->TexWidth != 0 && tex->TexHeight != 0 );
-	NUASSERT( tex->TexFormat != nuTexFormatInvalid );
-	NUASSERT( texUnit < nuMaxTextureUnits );
+	EnsureTextureProperlyDefined( tex, texUnit );
+
 	if ( !IsTextureValid( tex->TexID ) )
 	{
 		GLuint t;
@@ -560,19 +559,19 @@ void nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
 	}
 
 	GLuint glTexID = GetTextureDeviceIDInt( tex->TexID );
-	if ( BoundTextures[texUnit] == glTexID )
-		return;
-
-	glActiveTexture( GL_TEXTURE0 + texUnit );
-	glBindTexture( GL_TEXTURE_2D, glTexID );
-	BoundTextures[texUnit] = glTexID;
+	if ( BoundTextures[texUnit] != glTexID )
+	{
+		glActiveTexture( GL_TEXTURE0 + texUnit );
+		glBindTexture( GL_TEXTURE_2D, glTexID );
+		BoundTextures[texUnit] = glTexID;
+	}
 
 	// If the texture has not been updated, then we are done
 	nuBox invRect = tex->TexInvalidRect;
 	nuBox fullRect = nuBox(0, 0, tex->TexWidth, tex->TexHeight);
 	invRect.ClampTo( fullRect );
 	if ( invRect.IsAreaZero() )
-		return;
+		return true;
 
 	int format = 0;
 	switch ( tex->TexFormat )
@@ -609,6 +608,8 @@ void nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
 
 	if ( Have_Unpack_RowLength )
 		glPixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
+
+	return true;
 }
 
 void nuRenderGL::ReadBackbuffer( nuImage& image )

@@ -193,7 +193,6 @@ NUAPI void nuInitialize()
 	nuGlobals->SubPixelTextGamma = 1.0f;
 	nuGlobals->WholePixelTextGamma = 1.0f;
 #if NU_PLATFORM_WIN_DESKTOP
-	//nuGlobals->EnableSubpixelText = true;
 	nuGlobals->EnableSubpixelText = true;
 	nuGlobals->EnableSRGBFramebuffer = true;
 	//nuGlobals->EmulateGammaBlending = true;

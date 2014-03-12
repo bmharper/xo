@@ -44,7 +44,7 @@ void nuRenderer::RenderNodeOuter( nuRenderDomEl* node )
 void nuRenderer::RenderNodeInner( nuRenderDomEl* node )
 {
 	// always shade rectangles well
-	const bool alwaysGoodRects = false; // TEMP - DX
+	const bool alwaysGoodRects = true;
 
 	nuStyleRender* style = &node->Style;
 	float bottom = nuPosToReal( node->Pos.Bottom );
@@ -53,7 +53,6 @@ void nuRenderer::RenderNodeInner( nuRenderDomEl* node )
 	float right = nuPosToReal( node->Pos.Right );
 
 	float radius = style->BorderRadius;
-	//radius = 0; // TEMP - try to get DirectX working
 	bool useRectShader = alwaysGoodRects || radius != 0;
 
 	float width = right - left;
@@ -85,21 +84,6 @@ void nuRenderer::RenderNodeInner( nuRenderDomEl* node )
 	corners[2].UV = NUVEC2(1 + padU, 1 + padV);
 	corners[3].UV = NUVEC2(1 + padU, -padV);
 
-	//for ( int i = 0; i < 4; i++ )
-	//	corners[i].Pos.z = 0.5f;
-
-	Mat4f tx = Driver->ShaderPerFrame.MVProj.Transposed();
-	for ( int i = 0; i < 4; i++ )
-	{
-		//corners[i].Pos = (tx * nuVec4f(corners[i].Pos, 1.0f)).vec3;
-		//corners[i].Pos.z = 0.5f;
-	}
-	//corners[0].Pos = NUVEC3( 0.0f, 0.5f, 0.5f );
-	//corners[1].Pos = NUVEC3( 0.5f, -0.5f, 0.5f );
-	//corners[2].Pos = NUVEC3( -0.5f, -0.5f, 0.5f );
-
-	//NUTRACE( "node %f\n", left );
-
 	//auto bg = style.Get( nuCatBackground );
 	//auto bgImage = style.Get( nuCatBackgroundImage );
 	nuColor bg = style->BackgroundColor;
@@ -121,7 +105,8 @@ void nuRenderer::RenderNodeInner( nuRenderDomEl* node )
 			if ( bgImage[0] != 0 )
 			{
 				Driver->ActivateShader( nuShaderFillTex );
-				Driver->LoadTexture( Images->GetOrNull( bgImage ), 0 );
+				if ( !LoadTexture( Images->GetOrNull( bgImage ), 0 ) )
+					return;
 				Driver->DrawQuad( corners );
 			}
 			else
@@ -225,7 +210,8 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 	}
 
 	Driver->ActivateShader( nuShaderTextRGB );
-	Driver->LoadTexture( atlas, 0 );
+	if ( !LoadTexture( atlas, 0 ) )
+		return;
 	Driver->DrawQuad( corners );
 }
 
@@ -256,9 +242,15 @@ void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRen
 	int pad = 1;
 
 	// We only use whole pixel rendering on high resolution devices, and glyph sizes, as measured
-	// in device pixels, are always high enough that we don't even need to round.
-	bool round = false;
-	if ( round )
+	// in device pixels, are always high enough that it ends up being more important to have sub-pixel
+	// positioning than to render the glyphs without any resampling.
+	// 
+	//                       Snapping On                                 Snapping Off
+	// Rendering             Crisper, because no resampling              Fuzzier, because of resampling
+	// Positioning           Text cannot be positioned sub-pixel         Text can be positioned with sub-pixel accuracy
+
+	bool snapToWholePixels = false;
+	if ( snapToWholePixels )
 	{
 		left = (float) floor(left + 0.5f);
 		top = (float) floor(top + 0.5f);
@@ -290,7 +282,8 @@ void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRen
 		corners[i].Color = NURGBA(150,0,0,255);
 
 	Driver->ActivateShader( nuShaderTextWhole );
-	Driver->LoadTexture( atlas, 0 );
+	if ( !LoadTexture( atlas, 0 ) )
+		return;
 	Driver->DrawQuad( corners );
 }
 
@@ -301,6 +294,14 @@ void nuRenderer::RenderGlyphsNeeded()
 	GlyphsNeeded.clear();
 }
 
+bool nuRenderer::LoadTexture( nuTexture* tex, int texUnit )
+{
+	if ( !Driver->LoadTexture(tex, texUnit) )
+		return false;
+
+	tex->TexValidate();
+	return true;
+}
 
 		/*
 		uint16 indices[12] = {0,1,2,3,4,5,6,7,8,9,10,11};
