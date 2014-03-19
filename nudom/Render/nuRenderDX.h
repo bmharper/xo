@@ -72,7 +72,6 @@ private:
 	nuDXProg_TextWhole		PTextWhole;
 	static const int		NumProgs = 3;
 	nuDXProg*				AllProgs[NumProgs];
-	pvect<Texture2D*>		Tex2D;
 
 	bool				InitializeDXDevice( nuSysWnd& wnd );
 	bool				InitializeDXSurface( nuSysWnd& wnd );
@@ -84,8 +83,11 @@ private:
 	bool				SetShaderFrameUniforms();
 	bool				SetShaderObjectUniforms();
 	ID3D11Buffer*		CreateBuffer( size_t sizeBytes, D3D11_USAGE usage, D3D11_BIND_FLAG bind, uint cpuAccess, const void* initialContent );
-	int					CreateTexture2D( nuTexture* tex );
+	bool				CreateTexture2D( nuTexture* tex );
 	void				UpdateTexture2D( ID3D11Texture2D* dxTex, nuTexture* tex );
+	
+	nuTextureID			RegisterTextureDX( Texture2D* tex )			{ return RegisterTexture(tex); }
+	Texture2D*			GetTextureDX( nuTextureID texID ) const		{ return (Texture2D*) GetTextureDeviceHandle(texID); }
 
 };
 

@@ -33,7 +33,7 @@ void nuRenderBase::Ortho( nuMat4f &imat, double left, double right, double botto
 void nuRenderBase::SurfaceLost_ForgetTextures()
 {
 	TexIDOffset++;
-	if ( TexIDOffset > nuGlobal()->MaxTextureID )
+	if ( TexIDOffset >= nuGlobal()->MaxTextureID )
 		TexIDOffset = 0;
 	TexIDToNative.clear();
 }
@@ -55,12 +55,12 @@ nuTextureID nuRenderBase::RegisterTexture( void* deviceTexID )
 	return id + TEX_OFFSET_ONE;
 }
 
-void* nuRenderBase::GetTextureDeviceID( nuTextureID texID ) const
+void* nuRenderBase::GetTextureDeviceHandle( nuTextureID texID ) const
 {
 	nuTextureID absolute = texID - TEX_OFFSET_ONE - TexIDOffset;
 	if ( absolute >= (nuTextureID) TexIDToNative.size() )
 	{
-		NUPANIC( "nuRenderBase::GetTextureDeviceID: Invalid texture ID" );
+		NUPANIC( "nuRenderBase::GetTextureDeviceHandle: Invalid texture ID. Use IsTextureValid() to check if a texture is valid." );
 		return NULL;
 	}
 	return TexIDToNative[absolute];

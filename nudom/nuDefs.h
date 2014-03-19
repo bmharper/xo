@@ -309,7 +309,7 @@ struct nuGlobalStruct
 	//bool						EmulateGammaBlending;	// Only applicable when EnableSRGBFramebuffer = true, this tries to emulate gamma-space blending. You would turn this on to get consistent blending on all devices.
 	float						SubPixelTextGamma;		// Tweak freetype's gamma when doing sub-pixel text rendering.
 	float						WholePixelTextGamma;	// Tweak freetype's gamma when doing whole-pixel text rendering.
-	nuTextureID					MaxTextureID;			// Used to test texture ID wrap-around
+	nuTextureID					MaxTextureID;			// Used to test texture ID wrap-around. Were it not for testing, this could be 2^32 - 1
 	nuColor						ClearColor;				// glClearColor
 
 	// Debugging flags. Enabling these should make debugging easier.

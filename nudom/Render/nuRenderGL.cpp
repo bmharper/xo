@@ -271,7 +271,7 @@ void nuRenderGL::DeleteShadersAndTextures()
 
 	podvec<GLuint> textures;
 	for ( intp i = 0; i < TexIDToNative.size(); i++ )
-		textures += GetTextureDeviceIDInt( FirstTextureID() + (nuTextureID) i );
+		textures += GetTextureDeviceHandleInt( FirstTextureID() + (nuTextureID) i );
 
 	glDeleteTextures( (GLsizei) textures.size(), &textures[0] );
 
@@ -558,7 +558,7 @@ bool nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
 		tex->TexInvalidate();
 	}
 
-	GLuint glTexID = GetTextureDeviceIDInt( tex->TexID );
+	GLuint glTexID = GetTextureDeviceHandleInt( tex->TexID );
 	if ( BoundTextures[texUnit] != glTexID )
 	{
 		glActiveTexture( GL_TEXTURE0 + texUnit );

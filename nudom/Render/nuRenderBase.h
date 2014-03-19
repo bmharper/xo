@@ -58,8 +58,8 @@ public:
 	// Register a new texture. There is no "unregister".
 	nuTextureID			RegisterTexture( void* deviceTexID );
 	nuTextureID			RegisterTextureInt( uint deviceTexID )				{ return RegisterTexture( reinterpret_cast<void*>(deviceTexID) );  }
-	void*				GetTextureDeviceID( nuTextureID texID ) const;
-	uint				GetTextureDeviceIDInt( nuTextureID texID ) const	{ return reinterpret_cast<uint>(GetTextureDeviceID( texID )); }
+	void*				GetTextureDeviceHandle( nuTextureID texID ) const;
+	uint				GetTextureDeviceHandleInt( nuTextureID texID ) const	{ return reinterpret_cast<uint>(GetTextureDeviceHandle( texID )); }
 
 	virtual bool		InitializeDevice( nuSysWnd& wnd ) = 0;	// Initialize this device
 	virtual void		DestroyDevice( nuSysWnd& wnd ) = 0;		// Destroy this device and all associated textures, etc

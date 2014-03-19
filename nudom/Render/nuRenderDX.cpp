@@ -378,7 +378,7 @@ ID3D11Buffer* nuRenderDX::CreateBuffer( size_t sizeBytes, D3D11_USAGE usage, D3D
 	return buffer;
 }
 
-int nuRenderDX::CreateTexture2D( nuTexture* tex )
+bool nuRenderDX::CreateTexture2D( nuTexture* tex )
 {
 	D3D11_TEXTURE2D_DESC desc;
 	memset( &desc, 0, sizeof(desc) );
@@ -402,7 +402,7 @@ int nuRenderDX::CreateTexture2D( nuTexture* tex )
 	if ( !SUCCEEDED(hr) )
 	{
 		NUTRACE( "CreateTexture2D failed: %08x", hr );
-		return -1;
+		return false;
 	}
 	Texture2D* t = new Texture2D();
 	t->Tex = dxTex;
@@ -412,10 +412,11 @@ int nuRenderDX::CreateTexture2D( nuTexture* tex )
 		NUTRACE( "CreateTexture2D.CreateShaderResourceView failed: %08x", hr );
 		delete t;
 		dxTex->Release();
-		return -1;
+		return false;
 	}
-	Tex2D += t;
-	return (int) Tex2D.size() - 1;
+	tex->TexID = RegisterTextureDX( t );
+	tex->TexInvalidate();
+	return true;
 }
 
 void nuRenderDX::UpdateTexture2D( ID3D11Texture2D* dxTex, nuTexture* tex )
@@ -511,20 +512,12 @@ bool nuRenderDX::LoadTexture( nuTexture* tex, int texUnit )
 {
 	EnsureTextureProperlyDefined( tex, texUnit );
 
-	// TODO: Why did I create TexIDToNative, and should we be using it here?
-
-	Texture2D* mytex = NULL;
-	if ( tex->TexID - 1 < (uint) Tex2D.size() )
-		mytex = Tex2D[tex->TexID - 1];
-
-	if ( mytex == NULL )
+	if ( !IsTextureValid( tex->TexID ) )
 	{
-		int index = CreateTexture2D( tex );
-		if ( index == -1 )
+		if ( !CreateTexture2D( tex ) )
 			return false;
-		mytex = Tex2D[index];
-		tex->TexID = index + 1;
 	}
+	Texture2D* mytex = GetTextureDX( tex->TexID );
 
 	UpdateTexture2D( mytex->Tex, tex );
 
