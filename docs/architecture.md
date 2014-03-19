@@ -1,4 +1,3 @@
-
 Threads
 -------
 
@@ -117,8 +116,8 @@ Inside .h:
 
 Inside .cpp:
 
-// More detailed multi-line descriptions go here.
-// Don't duplicate the one-liner from the .h file here.
-void Klass::Function()
-{
-}
+	// More detailed multi-line descriptions go here.
+	// Don't duplicate the one-liner from the .h file here.
+	void Klass::Function()
+	{
+	}
