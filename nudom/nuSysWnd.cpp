@@ -31,6 +31,9 @@ void nuSysWnd::PlatformInitialize()
 	wcex.hIconSm		= NULL;
 
 	ATOM wclass_atom = RegisterClassEx(&wcex);
+#elif NU_PLATFORM_ANDROID
+#else
+	NUTODO_STATIC
 #endif
 }
 
@@ -40,6 +43,9 @@ nuSysWnd::nuSysWnd()
 	SysWnd = NULL;
 #elif NU_PLATFORM_ANDROID
 	MainWnd = this;
+	RelativeClientRect = nuBox(0,0,0,0);
+#else
+	NUTODO_STATIC
 #endif
 	DocGroup = new nuDocGroup();
 	DocGroup->Wnd = this;
@@ -58,6 +64,8 @@ nuSysWnd::~nuSysWnd()
 	DestroyWindow( SysWnd );
 #elif NU_PLATFORM_ANDROID
 	MainWnd = NULL;
+#else
+	NUTODO_STATIC
 #endif
 	nuGlobal()->DocRemoveQueue.Add( DocGroup );
 	DocGroup = NULL;
@@ -83,8 +91,10 @@ nuSysWnd* nuSysWnd::Create()
 	return w;
 #elif NU_PLATFORM_ANDROID
 	nuSysWnd* w = new nuSysWnd();
-	w->RGL->CreateShaders();
+	w->InitializeRenderer();
 	return w;
+#else
+	NUTODO_STATIC
 #endif
 }
 
@@ -102,6 +112,9 @@ void nuSysWnd::Show()
 {
 #if NU_PLATFORM_WIN_DESKTOP
 	ShowWindow( SysWnd, SW_SHOW );
+#elif NU_PLATFORM_ANDROID
+#else
+	NUTODO_STATIC
 #endif
 }
 
@@ -143,6 +156,9 @@ void nuSysWnd::SetPosition( nuBox box, uint setPosFlags )
 	if ( !!(setPosFlags & SetPosition_Move) ) wflags = wflags & ~SWP_NOMOVE;
 	if ( !!(setPosFlags & SetPosition_Size) ) wflags = wflags & ~SWP_NOSIZE;
 	SetWindowPos( SysWnd, NULL, box.Left, box.Top, box.Width(), box.Height(), wflags );
+#elif NU_PLATFORM_ANDROID
+#else
+	NUTODO_STATIC
 #endif
 }
 
@@ -156,15 +172,16 @@ nuBox nuSysWnd::GetRelativeClientRect()
 	nuBox box = r;
 	box.Offset( p0.x, p0.y );
 	return box;
+#elif NU_PLATFORM_ANDROID
+	return RelativeClientRect;
 #else
-	// TODO
-	nuBox box(0,0,0,0);
-	return box;
+	NUTODO_STATIC
 #endif
 }
 
 bool nuSysWnd::InitializeRenderer()
 {
+#if NU_PLATFORM_WIN_DESKTOP
 	if ( nuGlobal()->PreferOpenGL )
 	{
 		if ( InitializeRenderer_Any<nuRenderGL>( Renderer ) )
@@ -180,6 +197,9 @@ bool nuSysWnd::InitializeRenderer()
 			return true;
 	}
 	return false;
+#else
+	InitializeRenderer_Any<nuRenderGL>( Renderer );
+#endif
 }
 
 template<typename TRenderer>

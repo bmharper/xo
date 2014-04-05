@@ -7,7 +7,5 @@ void main()
 {
 	pos = mvproj * vpos;
 	gl_Position = pos;
-	
-	color.rgb = pow( vcolor.rgb, vec3(2.2, 2.2, 2.2) );
-	color.a = vcolor.a;
+	color = vec4(pow(vcolor.rgb, vec3(2.2, 2.2, 2.2)), vcolor.a);
 }

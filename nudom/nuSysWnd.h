@@ -14,6 +14,8 @@ public:
 	};
 #if NU_PLATFORM_WIN_DESKTOP
 	HWND				SysWnd;
+#elif NU_PLATFORM_ANDROID
+	nuBox				RelativeClientRect;		// Set by NuLib_init
 #endif
 	nuDocGroup*			DocGroup;
 	nuRenderBase*		Renderer;

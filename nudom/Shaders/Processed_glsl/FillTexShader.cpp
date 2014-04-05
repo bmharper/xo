@@ -29,7 +29,7 @@ const char* nuGLProg_FillTex::VertSrc()
 "	{\n"
 "		gl_Position = mvproj * vpos;\n"
 "		texuv0 = vtexuv0;\n"
-"		color = vcolor;\n"
+"		color = vec4(pow(vcolor.rgb, vec3(2.2, 2.2, 2.2)), vcolor.a);\n"
 "	}\n"
 ;
 }

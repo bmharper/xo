@@ -42,6 +42,8 @@ calamity becomes impossible.
 class NUAPI nuRenderBase
 {
 public:
+	friend struct nuRenderBase_OnceOff;
+
 	nuShaderPerFrame		ShaderPerFrame;
 	nuShaderPerObject		ShaderPerObject;
 
@@ -71,7 +73,7 @@ public:
 	virtual void		PreRender() = 0;
 	virtual void		PostRenderCleanup() = 0;
 
-	virtual nuProgBase* GetShader( nuShaders shader ) = 0;
+	virtual nuProgBase* GetShader( nuShaders shader, nuShaderInfo*& info ) = 0;
 	virtual void		ActivateShader( nuShaders shader ) = 0;
 
 	virtual void		DrawQuad( const void* v ) = 0;
@@ -83,6 +85,11 @@ protected:
 	static const nuTextureID	TEX_OFFSET_ONE = 1;	// This constant causes the nuTextureID that we expose to never be zero.
 	nuTextureID					TexIDOffset;
 	podvec<void*>				TexIDToNative;		// Maps from nuTextureID to native device texture (eg. GLuint or ID3D11Texture2D*). We're wasting 4 bytes here on OpenGL.
+
+	// This information must be written inside the shader source code. Perhaps we postpone that until we have HLSL -> GLSL conversion layer complete
+	// Also.. we can probably stick to a bunch of vertex formats - no need to have a per-shader vertex format
+	static nuShaderInfo			FixedShaderInfoNormal;
+	static nuShaderInfo			FixedShaderInfoTexRGB;
 
 	void				EnsureTextureProperlyDefined( nuTexture* tex, int texUnit );
 };
@@ -102,7 +109,7 @@ public:
 	virtual void		PreRender();
 	virtual void		PostRenderCleanup();
 
-	virtual nuProgBase* GetShader( nuShaders shader );
+	virtual nuProgBase* GetShader( nuShaders shader, nuShaderInfo*& info );
 	virtual void		ActivateShader( nuShaders shader );
 
 	virtual void		DrawQuad( const void* v );

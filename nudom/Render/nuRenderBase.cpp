@@ -1,6 +1,15 @@
 #include "pch.h"
 #include "nuRenderBase.h"
 
+// This static stuff will fall away eventually
+nuShaderInfo nuRenderBase::FixedShaderInfoNormal;
+nuShaderInfo nuRenderBase::FixedShaderInfoTexRGB;
+
+struct nuRenderBase_OnceOff { nuRenderBase_OnceOff() {
+	nuRenderBase::FixedShaderInfoNormal.VertexSize = sizeof(nuVx_PTC);
+	nuRenderBase::FixedShaderInfoTexRGB.VertexSize = sizeof(nuVx_PTCV4);
+}} nuRenderBase_OnceOff_Instantiate;
+
 nuRenderBase::nuRenderBase()
 {
 	TexIDOffset = 0;
@@ -101,8 +110,9 @@ void nuRenderDummy::PostRenderCleanup()
 {
 }
 
-nuProgBase* nuRenderDummy::GetShader( nuShaders shader )
+nuProgBase* nuRenderDummy::GetShader( nuShaders shader, nuShaderInfo*& info )
 {
+	info = NULL;
 	return NULL;
 }
 void nuRenderDummy::ActivateShader( nuShaders shader )

@@ -184,6 +184,15 @@ bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
 }
 #endif
 
+#if NU_PLATFORM_ANDROID
+bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
+{
+	if ( !CreateShaders() )
+		return false;
+	return true;
+}
+#endif
+
 void nuRenderGL::CheckExtensions()
 {
 	const char* ver = (const char*) glGetString( GL_VERSION );
@@ -281,14 +290,17 @@ void nuRenderGL::DeleteShadersAndTextures()
 		DeleteProgram( *AllProgs[i] );
 }
 
-nuProgBase* nuRenderGL::GetShader( nuShaders shader )
+nuProgBase* nuRenderGL::GetShader( nuShaders shader, nuShaderInfo*& info )
 {
+	info = &FixedShaderInfoNormal;
 	switch ( shader )
 	{
 	case nuShaderFill:		return &PFill;
 	case nuShaderFillTex:	return &PFillTex;
 	case nuShaderRect:		return &PRect;
-	case nuShaderTextRGB:	return &PTextRGB;
+	case nuShaderTextRGB:
+		info = &FixedShaderInfoTexRGB;
+		return &PTextRGB;
 	case nuShaderTextWhole:	return &PTextWhole;
 	default:
 		NUASSERT(false);
@@ -300,9 +312,11 @@ void nuRenderGL::ActivateShader( nuShaders shader )
 {
 	if ( ActiveShader == shader )
 		return;
-	nuGLProg* p = (nuGLProg*) GetShader( shader );
+	nuShaderInfo* info = nullptr;
+	nuGLProg* p = (nuGLProg*) GetShader( shader, info );
 	ActiveShader = shader;
 	NUASSERT( p->Prog != 0 );
+	NUTRACE_RENDER( "Activate shader %s\n", p->Name() );
 	glUseProgram( p->Prog );
 	if ( ActiveShader == nuShaderTextRGB )
 	{
@@ -320,6 +334,7 @@ void nuRenderGL::ActivateShader( nuShaders shader )
 
 void nuRenderGL::DestroyDevice( nuSysWnd& wnd )
 {
+#if NU_PLATFORM_WIN_DESKTOP
 	if ( GLRC != NULL )
 	{
 		DC = GetDC( wnd.SysWnd );
@@ -331,6 +346,7 @@ void nuRenderGL::DestroyDevice( nuSysWnd& wnd )
 		DC = NULL;
 		GLRC = NULL;
 	}
+#endif
 }
 
 void nuRenderGL::SurfaceLost()
@@ -345,6 +361,7 @@ bool nuRenderGL::BeginRender( nuSysWnd& wnd )
 	auto rect = wnd.GetRelativeClientRect();
 	FBWidth = rect.Width();
 	FBHeight = rect.Height();
+	NUTRACE_RENDER( "BeginRender %d x %d\n", FBWidth, FBHeight );
 #if NU_PLATFORM_WIN_DESKTOP
 	if ( GLRC )
 	{
@@ -411,6 +428,7 @@ void nuRenderGL::PreRender()
 
 void nuRenderGL::SetShaderFrameUniforms()
 {
+	NUTRACE_RENDER( "FB %d x %d\n", FBWidth, FBHeight );
 	nuMat4f mvproj;
 	mvproj.Identity();
 	Ortho( mvproj, 0, FBWidth, FBHeight, 0, 1, 0 );
@@ -482,6 +500,7 @@ void nuRenderGL::DrawQuad( const void* v )
 	case nuShaderFill:
 		varvpos = PFill.v_vpos;
 		varvcol = PFill.v_vcolor;
+		NUTRACE_RENDER( "vv %d %d\n", varvpos, varvcol );
 		break;
 	case nuShaderFillTex:
 		varvpos = PFillTex.v_vpos;
@@ -531,7 +550,8 @@ void nuRenderGL::DrawQuad( const void* v )
 	indices[3] = 2;
 	glDrawElements( GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, indices );
 
-	NUTRACE_RENDER( "DrawQuad done\n" );
+	//auto vx = (nuVx_PTC*) vbyte;
+	//NUTRACE_RENDER( "DrawQuad done (%f,%f) (%f,%f) (%f,%f) (%f,%f)\n", vx[0].Pos.x, vx[0].Pos.y, vx[1].Pos.x, vx[1].Pos.y, vx[2].Pos.x, vx[2].Pos.y, vx[3].Pos.x, vx[3].Pos.y );
 
 	Check();
 }
@@ -683,6 +703,7 @@ bool nuRenderGL::LoadProgram( nuGLProg& prog, const char* name, const char* vsrc
 
 bool nuRenderGL::LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, const char* name, const char* vsrc, const char* fsrc )
 {
+	NUTRACE("Loading shader %s\n", name);
 	NUASSERT(glGetError() == GL_NO_ERROR);
 
 	bool isTextRGB = strcmp(name, "TextRGB") == 0;

@@ -33,9 +33,7 @@ const char* nuGLProg_TextRGB::VertSrc()
 "		gl_Position = mvproj * vpos;\n"
 "		texuv0 = vtexuv0;\n"
 "		texClamp = vtexClamp;\n"
-"	\n"
-"		color.rgb = pow( vcolor.rgb, vec3(2.2, 2.2, 2.2) );\n"
-"		color.a = vcolor.a;\n"
+"		color = vec4(pow(vcolor.rgb, vec3(2.2, 2.2, 2.2)), vcolor.a);\n"
 "	}\n"
 ;
 }

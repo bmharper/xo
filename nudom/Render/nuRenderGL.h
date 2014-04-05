@@ -47,7 +47,7 @@ public:
 	
 	virtual void		DrawQuad( const void* v );
 
-	virtual nuProgBase* GetShader( nuShaders shader );
+	virtual nuProgBase* GetShader( nuShaders shader, nuShaderInfo*& info );
 	virtual void		ActivateShader( nuShaders shader );
 
 	virtual bool		LoadTexture( nuTexture* tex, int texUnit );

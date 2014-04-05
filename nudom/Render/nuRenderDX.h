@@ -8,6 +8,7 @@
 #include "../Shaders/Processed_hlsl/FillShader.h"
 #include "../Shaders/Processed_hlsl/RectShader.h"
 #include "../Shaders/Processed_hlsl/TextWholeShader.h"
+#include "../Shaders/Processed_hlsl/TextRGBShader.h"
 
 class NUAPI nuRenderDX : public nuRenderBase
 {
@@ -32,7 +33,9 @@ private:
 
 		D3D_FEATURE_LEVEL		FeatureLevel;
 
+		// our own state that
 		nuDXProg*				ActiveProgram;
+		nuShaderInfo*			ActiveProgramInfo;
 	};
 
 public:
@@ -49,7 +52,7 @@ public:
 	virtual void		PreRender();
 	virtual void		PostRenderCleanup();
 	
-	virtual nuProgBase* GetShader( nuShaders shader );
+	virtual nuProgBase* GetShader( nuShaders shader, nuShaderInfo*& info );
 	virtual void		ActivateShader( nuShaders shader );
 
 	virtual void		DrawQuad( const void* v );
@@ -69,8 +72,9 @@ private:
 
 	nuDXProg_Fill			PFill;
 	nuDXProg_Rect			PRect;
+	nuDXProg_TextRGB		PTextRGB;
 	nuDXProg_TextWhole		PTextWhole;
-	static const int		NumProgs = 3;
+	static const int		NumProgs = 4;
 	nuDXProg*				AllProgs[NumProgs];
 
 	bool				InitializeDXDevice( nuSysWnd& wnd );

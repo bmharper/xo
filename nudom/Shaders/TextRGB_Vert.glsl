@@ -11,7 +11,5 @@ void main()
 	gl_Position = mvproj * vpos;
 	texuv0 = vtexuv0;
 	texClamp = vtexClamp;
-
-	color.rgb = pow( vcolor.rgb, vec3(2.2, 2.2, 2.2) );
-	color.a = vcolor.a;
+	color = vec4(pow(vcolor.rgb, vec3(2.2, 2.2, 2.2)), vcolor.a);
 }

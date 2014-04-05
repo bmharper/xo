@@ -12,8 +12,9 @@ nuRenderDX::nuRenderDX()
 	FBWidth = FBHeight = 0;
 	AllProgs[0] = &PFill;
 	AllProgs[1] = &PRect;
-	AllProgs[2] = &PTextWhole;
-	static_assert(NumProgs == 3, "Add new shader here");
+	AllProgs[2] = &PTextRGB;
+	AllProgs[3] = &PTextWhole;
+	static_assert(NumProgs == 4, "Add new shader here");
 }
 
 nuRenderDX::~nuRenderDX()
@@ -311,7 +312,8 @@ void nuRenderDX::EndRender( nuSysWnd& wnd )
 	if (!SUCCEEDED(hr))
 		NUTRACE( "DirectX Present failed: 0x%08x", hr );
 
-	D3D.ActiveProgram = NULL;
+	D3D.ActiveProgram = nullptr;
+	D3D.ActiveProgramInfo = nullptr;
 
 	// TODO: Handle
 	//	DXGI_ERROR_DEVICE_REMOVED
@@ -441,14 +443,17 @@ void nuRenderDX::PostRenderCleanup()
 {
 }
 
-nuProgBase* nuRenderDX::GetShader( nuShaders shader )
+nuProgBase* nuRenderDX::GetShader( nuShaders shader, nuShaderInfo*& info )
 {
+	info = &FixedShaderInfoNormal;
 	switch ( shader )
 	{
 	case nuShaderFill:		return &PFill;
 	//case nuShaderFillTex:	return &PFillTex;
 	case nuShaderRect:		return &PRect;
-	//case nuShaderTextRGB:	return &PTextRGB;
+	case nuShaderTextRGB:
+		info = &FixedShaderInfoTexRGB;
+		return &PTextRGB;
 	case nuShaderTextWhole:	return &PTextWhole;
 	default:
 		NUASSERT(false);
@@ -458,7 +463,8 @@ nuProgBase* nuRenderDX::GetShader( nuShaders shader )
 
 void nuRenderDX::ActivateShader( nuShaders shader )
 {
-	nuDXProg* p = (nuDXProg*) GetShader( shader );
+	nuShaderInfo* info = nullptr;
+	nuDXProg* p = (nuDXProg*) GetShader( shader, info );
 	if ( p == D3D.ActiveProgram )
 		return;
 
@@ -468,6 +474,7 @@ void nuRenderDX::ActivateShader( nuShaders shader )
 	D3D.Context->VSSetConstantBuffers( ConstantSlotPerFrame, 1, &D3D.ShaderPerFrameConstants );
 	D3D.Context->PSSetConstantBuffers( ConstantSlotPerFrame, 1, &D3D.ShaderPerFrameConstants );
 	D3D.ActiveProgram = p;
+	D3D.ActiveProgramInfo = info;
 
 	float blendFactors[4] = {0,0,0,0};
 	uint sampleMask = 0xffffffff;
@@ -493,10 +500,12 @@ void nuRenderDX::DrawQuad( const void* v )
 		return;
 	}
 
-	memcpy( map.pData, v, nvert * sizeof(nuVx_PTC) );
+	int vertexSize = D3D.ActiveProgramInfo->VertexSize;
+
+	memcpy( map.pData, v, nvert * vertexSize );
 	D3D.Context->Unmap( D3D.VertBuffer, 0 );
 
-	UINT stride = sizeof(nuVx_PTC);
+	UINT stride = vertexSize;
 	UINT offset = 0;
 	D3D.Context->IASetVertexBuffers( 0, 1, &D3D.VertBuffer, &stride, &offset );
 	D3D.Context->IASetIndexBuffer( D3D.QuadIndexBuffer, DXGI_FORMAT_R16_UINT, 0 );

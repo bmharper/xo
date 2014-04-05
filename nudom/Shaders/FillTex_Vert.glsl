@@ -8,5 +8,5 @@ void main()
 {
 	gl_Position = mvproj * vpos;
 	texuv0 = vtexuv0;
-	color = vcolor;
+	color = vec4(pow(vcolor.rgb, vec3(2.2, 2.2, 2.2)), vcolor.a);
 }

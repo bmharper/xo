@@ -206,6 +206,7 @@ local nudom = SharedLibrary {
 		"nudom/Shaders/Processed_glsl/TextWholeShader.cpp",
 		"nudom/Shaders/Processed_hlsl/FillShader.cpp",
 		"nudom/Shaders/Processed_hlsl/RectShader.cpp",
+		"nudom/Shaders/Processed_hlsl/TextRGBShader.cpp",
 		"nudom/Shaders/Processed_hlsl/TextWholeShader.cpp",
 		"nudom/Shaders/Helpers/nuPreprocessor.cpp",
 		"dependencies/Panacea/Containers/queue.cpp",

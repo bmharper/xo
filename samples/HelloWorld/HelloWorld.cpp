@@ -13,7 +13,6 @@ void nuMain( nuMainEvent ev )
 			nuDoc* doc = MainWnd->Doc();
 			//doc->Root.StyleParse( "margin: 20px;" );
 			//doc->Root.StyleParse( "border-radius: 55px;" );
-
 			NUTRACE( "Hello 2\n" );
 
 			for ( int i = 0; i < 4; i++ )

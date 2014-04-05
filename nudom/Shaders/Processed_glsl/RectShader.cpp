@@ -29,9 +29,7 @@ const char* nuGLProg_Rect::VertSrc()
 "	{\n"
 "		pos = mvproj * vpos;\n"
 "		gl_Position = pos;\n"
-"	\n"
-"		color.rgb = pow( vcolor.rgb, vec3(2.2, 2.2, 2.2) );\n"
-"		color.a = vcolor.a;\n"
+"		color = vec4(pow(vcolor.rgb, vec3(2.2, 2.2, 2.2)), vcolor.a);\n"
 "	}\n"
 ;
 }

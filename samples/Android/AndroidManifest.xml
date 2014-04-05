@@ -6,9 +6,10 @@
             android:label="@string/gl2jni_activity"
             android:debuggable="true"
             >
+        <!-- android:theme="@android:style/Theme.NoTitleBar.Fullscreen" -->     
         <activity android:name="NuActivity"
-                android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
             	android:launchMode="singleTask"
+            	android:theme="@android:style/Theme.NoTitleBar"
             	android:configChanges="orientation|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -2,6 +2,8 @@
 
 #include "nuDefs.h"
 
+#if NU_BUILD_DIRECTX
+
 class NUAPI nuDXProg : public nuProgBase
 {
 public:
@@ -25,3 +27,5 @@ public:
 protected:
 	void					ResetBase();
 };
+
+#endif

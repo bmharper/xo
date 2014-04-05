@@ -85,6 +85,7 @@ JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_init(JNIEnv * env, jobject o
 	
 	if ( MainWnd )
 	{
+		MainWnd->RelativeClientRect = nuBox( 0, 0, width, height );
 		nuEvent ev = MakeEvent();
 		ev.MakeWindowSize( width, height );
 		PostEvent( ev );
@@ -121,7 +122,9 @@ JNIEXPORT int JNICALL Java_com_android_nudom_NuLib_step(JNIEnv * env, jobject ob
 		//MainWnd->DocGroup->RenderDoc->Render( MainWnd->RGL );
 
 		//LOGI("render 3");
-		return MainWnd->DocGroup->Render();
+		int r = MainWnd->DocGroup->Render();
+		//LOGI("render done");
+		return r;
 	}
 	return nuRenderResultNeedMore;
 }
@@ -141,7 +144,7 @@ JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_input(JNIEnv * env, jobject 
 	*/
 	if ( MainWnd )
 	{
-	    LOGI("dispatching touch input %d", type);
+	    //LOGI("dispatching touch input %d", type);
 
 		nuEvent ev = MakeEvent();
 		ev.Type = nuEventTouch;

@@ -50,7 +50,7 @@ class NuView extends GLSurfaceView {
 
     private void init(boolean translucent, int depth, int stencil) {
 
-        /* By default, GLSurfaceView() creates a RGB_565 opaque surface.
+        /* By default, GLSurfaceView() creates a RGB_888 opaque surface.
          * If we want a translucent one, we should change the surface's
          * format here, using PixelFormat.TRANSLUCENT for GL Surfaces
          * is interpreted as any 32-bit surface with alpha by SurfaceFlinger.
@@ -71,7 +71,7 @@ class NuView extends GLSurfaceView {
          */
         setEGLConfigChooser( translucent ?
                              new ConfigChooser(8, 8, 8, 8, depth, stencil) :
-                             new ConfigChooser(5, 6, 5, 0, depth, stencil) );
+                             new ConfigChooser(8, 8, 8, 0, depth, stencil) );
 
         /* Set the renderer responsible for frame rendering */
         setRenderer(new NuRenderer(this));
@@ -79,7 +79,9 @@ class NuView extends GLSurfaceView {
     }
 
     private static class ContextFactory implements GLSurfaceView.EGLContextFactory {
-        private static int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
+        
+    	private static int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
+        
         public EGLContext createContext(EGL10 egl, EGLDisplay display, EGLConfig eglConfig) {
             Log.w(TAG, "creating OpenGL ES 2.0 context");
             checkEglError("Before eglCreateContext", egl);
@@ -128,8 +130,7 @@ class NuView extends GLSurfaceView {
 
         public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
 
-            /* Get the number of minimally matching EGL configurations
-             */
+            // Get the number of minimally matching EGL configurations
             int[] num_config = new int[1];
             egl.eglChooseConfig(display, s_configAttribs2, null, 0, num_config);
 
@@ -139,40 +140,33 @@ class NuView extends GLSurfaceView {
                 throw new IllegalArgumentException("No configs match configSpec");
             }
 
-            /* Allocate then read the array of minimally matching EGL configs
-             */
+            // Allocate then read the array of minimally matching EGL configs
             EGLConfig[] configs = new EGLConfig[numConfigs];
             egl.eglChooseConfig(display, s_configAttribs2, configs, numConfigs, num_config);
 
             if (DEBUG) {
                  printConfigs(egl, display, configs);
             }
-            /* Now return the "best" one
-             */
+            
+            // Now return the "best" one
             return chooseConfig(egl, display, configs);
         }
 
         public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display,
                 EGLConfig[] configs) {
             for(EGLConfig config : configs) {
-                int d = findConfigAttrib(egl, display, config,
-                        EGL10.EGL_DEPTH_SIZE, 0);
-                int s = findConfigAttrib(egl, display, config,
-                        EGL10.EGL_STENCIL_SIZE, 0);
+                int d = findConfigAttrib(egl, display, config, EGL10.EGL_DEPTH_SIZE, 0);
+                int s = findConfigAttrib(egl, display, config, EGL10.EGL_STENCIL_SIZE, 0);
 
                 // We need at least mDepthSize and mStencilSize bits
                 if (d < mDepthSize || s < mStencilSize)
                     continue;
 
                 // We want an *exact* match for red/green/blue/alpha
-                int r = findConfigAttrib(egl, display, config,
-                        EGL10.EGL_RED_SIZE, 0);
-                int g = findConfigAttrib(egl, display, config,
-                            EGL10.EGL_GREEN_SIZE, 0);
-                int b = findConfigAttrib(egl, display, config,
-                            EGL10.EGL_BLUE_SIZE, 0);
-                int a = findConfigAttrib(egl, display, config,
-                        EGL10.EGL_ALPHA_SIZE, 0);
+                int r = findConfigAttrib(egl, display, config, EGL10.EGL_RED_SIZE, 0);
+                int g = findConfigAttrib(egl, display, config, EGL10.EGL_GREEN_SIZE, 0);
+                int b = findConfigAttrib(egl, display, config, EGL10.EGL_BLUE_SIZE, 0);
+                int a = findConfigAttrib(egl, display, config, EGL10.EGL_ALPHA_SIZE, 0);
 
                 if (r == mRedSize && g == mGreenSize && b == mBlueSize && a == mAlphaSize)
                     return config;
@@ -180,9 +174,7 @@ class NuView extends GLSurfaceView {
             return null;
         }
 
-        private int findConfigAttrib(EGL10 egl, EGLDisplay display,
-                EGLConfig config, int attribute, int defaultValue) {
-
+        private int findConfigAttrib(EGL10 egl, EGLDisplay display, EGLConfig config, int attribute, int defaultValue) {
             if (egl.eglGetConfigAttrib(display, config, attribute, mValue)) {
                 return mValue[0];
             }
@@ -295,10 +287,10 @@ class NuView extends GLSurfaceView {
     }
 
     private class NuRenderer implements GLSurfaceView.Renderer {
-    	public NuView MyView;
+    	public NuView myView;
     	
     	public NuRenderer( NuView view ) {
-    		MyView = view;
+    		myView = view;
     	}
     	
         public void onSurfaceChanged(GL10 gl, int width, int height) {
@@ -314,11 +306,11 @@ class NuView extends GLSurfaceView {
         	int res = NuLib.step();
         	if ( res == NuView.RENDER_RESULT_IDLE ) {
         		//Log.i("nu", "idle");
-        		MyView.setRenderMode(RENDERMODE_WHEN_DIRTY);
+        		myView.setRenderMode(RENDERMODE_WHEN_DIRTY);
         	}
         	else {
         		//Log.i("nu", "continuous");
-                MyView.setRenderMode(RENDERMODE_CONTINUOUSLY);
+        		myView.setRenderMode(RENDERMODE_CONTINUOUSLY);
         	}
         }
         

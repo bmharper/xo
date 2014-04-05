@@ -28,6 +28,7 @@ void* nuMallocOrDie( size_t bytes );
 #define NUCHECKALLOC(x)		NUASSERT((x) != NULL)
 #define NUPANIC(msg)		AbcPanic(msg)
 #define NUTODO				NUPANIC("not yet implemented") 
+#define NUTODO_STATIC		static_assert(false, "Implement me");
 
 enum nuPlatform
 {
