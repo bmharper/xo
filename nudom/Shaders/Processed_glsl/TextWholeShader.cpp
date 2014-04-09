@@ -78,4 +78,9 @@ uint32 nuGLProg_TextWhole::PlatformMask()
 	return nuPlatform_All;
 }
 
+nuVertexType nuGLProg_TextWhole::VertexType()
+{
+	return nuVertexType_NULL;
+}
+
 

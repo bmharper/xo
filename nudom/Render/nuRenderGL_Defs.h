@@ -1,6 +1,7 @@
 #pragma once
 
-#include "nuDefs.h"
+#include "../nuDefs.h"
+#include "nuVertexTypes.h"
 
 class NUAPI nuGLProg : public nuProgBase
 {
@@ -19,6 +20,7 @@ public:
 	virtual const char*		Name();
 	virtual bool			LoadVariablePositions();
 	virtual uint32			PlatformMask(); 			// Combination of nuPlatformMask bits.
+	virtual nuVertexType	VertexType();
 
 	bool					UseOnThisPlatform() { return !!(PlatformMask() & NU_PLATFORM); }
 

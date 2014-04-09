@@ -113,4 +113,9 @@ uint32 nuGLProg_Rect::PlatformMask()
 	return nuPlatform_All;
 }
 
+nuVertexType nuGLProg_Rect::VertexType()
+{
+	return nuVertexType_NULL;
+}
+
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../nuDefs.h"
+#include "nuVertexTypes.h"
 
 struct nuShaderPerFrame
 {
@@ -116,23 +117,4 @@ public:
 
 	virtual bool		LoadTexture( nuTexture* tex, int texUnit );
 	virtual void		ReadBackbuffer( nuImage& image );
-};
-
-// Position, UV, Color
-struct NUAPI nuVx_PTC
-{
-	// Note that nuRenderGL::DrawQuad assumes that we share our base layout with nuVx_PTCV4
-	nuVec3f		Pos;
-	nuVec2f		UV;
-	uint32		Color;
-};
-
-// Position, UV, Color, Vec4
-struct NUAPI nuVx_PTCV4
-{
-	// Note that nuRenderGL::DrawQuad assumes that we share our base layout with nuVx_PTC
-	nuVec3f		Pos;
-	nuVec2f		UV;
-	uint32		Color;
-	nuVec4f		V4;
 };

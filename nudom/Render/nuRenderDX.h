@@ -82,6 +82,7 @@ private:
 	bool				WindowResized();
 	bool				CreateShaders();
 	bool				CreateShader( nuDXProg* prog );
+	bool				CreateVertexLayout( nuDXProg* prog, ID3DBlob* vsBlob );
 	bool				CompileShader( const char* name, const char* source, const char* shaderTarget, ID3DBlob** blob );
 	bool				SetupBuffers();
 	bool				SetShaderFrameUniforms();

@@ -127,4 +127,9 @@ uint32 nuGLProg_TextRGB::PlatformMask()
 	return nuPlatform_WinDesktop;
 }
 
+nuVertexType nuGLProg_TextRGB::VertexType()
+{
+	return nuVertexType_NULL;
+}
+
 

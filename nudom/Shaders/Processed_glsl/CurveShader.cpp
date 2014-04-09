@@ -89,4 +89,9 @@ uint32 nuGLProg_Curve::PlatformMask()
 	return nuPlatform_WinDesktop;
 }
 
+nuVertexType nuGLProg_Curve::VertexType()
+{
+	return nuVertexType_NULL;
+}
+
 

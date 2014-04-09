@@ -20,12 +20,13 @@ class nuGLDXProg_NAME : public nuGLDXProg
 {
 public:
 	nuGLDXProg_NAME();
-	virtual void		Reset();
-	virtual const char*	VertSrc();
-	virtual const char*	FragSrc();
-	virtual const char*	Name();
-	virtual bool		LoadVariablePositions();	// Performs glGet[Uniform|Attrib]Location for all variables. Returns true if all variables are found.
-	virtual uint32		PlatformMask();				// Combination of nuPlatform bits.
+	virtual void			Reset();
+	virtual const char*		VertSrc();
+	virtual const char*		FragSrc();
+	virtual const char*		Name();
+	virtual bool			LoadVariablePositions();	// Performs glGet[Uniform|Attrib]Location for all variables. Returns true if all variables are found.
+	virtual uint32			PlatformMask();				// Combination of nuPlatform bits.
+	virtual nuVertexType	VertexType();				// Only meaningful on DirectX
 
 END
 
@@ -75,6 +76,11 @@ uint32 nuGLDXProg_NAME::PlatformMask()
 	return PLATFORM_MASK;
 }
 
+nuVertexType nuGLDXProg_NAME::VertexType()
+{
+	return VERTEX_TYPE;
+}
+
 END
 
 # nature:	uniform, attribute
@@ -86,6 +92,11 @@ class Variable
 		@type = _type
 		@name = _name
 	end
+end
+
+def die(msg)
+	put(msg + "\n")
+	exit(1)
 end
 
 def name_from_shader_source(source, include_vert_or_frag = true)
@@ -115,7 +126,18 @@ def escape_file(file)
 	return escape_txt( File.open(file) { |f| f.read } )
 end
 
-def gen_combined(ext, vert, frag, name, filename_base)
+def extract_vertex_type(vert_src, name)
+	# example:
+	# VSOutput main(VertexType_PTCV4 vertex)
+	vert_src.each_line{ |line|
+		if line =~ /main\(VertexType_(\w+)/
+			return "nuVertexType_" + $1
+		end
+	}
+	die("Couldn't find vertex type for shader #{name}")
+end
+
+def gen_combined(common, ext, vert, frag, name, filename_base)
 	variables = []
 	platforms = {}
 	vert_src = File.open(vert) { |f| f.read }
@@ -147,6 +169,11 @@ def gen_combined(ext, vert, frag, name, filename_base)
 		cleaned_src
 	}
 	vert_src, frag_src = replaced[0], replaced[1]
+	vert_src = common + vert_src
+	frag_src = common + frag_src
+
+	vertex_type = "nuVertexType_NULL"
+	vertex_type = extract_vertex_type(vert_src, name) if ext2name(ext) == "DX"
 
 	platforms[:nuPlatform_All] = 1 if platforms.length == 0
 
@@ -188,20 +215,27 @@ def gen_combined(ext, vert, frag, name, filename_base)
 		txt.gsub!("RESET", reset)
 		txt.gsub!("LOAD_FUNC_BODY", load_func_body)
 		txt.gsub!("PLATFORM_MASK", platforms.keys.join(" | "))
+		txt.gsub!("VERTEX_TYPE", vertex_type)
 		file << txt
 		file << "\n"
 	}
 end
 
 # vert and frag are paths to .hlsl/.glsl files
-def gen_pair(base_dir, ext, vert, frag)
+def gen_pair(common, base_dir, ext, vert, frag)
 	name = name_from_shader_source(vert, false)
-	gen_combined(ext, vert, frag, name, base_dir + "/Processed_#{ext}/#{name}Shader")
+	gen_combined(common, ext, vert, frag, name, base_dir + "/Processed_#{ext}/#{name}Shader")
 end
 
 def run_dir(base_dir, ext)
 	shaders = Dir.glob("#{base_dir}/*.#{ext}")
 	#print(shaders)
+
+	common = ""
+	fcommon = "#{base_dir}/_Common.#{ext}"
+	if File.exist?(fcommon)
+		common = File.open(fcommon) { |file| file.read }
+	end
 
 	# At present we expect pairs of "xyzFrag.glsl" and "xyzVert.glsl" (or .hlsl)
 	# Maybe someday we could pair them up differently.. but not THIS DAY
@@ -210,7 +244,7 @@ def run_dir(base_dir, ext)
 			vert = candidate
 			frag = candidate.sub("Vert.#{ext}", "Frag.#{ext}")
 			#print(vert + " " + frag + "\n")
-			gen_pair(base_dir, ext, vert, frag)
+			gen_pair(common, base_dir, ext, vert, frag)
 		end
 	}
 end

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nuDefs.h"
+#include "nuVertexTypes.h"
 
 #if NU_BUILD_DIRECTX
 
@@ -21,6 +22,7 @@ public:
 	virtual const char*		Name();
 	virtual bool			LoadVariablePositions();
 	virtual uint32			PlatformMask(); 			// Combination of nuPlatformMask bits.
+	virtual nuVertexType	VertexType();
 
 	bool					UseOnThisPlatform() { return !!(PlatformMask() & NU_PLATFORM); }
 

@@ -76,4 +76,9 @@ uint32 nuGLProg_FillTex::PlatformMask()
 	return nuPlatform_All;
 }
 
+nuVertexType nuGLProg_FillTex::VertexType()
+{
+	return nuVertexType_NULL;
+}
+
 

@@ -208,21 +208,10 @@ bool nuRenderDX::CreateShader( nuDXProg* prog )
 		return false;
 	}
 
-	// Vertex input layout
-	D3D11_INPUT_ELEMENT_DESC layout[] =
-	{
-		{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, offsetof(nuVx_PTC,Pos),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, offsetof(nuVx_PTC,UV),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR",		0, DXGI_FORMAT_R8G8B8A8_UNORM,		0, offsetof(nuVx_PTC,Color),	D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-
-	hr = D3D.Device->CreateInputLayout( layout, arraysize(layout), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &prog->VertLayout );
+	bool layoutOK = CreateVertexLayout( prog, vsBlob );
 	vsBlob->Release();
-	if ( FAILED(hr) )
-	{
-		NUTRACE( "Vertex layout for %s invalid (0x%08x)", (const char*) prog->Name(), hr );
+	if ( !layoutOK )
 		return false;
-	}
 
 	// Pixel shader
 	ID3DBlob* psBlob = NULL;
@@ -234,6 +223,47 @@ bool nuRenderDX::CreateShader( nuDXProg* prog )
 	if( FAILED(hr) )
 	{
 		NUTRACE( "CreatePixelShader failed (0x%08x) for %s", hr, (const char*) prog->Name() );
+		return false;
+	}
+
+	return true;
+}
+
+bool nuRenderDX::CreateVertexLayout( nuDXProg* prog, ID3DBlob* vsBlob )
+{
+	nuVertexType vtype = prog->VertexType();
+
+	static_assert(nuVertexType_END == 3, "Create new vertex layout here");
+
+	D3D11_INPUT_ELEMENT_DESC layouts[nuVertexType_END - 1][4] =
+	{
+		// nuVertexType_PTC
+		{
+			{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, offsetof(nuVx_PTC,Pos),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, offsetof(nuVx_PTC,UV),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "COLOR",		0, DXGI_FORMAT_R8G8B8A8_UNORM,		0, offsetof(nuVx_PTC,Color),	D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		},
+		// nuVertexType_PTCV4
+		{
+			{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, offsetof(nuVx_PTCV4,Pos),	D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD",	1, DXGI_FORMAT_R32G32_FLOAT,		0, offsetof(nuVx_PTCV4,UV),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "COLOR",		0, DXGI_FORMAT_R8G8B8A8_UNORM,		0, offsetof(nuVx_PTCV4,Color),	D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD",	2, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, offsetof(nuVx_PTCV4,V4),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		},
+	};
+	int layoutSizes[nuVertexType_END - 1] =
+	{
+		3,	// PTC
+		4,	// PTCV4
+	};
+
+	static_assert(nuVertexType_NULL == 0, "nuVertexType_NULL = 0");
+	int index = vtype - 1;
+
+	HRESULT hr = D3D.Device->CreateInputLayout( layouts[index], layoutSizes[index], vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &prog->VertLayout );
+	if ( FAILED(hr) )
+	{
+		NUTRACE( "Vertex layout for %s invalid (0x%08x)", (const char*) prog->Name(), hr );
 		return false;
 	}
 
