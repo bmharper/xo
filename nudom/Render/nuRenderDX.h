@@ -25,6 +25,7 @@ private:
 		ID3D11RasterizerState*	Rasterizer;
 		ID3D11RenderTargetView*	RenderTargetView;
 		ID3D11BlendState*		BlendNormal;
+		ID3D11BlendState*		BlendDual;
 		ID3D11SamplerState*		SamplerLinear;
 		ID3D11Buffer*           VertBuffer;
 		ID3D11Buffer*           QuadIndexBuffer;
@@ -35,12 +36,13 @@ private:
 
 		// our own state that
 		nuDXProg*				ActiveProgram;
-		nuShaderInfo*			ActiveProgramInfo;
 	};
 
 public:
 						nuRenderDX();
 	virtual				~nuRenderDX();
+
+	virtual const char*	RendererName();
 
 	virtual bool		InitializeDevice( nuSysWnd& wnd );
 	virtual void		DestroyDevice( nuSysWnd& wnd );
@@ -52,7 +54,7 @@ public:
 	virtual void		PreRender();
 	virtual void		PostRenderCleanup();
 	
-	virtual nuProgBase* GetShader( nuShaders shader, nuShaderInfo*& info );
+	virtual nuProgBase* GetShader( nuShaders shader );
 	virtual void		ActivateShader( nuShaders shader );
 
 	virtual void		DrawQuad( const void* v );

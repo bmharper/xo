@@ -286,12 +286,6 @@ class nuProgBase
 public:
 };
 
-// This should be defined inside the shader source. I'll delay that until HLSL -> GLSL conversion layer is in place
-struct nuShaderInfo
-{
-	int VertexSize;
-};
-
 enum nuShaders
 {
 	nuShaderInvalid,

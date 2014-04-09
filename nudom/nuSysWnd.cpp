@@ -206,10 +206,15 @@ template<typename TRenderer>
 bool nuSysWnd::InitializeRenderer_Any( nuRenderBase*& renderer )
 {
 	renderer = new TRenderer();
-	if ( !renderer->InitializeDevice( *this ) )
+	if ( renderer->InitializeDevice( *this ) )
+	{
+		NUTRACE( "Successfully initialized %s renderer\n", renderer->RendererName() );
+		return true;
+	}
+	else
 	{
 		delete renderer;
 		renderer = NULL;
+		return false;
 	}
-	return renderer != NULL;
 }

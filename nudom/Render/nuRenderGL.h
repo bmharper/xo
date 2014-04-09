@@ -35,6 +35,9 @@ public:
 	//void			DrawTriangles( int nvert, const void* v, const uint16* indices );
 	
 	// Implementation of nuRenderBase
+
+	virtual const char*	RendererName();
+
 	virtual bool		InitializeDevice( nuSysWnd& wnd );
 	virtual void		DestroyDevice( nuSysWnd& wnd );
 	virtual void		SurfaceLost();
@@ -47,7 +50,7 @@ public:
 	
 	virtual void		DrawQuad( const void* v );
 
-	virtual nuProgBase* GetShader( nuShaders shader, nuShaderInfo*& info );
+	virtual nuProgBase* GetShader( nuShaders shader );
 	virtual void		ActivateShader( nuShaders shader );
 
 	virtual bool		LoadTexture( nuTexture* tex, int texUnit );

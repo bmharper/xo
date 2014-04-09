@@ -26,3 +26,5 @@ enum nuVertexType
 	nuVertexType_PTCV4,
 	nuVertexType_END,
 };
+
+NUAPI size_t nuVertexSize( nuVertexType t );

@@ -195,6 +195,7 @@ local nudom = SharedLibrary {
 		"nudom/Render/nuRenderStack.cpp",
 		"nudom/Render/nuStyleResolve.cpp",
 		"nudom/Render/nuTextureAtlas.cpp",
+		"nudom/Render/nuVertexTypes.cpp",
 		"nudom/Text/nuFontStore.cpp",
 		"nudom/Text/nuGlyphCache.cpp",
 		"nudom/Text/nuTextDefs.cpp",

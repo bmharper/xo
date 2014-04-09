@@ -21,6 +21,11 @@ nuRenderDX::~nuRenderDX()
 {
 }
 
+const char*	nuRenderDX::RendererName()
+{
+	return "DirectX 11";
+}
+
 bool nuRenderDX::InitializeDevice( nuSysWnd& wnd )
 {
 	if ( !InitializeDXDevice(wnd) )
@@ -93,7 +98,7 @@ bool nuRenderDX::InitializeDXDevice( nuSysWnd& wnd )
 	memset( &blend, 0, sizeof(blend) );
 	blend.AlphaToCoverageEnable = FALSE;
 	blend.IndependentBlendEnable = FALSE;
-	blend.RenderTarget[0].BlendEnable = true;
+	blend.RenderTarget[0].BlendEnable    = true;
 	blend.RenderTarget[0].SrcBlend       = D3D11_BLEND_SRC_ALPHA;
 	blend.RenderTarget[0].DestBlend      = D3D11_BLEND_INV_SRC_ALPHA;
 	blend.RenderTarget[0].BlendOp        = D3D11_BLEND_OP_ADD;
@@ -103,6 +108,20 @@ bool nuRenderDX::InitializeDXDevice( nuSysWnd& wnd )
 	blend.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 	HRESULT eBlendNormal = D3D.Device->CreateBlendState( &blend, &D3D.BlendNormal );
 	CHECK_HR(eBlendNormal, "CreateBlendNormal");
+
+	memset( &blend, 0, sizeof(blend) );
+	blend.AlphaToCoverageEnable = FALSE;
+	blend.IndependentBlendEnable = FALSE;
+	blend.RenderTarget[0].BlendEnable    = true;
+	blend.RenderTarget[0].SrcBlend       = D3D11_BLEND_SRC1_COLOR;
+	blend.RenderTarget[0].DestBlend      = D3D11_BLEND_INV_SRC1_COLOR;
+	blend.RenderTarget[0].BlendOp        = D3D11_BLEND_OP_ADD;
+	blend.RenderTarget[0].SrcBlendAlpha  = D3D11_BLEND_ONE;
+	blend.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+	blend.RenderTarget[0].BlendOpAlpha   = D3D11_BLEND_OP_ADD;
+	blend.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	HRESULT eBlendDual = D3D.Device->CreateBlendState( &blend, &D3D.BlendDual );
+	CHECK_HR(eBlendDual, "CreateBlendDual");
 
 	D3D11_SAMPLER_DESC sampler;
 	memset( &sampler, 0, sizeof(sampler) );
@@ -120,7 +139,7 @@ bool nuRenderDX::InitializeDXDevice( nuSysWnd& wnd )
 	sampler.MinLOD = 0;
 	sampler.MaxLOD = D3D11_FLOAT32_MAX;
 	HRESULT eSampler = D3D.Device->CreateSamplerState( &sampler, &D3D.SamplerLinear );
-	CHECK_HR(eBlendNormal, "CreateSamplerLinear");
+	CHECK_HR(eSampler, "CreateSamplerLinear");
 
 	return true;
 }
@@ -195,9 +214,12 @@ bool nuRenderDX::CreateShader( nuDXProg* prog )
 {
 	std::string name = prog->Name();
 
+	std::string vert_src = CommonShaderDefines() + prog->VertSrc();
+	std::string frag_src = CommonShaderDefines() + prog->FragSrc();
+
 	// Vertex shader
 	ID3DBlob* vsBlob = NULL;
-	if ( !CompileShader( (name + "Vertex").c_str(), prog->VertSrc(), "vs_4_0", &vsBlob ) )
+	if ( !CompileShader( (name + "Vertex").c_str(), vert_src.c_str(), "vs_4_0", &vsBlob ) )
 		return false;
 
 	HRESULT hr = D3D.Device->CreateVertexShader( vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), NULL, &prog->Vert );
@@ -215,7 +237,7 @@ bool nuRenderDX::CreateShader( nuDXProg* prog )
 
 	// Pixel shader
 	ID3DBlob* psBlob = NULL;
-	if ( !CompileShader( (name + "Frag").c_str(), prog->FragSrc(), "ps_4_0", &psBlob ) )
+	if ( !CompileShader( (name + "Frag").c_str(), frag_src.c_str(), "ps_4_0", &psBlob ) )
 		return false;
 
 	hr = D3D.Device->CreatePixelShader( psBlob->GetBufferPointer(), psBlob->GetBufferSize(), NULL, &prog->Frag );
@@ -343,7 +365,6 @@ void nuRenderDX::EndRender( nuSysWnd& wnd )
 		NUTRACE( "DirectX Present failed: 0x%08x", hr );
 
 	D3D.ActiveProgram = nullptr;
-	D3D.ActiveProgramInfo = nullptr;
 
 	// TODO: Handle
 	//	DXGI_ERROR_DEVICE_REMOVED
@@ -473,28 +494,24 @@ void nuRenderDX::PostRenderCleanup()
 {
 }
 
-nuProgBase* nuRenderDX::GetShader( nuShaders shader, nuShaderInfo*& info )
+nuProgBase* nuRenderDX::GetShader( nuShaders shader )
 {
-	info = &FixedShaderInfoNormal;
 	switch ( shader )
 	{
 	case nuShaderFill:		return &PFill;
 	//case nuShaderFillTex:	return &PFillTex;
 	case nuShaderRect:		return &PRect;
-	case nuShaderTextRGB:
-		info = &FixedShaderInfoTexRGB;
-		return &PTextRGB;
+	case nuShaderTextRGB:	return &PTextRGB;
 	case nuShaderTextWhole:	return &PTextWhole;
 	default:
-		NUASSERT(false);
+		NUTODO;
 		return NULL;
 	}
 }
 
 void nuRenderDX::ActivateShader( nuShaders shader )
 {
-	nuShaderInfo* info = nullptr;
-	nuDXProg* p = (nuDXProg*) GetShader( shader, info );
+	nuDXProg* p = (nuDXProg*) GetShader( shader );
 	if ( p == D3D.ActiveProgram )
 		return;
 
@@ -504,11 +521,14 @@ void nuRenderDX::ActivateShader( nuShaders shader )
 	D3D.Context->VSSetConstantBuffers( ConstantSlotPerFrame, 1, &D3D.ShaderPerFrameConstants );
 	D3D.Context->PSSetConstantBuffers( ConstantSlotPerFrame, 1, &D3D.ShaderPerFrameConstants );
 	D3D.ActiveProgram = p;
-	D3D.ActiveProgramInfo = info;
 
 	float blendFactors[4] = {0,0,0,0};
 	uint sampleMask = 0xffffffff;
-	D3D.Context->OMSetBlendState( D3D.BlendNormal, blendFactors, sampleMask );
+
+	if ( shader == nuShaderTextRGB )
+		D3D.Context->OMSetBlendState( D3D.BlendDual, blendFactors, sampleMask );
+	else
+		D3D.Context->OMSetBlendState( D3D.BlendNormal, blendFactors, sampleMask );
 
 	D3D.Context->PSSetSamplers( 0, 1, &D3D.SamplerLinear );
 }
@@ -530,7 +550,8 @@ void nuRenderDX::DrawQuad( const void* v )
 		return;
 	}
 
-	int vertexSize = D3D.ActiveProgramInfo->VertexSize;
+	//int vertexSize = D3D.ActiveProgramInfo->VertexSize;
+	int vertexSize = (int) nuVertexSize( D3D.ActiveProgram->VertexType() );
 
 	memcpy( map.pData, v, nvert * vertexSize );
 	D3D.Context->Unmap( D3D.VertBuffer, 0 );

@@ -59,6 +59,11 @@ void nuRenderGL::Reset()
 	ActiveShader = nuShaderInvalid;
 }
 
+const char*	nuRenderGL::RendererName()
+{
+	return "OpenGL";
+}
+
 #if NU_PLATFORM_WIN_DESKTOP
 
 typedef BOOL (*_wglChoosePixelFormatARB) (HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
@@ -290,17 +295,14 @@ void nuRenderGL::DeleteShadersAndTextures()
 		DeleteProgram( *AllProgs[i] );
 }
 
-nuProgBase* nuRenderGL::GetShader( nuShaders shader, nuShaderInfo*& info )
+nuProgBase* nuRenderGL::GetShader( nuShaders shader )
 {
-	info = &FixedShaderInfoNormal;
 	switch ( shader )
 	{
 	case nuShaderFill:		return &PFill;
 	case nuShaderFillTex:	return &PFillTex;
 	case nuShaderRect:		return &PRect;
-	case nuShaderTextRGB:
-		info = &FixedShaderInfoTexRGB;
-		return &PTextRGB;
+	case nuShaderTextRGB:	return &PTextRGB;
 	case nuShaderTextWhole:	return &PTextWhole;
 	default:
 		NUASSERT(false);
@@ -312,8 +314,7 @@ void nuRenderGL::ActivateShader( nuShaders shader )
 {
 	if ( ActiveShader == shader )
 		return;
-	nuShaderInfo* info = nullptr;
-	nuGLProg* p = (nuGLProg*) GetShader( shader, info );
+	nuGLProg* p = (nuGLProg*) GetShader( shader );
 	ActiveShader = shader;
 	NUASSERT( p->Prog != 0 );
 	NUTRACE_RENDER( "Activate shader %s\n", p->Name() );
@@ -665,7 +666,7 @@ void nuRenderGL::PreparePreprocessor()
 	#endif
 #endif
 
-	BaseShader.append( fmt( "#define NU_GLYPH_ATLAS_SIZE %v\n", nuGlyphAtlasSize ).Z );
+	BaseShader.append( CommonShaderDefines() );
 	if ( nuGlobal()->EnableSRGBFramebuffer && Have_sRGB_Framebuffer )
 		BaseShader.append( "#define NU_SRGB_FRAMEBUFFER\n" );
 

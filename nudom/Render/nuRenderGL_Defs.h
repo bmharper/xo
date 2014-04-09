@@ -20,7 +20,7 @@ public:
 	virtual const char*		Name();
 	virtual bool			LoadVariablePositions();
 	virtual uint32			PlatformMask(); 			// Combination of nuPlatformMask bits.
-	virtual nuVertexType	VertexType();
+	virtual nuVertexType	VertexType();				// Not used on GL
 
 	bool					UseOnThisPlatform() { return !!(PlatformMask() & NU_PLATFORM); }
 

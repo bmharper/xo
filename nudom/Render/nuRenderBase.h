@@ -64,6 +64,8 @@ public:
 	void*				GetTextureDeviceHandle( nuTextureID texID ) const;
 	uint				GetTextureDeviceHandleInt( nuTextureID texID ) const	{ return reinterpret_cast<uint>(GetTextureDeviceHandle( texID )); }
 
+	virtual const char*	RendererName() = 0;
+
 	virtual bool		InitializeDevice( nuSysWnd& wnd ) = 0;	// Initialize this device
 	virtual void		DestroyDevice( nuSysWnd& wnd ) = 0;		// Destroy this device and all associated textures, etc
 	virtual void		SurfaceLost() = 0;
@@ -74,7 +76,7 @@ public:
 	virtual void		PreRender() = 0;
 	virtual void		PostRenderCleanup() = 0;
 
-	virtual nuProgBase* GetShader( nuShaders shader, nuShaderInfo*& info ) = 0;
+	virtual nuProgBase* GetShader( nuShaders shader ) = 0;
 	virtual void		ActivateShader( nuShaders shader ) = 0;
 
 	virtual void		DrawQuad( const void* v ) = 0;
@@ -87,12 +89,8 @@ protected:
 	nuTextureID					TexIDOffset;
 	podvec<void*>				TexIDToNative;		// Maps from nuTextureID to native device texture (eg. GLuint or ID3D11Texture2D*). We're wasting 4 bytes here on OpenGL.
 
-	// This information must be written inside the shader source code. Perhaps we postpone that until we have HLSL -> GLSL conversion layer complete
-	// Also.. we can probably stick to a bunch of vertex formats - no need to have a per-shader vertex format
-	static nuShaderInfo			FixedShaderInfoNormal;
-	static nuShaderInfo			FixedShaderInfoTexRGB;
-
 	void				EnsureTextureProperlyDefined( nuTexture* tex, int texUnit );
+	std::string			CommonShaderDefines();
 };
 
 // This reduces the amount of #ifdef-ing needed, so that on non-Windows platforms
@@ -110,7 +108,7 @@ public:
 	virtual void		PreRender();
 	virtual void		PostRenderCleanup();
 
-	virtual nuProgBase* GetShader( nuShaders shader, nuShaderInfo*& info );
+	virtual nuProgBase* GetShader( nuShaders shader );
 	virtual void		ActivateShader( nuShaders shader );
 
 	virtual void		DrawQuad( const void* v );

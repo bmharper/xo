@@ -1,14 +1,6 @@
 #include "pch.h"
 #include "nuRenderBase.h"
-
-// This static stuff will fall away eventually
-nuShaderInfo nuRenderBase::FixedShaderInfoNormal;
-nuShaderInfo nuRenderBase::FixedShaderInfoTexRGB;
-
-struct nuRenderBase_OnceOff { nuRenderBase_OnceOff() {
-	nuRenderBase::FixedShaderInfoNormal.VertexSize = sizeof(nuVx_PTC);
-	nuRenderBase::FixedShaderInfoTexRGB.VertexSize = sizeof(nuVx_PTCV4);
-}} nuRenderBase_OnceOff_Instantiate;
+#include "../Text/nuGlyphCache.h"
 
 nuRenderBase::nuRenderBase()
 {
@@ -82,6 +74,13 @@ void nuRenderBase::EnsureTextureProperlyDefined( nuTexture* tex, int texUnit )
 	NUASSERT( texUnit < nuMaxTextureUnits );
 }
 
+std::string nuRenderBase::CommonShaderDefines()
+{
+	std::string s;
+	s.append( fmt( "#define NU_GLYPH_ATLAS_SIZE %v\n", nuGlyphAtlasSize ).Z );
+	return s;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool nuRenderDummy::InitializeDevice( nuSysWnd& wnd )
@@ -110,9 +109,8 @@ void nuRenderDummy::PostRenderCleanup()
 {
 }
 
-nuProgBase* nuRenderDummy::GetShader( nuShaders shader, nuShaderInfo*& info )
+nuProgBase* nuRenderDummy::GetShader( nuShaders shader )
 {
-	info = NULL;
 	return NULL;
 }
 void nuRenderDummy::ActivateShader( nuShaders shader )
