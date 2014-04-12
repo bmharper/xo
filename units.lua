@@ -277,16 +277,6 @@ local HelloWorld = Program {
 	}
 }
 
-local DirectXTest = Program {
-	Name = "DirectXTest",
-	Depends = {
-		crt,
-	},
-	Sources = {
-		"experiments/DirectXTest.cpp",
-	}
-}
-
 local Bench = Program {
 	Name = "Bench",
 	Includes = { "nudom" },
