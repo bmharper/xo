@@ -190,7 +190,7 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 
 	nuGlyphCache* glyphCache = nuGlobal()->GlyphCache;
 
-	float fontSizePx = 12;
+	float fontSizePx = 11;
 	
 	// round font size to integer units
 	rnode->Style.FontSizePx = (uint8) nuRound( fontSizePx );
@@ -198,7 +198,7 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 	nuPos fontHeight = nuRealToPos( rnode->Style.FontSizePx );
 
 	const nuString& str = node.GetText();
-	rnode->Text.reserve( str.Len );
+	rnode->Text.reserve( str.Length() );
 	const char* txt = str.Z;
 
 	nuGlyphCacheKey key( rnode->FontID, 0, rnode->Style.FontSizePx, glyphFlags );

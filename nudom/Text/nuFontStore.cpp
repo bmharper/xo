@@ -53,7 +53,7 @@ const nuFont* nuFontStore::GetByFacename( const nuString& facename )
 nuFontID nuFontStore::Insert( const nuFont& font )
 {
 	NUASSERT( font.ID == nuFontIDNull );
-	NUASSERT( font.Facename.Len != 0 );
+	NUASSERT( font.Facename.Length() != 0 );
 	TakeCriticalSection lock(Lock);
 	
 	const nuFont* existing = GetByFacename_Internal( font.Facename );

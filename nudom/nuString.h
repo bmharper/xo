@@ -15,29 +15,29 @@ class NUAPI nuStringRaw
 {
 public:
 	char*	Z;
-	size_t	Len;	// Excludes null terminator, which we DO always have.
 
-	void	Set( const nuStringRaw& b );
-	void	Set( const char* b );
+	intp	Length() const;
 	void	CloneFastInto( nuStringRaw& b, nuPool* pool ) const;
-	void	Free();
 	void	Discard();
 	u32		GetHashCode() const;
+	intp	Index( const char* find ) const;
+	intp	RIndex( const char* find ) const;
 
 	bool	operator==( const char* b ) const;
 	bool	operator!=( const char* b ) const			{ return !(*this == b); }
 	bool	operator==( const nuStringRaw& b ) const;
 	bool	operator!=( const nuStringRaw& b ) const	{ return !(*this == b); }
 
-	bool	operator<( const nuStringRaw& b ) const		{ return strcmp(Z, b.Z) < 0; }
+	bool	operator<( const nuStringRaw& b ) const;
 
 protected:
-	static nuStringRaw Temp( const char* b );
+	static nuStringRaw Temp( char* b );
 
-	void	Alloc( size_t chars );
+	void	Alloc( uintp chars );
+	void	Free();
 };
 
-FHASH_SETUP_CLASS_GETHASHCODE( nuStringRaw, nuStringRaw );
+//FHASH_SETUP_CLASS_GETHASHCODE( nuStringRaw, nuStringRaw );
 
 // This is the classic thing you'd expect from a string. The destructor will free the memory.
 class NUAPI nuString : public nuStringRaw
@@ -45,21 +45,28 @@ class NUAPI nuString : public nuStringRaw
 public:
 				nuString();
 				nuString( const nuString& b );
+				nuString( const nuStringRaw& b );
 				nuString( const char* z );
 				~nuString();
 
-	void		MakeTemp( const char* z );
-	void		KillTemp();
-	void		ReplaceAll( const char* find, const char* replace );
+	void				Set( const char* z, intp maxLength = -1 );	// checks maxLength against strlen(z) and clamps automatically
+	void				ReplaceAll( const char* find, const char* replace );
+	podvec<nuString>	Split( const char* splitter ) const;
+	nuString			SubStr( intp start, intp end ) const;	// Returns [start .. end - 1]
 
-	nuString&	operator=( const nuStringRaw& b );
 	nuString&	operator=( const nuString& b );
+	nuString&	operator=( const nuStringRaw& b );
 	nuString&	operator=( const char* b );
-	nuString&	operator+=( const nuString& b );
+	nuString&	operator+=( const nuStringRaw& b );
+	nuString&	operator+=( const char* b );
+
+	static nuString		Join( const podvec<nuString>& parts, const char* joiner );
 
 };
 
 FHASH_SETUP_CLASS_GETHASHCODE( nuString, nuString );
+
+NUAPI nuString operator+( const nuStringRaw& a, const char* b );
 
 // Use this when you need a temporary 'nuString' object, but you don't need any heap allocs or frees
 class NUAPI nuTempString : public nuString

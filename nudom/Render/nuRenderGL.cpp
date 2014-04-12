@@ -401,13 +401,19 @@ void nuRenderGL::PreRender()
 	glViewport( 0, 0, FBWidth, FBHeight );
 
 	auto clear = nuGlobal()->ClearColor;
-	glClearColor( clear.r / 255.0f, clear.g / 255.0f, clear.b / 255.0f, clear.a / 255.0f );
+
+	if ( nuGlobal()->EnableSRGBFramebuffer && Have_sRGB_Framebuffer )
+	{
+		glEnable( GL_FRAMEBUFFER_SRGB );
+		glClearColor( nuSRGB2Linear(clear.r), nuSRGB2Linear(clear.g), nuSRGB2Linear(clear.b), clear.a / 255.0f );
+	}
+	else
+	{
+		glClearColor( clear.r / 255.0f, clear.g / 255.0f, clear.b / 255.0f, clear.a / 255.0f );
+	}
 
 	//glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
-
-	if ( nuGlobal()->EnableSRGBFramebuffer && Have_sRGB_Framebuffer )
-		glEnable( GL_FRAMEBUFFER_SRGB );
 
 	NUTRACE_RENDER( "PreRender 2\n" );
 	Check();
@@ -633,7 +639,7 @@ bool nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
 	return true;
 }
 
-void nuRenderGL::ReadBackbuffer( nuImage& image )
+bool nuRenderGL::ReadBackbuffer( nuImage& image )
 {
 	image.Alloc( nuTexFormatRGBA8, FBWidth, FBHeight );
 	if ( Have_Unpack_RowLength )
@@ -647,6 +653,8 @@ void nuRenderGL::ReadBackbuffer( nuImage& image )
 
 	if ( Have_Unpack_RowLength )
 		glPixelStorei( GL_UNPACK_ROW_LENGTH, 0 );
+
+	return true;
 }
 
 void nuRenderGL::PreparePreprocessor()

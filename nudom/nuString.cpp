@@ -1,61 +1,32 @@
 #include "pch.h"
+#include "nuDefs.h"
 #include "nuString.h"
 
-nuStringRaw nuStringRaw::Temp( const char* b )
+intp nuStringRaw::Length() const
 {
-	nuStringRaw r;
-	r.Z = const_cast<char*>(b);
-	r.Len = strlen(b);
-	return r;
-}
-
-void nuStringRaw::Set( const nuStringRaw& b )
-{
-	if ( Len != b.Len )
-	{
-		Free();
-		if ( b.Len != 0 )
-		{
-			// add a null terminator, always, but don't assume that source has a null terminator
-			Alloc( b.Len + 1 );
-			memcpy( Z, b.Z, b.Len );
-			Z[b.Len] = 0;
-		}
-		Len = b.Len;
-	}
-	else if ( Len != 0 )
-	{
-		memcpy( Z, b.Z, b.Len );
-	}
-}
-
-void nuStringRaw::Set( const char* b )
-{
-	*this = Temp(b);
+	return Z == nullptr ? 0 : strlen(Z);
 }
 
 void nuStringRaw::CloneFastInto( nuStringRaw& b, nuPool* pool ) const
 {
-	if ( Len != 0 )
+	auto len = Length();
+	if ( len != 0 )
 	{
-		b.Z = (char*) pool->Alloc( Len, false );
-		b.Len = Len;
-		memcpy( b.Z, Z, Len + 1 );
+		b.Z = (char*) pool->Alloc( len, false );
+		memcpy( b.Z, Z, len + 1 );
 	}
 	else
 	{
-		b.Z = NULL;
-		b.Len = 0;
+		b.Z = nullptr;
 	}
 }
 
 void nuStringRaw::Discard()
 {
-	Z = NULL;
-	Len = 0;
+	Z = nullptr;
 }
 
-void nuStringRaw::Alloc( size_t chars )
+void nuStringRaw::Alloc( uintp chars )
 {
 	Z = (char*) malloc( chars );
 	NUASSERT(Z);
@@ -64,16 +35,16 @@ void nuStringRaw::Alloc( size_t chars )
 void nuStringRaw::Free()
 {
 	free(Z);
-	Z = NULL;
-	Len = 0;
+	Z = nullptr;
 }
 
 u32 nuStringRaw::GetHashCode() const
 {
-	if ( Z == NULL ) return 0;
+	if ( Z == nullptr )
+		return 0;
 	// sdbm.
 	u32 hash = 0;
-	for ( size_t i = 0; i < Len; i++ )
+	for ( uintp i = 0; Z[i] != 0; i++ )
 	{
 		// hash(i) = hash(i - 1) * 65539 + str[i]
 		hash = (u32) Z[i] + (hash << 6) + (hash << 16) - hash;
@@ -82,15 +53,67 @@ u32 nuStringRaw::GetHashCode() const
 	return hash;
 }
 
+intp nuStringRaw::Index( const char* find ) const
+{
+	const char* p = strstr( Z, find );
+	if ( p == nullptr )
+		return -1;
+	return p - Z;
+}
+
+intp nuStringRaw::RIndex( const char* find ) const
+{
+	intp pos = 0;
+	intp last = -1;
+	while ( true )
+	{
+		const char* p = strstr( Z + pos, find );
+		if ( p == nullptr )
+			return last;
+		last = p - Z;
+		pos = last + 1;
+	}
+	NUPANIC("supposed to be unreachable");
+	return last;
+}
+
 bool nuStringRaw::operator==( const char* b ) const
 {
-	return *this == Temp(b);
+	return *this == Temp(const_cast<char*>(b));
 }
 
 bool nuStringRaw::operator==( const nuStringRaw& b ) const
 {
-	if ( Len != b.Len ) return false;
-	return memcmp( Z, b.Z, Len ) == 0;
+	if ( Z == nullptr )
+	{
+		return b.Z == nullptr || b.Z[0] == 0;
+	}
+	if ( b.Z == nullptr )
+	{
+		// First case here is already handled
+		return /* Z == nullptr || */ Z[0] == 0;
+	}
+	return strcmp( Z, b.Z ) == 0;
+}
+
+bool nuStringRaw::operator<( const nuStringRaw& b ) const
+{
+	if ( Z == nullptr )
+	{
+		return b.Z != nullptr && b.Z[0] != 0;
+	}
+	if ( b.Z == nullptr )
+	{
+		return false;
+	}
+	return strcmp( Z, b.Z ) < 0;
+}
+
+nuStringRaw nuStringRaw::Temp( char* b )
+{
+	nuStringRaw r;
+	r.Z = b;
+	return r;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,21 +122,24 @@ bool nuStringRaw::operator==( const nuStringRaw& b ) const
 
 nuString::nuString()
 {
-	Z = NULL;
-	Len = 0;
+	Z = nullptr;
 }
 
 nuString::nuString( const nuString& b )
 {
-	Z = NULL;
-	Len = 0;
+	Z = nullptr;
+	*this = b;
+}
+
+nuString::nuString( const nuStringRaw& b )
+{
+	Z = nullptr;
 	*this = b;
 }
 
 nuString::nuString( const char* z )
 {
-	Z = NULL;
-	Len = 0;
+	Z = nullptr;
 	*this = z;
 }
 
@@ -122,15 +148,30 @@ nuString::~nuString()
 	Free();
 }
 
-void nuString::MakeTemp( const char* z )
+void nuString::Set( const char* z, intp maxLength )
 {
-	Z = const_cast<char*>(z);	// const-correctness depends on the user
-	Len = strlen(z);
-}
+	intp newLength = 0;
+	if ( z != nullptr )
+		newLength = strlen(z);
+	
+	if ( maxLength >= 0 )
+		newLength = nuMin( newLength, maxLength );
 
-void nuString::KillTemp()
-{
-	Discard();
+	if ( Length() == newLength )
+	{
+		memcpy( Z, z, newLength );
+	}
+	else
+	{
+		Free();
+		if ( newLength != 0 )
+		{
+			// add a null terminator, always, but don't assume that source has a null terminator
+			Alloc( newLength + 1 );
+			memcpy( Z, z, newLength );
+			Z[newLength] = 0;
+		}
+	}
 }
 
 void nuString::ReplaceAll( const char* find, const char* replace )
@@ -147,35 +188,117 @@ void nuString::ReplaceAll( const char* find, const char* replace )
 	*this = self.c_str();
 }
 
+podvec<nuString> nuString::Split( const char* splitter ) const
+{
+	podvec<nuString> v;
+	intp splitLen = strlen(splitter);
+	intp pos = 0;
+	intp len = Length();
+	while ( true )
+	{
+		const char* next = strstr( Z + pos, splitter );
+		if ( next == nullptr )
+		{
+			v += SubStr( pos, len );
+			break;
+		}
+		else
+		{
+			v += SubStr( pos, next - Z );
+			pos = next - Z + splitLen;
+		}
+	}
+	return v;
+}
+
+nuString nuString::SubStr( intp start, intp end ) const
+{
+	auto len = Length();
+	start = nuClamp<intp>( start, 0, len );
+	end = nuClamp<intp>( end, 0, len );
+	nuString s;
+	s.Set( Z + start, end - start );
+	return s;
+}
+
 nuString& nuString::operator=( const nuString& b )
 {
-	Set( b );
+	Set( b.Z );
 	return *this;
 }
 
 nuString& nuString::operator=( const nuStringRaw& b )
 {
-	Set( b );
+	Set( b.Z );
 	return *this;
 }
 
 nuString& nuString::operator=( const char* b )
 {
-	Set( Temp(b) );
+	Set( b );
 	return *this;
 }
 
-nuString& nuString::operator+=( const nuString& b )
+nuString& nuString::operator+=( const nuStringRaw& b )
 {
-	char* newZ = (char*) malloc( Len + b.Len + 1 );
+	intp len1 = Length();
+	intp len2 = b.Length();
+	char* newZ = (char*) malloc( len1 + len2 + 1 );
 	NUASSERT(newZ);
-	memcpy( newZ, Z, Len );
-	memcpy( newZ + Len, b.Z, b.Len );
-	Len += b.Len;
-	newZ[Len] = 0;
+	memcpy( newZ, Z, len1 );
+	memcpy( newZ + len1, b.Z, len2 );
+	newZ[len1 + len2] = 0;
 	free( Z );
 	Z = newZ;
 	return *this;
+}
+
+nuString& nuString::operator+=( const char* b )
+{
+	*this += nuTempString(b);
+	return *this;
+}
+
+nuString nuString::Join( const podvec<nuString>& parts, const char* joiner )
+{
+	nuString r;
+	if ( parts.size() != 0 )
+	{
+		intp jlen = joiner == nullptr ? 0 : (intp) strlen(joiner);
+		intp total = 0;
+		for ( intp i = 0; i < parts.size(); i++ )
+			total += parts[i].Length() + jlen;
+		r.Alloc( total + 1 );
+	
+		intp rpos = 0;
+		for ( intp i = 0; i < parts.size(); i++ )
+		{
+			const char* part = parts[i].Z;
+			if ( part != nullptr )
+			{
+				for ( intp j = 0; part[j]; j++, rpos++ )
+					r.Z[rpos] = part[j];
+			}
+			if ( i != parts.size() - 1 )
+			{
+				for ( intp j = 0; j < jlen; j++, rpos++ )
+					r.Z[rpos] = joiner[j];
+			}
+		}
+		r.Z[rpos] = 0;
+	}
+	return r;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+NUAPI nuString operator+( const nuStringRaw& a, const char* b )
+{
+	nuString r = a;
+	r += b;
+	return r;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -184,10 +307,10 @@ nuString& nuString::operator+=( const nuString& b )
 
 nuTempString::nuTempString( const char* z )
 {
-	MakeTemp( z );
+	Z = const_cast<char*>(z);
 }
 
 nuTempString::~nuTempString()
 {
-	KillTemp();
+	Z = nullptr;
 }

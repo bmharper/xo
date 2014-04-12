@@ -108,7 +108,7 @@ typedef Vec4T<float> nuVec4f;
 #include "nuString.h"
 #define FMT_STRING nuString
 #define FMT_STRING_BUF(s)	(s.Z)
-#define FMT_STRING_LEN(s)	(s.Len)
+#define FMT_STRING_LEN(s)	(s.Length())
 #include "../dependencies/Panacea/Strings/fmt.h"
 
 #ifdef TEMP_ASSERT

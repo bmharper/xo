@@ -829,7 +829,7 @@ YY_PARSE(yycontext *) YYRELEASE(yycontext *yyctx)
 
 void yycontext::SetError( const char* txt )
 {
-	if ( Error.Len == 0 )
+	if ( Error.Length() == 0 )
 		Error = txt;
 }
 
@@ -942,7 +942,7 @@ nuString nuPreprocessor::Run( const char* raw )
 	if ( ctx.OnStack.size() != 1 )
 		ctx.SetError( "Unterminated #if or #ifdef" );
 
-	if ( ctx.Error.Len != 0 )
+	if ( ctx.Error.Length() != 0 )
 		return fmt( "Error: %v", ctx.Error.Z );
 	else
 		return nuString( &ctx.Out[0] );
@@ -958,7 +958,7 @@ bool nuPreprocessor::IsIdentChar( char c )
 
 bool nuPreprocessor::Match( const char* buf, uintp bufPos, const nuString& find )
 {
-	for ( uintp i = 0; i < find.Len; i++ )
+	for ( intp i = 0; find.Z[i] != 0; i++ )
 	{
 		if ( buf[bufPos + i] != find.Z[i] )
 			return false;
@@ -968,7 +968,7 @@ bool nuPreprocessor::Match( const char* buf, uintp bufPos, const nuString& find 
 	if ( bufPos != 0 && IsIdentChar(buf[bufPos - 1]) )
 		return false;
 
-	if ( IsIdentChar(buf[bufPos + find.Len]) )
+	if ( IsIdentChar(buf[bufPos + find.Length()]) )
 		return false;
 
 	return true;
@@ -989,9 +989,9 @@ void nuPreprocessor::RunMacros( const char* raw, podvec<char>& out )
 			{
 				matched = true;
 				const nuString& replace = it.val();
-				for ( uintp j = 0; j < replace.Len; j++ )
+				for ( uintp j = 0; replace.Z[j] != 0; j++ )
 					out += replace.Z[j];
-				i += macro.Len - 1;
+				i += macro.Length() - 1;
 				break;
 			}
 		}

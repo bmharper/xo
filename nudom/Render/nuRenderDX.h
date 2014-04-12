@@ -60,7 +60,7 @@ public:
 	virtual void		DrawQuad( const void* v );
 
 	virtual bool		LoadTexture( nuTexture* tex, int texUnit );
-	virtual void		ReadBackbuffer( nuImage& image );
+	virtual bool		ReadBackbuffer( nuImage& image );
 
 private:
 	struct Texture2D

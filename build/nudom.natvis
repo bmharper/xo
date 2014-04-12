@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
-    <Type Name="nuString">
-        <DisplayString>{Z} ({Len})</DisplayString>
+    <Type Name="nuStringRaw">
+        <DisplayString>{Z}</DisplayString>
 	    <StringView>Z,s</StringView>
     </Type>
     <Type Name="podvec&lt;*&gt;">
         <DisplayString>{count}/{capacity}</DisplayString>
+		<Expand> 
+		    <Item Name="count">count</Item> 
+		    <Item Name="capacity">capacity</Item> 
+		    <ArrayItems> 
+		      <Size>count</Size> 
+		      <ValuePointer>(TElem*)data</ValuePointer> 
+		    </ArrayItems> 
+  		</Expand>         
     </Type>
     <Type Name="pvect&lt;*&gt;">
         <DisplayString>{count}/{capacity}</DisplayString>

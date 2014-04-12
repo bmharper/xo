@@ -158,7 +158,7 @@ const nuString&	nuDomEl::GetText() const
 	}
 	else
 	{
-		NUASSERT(Text.Len == 0);
+		NUASSERT(Text.Length() == 0);
 		return Text;
 	}
 }

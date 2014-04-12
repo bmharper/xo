@@ -125,6 +125,7 @@ bool nuRenderDummy::LoadTexture( nuTexture* tex, int texUnit )
 {
 	return true;
 }
-void nuRenderDummy::ReadBackbuffer( nuImage& image )
+bool nuRenderDummy::ReadBackbuffer( nuImage& image )
 {
+	return false;
 }

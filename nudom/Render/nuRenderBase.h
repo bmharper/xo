@@ -82,7 +82,7 @@ public:
 	virtual void		DrawQuad( const void* v ) = 0;
 
 	virtual bool		LoadTexture( nuTexture* tex, int texUnit ) = 0;
-	virtual void		ReadBackbuffer( nuImage& image ) = 0;
+	virtual bool		ReadBackbuffer( nuImage& image ) = 0;
 
 protected:
 	static const nuTextureID	TEX_OFFSET_ONE = 1;	// This constant causes the nuTextureID that we expose to never be zero.
@@ -114,5 +114,5 @@ public:
 	virtual void		DrawQuad( const void* v );
 
 	virtual bool		LoadTexture( nuTexture* tex, int texUnit );
-	virtual void		ReadBackbuffer( nuImage& image );
+	virtual bool		ReadBackbuffer( nuImage& image );
 };

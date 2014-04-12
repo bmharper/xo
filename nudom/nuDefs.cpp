@@ -92,6 +92,28 @@ void nuBox::ClampTo( const nuBox& clamp )
 	Bottom = std::min(Bottom, clamp.Bottom);
 }
 
+static const float sRGB_Low	= 0.0031308f;
+static const float sRGB_a	= 0.055f;
+
+NUAPI float	nuSRGB2Linear( uint8 srgb )
+{
+	float g = srgb * (1.0f / 255.0f);
+	if ( g <= 0.04045 )
+		return g / 12.92f;
+	else
+		return pow( (g + sRGB_a) / (1.0f + sRGB_a), 2.4f );
+}
+
+NUAPI uint8	nuLinear2SRGB( float linear )
+{
+	float g;
+	if ( linear <= sRGB_Low )
+		g = 12.92f * linear;
+	else
+		g = (1.0f + sRGB_a) * pow(linear, 1.0f / 2.4f) - sRGB_a;
+	return (uint8) nuRound( 255.0f * g );
+}
+
 void nuRenderStats::Reset()
 {
 	memset( this, 0, sizeof(*this) );

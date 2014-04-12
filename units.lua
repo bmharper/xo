@@ -1,45 +1,86 @@
 require 'tundra.syntax.glob'
 
-local winKernelLibs = { "kernel32.lib", "user32.lib", "gdi32.lib", "winspool.lib", "advapi32.lib", "shell32.lib", "comctl32.lib", 
-						"uuid.lib", "ole32.lib", "oleaut32.lib", "shlwapi.lib", "OLDNAMES.lib", "wldap32.lib", "wsock32.lib",
-						"Psapi.lib", "Msimg32.lib", "Comdlg32.lib", "RpcRT4.lib", "Iphlpapi.lib", "Delayimp.lib" }
-
-local winDllCRTDebug = tundra.util.merge_arrays( { "msvcrtd.lib", "msvcprtd.lib", "comsuppwd.lib" }, winKernelLibs )
-local winDllCRTRelease = tundra.util.merge_arrays( { "msvcrt.lib", "msvcprt.lib", "comsuppw.lib" }, winKernelLibs )
-
 local winDebugFilter = "win*-*-debug"
 local winReleaseFilter = "win*-*-release"
 local directxFilter = "win*"
 
-winDllCRTDebug.Config = winDebugFilter
-winDllCRTRelease.Config = winReleaseFilter
+local winKernelLibs = { "kernel32.lib", "user32.lib", "gdi32.lib", "winspool.lib", "advapi32.lib", "shell32.lib", "comctl32.lib", 
+						"uuid.lib", "ole32.lib", "oleaut32.lib", "shlwapi.lib", "OLDNAMES.lib", "wldap32.lib", "wsock32.lib",
+						"Psapi.lib", "Msimg32.lib", "Comdlg32.lib", "RpcRT4.lib", "Iphlpapi.lib", "Delayimp.lib" }
 
-local winDllOpts = {
+-- Dynamic (msvcr110.dll etc) CRT linkage
+local winLibsDynamicCRTDebug = tundra.util.merge_arrays( { "msvcrtd.lib", "msvcprtd.lib", "comsuppwd.lib" }, winKernelLibs )
+local winLibsDynamicCRTRelease = tundra.util.merge_arrays( { "msvcrt.lib", "msvcprt.lib", "comsuppw.lib" }, winKernelLibs )
+
+winLibsDynamicCRTDebug.Config = winDebugFilter
+winLibsDynamicCRTRelease.Config = winReleaseFilter
+
+-- Static CRT linkage
+local winLibsStaticCRTDebug = tundra.util.merge_arrays( { "libcmtd.lib", "libcpmtd.lib", "comsuppwd.lib" }, winKernelLibs )
+local winLibsStaticCRTRelease = tundra.util.merge_arrays( { "libcmt.lib", "libcpmt.lib", "comsuppw.lib" }, winKernelLibs )
+
+winLibsStaticCRTDebug.Config = winDebugFilter
+winLibsStaticCRTRelease.Config = winReleaseFilter
+
+local winDynamicOpts = {
 	{ "/MDd";					Config = winDebugFilter },
 	{ "/MD";					Config = winReleaseFilter },
 }
 
-local winDllDefs = {
+local winStaticOpts = {
+	{ "/MTd";					Config = winDebugFilter },
+	{ "/MT";					Config = winReleaseFilter },
+}
+
+local winDefs = {
 	{ "_CRTDBG_MAP_ALLOC";		Config = winDebugFilter },
 }
 
-local winDllEnv = {
-	CCOPTS = winDllOpts,
-	CXXOPTS = winDllOpts,
-	CCDEFS = winDllDefs,
-	CPPDEFS = winDllDefs,
+local winDynamicEnv = {
+	CCOPTS = winDynamicOpts,
+	CXXOPTS = winDynamicOpts,
+	CCDEFS = winDefs,
+	CPPDEFS = winDefs,
 }
 
-local crt = ExternalLibrary {
-	Name = "crt",
+local winStaticEnv = {
+	CCOPTS = winStaticOpts,
+	CXXOPTS = winStaticOpts,
+	CCDEFS = winDefs,
+	CPPDEFS = winDefs,
+}
+
+local crtDynamic = ExternalLibrary {
+	Name = "crtdynamic",
 	Propagate = {
-		Env = winDllEnv,
+		Env = winDynamicEnv,
 		Libs = {
-			winDllCRTDebug,
-			winDllCRTRelease,
+			winLibsDynamicCRTDebug,
+			winLibsDynamicCRTRelease,
 		},
 	},
 }
+
+local crtStatic = ExternalLibrary {
+	Name = "crtstatic",
+	Propagate = {
+		Env = winStaticEnv,
+		Libs = {
+			winLibsStaticCRTDebug,
+			winLibsStaticCRTRelease,
+		},
+	},
+}
+
+-- Swapping this out will change linkage to use MSVCR120.dll and its cousins,
+-- instead of statically linking to the required MSVC runtime libraries.
+-- I don't understand why, but if we build with crtStatic, then tests fail
+-- due to heap corruption. I can only guess it's the old issue of two different
+-- libraries using different heap properties. For example, library A allocated
+-- memory with debug_alloc(), and then library B tries to free that memory with
+-- regular free(). However, I cannot figure out how that is happening.
+--local crt = crtStatic
+local crt = crtDynamic
 
 local directx = ExternalLibrary {
 	Name = "directx",
@@ -312,6 +353,7 @@ local Test = Program {
 		"tests/test_Layout.cpp",
 		"tests/test_Preprocessor.cpp",
 		"tests/test_Stats.cpp",
+		"tests/test_String.cpp",
 		"tests/test_Styles.cpp",
 		"tests/nuImageTester.cpp",
 	}

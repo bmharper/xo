@@ -110,6 +110,11 @@ bool TTIsDead()
 #endif
 }
 
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable: 4996) // GetVersionEx is deprecated. Seriously!
+#endif
+
 void TTSetProcessIdle()
 {
 #ifdef _WIN32
@@ -123,6 +128,10 @@ void TTSetProcessIdle()
 	fprintf( stderr, "TTSetProcessIdle not implemented\n" );
 #endif
 }
+
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 
 bool TTFileExists( const char* f )
 {

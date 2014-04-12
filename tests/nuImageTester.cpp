@@ -41,7 +41,8 @@ void nuImageTester::TruthImage( const char* filename, std::function<void(nuDomEl
 {
 	// The plan is to have an interactive GUI here someday where you get presented
 	// with the failing image pair, and you can choose whether to mark the new one as "correct".
-	CreateOrVerifyTruthImage( true, filename, setup );
+	bool overwrite_DO_NOT_COMMIT_THIS_CHANGE = false;
+	CreateOrVerifyTruthImage( overwrite_DO_NOT_COMMIT_THIS_CHANGE, filename, setup );
 }
 
 void nuImageTester::VerifyWithImage( const char* filename, std::function<void(nuDomEl& root)> setup )
@@ -90,17 +91,24 @@ void nuImageTester::CreateOrVerifyTruthImage( bool create, const char* filename,
 	Wnd->DocGroup->Doc->Reset();
 	setup( Wnd->DocGroup->Doc->Root );
 
+	nuString truthFile = FullPath(filename);
+	nuString newSample = FullPath((nuString(filename) + "-observed-result").Z);
+
 	nuImage img;
 	nuRenderResult res = Wnd->DocGroup->RenderToImage( img );
 	if ( create )
 	{
-		stbi_write_png( FullPath(filename).Z, img.GetWidth(), img.GetHeight(), 4, img.TexDataAtLine(0), img.TexStride );
+		stbi_write_png( truthFile.Z, img.GetWidth(), img.GetHeight(), 4, img.TexDataAtLine(0), img.TexStride );
 	}
 	else
 	{
 		int width = 0, height = 0, comp = 0;
-		unsigned char* data = stbi_load( FullPath(filename).Z, &width, &height, &comp, 4 );
+		unsigned char* data = stbi_load( truthFile.Z, &width, &height, &comp, 4 );
 		bool same = ImageEquals( img.GetWidth(), img.GetHeight(), img.TexStride, img.TexDataAtLine(0), width, height, width * 4, data );
+		if ( !same )
+		{
+			stbi_write_png( newSample.Z, img.GetWidth(), img.GetHeight(), 4, img.TexDataAtLine(0), img.TexStride );
+		}
 		TTASSERT(same);
 		stbi_image_free( data );
 	}
@@ -108,9 +116,18 @@ void nuImageTester::CreateOrVerifyTruthImage( bool create, const char* filename,
 
 nuString nuImageTester::FullPath( const char* path )
 {
-	char binPath[1024];
+	// binPath: C:\dev\individual\nudom\t2-output\win64-msvc2013-debug-default\Test.exe
+	// result:  C:/dev/individual/nudom/testdata/<path>
+	char binPath[2048];
 	AbcProcessGetPath( binPath, arraysize(binPath) );
-	nuString fullPath = "C:\\dev\\individual\\nudom\\testdata\\";
+	nuString fullPath = binPath;
+	fullPath.ReplaceAll( "\\", "/" );
+	auto parts = fullPath.Split( "/" );
+	parts.pop();
+	parts.pop();
+	parts.pop();
+	fullPath = nuString::Join( parts, "/" );
+	fullPath += "/testdata/";
 	fullPath += path;
 	fullPath += ".png";
 	return fullPath;

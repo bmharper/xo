@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "nuRenderDX.h"
+#include "../Image/nuImage.h"
 #include "../nuSysWnd.h"
 
 #if NU_BUILD_DIRECTX
@@ -377,7 +378,13 @@ void nuRenderDX::PreRender()
 	D3D.Context->RSSetState( D3D.Rasterizer );
 
 	// Clear the back buffer 
-	float clearColor[4] = {0.3f, 0.0f, 1, 0};
+	auto clear = nuGlobal()->ClearColor;
+	float clearColor[4] = {clear.r / 255.0f, clear.g / 255.0f, clear.b / 255.0f, clear.a / 255.0f};
+	// This is necessary to get 100% the exact same color out from ReadBackbuffer.
+	// Curiously, glClearColor treats these values as sRGB, despite them being floats.
+	clearColor[0] = nuSRGB2Linear( clear.r );
+	clearColor[1] = nuSRGB2Linear( clear.g );
+	clearColor[2] = nuSRGB2Linear( clear.b );
 	D3D.Context->ClearRenderTargetView( D3D.RenderTargetView, clearColor );
 
 	SetShaderFrameUniforms();
@@ -586,8 +593,51 @@ bool nuRenderDX::LoadTexture( nuTexture* tex, int texUnit )
 	return true;
 }
 
-void nuRenderDX::ReadBackbuffer( nuImage& image )
+bool nuRenderDX::ReadBackbuffer( nuImage& image )
 {
+	D3D11_TEXTURE2D_DESC desc;
+	memset( &desc, 0, sizeof(desc) );
+	desc.Width = FBWidth;
+	desc.Height = FBHeight;
+	desc.MipLevels = 1;					// 0 = generate all levels. 1 = just one level
+	desc.ArraySize = 1;
+	desc.SampleDesc.Count = 1;
+	desc.Usage = D3D11_USAGE_STAGING;
+	desc.BindFlags = 0;
+	desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	desc.MiscFlags = 0;
+	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	ID3D11Texture2D* tempTex = NULL;
+	HRESULT hr = D3D.Device->CreateTexture2D( &desc, NULL, &tempTex );
+	if ( !SUCCEEDED(hr) )
+	{
+		NUTRACE( "CreateTexture2D for ReadBackBuffer failed: %08x", hr );
+		return false;
+	}
+
+	ID3D11Texture2D* backBuffer = NULL;
+	hr = D3D.SwapChain->GetBuffer( 0, __uuidof(ID3D11Texture2D), (void**) &backBuffer );
+	bool ok = false;
+	if ( SUCCEEDED(hr) )
+	{
+		D3D11_BOX srcBox = { 0, 0, 0, FBWidth, FBHeight, 1 };
+		D3D.Context->CopySubresourceRegion( tempTex, 0, 0, 0, 0, backBuffer, 0, &srcBox );
+		backBuffer->Release();
+
+		D3D11_MAPPED_SUBRESOURCE map;
+		if ( SUCCEEDED(D3D.Context->Map( tempTex, 0, D3D11_MAP_READ, 0, &map )) )
+		{
+			image.Alloc( nuTexFormatRGBA8, FBWidth, FBHeight );
+			for ( int i = 0; i < FBHeight; i++ )
+				memcpy( image.TexDataAtLine(i), (char*) map.pData + map.RowPitch * (uint) i, image.TexStride );
+			D3D.Context->Unmap( tempTex, 0 );
+			ok = true;
+		}
+	}
+
+	tempTex->Release();
+
+	return ok;
 }
 
 

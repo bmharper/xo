@@ -64,6 +64,10 @@ inline double	nuPosToDouble( int32 pos )		{ return pos * (1.0 / (1 << nuPosShift
 inline int32	nuPosRound( int32 pos )			{ return pos + (1 << (nuPosShift-1)) & ~nuPosMask; }
 inline float	nuRound( float real )			{ return floor(real + 0.5f); }
 
+template<typename T>	T nuClamp( T v, T vmin, T vmax )	{ return (v < vmin) ? vmin : (v > vmax) ? vmax : v; }
+template<typename T>	T nuMin( T a, T b )					{ return a < b ? a : b; }
+template<typename T>	T nuMax( T a, T b )					{ return a < b ? b : a; }
+
 enum nuCloneFlags
 {
 	nuCloneFlagEvents = 1,		// Include events in clone
@@ -197,16 +201,6 @@ struct NUAPI nuRGBA
 // This is non-premultipled alpha
 struct NUAPI nuColor
 {
-	void	Set( uint8 _r, uint8 _g, uint8 _b, uint8 _a ) { r = _r; g = _g; b = _b; a = _a; }
-	uint32	GetRGBA() const { nuRGBA x; x.r = r; x.g = g; x.b = b; x.a = a; return x.u; }
-
-	bool	operator==( const nuColor& x ) const { return u == x.u; }
-	bool	operator!=( const nuColor& x ) const { return u != x.u; }
-
-	static bool		Parse( const char* s, intp len, nuColor& v );
-	static nuColor	RGBA( uint8 _r, uint8 _g, uint8 _b, uint8 _a )		{ nuColor c; c.Set(_r,_g,_b,_a); return c; }
-	static nuColor	Make( uint32 _u )									{ nuColor c; c.u = _u; return c; }
-
 	union {
 		struct {
 #if ENDIANLITTLE
@@ -220,7 +214,20 @@ struct NUAPI nuColor
 		};
 		uint32 u;
 	};
+
+	void	Set( uint8 _r, uint8 _g, uint8 _b, uint8 _a ) { r = _r; g = _g; b = _b; a = _a; }
+	uint32	GetRGBA() const { nuRGBA x; x.r = r; x.g = g; x.b = b; x.a = a; return x.u; }
+
+	bool	operator==( const nuColor& x ) const { return u == x.u; }
+	bool	operator!=( const nuColor& x ) const { return u != x.u; }
+
+	static bool		Parse( const char* s, intp len, nuColor& v );
+	static nuColor	RGBA( uint8 _r, uint8 _g, uint8 _b, uint8 _a )		{ nuColor c; c.Set(_r,_g,_b,_a); return c; }
+	static nuColor	Make( uint32 _u )									{ nuColor c; c.u = _u; return c; }
 };
+
+NUAPI float	nuSRGB2Linear( uint8 srgb );
+NUAPI uint8	nuLinear2SRGB( float linear );
 
 struct nuStyleID
 {
