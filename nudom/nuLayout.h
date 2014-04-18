@@ -19,7 +19,7 @@ class NUAPI nuLayout
 {
 public:
 
-	void Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDomEl& root, nuPool* pool );
+	void Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDomNode& root, nuPool* pool );
 
 protected:
 
@@ -43,10 +43,10 @@ protected:
 	nuBox	ComputeSpecifiedPosition( const NodeState& s );
 	void	ComputeRelativeOffset( const NodeState& s, nuBox& box );
 
-	void	LayoutInternal( nuRenderDomEl& root );
+	void	LayoutInternal( nuRenderDomNode& root );
 	void	RenderGlyphsNeeded();
-	void	Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode );
-	void	RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode );
+	void	RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rnode );
+	void	RunText( NodeState& s, const nuDomText& node, nuRenderDomText* rnode );
 
 };
 

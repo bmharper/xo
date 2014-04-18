@@ -15,33 +15,28 @@ void nuMain( nuMainEvent ev )
 			//doc->Root.StyleParse( "border-radius: 55px;" );
 			NUTRACE( "Hello 2\n" );
 
+			nuDomNode* blocks[4];
 			for ( int i = 0; i < 4; i++ )
 			{
-				nuDomEl* div = doc->Root.AddChild( nuTagDiv );
-				//div->StyleParse( "width: 90px; height: 90px; border-radius: 15px; display: inline;" );
+				nuDomNode* div = doc->Root.AddNode( nuTagDiv );
+				//div->StyleParse( "width: 90px; height: 90px; border-radius: 0px; display: inline;" );
 				div->StyleParse( fmt("width: 90px; height: 90px; border-radius: %vpx; display: inline;", 5 * i + 1).Z );
 				div->StyleParse( "margin: 3px;" );
+				blocks[i] = div;
 			}
 
 			// block with text inside it
-			nuDomEl* txtBox = doc->Root.AddChild( nuTagDiv );
+			nuDomNode* txtBox = doc->Root.AddNode( nuTagDiv );
 			txtBox->StyleParse( "width: 90px; height: 90px; border-radius: 2px; background: #0c0; margin: 3px; position: absolute;" );
-			//txtBox->SetText( "from ethnic minorities" );
-			//txtBox->SetText( "| The quick brown fox JUMPS |" );
-			//txtBox->SetText( "This widget spans over three rows in the GridLayout" );
 			txtBox->SetText( "This widget spans.. document->textDocument()->activeView()" );
-			//txtBox->SetText( "fox" );
 
-			//doc->Root.ChildByIndex(0)->StyleParse( "background: #e00e" );
-			//doc->Root.ChildByIndex(1)->StyleParse( "background: #0e0e" );
-			//doc->Root.ChildByIndex(2)->StyleParse( "background: #00ee" );
-			doc->Root.ChildByIndex(0)->StyleParse( "background: #ff000040" );
-			doc->Root.ChildByIndex(1)->StyleParse( "background: #ff000080" );
-			doc->Root.ChildByIndex(2)->StyleParse( "background: #ff0000ff" );
+			blocks[0]->StyleParse( "background: #ff000040" );
+			blocks[1]->StyleParse( "background: #ff000080" );
+			blocks[2]->StyleParse( "background: #ff0000ff" );
 
 			NUTRACE( "Hello 3\n" );
 
-			nuDomEl* greybox = doc->Root.ChildByIndex(3);
+			nuDomNode* greybox = blocks[3];
 			greybox->StyleParse( "background: #aaaa; position: absolute; left: 90px; top: 90px;" );
 
 			auto onMoveOrTouch = [greybox, txtBox](const nuEvent& ev) -> bool {

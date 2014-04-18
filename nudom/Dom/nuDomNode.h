@@ -1,44 +1,34 @@
 #pragma once
+#include "nuDomEl.h"
 
-#include "nuStyle.h"
-#include "nuMem.h"
-#include "nuEvent.h"
-
-/* DOM node in the tree.
+/* DOM node that is not text
 It is vital that this data structure does not grow much bigger than this.
-Right now it's 120 bytes on Windows x64.
+Right now it's 128 bytes on Windows x64.
 */
-class NUAPI nuDomEl
+class NUAPI nuDomNode : public nuDomEl
 {
 public:
-					nuDomEl();
-					~nuDomEl();
+					nuDomNode( nuDoc* doc, nuTag tag );
+					virtual ~nuDomNode();
+
+	virtual void			SetText( const char* txt ) override;
+	virtual const char*		GetText() const override;
+	virtual void			CloneSlowInto( nuDomEl& c, uint cloneFlags ) const override;
+	virtual void			ForgetChildren() override;
 
 	const pvect<nuDomEl*>&			GetChildren() const			{ return Children; }
-	const podvec<nuStyleID>&		GetClasses() const			{ return Classes; }
 	podvec<nuStyleID>&				GetClassesMutable()			{ IncVersion(); return Classes; }
+	const podvec<nuStyleID>&		GetClasses() const			{ return Classes; }
 	const podvec<nuEventHandler>&	GetHandlers() const			{ return Handlers; }
 	const nuStyle&					GetStyle() const			{ return Style; }
-	nuInternalID					GetInternalID() const		{ return InternalID; }
-	nuTag							GetTag() const				{ return Tag; }
-	nuDoc*							GetDoc() const				{ return Doc; }
-	uint32							GetVersion() const			{ return Version; }
 
 	nuDomEl*		AddChild( nuTag tag );
+	nuDomNode*		AddNode( nuTag tag );
 	void			RemoveChild( nuDomEl* c );
 	void			RemoveAllChildren();
 	intp			ChildCount() const { return Children.size(); }
 	nuDomEl*		ChildByIndex( intp index );
-	void			CloneSlowInto( nuDomEl& c, uint cloneFlags ) const;
-	void			CloneFastInto( nuDomEl& c, nuPool* pool, uint cloneFlags ) const;
 	void			Discard();
-	void			ForgetChildren();
-	void			SetText( const char* txt );		// Replace all children with a single nuTagText child, or set internal text if 'this' is nuTagText.
-	const nuString&	GetText() const;				// Reverse behaviour of SetText()
-
-	void			SetInternalID( nuInternalID id )			{ InternalID = id; }	// Used by nuDoc at element creation time.
-	void			SetDoc( nuDoc* doc )						{ Doc = doc; }			// Used by nuDoc at element creation and destruction time.
-	void			SetDocRoot()								{ Tag = nuTagBody; }	// Used by nuDoc at initialization time.
 
 	bool			StyleParse( const char* t );
 	bool			StyleParsef( const char* t, ... );
@@ -62,21 +52,12 @@ public:
 	void			OnMouseMove( nuEventHandlerLambda lambda )					{ AddHandler( nuEventMouseMove, lambda ); }
 
 protected:
-	nuDoc*					Doc;			// Owning document
-	nuInternalID			InternalID;		// Internal 32-bit ID that is used to keep track of an object (memory address is not sufficient)
-	nuTag					Tag;			// Tag, such <div>, etc
-	nuStyle					Style;			// Styles that override those referenced by the Tag and the Classes.
-	uint32					Version;		// Monotonic integer used to detect modified nodes
-	podvec<nuStyleID>		Classes;		// Classes of styles
-	nuString				Text;			// Applicable only to nuTagText elements
-
-	podvec<nuEventHandler>	Handlers;
 	uint32					AllEventMask;
+	nuStyle					Style;			// Styles that override those referenced by the Tag and the Classes.
+	podvec<nuEventHandler>	Handlers;
 	pvect<nuDomEl*>			Children;
+	podvec<nuStyleID>		Classes;		// Classes of styles
 
 	void			RecalcAllEventMask();
 	void			AddHandler( nuEvents ev, nuEventHandlerF func, bool isLambda, void* context );
-
-	void			IncVersion();
-
 };

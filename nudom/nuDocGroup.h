@@ -34,6 +34,6 @@ protected:
 	AbcCriticalSection	DocLock;		// Mutation of 'Doc', or cloning of 'Doc' for the renderer
 
 	nuRenderResult	RenderInternal( nuImage* targetImage );
-	void			FindTarget( const nuVec2f& p, pvect<nuRenderDomEl*>& chain );
+	//void			FindTarget( const nuVec2f& p, pvect<nuRenderDomEl*>& chain );
 	bool			BubbleEvent( nuEvent& ev );
 };

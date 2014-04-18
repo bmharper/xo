@@ -129,7 +129,9 @@ static_assert( nuCatMargin_Left % 4 == 0, "Start of boxes must be multiple of 4"
 inline nuStyleCategories nuCatMakeBaseBox( nuStyleCategories c ) { return (nuStyleCategories) (c & ~3); }
 
 // Styles that are inherited by default
-const int						nuNumInheritedStyleCategories = 1;
+// Generally it is text styles that are inherited
+// Inheritance means that child nodes inherit the styles of their parents
+const int						nuNumInheritedStyleCategories = 3;
 extern const nuStyleCategories	nuInheritedStyleCategories[nuNumInheritedStyleCategories];
 
 /* Single style attribute (such as Margin-Left, Width, FontSize, etc).
@@ -197,6 +199,7 @@ public:
 	nuBoxSizeType		GetBoxSizing() const				{ return (nuBoxSizeType) ValU32; }
 
 	const char*			GetBackgroundImage( nuStringTable* strings ) const;
+	const nuString*		GetFont( const nuDoc* doc ) const;
 
 protected:
 	void SetString( nuStyleCategories cat, const char* str, nuDoc* doc );
@@ -328,27 +331,19 @@ protected:
 
 // The set of style information that is used by the renderer
 // This is baked in by the Layout engine.
-// This struct is present in every single nuRenderDomEl, so it pays to keep it tight.
+// This struct is present in every single nuRenderDomNode, so it pays to keep it tight.
 class NUAPI nuStyleRender
 {
 public:
 	nuColor BackgroundColor;
 	int		BackgroundImageID;
 	float	BorderRadius;
-	uint8	FontSizePx;
 
 	nuStyleRender() { memset(this, 0, sizeof(*this)); }
 };
 
 /* Store all style classes in one table, that is owned by one document.
 This allows us to reference styles by a 32-bit integer ID instead of by name.
-
-NOTE: I wrote GarbageCollect before realizing that this function will probably NEVER be used.
-Why would you want to garbage collect your styles? You define them up front, and just because
-you're not using them at the moment, doesn't mean you're not going to want to use them in future.
-If time passes, and this function is never used, then get rid of the code.
-The garbage collection code has never been tested.
-
 */
 class NUAPI nuStyleTable
 {
@@ -360,9 +355,8 @@ public:
 	nuStyle*		GetOrCreate( const char* name );
 	const nuStyle*	GetByID( nuStyleID id ) const;
 	nuStyleID		GetStyleID( const char* name );
-	void			GarbageCollect( nuDomEl* root );						// Discover unused styles and mark them as unused
-	void			CloneSlowInto( nuStyleTable& c ) const;					// Does not clone NameToIndex or UnusedSlots
-	void			CloneFastInto( nuStyleTable& c, nuPool* pool ) const;	// Does not clone NameToIndex or UnusedSlots
+	void			CloneSlowInto( nuStyleTable& c ) const;					// Does not clone NameToIndex
+	void			CloneFastInto( nuStyleTable& c, nuPool* pool ) const;	// Does not clone NameToIndex
 
 protected:
 	podvec<nuString>			Names;		// Names and Styles are parallels
@@ -370,10 +364,6 @@ protected:
 	podvec<int>					UnusedSlots;
 	fhashmap<nuString, int>		NameToIndex;
 
-	void			Compact( BitMap& used, nuDomEl* root );
-
-	static void		GarbageCollectInternalR( BitMap& used, nuDomEl* node );
-	static void		CompactR( const nuStyleID* old2newID, nuDomEl* node );
 
 };
 

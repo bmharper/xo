@@ -35,7 +35,7 @@ class NUAPI nuStyleResolver
 {
 public:
 	// Resolves the given node, and places its style on the top of the stack
-	static void		ResolveAndPush( nuRenderStack& stack, const nuDomEl* node );
+	static void		ResolveAndPush( nuRenderStack& stack, const nuDomNode* node );
 
 protected:
 	static void		Set( nuRenderStack& stack, const nuDomEl* node, intp n, const nuStyleAttrib* vals );

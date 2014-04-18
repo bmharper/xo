@@ -8,7 +8,7 @@ public:
 					nuStringTable();
 					~nuStringTable();
 
-	const char*		GetStr( int id ) const;		// Returns an empty string if the id is invalid or zero.
+	const nuString*	GetStr( int id ) const;			// Returns an empty string if the id is invalid or zero.
 	int				GetId( const char* str );
 
 	// temp hack. should probably not be here.
@@ -17,4 +17,5 @@ public:
 protected:
 	fhashmap<nuString, int>		NameToId;
 	podvec<nuString>			IdToName;
+	nuString					Empty;
 };

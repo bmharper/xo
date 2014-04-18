@@ -6,6 +6,8 @@
 #include "nuPlatform.h"
 
 class nuDomEl;
+class nuDomNode;
+class nuDomText;
 class nuDoc;
 class nuEvent;
 class nuImage;
@@ -16,7 +18,9 @@ class nuDocGroup;
 class nuRenderDoc;
 class nuRenderer;
 class nuRenderDomEl;
-struct nuRenderTextEl;
+class nuRenderDomNode;
+class nuRenderDomText;
+struct nuRenderCharEl;
 class nuRenderBase;
 class nuRenderGL;
 class nuRenderDX;

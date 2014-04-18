@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "nuLayout.h"
 #include "nuDoc.h"
+#include "Dom/nuDomNode.h"
+#include "Dom/nuDomText.h"
 #include "Render/nuRenderDomEl.h"
 #include "Render/nuStyleResolve.h"
 #include "Text/nuFontStore.h"
@@ -15,7 +17,7 @@ Missing glyphs are a once-off cost (ie once per application instance),
 so it's not worth trying to use a mutable glyph cache.
 
 */
-void nuLayout::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDomEl& root, nuPool* pool )
+void nuLayout::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDomNode& root, nuPool* pool )
 {
 	Doc = &doc;
 	DocWidth = docWidth;
@@ -40,7 +42,7 @@ void nuLayout::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDo
 	}
 }
 
-void nuLayout::LayoutInternal( nuRenderDomEl& root )
+void nuLayout::LayoutInternal( nuRenderDomNode& root )
 {
 	PtToPixel = 1.0;	// TODO
 
@@ -52,9 +54,6 @@ void nuLayout::LayoutInternal( nuRenderDomEl& root )
 
 	NUTRACE_LAYOUT( "Layout 2\n" );
 
-	// Add root dummy element to the stack
-	//Stack.Stack.add();
-
 	NodeState s;
 	s.ParentContentBox.SetInt( 0, 0, DocWidth, DocHeight );
 	s.PositionedAncestor = s.ParentContentBox;
@@ -63,23 +62,17 @@ void nuLayout::LayoutInternal( nuRenderDomEl& root )
 
 	NUTRACE_LAYOUT( "Layout 3\n" );
 
-	Run( s, Doc->Root, &root );
+	RunNode( s, Doc->Root, &root );
 }
 
-void nuLayout::Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode )
+void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rnode )
 {
 	NUTRACE_LAYOUT( "Layout (%d) Run 1\n", node.GetInternalID() );
 	nuStyleResolver::ResolveAndPush( Stack, &node );
 	rnode->SetStyle( Stack );
 	
 	NUTRACE_LAYOUT( "Layout (%d) Run 2\n", node.GetInternalID() );
-
 	rnode->InternalID = node.GetInternalID();
-
-	if ( node.GetTag() == nuTagText )
-	{
-		RunText( s, node, rnode );
-	}
 
 	nuStyleBox margin;
 	nuStyleBox padding;
@@ -151,57 +144,64 @@ void nuLayout::Run( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode )
 
 	NUTRACE_LAYOUT( "Layout (%d) Run 3\n", node.GetInternalID() );
 
-	const auto& nodeChildren = node.GetChildren();
+	const pvect<nuDomEl*>& nodeChildren = node.GetChildren();
 	for ( int i = 0; i < nodeChildren.size(); i++ )
 	{
-		nuRenderDomEl* rchild = Pool->AllocT<nuRenderDomEl>( true );
-		rchild->SetPool( Pool );
-		rnode->Children += rchild;
-		Run( cs, *nodeChildren[i], rchild );
+		const nuDomEl* child = nodeChildren[i];
+		if ( child->GetTag() == nuTagText )
+		{
+			nuRenderDomText* rchild = new (Pool->AllocT<nuRenderDomText>(false)) nuRenderDomText( child->GetInternalID(), Pool );
+			rnode->Children += rchild;
+			RunText( cs, *static_cast<const nuDomText*>(child), rchild );
+		}
+		else
+		{
+			nuRenderDomNode* rchild = new (Pool->AllocT<nuRenderDomNode>(false)) nuRenderDomNode( child->GetInternalID(), child->GetTag(), Pool );
+			rnode->Children += rchild;
+			RunNode( cs, *static_cast<const nuDomNode*>(child), rchild );
+		}
 	}
 
 	Stack.StackPop();
 }
 
-void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode )
+void nuLayout::RunText( NodeState& s, const nuDomText& node, nuRenderDomText* rnode )
 {
+	rnode->SetStyle( Stack );
+	
+	NUTRACE_LAYOUT( "Layout (%d) Run 2\n", node.GetInternalID() );
+	rnode->InternalID = node.GetInternalID();
+
 	NUTRACE_LAYOUT( "Layout (%d) Run txt.1\n", node.GetInternalID() );
 
-#if NU_PLATFORM_WIN_DESKTOP
-	//const char* zfont = "Trebuchet MS";
-	//const char* zfont = "Microsoft Sans Serif";
-	const char* zfont = "Consolas";
-	//const char* zfont = "Times New Roman";
-	//const char* zfont = "Verdana";
-	//const char* zfont = "Tahoma";
-#else
-	const char* zfont = "Droid Sans";
-#endif
+	nuStyleAttrib fontfam = Stack.Get( nuCatFontFamily );
+	const nuString* fontStr = fontfam.GetFont( Doc );
 
-	bool subPixel = nuGlobal()->EnableSubpixelText;
-	uint8 glyphFlags = subPixel ? nuGlyphFlag_SubPixel_RGB : 0;
-
-	// total hack job
-	const nuFont* font = nuGlobal()->FontStore->GetByFacename( nuString(zfont) );
+	const nuFont* font = nuGlobal()->FontStore->GetByFacename( *fontStr );
 	if ( font )
 		rnode->FontID = font->ID;
 	else
-		rnode->FontID = nuGlobal()->FontStore->InsertByFacename( nuString(zfont) );
+		rnode->FontID = nuGlobal()->FontStore->InsertByFacename( *fontStr );
 
 	nuGlyphCache* glyphCache = nuGlobal()->GlyphCache;
 
-	float fontSizePx = 11;
+	nuStyleAttrib fontSizeAttrib = Stack.Get( nuCatFontSize );
+	nuPos fontHeight = ComputeDimension( s.ParentContentBox.Height(), fontSizeAttrib.GetSize() );
+
+	float fontSizePxUnrounded = nuPosToReal( fontHeight );
 	
 	// round font size to integer units
-	rnode->Style.FontSizePx = (uint8) nuRound( fontSizePx );
+	rnode->FontSizePx = (uint8) nuRound( fontSizePxUnrounded );
 
-	nuPos fontHeight = nuRealToPos( rnode->Style.FontSizePx );
+	nuPos fontHeightRounded = nuRealToPos( rnode->FontSizePx );
 
-	const nuString& str = node.GetText();
-	rnode->Text.reserve( str.Length() );
-	const char* txt = str.Z;
+	const char* txt = node.GetText();
+	intp len = strlen(txt);
+	rnode->Text.reserve( len );
 
-	nuGlyphCacheKey key( rnode->FontID, 0, rnode->Style.FontSizePx, glyphFlags );
+	uint8 glyphFlags = nuGlobal()->EnableSubpixelText ? nuGlyphFlag_SubPixel_RGB : 0;
+
+	nuGlyphCacheKey key( rnode->FontID, 0, rnode->FontSizePx, glyphFlags );
 
 	for ( intp i = 0; txt[i]; i++ )
 	{
@@ -218,11 +218,11 @@ void nuLayout::RunText( NodeState& s, const nuDomEl& node, nuRenderDomEl* rnode 
 			continue;
 		}
 		rnode->Text.Count++;
-		nuRenderTextEl& rtxt = rnode->Text.back();
+		nuRenderCharEl& rtxt = rnode->Text.back();
 		rtxt.Char = key.Char;
 		rtxt.X = s.PosX + nuRealToPos(glyph->MetricLeftx256 / 256.0f);
-		rtxt.Y = s.PosY - nuRealToPos(glyph->MetricTop) + fontHeight;
-		s.PosX += nuRealToPos(glyph->MetricLinearHoriAdvance * fontSizePx);
+		rtxt.Y = s.PosY - nuRealToPos(glyph->MetricTop) + fontHeightRounded;
+		s.PosX += nuRealToPos(glyph->MetricLinearHoriAdvance * rnode->FontSizePx);
 	}
 }
 

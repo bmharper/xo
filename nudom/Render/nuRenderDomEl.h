@@ -5,7 +5,7 @@
 
 class nuRenderStack;
 
-struct NUAPI nuRenderTextEl
+struct NUAPI nuRenderCharEl
 {
 	int		Char;
 	nuPos	X;		// Left point of baseline
@@ -16,21 +16,37 @@ struct NUAPI nuRenderTextEl
 class NUAPI nuRenderDomEl
 {
 public:
-				nuRenderDomEl( nuPool* pool = NULL );
-				~nuRenderDomEl();
-
-	void		SetPool( nuPool* pool );
-	void		Discard();
-	void		SetStyle( nuRenderStack& stack );
+				nuRenderDomEl( nuInternalID id, nuTag tag );
 
 	nuInternalID					InternalID;			// Reference to our original nuDomEl
 	nuBox							Pos;
-	nuStyleRender					Style;
-	
-	// Following are relevant for text only ... this must be split out into a separate nuRenderDomElText or something
-	nuFontID						FontID;
-	int								Char;
-	nuPoolArray<nuRenderTextEl>		Text; // let's try this
+	nuTag							Tag;
 
+};
+
+class NUAPI nuRenderDomNode : public nuRenderDomEl
+{
+public:
+				nuRenderDomNode( nuInternalID id = nuInternalIDNull, nuTag tag = nuTagBody, nuPool* pool = NULL );
+
+	void		Discard();
+	void		SetStyle( nuRenderStack& stack );
+	void		SetPool( nuPool* pool );
+
+	nuStyleRender					Style;
 	nuPoolArray<nuRenderDomEl*>		Children;
+};
+
+class NUAPI nuRenderDomText : public nuRenderDomEl
+{
+public:
+				nuRenderDomText( nuInternalID id, nuPool* pool );
+
+	void		SetStyle( nuRenderStack& stack );
+
+	nuFontID						FontID;
+	nuPoolArray<nuRenderCharEl>		Text;
+	int								Char;
+	nuColor							Color;
+	uint8							FontSizePx;
 };

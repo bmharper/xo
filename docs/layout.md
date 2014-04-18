@@ -29,3 +29,8 @@ To set horizontal to normal, use the following style:
 
 Hang on - maybe we can get away without defining "block" or "inline",
 and rather implement those concepts with style classes.
+
+Text tags
+---------
+Text must live inside 'text' tags. Text tags must be leaves - ie they
+may not have any children.

@@ -14,16 +14,27 @@ Every few weeks I make sure that Android still runs.
 
 Build requirements:
 
-* The build system is [tundra](http://github.com/deplinenoise/tundra)
+* The build system is [tundra2](http://github.com/deplinenoise/tundra)
 
 To see something on the screen:
 
+* Install Visual Studio 2013
+* Install tundra2. You might need to update tundra to the latest and build
+it yourself
+
+Once you have those two, you should be able to do the following:
+	
 	tundra2 HelloWorld
-	t2-output\win64-msvc-debug-default\HelloWorld
+	t2-output\win64-2013-debug-default\HelloWorld
 
 If you move the cursor around on the screen, then the green square and text will move with it.
 
-If you change shaders, then you must run `build\shaders.rb` before building again.
+If you change shaders, then you must run `build/shaders.rb` before building again.
+
+Using Visual Studio
+-------------------
+tundra can generate Visual Studio IDE projects for you. Use "build/genide.bat" to generate
+IDE projects that you can open in Visual Studio.
 
 Design goals
 ------------
@@ -60,6 +71,8 @@ Status
 
 I have three colored, rounded rectangles on the screen, that you can control with a finger or mouse move.  
 Running on Android and Windows.
+
+There is an OpenGL and a DirectX 11 backend.
 
 * Purely horizontal text is rendered well on Windows, where you typically have low resolution (< 100 dpi) monitors.
 	Text through the low DPI path is vertically snapped to whole pixels, and horizontally snapped to 1/3 of a pixel,

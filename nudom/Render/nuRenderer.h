@@ -9,7 +9,7 @@ Any state that is persisted between renderings is stored in nuRenderGL.
 class NUAPI nuRenderer
 {
 public:
-	nuRenderResult	Render( nuImageStore* images, nuStringTable* strings, nuRenderBase* driver, nuRenderDomEl* root, int width, int height );
+	nuRenderResult	Render( nuImageStore* images, nuStringTable* strings, nuRenderBase* driver, nuRenderDomNode* root, int width, int height );
 
 protected:
 	nuRenderBase*				Driver;
@@ -17,11 +17,11 @@ protected:
 	nuStringTable*				Strings;
 	fhashset<nuGlyphCacheKey>	GlyphsNeeded;
 
-	void			RenderNodeOuter( nuRenderDomEl* node );
-	void			RenderNodeInner( nuRenderDomEl* node );
-	void			RenderTextNode( nuRenderDomEl* node );
-	void			RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRenderTextEl& txtEl );
-	void			RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRenderTextEl& txtEl );
+	void			RenderEl( nuRenderDomEl* node );
+	void			RenderNode( nuRenderDomNode* node );
+	void			RenderText( nuRenderDomText* node );
+	void			RenderTextChar_WholePixel( nuRenderDomText* node, const nuRenderCharEl& txtEl );
+	void			RenderTextChar_SubPixel( nuRenderDomText* node, const nuRenderCharEl& txtEl );
 	void			RenderGlyphsNeeded();
 
 	bool			LoadTexture( nuTexture* tex, int texUnit );		// Load a texture and reset invalid rectangle

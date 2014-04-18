@@ -165,6 +165,8 @@ local freetype_gl = StaticLibrary {
 }
 --]]
 
+-- This is not used right now - shaders are hand-written in both environments
+--[[
 local hlslang = Program {
 	Name = "hlslang",
 	SourceDir = ".",
@@ -189,6 +191,7 @@ local hlslang = Program {
 		"dependencies/hlslang/src/hlslang.cpp",
 	}
 }
+--]]
 
 local nudom = SharedLibrary {
 	Name = "nudom",
@@ -210,7 +213,6 @@ local nudom = SharedLibrary {
 		Glob { Extensions = { ".h" }, Dir = "dependencies/Panacea", },
 		"nudom/nuDefs.cpp",
 		"nudom/nuDoc.cpp",
-		"nudom/nuDomEl.cpp",
 		"nudom/nuEvent.cpp",
 		"nudom/nuLayout.cpp",
 		"nudom/nuMem.cpp",
@@ -223,6 +225,9 @@ local nudom = SharedLibrary {
 		"nudom/nuSysWnd.cpp",
 		"nudom/nuDocGroup.cpp",
 		"nudom/nuDocGroup_Windows.cpp",
+		"nudom/Dom/nuDomEl.cpp",
+		"nudom/Dom/nuDomNode.cpp",
+		"nudom/Dom/nuDomText.cpp",
 		"nudom/Image/nuImage.cpp",
 		"nudom/Image/nuImageStore.cpp",
 		"nudom/Render/nuRenderBase.cpp",
@@ -274,6 +279,19 @@ local HelloWorld = Program {
 	Sources = {
 		"templates/nuWinMain.cpp",
 		"samples/HelloWorld/HelloWorld.cpp",
+	}
+}
+
+local KitchenSink = Program {
+	Name = "KitchenSink",
+	Includes = { "nudom" },
+	Depends = {
+		crt,
+		nudom
+	},
+	Sources = {
+		"templates/nuWinMain.cpp",
+		"samples/KitchenSink/KitchenSink.cpp",
 	}
 }
 

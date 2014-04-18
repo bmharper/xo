@@ -5,7 +5,7 @@
 #include "Render/nuRenderer.h"
 #include "nuCloneHelpers.h"
 
-nuDoc::nuDoc()
+nuDoc::nuDoc() : Root( this, nuTagDiv )
 {
 	IsReadOnly = false;
 	Version = 0;
@@ -39,6 +39,7 @@ void nuDoc::MakeFreeIDsUsable()
 	FreeIDs.clear();
 }
 
+/*
 void nuDoc::CloneFastInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) const
 {
 	// this code path died...
@@ -46,7 +47,6 @@ void nuDoc::CloneFastInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) con
 
 	//c.Reset();
 
-	/*
 	if ( c.ChildByInternalID.size() != ChildByInternalID.size() )
 		c.ChildByInternalID.resize( ChildByInternalID.size() );
 	c.ChildByInternalID.nullfill();
@@ -54,8 +54,8 @@ void nuDoc::CloneFastInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) con
 	
 	ClassStyles.CloneFastInto( c.ClassStyles, &c.Pool );
 	nuCloneStaticArrayWithCloneFastInto( c.TagStyles, TagStyles, &c.Pool );
-	*/
 }
+*/
 
 // This clones only the objects that are marked as modified.
 void nuDoc::CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) const
@@ -80,7 +80,7 @@ void nuDoc::CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) con
 			if ( src && !dst )
 			{
 				// create in destination
-				nuDomEl* newChild = c.AllocChild();
+				nuDomEl* newChild = c.AllocChild( src->GetTag() );
 				newChild->SetDoc( &c );
 				c.ChildByInternalID[i] = newChild;
 			}
@@ -112,10 +112,13 @@ void nuDoc::CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) con
 	c.Version = Version;
 }
 
-nuDomEl* nuDoc::AllocChild()
+nuDomEl* nuDoc::AllocChild( nuTag tag )
 {
 	// we may want to use a more specialized heap in future, so we keep this path strict
-	return new nuDomEl();
+	if ( tag == nuTagText )
+		return new nuDomText( this, tag );
+	else
+		return new nuDomNode( this, tag );
 }
 
 void nuDoc::FreeChild( const nuDomEl* el )
@@ -196,7 +199,27 @@ void nuDoc::ResetInternalIDs()
 
 void nuDoc::InitializeDefaultTagStyles()
 {
+#if NU_PLATFORM_WIN_DESKTOP
+	//const char* font = "Trebuchet MS";
+	//const char* font = "Microsoft Sans Serif";
+	//const char* font = "Consolas";
+	//const char* font = "Times New Roman";
+	const char* font = "Verdana";
+	//const char* font = "Tahoma";
+	//const char* font = "Segoe UI";
+	//const char* font = "Arial";
+#elif NU_PLATFORM_ANDROID
+	const char* font = "Droid Sans";
+#else
+	const char* font = "Helvetica";
+#endif
+	nuStyleAttrib afont;
+	afont.SetFont( font, this );
+
+	// Other defaults are set inside nuRenderStack::Initialize
+
 	TagStyles[nuTagBody].Parse( "background: #fff; width: 100%; height: 100%; box-sizing: margin;", this );
+	TagStyles[nuTagBody].Set( afont );
 	//TagStyles[nuTagBody].Parse( "background: #000; width: 100%; height: 100%;", this );
 	TagStyles[nuTagDiv].Parse( "display: block;", this );
 	// Hack to give text some size

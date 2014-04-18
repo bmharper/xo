@@ -8,6 +8,8 @@
 // Styles that are inherited by default
 const nuStyleCategories nuInheritedStyleCategories[nuNumInheritedStyleCategories] = {
 	nuCatFontFamily,
+	nuCatFontSize,
+	nuCatColor,
 };
 
 static bool MATCH( const char* s, intp start, intp end, const char* truth )
@@ -201,7 +203,12 @@ void nuStyleAttrib::SetInherit( nuStyleCategories cat )
 
 const char* nuStyleAttrib::GetBackgroundImage( nuStringTable* strings ) const
 {
-	return strings->GetStr( ValU32 );
+	return strings->GetStr( ValU32 )->Z;
+}
+
+const nuString* nuStyleAttrib::GetFont( const nuDoc* doc ) const
+{
+	return doc->Strings.GetStr( ValU32 );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -644,7 +651,6 @@ void nuStyleTable::Discard()
 {
 	Styles.hack( 0, 0, NULL );
 	Names.hack( 0, 0, NULL );
-	NUASSERT( UnusedSlots.size() == 0 && NameToIndex.size() == 0 );
 }
 
 const nuStyle* nuStyleTable::GetByID( nuStyleID id ) const
@@ -660,15 +666,9 @@ nuStyle* nuStyleTable::GetOrCreate( const char* name )
 	if ( pindex ) return &Styles[*pindex];
 	
 	// create new
-	int index;
-	if ( UnusedSlots.size() != 0 )
-		index = UnusedSlots.rpop();
-	else
-	{
-		index = (int) Styles.size();
-		Styles.add();
-		Names.add();
-	}
+	int index = (int) Styles.size();
+	Styles.add();
+	Names.add();
 	nuStyle* s = &Styles[index];
 	NameToIndex.insert( n, index );
 	Names[index] = nuString( name );
@@ -683,30 +683,6 @@ nuStyleID nuStyleTable::GetStyleID( const char* name )
 	else			return nuStyleID(0);
 }
 
-void nuStyleTable::GarbageCollect( nuDomEl* root )
-{
-	BitMap used;
-	used.Resize( (uint32) Styles.size(), false );
-	UnusedSlots.clear();
-	GarbageCollectInternalR( used, root );
-	for ( int i = 0; i < used.Size(); i++ )
-	{
-		if ( !used.Get( i ) )
-		{
-			NameToIndex.erase( Names[i] );
-			Names[i] = "";
-			Styles[i].Attribs.clear();
-			UnusedSlots += i;
-		}
-	}
-
-	// Compact only if we are wasting more space than we're using
-	if ( UnusedSlots.size() > Styles.size() )
-	{
-		Compact( used, root );
-	}
-}
-
 void nuStyleTable::CloneSlowInto( nuStyleTable& c ) const
 {
 	// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
@@ -717,63 +693,6 @@ void nuStyleTable::CloneFastInto( nuStyleTable& c, nuPool* pool ) const
 {
 	// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
 	nuClonePodvecWithMemCopy( c.Styles, Styles, pool );
-}
-
-void nuStyleTable::Compact( BitMap& used, nuDomEl* root )
-{
-	podvec<nuStyleID> old2newID;
-	old2newID.resize( Styles.size() );
-	uint32 newID = 0;
-	for ( intp i = 0; i < Styles.size(); i++ )
-	{
-		if ( used.Get((uint32) i) )
-		{
-			old2newID[i] = nuStyleID( newID );
-			newID++;
-		}
-		else
-			old2newID[i] = nuStyleID( -1 );
-	}
-	CompactR( &old2newID[0], root );
-		
-	// We'll have to see how painful these memory bumps are.
-	// The 'right' thing to do is to 'move' the objects from the old list into a new list.
-	for ( intp i = Styles.size() - 1; i >= 0; i-- )
-	{
-		if ( !used.Get((uint32) i) )
-		{
-			Styles.erase(i);
-			Names.erase(i);
-		}
-	}
-
-	NameToIndex.clear();
-	for ( intp i = 0; i < Styles.size(); i++ )
-		NameToIndex.insert( Names[i], (int) i );
-
-	UnusedSlots.clear();
-}
-
-void nuStyleTable::GarbageCollectInternalR( BitMap& used, nuDomEl* node )
-{
-	for ( intp i = 0; i < node->GetClasses().size(); i++ )
-		used.Set( node->GetClasses()[i], true );
-	
-	for ( intp i = 0; i < node->ChildCount(); i++ )
-		GarbageCollectInternalR( used, node->ChildByIndex(i) );
-}
-
-void nuStyleTable::CompactR( const nuStyleID* old2newID, nuDomEl* node )
-{
-	for ( intp i = 0; i < node->GetClasses().size(); i++ )
-	{
-		nuStyleID newval = old2newID[node->GetClasses()[i]];
-		node->GetClassesMutable()[i] = newval;
-		NUASSERT( newval != -1 );
-	}
-
-	for ( intp i = 0; i < node->ChildCount(); i++ )
-		CompactR( old2newID, node->ChildByIndex(i) );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

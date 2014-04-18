@@ -1,5 +1,6 @@
 #pragma once
 
+// A memory pool
 class NUAPI nuPool
 {
 public:
@@ -26,6 +27,7 @@ protected:
 	podvec<void*>	BigBlocks;
 };
 
+// A vector that allocates its storage from a nuPool object
 template<typename T>
 class nuPoolArray
 {

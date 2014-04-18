@@ -20,6 +20,7 @@ void nuRenderDoc::ResetRenderData()
 {
 	RenderRoot.Discard();
 	RenderPool.FreeAll();
+	RenderRoot.InternalID = Doc.Root.GetInternalID();
 }
 
 nuRenderResult nuRenderDoc::Render( nuRenderBase* driver )
@@ -51,6 +52,7 @@ void nuRenderDoc::CopyFromCanonical( const nuDoc& canonical, nuRenderStats& stat
 	ClonedImages.CloneFrom( canonical.Images );
 }
 
+/*
 nuInternalID nuRenderDoc::FindElement( const nuRenderDomEl& el, nuPoint pos )
 {
 	if ( el.Children.size() == 0 )
@@ -68,6 +70,7 @@ nuInternalID nuRenderDoc::FindElement( const nuRenderDomEl& el, nuPoint pos )
 
 	return nuInternalIDNull;
 }
+*/
 
 /*
 void nuRenderDoc::FindAlteredNodes( const nuDoc* original, const nuDoc* modified, podvec<nuInternalID>& alteredNodeIDs )

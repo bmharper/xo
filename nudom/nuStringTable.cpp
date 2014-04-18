@@ -1,21 +1,25 @@
 #include "pch.h"
 #include "nuStringTable.h"
  
-
 nuStringTable::nuStringTable()
 {
+	// We must do this manually, otherwise nuString will "optimize away" the single character of the string
+	Empty.Z = "";
+
 	IdToName += nuTempString(""); // this will end up as a blank string with no heap alloc
 	NameToId.insert( IdToName[0], 0 );
 }
 nuStringTable::~nuStringTable()
 {
+	// reverse the hack that we establish in the constructor
+	Empty.Z = nullptr;
 }
 
-const char* nuStringTable::GetStr( int id ) const
+const nuString* nuStringTable::GetStr( int id ) const
 {
 	if ( (uint32) id >= (uint32) IdToName.size() )
-		return "";
-	return IdToName[id].Z != NULL ? IdToName[id].Z : "";
+		return &Empty;
+	return IdToName[id].Z != NULL ? &IdToName[id] : &Empty;
 }
 
 int nuStringTable::GetId( const char* str )
