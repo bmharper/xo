@@ -40,6 +40,10 @@ public:
 class NUAPI nuRenderDomText : public nuRenderDomEl
 {
 public:
+	enum Flag
+	{
+		FlagSubPixelGlyphs = 1,
+	};
 				nuRenderDomText( nuInternalID id, nuPool* pool );
 
 	void		SetStyle( nuRenderStack& stack );
@@ -49,4 +53,5 @@ public:
 	int								Char;
 	nuColor							Color;
 	uint8							FontSizePx;
+	uint8							Flags;
 };

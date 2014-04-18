@@ -28,7 +28,7 @@ public:
 
 protected:
 	// Cloned data. temp hack for webcam demo
-	nuStringTable	ClonedStrings;
+	//nuStringTable	ClonedStrings;
 	nuImageStore	ClonedImages;
 
 	void			ResetRenderData();

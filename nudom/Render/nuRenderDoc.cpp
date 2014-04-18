@@ -34,7 +34,7 @@ nuRenderResult nuRenderDoc::Render( nuRenderBase* driver )
 
 	NUTRACE_RENDER( "RenderDoc: Render\n" );
 	nuRenderer rend;
-	nuRenderResult res = rend.Render( &ClonedImages, &ClonedStrings, driver, &RenderRoot, WindowWidth, WindowHeight );
+	nuRenderResult res = rend.Render( &ClonedImages, &Doc.Strings, driver, &RenderRoot, WindowWidth, WindowHeight );
 
 	return res;
 }
@@ -48,7 +48,7 @@ void nuRenderDoc::CopyFromCanonical( const nuDoc& canonical, nuRenderStats& stat
 	canonical.CloneSlowInto( Doc, 0, stats );
 
 	// TODO: Don't do this dumb copying.
-	ClonedStrings.CloneFrom( canonical.Strings );
+	//ClonedStrings.CloneFrom( canonical.Strings );
 	ClonedImages.CloneFrom( canonical.Images );
 }
 

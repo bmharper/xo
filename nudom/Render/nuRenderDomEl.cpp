@@ -44,6 +44,7 @@ nuRenderDomText::nuRenderDomText( nuInternalID id, nuPool* pool ) : nuRenderDomE
 	FontID = nuFontIDNull;
 	Char = 0;
 	FontSizePx = 0;
+	Flags = 0;
 }
 
 void nuRenderDomText::SetStyle( nuRenderStack& stack )

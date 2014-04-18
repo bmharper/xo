@@ -203,10 +203,10 @@ void nuStyleAttrib::SetInherit( nuStyleCategories cat )
 
 const char* nuStyleAttrib::GetBackgroundImage( nuStringTable* strings ) const
 {
-	return strings->GetStr( ValU32 )->Z;
+	return strings->GetStr( ValU32 );
 }
 
-const nuString* nuStyleAttrib::GetFont( const nuDoc* doc ) const
+const char* nuStyleAttrib::GetFont( const nuDoc* doc ) const
 {
 	return doc->Strings.GetStr( ValU32 );
 }
@@ -231,6 +231,25 @@ static bool ParseSingleAttrib( const char* s, intp len, bool (*parseFunc)(const 
 		nuParseFail( "Unknown: '%.*s'", (int) len, s );
 		return false;
 	}
+}
+
+static void ParseString( const char* s, intp len, nuStyleCategories cat, nuDoc* doc, nuStyle& style )
+{
+	nuStyleAttrib attrib;
+	if ( len < sizeof(stat) )
+	{
+		char stat[64];
+		memcpy( stat, s, len );
+		stat[len] = 0;
+		attrib.Set( cat, stat, doc );
+	}
+	else
+	{
+		nuString copy;
+		copy.Set( s, len );
+		attrib.Set( cat, copy.Z, doc );
+	}
+	style.Set( attrib );
 }
 
 template<typename T>
@@ -281,6 +300,8 @@ bool nuStyle::Parse( const char* t, nuDoc* doc )
 			else if ( MATCH(t, startk, eq, "flow-direction-horizontal") )	{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Horizontal, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Vertical, *this ); }
 			else if ( MATCH(t, startk, eq, "box-sizing") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuBoxSizeParse, nuCatBoxSizing, *this ); }
+			else if ( MATCH(t, startk, eq, "font-size") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatFontSize, *this ); }
+			else if ( MATCH(t, startk, eq, "font-family") )					{ ParseString( TSTART, TLEN, nuCatFontFamily, doc, *this ); }
 			else
 			{
 				ok = false;
@@ -518,6 +539,8 @@ void nuStyleSet::Set( int n, const nuStyleAttrib* attribs, nuPool* pool )
 
 void nuStyleSet::Set( const nuStyleAttrib& attrib, nuPool* pool )
 {
+	if ( attrib.Category == nuCatFontSize )
+		int abc = 123;
 	int32 slot = GetSlot( attrib.GetCategory() );
 	if ( slot != 0 )
 	{

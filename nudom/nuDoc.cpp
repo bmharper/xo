@@ -109,6 +109,8 @@ void nuDoc::CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) con
 	ClassStyles.CloneSlowInto( c.ClassStyles );
 	nuCloneStaticArrayWithCloneSlowInto( c.TagStyles, TagStyles );
 
+	c.Strings.CloneFrom_Incremental( Strings );
+
 	c.Version = Version;
 }
 

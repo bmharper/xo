@@ -61,6 +61,7 @@ static const nuTextureID nuTextureIDNull = 0;		// Zero is always an invalid Text
 // Maximum number of texture units that we will try to use
 static const u32 nuMaxTextureUnits = 8;
 
+inline int32	nuRealx256ToPos( int32 real )	{ return int32(real * ((1 << nuPosShift) / 256)); } // Since nuPosShift = 256, nuRealx256ToPos simplifies out to identity
 inline int32	nuRealToPos( float real )		{ return int32(real * (1 << nuPosShift)); }
 inline int32	nuDoubleToPos( double real )	{ return int32(real * (1 << nuPosShift)); }
 inline float	nuPosToReal( int32 pos )		{ return pos * (1.0f / (1 << nuPosShift)); }
@@ -313,6 +314,7 @@ struct nuGlobalStruct
 {
 	int							TargetFPS;
 	int							NumWorkerThreads;		// Read-only. Set during nuInitialize().
+	int							MaxSubpixelGlyphSize;	// Maximum font size where we will use sub-pixel glyph textures
 	bool						PreferOpenGL;			// Prefer OpenGL over DirectX. If this is true, then on Windows OpenGL will be tried first.
 	bool						EnableVSync;			// This is only respected during device initialization, so you must set it at application start. It raises latency noticeably. This has no effect on DirectX windowed rendering.
 	bool						EnableSubpixelText;		// Enable sub-pixel text rendering. Assumes pixels are the standard RGB layout. Enabled by default on Windows desktop only.

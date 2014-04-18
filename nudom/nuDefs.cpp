@@ -206,6 +206,7 @@ NUAPI void nuInitialize()
 	nuGlobals = new nuGlobalStruct();
 	nuGlobals->TargetFPS = 60;
 	nuGlobals->NumWorkerThreads = min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
+	nuGlobals->MaxSubpixelGlyphSize = 30;
 	nuGlobals->PreferOpenGL = false;
 	nuGlobals->EnableVSync = false;
 	//nuGlobals->SubPixelTextGamma = 0.6f; // 0.5 is good for sRGB framebuffer

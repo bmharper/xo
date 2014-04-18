@@ -167,21 +167,20 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 
 void nuLayout::RunText( NodeState& s, const nuDomText& node, nuRenderDomText* rnode )
 {
-	rnode->SetStyle( Stack );
-	
-	NUTRACE_LAYOUT( "Layout (%d) Run 2\n", node.GetInternalID() );
+	NUTRACE_LAYOUT( "Layout text (%d) Run 1\n", node.GetInternalID() );
 	rnode->InternalID = node.GetInternalID();
+	rnode->SetStyle( Stack );
 
-	NUTRACE_LAYOUT( "Layout (%d) Run txt.1\n", node.GetInternalID() );
+	NUTRACE_LAYOUT( "Layout text (%d) Run 2\n", node.GetInternalID() );
 
 	nuStyleAttrib fontfam = Stack.Get( nuCatFontFamily );
-	const nuString* fontStr = fontfam.GetFont( Doc );
+	const char* fontStr = fontfam.GetFont( Doc );
 
-	const nuFont* font = nuGlobal()->FontStore->GetByFacename( *fontStr );
+	const nuFont* font = nuGlobal()->FontStore->GetByFacename( fontStr );
 	if ( font )
 		rnode->FontID = font->ID;
 	else
-		rnode->FontID = nuGlobal()->FontStore->InsertByFacename( *fontStr );
+		rnode->FontID = nuGlobal()->FontStore->InsertByFacename( fontStr );
 
 	nuGlyphCache* glyphCache = nuGlobal()->GlyphCache;
 
@@ -193,13 +192,20 @@ void nuLayout::RunText( NodeState& s, const nuDomText& node, nuRenderDomText* rn
 	// round font size to integer units
 	rnode->FontSizePx = (uint8) nuRound( fontSizePxUnrounded );
 
+	// Nothing prevents somebody from setting a font size to zero
+	if ( rnode->FontSizePx < 1 )
+		return;
+
 	nuPos fontHeightRounded = nuRealToPos( rnode->FontSizePx );
 
 	const char* txt = node.GetText();
 	intp len = strlen(txt);
 	rnode->Text.reserve( len );
 
-	uint8 glyphFlags = nuGlobal()->EnableSubpixelText ? nuGlyphFlag_SubPixel_RGB : 0;
+	bool subPixel = nuGlobal()->EnableSubpixelText && rnode->FontSizePx <= nuGlobal()->MaxSubpixelGlyphSize;
+	uint8 glyphFlags = subPixel ? nuGlyphFlag_SubPixel_RGB : 0;
+	if ( subPixel )
+		rnode->Flags |= nuRenderDomText::FlagSubPixelGlyphs;
 
 	nuGlyphCacheKey key( rnode->FontID, 0, rnode->FontSizePx, glyphFlags );
 
@@ -220,9 +226,9 @@ void nuLayout::RunText( NodeState& s, const nuDomText& node, nuRenderDomText* rn
 		rnode->Text.Count++;
 		nuRenderCharEl& rtxt = rnode->Text.back();
 		rtxt.Char = key.Char;
-		rtxt.X = s.PosX + nuRealToPos(glyph->MetricLeftx256 / 256.0f);
+		rtxt.X = s.PosX + nuRealx256ToPos(glyph->MetricLeftx256);
 		rtxt.Y = s.PosY - nuRealToPos(glyph->MetricTop) + fontHeightRounded;
-		s.PosX += nuRealToPos(glyph->MetricLinearHoriAdvance * rnode->FontSizePx);
+		s.PosX += nuRealx256ToPos(glyph->MetricLinearHoriAdvancex256);
 	}
 }
 

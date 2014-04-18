@@ -3,7 +3,7 @@
 #include "nuFontStore.h"
 #include "Render/nuTextureAtlas.h"
 
-static const uint32 nuSubPixelHintKillShift = 4;
+static const uint32 nuSubPixelHintKillShift = 3;
 static const uint32 nuSubPixelHintKillMultiplier = (1 << nuSubPixelHintKillShift);
 
 // GCC 4.6 for Android forces us to set the value of this constant in the .cpp file, not in the .h file.
@@ -82,6 +82,7 @@ const nuGlyph* nuGlyphCache::GetGlyph( const nuGlyphCacheKey& key ) const
 
 uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 {
+	NUASSERT( key.Size != 0 );
 	const nuFont* font = nuGlobal()->FontStore->GetByFontID( key.FontID );
 
 	FT_UInt iFTGlyph = FT_Get_Char_Index( font->FTFace, key.Char );
@@ -165,7 +166,7 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	g.AtlasID = (uint) Atlasses.find( atlas );
 	g.MetricLeftx256 = font->FTFace->glyph->bitmap_left * 256 / combinedHorzMultiplier;
 	g.MetricTop = font->FTFace->glyph->bitmap_top;
-	g.MetricLinearHoriAdvance = font->FTFace->glyph->linearHoriAdvance / 2048.0f;
+	g.MetricLinearHoriAdvancex256 = ((int32) font->FTFace->glyph->linearHoriAdvance * 256 * (int32) pixSize) / 2048;
 	Table.insert( key, (uint) Glyphs.size() );
 	Glyphs += g;
 	return (uint) (Glyphs.size() - 1);

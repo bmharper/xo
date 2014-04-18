@@ -86,7 +86,7 @@ void nuRenderer::RenderNode( nuRenderDomNode* node )
 	//auto bg = style.Get( nuCatBackground );
 	//auto bgImage = style.Get( nuCatBackgroundImage );
 	nuColor bg = style->BackgroundColor;
-	const char* bgImage = Strings->GetStr( style->BackgroundImageID )->Z;
+	const char* bgImage = Strings->GetStr( style->BackgroundImageID );
 	if ( bg.a != 0 )
 	{
 		for ( int i = 0; i < 4; i++ )
@@ -119,10 +119,10 @@ void nuRenderer::RenderNode( nuRenderDomNode* node )
 
 void nuRenderer::RenderText( nuRenderDomText* node )
 {
-	bool subPixel = nuGlobal()->EnableSubpixelText;
+	bool subPixelGlyphs = node->Flags & nuRenderDomText::FlagSubPixelGlyphs;
 	for ( intp i = 0; i < node->Text.size(); i++ )
 	{
-		if ( subPixel )
+		if ( subPixelGlyphs )
 			RenderTextChar_SubPixel( node, node->Text[i] );
 		else
 			RenderTextChar_WholePixel( node, node->Text[i] );

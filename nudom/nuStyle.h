@@ -176,13 +176,14 @@ public:
 	void SetBoxSizing( nuBoxSizeType type )						{ SetU32( nuCatBoxSizing, type ); }
 
 	// Generic Set() that is used by template code
-	void Set( nuStyleCategories cat, nuColor val )				{ SetColor( cat, val ); }
-	void Set( nuStyleCategories cat, nuSize val )				{ SetSize( cat, val ); }
-	void Set( nuStyleCategories cat, nuDisplayType val )		{ SetDisplay( val ); }
-	void Set( nuStyleCategories cat, nuPositionType val )		{ SetPosition( val ); }
-	void Set( nuStyleCategories cat, nuFlowAxis val )			{ SetFlowAxis( val ); }
-	void Set( nuStyleCategories cat, nuFlowDirection val )		{ SetU32( cat, val ); }
-	void Set( nuStyleCategories cat, nuBoxSizeType val )		{ SetBoxSizing( val ); }
+	void Set( nuStyleCategories cat, nuColor val )					{ SetColor( cat, val ); }
+	void Set( nuStyleCategories cat, nuSize val )					{ SetSize( cat, val ); }
+	void Set( nuStyleCategories cat, nuDisplayType val )			{ SetDisplay( val ); }
+	void Set( nuStyleCategories cat, nuPositionType val )			{ SetPosition( val ); }
+	void Set( nuStyleCategories cat, nuFlowAxis val )				{ SetFlowAxis( val ); }
+	void Set( nuStyleCategories cat, nuFlowDirection val )			{ SetU32( cat, val ); }
+	void Set( nuStyleCategories cat, nuBoxSizeType val )			{ SetBoxSizing( val ); }
+	void Set( nuStyleCategories cat, const char* val, nuDoc* doc )	{ SetString( cat, val, doc ); }
 
 	bool				IsNull() const							{ return Category == nuCatNULL; }
 	bool				IsInherit() const						{ return Flags == FlagInherit; }
@@ -199,7 +200,7 @@ public:
 	nuBoxSizeType		GetBoxSizing() const				{ return (nuBoxSizeType) ValU32; }
 
 	const char*			GetBackgroundImage( nuStringTable* strings ) const;
-	const nuString*		GetFont( const nuDoc* doc ) const;
+	const char*			GetFont( const nuDoc* doc ) const;
 
 protected:
 	void SetString( nuStyleCategories cat, const char* str, nuDoc* doc );

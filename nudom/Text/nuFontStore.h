@@ -11,7 +11,7 @@ All public members are thread safe.
 
 Members suffixed by "_Internal" assume that the appropriate locks have been acquired.
 
-One a nuFont* object has been created, it will never be destroyed.
+Once a nuFont* object has been created, it will never be destroyed.
 
 Although the public API of this class is thread safe, the nuFont* objects returned are
 most definitely not thread safe. Freetype stores a lot of glyph rendering state inside
@@ -28,9 +28,9 @@ public:
 	void			InitializeFreetype();
 	void			ShutdownFreetype();
 	const nuFont*	GetByFontID( nuFontID fontID );
-	const nuFont*	GetByFacename( const nuString& facename );
+	const nuFont*	GetByFacename( const char* facename );
 	nuFontID		Insert( const nuFont& font );
-	nuFontID		InsertByFacename( const nuString& facename );
+	nuFontID		InsertByFacename( const char* facename );
 
 private:
 	AbcCriticalSection				Lock;
@@ -38,8 +38,8 @@ private:
 	fhashmap<nuString, nuFontID>	FacenameToFontID;
 	FT_Library						FTLibrary;
 
-	const nuFont*	GetByFacename_Internal( const nuString& facename ) const;
+	const nuFont*	GetByFacename_Internal( const char* facename ) const;
 	nuFontID		Insert_Internal( const nuFont& font );
-	const char*		FacenameToFilename( const nuString& facename );
+	const char*		FacenameToFilename( const char* facename );
 
 };

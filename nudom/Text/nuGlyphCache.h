@@ -21,10 +21,10 @@ struct nuGlyph
 	uint16	Height;
 	int16	MetricLeftx256;	// low 8 bits are sub-pixel
 	int16	MetricTop;
-	float	MetricLinearHoriAdvance;
+	int32	MetricLinearHoriAdvancex256;
 
 	// A Null glyph is one that could not be found in the font
-	bool IsNull() const { return Width == 0 && MetricLinearHoriAdvance == 0; }
+	bool IsNull() const { return Width == 0 && MetricLinearHoriAdvancex256 == 0; }
 	void SetNull()		{ memset(this, 0, sizeof(*this)); }
 };
 
