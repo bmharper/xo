@@ -1,6 +1,29 @@
 #include "pch.h"
 #include "nuFontStore.h"
 
+nuFontTableImmutable::nuFontTableImmutable()
+{
+}
+
+nuFontTableImmutable::~nuFontTableImmutable()
+{
+}
+
+void nuFontTableImmutable::Initialize( const pvect<nuFont*>& fonts )
+{
+	Fonts = fonts;
+}
+
+const nuFont* nuFontTableImmutable::GetByFontID( nuFontID fontID ) const
+{
+	NUASSERT( fontID != nuFontIDNull && fontID < Fonts.size() );
+	return Fonts[fontID];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 nuFontStore::nuFontStore()
 {
 	FTLibrary = NULL;
@@ -85,6 +108,28 @@ nuFontID nuFontStore::InsertByFacename( const char* facename )
 	return Insert_Internal( font );
 }
 
+nuFontID nuFontStore::GetFallbackFontID()
+{
+	nuFontID fid = nuFontIDNull;
+#if NU_PLATFORM_WIN_DESKTOP
+	fid = InsertByFacename( "Arial" );
+#elif NU_PLATFORM_ANDROID
+	fid = InsertByFacename( "Droid Sans" );
+#else
+	NUTODO_STATIC;
+#endif
+	NUASSERT( fid != nuFontIDNull );
+	return fid;
+}
+
+nuFontTableImmutable nuFontStore::GetImmutableTable()
+{
+	TakeCriticalSection lock(Lock);
+	nuFontTableImmutable t;
+	t.Initialize( Fonts );
+	return t;
+}
+
 const nuFont* nuFontStore::GetByFacename_Internal( const char* facename ) const
 {
 	nuFontID id;
@@ -101,7 +146,27 @@ nuFontID nuFontStore::Insert_Internal( const nuFont& font )
 	copy->ID = (nuFontID) Fonts.size();
 	Fonts += copy;
 	FacenameToFontID.insert( copy->Facename, copy->ID );
+	LoadFontConstants( *copy );
 	return copy->ID;
+}
+
+void nuFontStore::LoadFontConstants( nuFont& font )
+{
+	uint ftflags = FT_LOAD_LINEAR_DESIGN;
+	FT_UInt iFTGlyph = FT_Get_Char_Index( font.FTFace, 32 );
+	FT_Error e = FT_Set_Pixel_Sizes( font.FTFace, 100, 100 );
+	NUASSERT( e == 0 );
+	e = FT_Load_Glyph( font.FTFace, iFTGlyph, ftflags );
+	if ( e != 0 )
+	{
+		NUTRACE( "Failed to load glyph for character %d (%d)\n", 32, iFTGlyph );
+		font.LinearHoriAdvance_Space_x256 = 0;
+	}
+	else
+	{
+		font.LinearHoriAdvance_Space_x256 = ((int32) font.FTFace->glyph->linearHoriAdvance * 256) / font.FTFace->units_per_EM;
+	}
+	font.NaturalLineHeight_x256 = font.FTFace->height * 256 / font.FTFace->units_per_EM;
 }
 
 const char* nuFontStore::FacenameToFilename( const char* facename )

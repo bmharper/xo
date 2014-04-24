@@ -92,6 +92,16 @@ void nuBox::ClampTo( const nuBox& clamp )
 	Bottom = std::min(Bottom, clamp.Bottom);
 }
 
+nuBox nuBox::ShrunkBy( const nuBox& margins )
+{
+	nuBox c = *this;
+	c.Left += margins.Left;
+	c.Right -= margins.Right;
+	c.Top += margins.Top;
+	c.Bottom -= margins.Bottom;
+	return c;
+}
+
 static const float sRGB_Low	= 0.0031308f;
 static const float sRGB_a	= 0.055f;
 
@@ -209,10 +219,15 @@ NUAPI void nuInitialize()
 	nuGlobals->MaxSubpixelGlyphSize = 30;
 	nuGlobals->PreferOpenGL = false;
 	nuGlobals->EnableVSync = false;
-	//nuGlobals->SubPixelTextGamma = 0.6f; // 0.5 is good for sRGB framebuffer
-	// Ah....... Freetype's output is linear coverage percentage, so if we treat our freetype texture as GL_LUMINANCE
+	// Freetype's output is linear coverage percentage, so if we treat our freetype texture as GL_LUMINANCE
 	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get perfect results without
 	// doing any tweaking to the freetype glyphs.
+	// Setting SubPixelTextGamma = 2.2 will get results very close to default cleartype on Windows 8.1
+	// As far as I know, leaving the gamma at 1.0 is "true to the font designer", but this does leave the fonts
+	// quite a bit heavier than the default on Windows. For this reason, we set the gamma to 1.5. It seems like
+	// a reasonable blend between the "correct weight" and "prior art".
+	// CORRECTION. A gamma of anything other than 1.0 looks bad at small font sizes (like 12 or 13 pixels)
+	// We might want to have a "gamma curve" of pixel size vs gamma.
 	nuGlobals->SubPixelTextGamma = 1.0f;
 	nuGlobals->WholePixelTextGamma = 1.0f;
 #if NU_PLATFORM_WIN_DESKTOP
@@ -224,6 +239,7 @@ NUAPI void nuInitialize()
 	nuGlobals->EnableSRGBFramebuffer = false;
 	//nuGlobals->EmulateGammaBlending = false;
 #endif
+	nuGlobals->EnableKerning = true;
 	//nuGlobals->DebugZeroClonedChildList = true;
 	nuGlobals->MaxTextureID = ~((nuTextureID) 0);
 	nuGlobals->ClearColor.Set( 200, 0, 200, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node

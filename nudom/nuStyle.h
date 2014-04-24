@@ -5,7 +5,8 @@
 
 // Represents a size that is zero, pixels, points, percent.
 // TODO: em
-// TODO: ap (angular pixel)
+// TODO: ap (angular pixel).. maybe call them "ep" for "eye pixel"
+// Or perhaps rename Pixels to DP, for DevicePixels.
 // Zero is represented as 0 pixels
 struct NUAPI nuSize
 {
@@ -18,6 +19,7 @@ struct NUAPI nuSize
 	static nuSize	Points( float v )			{ nuSize s = {v, PT}; return s; }
 	static nuSize	Pixels( float v )			{ nuSize s = {v, PX}; return s; }
 	static nuSize	Zero()						{ nuSize s = {0, PX}; return s; }
+	static nuSize	Null()						{ nuSize s = {0, NONE}; return s; }
 
 	static bool		Parse( const char* s, intp len, nuSize& v );
 };
@@ -168,7 +170,7 @@ public:
 	void SetDisplay( nuDisplayType val )						{ SetU32( nuCatDisplay, val ); }
 	void SetBorderRadius( nuSize val )							{ SetSize( nuCatBorderRadius, val ); }
 	void SetPosition( nuPositionType val )						{ SetU32( nuCatPosition, val ); }
-	void SetFont( const char* font, nuDoc* doc )				{ SetString( nuCatFontFamily, font, doc ); }
+	void SetFont( nuFontID val )								{ SetU32( nuCatFontFamily, val ); }
 	void SetBackgroundImage( const char* image, nuDoc* doc )	{ SetString( nuCatBackgroundImage, image, doc ); }
 	void SetFlowAxis( nuFlowAxis axis )							{ SetU32( nuCatFlow_Axis, axis ); }
 	void SetFlowDirectionHorizonal( nuFlowDirection dir )		{ SetU32( nuCatFlow_Direction_Horizontal, dir ); }
@@ -183,6 +185,7 @@ public:
 	void Set( nuStyleCategories cat, nuFlowAxis val )				{ SetFlowAxis( val ); }
 	void Set( nuStyleCategories cat, nuFlowDirection val )			{ SetU32( cat, val ); }
 	void Set( nuStyleCategories cat, nuBoxSizeType val )			{ SetBoxSizing( val ); }
+	void Set( nuStyleCategories cat, nuFontID val )					{ SetFont( val ); }
 	void Set( nuStyleCategories cat, const char* val, nuDoc* doc )	{ SetString( cat, val, doc ); }
 
 	bool				IsNull() const							{ return Category == nuCatNULL; }
@@ -200,7 +203,7 @@ public:
 	nuBoxSizeType		GetBoxSizing() const				{ return (nuBoxSizeType) ValU32; }
 
 	const char*			GetBackgroundImage( nuStringTable* strings ) const;
-	const char*			GetFont( const nuDoc* doc ) const;
+	nuFontID			GetFont() const;
 
 protected:
 	void SetString( nuStyleCategories cat, const char* str, nuDoc* doc );

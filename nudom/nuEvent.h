@@ -9,6 +9,7 @@ enum nuEvents
 	nuEventMouseMove	= BIT(1),
 	nuEventWindowSize	= BIT(2),
 	nuEventTimer		= BIT(3),
+	nuEventClick		= BIT(4),
 };
 
 /* User interface event (keyboard, mouse, touch, etc).

@@ -52,8 +52,8 @@ void nuRenderStack::Initialize( const nuDoc* doc, nuPool* pool )
 	Defaults[nuCatBorder_Top].SetSize( nuCatBorder_Top, nuSize::Zero() );
 	Defaults[nuCatBorder_Right].SetSize( nuCatBorder_Right, nuSize::Zero() );
 	Defaults[nuCatBorder_Bottom].SetSize( nuCatBorder_Bottom, nuSize::Zero() );
-	//Defaults[nuCatWidth]
-	//Defaults[nuCatHeight]
+	Defaults[nuCatWidth].SetSize( nuCatWidth, nuSize::Null() );
+	Defaults[nuCatHeight].SetSize( nuCatHeight, nuSize::Null() );
 	//Defaults[nuCatTop]
 	//Defaults[nuCatLeft]
 	//Defaults[nuCatRight]

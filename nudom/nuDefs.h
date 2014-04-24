@@ -37,6 +37,7 @@ class nuMat4f;
 #endif
 
 typedef int32 nuPos;								// fixed-point position
+static nuPos nuPosNULL = INT32MAX;
 static const u32 nuPosShift = 8;					// 24:8 fixed point coordinates used during layout
 static const u32 nuPosMask = (1 << nuPosShift) - 1;	// 255
 
@@ -69,6 +70,7 @@ inline double	nuPosToDouble( int32 pos )		{ return pos * (1.0 / (1 << nuPosShift
 inline int32	nuPosRound( int32 pos )			{ return pos + (1 << (nuPosShift-1)) & ~nuPosMask; }
 inline float	nuRound( float real )			{ return floor(real + 0.5f); }
 
+// These purposefully do not pass by reference, because of this: http://randomascii.wordpress.com/2013/11/24/stdmin-causing-three-times-slowdown-on-vc/
 template<typename T>	T nuClamp( T v, T vmin, T vmax )	{ return (v < vmin) ? vmin : (v > vmax) ? vmax : v; }
 template<typename T>	T nuMin( T a, T b )					{ return a < b ? a : b; }
 template<typename T>	T nuMax( T a, T b )					{ return a < b ? b : a; }
@@ -133,7 +135,11 @@ public:
 	nuPoint() : X(0), Y(0) {}
 	nuPoint( nuPos x, nuPos y ) : X(x), Y(y) {}
 
-	void	SetInt( int32 x, int32 y ) { X = nuRealToPos((float) x); Y = nuRealToPos((float) y); }
+	void	SetInt( int32 x, int32 y )				{ X = nuRealToPos((float) x); Y = nuRealToPos((float) y); }
+	bool	operator==( const nuPoint& p ) const	{ return X == p.X && Y == p.Y; }
+	bool	operator!=( const nuPoint& p ) const	{ return !(*this == p); }
+	nuPoint	operator+( const nuPoint& p ) const		{ return nuPoint(X + p.X, Y + p.Y); }
+	nuPoint	operator-( const nuPoint& p ) const		{ return nuPoint(X - p.X, Y - p.Y); }
 };
 
 /*
@@ -160,11 +166,13 @@ public:
 	void	SetInt( int32 left, int32 top, int32 right, int32 bottom );
 	void	ExpandToFit( const nuBox& expando );
 	void	ClampTo( const nuBox& clamp );
+	nuBox	ShrunkBy( const nuBox& margins );
 
 	nuPos	Width() const							{ return Right - Left; }
 	nuPos	Height() const							{ return Bottom - Top; }
 	void	Offset( int32 x, int32 y )				{ Left += x; Right += x; Top += y; Bottom += y; }
-	bool	IsInsideMe( const nuPoint& p ) const	{ return p.X >= Left && p.Y >= Top && p.X < Right && p.Y < Bottom; }
+	void	Offset( nuPoint p )						{ Offset( p.X, p.Y ); }
+	bool	IsInsideMe( nuPoint p ) const			{ return p.X >= Left && p.Y >= Top && p.X < Right && p.Y < Bottom; }
 	bool	IsAreaZero() const						{ return Width() == 0 || Height() == 0; }
 
 	bool operator==( const nuBox& b ) { return Left == b.Left && Right == b.Right && Top == b.Top && Bottom == b.Bottom; }
@@ -319,6 +327,7 @@ struct nuGlobalStruct
 	bool						EnableVSync;			// This is only respected during device initialization, so you must set it at application start. It raises latency noticeably. This has no effect on DirectX windowed rendering.
 	bool						EnableSubpixelText;		// Enable sub-pixel text rendering. Assumes pixels are the standard RGB layout. Enabled by default on Windows desktop only.
 	bool						EnableSRGBFramebuffer;	// Enable sRGB framebuffer (implies linear blending)
+	bool						EnableKerning;			// Enable kerning on text
 	//bool						EmulateGammaBlending;	// Only applicable when EnableSRGBFramebuffer = true, this tries to emulate gamma-space blending. You would turn this on to get consistent blending on all devices.
 	float						SubPixelTextGamma;		// Tweak freetype's gamma when doing sub-pixel text rendering.
 	float						WholePixelTextGamma;	// Tweak freetype's gamma when doing whole-pixel text rendering.

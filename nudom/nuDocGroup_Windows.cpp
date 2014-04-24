@@ -52,6 +52,7 @@ LRESULT nuDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 	nuEvent ev;
 	ev.DocGroup = this;
 	LRESULT result = 0;
+	auto cursor = NUVEC2( (float) GET_X_LPARAM(lParam), (float) GET_Y_LPARAM(lParam) );
 
 	switch (message)
 	{
@@ -97,8 +98,17 @@ LRESULT nuDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 	case WM_MOUSEMOVE:
 		ev.Type = nuEventMouseMove;
 		ev.PointCount = 1;
-		ev.Points[0] = NUVEC2( LOWORD(lParam), HIWORD(lParam) );
+		ev.Points[0] = cursor;
 		NUTRACE_LATENCY("MouseMove\n");
+		nuGlobal()->EventQueue.Add( ev );
+		break;
+
+	case WM_LBUTTONUP:
+		// Click event needs refinement (ie on down, capture, etc)
+		ev.Type = nuEventClick;
+		ev.PointCount = 1;
+		NUTRACE_LATENCY("LButtonUp\n");
+		ev.Points[0] = cursor;
 		nuGlobal()->EventQueue.Add( ev );
 		break;
 

@@ -8,8 +8,8 @@ class nuRenderStack;
 struct NUAPI nuRenderCharEl
 {
 	int		Char;
-	nuPos	X;		// Left point of baseline
-	nuPos	Y;		// Left point of baseline
+	nuPos	X;
+	nuPos	Y;
 };
 
 // Element that is ready for rendering
@@ -19,9 +19,8 @@ public:
 				nuRenderDomEl( nuInternalID id, nuTag tag );
 
 	nuInternalID					InternalID;			// Reference to our original nuDomEl
-	nuBox							Pos;
+	nuBox							Pos;				// For rectangles, this is the BorderBox
 	nuTag							Tag;
-
 };
 
 class NUAPI nuRenderDomNode : public nuRenderDomEl
@@ -47,6 +46,8 @@ public:
 				nuRenderDomText( nuInternalID id, nuPool* pool );
 
 	void		SetStyle( nuRenderStack& stack );
+	
+	bool		IsSubPixel() const { return !!(Flags & FlagSubPixelGlyphs); }
 
 	nuFontID						FontID;
 	nuPoolArray<nuRenderCharEl>		Text;

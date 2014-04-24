@@ -14,14 +14,15 @@ inline bool nuGlyphFlag_IsSubPixel( uint32 flags ) { return !!(flags & nuGlyphFl
 
 struct nuGlyph
 {
-	uint	AtlasID;
-	uint16	X;
-	uint16	Y;
-	uint16	Width;
-	uint16	Height;
-	int16	MetricLeftx256;	// low 8 bits are sub-pixel
-	int16	MetricTop;
-	int32	MetricLinearHoriAdvancex256;
+	uint		AtlasID;
+	uint		FTGlyphIndex;
+	uint16		X;
+	uint16		Y;
+	uint16		Width;
+	uint16		Height;
+	int16		MetricLeftx256;	// low 8 bits are sub-pixel
+	int16		MetricTop;
+	int32		MetricLinearHoriAdvancex256;
 
 	// A Null glyph is one that could not be found in the font
 	bool IsNull() const { return Width == 0 && MetricLinearHoriAdvancex256 == 0; }
@@ -67,9 +68,9 @@ public:
 	
 	// Returns NULL if the glyph is not in the cache. Even if the glyph pointer is not NULL, you must still check
 	// whether it is the logical "null glyph", which is empty. You can detect that with nuGlyph.IsNull().
-	const nuGlyph*	GetGlyph( const nuGlyphCacheKey& key ) const;
+	const nuGlyph*		GetGlyph( const nuGlyphCacheKey& key ) const;
 
-	uint			RenderGlyph( const nuGlyphCacheKey& key );
+	uint				RenderGlyph( const nuGlyphCacheKey& key );
 
 	const nuTextureAtlas*	GetAtlas( uint i ) const		{ return Atlasses[i]; }
 	nuTextureAtlas*			GetAtlasMutable( uint i )		{ return Atlasses[i]; }

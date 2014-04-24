@@ -46,6 +46,8 @@ public:
 	nuStyleAttrib		Get( nuStyleCategories cat ) const;
 	void				GetBox( nuStyleCategories cat, nuStyleBox& box ) const;
 	
+	nuStyleBox			GetBox( nuStyleCategories cat ) const { nuStyleBox b; GetBox(cat, b); return b; }
+	
 	void				StackPop();
 	nuRenderStackEl&	StackPush();
 	nuRenderStackEl&	StackBack()			{ return Stack.back(); }

@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "nuDoc.h"
 #include "nuDocGroup.h"
-#include "nuLayout.h"
+#include "Layout/nuLayout.h"
 #include "nuSysWnd.h"
 #include "Render/nuRenderer.h"
 #include "Render/nuRenderDoc.h"

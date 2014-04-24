@@ -2,6 +2,7 @@
 #include "nuDoc.h"
 #include "nuStyle.h"
 #include "nuCloneHelpers.h"
+#include "Text/nuFontStore.h"
 
 #define EQ(a,b) (strcmp(a,b) == 0)
 
@@ -42,6 +43,13 @@ static uint8 ParseHexCharSingle( const char* ch )
 inline bool IsNumeric( char c )
 {
 	return (c >= '0' && c <= '9') || (c == '.') || (c == '-');
+}
+
+// This is parsing whitespace, not DOM/textual whitespace
+// In other words, it is the space between the comma and verdana in "font-family: verdana, arial",
+inline bool IsWhitespace( char c )
+{
+	return c == 32 || c == 9;
 }
 
 bool nuSize::Parse( const char* s, intp len, nuSize& v )
@@ -206,9 +214,9 @@ const char* nuStyleAttrib::GetBackgroundImage( nuStringTable* strings ) const
 	return strings->GetStr( ValU32 );
 }
 
-const char* nuStyleAttrib::GetFont( const nuDoc* doc ) const
+nuFontID nuStyleAttrib::GetFont() const
 {
-	return doc->Strings.GetStr( ValU32 );
+	return ValU32;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -233,6 +241,7 @@ static bool ParseSingleAttrib( const char* s, intp len, bool (*parseFunc)(const 
 	}
 }
 
+// This was added when font-family was stored as a string, but it is now stored as a nuFontID
 static void ParseString( const char* s, intp len, nuStyleCategories cat, nuDoc* doc, nuStyle& style )
 {
 	nuStyleAttrib attrib;
@@ -268,6 +277,51 @@ static bool ParseCompound( const char* s, intp len, bool (*parseFunc)(const char
 	}
 }
 
+static bool ParseFontFamily( const char* s, intp len, nuFontID& v )
+{
+	bool onFont = false;
+	char buf[64];
+	intp bufPos = 0;
+	for ( intp i = 0; true; i++ )
+	{
+		if ( onFont )
+		{
+			if ( s[i] == ',' || i == len )
+			{
+				buf[bufPos] = 0;
+				v = nuGlobal()->FontStore->InsertByFacename( buf );
+				if ( v != nuFontIDNull )
+					return true;
+				onFont = false;
+				bufPos = 0;
+			}
+			else
+			{
+				buf[bufPos++] = s[i];
+			}
+			if ( i == len )
+				break;
+		}
+		else
+		{
+			if ( i == len )
+				break;
+			if ( IsWhitespace(s[i]) )
+				continue;
+			onFont = true;
+			buf[bufPos++] = s[i];
+		}
+		if ( bufPos >= arraysize(buf) )
+		{
+			nuParseFail( "Font name too long: '%*.s'", (int) len, s );
+			return false;
+		}
+	}
+	// not sure whether we should do this. One might want no font to be set instead.
+	v = nuGlobal()->FontStore->GetFallbackFontID();
+	return true;
+}
+
 bool nuStyle::Parse( const char* t, nuDoc* doc )
 {
 	// "background: #8f8; width: 100%; height: 100%;"
@@ -301,7 +355,7 @@ bool nuStyle::Parse( const char* t, nuDoc* doc )
 			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Vertical, *this ); }
 			else if ( MATCH(t, startk, eq, "box-sizing") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuBoxSizeParse, nuCatBoxSizing, *this ); }
 			else if ( MATCH(t, startk, eq, "font-size") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatFontSize, *this ); }
-			else if ( MATCH(t, startk, eq, "font-family") )					{ ParseString( TSTART, TLEN, nuCatFontFamily, doc, *this ); }
+			else if ( MATCH(t, startk, eq, "font-family") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &ParseFontFamily, nuCatFontFamily, *this ); }
 			else
 			{
 				ok = false;
@@ -325,22 +379,6 @@ bool nuStyle::Parse( const char* t, nuDoc* doc )
 #undef TSTART
 #undef TLEN
 }
-
-/*
-void nuStyle::Compute( const nuDoc& doc, const nuDomEl& node )
-{
-	NUASSERT( Attribs.size() == 0 );
-
-	nuStyle** defaults = nuDefaultTagStyles();
-
-	const nuStyle* styles[] = {
-		defaults[node.GetTag()],
-		// TODO: Classes
-		&node.GetStyle(),
-	};
-	MergeInZeroCopy( arraysize(styles), styles );
-}
-*/
 
 const nuStyleAttrib* nuStyle::Get( nuStyleCategories cat ) const
 {

@@ -1,8 +1,9 @@
 #include "pch.h"
 #include "nuDoc.h"
 #include "nuDocGroup.h"
-#include "nuLayout.h"
+#include "Layout/nuLayout.h"
 #include "Render/nuRenderer.h"
+#include "Text/nuFontStore.h"
 #include "nuCloneHelpers.h"
 
 nuDoc::nuDoc() : Root( this, nuTagDiv )
@@ -216,16 +217,16 @@ void nuDoc::InitializeDefaultTagStyles()
 	const char* font = "Helvetica";
 #endif
 	nuStyleAttrib afont;
-	afont.SetFont( font, this );
+	afont.SetFont( nuGlobal()->FontStore->InsertByFacename(font) );
 
 	// Other defaults are set inside nuRenderStack::Initialize
 
 	TagStyles[nuTagBody].Parse( "background: #fff; width: 100%; height: 100%; box-sizing: margin;", this );
 	TagStyles[nuTagBody].Set( afont );
 	//TagStyles[nuTagBody].Parse( "background: #000; width: 100%; height: 100%;", this );
-	TagStyles[nuTagDiv].Parse( "display: block;", this );
+	//TagStyles[nuTagDiv].Parse( "display: block;", this );
 	// Hack to give text some size
-	TagStyles[nuTagText].Parse( "width: 70px; height: 30px; background: #fff;", this );
+	//TagStyles[nuTagText].Parse( "width: 70px; height: 30px;", this );
 
 	static_assert(nuTagText == nuTagEND - 1, "add default style for new tag");
 }

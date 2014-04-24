@@ -32,7 +32,7 @@ static AbcThreadReturnType AbcKernelCallbackDecl rend_thread( void* tp )
 TESTFUNC(DocumentClone_Junk)
 {
 	nuDoc d1;
-	nuDomEl* div = d1.Root.AddChild( nuTagDiv );
+	nuDomNode* div = d1.Root.AddNode( nuTagDiv );
 	div->StyleParse( "margin: 3px;" );
 
 	AbcThreadHandle t_ui, t_render;
@@ -59,7 +59,7 @@ TESTFUNC(DocumentClone)
 	TTASSERT( g.RenderStats.Clone_NumEls == 0 );
 	nuDoc* d = g.Doc;
 
-	nuDomEl* div1 = d->Root.AddChild( nuTagDiv );
+	nuDomNode* div1 = d->Root.AddNode( nuTagDiv );
 	for ( int i = 0; i < 5; i++ )
 	{
 		g.Render();

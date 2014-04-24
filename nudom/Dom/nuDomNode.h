@@ -44,12 +44,15 @@ public:
 	void			AddHandler( nuEvents ev, nuEventHandlerLambda lambda );
 	bool			HandlesEvent( nuEvents ev ) const { return !!(AllEventMask & ev); }
 
-	void			OnTouch( nuEventHandlerF func, void* context = NULL )		{ AddHandler( nuEventTouch, func, context ); }
-	void			OnMouseMove( nuEventHandlerF func, void* context = NULL )	{ AddHandler( nuEventMouseMove, func, context ); }
-	void			OnTimer( nuEventHandlerF func, void* context = NULL )		{ AddHandler( nuEventTimer, func, context ); }
+	void			OnTouch( nuEventHandlerF func, void* context )				{ AddHandler( nuEventTouch, func, context ); }
+	void			OnMouseMove( nuEventHandlerF func, void* context )			{ AddHandler( nuEventMouseMove, func, context ); }
+	void			OnClick( nuEventHandlerF func, void* context )				{ AddHandler( nuEventClick, func, context ); }
+	void			OnTimer( nuEventHandlerF func, void* context )				{ AddHandler( nuEventTimer, func, context ); }
 
 	void			OnTouch( nuEventHandlerLambda lambda )						{ AddHandler( nuEventTouch, lambda ); }
 	void			OnMouseMove( nuEventHandlerLambda lambda )					{ AddHandler( nuEventMouseMove, lambda ); }
+	void			OnClick( nuEventHandlerLambda lambda )						{ AddHandler( nuEventClick, lambda ); }
+	void			OnTimer( nuEventHandlerLambda lambda )						{ AddHandler( nuEventTimer, lambda ); }
 
 protected:
 	uint32					AllEventMask;
