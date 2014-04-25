@@ -102,8 +102,10 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 
 	// The 15 here is a number taken from observations of a bunch of different fonts
 	// The auto hinter fails to produce clean horizontal stems when the text gets larger
+	// Times New Roman seems to look better at all sub-pixel sizes using the auto hinter.
+	// The Sans Serif fonts like Segoe UI seem to look better with the TT hinter at larger sizes.
 	uint ftflags = FT_LOAD_RENDER | FT_LOAD_LINEAR_DESIGN;
-	if ( isSubPixel && pixSize < 15 )
+	if ( isSubPixel && pixSize < 20 )
 		ftflags |= FT_LOAD_FORCE_AUTOHINT;
 
 	e = FT_Load_Glyph( font->FTFace, iFTGlyph, ftflags );

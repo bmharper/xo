@@ -68,6 +68,8 @@ inline int32	nuDoubleToPos( double real )	{ return int32(real * (1 << nuPosShift
 inline float	nuPosToReal( int32 pos )		{ return pos * (1.0f / (1 << nuPosShift)); }
 inline double	nuPosToDouble( int32 pos )		{ return pos * (1.0 / (1 << nuPosShift)); }
 inline int32	nuPosRound( int32 pos )			{ return pos + (1 << (nuPosShift-1)) & ~nuPosMask; }
+inline int32	nuPosRoundDown( int32 pos )		{ return pos & ~nuPosMask; }
+inline int32	nuPosRoundUp( int32 pos )		{ return pos + ((1 << nuPosShift) - 1) & ~nuPosMask; }
 inline float	nuRound( float real )			{ return floor(real + 0.5f); }
 
 // These purposefully do not pass by reference, because of this: http://randomascii.wordpress.com/2013/11/24/stdmin-causing-three-times-slowdown-on-vc/
@@ -328,6 +330,7 @@ struct nuGlobalStruct
 	bool						EnableSubpixelText;		// Enable sub-pixel text rendering. Assumes pixels are the standard RGB layout. Enabled by default on Windows desktop only.
 	bool						EnableSRGBFramebuffer;	// Enable sRGB framebuffer (implies linear blending)
 	bool						EnableKerning;			// Enable kerning on text
+	bool						RoundLineHeights;		// Round text line heights to integer amounts, so that text line separation is not subject to sub-pixel positioning differences.
 	//bool						EmulateGammaBlending;	// Only applicable when EnableSRGBFramebuffer = true, this tries to emulate gamma-space blending. You would turn this on to get consistent blending on all devices.
 	float						SubPixelTextGamma;		// Tweak freetype's gamma when doing sub-pixel text rendering.
 	float						WholePixelTextGamma;	// Tweak freetype's gamma when doing whole-pixel text rendering.

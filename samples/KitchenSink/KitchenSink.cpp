@@ -51,6 +51,8 @@ void DoTwoTextRects( nuDoc* doc )
 
 void DoBlockMargins( nuDoc* doc )
 {
+	doc->Root.StyleParse( "padding: 4px" );
+
 	// This should produce a matrix of blocks that are perfectly separated by 8 pixels.
 	// It would be 4 pixels between blocks if we collapsed margins, but we don't do that.
 	if (1)
@@ -58,7 +60,7 @@ void DoBlockMargins( nuDoc* doc )
 		for ( int i = 0; i < 30; i++ )
 		{
 			nuDomNode* div = doc->Root.AddNode( nuTagDiv );
-			div->StyleParse( "width: 90px; height: 90px; background: #faa8; margin: 4px; border-radius: 5px;" );
+			div->StyleParse( "width: 150px; height: 80px; background: #faa8; margin: 4px; border-radius: 5px;" );
 			div->StyleParse( "font-size: 13px" );
 			div->SetText( fmt("\n\n   block %v", i).Z );
 		}
@@ -74,13 +76,36 @@ void DoBlockMargins( nuDoc* doc )
 	}
 }
 
+void DoLongText( nuDoc* doc )
+{
+	auto div = doc->Root.AddNode( nuTagDiv );
+	div->StyleParse( "padding: 10px; width: 500px; font-family: Times New Roman; font-size: 18px; color: #333;" );
+	div->SetText(
+		"It is an ancient Mariner,\n"
+		"And he stoppeth one of three.\n"
+		"'By thy long grey beard and glittering eye,\n"
+		"Now wherefore stopp'st thou me?\n"
+		"\n"
+		"The Bridegroom's doors are opened wide,\n"
+		"And I am next of kin;\n"
+		"The guests are met, the feast is set:\n"
+		"May'st hear the merry din.'\n"
+		"\n"
+		"He holds him with his skinny hand,\n"
+		"'There was a ship,' quoth he.\n"
+		"'Hold off! unhand me, grey-beard loon!'\n"
+		"Eftsoons his hand dropt he.\n"
+		);
+}
+
 void InitDOM( nuDoc* doc )
 {
 	nuDomNode* body = &doc->Root;
 	body->StyleParse( "font-family: Segoe UI, Droid Sans" );
 
 	//DoTwoTextRects( doc );
-	DoBlockMargins( doc );
+	//DoBlockMargins( doc );
+	DoLongText( doc );
 
 	body->OnClick( [](const nuEvent& ev) -> bool {
 		nuGlobal()->EnableKerning = !nuGlobal()->EnableKerning;

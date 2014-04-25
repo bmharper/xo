@@ -339,6 +339,7 @@ bool nuStyle::Parse( const char* t, nuDoc* doc )
 		{
 			bool ok = true;
 			if ( MATCH(t, startk, eq, "background") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuColor::Parse, nuCatBackground, *this ); }
+			else if ( MATCH(t, startk, eq, "color") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuColor::Parse, nuCatColor, *this ); }
 			else if ( MATCH(t, startk, eq, "width") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatWidth, *this ); }
 			else if ( MATCH(t, startk, eq, "height") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatHeight, *this ); }
 			else if ( MATCH(t, startk, eq, "padding") )						{ ok = ParseCompound( TSTART, TLEN, &nuStyleBox::Parse, nuCatPadding_Left, *this ); }

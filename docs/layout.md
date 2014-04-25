@@ -51,17 +51,24 @@ attribute called "break-after", which, if true, causes the flow to move
 in the major flow direction. For convenience there is also a <br> element,
 which by default has the "break-after" attribute set.
 
-* A new line (\n or \r\n) in text elements causes a line break.
+* A new line (which is \n only) in text elements causes a line break.
 
 * If the width/height of an element is unspecified, then it grows forever,
 regardless of the size of its parent content box. For example, if you had
 text inside an element with no width (and assuming vertical flow), then
 the only thing that would cause the text to wrap onto the next line would
 be the presence of a <br> element inside the text.
+On the contrary, if the width/height of an element is specified, then
+its children wrap around inside it.
 
-* We perform centering by introducing elements called "center-horizontal"
+* We perform centering by introducing style attributes called "center-horizontal"
 and "center-vertical". By setting "center-horizontal: 50%", you can center
 horizontally. The "left" and "right" attributes will clobber the center
 attributes.
 
 * Our default box-sizing is "border". This just makes sense for UI layout.
+
+* Width or Height specified as a percentage is a percentage of the size of
+the Content Box of its parent.
+
+* We do not collapse margins at all.

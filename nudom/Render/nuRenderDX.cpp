@@ -380,8 +380,6 @@ void nuRenderDX::PreRender()
 	// Clear the back buffer 
 	auto clear = nuGlobal()->ClearColor;
 	float clearColor[4] = {clear.r / 255.0f, clear.g / 255.0f, clear.b / 255.0f, clear.a / 255.0f};
-	// This is necessary to get 100% the exact same color out from ReadBackbuffer.
-	// Curiously, glClearColor treats these values as sRGB, despite them being floats.
 	clearColor[0] = nuSRGB2Linear( clear.r );
 	clearColor[1] = nuSRGB2Linear( clear.g );
 	clearColor[2] = nuSRGB2Linear( clear.b );

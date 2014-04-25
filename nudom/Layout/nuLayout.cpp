@@ -133,9 +133,6 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 	}
 	*/
 
-	if ( position == nuPositionRelative )
-		ComputeRelativeOffset( s, marginBox );
-
 	nuBox contentBox = marginBox;
 	contentBox.Left += border.Left + padding.Left + margin.Left;
 	contentBox.Top += border.Top + padding.Top + margin.Top;
@@ -145,11 +142,14 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 	else				contentBox.Bottom = contentBox.Top;
 
 	// Check if this block overflows. If we don't have width yet, then we'll check overflow after laying out our children
-	if ( s.ParentContentBoxHasWidth && haveWidth )
+	if ( position == nuPositionStatic && s.ParentContentBoxHasWidth && haveWidth )
 	{
 		nuPoint offset = PositionBlock( s, marginBox );
 		contentBox.Offset( offset );
 	}
+
+	//if ( position == nuPositionRelative ) -- todo
+	//	ComputeRelativeOffset( s, marginBox );
 
 	NodeState cs = s;
 	cs.ParentContentBox = contentBox;
@@ -171,6 +171,8 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 	const pvect<nuDomEl*>& nodeChildren = node.GetChildren();
 	for ( int i = 0; i < nodeChildren.size(); i++ )
 	{
+		if ( i == 2 )
+			int abc = 123;
 		const nuDomEl* child = nodeChildren[i];
 		if ( child->GetTag() == nuTagText )
 		{
@@ -193,7 +195,7 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 	rnode->Pos = marginBox.ShrunkBy( margin );
 
 	// We couldn't check for overflow until we'd layed out our children. If we do overflow, then we need to retrofit all of our child boxes with an offset.
-	if ( s.ParentContentBoxHasWidth && !haveWidth )
+	if ( position == nuPositionStatic && s.ParentContentBoxHasWidth && !haveWidth )
 	{
 		nuPoint offset = PositionBlock( s, marginBox );
 		if ( offset != nuPoint(0,0) )
@@ -294,6 +296,8 @@ void nuLayout::GenerateTextOutput( NodeState& s, TextRunState& ts )
 	
 	// if we add a "line-height" style then we'll want to multiply that by this
 	nuPos lineHeight = nuRealx256ToPos( ts.RNode->FontSizePx * font->NaturalLineHeight_x256 ); 
+	if ( nuGlobal()->RoundLineHeights )
+		lineHeight = nuPosRoundUp( lineHeight );
 
 	int fontHeightPx = ts.RNode->FontSizePx;
 	ts.RNode->Text.reserve( ts.GlyphCount );
@@ -366,15 +370,15 @@ void nuLayout::NextLine( NodeState& s, nuPos textHeight )
 	s.PosMaxY = s.PosLineY;
 }
 
-nuPoint nuLayout::PositionBlock( NodeState& s, nuBox marginBox )
+nuPoint nuLayout::PositionBlock( NodeState& s, nuBox& marginBox )
 {
 	NUASSERTDEBUG(s.ParentContentBoxHasWidth);
-	// Although borderBox is actually absolutely positioned by the time it gets here,
-	// we treat it as though it's just a "size". That just seems more sane - it might
-	// make sense in future to defer computing the actual position of the border box
-	// until we've run PositionBlock.
+	
+	// Going to next line is futile if this block is as far to the left as possible
+	const bool futile = marginBox.Left == s.ParentContentBox.Left;
+
 	nuPoint offset(0,0);
-	if ( marginBox.Right <= s.ParentContentBox.Right )
+	if ( marginBox.Right <= s.ParentContentBox.Right || futile )
 	{
 		s.PosX = marginBox.Right;
 		s.PosLineX = s.PosX;
@@ -386,7 +390,7 @@ nuPoint nuLayout::PositionBlock( NodeState& s, nuBox marginBox )
 		offset = nuPoint( s.ParentContentBox.Left - marginBox.Left, s.PosMaxY - marginBox.Top );
 		marginBox.Offset( offset.X, offset.Y );
 		s.PosX = marginBox.Right;
-		s.PosY = marginBox.Bottom;
+		s.PosY = marginBox.Top;
 		s.PosLineX = s.PosX;
 		s.PosLineY = s.PosY;
 	}
@@ -485,10 +489,11 @@ nuBox nuLayout::ComputeSpecifiedPosition( const NodeState& s )
 
 void nuLayout::ComputeRelativeOffset( const NodeState& s, nuBox& box )
 {
-	auto left = Stack.Get( nuCatLeft );
-	auto top = Stack.Get( nuCatTop );
-	if ( !left.IsNull() )		box.Left += ComputeDimension( s.ParentContentBox.Width(), s.ParentContentBoxHasWidth, left.GetSize() );
-	if ( !top.IsNull() )		box.Top += ComputeDimension( s.ParentContentBox.Height(), s.ParentContentBoxHasHeight, top.GetSize() );
+	NUTODO;
+	//auto left = Stack.Get( nuCatLeft );
+	//auto top = Stack.Get( nuCatTop );
+	//if ( !left.IsNull() )		box.Left += ComputeDimension( s.ParentContentBox.Width(), s.ParentContentBoxHasWidth, left.GetSize() );
+	//if ( !top.IsNull() )		box.Top += ComputeDimension( s.ParentContentBox.Height(), s.ParentContentBoxHasHeight, top.GetSize() );
 }
 
 nuBox nuLayout::ComputeBox( nuBox container, bool widthDefined, bool heightDefined, nuStyleCategories cat )

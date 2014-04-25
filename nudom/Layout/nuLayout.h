@@ -91,7 +91,7 @@ protected:
 	void	GenerateTextWords( NodeState& s, TextRunState& ts );
 	void	GenerateTextOutput( NodeState& s, TextRunState& ts );
 	void	NextLine( NodeState& s, nuPos textHeight );
-	nuPoint	PositionBlock( NodeState& s, nuBox borderBox );
+	nuPoint	PositionBlock( NodeState& s, nuBox& marginBox );
 	void	OffsetRecursive( nuRenderDomNode* rnode, nuPoint offset );
 
 	static bool				IsSpace( int ch );
