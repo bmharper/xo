@@ -5,7 +5,8 @@
 
 // Represents a size that is zero, pixels, points, percent.
 // TODO: em
-// TODO: ap (angular pixel)
+// TODO: ap (angular pixel).. maybe call them "ep" for "eye pixel"
+// Or perhaps rename Pixels to DP, for DevicePixels.
 // Zero is represented as 0 pixels
 struct NUAPI nuSize
 {
@@ -18,6 +19,7 @@ struct NUAPI nuSize
 	static nuSize	Points( float v )			{ nuSize s = {v, PT}; return s; }
 	static nuSize	Pixels( float v )			{ nuSize s = {v, PX}; return s; }
 	static nuSize	Zero()						{ nuSize s = {0, PX}; return s; }
+	static nuSize	Null()						{ nuSize s = {0, NONE}; return s; }
 
 	static bool		Parse( const char* s, intp len, nuSize& v );
 };
@@ -129,7 +131,9 @@ static_assert( nuCatMargin_Left % 4 == 0, "Start of boxes must be multiple of 4"
 inline nuStyleCategories nuCatMakeBaseBox( nuStyleCategories c ) { return (nuStyleCategories) (c & ~3); }
 
 // Styles that are inherited by default
-const int						nuNumInheritedStyleCategories = 1;
+// Generally it is text styles that are inherited
+// Inheritance means that child nodes inherit the styles of their parents
+const int						nuNumInheritedStyleCategories = 3;
 extern const nuStyleCategories	nuInheritedStyleCategories[nuNumInheritedStyleCategories];
 
 /* Single style attribute (such as Margin-Left, Width, FontSize, etc).
@@ -166,7 +170,7 @@ public:
 	void SetDisplay( nuDisplayType val )						{ SetU32( nuCatDisplay, val ); }
 	void SetBorderRadius( nuSize val )							{ SetSize( nuCatBorderRadius, val ); }
 	void SetPosition( nuPositionType val )						{ SetU32( nuCatPosition, val ); }
-	void SetFont( const char* font, nuDoc* doc )				{ SetString( nuCatFontFamily, font, doc ); }
+	void SetFont( nuFontID val )								{ SetU32( nuCatFontFamily, val ); }
 	void SetBackgroundImage( const char* image, nuDoc* doc )	{ SetString( nuCatBackgroundImage, image, doc ); }
 	void SetFlowAxis( nuFlowAxis axis )							{ SetU32( nuCatFlow_Axis, axis ); }
 	void SetFlowDirectionHorizonal( nuFlowDirection dir )		{ SetU32( nuCatFlow_Direction_Horizontal, dir ); }
@@ -174,13 +178,15 @@ public:
 	void SetBoxSizing( nuBoxSizeType type )						{ SetU32( nuCatBoxSizing, type ); }
 
 	// Generic Set() that is used by template code
-	void Set( nuStyleCategories cat, nuColor val )				{ SetColor( cat, val ); }
-	void Set( nuStyleCategories cat, nuSize val )				{ SetSize( cat, val ); }
-	void Set( nuStyleCategories cat, nuDisplayType val )		{ SetDisplay( val ); }
-	void Set( nuStyleCategories cat, nuPositionType val )		{ SetPosition( val ); }
-	void Set( nuStyleCategories cat, nuFlowAxis val )			{ SetFlowAxis( val ); }
-	void Set( nuStyleCategories cat, nuFlowDirection val )		{ SetU32( cat, val ); }
-	void Set( nuStyleCategories cat, nuBoxSizeType val )		{ SetBoxSizing( val ); }
+	void Set( nuStyleCategories cat, nuColor val )					{ SetColor( cat, val ); }
+	void Set( nuStyleCategories cat, nuSize val )					{ SetSize( cat, val ); }
+	void Set( nuStyleCategories cat, nuDisplayType val )			{ SetDisplay( val ); }
+	void Set( nuStyleCategories cat, nuPositionType val )			{ SetPosition( val ); }
+	void Set( nuStyleCategories cat, nuFlowAxis val )				{ SetFlowAxis( val ); }
+	void Set( nuStyleCategories cat, nuFlowDirection val )			{ SetU32( cat, val ); }
+	void Set( nuStyleCategories cat, nuBoxSizeType val )			{ SetBoxSizing( val ); }
+	void Set( nuStyleCategories cat, nuFontID val )					{ SetFont( val ); }
+	void Set( nuStyleCategories cat, const char* val, nuDoc* doc )	{ SetString( cat, val, doc ); }
 
 	bool				IsNull() const							{ return Category == nuCatNULL; }
 	bool				IsInherit() const						{ return Flags == FlagInherit; }
@@ -197,6 +203,7 @@ public:
 	nuBoxSizeType		GetBoxSizing() const				{ return (nuBoxSizeType) ValU32; }
 
 	const char*			GetBackgroundImage( nuStringTable* strings ) const;
+	nuFontID			GetFont() const;
 
 protected:
 	void SetString( nuStyleCategories cat, const char* str, nuDoc* doc );
@@ -328,27 +335,19 @@ protected:
 
 // The set of style information that is used by the renderer
 // This is baked in by the Layout engine.
-// This struct is present in every single nuRenderDomEl, so it pays to keep it tight.
+// This struct is present in every single nuRenderDomNode, so it pays to keep it tight.
 class NUAPI nuStyleRender
 {
 public:
 	nuColor BackgroundColor;
 	int		BackgroundImageID;
 	float	BorderRadius;
-	uint8	FontSizePx;
 
 	nuStyleRender() { memset(this, 0, sizeof(*this)); }
 };
 
 /* Store all style classes in one table, that is owned by one document.
 This allows us to reference styles by a 32-bit integer ID instead of by name.
-
-NOTE: I wrote GarbageCollect before realizing that this function will probably NEVER be used.
-Why would you want to garbage collect your styles? You define them up front, and just because
-you're not using them at the moment, doesn't mean you're not going to want to use them in future.
-If time passes, and this function is never used, then get rid of the code.
-The garbage collection code has never been tested.
-
 */
 class NUAPI nuStyleTable
 {
@@ -360,9 +359,8 @@ public:
 	nuStyle*		GetOrCreate( const char* name );
 	const nuStyle*	GetByID( nuStyleID id ) const;
 	nuStyleID		GetStyleID( const char* name );
-	void			GarbageCollect( nuDomEl* root );						// Discover unused styles and mark them as unused
-	void			CloneSlowInto( nuStyleTable& c ) const;					// Does not clone NameToIndex or UnusedSlots
-	void			CloneFastInto( nuStyleTable& c, nuPool* pool ) const;	// Does not clone NameToIndex or UnusedSlots
+	void			CloneSlowInto( nuStyleTable& c ) const;					// Does not clone NameToIndex
+	void			CloneFastInto( nuStyleTable& c, nuPool* pool ) const;	// Does not clone NameToIndex
 
 protected:
 	podvec<nuString>			Names;		// Names and Styles are parallels
@@ -370,10 +368,6 @@ protected:
 	podvec<int>					UnusedSlots;
 	fhashmap<nuString, int>		NameToIndex;
 
-	void			Compact( BitMap& used, nuDomEl* root );
-
-	static void		GarbageCollectInternalR( BitMap& used, nuDomEl* node );
-	static void		CompactR( const nuStyleID* old2newID, nuDomEl* node );
 
 };
 

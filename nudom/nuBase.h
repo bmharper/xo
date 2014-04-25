@@ -9,6 +9,7 @@
 		#include <crtdbg.h>
 	#endif
 	#include <windows.h>
+	#include <windowsx.h>
 	#include <mmsystem.h>
 #else
 	typedef const wchar_t* LPCTSTR;

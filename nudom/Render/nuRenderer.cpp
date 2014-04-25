@@ -7,7 +7,7 @@
 #include "Text/nuGlyphCache.h"
 #include "../Image/nuImage.h"
 
-nuRenderResult nuRenderer::Render( nuImageStore* images, nuStringTable* strings, nuRenderBase* driver, nuRenderDomEl* root, int width, int height )
+nuRenderResult nuRenderer::Render( nuImageStore* images, nuStringTable* strings, nuRenderBase* driver, nuRenderDomNode* root, int width, int height )
 {
 	Driver = driver;
 	Images = images;
@@ -16,7 +16,7 @@ nuRenderResult nuRenderer::Render( nuImageStore* images, nuStringTable* strings,
 	Driver->PreRender();
 
 	// This phase is probably worth parallelizing
-	RenderNodeOuter( root );
+	RenderEl( root );
 	// After RenderNode we are serial again.
 
 	Driver->PostRenderCleanup();
@@ -27,21 +27,20 @@ nuRenderResult nuRenderer::Render( nuImageStore* images, nuStringTable* strings,
 	return needGlyphs ? nuRenderResultNeedMore : nuRenderResultIdle;
 }
 
-void nuRenderer::RenderNodeOuter( nuRenderDomEl* node )
+void nuRenderer::RenderEl( nuRenderDomEl* el )
 {
-	if ( node->Text.size() != 0 )
+	if ( el->Tag == nuTagText )
+		RenderText( static_cast<nuRenderDomText*>(el) );
+	else
 	{
-		RenderTextNode( node );
-		return;
+		nuRenderDomNode* node = static_cast<nuRenderDomNode*>(el);
+		RenderNode( node );
+		for ( intp i = 0; i < node->Children.size(); i++ )
+			RenderEl( node->Children[i] );
 	}
-
-	RenderNodeInner( node );
-
-	for ( intp i = 0; i < node->Children.size(); i++ )
-		RenderNodeOuter( node->Children[i] );
 }
 
-void nuRenderer::RenderNodeInner( nuRenderDomEl* node )
+void nuRenderer::RenderNode( nuRenderDomNode* node )
 {
 	// always shade rectangles well
 	const bool alwaysGoodRects = true;
@@ -118,31 +117,27 @@ void nuRenderer::RenderNodeInner( nuRenderDomEl* node )
 	}
 }
 
-void nuRenderer::RenderTextNode( nuRenderDomEl* node )
+void nuRenderer::RenderText( nuRenderDomText* node )
 {
-	bool subPixel = nuGlobal()->EnableSubpixelText;
+	bool subPixelGlyphs = node->Flags & nuRenderDomText::FlagSubPixelGlyphs;
 	for ( intp i = 0; i < node->Text.size(); i++ )
 	{
-		if ( subPixel )
-			RenderTextNodeChar_SubPixel( node, node->Text[i] );
+		if ( subPixelGlyphs )
+			RenderTextChar_SubPixel( node, node->Text[i] );
 		else
-			RenderTextNodeChar_WholePixel( node, node->Text[i] );
+			RenderTextChar_WholePixel( node, node->Text[i] );
 	}
 }
 
-void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRenderTextEl& txtEl )
+void nuRenderer::RenderTextChar_SubPixel( nuRenderDomText* node, const nuRenderCharEl& txtEl )
 {
-	nuStyleRender* style = &node->Style;
-
-	nuGlyphCacheKey glyphKey( node->FontID, txtEl.Char, style->FontSizePx, nuGlyphFlag_SubPixel_RGB );
+	nuGlyphCacheKey glyphKey( node->FontID, txtEl.Char, node->FontSizePx, nuGlyphFlag_SubPixel_RGB );
 	const nuGlyph* glyph = nuGlobal()->GlyphCache->GetGlyph( glyphKey );
 	if ( !glyph )
 	{
 		GlyphsNeeded.insert( glyphKey );
 		return;
 	}
-	//if ( !nuGlobal()->GlyphCache->GetGlyphFromChar( node->FontID, txtEl.Char, style->FontSizePx, nuGlyphFlag_SubPixel_RGB, glyph ) )
-	//	return;
 
 	nuTextureAtlas* atlas = nuGlobal()->GlyphCache->GetAtlasMutable( glyph->AtlasID );
 	float atlasScaleX = 1.0f / atlas->GetWidth();
@@ -158,8 +153,10 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 
 	// Our texture (minus the padding) can be missing 1 or 2 columns on its right side,
 	// but our proper width in pixels DOES include those 1 or 2 missing columns (they are simply black).
-	// We clamp our texture reads to our freetype-rasterized limits, but the geometry we emit
+	// We clamp our texture reads to our freetype-rasterized limits, but the vertex coordinates we emit
 	// now to the GPU includes those 1 or 2 missing columns.
+	// This issue exists because freetype's bitmaps will never include a column of pure black on the left
+	// or right edge of the glyph.
 	int roundedWidth = (nonPaddedWidth + 2) / 3;
 
 	// We don't need to round our horizontal position to any fixed grid - the interpolation
@@ -171,8 +168,7 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 	float right = left + roundedWidth;
 	float bottom = top + glyph->Height;
 
-	// We have to 'overdraw' on the left and right by 1 pixel, to ensure that we filter over
-	// the edges.
+	// We have to 'overdraw' on the left and right by 1 pixel, to ensure that we filter over the edges.
 	int overdraw = 1;
 	left -= overdraw;
 	right += overdraw;
@@ -199,13 +195,12 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 	clamp.y = (glyph->Y + 0.5f) * atlasScaleY;
 	clamp.z = (glyph->X + glyph->Width - 0.5f) * atlasScaleX;
 	clamp.w = (glyph->Y + glyph->Height - 0.5f) * atlasScaleY;
+
+	uint32 color = node->Color.GetRGBA();
+
 	for ( int i = 0; i < 4; i++ )
 	{
-		//corners[i].Color = NURGBA(0,0,0,255);
-		//corners[i].Color = NURGBA(255,255,255,255);
-		corners[i].Color = NURGBA(0,0,0,255);
-		//corners[i].Color = NURGBA(10,10,10,255);
-		//corners[i].Color = NURGBA(150,0,0,255);
+		corners[i].Color = color;
 		corners[i].V4 = clamp;
 	}
 
@@ -215,14 +210,9 @@ void nuRenderer::RenderTextNodeChar_SubPixel( nuRenderDomEl* node, const nuRende
 	Driver->DrawQuad( corners );
 }
 
-void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRenderTextEl& txtEl )
+void nuRenderer::RenderTextChar_WholePixel( nuRenderDomText* node, const nuRenderCharEl& txtEl )
 {
-	nuStyleRender* style = &node->Style;
-
-	//nuGlyph glyph;
-	//if ( !nuGlobal()->GlyphCache->GetGlyphFromChar( node->FontID, txtEl.Char, style->FontSizePx, 0, glyph ) )
-	//	return;
-	nuGlyphCacheKey glyphKey( node->FontID, txtEl.Char, style->FontSizePx, 0 );
+	nuGlyphCacheKey glyphKey( node->FontID, txtEl.Char, node->FontSizePx, 0 );
 	const nuGlyph* glyph = nuGlobal()->GlyphCache->GetGlyph( glyphKey );
 	if ( !glyph )
 	{
@@ -247,7 +237,7 @@ void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRen
 	// 
 	//                       Snapping On                                 Snapping Off
 	// Rendering             Crisper, because no resampling              Fuzzier, because of resampling
-	// Positioning           Text cannot be positioned sub-pixel         Text can be positioned with sub-pixel accuracy
+	// Positioning           Text cannot be positioned sub-pixel         Text can be positioned with sub-pixel accuracy in X and Y
 
 	bool snapToWholePixels = false;
 	if ( snapToWholePixels )
@@ -278,8 +268,10 @@ void nuRenderer::RenderTextNodeChar_WholePixel( nuRenderDomEl* node, const nuRen
 	corners[2].UV = NUVEC2(u1, v1);
 	corners[3].UV = NUVEC2(u1, v0);
 
+	uint32 color = node->Color.GetRGBA();
+
 	for ( int i = 0; i < 4; i++ )
-		corners[i].Color = NURGBA(150,0,0,255);
+		corners[i].Color = color;
 
 	Driver->ActivateShader( nuShaderTextWhole );
 	if ( !LoadTexture( atlas, 0 ) )
@@ -302,50 +294,3 @@ bool nuRenderer::LoadTexture( nuTexture* tex, int texUnit )
 	tex->TexValidate();
 	return true;
 }
-
-		/*
-		uint16 indices[12] = {0,1,2,3,4,5,6,7,8,9,10,11};
-		//uint16 indices[12 * 4];
-		nuVx_PTC tri[12];
-
-		Driver->ActivateShader( nuShaderCurve );
-
-		const float A = radius;
-		const float B = SQRT_2 * 0.5 * A;
-		const float C = A - B;
-		const float M1 = 0.5 * (A + C);
-		const float M2 = 0.5 * (0 + C);
-		const float ME = -0.101 * A;
-		for ( int icorner = 0; icorner < 1; icorner++ )
-		{
-			tri[0].UV = NUVEC2(1,1);
-			tri[1].UV = NUVEC2(0.5,0);
-			tri[2].UV = NUVEC2(0,0);
-			tri[0].Pos = NUVEC3(A,0,0);
-			tri[1].Pos = NUVEC3(M1 + ME, M2 + ME,0);
-			tri[2].Pos = NUVEC3(C,C,0);
-
-			tri[3].UV = NUVEC2(1,1);
-			tri[4].UV = NUVEC2(0.5,0);
-			tri[5].UV = NUVEC2(0,0);
-			tri[3].Pos = NUVEC3(C,C,0);
-			tri[4].Pos = NUVEC3(M2 + ME, M1 + ME,0);
-			tri[5].Pos = NUVEC3(0,A,0);
-
-			tri[6].UV = NUVEC2(1,1);
-			tri[7].UV = NUVEC2(0.5,0.5);
-			tri[8].UV = NUVEC2(0,0);
-			tri[6].Pos = NUVEC3(A,0,0);
-			tri[7].Pos = NUVEC3(C,C,0);
-			tri[8].Pos = NUVEC3(A,A,0);
-
-			tri[9].UV = NUVEC2(1,1);
-			tri[10].UV = NUVEC2(0.5,0.5);
-			tri[11].UV = NUVEC2(0,0);
-			tri[9].Pos = NUVEC3(C,C,0);
-			tri[10].Pos = NUVEC3(0,A,0);
-			tri[11].Pos = NUVEC3(A,A,0);
-
-			Driver->DrawTriangles( 12, tri, indices );
-		}
-		*/

@@ -3,7 +3,7 @@
 #include "nuFontStore.h"
 #include "Render/nuTextureAtlas.h"
 
-static const uint32 nuSubPixelHintKillShift = 4;
+static const uint32 nuSubPixelHintKillShift = 3;
 static const uint32 nuSubPixelHintKillMultiplier = (1 << nuSubPixelHintKillShift);
 
 // GCC 4.6 for Android forces us to set the value of this constant in the .cpp file, not in the .h file.
@@ -82,6 +82,7 @@ const nuGlyph* nuGlyphCache::GetGlyph( const nuGlyphCacheKey& key ) const
 
 uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 {
+	NUASSERT( key.Size != 0 );
 	const nuFont* font = nuGlobal()->FontStore->GetByFontID( key.FontID );
 
 	FT_UInt iFTGlyph = FT_Get_Char_Index( font->FTFace, key.Char );
@@ -99,8 +100,10 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	FT_Error e = FT_Set_Pixel_Sizes( font->FTFace, combinedHorzMultiplier * pixSize, pixSize );
 	NUASSERT( e == 0 );
 
+	// The 15 here is a number taken from observations of a bunch of different fonts
+	// The auto hinter fails to produce clean horizontal stems when the text gets larger
 	uint ftflags = FT_LOAD_RENDER | FT_LOAD_LINEAR_DESIGN;
-	if ( isSubPixel )
+	if ( isSubPixel && pixSize < 15 )
 		ftflags |= FT_LOAD_FORCE_AUTOHINT;
 
 	e = FT_Load_Glyph( font->FTFace, iFTGlyph, ftflags );
@@ -158,14 +161,16 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 		CopyBitmap( font, atlas->TexDataAt(atlasX, atlasY), atlas->GetStride() );
 
 	nuGlyph g;
+	g.FTGlyphIndex = iFTGlyph;
 	g.Width = isEmpty ? 0 : naturalWidth + horzPad * 2;
 	g.Height = height;
 	g.X = atlasX;
 	g.Y = atlasY;
 	g.AtlasID = (uint) Atlasses.find( atlas );
 	g.MetricLeftx256 = font->FTFace->glyph->bitmap_left * 256 / combinedHorzMultiplier;
+	//g.MetricLeftx256 -= font->FTFace->glyph->metrics.horiBearingX * 256 / 64; -- this is rubbish, an attempt at using kerning
 	g.MetricTop = font->FTFace->glyph->bitmap_top;
-	g.MetricLinearHoriAdvance = font->FTFace->glyph->linearHoriAdvance / 2048.0f;
+	g.MetricLinearHoriAdvancex256 = ((int32) font->FTFace->glyph->linearHoriAdvance * 256 * (int32) pixSize) / 2048;
 	Table.insert( key, (uint) Glyphs.size() );
 	Glyphs += g;
 	return (uint) (Glyphs.size() - 1);

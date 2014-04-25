@@ -15,7 +15,7 @@ public:
 	uint32						WindowWidth, WindowHeight;		// Device pixels
 
 	// Rendered state
-	nuRenderDomEl				RenderRoot;
+	nuRenderDomNode				RenderRoot;
 	nuPool						RenderPool;
 	//podvec<nuInternalID>		ModifiedNodeIDs;
 
@@ -24,15 +24,15 @@ public:
 
 	nuRenderResult	Render( nuRenderBase* driver );
 	void			CopyFromCanonical( const nuDoc& canonical, nuRenderStats& stats );
-	nuInternalID	FindElement( nuPoint pos );
+	//nuInternalID	FindElement( nuPoint pos );
 
 protected:
 	// Cloned data. temp hack for webcam demo
-	nuStringTable	ClonedStrings;
+	//nuStringTable	ClonedStrings;
 	nuImageStore	ClonedImages;
 
 	void			ResetRenderData();
-	nuInternalID	FindElement( const nuRenderDomEl& el, nuPoint pos );
+	//nuInternalID	FindElement( const nuRenderDomEl& el, nuPoint pos );
 	//static void		FindAlteredNodes( const nuDoc* original, const nuDoc* modified, podvec<nuInternalID>& alteredNodeIDs );
 
 };

@@ -2,12 +2,15 @@
 #include "nuDoc.h"
 #include "nuStyle.h"
 #include "nuCloneHelpers.h"
+#include "Text/nuFontStore.h"
 
 #define EQ(a,b) (strcmp(a,b) == 0)
 
 // Styles that are inherited by default
 const nuStyleCategories nuInheritedStyleCategories[nuNumInheritedStyleCategories] = {
 	nuCatFontFamily,
+	nuCatFontSize,
+	nuCatColor,
 };
 
 static bool MATCH( const char* s, intp start, intp end, const char* truth )
@@ -40,6 +43,13 @@ static uint8 ParseHexCharSingle( const char* ch )
 inline bool IsNumeric( char c )
 {
 	return (c >= '0' && c <= '9') || (c == '.') || (c == '-');
+}
+
+// This is parsing whitespace, not DOM/textual whitespace
+// In other words, it is the space between the comma and verdana in "font-family: verdana, arial",
+inline bool IsWhitespace( char c )
+{
+	return c == 32 || c == 9;
 }
 
 bool nuSize::Parse( const char* s, intp len, nuSize& v )
@@ -204,6 +214,11 @@ const char* nuStyleAttrib::GetBackgroundImage( nuStringTable* strings ) const
 	return strings->GetStr( ValU32 );
 }
 
+nuFontID nuStyleAttrib::GetFont() const
+{
+	return ValU32;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -226,6 +241,26 @@ static bool ParseSingleAttrib( const char* s, intp len, bool (*parseFunc)(const 
 	}
 }
 
+// This was added when font-family was stored as a string, but it is now stored as a nuFontID
+static void ParseString( const char* s, intp len, nuStyleCategories cat, nuDoc* doc, nuStyle& style )
+{
+	nuStyleAttrib attrib;
+	if ( len < sizeof(stat) )
+	{
+		char stat[64];
+		memcpy( stat, s, len );
+		stat[len] = 0;
+		attrib.Set( cat, stat, doc );
+	}
+	else
+	{
+		nuString copy;
+		copy.Set( s, len );
+		attrib.Set( cat, copy.Z, doc );
+	}
+	style.Set( attrib );
+}
+
 template<typename T>
 static bool ParseCompound( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, T& t), nuStyleCategories cat, nuStyle& style )
 {
@@ -240,6 +275,51 @@ static bool ParseCompound( const char* s, intp len, bool (*parseFunc)(const char
 		nuParseFail( "Unknown: '%.*s'", (int) len, s );
 		return false;
 	}
+}
+
+static bool ParseFontFamily( const char* s, intp len, nuFontID& v )
+{
+	bool onFont = false;
+	char buf[64];
+	intp bufPos = 0;
+	for ( intp i = 0; true; i++ )
+	{
+		if ( onFont )
+		{
+			if ( s[i] == ',' || i == len )
+			{
+				buf[bufPos] = 0;
+				v = nuGlobal()->FontStore->InsertByFacename( buf );
+				if ( v != nuFontIDNull )
+					return true;
+				onFont = false;
+				bufPos = 0;
+			}
+			else
+			{
+				buf[bufPos++] = s[i];
+			}
+			if ( i == len )
+				break;
+		}
+		else
+		{
+			if ( i == len )
+				break;
+			if ( IsWhitespace(s[i]) )
+				continue;
+			onFont = true;
+			buf[bufPos++] = s[i];
+		}
+		if ( bufPos >= arraysize(buf) )
+		{
+			nuParseFail( "Font name too long: '%*.s'", (int) len, s );
+			return false;
+		}
+	}
+	// not sure whether we should do this. One might want no font to be set instead.
+	v = nuGlobal()->FontStore->GetFallbackFontID();
+	return true;
 }
 
 bool nuStyle::Parse( const char* t, nuDoc* doc )
@@ -274,6 +354,8 @@ bool nuStyle::Parse( const char* t, nuDoc* doc )
 			else if ( MATCH(t, startk, eq, "flow-direction-horizontal") )	{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Horizontal, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Vertical, *this ); }
 			else if ( MATCH(t, startk, eq, "box-sizing") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuBoxSizeParse, nuCatBoxSizing, *this ); }
+			else if ( MATCH(t, startk, eq, "font-size") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatFontSize, *this ); }
+			else if ( MATCH(t, startk, eq, "font-family") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &ParseFontFamily, nuCatFontFamily, *this ); }
 			else
 			{
 				ok = false;
@@ -297,22 +379,6 @@ bool nuStyle::Parse( const char* t, nuDoc* doc )
 #undef TSTART
 #undef TLEN
 }
-
-/*
-void nuStyle::Compute( const nuDoc& doc, const nuDomEl& node )
-{
-	NUASSERT( Attribs.size() == 0 );
-
-	nuStyle** defaults = nuDefaultTagStyles();
-
-	const nuStyle* styles[] = {
-		defaults[node.GetTag()],
-		// TODO: Classes
-		&node.GetStyle(),
-	};
-	MergeInZeroCopy( arraysize(styles), styles );
-}
-*/
 
 const nuStyleAttrib* nuStyle::Get( nuStyleCategories cat ) const
 {
@@ -511,6 +577,8 @@ void nuStyleSet::Set( int n, const nuStyleAttrib* attribs, nuPool* pool )
 
 void nuStyleSet::Set( const nuStyleAttrib& attrib, nuPool* pool )
 {
+	if ( attrib.Category == nuCatFontSize )
+		int abc = 123;
 	int32 slot = GetSlot( attrib.GetCategory() );
 	if ( slot != 0 )
 	{
@@ -644,7 +712,6 @@ void nuStyleTable::Discard()
 {
 	Styles.hack( 0, 0, NULL );
 	Names.hack( 0, 0, NULL );
-	NUASSERT( UnusedSlots.size() == 0 && NameToIndex.size() == 0 );
 }
 
 const nuStyle* nuStyleTable::GetByID( nuStyleID id ) const
@@ -660,15 +727,9 @@ nuStyle* nuStyleTable::GetOrCreate( const char* name )
 	if ( pindex ) return &Styles[*pindex];
 	
 	// create new
-	int index;
-	if ( UnusedSlots.size() != 0 )
-		index = UnusedSlots.rpop();
-	else
-	{
-		index = (int) Styles.size();
-		Styles.add();
-		Names.add();
-	}
+	int index = (int) Styles.size();
+	Styles.add();
+	Names.add();
 	nuStyle* s = &Styles[index];
 	NameToIndex.insert( n, index );
 	Names[index] = nuString( name );
@@ -683,30 +744,6 @@ nuStyleID nuStyleTable::GetStyleID( const char* name )
 	else			return nuStyleID(0);
 }
 
-void nuStyleTable::GarbageCollect( nuDomEl* root )
-{
-	BitMap used;
-	used.Resize( (uint32) Styles.size(), false );
-	UnusedSlots.clear();
-	GarbageCollectInternalR( used, root );
-	for ( int i = 0; i < used.Size(); i++ )
-	{
-		if ( !used.Get( i ) )
-		{
-			NameToIndex.erase( Names[i] );
-			Names[i] = "";
-			Styles[i].Attribs.clear();
-			UnusedSlots += i;
-		}
-	}
-
-	// Compact only if we are wasting more space than we're using
-	if ( UnusedSlots.size() > Styles.size() )
-	{
-		Compact( used, root );
-	}
-}
-
 void nuStyleTable::CloneSlowInto( nuStyleTable& c ) const
 {
 	// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
@@ -717,63 +754,6 @@ void nuStyleTable::CloneFastInto( nuStyleTable& c, nuPool* pool ) const
 {
 	// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
 	nuClonePodvecWithMemCopy( c.Styles, Styles, pool );
-}
-
-void nuStyleTable::Compact( BitMap& used, nuDomEl* root )
-{
-	podvec<nuStyleID> old2newID;
-	old2newID.resize( Styles.size() );
-	uint32 newID = 0;
-	for ( intp i = 0; i < Styles.size(); i++ )
-	{
-		if ( used.Get((uint32) i) )
-		{
-			old2newID[i] = nuStyleID( newID );
-			newID++;
-		}
-		else
-			old2newID[i] = nuStyleID( -1 );
-	}
-	CompactR( &old2newID[0], root );
-		
-	// We'll have to see how painful these memory bumps are.
-	// The 'right' thing to do is to 'move' the objects from the old list into a new list.
-	for ( intp i = Styles.size() - 1; i >= 0; i-- )
-	{
-		if ( !used.Get((uint32) i) )
-		{
-			Styles.erase(i);
-			Names.erase(i);
-		}
-	}
-
-	NameToIndex.clear();
-	for ( intp i = 0; i < Styles.size(); i++ )
-		NameToIndex.insert( Names[i], (int) i );
-
-	UnusedSlots.clear();
-}
-
-void nuStyleTable::GarbageCollectInternalR( BitMap& used, nuDomEl* node )
-{
-	for ( intp i = 0; i < node->GetClasses().size(); i++ )
-		used.Set( node->GetClasses()[i], true );
-	
-	for ( intp i = 0; i < node->ChildCount(); i++ )
-		GarbageCollectInternalR( used, node->ChildByIndex(i) );
-}
-
-void nuStyleTable::CompactR( const nuStyleID* old2newID, nuDomEl* node )
-{
-	for ( intp i = 0; i < node->GetClasses().size(); i++ )
-	{
-		nuStyleID newval = old2newID[node->GetClasses()[i]];
-		node->GetClassesMutable()[i] = newval;
-		NUASSERT( newval != -1 );
-	}
-
-	for ( intp i = 0; i < node->ChildCount(); i++ )
-		CompactR( old2newID, node->ChildByIndex(i) );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

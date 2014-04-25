@@ -51,6 +51,20 @@ Build {
 			DefaultOnHost = "linux",
 			Tools = { "gcc" },
 		},
+		-- Other Windows configuration that you might want to enable
+		--[[
+		{
+			Name = "win32-msvc2010",
+			SupportedHosts = { "windows" },
+			Inherit = win_common,
+			Tools = { {"msvc-vs2010"; TargetArch = "x86"} },
+		},
+		{
+			Name = "win64-msvc2010",
+			SupportedHosts = { "windows" },
+			Inherit = win_common,
+			Tools = { {"msvc-vs2010"; TargetArch = "x64"} },
+		},
 		{
 			Name = "win32-msvc2012",
 			SupportedHosts = { "windows" },
@@ -64,6 +78,15 @@ Build {
 			Tools = { {"msvc-vs2012"; TargetArch = "x64"} },
 		},
 		{
+			Name = "win32-mingw",
+			Tools = { "mingw" },
+			-- Link with the C++ compiler to get the C++ standard library.
+			ReplaceEnv = {
+				LD = "$(CXX)",
+			},
+		},
+		--]]
+		{
 			Name = "win32-msvc2013",
 			SupportedHosts = { "windows" },
 			Inherit = win_common,
@@ -75,38 +98,17 @@ Build {
 			Inherit = win_common,
 			Tools = { {"msvc-vs2013"; TargetArch = "x64"} },
 		},
-		-- Uncommenting the following two projects will enable building on VS 2010
-		--{
-		--	Name = "win32-msvc2010",
-		--	SupportedHosts = { "windows" },
-		--	Inherit = win_common,
-		--	Tools = { {"msvc-vs2010"; TargetArch = "x86"} },
-		--},
-		--{
-		--	Name = "win64-msvc2010",
-		--	SupportedHosts = { "windows" },
-		--	Inherit = win_common,
-		--	Tools = { {"msvc-vs2010"; TargetArch = "x64"} },
-		--},
-		--{
-		--	Name = "win32-mingw",
-		--	Tools = { "mingw" },
-		--	-- Link with the C++ compiler to get the C++ standard library.
-		--	ReplaceEnv = {
-		--		LD = "$(CXX)",
-		--	},
-		--},
 	},
 	IdeGenerationHints = {
 		Msvc = {
 			-- Remap config names to MSVC platform names (affects things like header scanning & debugging)
 			PlatformMappings = {
-				['win64-msvc2013'] = 'x64',
-				['win64-msvc2012'] = 'x64',
 				['win64-msvc2010'] = 'x64',
-				['win32-msvc2013'] = 'Win32',
-				['win32-msvc2012'] = 'Win32',
+				['win64-msvc2012'] = 'x64',
+				['win64-msvc2013'] = 'x64',
 				['win32-msvc2010'] = 'Win32',
+				['win32-msvc2012'] = 'Win32',
+				['win32-msvc2013'] = 'Win32',
 			},
 			-- Remap variant names to MSVC friendly names
 			VariantMappings = {

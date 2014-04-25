@@ -1,6 +1,7 @@
 #pragma once
 
-#include "nuDomEl.h"
+#include "Dom/nuDomNode.h"
+#include "Dom/nuDomText.h"
 #include "nuMem.h"
 #include "nuStringTable.h"
 #include "Image/nuImageStore.h"
@@ -19,7 +20,7 @@ and if the two differ, it knows that it needs to update.
 class NUAPI nuDoc
 {
 public:
-	nuDomEl						Root;							// Root element of the document tree
+	nuDomNode					Root;							// Root element of the document tree
 	nuStyleTable				ClassStyles;					// All style classes defined in this document
 	nuStyle						TagStyles[nuTagEND];			// Styles of tags. For example, the style of <p>, or the style of <h1>.
 	nuStringTable				Strings;						// Generic string table.
@@ -33,9 +34,9 @@ public:
 	void			ResetModifiedBitmap();													// Reset the 'ismodified' bitmap of all DOM elements.
 	void			MakeFreeIDsUsable();													// All of our dependent renderers have been updated, we can move FreeIDs over to UsableIDs.
 	void			CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) const;	// Used to make a read-only clone for the renderer. Preserves existing.
-	void			CloneFastInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) const;	// Used to make a read-only clone for the renderer. Starts from scratch.
+	//void			CloneFastInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) const;	// Used to make a read-only clone for the renderer. Starts from scratch.
 
-	nuDomEl*		AllocChild();
+	nuDomEl*		AllocChild( nuTag tag );
 	void			FreeChild( const nuDomEl* el );
 
 	void			ChildAdded( nuDomEl* el );

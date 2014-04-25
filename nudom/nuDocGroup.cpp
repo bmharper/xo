@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "nuDoc.h"
 #include "nuDocGroup.h"
-#include "nuLayout.h"
+#include "Layout/nuLayout.h"
 #include "nuSysWnd.h"
 #include "Render/nuRenderer.h"
 #include "Render/nuRenderDoc.h"
@@ -143,7 +143,7 @@ bool nuDocGroup::BubbleEvent( nuEvent& ev )
 
 	NUTRACE_EVENTS( "BubbleEvent type=%d\n", (int) ev.Type );
 
-	nuDomEl* el = &Doc->Root;
+	nuDomNode* el = &Doc->Root;
 	bool stop = false;
 	bool handled = false;
 
@@ -170,6 +170,7 @@ bool nuDocGroup::BubbleEvent( nuEvent& ev )
 	return handled;
 }
 
+/*
 void nuDocGroup::FindTarget( const nuVec2f& p, pvect<nuRenderDomEl*>& chain )
 {
 	chain += &RenderDoc->RenderRoot;
@@ -182,6 +183,7 @@ void nuDocGroup::FindTarget( const nuVec2f& p, pvect<nuRenderDomEl*>& chain )
 		}
 	}
 }
+*/
 
 bool nuDocGroup::IsDocVersionDifferentToRenderer() const
 {

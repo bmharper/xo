@@ -37,7 +37,7 @@ void nuImageTester::SetSize( u32 width, u32 height )
 		Wnd->SetPosition( nuBox(0, 0, nwidth, nheight), nuSysWnd::SetPosition_Size );
 }
 
-void nuImageTester::TruthImage( const char* filename, std::function<void(nuDomEl& root)> setup )
+void nuImageTester::TruthImage( const char* filename, std::function<void(nuDomNode& root)> setup )
 {
 	// The plan is to have an interactive GUI here someday where you get presented
 	// with the failing image pair, and you can choose whether to mark the new one as "correct".
@@ -45,12 +45,12 @@ void nuImageTester::TruthImage( const char* filename, std::function<void(nuDomEl
 	CreateOrVerifyTruthImage( overwrite_DO_NOT_COMMIT_THIS_CHANGE, filename, setup );
 }
 
-void nuImageTester::VerifyWithImage( const char* filename, std::function<void(nuDomEl& root)> setup )
+void nuImageTester::VerifyWithImage( const char* filename, std::function<void(nuDomNode& root)> setup )
 {
 	CreateOrVerifyTruthImage( false, filename, setup );
 }
 
-void nuImageTester::CreateTruthImage( const char* filename, std::function<void(nuDomEl& root)> setup )
+void nuImageTester::CreateTruthImage( const char* filename, std::function<void(nuDomNode& root)> setup )
 {
 	CreateOrVerifyTruthImage( true, filename, setup );
 }
@@ -85,7 +85,7 @@ bool nuImageTester::ImageEquals( u32 width1, u32 height1, int stride1, const voi
 	return true;
 }
 
-void nuImageTester::CreateOrVerifyTruthImage( bool create, const char* filename, std::function<void(nuDomEl& root)> setup )
+void nuImageTester::CreateOrVerifyTruthImage( bool create, const char* filename, std::function<void(nuDomNode& root)> setup )
 {
 	// populate the document
 	Wnd->DocGroup->Doc->Reset();

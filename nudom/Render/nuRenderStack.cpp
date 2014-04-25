@@ -32,16 +32,6 @@ void nuRenderStack::Initialize( const nuDoc* doc, nuPool* pool )
 	Pool = pool;
 	Stack.Pool = pool;
 
-	/*
-	DefaultWidth.SetSize( nuCatWidth, nuSize::Percent(100) );
-	DefaultHeight.SetSize( nuCatHeight, nuSize::Percent(100) );
-	DefaultPadding.SetZero();
-	DefaultMargin.SetZero();
-	DefaultBorderRadius.SetSize( nuCatBorderRadius, nuSize::Pixels(0) );
-	DefaultDisplay.SetDisplay( nuDisplayInline );
-	DefaultPosition.SetPosition( nuPositionStatic );
-	*/
-	//Defaults[nuCatNULL] = 
 	memset( Defaults, 0, sizeof(Defaults) );
 	Defaults[nuCatColor].SetColor( nuCatColor, nuColor::RGBA(0,0,0,255) );
 	Defaults[nuCatDisplay].SetDisplay( nuDisplayInline );
@@ -62,14 +52,15 @@ void nuRenderStack::Initialize( const nuDoc* doc, nuPool* pool )
 	Defaults[nuCatBorder_Top].SetSize( nuCatBorder_Top, nuSize::Zero() );
 	Defaults[nuCatBorder_Right].SetSize( nuCatBorder_Right, nuSize::Zero() );
 	Defaults[nuCatBorder_Bottom].SetSize( nuCatBorder_Bottom, nuSize::Zero() );
-	//Defaults[nuCatWidth]
-	//Defaults[nuCatHeight]
+	Defaults[nuCatWidth].SetSize( nuCatWidth, nuSize::Null() );
+	Defaults[nuCatHeight].SetSize( nuCatHeight, nuSize::Null() );
 	//Defaults[nuCatTop]
 	//Defaults[nuCatLeft]
 	//Defaults[nuCatRight]
 	//Defaults[nuCatBottom]
-	Defaults[nuCatFontSize].SetSize( nuCatFontSize, nuSize::Points(10) );
-	//Defaults[nuCatFontFamily]
+	Defaults[nuCatFontSize].SetSize( nuCatFontSize, nuSize::Pixels(12) );
+	// Font should inherit from body. nuDoc initializes the default font for nuTagBody
+	//Defaults[nuCatFontFamily].SetFont( doc->TagStyles[nuTagBody].Get().GetFont( doc ).Z, doc );
 	Defaults[nuCatBorderRadius].SetSize( nuCatBorderRadius, nuSize::Zero() );
 	Defaults[nuCatPosition].SetPosition( nuPositionStatic );
 	Defaults[nuCatBoxSizing].SetBoxSizing( nuBoxSizeBorder );	// HTML default is Content

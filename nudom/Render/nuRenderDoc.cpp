@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "../nuLayout.h"
+#include "../Layout/nuLayout.h"
 #include "nuRenderDoc.h"
 #include "nuRenderer.h"
 #include "nuRenderDX.h"
@@ -20,6 +20,7 @@ void nuRenderDoc::ResetRenderData()
 {
 	RenderRoot.Discard();
 	RenderPool.FreeAll();
+	RenderRoot.InternalID = Doc.Root.GetInternalID();
 }
 
 nuRenderResult nuRenderDoc::Render( nuRenderBase* driver )
@@ -33,7 +34,7 @@ nuRenderResult nuRenderDoc::Render( nuRenderBase* driver )
 
 	NUTRACE_RENDER( "RenderDoc: Render\n" );
 	nuRenderer rend;
-	nuRenderResult res = rend.Render( &ClonedImages, &ClonedStrings, driver, &RenderRoot, WindowWidth, WindowHeight );
+	nuRenderResult res = rend.Render( &ClonedImages, &Doc.Strings, driver, &RenderRoot, WindowWidth, WindowHeight );
 
 	return res;
 }
@@ -47,10 +48,11 @@ void nuRenderDoc::CopyFromCanonical( const nuDoc& canonical, nuRenderStats& stat
 	canonical.CloneSlowInto( Doc, 0, stats );
 
 	// TODO: Don't do this dumb copying.
-	ClonedStrings.CloneFrom( canonical.Strings );
+	//ClonedStrings.CloneFrom( canonical.Strings );
 	ClonedImages.CloneFrom( canonical.Images );
 }
 
+/*
 nuInternalID nuRenderDoc::FindElement( const nuRenderDomEl& el, nuPoint pos )
 {
 	if ( el.Children.size() == 0 )
@@ -68,6 +70,7 @@ nuInternalID nuRenderDoc::FindElement( const nuRenderDomEl& el, nuPoint pos )
 
 	return nuInternalIDNull;
 }
+*/
 
 /*
 void nuRenderDoc::FindAlteredNodes( const nuDoc* original, const nuDoc* modified, podvec<nuInternalID>& alteredNodeIDs )

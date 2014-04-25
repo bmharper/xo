@@ -2,10 +2,8 @@
 #include "nuStyleResolve.h"
 #include "nuRenderStack.h"
 
-void nuStyleResolver::ResolveAndPush( nuRenderStack& stack, const nuDomEl* node )
+void nuStyleResolver::ResolveAndPush( nuRenderStack& stack, const nuDomNode* node )
 {
-	if ( node->GetInternalID() == 5 )
-		int ewqeqw = 23232;
 	nuRenderStackEl& result = stack.StackPush();
 
 	// 1. Inherited by default
