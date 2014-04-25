@@ -323,7 +323,16 @@ void nuRenderGL::ActivateShader( nuShaders shader )
 	{
 		// outputColor0 = vec4(color.r, color.g, color.b, avgA);
 		// outputColor1 = vec4(aR, aG, aB, avgA);
-		glBlendFuncSeparate( GL_SRC1_COLOR, GL_ONE_MINUS_SRC1_COLOR, GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
+		if ( Have_BlendFuncExtended )
+			glBlendFuncSeparate( GL_SRC1_COLOR, GL_ONE_MINUS_SRC1_COLOR, GL_ONE, GL_ONE_MINUS_SRC_ALPHA );
+		// else we are screwed!
+		// there might be a solution that is better than simply ignoring the problem, but I
+		// haven't bothered yet. On my Sandy Bridge (i7-2600K) with 2014-04-15 Intel drivers,
+		// the DirectX drivers correctly expose this functionality, but the OpenGL drivers do
+		// not support GL_ARB_blend_func_extended, so it's very simple - we just use DirectX.
+		// I can't think of a device/OS combination where you'd want OpenGL+Subpixel text,
+		// so sticking with DirectX 11 there is hopefully fine. Hmm.. actually desktop linux
+		// is indeed such a combination. We'll have to wait and see.
 	}
 	else
 	{
