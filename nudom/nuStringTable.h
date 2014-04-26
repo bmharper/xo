@@ -18,5 +18,5 @@ public:
 protected:
 	nuPool						Pool;
 	fhashmap<nuString, int>		NameToId;			// This could be improved dramatically, by avoiding the heap alloc for every item
-	pvect<char*>				IdToName;
+	pvect<const char*>			IdToName;
 };

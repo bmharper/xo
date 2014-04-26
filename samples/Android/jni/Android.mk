@@ -41,9 +41,7 @@ NU_SRC = \
 ../../../templates/nuAndroid.cpp \
 ../../../nudom/nuDefs.cpp \
 ../../../nudom/nuDoc.cpp \
-../../../nudom/nuDomEl.cpp \
 ../../../nudom/nuEvent.cpp \
-../../../nudom/nuLayout.cpp \
 ../../../nudom/nuMem.cpp \
 ../../../nudom/nuPlatform.cpp \
 ../../../nudom/nuString.cpp \
@@ -52,8 +50,13 @@ NU_SRC = \
 ../../../nudom/nuStyleParser.cpp \
 ../../../nudom/nuSysWnd.cpp \
 ../../../nudom/nuDocGroup.cpp \
+../../../nudom/Dom/nuDomEl.cpp \
+../../../nudom/Dom/nuDomNode.cpp \
+../../../nudom/Dom/nuDomText.cpp \
 ../../../nudom/Image/nuImage.cpp \
 ../../../nudom/Image/nuImageStore.cpp \
+../../../nudom/Layout/nuLayout.cpp \
+../../../nudom/Layout/nuTextLayout.cpp \
 ../../../nudom/Render/nuRenderer.cpp \
 ../../../nudom/Render/nuRenderBase.cpp \
 ../../../nudom/Render/nuRenderGL.cpp \

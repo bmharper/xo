@@ -51,6 +51,11 @@ void nuMain( nuMainEvent ev )
 
 			MainWnd->Show();
 
+			nuEvent inject;
+			inject.PointCount = 1;
+			inject.Points[0] = NUVEC2(100,100);
+			onMoveOrTouch( inject );
+
 			NUTRACE( "Hello 5\n" );
 		}
 		break;

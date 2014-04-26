@@ -56,14 +56,17 @@ void nuLayout::LayoutInternal( nuRenderDomNode& root )
 	NUTRACE_LAYOUT( "Layout 2\n" );
 
 	NodeState s;
+	memset( &s, 0, sizeof(s) );
 	s.ParentContentBox.SetInt( 0, 0, DocWidth, DocHeight );
 	//s.PositionedAncestor = s.ParentContentBox;
+	s.ParentContentBoxHasWidth = true;
+	s.ParentContentBoxHasHeight = true;
 	s.PosX = s.ParentContentBox.Left;
 	s.PosY = s.ParentContentBox.Top;
 	s.PosLineX = s.PosX;
 	s.PosLineY = s.PosY;
 
-	NUTRACE_LAYOUT( "Layout 3\n" );
+	NUTRACE_LAYOUT( "Layout 3 DocBox = %d,%d,%d,%d\n", s.ParentContentBox.Left, s.ParentContentBox.Top, s.ParentContentBox.Right, s.ParentContentBox.Bottom );
 
 	RunNode( s, Doc->Root, &root );
 }
@@ -166,13 +169,11 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 	cs.PosMaxX = cs.PosX;
 	cs.PosMaxY = cs.PosY;
 
-	NUTRACE_LAYOUT( "Layout (%d) Run 3\n", node.GetInternalID() );
+	NUTRACE_LAYOUT( "Layout (%d) Run 3 (position = %d) (%d %d)\n", node.GetInternalID(), (int) position, s.ParentContentBoxHasWidth ? 1 : 0, haveWidth ? 1 : 0 );
 
 	const pvect<nuDomEl*>& nodeChildren = node.GetChildren();
 	for ( int i = 0; i < nodeChildren.size(); i++ )
 	{
-		if ( i == 2 )
-			int abc = 123;
 		const nuDomEl* child = nodeChildren[i];
 		if ( child->GetTag() == nuTagText )
 		{
@@ -201,6 +202,8 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 		if ( offset != nuPoint(0,0) )
 			OffsetRecursive( rnode, offset );
 	}
+
+	NUTRACE_LAYOUT( "Layout (%d) marginBox: %d,%d,%d,%d\n", node.GetInternalID(), marginBox.Left, marginBox.Top, marginBox.Right, marginBox.Bottom );
 
 	s.PosMaxY = nuMax( s.PosMaxY, marginBox.Bottom );
 
@@ -382,6 +385,7 @@ nuPoint nuLayout::PositionBlock( NodeState& s, nuBox& marginBox )
 	{
 		s.PosX = marginBox.Right;
 		s.PosLineX = s.PosX;
+		NUTRACE_LAYOUT( "Layout block fits %d,%d\n", s.PosX, s.PosY );
 	}
 	else
 	{
@@ -393,6 +397,7 @@ nuPoint nuLayout::PositionBlock( NodeState& s, nuBox& marginBox )
 		s.PosY = marginBox.Top;
 		s.PosLineX = s.PosX;
 		s.PosLineY = s.PosY;
+		NUTRACE_LAYOUT( "Layout block does not fit %d,%d\n", s.PosX, s.PosY );
 	}
 	return offset;
 }

@@ -244,10 +244,10 @@ static bool ParseSingleAttrib( const char* s, intp len, bool (*parseFunc)(const 
 // This was added when font-family was stored as a string, but it is now stored as a nuFontID
 static void ParseString( const char* s, intp len, nuStyleCategories cat, nuDoc* doc, nuStyle& style )
 {
+	char stat[64];
 	nuStyleAttrib attrib;
 	if ( len < sizeof(stat) )
 	{
-		char stat[64];
 		memcpy( stat, s, len );
 		stat[len] = 0;
 		attrib.Set( cat, stat, doc );

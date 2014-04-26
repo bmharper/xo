@@ -184,7 +184,7 @@ const char* nuFontStore::FacenameToFilename( const char* facename )
 	return "c:\\Windows\\Fonts\\arial.ttf";
 #else
 	if ( name == "Droid Sans" ) return "/system/fonts/DroidSans.ttf";
-	if ( ename == "Droid Sans Mono" ) return "/system/fonts/DroidSansMono.ttf";
+	if ( name == "Droid Sans Mono" ) return "/system/fonts/DroidSansMono.ttf";
 	return "/system/fonts/DroidSans.ttf";
 #endif
 }

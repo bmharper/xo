@@ -8,9 +8,10 @@ just no-ops, but by turning them into trace commands, you can enable big
 chunks of traces inside the nudom core.
 
 On Android I have successfully used gdb from Windows like so:
-c:\dev\android-ndk-r9\ndk-gdb-py --adb="c:\Program Files (x86)\Android\android-sdk\platform-tools\adb.exe" --start
+C:\dev\sdk\android-ndk-r9b\ndk-gdb-py --adb="C:\Program Files (x86)\Android\android-studio\sdk\platform-tools\adb.exe" --start
 
 You will probably need to close Eclipse or IntelliJ (aka Android Studio) so that
 gdb can get control of the debugging interface.
 
+Sample path for setting a breakpoint:
 jni/../../../nudom/nuLayout.cpp:41

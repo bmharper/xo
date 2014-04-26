@@ -65,7 +65,7 @@ void nuDoc::CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) con
 
 	// Make sure the destination is large enough to hold all of our children
 	while ( c.ChildByInternalID.size() < ChildByInternalID.size() )
-		c.ChildByInternalID += nuInternalIDNull;
+		c.ChildByInternalID += nullptr;
 
 	// Although it would be trivial to parallelize the following two passes, I think it is unlikely to be worth it,
 	// since I suspect these passes will be bandwidth limited.
@@ -90,7 +90,7 @@ void nuDoc::CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) con
 				// destroy destination. Make it forget its children, because this loop takes care of all elements.
 				dst->ForgetChildren();
 				c.FreeChild( dst );
-				c.ChildByInternalID[i] = nuInternalIDNull;
+				c.ChildByInternalID[i] = nullptr;
 			}
 		}
 	}
