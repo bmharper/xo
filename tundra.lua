@@ -1,4 +1,7 @@
 
+-- MSVC /analyze is very slow, so we don't want it turned on all the time,
+-- which is why we keep a separate SubVariant called "analyze"
+
 local win_linker = {
 	{ "/NXCOMPAT /DYNAMICBASE";								Config = "win*" },
 	{ "/DEBUG";												Config = "win*-*-debug" },
@@ -16,6 +19,7 @@ local win_common = {
 			{ "1";  Config = "win*-*-debug" },
 		},
 		CXXOPTS = {
+			{ "/analyze /WX"; Config = "win*-*-*-analyze" },
 			{ "/EHsc"; Config = "win*" },
 			{ "/W3"; Config = "win*" },
 			{ "/wd4251"; Config = "win*" },			-- class needs to have DLL-interface...
@@ -40,6 +44,8 @@ Build {
 		PchGen = { Name = "Precompiled Header Generation", BuildOrder = 1 },
 	},
 	Variants = { "debug", "release" },
+	SubVariants = { "default", "analyze" },
+	DefaultSubVariant = "default",
 	Configs = {
 		{
 			Name = "macosx-gcc",
@@ -112,9 +118,10 @@ Build {
 			},
 			-- Remap variant names to MSVC friendly names
 			VariantMappings = {
-				['release']    = 'Release',
-				['debug']      = 'Debug',
-				['production'] = 'Production',
+				['release-default']    = 'Release',
+				['debug-default']      = 'Debug',
+				['release-analyze']    = 'Release Analyze',
+				['debug-analyze']      = 'Debug Analyze',
 			},
 		},
 		-- Override solutions to generate and what units to put where.
