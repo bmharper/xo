@@ -31,9 +31,9 @@ PSOutput main(VSOutput input)
 	float tap5 = shader_texture.Sample(sample_type, float2(clamp(uv.x + offset * 2.0, clamps.x, clamps.z), uv.y)).r;
 	float tap6 = shader_texture.Sample(sample_type, float2(clamp(uv.x + offset * 3.0, clamps.x, clamps.z), uv.y)).r;
 
-	float w0 = 0.55;
-	float w1 = 0.32;
-	float w2 = 0.13;
+	float w0 = 0.60;
+	float w1 = 0.28;
+	float w2 = 0.12;
 	//float w0 = 0.98;
 	//float w1 = 0.01;
 	//float w2 = 0.01;
