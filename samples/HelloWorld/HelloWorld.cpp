@@ -27,7 +27,7 @@ void nuMain( nuMainEvent ev )
 
 			// block with text inside it
 			nuDomNode* txtBox = doc->Root.AddNode( nuTagDiv );
-			txtBox->StyleParse( "width: 90px; height: 90px; border-radius: 2px; background: #0c0; margin: 3px; position: absolute;" );
+			txtBox->StyleParse( "width: 90px; height: 90px; border-radius: 2px; background: #0c0; margin: 3px; position: absolute; font-size: 12ep;" );
 			txtBox->SetText( "This widget spans.. document->textDocument()->activeView()" );
 
 			blocks[0]->StyleParse( "background: #ff000040" );

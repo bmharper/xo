@@ -19,6 +19,7 @@ and if the two differ, it knows that it needs to update.
 */
 class NUAPI nuDoc
 {
+	DISALLOW_COPY_AND_ASSIGN(nuDoc);
 public:
 	nuDomNode					Root;							// Root element of the document tree
 	nuStyleTable				ClassStyles;					// All style classes defined in this document

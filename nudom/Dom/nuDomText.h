@@ -3,6 +3,7 @@
 
 class NUAPI nuDomText : public nuDomEl
 {
+	DISALLOW_COPY_AND_ASSIGN(nuDomText);
 public:
 					nuDomText( nuDoc* doc, nuTag tag );
 					virtual ~nuDomText();

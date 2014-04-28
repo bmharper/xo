@@ -3,7 +3,13 @@
 #include "nuFontStore.h"
 #include "Render/nuTextureAtlas.h"
 
-static const uint32 nuSubPixelHintKillShift = 3;
+// Remember that our horizontal expansion is not only there to clobber the horizontal
+// hinting. It also serves to give us more accurate glyph metrics, in particular MetricLeftx256,
+// which is also called horiBearingX by Freetype.
+// An alternative would be to separately load just the glyph metrics without performing glyph
+// rendering. That would give us perfect metrics. This only affects the horizontal spacing of
+// glyphs, and I think it's unlikely that one would be able to tell the difference there.
+static const uint32 nuSubPixelHintKillShift = 4;
 static const uint32 nuSubPixelHintKillMultiplier = (1 << nuSubPixelHintKillShift);
 
 // GCC 4.6 for Android forces us to set the value of this constant in the .cpp file, not in the .h file.
@@ -100,12 +106,9 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	FT_Error e = FT_Set_Pixel_Sizes( font->FTFace, combinedHorzMultiplier * pixSize, pixSize );
 	NUASSERT( e == 0 );
 
-	// The 15 here is a number taken from observations of a bunch of different fonts
-	// The auto hinter fails to produce clean horizontal stems when the text gets larger
-	// Times New Roman seems to look better at all sub-pixel sizes using the auto hinter.
-	// The Sans Serif fonts like Segoe UI seem to look better with the TT hinter at larger sizes.
 	uint ftflags = FT_LOAD_RENDER | FT_LOAD_LINEAR_DESIGN;
-	if ( isSubPixel && pixSize < 20 )
+	// See nuFontStore::LoadFontTweaks for details of why we have this "MaxAutoHinterSize"
+	if ( isSubPixel && pixSize <= font->MaxAutoHinterSize )
 		ftflags |= FT_LOAD_FORCE_AUTOHINT;
 
 	e = FT_Load_Glyph( font->FTFace, iFTGlyph, ftflags );
@@ -170,7 +173,6 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	g.Y = atlasY;
 	g.AtlasID = (uint) Atlasses.find( atlas );
 	g.MetricLeftx256 = font->FTFace->glyph->bitmap_left * 256 / combinedHorzMultiplier;
-	//g.MetricLeftx256 -= font->FTFace->glyph->metrics.horiBearingX * 256 / 64; -- this is rubbish, an attempt at using kerning
 	g.MetricTop = font->FTFace->glyph->bitmap_top;
 	g.MetricLinearHoriAdvancex256 = ((int32) font->FTFace->glyph->linearHoriAdvance * 256 * (int32) pixSize) / 2048;
 	Table.insert( key, (uint) Glyphs.size() );

@@ -46,6 +46,7 @@ void nuLayout::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDo
 void nuLayout::LayoutInternal( nuRenderDomNode& root )
 {
 	PtToPixel = 1.0;	// TODO
+	EpToPixel = nuGlobal()->EpToPixel;
 
 	NUTRACE_LAYOUT( "Layout 1\n" );
 
@@ -63,8 +64,9 @@ void nuLayout::LayoutInternal( nuRenderDomNode& root )
 	s.ParentContentBoxHasHeight = true;
 	s.PosX = s.ParentContentBox.Left;
 	s.PosY = s.ParentContentBox.Top;
-	s.PosLineX = s.PosX;
-	s.PosLineY = s.PosY;
+	s.PosMaxX = s.PosX;
+	s.PosMaxY = s.PosY;
+	s.PosBaselineY = nuPosNULL;
 
 	NUTRACE_LAYOUT( "Layout 3 DocBox = %d,%d,%d,%d\n", s.ParentContentBox.Left, s.ParentContentBox.Top, s.ParentContentBox.Right, s.ParentContentBox.Bottom );
 
@@ -164,10 +166,9 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 	//else								cs.PositionedAncestor = s.ParentContentBox;
 	cs.PosX = contentBox.Left;
 	cs.PosY = contentBox.Top;
-	cs.PosLineX = cs.PosX;
-	cs.PosLineY = cs.PosY;
 	cs.PosMaxX = cs.PosX;
 	cs.PosMaxY = cs.PosY;
+	cs.PosBaselineY = s.PosBaselineY;
 
 	NUTRACE_LAYOUT( "Layout (%d) Run 3 (position = %d) (%d %d)\n", node.GetInternalID(), (int) position, s.ParentContentBoxHasWidth ? 1 : 0, haveWidth ? 1 : 0 );
 
@@ -195,7 +196,8 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 
 	rnode->Pos = marginBox.ShrunkBy( margin );
 
-	// We couldn't check for overflow until we'd layed out our children. If we do overflow, then we need to retrofit all of our child boxes with an offset.
+	// Since our width was undefined, we couldn't check for overflow until we'd layed out our children.
+	// If we do overflow now, then we need to retrofit all of our child boxes with an offset.
 	if ( position == nuPositionStatic && s.ParentContentBoxHasWidth && !haveWidth )
 	{
 		nuPoint offset = PositionBlock( s, marginBox );
@@ -206,6 +208,7 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 	NUTRACE_LAYOUT( "Layout (%d) marginBox: %d,%d,%d,%d\n", node.GetInternalID(), marginBox.Left, marginBox.Top, marginBox.Right, marginBox.Bottom );
 
 	s.PosMaxY = nuMax( s.PosMaxY, marginBox.Bottom );
+	s.PosBaselineY = cs.PosBaselineY;
 
 	Stack.StackPop();
 }
@@ -288,6 +291,29 @@ void nuLayout::GenerateTextWords( NodeState& s, TextRunState& ts )
 	}
 }
 
+/*
+
+This diagram was created using asciiflow (http://asciiflow.com/)
+
+               +–––––––––––––––––––––––––––––––––––+  XXXXXXXXXXXX           
+            XX |      X       X                    |             X           
+            X  |      X       X                    |             X           
+            X  |      X       X                    |             X           
+            X  |      X       X                    |             X           
+ ascender   X  |      XXXXXXXXX     XXXXXXXX       |             X           
+            X  |      X       X     X      X       |             X           
+            X  |      X       X     X      X       |             X lineheight
+            XX |      X       X     XXXXXXXX       |             X           
+               +–––––––––––––––––––+X+––––––––––––––+ baseline   X           
+            XX |                    X              |             X           
+descender   X  |                    X              |             X           
+            X  |                    X              |             X           
+            XX |                    X              |             X           
+               |                                   |             X           
+               +–––––––––––––––––––––––––––––––––––+  XXXXXXXXXXXX           
+          
+
+*/
 void nuLayout::GenerateTextOutput( NodeState& s, TextRunState& ts )
 {
 	const char* txt = ts.Node->GetText();
@@ -296,9 +322,11 @@ void nuLayout::GenerateTextOutput( NodeState& s, TextRunState& ts )
 	const nuFont* font = Fonts.GetByFontID( ts.RNode->FontID );
 
 	nuPos fontHeightRounded = nuRealToPos( ts.RNode->FontSizePx );
+	nuPos fontAscender = nuRealx256ToPos( font->Ascender_x256 * ts.RNode->FontSizePx );
+	nuTextAlignVertical valign = Stack.Get( nuCatText_Align_Vertical ).GetTextAlignVertical();
 	
 	// if we add a "line-height" style then we'll want to multiply that by this
-	nuPos lineHeight = nuRealx256ToPos( ts.RNode->FontSizePx * font->NaturalLineHeight_x256 ); 
+	nuPos lineHeight = nuRealx256ToPos( ts.RNode->FontSizePx * font->LineHeight_x256 ); 
 	if ( nuGlobal()->RoundLineHeights )
 		lineHeight = nuPosRoundUp( lineHeight );
 
@@ -306,6 +334,15 @@ void nuLayout::GenerateTextOutput( NodeState& s, TextRunState& ts )
 	ts.RNode->Text.reserve( ts.GlyphCount );
 	bool parentHasWidth = s.ParentContentBoxHasWidth;
 	bool enableKerning = nuGlobal()->EnableKerning;
+
+	nuPos baseline = 0;
+	if ( valign == nuTextAlignVerticalTop || s.PosBaselineY == nuPosNULL )		baseline = s.PosY + fontAscender;
+	else if ( valign == nuTextAlignVerticalBaseline )							baseline = s.PosBaselineY;
+	else																		NUTODO;
+	
+	// First text in the line defines the baseline
+	if ( s.PosBaselineY == nuPosNULL )
+		s.PosBaselineY = baseline;
 
 	for ( intp iword = 0; iword < ts.Words.size(); iword++ )
 	{
@@ -318,7 +355,8 @@ void nuLayout::GenerateTextOutput( NodeState& s, TextRunState& ts )
 			bool futile = s.PosX == s.ParentContentBox.Left && word.Width > s.ParentContentBox.Width();
 			if ( !futile )
 			{
-				NextLine( s, lineHeight );
+				NextLine( s );
+				baseline = s.PosY + fontAscender;
 				// If the line break was performed for a space, then treat that space as "done"
 				if ( isSpace )
 					continue;
@@ -331,7 +369,8 @@ void nuLayout::GenerateTextOutput( NodeState& s, TextRunState& ts )
 		}
 		else if ( isNewline )
 		{
-			NextLine( s, lineHeight );
+			NextLine( s );
+			baseline = s.PosY + fontAscender;
 		}
 		else
 		{
@@ -340,65 +379,61 @@ void nuLayout::GenerateTextOutput( NodeState& s, TextRunState& ts )
 			{
 				key.Char = txt[i];
 				const nuGlyph* glyph = glyphCache->GetGlyph( key );
+				__analysis_assume( glyph != nullptr );
 				if ( glyph->IsNull() )
 					continue;
 				if ( enableKerning && prevGlyph )
 				{
+					// Multithreading hazard here. I'm not sure whether FT_Get_Kerning is thread safe.
+					// Also, I have stepped inside there and I see it does a binary search. We would probably
+					// be better off caching the kerning for frequent pairs of glyphs in a hash table.
 					FT_Vector kern;
 					FT_Get_Kerning( font->FTFace, prevGlyph->FTGlyphIndex, glyph->FTGlyphIndex, FT_KERNING_UNSCALED, &kern );
-					nuPos kerning = kern.x * fontHeightPx * 256 / font->FTFace->units_per_EM;
+					nuPos kerning = ((kern.x * fontHeightPx) << nuPosShift) / font->FTFace->units_per_EM;
 					s.PosX += kerning;
 				}
 				ts.RNode->Text.Count++;
 				nuRenderCharEl& rtxt = ts.RNode->Text.back();
 				rtxt.Char = key.Char;
 				rtxt.X = s.PosX + nuRealx256ToPos( glyph->MetricLeftx256 );
-				rtxt.Y = s.PosY - nuRealToPos( glyph->MetricTop ) + fontHeightRounded;
+				rtxt.Y = baseline - nuRealToPos( glyph->MetricTop );			// rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
 				s.PosX += nuRealx256ToPos( glyph->MetricLinearHoriAdvancex256 );
 				s.PosMaxX = nuMax( s.PosMaxX, s.PosX );
 				prevGlyph = glyph;
 			}
 		}
-		s.PosLineY = nuMax( s.PosLineY, s.PosY + lineHeight );
-		s.PosMaxY = s.PosLineY;
+		s.PosMaxY = nuMax( s.PosMaxY, baseline - fontAscender + lineHeight );
 	}
 }
 
-void nuLayout::NextLine( NodeState& s, nuPos textHeight )
+void nuLayout::NextLine( NodeState& s )
 {
-	// This is similar to PositionBlock, but for text
 	s.PosX = s.ParentContentBox.Left;
-	s.PosY = s.PosLineY;
-	s.PosLineY = nuMax( s.PosLineY, s.PosY + textHeight );
-	s.PosMaxY = s.PosLineY;
+	s.PosY = s.PosMaxY;
+	s.PosBaselineY = nuPosNULL;
 }
 
 nuPoint nuLayout::PositionBlock( NodeState& s, nuBox& marginBox )
 {
 	NUASSERTDEBUG(s.ParentContentBoxHasWidth);
 	
+	nuPoint offset(0,0);
+
 	// Going to next line is futile if this block is as far to the left as possible
 	const bool futile = marginBox.Left == s.ParentContentBox.Left;
-
-	nuPoint offset(0,0);
-	if ( marginBox.Right <= s.ParentContentBox.Right || futile )
+	if ( marginBox.Right > s.ParentContentBox.Right && !futile )
 	{
-		s.PosX = marginBox.Right;
-		s.PosLineX = s.PosX;
-		NUTRACE_LAYOUT( "Layout block fits %d,%d\n", s.PosX, s.PosY );
+		// Block does not fit on this line, it must move onto the next line.
+		NUTRACE_LAYOUT( "Layout block does not fit %d,%d\n", s.PosX, s.PosY );
+		NextLine( s );
+		offset = nuPoint( s.PosX - marginBox.Left, s.PosY - marginBox.Top );
+		marginBox.Offset( offset.X, offset.Y );
 	}
 	else
 	{
-		// Block does not fit on this line, it must move onto the next line.
-		// This is like NextLine but without textHeight.
-		offset = nuPoint( s.ParentContentBox.Left - marginBox.Left, s.PosMaxY - marginBox.Top );
-		marginBox.Offset( offset.X, offset.Y );
-		s.PosX = marginBox.Right;
-		s.PosY = marginBox.Top;
-		s.PosLineX = s.PosX;
-		s.PosLineY = s.PosY;
-		NUTRACE_LAYOUT( "Layout block does not fit %d,%d\n", s.PosX, s.PosY );
+		NUTRACE_LAYOUT( "Layout block fits %d,%d\n", s.PosX, s.PosY );
 	}
+	s.PosX = marginBox.Right;
 	return offset;
 }
 
@@ -457,13 +492,14 @@ nuPos nuLayout::ComputeDimension( nuPos container, bool isContainerDefined, nuSi
 	switch ( size.Type )
 	{
 	case nuSize::NONE: return nuPosNULL;
+	case nuSize::PX: return nuRealToPos( size.Val );
+	case nuSize::PT: return nuRealToPos( size.Val * PtToPixel );
+	case nuSize::EP: return nuRealToPos( size.Val * EpToPixel );
 	case nuSize::PERCENT:
 		if ( container == nuPosNULL || !isContainerDefined )
 			return nuPosNULL;
 		else
 			return nuPos((float) container * (size.Val * 0.01f));
-	case nuSize::PX: return nuRealToPos( size.Val );
-	case nuSize::PT: return nuRealToPos( size.Val * PtToPixel );	
 	default: NUPANIC("Unrecognized size type"); return 0;
 	}
 }

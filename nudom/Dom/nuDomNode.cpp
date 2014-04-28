@@ -75,6 +75,13 @@ nuDomNode* nuDomNode::AddNode( nuTag tag )
 	return static_cast<nuDomNode*>(AddChild(tag));
 }
 
+nuDomText* nuDomNode::AddText( const char* txt )
+{
+	nuDomText* el = static_cast<nuDomText*>(AddChild(nuTagText));
+	el->SetText( txt );
+	return el;
+}
+
 void nuDomNode::RemoveChild( nuDomEl* c )
 {
 	if ( !c ) return;

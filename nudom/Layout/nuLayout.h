@@ -43,11 +43,11 @@ protected:
 		bool	ParentContentBoxHasHeight;
 
 		// Mutable
-		nuPos	PosMaxX;			// Used to accumulate width when unspecified
-		nuPos	PosMaxY;			// Used to accumulate height when unspecified
-		nuPos	PosLineX;			// Starts equal to PosX.
-		nuPos	PosLineY;			// Starts equal to PosY.
-		nuPos	PosX, PosY;
+		nuPos	PosMaxX;			// Right-most edge of the current line
+		nuPos	PosMaxY;			// Bottom of the current line
+		nuPos	PosX;
+		nuPos	PosY;
+		nuPos	PosBaselineY;		// First text element sets this, and it is thereafter fixed until the next line
 	};
 
 	struct Word
@@ -72,6 +72,7 @@ protected:
 	nuPool*						Pool;
 	nuRenderStack				Stack;
 	float						PtToPixel;
+	float						EpToPixel;
 	nuFontTableImmutable		Fonts;
 	fhashset<nuGlyphCacheKey>	GlyphsNeeded;
 
@@ -90,7 +91,7 @@ protected:
 	void	RunText( NodeState& s, const nuDomText& node, nuRenderDomText* rnode );
 	void	GenerateTextWords( NodeState& s, TextRunState& ts );
 	void	GenerateTextOutput( NodeState& s, TextRunState& ts );
-	void	NextLine( NodeState& s, nuPos textHeight );
+	void	NextLine( NodeState& s );
 	nuPoint	PositionBlock( NodeState& s, nuBox& marginBox );
 	void	OffsetRecursive( nuRenderDomNode* rnode, nuPoint offset );
 

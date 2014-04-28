@@ -25,7 +25,7 @@ void nuMain( nuMainEvent ev );
 #define CLAMP(a,mmin,mmax) (((a) < (mmin) ? (mmin) : ((a) > (mmax) ? (mmax) : (a))))
 
 extern "C" {
-    JNIEXPORT void	JNICALL Java_com_android_nudom_NuLib_init(JNIEnv * env, jobject obj,  jint width, jint height);
+    JNIEXPORT void	JNICALL Java_com_android_nudom_NuLib_init(JNIEnv * env, jobject obj,  jint width, jint height, jfloat scaledDensity);
 	JNIEXPORT void	JNICALL Java_com_android_nudom_NuLib_surfacelost(JNIEnv * env, jobject obj);
     JNIEXPORT void	JNICALL Java_com_android_nudom_NuLib_destroy(JNIEnv * env, jint iskilling);
     JNIEXPORT int	JNICALL Java_com_android_nudom_NuLib_step(JNIEnv * env, jobject obj);
@@ -67,7 +67,7 @@ static void PostEvent( const nuEvent& ev )
 	ProcessAllEvents();
 }
 
-JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_init(JNIEnv * env, jobject obj, jint width, jint height)
+JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_init(JNIEnv * env, jobject obj, jint width, jint height, jfloat scaledDensity)
 {
     LOGI("NuLib_init 1 (%d, %d)", width, height);
 	if ( !Initialized )
@@ -76,6 +76,9 @@ JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_init(JNIEnv * env, jobject o
 	    
 		LOGI("NuLib_init 2");
 		nuInitialize();
+
+		LOGI("NuLib_init scaledDensity = %f", scaledDensity);
+		nuGlobal()->EpToPixel = scaledDensity;
 
 		LOGI("NuLib_init 3");
 		nuMain( nuMainEventInit );

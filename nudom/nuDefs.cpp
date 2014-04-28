@@ -204,11 +204,43 @@ NUAPI nuGlobalStruct* nuGlobal()
 	return nuGlobals;
 }
 
+static float ComputeEpToPixel()
+{
+#if NU_PLATFORM_WIN_DESKTOP
+	float scale = 1;
+	HDC dc = GetDC( NULL );
+	if ( dc != NULL )
+	{
+		int dpi = GetDeviceCaps( dc, LOGPIXELSX );
+		scale = (float) dpi / 96.0f;
+		ReleaseDC( NULL, dc );
+	}
+	return scale;
+#elif NU_PLATFORM_ANDROID
+	// nuGlobals->EpToPixel is injected by Java_com_android_nudom_NuLib_init after it calls nuInitialize()
+	return 1;
+#else
+	NUTODO_STATIC
+#endif
+}
+
+static void InitializePlatform()
+{
+#if NU_PLATFORM_WIN_DESKTOP
+	SetProcessDPIAware();
+#elif NU_PLATFORM_ANDROID
+#else
+	NUTODO_STATIC;
+#endif
+}
+
 NUAPI void nuInitialize()
 {
 	InitializeCount++;
 	if ( InitializeCount != 1 )
 		return;
+
+	InitializePlatform();
 
 	AbcMachineInformation minf;
 	AbcMachineInformationGet( minf );
@@ -216,8 +248,8 @@ NUAPI void nuInitialize()
 	nuGlobals = new nuGlobalStruct();
 	nuGlobals->TargetFPS = 60;
 	nuGlobals->NumWorkerThreads = min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
-	nuGlobals->MaxSubpixelGlyphSize = 30;
-	nuGlobals->PreferOpenGL = false;
+	nuGlobals->MaxSubpixelGlyphSize = 40;
+	nuGlobals->PreferOpenGL = true;
 	nuGlobals->EnableVSync = false;
 	// Freetype's output is linear coverage percentage, so if we treat our freetype texture as GL_LUMINANCE
 	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get perfect results without
@@ -241,6 +273,7 @@ NUAPI void nuInitialize()
 #endif
 	nuGlobals->EnableKerning = true;
 	nuGlobals->RoundLineHeights = nuGlobals->EnableSubpixelText;	// happens to be correlated with sub-pixel text, because with sub-pixel, we snap to vertical pixels (but not horz)
+	nuGlobals->EpToPixel = ComputeEpToPixel();
 	//nuGlobals->DebugZeroClonedChildList = true;
 	nuGlobals->MaxTextureID = ~((nuTextureID) 0);
 	nuGlobals->ClearColor.Set( 200, 0, 200, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node

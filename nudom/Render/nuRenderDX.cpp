@@ -293,6 +293,8 @@ bool nuRenderDX::CreateVertexLayout( nuDXProg* prog, ID3DBlob* vsBlob )
 	return true;
 }
 
+DISABLE_CODE_ANALYSIS_WARNINGS_PUSH_USING_FAILED_CALL_VALUE
+
 bool nuRenderDX::CompileShader( const char* name, const char* source, const char* shaderTarget, ID3DBlob** blob )
 {
 	//D3D_SHADER_MACRO macros[1] = {
@@ -317,6 +319,8 @@ bool nuRenderDX::CompileShader( const char* name, const char* source, const char
 
 	return true;
 }
+
+DISABLE_CODE_ANALYSIS_WARNINGS_POP
 
 bool nuRenderDX::SetupBuffers()
 {
@@ -419,7 +423,7 @@ bool nuRenderDX::SetShaderObjectUniforms()
 
 ID3D11Buffer* nuRenderDX::CreateBuffer( size_t sizeBytes, D3D11_USAGE usage, D3D11_BIND_FLAG bind, uint cpuAccess, const void* initialContent )
 {
-	ID3D11Buffer* buffer = NULL;
+	ID3D11Buffer* buffer = nullptr;
 	D3D11_BUFFER_DESC bd;
 	memset( &bd, 0, sizeof(bd) );
 	bd.ByteWidth = (UINT) sizeBytes;
@@ -432,7 +436,10 @@ ID3D11Buffer* nuRenderDX::CreateBuffer( size_t sizeBytes, D3D11_USAGE usage, D3D
 	sub.SysMemSlicePitch = 0;
 	HRESULT hr = D3D.Device->CreateBuffer( &bd, initialContent != NULL ? &sub : NULL, &buffer );
 	if ( !SUCCEEDED(hr) )
+	{
+		buffer = nullptr;
 		NUTRACE( "CreateBuffer failed: %08x", hr );
+	}
 	return buffer;
 }
 

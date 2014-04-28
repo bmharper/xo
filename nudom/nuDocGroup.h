@@ -7,6 +7,7 @@
 // It coordinates between DOM and Render threads.
 class NUAPI nuDocGroup
 {
+	DISALLOW_COPY_AND_ASSIGN(nuDocGroup);
 public:
 	nuDoc*				Doc;
 	nuSysWnd*			Wnd;

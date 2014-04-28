@@ -66,6 +66,7 @@ private:
 	const nuFont*	GetByFacename_Internal( const char* facename ) const;
 	nuFontID		Insert_Internal( const nuFont& font );
 	void			LoadFontConstants( nuFont& font );
+	void			LoadFontTweaks( nuFont& font );
 	const char*		FacenameToFilename( const char* facename );
 
 };

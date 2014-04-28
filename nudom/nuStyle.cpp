@@ -11,6 +11,7 @@ const nuStyleCategories nuInheritedStyleCategories[nuNumInheritedStyleCategories
 	nuCatFontFamily,
 	nuCatFontSize,
 	nuCatColor,
+	nuCatText_Align_Vertical,
 };
 
 static bool MATCH( const char* s, intp start, intp end, const char* truth )
@@ -55,6 +56,7 @@ inline bool IsWhitespace( char c )
 bool nuSize::Parse( const char* s, intp len, nuSize& v )
 {
 	// 1.23px
+	// 1.23ep
 	// 1.23pt
 	// 1.23%
 	// 0
@@ -101,6 +103,10 @@ bool nuSize::Parse( const char* s, intp len, nuSize& v )
 				nuParseFail( "Invalid size: %.*s", (int) len, s );
 				return false;
 			}
+		}
+		else if ( s[nondig] == 'e' && len - nondig >= 2 && s[nondig + 1] == 'p' )
+		{
+			x.Type = nuSize::EP;
 		}
 	}
 	v = x;
@@ -357,6 +363,7 @@ bool nuStyle::Parse( const char* t, nuDoc* doc )
 			else if ( MATCH(t, startk, eq, "box-sizing") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuBoxSizeParse, nuCatBoxSizing, *this ); }
 			else if ( MATCH(t, startk, eq, "font-size") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatFontSize, *this ); }
 			else if ( MATCH(t, startk, eq, "font-family") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &ParseFontFamily, nuCatFontFamily, *this ); }
+			else if ( MATCH(t, startk, eq, "text-align-vertical") )			{ ok = ParseSingleAttrib( TSTART, TLEN, &nuTextAlignVerticalParse, nuCatText_Align_Vertical, *this ); }
 			else
 			{
 				ok = false;
@@ -794,5 +801,12 @@ NUAPI bool nuBoxSizeParse( const char* s, intp len, nuBoxSizeType& t )
 	if ( MATCH(s, 0, len, "content") )	{ t = nuBoxSizeContent; return true; }
 	if ( MATCH(s, 0, len, "border") )	{ t = nuBoxSizeBorder; return true; }
 	if ( MATCH(s, 0, len, "margin") )	{ t = nuBoxSizeMargin; return true; }
+	return false;
+}
+
+NUAPI bool nuTextAlignVerticalParse( const char* s, intp len, nuTextAlignVertical& t )
+{
+	if ( MATCH(s, 0, len, "baseline") )	{ t = nuTextAlignVerticalBaseline; return true; }
+	if ( MATCH(s, 0, len, "top") )		{ t = nuTextAlignVerticalTop; return true; }
 	return false;
 }

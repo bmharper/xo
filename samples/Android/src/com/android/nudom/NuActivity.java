@@ -2,8 +2,8 @@ package com.android.nudom;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.WindowManager;
 import android.view.*;
 
 import java.io.File;
@@ -15,7 +15,11 @@ public class NuActivity extends Activity {
 
     @Override protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        mView = new NuView(getApplication());
+    	
+        DisplayMetrics metrics = new DisplayMetrics();
+    	getWindowManager().getDefaultDisplay().getMetrics(metrics);
+    	
+        mView = new NuView(getApplication(), metrics.scaledDensity);
         setContentView(mView);
     }
 

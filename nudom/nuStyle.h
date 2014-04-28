@@ -3,14 +3,13 @@
 #include "nuDefs.h"
 #include "nuString.h"
 
-// Represents a size that is zero, pixels, points, percent.
+// Represents a size that is zero, pixels, eye pixels, points, percent.
 // TODO: em
-// TODO: ap (angular pixel).. maybe call them "ep" for "eye pixel"
-// Or perhaps rename Pixels to DP, for DevicePixels.
 // Zero is represented as 0 pixels
+// See "layout" documentation for explanation of units.
 struct NUAPI nuSize
 {
-	enum	Types { NONE = 0, PX, PT, PERCENT };
+	enum	Types { NONE = 0, PX, PT, EP, PERCENT };
 	float 	Val;
 	Types 	Type;
 
@@ -18,6 +17,7 @@ struct NUAPI nuSize
 	static nuSize	Percent( float v )			{ nuSize s = {v, PERCENT}; return s; }
 	static nuSize	Points( float v )			{ nuSize s = {v, PT}; return s; }
 	static nuSize	Pixels( float v )			{ nuSize s = {v, PX}; return s; }
+	static nuSize	EyePixels( float v )		{ nuSize s = {v, EP}; return s; }
 	static nuSize	Zero()						{ nuSize s = {0, PX}; return s; }
 	static nuSize	Null()						{ nuSize s = {0, NONE}; return s; }
 
@@ -61,6 +61,12 @@ enum nuFlowAxis
 	nuFlowAxisHorizontal
 };
 
+enum nuTextAlignVertical
+{
+	nuTextAlignVerticalBaseline,	// Baseline is default
+	nuTextAlignVerticalTop			// This is unlikely to be useful, but having it proves that we *could* make other rules if proved useful
+};
+
 enum nuPositionType
 {
 	// All of these definitions are the same as HTML's
@@ -86,7 +92,7 @@ XY(Color) \
 XY(Display) \
 XY(Background) \
 XY(BackgroundImage) \
-XY(Dummy1_UseMe) \
+XY(Text_Align_Vertical) \
 XY(Dummy2_UseMe) \
 XY(Dummy3_UseMe) \
 XY(Margin_Left) \
@@ -133,7 +139,7 @@ inline nuStyleCategories nuCatMakeBaseBox( nuStyleCategories c ) { return (nuSty
 // Styles that are inherited by default
 // Generally it is text styles that are inherited
 // Inheritance means that child nodes inherit the styles of their parents
-const int						nuNumInheritedStyleCategories = 3;
+const int						nuNumInheritedStyleCategories = 4;
 extern const nuStyleCategories	nuInheritedStyleCategories[nuNumInheritedStyleCategories];
 
 /* Single style attribute (such as Margin-Left, Width, FontSize, etc).
@@ -176,6 +182,7 @@ public:
 	void SetFlowDirectionHorizonal( nuFlowDirection dir )		{ SetU32( nuCatFlow_Direction_Horizontal, dir ); }
 	void SetFlowDirectionVertical( nuFlowDirection dir )		{ SetU32( nuCatFlow_Direction_Vertical, dir ); }
 	void SetBoxSizing( nuBoxSizeType type )						{ SetU32( nuCatBoxSizing, type ); }
+	void SetTextAlignVertical( nuTextAlignVertical align )		{ SetU32( nuCatText_Align_Vertical, align ); }
 
 	// Generic Set() that is used by template code
 	void Set( nuStyleCategories cat, nuColor val )					{ SetColor( cat, val ); }
@@ -185,6 +192,7 @@ public:
 	void Set( nuStyleCategories cat, nuFlowAxis val )				{ SetFlowAxis( val ); }
 	void Set( nuStyleCategories cat, nuFlowDirection val )			{ SetU32( cat, val ); }
 	void Set( nuStyleCategories cat, nuBoxSizeType val )			{ SetBoxSizing( val ); }
+	void Set( nuStyleCategories cat, nuTextAlignVertical val )		{ SetTextAlignVertical( val ); }
 	void Set( nuStyleCategories cat, nuFontID val )					{ SetFont( val ); }
 	void Set( nuStyleCategories cat, const char* val, nuDoc* doc )	{ SetString( cat, val, doc ); }
 
@@ -201,6 +209,7 @@ public:
 	nuFlowDirection		GetFlowDirectionMajor() const		{ return (nuFlowDirection) ValU32; }
 	nuFlowDirection		GetFlowDirectionMinor() const		{ return (nuFlowDirection) ValU32; }
 	nuBoxSizeType		GetBoxSizing() const				{ return (nuBoxSizeType) ValU32; }
+	nuTextAlignVertical	GetTextAlignVertical() const		{ return (nuTextAlignVertical) ValU32; }
 
 	const char*			GetBackgroundImage( nuStringTable* strings ) const;
 	nuFontID			GetFont() const;
@@ -377,4 +386,5 @@ NUAPI bool nuPositionTypeParse( const char* s, intp len, nuPositionType& t );
 NUAPI bool nuFlowAxisParse( const char* s, intp len, nuFlowAxis& t );
 NUAPI bool nuFlowDirectionParse( const char* s, intp len, nuFlowDirection& t );
 NUAPI bool nuBoxSizeParse( const char* s, intp len, nuBoxSizeType& t );
+NUAPI bool nuTextAlignVerticalParse( const char* s, intp len, nuTextAlignVertical& t );
 

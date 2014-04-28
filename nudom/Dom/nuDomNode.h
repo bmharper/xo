@@ -7,6 +7,7 @@ Right now it's 128 bytes on Windows x64.
 */
 class NUAPI nuDomNode : public nuDomEl
 {
+	DISALLOW_COPY_AND_ASSIGN(nuDomNode);
 public:
 					nuDomNode( nuDoc* doc, nuTag tag );
 					virtual ~nuDomNode();
@@ -24,6 +25,7 @@ public:
 
 	nuDomEl*		AddChild( nuTag tag );
 	nuDomNode*		AddNode( nuTag tag );
+	nuDomText*		AddText( const char* txt = nullptr );
 	void			RemoveChild( nuDomEl* c );
 	void			RemoveAllChildren();
 	intp			ChildCount() const { return Children.size(); }

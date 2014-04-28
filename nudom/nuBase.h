@@ -112,6 +112,8 @@ typedef Vec4T<float> nuVec4f;
 #define FMT_STRING_LEN(s)	(s.Length())
 #include "../dependencies/Panacea/Strings/fmt.h"
 
+#include "warnings.h"
+
 #ifdef TEMP_ASSERT
 	#undef TEMP_ASSERT
 	#undef ASSERT

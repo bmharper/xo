@@ -147,8 +147,11 @@ nuFontID nuFontStore::Insert_Internal( const nuFont& font )
 	Fonts += copy;
 	FacenameToFontID.insert( copy->Facename, copy->ID );
 	LoadFontConstants( *copy );
+	LoadFontTweaks( *copy );
 	return copy->ID;
 }
+
+#define EM_TO_256(x) ((int32) ((x) * 256 / font.FTFace->units_per_EM))
 
 void nuFontStore::LoadFontConstants( nuFont& font )
 {
@@ -164,9 +167,25 @@ void nuFontStore::LoadFontConstants( nuFont& font )
 	}
 	else
 	{
-		font.LinearHoriAdvance_Space_x256 = ((int32) font.FTFace->glyph->linearHoriAdvance * 256) / font.FTFace->units_per_EM;
+		font.LinearHoriAdvance_Space_x256 = EM_TO_256(font.FTFace->glyph->linearHoriAdvance);
 	}
-	font.NaturalLineHeight_x256 = font.FTFace->height * 256 / font.FTFace->units_per_EM;
+	font.LineHeight_x256 = EM_TO_256(font.FTFace->height);
+	font.Ascender_x256 = EM_TO_256(font.FTFace->ascender);
+	font.Descender_x256 = EM_TO_256(font.FTFace->descender);
+}
+
+void nuFontStore::LoadFontTweaks( nuFont& font )
+{
+	// The default of 15 is a number taken from observations of a bunch of different fonts
+	// The auto hinter fails to produce clean horizontal stems when the text gets larger
+	// Times New Roman seems to look better at all sub-pixel sizes using the auto hinter.
+	// The Sans Serif fonts like Segoe UI seem to look better with the TT hinter at larger sizes.
+
+	if ( font.Facename == "Times New Roman" )
+		font.MaxAutoHinterSize = 30;
+
+	if ( font.Facename == "Microsoft Sans Serif" )
+		font.MaxAutoHinterSize = 14;
 }
 
 const char* nuFontStore::FacenameToFilename( const char* facename )

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -37,9 +38,12 @@ class NuView extends GLSurfaceView {
     private static final boolean DEBUG = false;
     public static final int RENDER_RESULT_NEED_MORE = 0;
     public static final int RENDER_RESULT_IDLE = 1;
+    
+    public float scaledDensity;
 
-    public NuView(Context context) {
+    public NuView(Context context, float scaledDensity) {
         super(context);
+    	this.scaledDensity = scaledDensity;
         init(false, 0, 0);
     }
 
@@ -289,12 +293,12 @@ class NuView extends GLSurfaceView {
     private class NuRenderer implements GLSurfaceView.Renderer {
     	public NuView myView;
     	
-    	public NuRenderer( NuView view ) {
+    	public NuRenderer(NuView view) {
     		myView = view;
     	}
     	
         public void onSurfaceChanged(GL10 gl, int width, int height) {
-            NuLib.init(width, height);
+            NuLib.init(width, height, myView.scaledDensity);
         }
 
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {

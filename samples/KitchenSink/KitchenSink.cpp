@@ -28,6 +28,48 @@ void nuMain( nuMainEvent ev )
 	}
 }
 
+void DoBaselineAlignment( nuDoc* doc )
+{
+	// Text DOM elements cannot define styles on themselves - they MUST inherit all of their styling from
+	// their parents. Therefore, if you want different font styles on the same line, then you must wrap
+	// those different styles in DOM Nodes. This example demonstrates that the "baseline" position is
+	// preserved when entering those DOM Nodes. If this were not true, then the baselines of the different
+	// sized text elements would not line up.
+
+	auto root = &doc->Root;
+	root->StyleParse( "padding: 10px;" );
+	root->StyleParse( "background: #ddd" );
+	//root->StyleParse( "text-align-vertical: top" );
+
+	if (1)
+	{
+		auto txt1 = root->AddNode( nuTagDiv );
+		txt1->StyleParse( "font-size: 38px; font-family: Microsoft Sans Serif; background: #fff0f0" );
+		txt1->SetText( "H" );
+		
+		auto txt2 = root->AddNode( nuTagDiv );
+		txt2->StyleParse( "font-size: 13px; font-family: Microsoft Sans Serif; background: #f0fff0" );
+		txt2->SetText( "ello." );
+		
+		auto txt3 = root->AddNode( nuTagDiv );
+		txt3->StyleParse( "font-size: 18px; font-family: Times New Roman; background: #f0f0ff" );
+		txt3->SetText( " More times at a smaller size." );
+	}
+
+	// ramp of 'e' characters from 8 to 30 pixels
+	if (1)
+	{
+		root->StyleParse( "font-family: Microsoft Sans Serif; background: #fff" );
+		
+		for ( int size = 8; size < 30; size++ )
+		{
+			auto txt = root->AddNode( nuTagDiv );
+			txt->StyleParse( fmt("font-size: %dpx", size).Z );
+			txt->SetText( "e" );
+		}
+	}
+}
+
 void DoTwoTextRects( nuDoc* doc )
 {
 	if (1)
@@ -79,7 +121,7 @@ void DoBlockMargins( nuDoc* doc )
 void DoLongText( nuDoc* doc )
 {
 	auto div = doc->Root.AddNode( nuTagDiv );
-	div->StyleParse( "padding: 10px; width: 500px; font-family: Times New Roman; font-size: 18px; color: #333;" );
+	div->StyleParse( "padding: 10px; width: 500px; font-family: Times New Roman; font-size: 19px; color: #333;" );
 	div->SetText(
 		"It is an ancient Mariner,\n"
 		"And he stoppeth one of three.\n"
@@ -103,9 +145,10 @@ void InitDOM( nuDoc* doc )
 	nuDomNode* body = &doc->Root;
 	body->StyleParse( "font-family: Segoe UI, Droid Sans" );
 
-	//DoTwoTextRects( doc );
+	//DoBaselineAlignment( doc );
+	DoTwoTextRects( doc );
 	//DoBlockMargins( doc );
-	DoLongText( doc );
+	//DoLongText( doc );
 
 	body->OnClick( [](const nuEvent& ev) -> bool {
 		nuGlobal()->EnableKerning = !nuGlobal()->EnableKerning;

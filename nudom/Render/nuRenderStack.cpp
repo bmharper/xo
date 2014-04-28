@@ -37,7 +37,7 @@ void nuRenderStack::Initialize( const nuDoc* doc, nuPool* pool )
 	Defaults[nuCatDisplay].SetDisplay( nuDisplayInline );
 	Defaults[nuCatBackground].SetColor( nuCatBackground, nuColor::RGBA(0,0,0,0) );
 	//Defaults[nuCatBackgroundImage]
-	//Defaults[nuCatDummy1_UseMe]
+	Defaults[nuCatText_Align_Vertical].SetTextAlignVertical( nuTextAlignVerticalBaseline );
 	//Defaults[nuCatDummy2_UseMe]
 	//Defaults[nuCatDummy3_UseMe]
 	Defaults[nuCatMargin_Left].SetSize( nuCatMargin_Left, nuSize::Zero() );
