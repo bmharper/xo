@@ -1,4 +1,5 @@
 #pragma once
+#if NU_BUILD_OPENGL
 
 #include "../../Render/nuRenderGL_Defs.h"
 
@@ -15,4 +16,6 @@ public:
 	virtual nuVertexType	VertexType();				// Only meaningful on DirectX
 
 };
+
+#endif // NU_BUILD_OPENGL
 

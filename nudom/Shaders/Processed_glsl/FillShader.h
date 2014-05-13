@@ -1,4 +1,5 @@
 #pragma once
+#if NU_BUILD_OPENGL
 
 #include "../../Render/nuRenderGL_Defs.h"
 
@@ -18,4 +19,6 @@ public:
 	GLint v_vpos;             // attribute vec4
 	GLint v_vcolor;           // attribute vec4
 };
+
+#endif // NU_BUILD_OPENGL
 

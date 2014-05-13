@@ -60,7 +60,7 @@ protected:
 	nuShaders		ActiveShader;
 	int				FBWidth, FBHeight;
 	GLuint			BoundTextures[nuMaxTextureUnits];
-	nuPreprocessor	Preprocessor;
+	//nuPreprocessor	Preprocessor;
 	std::string		BaseShader;
 	bool			Have_Unpack_RowLength;
 	bool			Have_sRGB_Framebuffer;

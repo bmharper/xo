@@ -1,4 +1,5 @@
 #include "pch.h"
+#if NU_BUILD_OPENGL
 #include "RectShader.h"
 
 nuGLProg_Rect::nuGLProg_Rect()
@@ -118,4 +119,5 @@ nuVertexType nuGLProg_Rect::VertexType()
 	return nuVertexType_NULL;
 }
 
+#endif // NU_BUILD_OPENGL
 

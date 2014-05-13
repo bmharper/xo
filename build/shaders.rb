@@ -11,8 +11,9 @@ Eventually I'd like to incorporate this into the tundra build.
 
 =end
 
-CombinedBaseH = <<-END
+CombinedBaseH_Start = <<-END
 #pragma once
+#if IF_BUILD
 
 #include "../../Render/nuRenderGLDX_Defs.h"
 
@@ -30,8 +31,15 @@ public:
 
 END
 
+CombinedBaseH_End = <<-END
+};
+
+#endif // IF_BUILD
+END
+
 CombinedBaseCpp = <<-END
 #include "pch.h"
+#if IF_BUILD
 #include "NAMEShader.h"
 
 nuGLDXProg_NAME::nuGLDXProg_NAME()
@@ -81,7 +89,9 @@ nuVertexType nuGLDXProg_NAME::VertexType()
 	return VERTEX_TYPE;
 }
 
+#endif // IF_BUILD
 END
+
 
 # nature:	uniform, attribute
 # type:		vec2, vec3, vec4, mat2, mat3, mat4
@@ -111,6 +121,10 @@ end
 
 def ext2name(ext)
 	return ext == "hlsl" ? "DX" : "GL"
+end
+
+def ext2namelong(ext)
+	return ext == "hlsl" ? "DIRECTX" : "OPENGL"
 end
 
 def escape_txt(txt)
@@ -177,26 +191,32 @@ def gen_combined(common, ext, vert, frag, name, filename_base)
 
 	platforms[:nuPlatform_All] = 1 if platforms.length == 0
 
+	replace = lambda { |txt|
+		rep = txt
+		rep = rep.gsub("NAMEUC", name.upcase)
+		rep = rep.gsub("NAME", name)
+		rep = rep.gsub("GLDX", ext2name(ext))
+		rep = rep.gsub("VERT_SRC", escape_txt(vert_src))
+		rep = rep.gsub("FRAG_SRC", escape_txt(frag_src))
+		rep = rep.gsub("IF_BUILD", "NU_BUILD_" + ext2namelong(ext))
+		rep = rep.gsub("PLATFORM_MASK", platforms.keys.join(" | "))
+		rep = rep.gsub("VERTEX_TYPE", vertex_type)
+		return rep
+	}
+
 	File.open(filename_base + ".h", "w") { |file|
-		txt = CombinedBaseH + ""
-		txt.gsub!("NAMEUC", name.upcase)
-		txt.gsub!("NAME", name)
-		txt.gsub!("GLDX", ext2name(ext))
+		txt = CombinedBaseH_Start + ""
 		variables.each { |var|
 			txt << "\tGLint v_#{var.name}; #{' ' * (15 - var.name.length)} // #{var.nature} #{var.type}\n"
 		}
-		txt << "};\n"
+		txt << CombinedBaseH_End
+		txt = replace.call(txt)
 		file << txt
 		file << "\n"
 	}
 
 	File.open(filename_base + ".cpp", "w") { |file|
 		txt = CombinedBaseCpp + ""
-		txt.gsub!("NAMEUC", name.upcase)
-		txt.gsub!("NAME", name)
-		txt.gsub!("GLDX", ext2name(ext))
-		txt.gsub!("VERT_SRC", escape_txt(vert_src))
-		txt.gsub!("FRAG_SRC", escape_txt(frag_src))
 		load_func_body = ""
 		reset = ""
 		variables.each { |var|
@@ -212,10 +232,9 @@ def gen_combined(common, ext, vert, frag, name, filename_base)
 		load_func_body << "\tif ( nfail != 0 )\n"
 		load_func_body << "\t\tNUTRACE( \"Failed to bind %d variables of shader #{name}\\n\", nfail );\n"
 		reset.rstrip!
+		txt = replace.call(txt)
 		txt.gsub!("RESET", reset)
 		txt.gsub!("LOAD_FUNC_BODY", load_func_body)
-		txt.gsub!("PLATFORM_MASK", platforms.keys.join(" | "))
-		txt.gsub!("VERTEX_TYPE", vertex_type)
 		file << txt
 		file << "\n"
 	}

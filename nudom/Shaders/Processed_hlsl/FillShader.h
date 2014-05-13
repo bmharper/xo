@@ -1,4 +1,5 @@
 #pragma once
+#if NU_BUILD_DIRECTX
 
 #include "../../Render/nuRenderDX_Defs.h"
 
@@ -15,4 +16,6 @@ public:
 	virtual nuVertexType	VertexType();				// Only meaningful on DirectX
 
 };
+
+#endif // NU_BUILD_DIRECTX
 

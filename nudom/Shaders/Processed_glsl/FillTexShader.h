@@ -1,4 +1,5 @@
 #pragma once
+#if NU_BUILD_OPENGL
 
 #include "../../Render/nuRenderGL_Defs.h"
 
@@ -20,4 +21,6 @@ public:
 	GLint v_vtexuv0;          // attribute vec2
 	GLint v_tex0;             // uniform sampler2D
 };
+
+#endif // NU_BUILD_OPENGL
 

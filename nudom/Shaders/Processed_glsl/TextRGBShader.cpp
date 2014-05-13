@@ -1,4 +1,5 @@
 #include "pch.h"
+#if NU_BUILD_OPENGL
 #include "TextRGBShader.h"
 
 nuGLProg_TextRGB::nuGLProg_TextRGB()
@@ -132,4 +133,5 @@ nuVertexType nuGLProg_TextRGB::VertexType()
 	return nuVertexType_NULL;
 }
 
+#endif // NU_BUILD_OPENGL
 

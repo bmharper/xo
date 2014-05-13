@@ -247,7 +247,7 @@ NUAPI void nuInitialize()
 
 	nuGlobals = new nuGlobalStruct();
 	nuGlobals->TargetFPS = 60;
-	nuGlobals->NumWorkerThreads = min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
+	nuGlobals->NumWorkerThreads = std::min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
 	nuGlobals->MaxSubpixelGlyphSize = 40;
 	nuGlobals->PreferOpenGL = true;
 	nuGlobals->EnableVSync = false;

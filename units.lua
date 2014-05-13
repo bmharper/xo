@@ -283,6 +283,19 @@ local HelloWorld = Program {
 	}
 }
 
+local HelloAmalgamation = Program {
+	Name = "HelloAmalgamation",
+	Includes = { "nudom" },
+	Depends = {
+		crt,
+	},
+	Sources = {
+		"amalgamation/nuDom-amalgamation.cpp",
+		"templates/nuWinMain.cpp",
+		"samples/HelloAmalgamation/HelloAmalgamation.cpp",
+	}
+}
+
 local KitchenSink = Program {
 	Name = "KitchenSink",
 	Includes = { "nudom" },

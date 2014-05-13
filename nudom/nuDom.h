@@ -1,7 +1,13 @@
 #pragma once
 
 #include "nuApiDecl.h"
+#include "nuBase_SystemIncludes.h"
 #include "nuBase.h"
+#include "nuBase_LocalIncludes.h"
+#include "nuBase_Vector.h"
+#include "nuBase_Fmt.h"
+#include "nuString.h"
+#include "../dependencies/Panacea/Strings/fmt.h"
 
 #ifdef _WIN32
 #pragma warning( push )
@@ -18,7 +24,7 @@
 #include "Image/nuImage.h"
 #include "nuSysWnd.h"
 #include "nuEvent.h"
-#include "Shaders/Helpers/nuPreprocessor.h"
+//#include "Shaders/Helpers/nuPreprocessor.h"
 
 #ifdef _WIN32
 #pragma warning( pop )

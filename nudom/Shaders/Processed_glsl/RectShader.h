@@ -1,4 +1,5 @@
 #pragma once
+#if NU_BUILD_OPENGL
 
 #include "../../Render/nuRenderGL_Defs.h"
 
@@ -21,4 +22,6 @@ public:
 	GLint v_box;              // uniform vec4
 	GLint v_vport_hsize;      // uniform vec2
 };
+
+#endif // NU_BUILD_OPENGL
 

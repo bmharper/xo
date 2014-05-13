@@ -1,4 +1,5 @@
 #include "pch.h"
+#if NU_BUILD_OPENGL
 #include "nuRenderGL.h"
 #include "../Image/nuImage.h"
 #include "nuTextureAtlas.h"
@@ -125,7 +126,9 @@ static bool nuBootGL( HWND wnd )
 
 	return true;
 }
+#endif
 
+#if NU_PLATFORM_WIN_DESKTOP
 bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
 {
 	if ( !GLIsBooted )
@@ -187,15 +190,15 @@ bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
 	GLRC = rc;
 	return GLRC != NULL;
 }
-#endif
-
-#if NU_PLATFORM_ANDROID
+#elif NU_PLATFORM_ANDROID
 bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
 {
 	if ( !CreateShaders() )
 		return false;
 	return true;
 }
+#else
+NUTODO_STATIC
 #endif
 
 void nuRenderGL::CheckExtensions()
@@ -807,3 +810,4 @@ void nuRenderGL::Check()
 	//NUASSERT( glGetError() == GL_NO_ERROR );
 }
 
+#endif

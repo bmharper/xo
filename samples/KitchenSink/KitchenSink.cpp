@@ -64,7 +64,7 @@ void DoBaselineAlignment( nuDoc* doc )
 		for ( int size = 8; size < 30; size++ )
 		{
 			auto txt = root->AddNode( nuTagDiv );
-			txt->StyleParse( fmt("font-size: %dpx", size).Z );
+			txt->StyleParse( fmt("font-size: %dpx; background: #f0f0f0", size).Z );
 			txt->SetText( "e" );
 		}
 	}
@@ -77,7 +77,8 @@ void DoTwoTextRects( nuDoc* doc )
 		nuDomNode* div = doc->Root.AddNode( nuTagDiv );
 		div->StyleParse( "width: 90px; height: 90px; background: #faa; margin: 4px" );
 		div->StyleParse( "font-size: 13px" );
-		div->SetText( "Ave quick brown fox jumps over the lazy dog.\nText wrap and kerning." );
+		//div->StyleParse( "text-align-vertical: top" );
+		div->SetText( "Ave quick brown fox jumps over the lazy dog.\nText wrap and kerning. >>" );
 	}
 
 	if (1)
@@ -99,12 +100,12 @@ void DoBlockMargins( nuDoc* doc )
 	// It would be 4 pixels between blocks if we collapsed margins, but we don't do that.
 	if (1)
 	{
-		for ( int i = 0; i < 30; i++ )
+		for ( int i = 0; i < 20; i++ )
 		{
 			nuDomNode* div = doc->Root.AddNode( nuTagDiv );
 			div->StyleParse( "width: 150px; height: 80px; background: #faa8; margin: 4px; border-radius: 5px;" );
 			div->StyleParse( "font-size: 13px" );
-			div->SetText( fmt("\n\n   block %v", i).Z );
+			div->SetText( fmt("  block %v", i).Z );
 		}
 	}
 
@@ -145,8 +146,8 @@ void InitDOM( nuDoc* doc )
 	nuDomNode* body = &doc->Root;
 	body->StyleParse( "font-family: Segoe UI, Droid Sans" );
 
-	//DoBaselineAlignment( doc );
-	DoTwoTextRects( doc );
+	DoBaselineAlignment( doc );
+	//DoTwoTextRects( doc );
 	//DoBlockMargins( doc );
 	//DoLongText( doc );
 

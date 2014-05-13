@@ -81,6 +81,8 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 	
 	NUTRACE_LAYOUT( "Layout (%d) Run 2\n", node.GetInternalID() );
 	rnode->InternalID = node.GetInternalID();
+	if ( rnode->InternalID == 50 )
+		int abc = 123;
 
 	//auto display = Stack.Get( nuCatDisplay ).GetDisplayType();
 	auto position = Stack.Get( nuCatPosition ).GetPositionType();
@@ -188,6 +190,8 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 			rnode->Children += rchild;
 			RunNode( cs, *static_cast<const nuDomNode*>(child), rchild );
 		}
+		if ( s.PosBaselineY == nuPosNULL )
+			s.PosBaselineY = cs.PosBaselineY;
 	}
 
 	// this is a guess
@@ -202,13 +206,18 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 	{
 		nuPoint offset = PositionBlock( s, marginBox );
 		if ( offset != nuPoint(0,0) )
+		{
 			OffsetRecursive( rnode, offset );
+			if ( s.PosBaselineY != nuPosNULL )
+				s.PosBaselineY += offset.Y;
+		}
 	}
 
 	NUTRACE_LAYOUT( "Layout (%d) marginBox: %d,%d,%d,%d\n", node.GetInternalID(), marginBox.Left, marginBox.Top, marginBox.Right, marginBox.Bottom );
 
 	s.PosMaxY = nuMax( s.PosMaxY, marginBox.Bottom );
-	s.PosBaselineY = cs.PosBaselineY;
+	//if ( s.PosBaselineY == nuPosNULL )
+	//	s.PosBaselineY = cs.PosBaselineY;
 
 	Stack.StackPop();
 }

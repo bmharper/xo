@@ -1,4 +1,5 @@
 #pragma once
+#if NU_BUILD_OPENGL
 
 #include "../nuDefs.h"
 #include "nuVertexTypes.h"
@@ -28,3 +29,4 @@ protected:
 	void					ResetBase();
 };
 
+#endif

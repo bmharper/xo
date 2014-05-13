@@ -1,4 +1,5 @@
 #include "pch.h"
+#if NU_BUILD_OPENGL
 #include "TextWholeShader.h"
 
 nuGLProg_TextWhole::nuGLProg_TextWhole()
@@ -83,4 +84,5 @@ nuVertexType nuGLProg_TextWhole::VertexType()
 	return nuVertexType_NULL;
 }
 
+#endif // NU_BUILD_OPENGL
 

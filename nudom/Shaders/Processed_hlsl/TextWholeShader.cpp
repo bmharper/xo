@@ -1,4 +1,5 @@
 #include "pch.h"
+#if NU_BUILD_DIRECTX
 #include "TextWholeShader.h"
 
 nuDXProg_TextWhole::nuDXProg_TextWhole()
@@ -168,4 +169,5 @@ nuVertexType nuDXProg_TextWhole::VertexType()
 	return nuVertexType_PTC;
 }
 
+#endif // NU_BUILD_DIRECTX
 

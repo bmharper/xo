@@ -1,4 +1,5 @@
 #include "pch.h"
+#if NU_BUILD_DIRECTX
 #include "TextRGBShader.h"
 
 nuDXProg_TextRGB::nuDXProg_TextRGB()
@@ -213,4 +214,5 @@ nuVertexType nuDXProg_TextRGB::VertexType()
 	return nuVertexType_PTCV4;
 }
 
+#endif // NU_BUILD_DIRECTX
 

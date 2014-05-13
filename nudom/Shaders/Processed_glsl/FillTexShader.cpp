@@ -1,4 +1,5 @@
 #include "pch.h"
+#if NU_BUILD_OPENGL
 #include "FillTexShader.h"
 
 nuGLProg_FillTex::nuGLProg_FillTex()
@@ -81,4 +82,5 @@ nuVertexType nuGLProg_FillTex::VertexType()
 	return nuVertexType_NULL;
 }
 
+#endif // NU_BUILD_OPENGL
 

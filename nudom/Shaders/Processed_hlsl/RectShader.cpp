@@ -1,4 +1,5 @@
 #include "pch.h"
+#if NU_BUILD_DIRECTX
 #include "RectShader.h"
 
 nuDXProg_Rect::nuDXProg_Rect()
@@ -187,4 +188,5 @@ nuVertexType nuDXProg_Rect::VertexType()
 	return nuVertexType_PTC;
 }
 
+#endif // NU_BUILD_DIRECTX
 

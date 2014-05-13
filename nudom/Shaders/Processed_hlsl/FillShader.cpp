@@ -1,4 +1,5 @@
 #include "pch.h"
+#if NU_BUILD_DIRECTX
 #include "FillShader.h"
 
 nuDXProg_Fill::nuDXProg_Fill()
@@ -163,4 +164,5 @@ nuVertexType nuDXProg_Fill::VertexType()
 	return nuVertexType_PTC;
 }
 
+#endif // NU_BUILD_DIRECTX
 

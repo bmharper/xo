@@ -1,4 +1,5 @@
 #include "pch.h"
+#if NU_BUILD_OPENGL
 #include "nuRenderGL_Defs.h"
 
 nuGLProg::nuGLProg()
@@ -18,3 +19,5 @@ void			nuGLProg::ResetBase()				{ Vert = Frag = Prog = 0; }
 bool			nuGLProg::LoadVariablePositions()	{ return false; }
 uint32			nuGLProg::PlatformMask()			{ return nuPlatform_All; }
 nuVertexType	nuGLProg::VertexType()				{ return nuVertexType_NULL; }
+
+#endif

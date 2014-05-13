@@ -1,7 +1,5 @@
 #pragma once
 
-//#include "nuDefs.h"
-
 #ifdef _WIN32
 #pragma warning( push )
 #pragma warning( disable: 4345 )	// POD constructed with () is default-initialized
@@ -36,8 +34,6 @@ protected:
 	void	Alloc( uintp chars );
 	void	Free();
 };
-
-//FHASH_SETUP_CLASS_GETHASHCODE( nuStringRaw, nuStringRaw );
 
 // This is the classic thing you'd expect from a string. The destructor will free the memory.
 class NUAPI nuString : public nuStringRaw
