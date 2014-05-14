@@ -86,7 +86,7 @@ local directx = ExternalLibrary {
 	Name = "directx",
 	Propagate = {
 		Libs = {
-			{ "D3D11.lib", "d3dcompiler.lib", { Config = directxFilter } },
+			{ "D3D11.lib", "d3dcompiler.lib"; Config = directxFilter },
 		},
 	},
 }
@@ -195,7 +195,10 @@ local hlslang = Program {
 
 local nudom = SharedLibrary {
 	Name = "nudom",
-	Libs = { "opengl32.lib", "user32.lib", "gdi32.lib", "winmm.lib", "freetype.lib" },
+	Libs = { 
+		{ "opengl32.lib", "user32.lib", "gdi32.lib", "winmm.lib" ; Config = "win*" },
+		{ "X11", "GL", "GLU", "stdc++"; Config = "linux-*" },
+	},
 	SourceDir = ".",
 	Includes = {
 		"nudom",
@@ -267,7 +270,7 @@ local nudom = SharedLibrary {
 		"dependencies/Panacea/Strings/fmt.cpp",
 		"dependencies/GL/gl_nudom.cpp",
 		{ "dependencies/GL/wgl_nudom.cpp"; Config = "win*" },
-		{ "dependencies/GL/glx_nudom.cpp"; Config = "linux*" },
+		{ "dependencies/GL/glx_nudom.cpp"; Config = "linux-gcc-debug-default" },
 		"dependencies/stb_image.cpp",
 	},
 }
@@ -275,6 +278,8 @@ local nudom = SharedLibrary {
 local HelloWorld = Program {
 	Name = "HelloWorld",
 	Includes = { "nudom" },
+	--Libs = { "X11", "GL", "GLU", "stdc++", "pthread", "rt"; Config = "linux-*" },
+	Libs = { "stdc++"; Config = "linux-*" },
 	Depends = {
 		crt,
 		nudom

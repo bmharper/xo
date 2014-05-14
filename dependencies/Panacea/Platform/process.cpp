@@ -5,6 +5,8 @@
 
 #ifdef _WIN32
 #include <Psapi.h>
+#else
+#include <unistd.h>
 #endif
 
 #ifndef _WIN32

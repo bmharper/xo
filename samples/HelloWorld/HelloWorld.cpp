@@ -1,4 +1,4 @@
-#include "../../nuDom/nuDom.h"
+#include "../../nudom/nuDom.h"
 
 static nuSysWnd* MainWnd;
 

@@ -274,5 +274,3 @@ int glx_LoadFunctions(Display *display, int screen)
 	ProcExtsFromExtString((const char *)glXQueryExtensionsString(display, screen));
 	return glx_LOAD_SUCCEEDED;
 }
-
-

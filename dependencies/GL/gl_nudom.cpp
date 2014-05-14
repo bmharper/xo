@@ -1275,5 +1275,3 @@ int ogl_IsVersionGEQ(int majorVersion, int minorVersion)
 	if(minorVersion >= g_minor_version) return 1;
 	return 0;
 }
-
-
