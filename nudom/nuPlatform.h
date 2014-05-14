@@ -55,7 +55,7 @@ enum nuPlatform
 	#define NU_PLATFORM_WIN_DESKTOP		0
 	#define NU_PLATFORM_LINUX_DESKTOP	1
 	#define NU_PLATFORM					nuPlatform_LinuxDesktop
-	#define NUTRACE_WRITE(msg)			fputs(stderr, msg)
+	#define NUTRACE_WRITE(msg)			fputs(msg, stderr)
 #else
 	#ifdef _MSC_VER
 		#pragma error( "Unknown nuDom platform" )

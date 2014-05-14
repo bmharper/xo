@@ -197,6 +197,15 @@ bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
 		return false;
 	return true;
 }
+#elif NU_PLATFORM_LINUX_DESKTOP
+bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
+{
+	int rload = glx_LoadFunctions( wnd.XDisplay, 0 );
+	NUTRACE( "glx_LoadFunction: %d\n", rload );
+	if ( !CreateShaders() )
+		return false;
+	return true;
+}
 #else
 NUTODO_STATIC
 #endif
@@ -386,6 +395,10 @@ bool nuRenderGL::BeginRender( nuSysWnd& wnd )
 		}
 	}
 	return false;
+#elif NU_PLATFORM_ANDROID
+	return true
+#elif NU_PLATFORM_LINUX_DESKTOP
+	glXMakeCurrent( wnd.XDisplay, wnd.XWindow, wnd.GLContext );
 #else
 	return true;
 #endif
@@ -399,6 +412,12 @@ void nuRenderGL::EndRender( nuSysWnd& wnd )
 	wglMakeCurrent( NULL, NULL );
 	ReleaseDC( wnd.SysWnd, DC );
 	DC = NULL;
+	NUTRACE_LATENCY( "SwapBuffers (done)\n" );
+#elif NU_PLATFORM_ANDROID
+#elif NU_PLATFORM_LINUX_DESKTOP
+	NUTRACE_LATENCY( "SwapBuffers (begin)\n" );
+	glXSwapBuffers( wnd.XDisplay, wnd.XWindow );
+	glXMakeCurrent( wnd.XDisplay, None, NULL );
 	NUTRACE_LATENCY( "SwapBuffers (done)\n" );
 #endif
 }

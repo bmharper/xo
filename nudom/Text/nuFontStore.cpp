@@ -115,6 +115,8 @@ nuFontID nuFontStore::GetFallbackFontID()
 	fid = InsertByFacename( "Arial" );
 #elif NU_PLATFORM_ANDROID
 	fid = InsertByFacename( "Droid Sans" );
+#elif NU_PLATFORM_LINUX_DESKTOP
+	fid = InsertByFacename( "Arial" );
 #else
 	NUTODO_STATIC;
 #endif

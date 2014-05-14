@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "nuDefs.h"
 #include "nuDocGroup.h"
+#include "nuSysWnd.h"
 
 #if NU_PLATFORM_WIN_DESKTOP
 
@@ -90,6 +91,42 @@ NUAPI void nuRunWin32MessageLoop()
 	}
 
 	//timeEndPeriod( 5 );
+}
+
+#elif NU_PLATFORM_LINUX_DESKTOP
+
+extern nuSysWnd* SingleMainWnd;
+
+NUAPI void nuRunXMessageLoop()
+{
+	while(1)
+	{
+		XEvent xev;
+		XNextEvent( SingleMainWnd->XDisplay, &xev );
+        
+		if ( xev.type == Expose )
+		{
+			/*
+			XWindowAttributes wa;
+			XGetWindowAttributes( SingleMainWnd->XDisplay, SingleMainWnd->Window, &wa );
+			glXMakeCurrent( SingleMainWnd->XDisplay, SingleMainWnd->Window, SingleMainWnd->GLContext );
+			glViewport( 0, 0, gwa.width, gwa.height );
+			//DrawAQuad(); 
+			//glXSwapBuffers(dpy, win);
+			glXMakeCurrent( SingleMainWnd->XDisplay, None, Null );
+			*/
+		}
+		else if ( xev.type == KeyPress )
+		{
+			NUTRACE( "key = %d\n", xev.xkey.keycode );
+			for ( int i = 0; i < nuGlobal()->Docs.size(); i++ )
+			{
+				nuRenderResult rr = nuGlobal()->Docs[i]->Render();
+				//if ( rr != nuRenderResultIdle )
+				//	renderIdle = false;
+			}
+		}
+	}
 }
 
 #endif

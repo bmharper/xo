@@ -8,7 +8,10 @@
 static const char*		WClass = "nuDom";
 
 #if NU_PLATFORM_ANDROID
-nuSysWnd*				MainWnd = NULL;
+nuSysWnd*				SingleMainWnd = NULL;
+#elif NU_PLATFORM_LINUX_DESKTOP
+// TODO: multiple windows
+nuSysWnd*				SingleMainWnd = NULL;
 #endif
 
 void nuSysWnd::PlatformInitialize()
@@ -32,6 +35,7 @@ void nuSysWnd::PlatformInitialize()
 
 	ATOM wclass_atom = RegisterClassEx(&wcex);
 #elif NU_PLATFORM_ANDROID
+#elif NU_PLATFORM_LINUX_DESKTOP
 #else
 	NUTODO_STATIC
 #endif
@@ -42,8 +46,18 @@ nuSysWnd::nuSysWnd()
 #if NU_PLATFORM_WIN_DESKTOP
 	SysWnd = NULL;
 #elif NU_PLATFORM_ANDROID
-	MainWnd = this;
+	SingleMainWnd = this;
 	RelativeClientRect = nuBox(0,0,0,0);
+#elif NU_PLATFORM_LINUX_DESKTOP
+	XDisplay = NULL;
+	//XWindowRoot = NULL;
+	VisualInfo = NULL;
+	//ColorMap = NULL;
+	//SetWindowAttributes = NULL;
+	//XWindow = NULL;
+	GLContext = NULL;
+	//WindowAttributes = NULL;
+	//Event = NULL;
 #else
 	NUTODO_STATIC
 #endif
@@ -63,7 +77,16 @@ nuSysWnd::~nuSysWnd()
 	}
 	DestroyWindow( SysWnd );
 #elif NU_PLATFORM_ANDROID
-	MainWnd = NULL;
+	SingleMainWnd = NULL;
+#elif NU_PLATFORM_LINUX_DESKTOP
+	if ( XDisplay != nullptr )
+	{
+		glXMakeCurrent( XDisplay, None, NULL );
+		glXDestroyContext( XDisplay, GLContext );
+		XDestroyWindow( XDisplay, XWindow );
+		XCloseDisplay( XDisplay );
+	}
+	SingleMainWnd = NULL;
 #else
 	NUTODO_STATIC
 #endif
@@ -93,6 +116,28 @@ nuSysWnd* nuSysWnd::Create()
 	nuSysWnd* w = new nuSysWnd();
 	w->InitializeRenderer();
 	return w;
+#elif NU_PLATFORM_LINUX_DESKTOP
+	GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None };
+	nuSysWnd* w = new nuSysWnd();
+	w->XDisplay = XOpenDisplay( NULL );
+	if ( w->XDisplay == NULL ) { NUTRACE("Cannot connect to X server\n" ); delete w; return nullptr; }
+	w->XWindowRoot = DefaultRootWindow( w->XDisplay );
+	w->VisualInfo = glXChooseVisual( w->XDisplay, 0, att );
+	if ( w->VisualInfo == NULL ) { NUTRACE("no appropriate visual found\n" ); delete w; return nullptr; }
+	NUTRACE( "visual %p selected\n", (void*) w->VisualInfo->visualid );
+	w->ColorMap = XCreateColormap( w->XDisplay, w->XWindowRoot, w->VisualInfo->visual, AllocNone );
+	XSetWindowAttributes swa;
+	swa.colormap = w->ColorMap;
+	swa.event_mask = ExposureMask | KeyPressMask;
+	w->XWindow = XCreateWindow( w->XDisplay, w->XWindowRoot, 0, 0, 600, 600, 0, w->VisualInfo->depth, InputOutput, w->VisualInfo->visual, CWColormap | CWEventMask, &swa );
+	XMapWindow( w->XDisplay, w->XWindow );
+	XStoreName( w->XDisplay, w->XWindow, "nudom" );
+	w->GLContext = glXCreateContext( w->XDisplay, w->VisualInfo, NULL, GL_TRUE );
+	glXMakeCurrent( w->XDisplay, w->XWindow, w->GLContext );
+ 	w->InitializeRenderer();
+	glXMakeCurrent( w->XDisplay, None, NULL );
+	SingleMainWnd = w;
+	return w;
 #else
 	NUTODO_STATIC
 #endif
@@ -113,6 +158,7 @@ void nuSysWnd::Show()
 #if NU_PLATFORM_WIN_DESKTOP
 	ShowWindow( SysWnd, SW_SHOW );
 #elif NU_PLATFORM_ANDROID
+#elif NU_PLATFORM_LINUX_DESKTOP
 #else
 	NUTODO_STATIC
 #endif
@@ -157,6 +203,8 @@ void nuSysWnd::SetPosition( nuBox box, uint setPosFlags )
 	if ( !!(setPosFlags & SetPosition_Size) ) wflags = wflags & ~SWP_NOSIZE;
 	SetWindowPos( SysWnd, NULL, box.Left, box.Top, box.Width(), box.Height(), wflags );
 #elif NU_PLATFORM_ANDROID
+#elif NU_PLATFORM_LINUX_DESKTOP
+	NUTRACE( "nuSysWnd.SetPosition is not implemented\n" );
 #else
 	NUTODO_STATIC
 #endif
@@ -174,6 +222,10 @@ nuBox nuSysWnd::GetRelativeClientRect()
 	return box;
 #elif NU_PLATFORM_ANDROID
 	return RelativeClientRect;
+#elif NU_PLATFORM_LINUX_DESKTOP
+	XWindowAttributes wa;
+	XGetWindowAttributes( XDisplay, XWindow, &wa );
+	return nuBox( wa.x, wa.y, wa.x + wa.width, wa.y + wa.height );
 #else
 	NUTODO_STATIC
 #endif

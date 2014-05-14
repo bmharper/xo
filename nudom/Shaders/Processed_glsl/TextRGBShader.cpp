@@ -125,7 +125,7 @@ bool nuGLProg_TextRGB::LoadVariablePositions()
 
 uint32 nuGLProg_TextRGB::PlatformMask()
 {
-	return nuPlatform_WinDesktop;
+	return nuPlatform_WinDesktop | nuPlatform_LinuxDesktop;
 }
 
 nuVertexType nuGLProg_TextRGB::VertexType()

@@ -1,0 +1,2 @@
+ssh ben@192.168.4.175 "./build-nudom nudom"
+"c:\dev\tools\tundra2\bin\tundra2.exe" -C "C:\dev\individual\nudom" win64-msvc2013-debug-default nudom

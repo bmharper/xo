@@ -13,9 +13,20 @@ public:
 		SetPosition_Size = 2,
 	};
 #if NU_PLATFORM_WIN_DESKTOP
-	HWND				SysWnd;
+	HWND					SysWnd;
 #elif NU_PLATFORM_ANDROID
-	nuBox				RelativeClientRect;		// Set by NuLib_init
+	nuBox					RelativeClientRect;		// Set by NuLib_init
+#elif NU_PLATFORM_LINUX_DESKTOP
+	Display*				XDisplay;
+	Window					XWindowRoot;
+	//GLint					att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
+	XVisualInfo*			VisualInfo;
+	Colormap				ColorMap;
+	Window					XWindow;
+	GLXContext				GLContext;
+	XEvent					Event;
+#else
+	NUTODO_STATIC;
 #endif
 	nuDocGroup*			DocGroup;
 	nuRenderBase*		Renderer;

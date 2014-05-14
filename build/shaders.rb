@@ -173,6 +173,7 @@ def gen_combined(common, ext, vert, frag, name, filename_base)
 				platform = $1
 				case platform
 				when "WIN_DESKTOP" then platforms[:nuPlatform_WinDesktop] = 1
+				when "LINUX_DESKTOP" then platforms[:nuPlatform_LinuxDesktop] = 1
 				when "ANDROID" then platforms[:nuPlatform_Android] = 1
 				else raise "Unrecognized platform #{platform}"
 				end

@@ -3,10 +3,10 @@
 
 // This file should be compiled and linked into your exe
 
-#if NU_PLATFORM_WIN_DESKTOP
-
 // This is your "main" function, which you define in your own code
 void nuMain( nuMainEvent ev );
+
+#if NU_PLATFORM_WIN_DESKTOP
 
 static int __cdecl CrtAllocHook( int allocType, void *pvData, size_t size, int blockUse, long request, const unsigned char *filename, int fileLine );
 
@@ -32,4 +32,18 @@ static int __cdecl CrtAllocHook( int allocType, void *pvData, size_t size, int b
 	return TRUE;
 }
 
+#elif NU_PLATFORM_LINUX_DESKTOP
+
+int main( int argc, char** argv )
+{
+	nuInitialize();
+	nuMain( nuMainEventInit );
+	nuRunXMessageLoop();
+	nuMain( nuMainEventShutdown );
+	nuShutdown();
+	return 0;
+}
+
+#else
+NUTODO_STATIC;
 #endif

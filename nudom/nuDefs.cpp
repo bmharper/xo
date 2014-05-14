@@ -219,6 +219,9 @@ static float ComputeEpToPixel()
 #elif NU_PLATFORM_ANDROID
 	// nuGlobals->EpToPixel is injected by Java_com_android_nudom_NuLib_init after it calls nuInitialize()
 	return 1;
+#elif NU_PLATFORM_LINUX_DESKTOP
+	// TODO
+	return 1;
 #else
 	NUTODO_STATIC
 #endif
@@ -229,6 +232,7 @@ static void InitializePlatform()
 #if NU_PLATFORM_WIN_DESKTOP
 	SetProcessDPIAware();
 #elif NU_PLATFORM_ANDROID
+#elif NU_PLATFORM_LINUX_DESKTOP
 #else
 	NUTODO_STATIC;
 #endif

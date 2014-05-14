@@ -14,9 +14,14 @@
 	#define _CRT_SECURE_NO_WARNINGS 1
 #endif
 
-#if defined(_WIN32) && defined(NU_BUILD_OPENGL)
+#if defined(NU_BUILD_OPENGL)
 	#include "../dependencies/GL/gl_nudom.h"
-	#include "../dependencies/GL/wgl_nudom.h"
+	#ifdef _WIN32
+		#include "../dependencies/GL/wgl_nudom.h"
+	#endif
+	#ifdef __linux__
+		#include "../dependencies/GL/glx_nudom.h"
+	#endif
 #endif
 
 #include "nuApiDecl.h"

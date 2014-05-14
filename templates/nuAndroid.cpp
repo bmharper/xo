@@ -19,7 +19,7 @@
 static bool			Initialized = false;
 //static nuRenderGL*	RGL = NULL;
 //static nuDocGroup*	Proc = NULL;
-extern nuSysWnd*	MainWnd;
+extern nuSysWnd*	SingleMainWnd;
 void nuMain( nuMainEvent ev );
 
 #define CLAMP(a,mmin,mmax) (((a) < (mmin) ? (mmin) : ((a) > (mmax) ? (mmax) : (a))))
@@ -38,7 +38,7 @@ extern "C" {
 static nuEvent MakeEvent()
 {
 	nuEvent e;
-	e.DocGroup = MainWnd->DocGroup;
+	e.DocGroup = SingleMainWnd->DocGroup;
 	return e;
 }
 
@@ -86,9 +86,9 @@ JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_init(JNIEnv * env, jobject o
 		LOGI("NuLib_init 4");
 	}
 	
-	if ( MainWnd )
+	if ( SingleMainWnd )
 	{
-		MainWnd->RelativeClientRect = nuBox( 0, 0, width, height );
+		SingleMainWnd->RelativeClientRect = nuBox( 0, 0, width, height );
 		nuEvent ev = MakeEvent();
 		ev.MakeWindowSize( width, height );
 		PostEvent( ev );
@@ -110,22 +110,22 @@ JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_destroy(JNIEnv * env, jint i
 JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_surfacelost(JNIEnv * env, jobject obj)
 {
 	LOGI("NuLib_surfacelost");
-	if ( MainWnd )
-		MainWnd->SurfaceLost();
+	if ( SingleMainWnd )
+		SingleMainWnd->SurfaceLost();
 }
 
 JNIEXPORT int JNICALL Java_com_android_nudom_NuLib_step(JNIEnv * env, jobject obj)
 {
-	if ( MainWnd )
+	if ( SingleMainWnd )
 	{
 		//LOGI("render 1 %d %d", Proc->Doc->WindowWidth, Proc->Doc->WindowHeight );
-		//MainWnd->DocGroup->RenderDoc->CopyFromCanonical( *MainWnd->DocGroup->Doc );
+		//SingleMainWnd->DocGroup->RenderDoc->CopyFromCanonical( *SingleMainWnd->DocGroup->Doc );
 
 		//LOGI("render 2");
-		//MainWnd->DocGroup->RenderDoc->Render( MainWnd->RGL );
+		//SingleMainWnd->DocGroup->RenderDoc->Render( SingleMainWnd->RGL );
 
 		//LOGI("render 3");
-		int r = MainWnd->DocGroup->Render();
+		int r = SingleMainWnd->DocGroup->Render();
 		//LOGI("render done");
 		return r;
 	}
@@ -145,7 +145,7 @@ JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_input(JNIEnv * env, jobject 
     if ( n >= 2 )   GREEN = fmod( xe[0], 300.0f ) / 300.0f;
     if ( n >= 3 )   BLUE = fmod( xe[0], 300.0f ) / 300.0f;
 	*/
-	if ( MainWnd )
+	if ( SingleMainWnd )
 	{
 	    //LOGI("dispatching touch input %d", type);
 

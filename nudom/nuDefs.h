@@ -362,6 +362,8 @@ NUAPI void				NUTRACE( const char* msg, ... );
 NUAPI void				NUTIME( const char* msg, ... );
 #if NU_PLATFORM_WIN_DESKTOP
 NUAPI void				nuRunWin32MessageLoop();
+#elif NU_PLATFORM_LINUX_DESKTOP
+NUAPI void				nuRunXMessageLoop();
 #endif
 
 // Various tracing options. Uncomment these to enable tracing of that class of events.
