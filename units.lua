@@ -265,7 +265,8 @@ local nudom = SharedLibrary {
 		"dependencies/Panacea/Platform/thread.cpp",
 		"dependencies/Panacea/Strings/ConvertUTF.cpp",
 		"dependencies/Panacea/Strings/fmt.cpp",
-		"dependencies/glext.cpp",
+		"dependencies/GL/gl_nudom.cpp",
+		"dependencies/GL/wgl_nudom.cpp",
 		"dependencies/stb_image.cpp",
 	},
 }

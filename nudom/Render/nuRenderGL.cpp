@@ -6,8 +6,6 @@
 #include "../Text/nuGlyphCache.h"
 #include "../nuSysWnd.h"
 
-void initGLExt();
-
 static bool GLIsBooted = false;
 
 #ifndef GL_FRAMEBUFFER_SRGB
@@ -115,9 +113,11 @@ static bool nuBootGL( HWND wnd )
 		BOOL setOK = SetPixelFormat(dc, iPixelFormat, &pfd); 
 		HGLRC rc = wglCreateContext( dc );
 		wglMakeCurrent( dc, rc );
-		initGLExt();
+		int wglLoad = wgl_LoadFunctions( dc );
+		int oglLoad = ogl_LoadFunctions();
+		NUTRACE( "wgl_Load: %d\n", wglLoad );
+		NUTRACE( "ogl_Load: %d\n", oglLoad );
 		GLIsBooted = true;
-		//biggleInit();
 		wglMakeCurrent( NULL, NULL ); 
 		wglDeleteContext( rc );
 	}
@@ -615,7 +615,7 @@ bool nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
 	int format = 0;
 	switch ( tex->TexFormat )
 	{
-	case nuTexFormatGrey8: format = GL_LUMINANCE; break;
+	case nuTexFormatGrey8: format = GL_RED; break;	// was luminance
 	//case : format = GL_RG;
 	//case : format = GL_RGB;
 	case nuTexFormatRGBA8: format = GL_RGBA; break;

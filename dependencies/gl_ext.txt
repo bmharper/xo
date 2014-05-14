@@ -1,0 +1,2 @@
+ARB_framebuffer_sRGB
+EXT_framebuffer_sRGB

@@ -15,8 +15,8 @@
 #endif
 
 #if defined(_WIN32) && defined(NU_BUILD_OPENGL)
-	#include "../dependencies/biggle.h"
-	#include "../dependencies/biggle_additions.h"
+	#include "../dependencies/GL/gl_nudom.h"
+	#include "../dependencies/GL/wgl_nudom.h"
 #endif
 
 #include "nuApiDecl.h"
