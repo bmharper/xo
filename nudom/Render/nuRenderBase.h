@@ -62,7 +62,7 @@ public:
 	nuTextureID			RegisterTexture( void* deviceTexID );
 	nuTextureID			RegisterTextureInt( uint deviceTexID )				{ return RegisterTexture( reinterpret_cast<void*>(deviceTexID) );  }
 	void*				GetTextureDeviceHandle( nuTextureID texID ) const;
-	uint				GetTextureDeviceHandleInt( nuTextureID texID ) const	{ return reinterpret_cast<uint>(GetTextureDeviceHandle( texID )); }
+	uint				GetTextureDeviceHandleInt( nuTextureID texID ) const	{ return (uint) reinterpret_cast<uintptr_t>(GetTextureDeviceHandle( texID )); }
 
 	virtual const char*	RendererName() = 0;
 

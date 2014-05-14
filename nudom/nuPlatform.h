@@ -32,21 +32,30 @@ void* nuMallocOrDie( size_t bytes );
 
 enum nuPlatform
 {
-	nuPlatform_WinDesktop	= 1,
-	nuPlatform_Android		= 2,
-	nuPlatform_All			= 1 | 2,
+	nuPlatform_WinDesktop		= 1,
+	nuPlatform_Android			= 2,
+	nuPlatform_LinuxDesktop		= 4,
+	nuPlatform_All			= 1 | 2 | 4,
 };
 
 #if defined(_WIN32)
 	#define NU_PLATFORM_ANDROID			0
 	#define NU_PLATFORM_WIN_DESKTOP		1
+	#define NU_PLATFORM_LINUX_DESKTOP	0
 	#define NU_PLATFORM					nuPlatform_WinDesktop
 	#define NUTRACE_WRITE				OutputDebugStringA
 #elif defined(ANDROID)
 	#define NU_PLATFORM_ANDROID			1
 	#define NU_PLATFORM_WIN_DESKTOP		0
+	#define NU_PLATFORM_LINUX_DESKTOP	0
 	#define NU_PLATFORM					nuPlatform_Android
 	#define NUTRACE_WRITE(msg)			__android_log_write(ANDROID_LOG_INFO, "nudom", msg)
+#elif defined(__linux__)
+	#define NU_PLATFORM_ANDROID			0
+	#define NU_PLATFORM_WIN_DESKTOP		0
+	#define NU_PLATFORM_LINUX_DESKTOP	1
+	#define NU_PLATFORM					nuPlatform_LinuxDesktop
+	#define NUTRACE_WRITE(msg)			fputs(stderr, msg)
 #else
 	#ifdef _MSC_VER
 		#pragma error( "Unknown nuDom platform" )

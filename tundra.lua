@@ -8,6 +8,14 @@ local win_linker = {
 	{ "/DEBUG /INCREMENTAL:NO /OPT:REF /OPT:ICF /RELEASE";	Config = "win*-*-release" },
 }
 
+local unix_common = {
+	Env = {
+		CXXOPTS = {
+			{ "-std=c++11" },
+		}
+	}
+}
+
 local win_common = {
 	Env = {
 		PROGOPTS = win_linker,
@@ -55,6 +63,7 @@ Build {
 		{
 			Name = "linux-gcc",
 			DefaultOnHost = "linux",
+			Inherit = unix_common,
 			Tools = { "gcc" },
 		},
 		-- Other Windows configuration that you might want to enable

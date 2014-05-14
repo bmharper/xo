@@ -678,6 +678,8 @@ void nuRenderGL::PreparePreprocessor()
 	BaseShader.append( "#define NU_PLATFORM_WIN_DESKTOP\n" );
 #elif NU_PLATFORM_ANDROID
 	BaseShader.append( "#define NU_PLATFORM_ANDROID\n" );
+#elif NU_PLATFORM_LINUX_DESKTOP
+	BaseShader.append( "#define NU_PLATFORM_LINUX_DESKTOP\n" );
 #else
 	#ifdef _MSC_VER
 		#pragma error( "Unknown nuDom platform" )

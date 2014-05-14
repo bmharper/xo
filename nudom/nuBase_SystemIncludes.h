@@ -12,12 +12,19 @@
 	#define NU_BUILD_OPENGL 1
 	#ifdef ANDROID
 		// Android
+		#define NU_BUILD_OPENGL_ES 1
 		#include <jni.h>
 		#include <android/log.h>
+		#include <sys/atomics.h>
 	#endif
-	#include <GLES2/gl2.h>
-	#include <GLES2/gl2ext.h>
-	#include <sys/atomics.h>
+	#ifdef NU_BUILD_OPENGL_ES
+		#include <GLES2/gl2.h>
+		#include <GLES2/gl2ext.h>
+	#else
+		#include <GL/gl.h>
+		#include <GL/glx.h>
+		#include <GL/glu.h>
+	#endif
 	#include <pthread.h>
 	#include <semaphore.h>
 	#include <math.h>
@@ -32,6 +39,8 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
+#include <float.h>
 
 #include <string>
 #include <algorithm>
