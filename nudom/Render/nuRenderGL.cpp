@@ -763,8 +763,9 @@ bool nuRenderGL::LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, cons
 	if ( isTextRGB )
 	{
 		// NOTE: The following DOES WORK. It is unnecessary however, on the NVidia hardware that I have tested on.
-		//glBindFragDataLocationIndexed( prog, 0, 0, "outputColor0" );
-		//glBindFragDataLocationIndexed( prog, 0, 1, "outputColor1" );
+		// BUT: It is necessary on Linux, Haswell Intel drivers
+		glBindFragDataLocationIndexed( prog, 0, 0, "outputColor0" );
+		glBindFragDataLocationIndexed( prog, 0, 1, "outputColor1" );
 	}
 	glLinkProgram( prog );
 
@@ -793,11 +794,22 @@ bool nuRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* name
 
 	shader = glCreateShader( shaderType );
 
+	std::string raw_prefix = "";
+	std::string raw_other = raw_src;
+	// #version must be on the first line
+	if ( strstr(raw_src, "#version") == raw_src )
+	{
+		size_t firstLine = strstr(raw_src, "\n") - raw_src;
+		raw_prefix = raw_other.substr( 0, firstLine + 1 );
+		raw_other = raw_other.substr( firstLine + 1 );
+	}
+
 	PreparePreprocessor();
-	std::string processed = BaseShader + raw_src;
+	std::string processed = raw_prefix + BaseShader + raw_other;
 	//nuString processed = Preprocessor.Run( raw_src );
 	//nuString processed(raw_src);
 	//processed.ReplaceAll( "NU_GLYPH_ATLAS_SIZE", fmt("%v", nuGlyphAtlasSize).Z );
+	//fputs( processed.c_str(), stderr );
 
 	GLchar* vstring[1];
 	vstring[0] = (GLchar*) processed.c_str();

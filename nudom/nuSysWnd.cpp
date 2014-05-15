@@ -128,7 +128,7 @@ nuSysWnd* nuSysWnd::Create()
 	w->ColorMap = XCreateColormap( w->XDisplay, w->XWindowRoot, w->VisualInfo->visual, AllocNone );
 	XSetWindowAttributes swa;
 	swa.colormap = w->ColorMap;
-	swa.event_mask = ExposureMask | KeyPressMask;
+	swa.event_mask = ExposureMask | KeyPressMask | PointerMotionMask;
 	w->XWindow = XCreateWindow( w->XDisplay, w->XWindowRoot, 0, 0, 600, 600, 0, w->VisualInfo->depth, InputOutput, w->VisualInfo->visual, CWColormap | CWEventMask, &swa );
 	XMapWindow( w->XDisplay, w->XWindow );
 	XStoreName( w->XDisplay, w->XWindow, "nudom" );
