@@ -200,10 +200,13 @@ bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
 #elif NU_PLATFORM_LINUX_DESKTOP
 bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
 {
-	int rload = glx_LoadFunctions( wnd.XDisplay, 0 );
-	NUTRACE( "glx_LoadFunction: %d\n", rload );
+	int oglLoad = ogl_LoadFunctions();
+	int glxLoad = glx_LoadFunctions( wnd.XDisplay, 0 );
+	NUTRACE( "oglload: %d\n", oglLoad );
+	NUTRACE( "glxload: %d\n", glxLoad );
 	if ( !CreateShaders() )
 		return false;
+	NUTRACE( "Shaders created\n" );
 	return true;
 }
 #else
