@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "cpu.h"
-#ifdef _WIN32
+#ifndef _WIN32
 #include <sys/sysconf.h>
 #endif
 

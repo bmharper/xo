@@ -15,7 +15,7 @@ void nuMain( nuMainEvent ev )
 	case nuMainEventInit:
 		{
 			MainWnd = nuSysWnd::CreateWithDoc();
-			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), nuSysWnd::SetPosition_Move | nuSysWnd::SetPosition_Size );
+			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
 			nuDoc* doc = MainWnd->Doc();
 			InitDOM( doc );
 			MainWnd->Show();
@@ -59,12 +59,12 @@ void DoBaselineAlignment( nuDoc* doc )
 	// ramp of 'e' characters from 8 to 30 pixels
 	if (1)
 	{
-		root->StyleParse( "font-family: Microsoft Sans Serif; background: #fff" );
+		root->StyleParse( "font-family: Segoe UI; background: #fff" );
 		
 		for ( int size = 8; size < 30; size++ )
 		{
 			auto txt = root->AddNode( nuTagDiv );
-			txt->StyleParse( fmt("font-size: %dpx; background: #f0f0f0", size).Z );
+			txt->StyleParse( fmt("font-size: %dpx; background: #e0e0e0", size).Z );
 			txt->SetText( "e" );
 		}
 	}
@@ -147,9 +147,9 @@ void InitDOM( nuDoc* doc )
 	body->StyleParse( "font-family: Segoe UI, Droid Sans" );
 
 	DoBaselineAlignment( doc );
-	//DoTwoTextRects( doc );
-	//DoBlockMargins( doc );
-	//DoLongText( doc );
+	DoTwoTextRects( doc );
+	DoBlockMargins( doc );
+	DoLongText( doc );
 
 	body->OnClick( [](const nuEvent& ev) -> bool {
 		nuGlobal()->EnableKerning = !nuGlobal()->EnableKerning;

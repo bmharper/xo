@@ -37,7 +37,6 @@ protected:
 	struct NodeState
 	{
 		// Immutable
-		//nuBox	PositionedAncestor;
 		nuBox	ParentContentBox;
 		bool	ParentContentBoxHasWidth;
 		bool	ParentContentBoxHasHeight;

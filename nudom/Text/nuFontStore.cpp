@@ -188,6 +188,10 @@ void nuFontStore::LoadFontTweaks( nuFont& font )
 
 	if ( font.Facename == "Microsoft Sans Serif" )
 		font.MaxAutoHinterSize = 14;
+
+	// This always looks better with the TT hinter
+	if ( font.Facename == "Segoe UI" )
+		font.MaxAutoHinterSize = 0;
 }
 
 const char* nuFontStore::FacenameToFilename( const char* facename )

@@ -9,7 +9,7 @@
 // An alternative would be to separately load just the glyph metrics without performing glyph
 // rendering. That would give us perfect metrics. This only affects the horizontal spacing of
 // glyphs, and I think it's unlikely that one would be able to tell the difference there.
-static const uint32 nuSubPixelHintKillShift = 4;
+static const uint32 nuSubPixelHintKillShift = 3;
 static const uint32 nuSubPixelHintKillMultiplier = (1 << nuSubPixelHintKillShift);
 
 // GCC 4.6 for Android forces us to set the value of this constant in the .cpp file, not in the .h file.

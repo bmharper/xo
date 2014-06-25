@@ -94,7 +94,7 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 	nuBox padding = ComputeBox( s.ParentContentBox, s.ParentContentBoxHasWidth, s.ParentContentBoxHasHeight, nuCatPadding_Left );
 	nuBox border = ComputeBox( s.ParentContentBox, s.ParentContentBoxHasWidth, s.ParentContentBoxHasHeight, nuCatBorder_Left );
 	
-	// It might make for less arithmetic if we work with borderBoxWidth and borderBoxHeight instead of contentBoxWidth and contentBoxHeight. We'll see.
+	// It might make for less arithmetic if we work with marginBoxWidth and marginBoxHeight instead of contentBoxWidth and contentBoxHeight. We'll see.
 	bool haveWidth = contentWidth != nuPosNULL;
 	bool haveHeight = contentHeight != nuPosNULL;
 	rnode->Style.BorderRadius = nuPosToReal( borderRadius );
@@ -124,100 +124,80 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 		if ( haveHeight ) marginBox.Bottom += margin.Top + border.Top + padding.Top + contentHeight + padding.Bottom + border.Bottom + margin.Bottom;
 	}
 
-	/*
-	if ( position != nuPositionAbsolute )
-	{
-		switch( display )
-		{
-		case nuDisplayInline:
-			s.PosX = rnode->Pos.Right + margin.Right;
-			break;
-		case nuDisplayBlock:
-			s.PosX = s.ParentContentBox.Left;
-			s.PosY = rnode->Pos.Bottom + margin.Bottom;
-			break;
-		}
-	}
-	*/
-
-	nuBox contentBox = marginBox;
-	contentBox.Left += border.Left + padding.Left + margin.Left;
-	contentBox.Top += border.Top + padding.Top + margin.Top;
-	if ( haveWidth )	contentBox.Right -= border.Right + padding.Right + margin.Right;
-	else				contentBox.Right = contentBox.Left;
-	if ( haveHeight )	contentBox.Bottom -= border.Bottom + padding.Bottom + margin.Bottom;
-	else				contentBox.Bottom = contentBox.Top;
-
 	// Check if this block overflows. If we don't have width yet, then we'll check overflow after laying out our children
 	if ( position == nuPositionStatic && s.ParentContentBoxHasWidth && haveWidth )
+		PositionBlock( s, marginBox );
+	
+	NodeState s_saved_0 = s;
+
+	// cs: child state
+	NodeState cs;
+	for ( int pass = 0; true; pass++ )
 	{
-		nuPoint offset = PositionBlock( s, marginBox );
-		contentBox.Offset( offset );
-	}
+		NUASSERTDEBUG( pass < 2 );
 
-	//if ( position == nuPositionRelative ) -- todo
-	//	ComputeRelativeOffset( s, marginBox );
+		nuBox contentBox = marginBox;
+		contentBox.Left += border.Left + padding.Left + margin.Left;
+		contentBox.Top += border.Top + padding.Top + margin.Top;
+		if ( haveWidth )	contentBox.Right -= border.Right + padding.Right + margin.Right;
+		else				contentBox.Right = contentBox.Left;
+		if ( haveHeight )	contentBox.Bottom -= border.Bottom + padding.Bottom + margin.Bottom;
+		else				contentBox.Bottom = contentBox.Top;
 
-	NodeState cs = s;
-	cs.ParentContentBox = contentBox;
-	cs.ParentContentBoxHasWidth = haveWidth;
-	cs.ParentContentBoxHasHeight = haveHeight;
-	// 'PositionedAncestor' means the nearest ancestor that was specifically positioned. Same as HTML.
-	// But I'm wondering now whether that's a good idea
-	//if ( position != nuPositionStatic )	cs.PositionedAncestor = contentBox;
-	//else								cs.PositionedAncestor = s.ParentContentBox;
-	cs.PosX = contentBox.Left;
-	cs.PosY = contentBox.Top;
-	cs.PosMaxX = cs.PosX;
-	cs.PosMaxY = cs.PosY;
-	cs.PosBaselineY = s.PosBaselineY;
+		cs = s;
+		cs.ParentContentBox = contentBox;
+		cs.ParentContentBoxHasWidth = haveWidth;
+		cs.ParentContentBoxHasHeight = haveHeight;
+		cs.PosX = cs.PosMaxX = contentBox.Left;
+		cs.PosY = cs.PosMaxY = contentBox.Top;
+		cs.PosBaselineY = s.PosBaselineY;
 
-	NUTRACE_LAYOUT( "Layout (%d) Run 3 (position = %d) (%d %d)\n", node.GetInternalID(), (int) position, s.ParentContentBoxHasWidth ? 1 : 0, haveWidth ? 1 : 0 );
+		NUTRACE_LAYOUT( "Layout (%d) Run 3 (position = %d) (%d %d)\n", node.GetInternalID(), (int) position, s.ParentContentBoxHasWidth ? 1 : 0, haveWidth ? 1 : 0 );
 
-	const pvect<nuDomEl*>& nodeChildren = node.GetChildren();
-	for ( int i = 0; i < nodeChildren.size(); i++ )
-	{
-		const nuDomEl* child = nodeChildren[i];
-		if ( child->GetTag() == nuTagText )
+		const pvect<nuDomEl*>& nodeChildren = node.GetChildren();
+		for ( int i = 0; i < nodeChildren.size(); i++ )
 		{
-			nuRenderDomText* rchild = new (Pool->AllocT<nuRenderDomText>(false)) nuRenderDomText( child->GetInternalID(), Pool );
-			rnode->Children += rchild;
-			RunText( cs, *static_cast<const nuDomText*>(child), rchild );
+			const nuDomEl* child = nodeChildren[i];
+			if ( child->GetTag() == nuTagText )
+			{
+				nuRenderDomText* rchild = new (Pool->AllocT<nuRenderDomText>(false)) nuRenderDomText( child->GetInternalID(), Pool );
+				rnode->Children += rchild;
+				RunText( cs, *static_cast<const nuDomText*>(child), rchild );
+			}
+			else
+			{
+				nuRenderDomNode* rchild = new (Pool->AllocT<nuRenderDomNode>(false)) nuRenderDomNode( child->GetInternalID(), child->GetTag(), Pool );
+				rnode->Children += rchild;
+				RunNode( cs, *static_cast<const nuDomNode*>(child), rchild );
+			}
 		}
-		else
+
+		if ( !haveWidth )	marginBox.Right = cs.PosMaxX + padding.Right + border.Right + margin.Right;
+		if ( !haveHeight )	marginBox.Bottom = cs.PosMaxY + padding.Bottom + border.Bottom + margin.Bottom;
+
+		// Since our width was undefined, we couldn't check for overflow until we'd layed out our children.
+		// If we do overflow now, then we need to retrofit all of our child boxes with an offset.
+		if ( position == nuPositionStatic && s.ParentContentBoxHasWidth && !haveWidth )
 		{
-			nuRenderDomNode* rchild = new (Pool->AllocT<nuRenderDomNode>(false)) nuRenderDomNode( child->GetInternalID(), child->GetTag(), Pool );
-			rnode->Children += rchild;
-			RunNode( cs, *static_cast<const nuDomNode*>(child), rchild );
+			nuPoint offset = PositionBlock( s, marginBox );
+			if ( offset != nuPoint(0,0) )
+			{
+				haveWidth = true;
+				//haveHeight = true;		// We do in fact NOT know height, because it can be altered by the resetting of the baseline on the new line
+				rnode->Children.clear();
+				continue;
+			}
 		}
-		if ( s.PosBaselineY == nuPosNULL )
-			s.PosBaselineY = cs.PosBaselineY;
-	}
 
-	// this is a guess
-	if ( !haveWidth )	marginBox.Right = cs.PosMaxX + padding.Right + border.Right + margin.Right;
-	if ( !haveHeight )	marginBox.Bottom = cs.PosMaxY + padding.Bottom + border.Bottom + margin.Bottom;
-
-	rnode->Pos = marginBox.ShrunkBy( margin );
-
-	// Since our width was undefined, we couldn't check for overflow until we'd layed out our children.
-	// If we do overflow now, then we need to retrofit all of our child boxes with an offset.
-	if ( position == nuPositionStatic && s.ParentContentBoxHasWidth && !haveWidth )
-	{
-		nuPoint offset = PositionBlock( s, marginBox );
-		if ( offset != nuPoint(0,0) )
-		{
-			OffsetRecursive( rnode, offset );
-			if ( s.PosBaselineY != nuPosNULL )
-				s.PosBaselineY += offset.Y;
-		}
+		rnode->Pos = marginBox.ShrunkBy( margin );
+		break;
 	}
 
 	NUTRACE_LAYOUT( "Layout (%d) marginBox: %d,%d,%d,%d\n", node.GetInternalID(), marginBox.Left, marginBox.Top, marginBox.Right, marginBox.Bottom );
 
 	s.PosMaxY = nuMax( s.PosMaxY, marginBox.Bottom );
-	//if ( s.PosBaselineY == nuPosNULL )
-	//	s.PosBaselineY = cs.PosBaselineY;
+	if ( s.PosBaselineY == nuPosNULL )
+		s.PosBaselineY = cs.PosBaselineY;
 
 	Stack.StackPop();
 }

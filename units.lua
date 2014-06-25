@@ -285,6 +285,7 @@ local HelloWorld = Program {
 	}
 }
 
+--[[
 local HelloAmalgamation = Program {
 	Name = "HelloAmalgamation",
 	Includes = { "nudom" },
@@ -297,6 +298,7 @@ local HelloAmalgamation = Program {
 		"samples/HelloAmalgamation/HelloAmalgamation.cpp",
 	}
 }
+--]]
 
 local KitchenSink = Program {
 	Name = "KitchenSink",
