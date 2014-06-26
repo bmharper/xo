@@ -2,8 +2,6 @@
 #include "cpu.h"
 #ifndef _WIN32
 #include <sys/sysconf.h>
-#else
-#include <unistd.h>
 #endif
 
 #ifdef _WIN32
