@@ -207,6 +207,10 @@ const char* nuFontStore::FacenameToFilename( const char* facename )
 	if ( name == "Tahoma" ) return "c:\\Windows\\Fonts\\tahoma.ttf";
 	if ( name == "Segoe UI" ) return "c:\\Windows\\Fonts\\segoeui.ttf";
 	return "c:\\Windows\\Fonts\\arial.ttf";
+#elif NU_PLATFORM_LINUX_DESKTOP
+	if ( name == "Arial" ) return "/usr/share/fonts/truetype/msttcorefonts/arial.ttf";
+	if ( name == "Times New Roman" ) return "/usr/share/fonts/truetype/msttcorefonts/times.ttf";
+	return "/usr/share/fonts/truetype/msttcorefonts/arial.ttf";
 #else
 	if ( name == "Droid Sans" ) return "/system/fonts/DroidSans.ttf";
 	if ( name == "Droid Sans Mono" ) return "/system/fonts/DroidSansMono.ttf";

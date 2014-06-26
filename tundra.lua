@@ -12,7 +12,13 @@ local unix_common = {
 	Env = {
 		CXXOPTS = {
 			{ "-std=c++11" },
-		}
+			{ "-fPIC" },
+			{ "-ggdb" },
+		},
+		CCOPTS = {
+			{ "-fPIC" },
+			{ "-ggdb" },
+		},
 	}
 }
 

@@ -122,7 +122,7 @@ void nuDocGroup::ProcessEvent( nuEvent& ev )
 		RenderDoc->WindowWidth = (uint32) ev.Points[0].x;
 		RenderDoc->WindowHeight = (uint32) ev.Points[0].y;
 		Doc->IncVersion();
-		NUTIME( "Processed WindowSize event. Document at version %d\n", Doc->GetVersion() );
+		//NUTIME( "Processed WindowSize event. Document at version %d\n", Doc->GetVersion() );
 		break;
 	}
 	if ( BubbleEvent( ev ) )

@@ -2,6 +2,7 @@
 #include "nuDefs.h"
 #include "nuDocGroup.h"
 #include "nuSysWnd.h"
+#include "nuEvent.h"
 
 #if NU_PLATFORM_WIN_DESKTOP
 
@@ -99,6 +100,8 @@ extern nuSysWnd* SingleMainWnd;
 
 NUAPI void nuRunXMessageLoop()
 {
+	nuProcessDocQueue();
+
 	while(1)
 	{
 		XEvent xev;
@@ -106,26 +109,49 @@ NUAPI void nuRunXMessageLoop()
         
 		if ( xev.type == Expose )
 		{
-			/*
 			XWindowAttributes wa;
-			XGetWindowAttributes( SingleMainWnd->XDisplay, SingleMainWnd->Window, &wa );
+			XGetWindowAttributes( SingleMainWnd->XDisplay, SingleMainWnd->XWindow, &wa );
+			/*
 			glXMakeCurrent( SingleMainWnd->XDisplay, SingleMainWnd->Window, SingleMainWnd->GLContext );
 			glViewport( 0, 0, gwa.width, gwa.height );
 			//DrawAQuad(); 
 			//glXSwapBuffers(dpy, win);
 			glXMakeCurrent( SingleMainWnd->XDisplay, None, Null );
 			*/
+			nuEvent nev;
+			nev.Type = nuEventWindowSize;
+			nev.Points[0].x = wa.width;
+			nev.Points[0].y = wa.height;
+			for ( int i = 0; i < nuGlobal()->Docs.size(); i++ )
+				nuGlobal()->Docs[i]->ProcessEvent( nev );
+
 		}
 		else if ( xev.type == KeyPress )
 		{
 			NUTRACE( "key = %d\n", xev.xkey.keycode );
-			for ( int i = 0; i < nuGlobal()->Docs.size(); i++ )
-			{
-				nuRenderResult rr = nuGlobal()->Docs[i]->Render();
-				//if ( rr != nuRenderResultIdle )
-				//	renderIdle = false;
-			}
+			if ( xev.xkey.keycode == 24 ) // 'q'
+				break;
 		}
+		else if ( xev.type == MotionNotify )
+		{
+			//NUTRACE( "x,y = %d,%d\n", xev.xmotion.x, xev.xmotion.y );
+			nuEvent nev;
+			nev.Type = nuEventMouseMove;
+			nev.Points[0].x = xev.xmotion.x;
+			nev.Points[0].y = xev.xmotion.y;
+			for ( int i = 0; i < nuGlobal()->Docs.size(); i++ )
+				nuGlobal()->Docs[i]->ProcessEvent( nev );
+		}
+
+		for ( int i = 0; i < nuGlobal()->Docs.size(); i++ )
+		{
+			nuRenderResult rr = nuGlobal()->Docs[i]->Render();
+			//NUTRACE( "rr = %d\n", rr );
+			//if ( rr != nuRenderResultIdle )
+			//	renderIdle = false;
+		}
+
+		nuProcessDocQueue();
 	}
 }
 
