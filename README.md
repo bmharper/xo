@@ -9,32 +9,38 @@ linkable to build native applications for a wide range of platforms.
 
 Build instructions
 ------------------
-The only platform that I'm working on right now is Windows Desktop. 
-Every few weeks I make sure that Android still runs.
+The only platform that I'm actively working on right now is Windows Desktop. 
+Every few weeks I make sure that Android still runs. I have had it running under Linux too,
+but haven't bothered to document that yet.
 
 Build requirements:
 
-* The build system is [tundra2](http://github.com/deplinenoise/tundra)
+* The build system is [tundra2](https://github.com/deplinenoise/tundra)
 
-To see something on the screen:
+### Building on Windows
 
-* Install Visual Studio 2013
-* Install tundra2. You might need to update tundra to the latest and build
-it yourself
+* Install Visual Studio 2013.
+* Install tundra2.
+	* Install the [latest binary release](https://github.com/deplinenoise/tundra/releases)
+	* Clone the latest tundra `master` branch onto your machine and compile a release build using the provided Visual Studio solution.
+	* Overwrite the appropriate pieces of the official release with the exe's that you just compiled.
+	* Overwrite the `scripts` directory with the latest scripts from `master`.
 
-Once you have those two, you should be able to do the following:
+Once you have the latest tundra, you can do this:
 	
 	tundra2 HelloWorld
-	t2-output\win64-2013-debug-default\HelloWorld
+	t2-output\win64-msvc2013-debug-default\HelloWorld.exe
 
 If you move the cursor around on the screen, then the green square and text will move with it.
 
-If you change shaders, then you must run `build/shaders.rb` before building again.
+There is another sample application called `KitchenSink` that stresses the layout system more.
 
-Using Visual Studio
--------------------
-tundra can generate Visual Studio IDE projects for you. Use "build/genide.bat" to generate
-IDE projects that you can open in Visual Studio.
+If you change shaders, then you must run `build\shaders.rb` before building again.
+
+### Using Visual Studio
+
+Tundra can generate Visual Studio IDE projects for you.  
+Use `build\genide.bat` to generate IDE projects that you can open in Visual Studio.
 
 Design goals
 ------------
@@ -53,7 +59,7 @@ Target platforms
 * Android
 * Linux
 * Windows Desktop
-* Windows Metro
+* Windows Metro (maybe)
 * iOS
 * OSX
 
@@ -62,7 +68,9 @@ nudom is written in C++, but it should be usable from other languages.
 Sample
 ------
 
-	nuDomEl* btn = doc->Append( "<div class='button'>Click Me</div>" );
+	nuDomEl* btn = root->AddNode( nuTagDiv );
+	btn->AddClass( "button" );
+	btn->SetText( "Click Me" );
 	btn->OnClick( [](const nuEvent& ev) -> bool { /* do something */ } );
 
 Status
@@ -70,7 +78,7 @@ Status
 *GARAGE EXPERIMENT*
 
 I have three colored, rounded rectangles on the screen, that you can control with a finger or mouse move.  
-Running on Android and Windows.
+Running on Android, Windows, and Linux (X-Windows).
 
 There is an OpenGL and a DirectX 11 backend.
 
@@ -81,7 +89,7 @@ There is an OpenGL and a DirectX 11 backend.
 
 Why?
 ----
-We want to write an application once, and have it run on many platforms.
+We want to write an application once, and have it run on many platforms. GUI is often the hardest thing to make cross platform.
 
 This project is well and truly irrational. The rational thing to do would be to stick to the
 browser as your UI medium.
@@ -93,9 +101,9 @@ Why not ... ?
 memory usage, access to hardware, generic network access. Some of these problems seem tantalizing close to
 being solved by some browsers (PNaCL, asm.js, websockets, etc), however browsers are definitely
 not "there yet" for a lot of applications. There is also the browser fragmentation problem: Only Chrome
-supports PNaCL, only Firefox does asm.js, only IE does ActiveX :o
+supports PNaCL, only Firefox does asm.js, only IE does ActiveX!
 * __libRocket__ This is painful to ignore, because we're obviously in dubious "Not Invented Here" territory.
 libRocket is almost what we want. I am writing nudom mostly to scratch an itch, and much of the joy here is
-in the journey. I wanted to start with a clean slate, and be sure that I could make this thing pretty tight code.
+in the journey. I wanted to start with a clean slate.
 Also, I believe that the layout principles that have evolved inside HTML/CSS could benefit from a clean start.
-* __QT__ Why are you asking me all these questions!
+* __QT__ Like I said, I'm scratching an itch.

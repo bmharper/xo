@@ -38,6 +38,7 @@ local win_common = {
 			{ "/RTC1"; Config = "win*-*-debug" },
 			{ "/Ox"; Config = "win*-*-release" },
 			{ "/arch:SSE2"; Config = "win32-*" },
+			-- { "/Zc:inline"; Config = "win*" },		-- This requires VC 2013 Update 2, but it's really just a compiler/linker performance improvement.
 		},
 		CPPDEFS = {
 			{ "_DEBUG";					Config = "win*-*-debug" },
