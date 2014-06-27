@@ -48,7 +48,6 @@ u32 nuStringRaw::GetHashCode() const
 	{
 		// hash(i) = hash(i - 1) * 65539 + str[i]
 		hash = (u32) Z[i] + (hash << 6) + (hash << 16) - hash;
-		i++;
 	}
 	return hash;
 }

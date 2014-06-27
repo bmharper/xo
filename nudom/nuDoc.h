@@ -37,6 +37,9 @@ public:
 	void			CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) const;	// Used to make a read-only clone for the renderer. Preserves existing.
 	//void			CloneFastInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) const;	// Used to make a read-only clone for the renderer. Starts from scratch.
 
+	// Style Classes
+	bool			ClassParse( const char* klass, const char* style );		// Set the class, overwriting any previously set style
+
 	nuDomEl*		AllocChild( nuTag tag );
 	void			FreeChild( const nuDomEl* el );
 

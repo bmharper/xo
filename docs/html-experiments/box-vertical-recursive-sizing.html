@@ -1,0 +1,43 @@
+<!DOCTYPE HTML>
+<head>
+</head>
+<!-- We have two outer boxes with unspecified vertical size. Their vertical size can only be calculated by
+summing up the sizes of the children. Does the browser do this? It needs to in order to be able to align
+a box by top or bottom -->
+<body style="font-size: 20px;">
+	<div style="width: 500px; background-color: #ddd">
+		<div style="vertical-align: top; display: inline-block;">
+			<div style="width: 30px; height: 30px;">1</div>
+			<div style="width: 30px; height: 30px;">2</div>
+			<div style="width: 30px; height: 30px;">3</div>
+			<div style="width: 30px; height: 30px;">4</div>
+			<div style="width: 30px; height: 30px;">5</div>
+			<div style="width: 30px; height: 30px;">6</div>
+			<div style="width: 30px; height: 30px;">7</div>
+			<div style="width: 30px; height: 30px;">8</div>
+			<div style="width: 30px; height: 30px;">9</div>
+		</div>
+		<!-- middle doesn't work -->
+		<div style="vertical-align: middle; display: inline-block; font-size: 15px;">
+			<div style="width: 30px; height: 30px;">1</div>
+			<div style="width: 30px; height: 30px;">2</div>
+		</div>
+		<!-- bottom DOES work one level deep-->
+		<div style="vertical-align: bottom; display: inline-block; font-size: 15px;">
+			<div style="width: 30px; height: 30px;">1</div>
+			<div style="width: 30px; height: 30px;">2</div>
+		</div>
+		<!-- bottom DOES work recursively -->
+		<div style="vertical-align: bottom; display: inline-block; font-size: 15px;">
+			<div style="width: 60px;">The quick brown fox jumps over the lazy</div>
+		</div>
+		<!-- even this works. We have specified no width here -->
+		<div style="vertical-align: bottom; display: inline-block; font-size: 15px;">
+			<div>The quick brown fox jumps over the lazy</div>
+		</div>
+	</div>
+</body>
+<!-- Conclusion: Yes.
+Notice how the block with "vertical-align: bottom" first has to lay out its children before
+it can know how high it is.
+-->

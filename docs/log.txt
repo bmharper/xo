@@ -1,0 +1,9 @@
+2014-06-26	Layout
+	You must specify either the width or the height of an element. If the element contains only text, then its height
+	is known. But... what if that element spans multiple lines, then its height is not known.
+
+2014-06-27	Layout - the answer
+	We DO need to do something like recursive layout, but we can probably do it with a single pass.
+	The key concept to add is "minimum width". Text is a strange thing, because it has no size up
+	front, and it can take on many forms. So in order to lay out a text box, you need to give it
+	a maximum width. Text in turn, has a minimum width, which I guess is the width of an "m".

@@ -115,15 +115,40 @@ bool nuSize::Parse( const char* s, intp len, nuSize& v )
 
 bool nuStyleBox::Parse( const char* s, intp len, nuStyleBox& v )
 {
+	int nspaces = 0;
+	int spaces[10];
+	for ( intp i = 0; i < len && nspaces < arraysize(spaces) - 1; i++ )
+	{
+		if ( IsWhitespace(s[i]) )
+			spaces[nspaces++] = (int) i;
+	}
+
 	// 20px
 	// 1px 2px 3px 4px (TODO)
 	nuStyleBox b;
-	nuSize one;
-	if ( nuSize::Parse( s, len, one ) )
+	if ( nspaces == 0 )
 	{
-		b.Left = b.Top = b.Bottom = b.Right = one;
-		v = b;
-		return true;
+		nuSize one;
+		if ( nuSize::Parse( s, len, one ) )
+		{
+			b.Left = b.Top = b.Bottom = b.Right = one;
+			v = b;
+			return true;
+		}
+	}
+
+	// 1px 2px 3px 4px
+	if ( nspaces == 3 )
+	{
+		bool ok1 = nuSize::Parse( s, spaces[0], b.Left );
+		bool ok2 = nuSize::Parse( s + spaces[0] + 1, spaces[1] - spaces[0] - 1, b.Top );
+		bool ok3 = nuSize::Parse( s + spaces[1] + 1, spaces[2] - spaces[1] - 1, b.Right );
+		bool ok4 = nuSize::Parse( s + spaces[2] + 1, (int) len - spaces[2] - 1, b.Bottom );
+		if ( ok1 && ok2 && ok3 && ok4 )
+		{
+			v = b;
+			return true;
+		}
 	}
 	return false;
 }

@@ -15,7 +15,8 @@ void nuMain( nuMainEvent ev )
 	case nuMainEventInit:
 		{
 			MainWnd = nuSysWnd::CreateWithDoc();
-			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
+			// DO NOT COMMIT MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
+			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 800, 60 + 400), nuSysWnd::SetPosition_Move | nuSysWnd::SetPosition_Size );
 			nuDoc* doc = MainWnd->Doc();
 			InitDOM( doc );
 			MainWnd->Show();
@@ -141,15 +142,36 @@ void DoLongText( nuDoc* doc )
 		);
 }
 
+void DoBackupSettings( nuDoc* doc )
+{
+	nuDomNode* root = &doc->Root;
+	doc->ClassParse( "bg-light", "background: #eee; padding: 8ep" );
+	doc->ClassParse( "bg-dark", "background: #ddd; padding: 8ep" );
+	doc->ClassParse( "button", "background: #fdd; padding: 8ep 1ep 8ep 1ep" );
+
+	nuDomNode* label = root->AddNode( nuTagDiv );
+	label->AddClass( "bg-light" );
+	label->SetText( "Backup from" );
+
+	nuDomNode* txt = root->AddNode( nuTagDiv );
+	txt->AddClass( "bg-dark" );
+	txt->SetText( "this is a text box" );
+	
+	nuDomNode* btn = root->AddNode( nuTagDiv );
+	btn->AddClass( "button" );
+	btn->SetText( "Browse..." );
+}
+
 void InitDOM( nuDoc* doc )
 {
 	nuDomNode* body = &doc->Root;
 	body->StyleParse( "font-family: Segoe UI, Droid Sans" );
 
-	DoBaselineAlignment( doc );
-	DoTwoTextRects( doc );
-	DoBlockMargins( doc );
-	DoLongText( doc );
+	//DoBaselineAlignment( doc );
+	//DoTwoTextRects( doc );
+	//DoBlockMargins( doc );
+	//DoLongText( doc );
+	DoBackupSettings( doc );
 
 	body->OnClick( [](const nuEvent& ev) -> bool {
 		nuGlobal()->EnableKerning = !nuGlobal()->EnableKerning;

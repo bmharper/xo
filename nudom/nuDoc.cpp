@@ -5,6 +5,7 @@
 #include "Render/nuRenderer.h"
 #include "Text/nuFontStore.h"
 #include "nuCloneHelpers.h"
+#include "nuStyle.h"
 
 nuDoc::nuDoc() : Root( this, nuTagDiv )
 {
@@ -113,6 +114,13 @@ void nuDoc::CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) con
 	c.Strings.CloneFrom_Incremental( Strings );
 
 	c.Version = Version;
+}
+
+bool nuDoc::ClassParse( const char* klass, const char* style )
+{
+	nuStyle* s = ClassStyles.GetOrCreate( klass );
+	s->Attribs.clear();
+	return s->Parse( style, this );
 }
 
 nuDomEl* nuDoc::AllocChild( nuTag tag )

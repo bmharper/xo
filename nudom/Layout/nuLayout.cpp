@@ -128,7 +128,7 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 	if ( position == nuPositionStatic && s.ParentContentBoxHasWidth && haveWidth )
 		PositionBlock( s, marginBox );
 	
-	NodeState s_saved_0 = s;
+	bool enableRecursiveLayout = false;
 
 	// cs: child state
 	NodeState cs;
@@ -177,7 +177,7 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 
 		// Since our width was undefined, we couldn't check for overflow until we'd layed out our children.
 		// If we do overflow now, then we need to retrofit all of our child boxes with an offset.
-		if ( position == nuPositionStatic && s.ParentContentBoxHasWidth && !haveWidth )
+		if ( enableRecursiveLayout && position == nuPositionStatic && s.ParentContentBoxHasWidth && !haveWidth )
 		{
 			nuPoint offset = PositionBlock( s, marginBox );
 			if ( offset != nuPoint(0,0) )
@@ -187,6 +187,10 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 				rnode->Children.clear();
 				continue;
 			}
+		}
+		else
+		{
+			s.PosX = marginBox.Right;
 		}
 
 		rnode->Pos = marginBox.ShrunkBy( margin );
