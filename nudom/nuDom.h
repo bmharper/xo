@@ -18,6 +18,7 @@
 #include "nuDoc.h"
 #include "nuDocGroup.h"
 #include "Layout/nuLayout.h"
+#include "Layout/nuLayout2.h"
 #include "Render/nuRenderer.h"
 #include "Render/nuRenderDoc.h"
 #include "Image/nuImageStore.h"

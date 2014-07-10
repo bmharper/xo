@@ -13,6 +13,7 @@ class nuEvent;
 class nuImage;
 class nuImageStore;
 class nuLayout;
+class nuLayout2;
 class nuPool;
 class nuDocGroup;
 class nuRenderDoc;
@@ -62,6 +63,7 @@ static const nuTextureID nuTextureIDNull = 0;		// Zero is always an invalid Text
 // Maximum number of texture units that we will try to use
 static const u32 nuMaxTextureUnits = 8;
 
+inline int32	nuIntToPos( int real )			{ return real << nuPosShift; }
 inline int32	nuRealx256ToPos( int32 real )	{ return int32(real * ((1 << nuPosShift) / 256)); } // Since nuPosShift = 256, nuRealx256ToPos simplifies out to identity
 inline int32	nuRealToPos( float real )		{ return int32(real * (1 << nuPosShift)); }
 inline int32	nuDoubleToPos( double real )	{ return int32(real * (1 << nuPosShift)); }
@@ -101,6 +103,7 @@ enum nuRenderResult
 XX(Body, 1) \
 XY(Div) \
 XY(Text) \
+XY(Lab) \
 XY(END) \
 
 #define XX(a,b) nuTag##a = b,
@@ -150,6 +153,12 @@ Without those, we get data alignment exceptions (signal 7) when running on my Ga
 I tried explicitly raising the alignment of nuBox to 8 and 16 bytes, but that did not help.
 Unfortunately I have not yet had the energy to open up the assembly and see what the compiler is doing wrong.
 This is documented inside nudom/docs/android.md
+
+There are some magic values in here:
+nuBox is used to represent the content-box of a node.
+One thing that comes up frequently is that a box has a well defined Left, but no Right. Or vice versa, or any combination thereof.
+So, nuPosNULL is treated like a NaN. If either Left or Right is nuPosNULL, then WidthOrNull is nuPosNULL.
+Likewise for HeightOrNull.
 */
 class NUAPI nuBox
 {
@@ -172,6 +181,8 @@ public:
 
 	nuPos	Width() const							{ return Right - Left; }
 	nuPos	Height() const							{ return Bottom - Top; }
+	nuPos	WidthOrNull() const						{ return (Left == nuPosNULL || Right == nuPosNULL) ? nuPosNULL : Right - Left; }
+	nuPos	HeightOrNull() const					{ return (Top == nuPosNULL || Bottom == nuPosNULL) ? nuPosNULL : Bottom - Top; }
 	void	Offset( int32 x, int32 y )				{ Left += x; Right += x; Top += y; Bottom += y; }
 	void	Offset( nuPoint p )						{ Offset( p.X, p.Y ); }
 	bool	IsInsideMe( nuPoint p ) const			{ return p.X >= Left && p.Y >= Top && p.X < Right && p.Y < Bottom; }

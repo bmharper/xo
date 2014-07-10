@@ -267,7 +267,7 @@ static bool ParseSingleAttrib( const char* s, intp len, bool (*parseFunc)(const 
 	}
 	else
 	{
-		nuParseFail( "Unknown: '%.*s'", (int) len, s );
+		nuParseFail( "Parse failed - unknown value: '%.*s'\n", (int) len, s );
 		return false;
 	}
 }
@@ -303,7 +303,7 @@ static bool ParseCompound( const char* s, intp len, bool (*parseFunc)(const char
 	}
 	else
 	{
-		nuParseFail( "Unknown: '%.*s'", (int) len, s );
+		nuParseFail( "Parse failed - unknown value: '%.*s'\n", (int) len, s );
 		return false;
 	}
 }
@@ -378,10 +378,10 @@ bool nuStyle::Parse( const char* t, nuDoc* doc )
 			else if ( MATCH(t, startk, eq, "display") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuDisplayTypeParse, nuCatDisplay, *this ); }
 			else if ( MATCH(t, startk, eq, "position") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuPositionTypeParse, nuCatPosition, *this ); }
 			else if ( MATCH(t, startk, eq, "border-radius") )				{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatBorderRadius, *this ); }
-			else if ( MATCH(t, startk, eq, "left") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatLeft, *this ); }
-			else if ( MATCH(t, startk, eq, "right") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatRight, *this ); }
-			else if ( MATCH(t, startk, eq, "top") )							{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatTop, *this ); }
-			else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatBottom, *this ); }
+			//else if ( MATCH(t, startk, eq, "left") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatLeft, *this ); }
+			//else if ( MATCH(t, startk, eq, "right") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatRight, *this ); }
+			//else if ( MATCH(t, startk, eq, "top") )							{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatTop, *this ); }
+			//else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatBottom, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-axis") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowAxisParse, nuCatFlow_Axis, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-direction-horizontal") )	{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Horizontal, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Vertical, *this ); }
@@ -389,10 +389,17 @@ bool nuStyle::Parse( const char* t, nuDoc* doc )
 			else if ( MATCH(t, startk, eq, "font-size") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatFontSize, *this ); }
 			else if ( MATCH(t, startk, eq, "font-family") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &ParseFontFamily, nuCatFontFamily, *this ); }
 			else if ( MATCH(t, startk, eq, "text-align-vertical") )			{ ok = ParseSingleAttrib( TSTART, TLEN, &nuTextAlignVerticalParse, nuCatText_Align_Vertical, *this ); }
+			else if ( MATCH(t, startk, eq, "left") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuHorizontalBindingParse, nuCatLeft, *this ); }
+			else if ( MATCH(t, startk, eq, "hcenter") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuHorizontalBindingParse, nuCatHCenter, *this ); }
+			else if ( MATCH(t, startk, eq, "right") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuHorizontalBindingParse, nuCatRight, *this ); }
+			else if ( MATCH(t, startk, eq, "top") )							{ ok = ParseSingleAttrib( TSTART, TLEN, &nuVerticalBindingParse, nuCatTop, *this ); }
+			else if ( MATCH(t, startk, eq, "vcenter") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuVerticalBindingParse, nuCatVCenter, *this ); }
+			else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuVerticalBindingParse, nuCatBottom, *this ); }
+			else if ( MATCH(t, startk, eq, "baseline") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuVerticalBindingParse, nuCatBaseline, *this ); }
 			else
 			{
 				ok = false;
-				nuParseFail( "Unknown: '%.*s'", int(eq - startk), t + startk );
+				nuParseFail( "Parse failed - unknown property: '%.*s'\n", int(eq - startk), t + startk );
 			}
 			if ( !ok )
 				nerror++;
@@ -833,5 +840,22 @@ NUAPI bool nuTextAlignVerticalParse( const char* s, intp len, nuTextAlignVertica
 {
 	if ( MATCH(s, 0, len, "baseline") )	{ t = nuTextAlignVerticalBaseline; return true; }
 	if ( MATCH(s, 0, len, "top") )		{ t = nuTextAlignVerticalTop; return true; }
+	return false;
+}
+
+NUAPI bool nuHorizontalBindingParse( const char* s, intp len, nuHorizontalBindings& t )
+{
+	if ( MATCH(s, 0, len, "left") )		{ t = nuHorizontalBindingLeft; return true; }
+	if ( MATCH(s, 0, len, "hcenter") )	{ t = nuHorizontalBindingCenter; return true; }
+	if ( MATCH(s, 0, len, "right") )	{ t = nuHorizontalBindingRight; return true; }
+	return false;
+}
+
+NUAPI bool nuVerticalBindingParse( const char* s, intp len, nuVerticalBindings& t )
+{
+	if ( MATCH(s, 0, len, "top") )		{ t = nuVerticalBindingTop; return true; }
+	if ( MATCH(s, 0, len, "vcenter") )	{ t = nuVerticalBindingCenter; return true; }
+	if ( MATCH(s, 0, len, "bottom") )	{ t = nuVerticalBindingBottom; return true; }
+	if ( MATCH(s, 0, len, "baseline") )	{ t = nuVerticalBindingBaseline; return true; }
 	return false;
 }

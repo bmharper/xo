@@ -7,3 +7,64 @@
 	The key concept to add is "minimum width". Text is a strange thing, because it has no size up
 	front, and it can take on many forms. So in order to lay out a text box, you need to give it
 	a maximum width. Text in turn, has a minimum width, which I guess is the width of an "m".
+
+2014-06-28	Layout - vertical alignment
+	It doesn't make sense for anything other than nuDomText elements to have valign:baseline, so
+	this should be illegal for nuDomNode elements. Although.. what about images? It might be useful
+	to align images onto the baseline. So perhaps instead of "valign", we have binding points, which
+	are expressed as child-bind-point:parent-bind-point. To align a text item to its parent's
+	baseline, you write baseline:baseline. Then, if you want to align the bottom of an image to
+	the baseline of its parent, you write bottom:baseline.
+	There is also this problem that nuDomText elements are leaves, and they may not specify any
+	style of their own. Whatever style they have needs to be inherited. I guess that's not really a
+	problem, except for the small issue that you'd need to set an alignment of baseline:basline on
+	a node that is not a nuDomText node, simply so that its child text leaves could inherit that
+	style. The question then remains: what is the binding of the non-text node that houses the text?
+	The answer is very simple: The baseline is defined as the baseline of your first child node with
+	a non-null baseline. So almost all nodes will end up having a baseline defined.
+
+	A box node may have zero, one, or two horizontal bind points. The same rule applies to vertical
+	bind points. Text nodes may not have two bind points, because that doesn't make any sense. Text
+	cannot be stretched, but boxes can. By far the most common text bind setting will be 
+	baseline:baseline. As for text's horizontal bind points, left:left sounds like the right default.
+	We might want to allow numerous bind points for boxes, such as left-mbox, left-bbox, left-cbox,
+	which refer to left margin box, left border box, left content box.
+	Another very important bind point is "center". In order to center a box horizontally inside its
+	parent, you can write hcenter:hcenter.
+
+2014-07-01	Layout - conceptual space
+	I've realized that it's useful to think of the initial layout canvas as a cartesian space
+	without any bounds. If there happens to be a box that bounds this space, then that box
+	can be overlayed onto the cartesian space, and used for clipping or for flow. The key
+	observation here is that you don't want to start out thinking "inside the box", because
+	it limits the way you think.
+	
+	I am starting on nuLayout2, which will be more free, less box oriented.
+
+	How about this:
+	Every node starts with its own local coordinate system, origin 0,0.
+	It's only inputs are ParentWidth, ParentHeight, ParentBaseline, any of which
+	may be null.
+	It's only outputs are NodeWidth, NodeHeight, NodeBaseline. NodeBaseline
+	is the baseline of the first child that returned a non-null baseline. The only
+	nodes that are original producers of a non-null baseline are nuDomText objects
+	(ie leaf text objects). BUT - what if you want a baseline defined by an object
+	that is going to have text, but has no text yet. Yeah, so that doesn't work.
+	The baseline needs to be defined by the deepest object that CAN have text.
+	Right now the only thing I can think of that can't have text is an <img>.
+	The node then calculates its specified width and height, if any. Having said
+	that, do we even need an <img> tag? Why not just a rectangle with a
+	background image?
+	However, the idea may still be useful. Perhaps there is a style such as
+	has-baseline: false. This stops the depth-first search for a baseline.
+
+2014-07-10	Layout
+	I am going to try writing Layout2 in such a way that performance is terrible.
+	For example, I am making it such that each node does not know where in space
+	it is situated. All it knows is it's parent width, height, and baseline.
+	After the node is finished rendering, its parent moves it to the right place.
+	This is daft, but I believe I'll quite easily be able to make it more sensible
+	from a performance perspective. It has the purity that each node receives the
+	absolute minimum that it needs in order to render itself. This is really just
+	to help me reason about it - I doubt I'll retain any of this design.
+

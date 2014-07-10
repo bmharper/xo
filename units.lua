@@ -233,6 +233,7 @@ local nudom = SharedLibrary {
 		"nudom/Image/nuImage.cpp",
 		"nudom/Image/nuImageStore.cpp",
 		"nudom/Layout/nuLayout.cpp",
+		"nudom/Layout/nuLayout2.cpp",
 		"nudom/Layout/nuTextLayout.cpp",
 		"nudom/Render/nuRenderBase.cpp",
 		"nudom/Render/nuRenderDX.cpp",

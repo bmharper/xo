@@ -110,6 +110,12 @@ nuDomEl* nuDomNode::ChildByIndex( intp index )
 	return Children[index];
 }
 
+const nuDomEl* nuDomNode::ChildByIndex( intp index ) const
+{
+	NUASSERT( (uintp) index < (uintp) Children.size() );
+	return Children[index];
+}
+
 void nuDomNode::Discard()
 {
 	InternalID = 0;

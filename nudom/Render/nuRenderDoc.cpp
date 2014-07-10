@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../Layout/nuLayout.h"
+#include "../Layout/nuLayout2.h"
 #include "nuRenderDoc.h"
 #include "nuRenderer.h"
 #include "nuRenderDX.h"
@@ -29,7 +30,7 @@ nuRenderResult nuRenderDoc::Render( nuRenderBase* driver )
 	ResetRenderData();
 	
 	NUTRACE_RENDER( "RenderDoc: Layout\n" );
-	nuLayout lay;
+	nuLayout2 lay;
 	lay.Layout( Doc, WindowWidth, WindowHeight, RenderRoot, &RenderPool );
 
 	NUTRACE_RENDER( "RenderDoc: Render\n" );

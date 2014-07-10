@@ -2,6 +2,7 @@
 #include "nuDoc.h"
 #include "nuDocGroup.h"
 #include "Layout/nuLayout.h"
+#include "Layout/nuLayout2.h"
 #include "nuSysWnd.h"
 #include "Render/nuRenderer.h"
 #include "Render/nuRenderDoc.h"

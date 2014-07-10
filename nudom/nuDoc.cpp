@@ -2,6 +2,7 @@
 #include "nuDoc.h"
 #include "nuDocGroup.h"
 #include "Layout/nuLayout.h"
+#include "Layout/nuLayout2.h"
 #include "Render/nuRenderer.h"
 #include "Text/nuFontStore.h"
 #include "nuCloneHelpers.h"
@@ -235,6 +236,7 @@ void nuDoc::InitializeDefaultTagStyles()
 	//TagStyles[nuTagDiv].Parse( "display: block;", this );
 	// Hack to give text some size
 	//TagStyles[nuTagText].Parse( "width: 70px; height: 30px;", this );
+	//TagStyles[nuTagLab]...
 
-	static_assert(nuTagText == nuTagEND - 1, "add default style for new tag");
+	static_assert(nuTagLab == nuTagEND - 1, "add default style for new tag");
 }

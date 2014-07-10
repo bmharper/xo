@@ -30,6 +30,7 @@ public:
 	void			RemoveAllChildren();
 	intp			ChildCount() const { return Children.size(); }
 	nuDomEl*		ChildByIndex( intp index );
+	const nuDomEl*	ChildByIndex( intp index ) const;
 	void			Discard();
 
 	bool			StyleParse( const char* t );

@@ -67,6 +67,23 @@ enum nuTextAlignVertical
 	nuTextAlignVerticalTop			// This is unlikely to be useful, but having it proves that we *could* make other rules if proved useful
 };
 
+enum nuVerticalBindings
+{
+	nuVerticalBindingNULL,
+	nuVerticalBindingTop,			// Top of parent's content box
+	nuVerticalBindingCenter,		// Center of parent's content box
+	nuVerticalBindingBottom,		// Bottom of parent's content box
+	nuVerticalBindingBaseline,		// Parent's baseline
+};
+
+enum nuHorizontalBindings
+{
+	nuHorizontalBindingNULL,
+	nuHorizontalBindingLeft,		// Left of parent's content box
+	nuHorizontalBindingCenter,		// Center of parent's content box
+	nuHorizontalBindingRight,		// Right of parent's content box
+};
+
 enum nuPositionType
 {
 	// All of these definitions are the same as HTML's
@@ -82,6 +99,18 @@ enum nuBoxSizeType
 	nuBoxSizeBorder,
 	nuBoxSizeMargin			// Created initially for the <body> element
 };
+
+// The following attributes are "bind sources". You bind a position of your own to a position on your parent node.
+// The "bind targets" that you can bind to on your parent node are the same properties that can be used as bind sources.
+// So if you bind left:right, then you are binding your left edge to your parent content box's right edge.
+// If you bind vcenter:vcenter, then you bind your vertical center to the vertical center of your parent context box.
+// * Left
+// * HCenter
+// * Right
+// * Top
+// * VCenter
+// * Bottom
+// * Baseline
 
 // The order of the box components (left,top,right,bottom) must be consistent with the order in nuStyleBox
 // In addition, all 'box' types must fall between Margin_Left and Border_Bottom. This is simply for sanity. It is verified
@@ -110,9 +139,12 @@ XY(Border_Bottom) \
 XY(Width) \
 XY(Height) \
 XY(Top) \
-XY(Left) \
-XY(Right) \
+XY(VCenter) \
 XY(Bottom) \
+XY(Baseline) \
+XY(Left) \
+XY(HCenter) \
+XY(Right) \
 XY(FontSize) \
 XY(FontFamily) \
 XY(BorderRadius) \
@@ -171,18 +203,25 @@ public:
 
 	void SetInherit( nuStyleCategories cat );
 
-	void SetColor( nuStyleCategories cat, nuColor val )			{ SetU32( cat, val.u ); }
-	void SetSize( nuStyleCategories cat, nuSize val )			{ SetWithSubtypeF( cat, val.Type, val.Val ); }
-	void SetDisplay( nuDisplayType val )						{ SetU32( nuCatDisplay, val ); }
-	void SetBorderRadius( nuSize val )							{ SetSize( nuCatBorderRadius, val ); }
-	void SetPosition( nuPositionType val )						{ SetU32( nuCatPosition, val ); }
-	void SetFont( nuFontID val )								{ SetU32( nuCatFontFamily, val ); }
-	void SetBackgroundImage( const char* image, nuDoc* doc )	{ SetString( nuCatBackgroundImage, image, doc ); }
-	void SetFlowAxis( nuFlowAxis axis )							{ SetU32( nuCatFlow_Axis, axis ); }
-	void SetFlowDirectionHorizonal( nuFlowDirection dir )		{ SetU32( nuCatFlow_Direction_Horizontal, dir ); }
-	void SetFlowDirectionVertical( nuFlowDirection dir )		{ SetU32( nuCatFlow_Direction_Vertical, dir ); }
-	void SetBoxSizing( nuBoxSizeType type )						{ SetU32( nuCatBoxSizing, type ); }
-	void SetTextAlignVertical( nuTextAlignVertical align )		{ SetU32( nuCatText_Align_Vertical, align ); }
+	void SetColor( nuStyleCategories cat, nuColor val )				{ SetU32( cat, val.u ); }
+	void SetSize( nuStyleCategories cat, nuSize val )				{ SetWithSubtypeF( cat, val.Type, val.Val ); }
+	void SetDisplay( nuDisplayType val )							{ SetU32( nuCatDisplay, val ); }
+	void SetBorderRadius( nuSize val )								{ SetSize( nuCatBorderRadius, val ); }
+	void SetPosition( nuPositionType val )							{ SetU32( nuCatPosition, val ); }
+	void SetFont( nuFontID val )									{ SetU32( nuCatFontFamily, val ); }
+	void SetBackgroundImage( const char* image, nuDoc* doc )		{ SetString( nuCatBackgroundImage, image, doc ); }
+	void SetFlowAxis( nuFlowAxis axis )								{ SetU32( nuCatFlow_Axis, axis ); }
+	void SetFlowDirectionHorizonal( nuFlowDirection dir )			{ SetU32( nuCatFlow_Direction_Horizontal, dir ); }
+	void SetFlowDirectionVertical( nuFlowDirection dir )			{ SetU32( nuCatFlow_Direction_Vertical, dir ); }
+	void SetBoxSizing( nuBoxSizeType type )							{ SetU32( nuCatBoxSizing, type ); }
+	void SetTextAlignVertical( nuTextAlignVertical align )			{ SetU32( nuCatText_Align_Vertical, align ); }
+	void SetLeft( nuHorizontalBindings bind )						{ SetU32( nuCatLeft, bind ); }
+	void SetHCenter( nuHorizontalBindings bind )					{ SetU32( nuCatHCenter, bind ); }
+	void SetRight( nuHorizontalBindings bind )						{ SetU32( nuCatRight, bind ); }
+	void SetTop( nuVerticalBindings bind )							{ SetU32( nuCatTop, bind ); }
+	void SetVCenter( nuVerticalBindings bind )						{ SetU32( nuCatVCenter, bind ); }
+	void SetBottom( nuVerticalBindings bind )						{ SetU32( nuCatBottom, bind ); }
+	void SetBaseline( nuVerticalBindings bind )						{ SetU32( nuCatBaseline, bind ); }
 
 	// Generic Set() that is used by template code
 	void Set( nuStyleCategories cat, nuColor val )					{ SetColor( cat, val ); }
@@ -192,27 +231,31 @@ public:
 	void Set( nuStyleCategories cat, nuFlowAxis val )				{ SetFlowAxis( val ); }
 	void Set( nuStyleCategories cat, nuFlowDirection val )			{ SetU32( cat, val ); }
 	void Set( nuStyleCategories cat, nuBoxSizeType val )			{ SetBoxSizing( val ); }
-	void Set( nuStyleCategories cat, nuTextAlignVertical val )		{ SetTextAlignVertical( val ); }
+	void Set( nuStyleCategories cat, nuTextAlignVertical val )		{ SetU32( cat, val ); }
+	void Set( nuStyleCategories cat, nuHorizontalBindings val )		{ SetU32( cat, val ); }
+	void Set( nuStyleCategories cat, nuVerticalBindings val )		{ SetU32( cat, val ); }
 	void Set( nuStyleCategories cat, nuFontID val )					{ SetFont( val ); }
 	void Set( nuStyleCategories cat, const char* val, nuDoc* doc )	{ SetString( cat, val, doc ); }
 
-	bool				IsNull() const							{ return Category == nuCatNULL; }
-	bool				IsInherit() const						{ return Flags == FlagInherit; }
+	bool					IsNull() const							{ return Category == nuCatNULL; }
+	bool					IsInherit() const						{ return Flags == FlagInherit; }
 
-	nuStyleCategories	GetCategory() const					{ return (nuStyleCategories) Category; }
-	nuSize				GetSize() const						{ return nuSize::Make( (nuSize::Types) SubType, ValF ); }
-	nuColor				GetColor() const					{ return nuColor::Make( ValU32 ); }
-	nuDisplayType		GetDisplayType() const				{ return (nuDisplayType) ValU32; }
-	nuPositionType		GetPositionType() const				{ return (nuPositionType) ValU32; }
-	int					GetStringID() const					{ return (int) ValU32; }
-	nuFlowAxis			GetFlowAxis() const					{ return (nuFlowAxis) ValU32; }
-	nuFlowDirection		GetFlowDirectionMajor() const		{ return (nuFlowDirection) ValU32; }
-	nuFlowDirection		GetFlowDirectionMinor() const		{ return (nuFlowDirection) ValU32; }
-	nuBoxSizeType		GetBoxSizing() const				{ return (nuBoxSizeType) ValU32; }
-	nuTextAlignVertical	GetTextAlignVertical() const		{ return (nuTextAlignVertical) ValU32; }
+	nuStyleCategories		GetCategory() const						{ return (nuStyleCategories) Category; }
+	nuSize					GetSize() const							{ return nuSize::Make( (nuSize::Types) SubType, ValF ); }
+	nuColor					GetColor() const						{ return nuColor::Make( ValU32 ); }
+	nuDisplayType			GetDisplayType() const					{ return (nuDisplayType) ValU32; }
+	nuPositionType			GetPositionType() const					{ return (nuPositionType) ValU32; }
+	int						GetStringID() const						{ return (int) ValU32; }
+	nuFlowAxis				GetFlowAxis() const						{ return (nuFlowAxis) ValU32; }
+	nuFlowDirection			GetFlowDirectionMajor() const			{ return (nuFlowDirection) ValU32; }
+	nuFlowDirection			GetFlowDirectionMinor() const			{ return (nuFlowDirection) ValU32; }
+	nuBoxSizeType			GetBoxSizing() const					{ return (nuBoxSizeType) ValU32; }
+	nuTextAlignVertical		GetTextAlignVertical() const			{ return (nuTextAlignVertical) ValU32; }
+	nuHorizontalBindings	GetHorizontalBinding() const			{ return (nuHorizontalBindings) ValU32; }
+	nuVerticalBindings		GetVerticalBinding() const				{ return (nuVerticalBindings) ValU32; }
 
-	const char*			GetBackgroundImage( nuStringTable* strings ) const;
-	nuFontID			GetFont() const;
+	const char*				GetBackgroundImage( nuStringTable* strings ) const;
+	nuFontID				GetFont() const;
 
 protected:
 	void SetString( nuStyleCategories cat, const char* str, nuDoc* doc );
@@ -376,8 +419,6 @@ protected:
 	podvec<nuStyle>				Styles;
 	podvec<int>					UnusedSlots;
 	fhashmap<nuString, int>		NameToIndex;
-
-
 };
 
 
@@ -387,4 +428,6 @@ NUAPI bool nuFlowAxisParse( const char* s, intp len, nuFlowAxis& t );
 NUAPI bool nuFlowDirectionParse( const char* s, intp len, nuFlowDirection& t );
 NUAPI bool nuBoxSizeParse( const char* s, intp len, nuBoxSizeType& t );
 NUAPI bool nuTextAlignVerticalParse( const char* s, intp len, nuTextAlignVertical& t );
+NUAPI bool nuHorizontalBindingParse( const char* s, intp len, nuHorizontalBindings& t );
+NUAPI bool nuVerticalBindingParse( const char* s, intp len, nuVerticalBindings& t );
 
