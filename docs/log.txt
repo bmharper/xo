@@ -68,3 +68,12 @@
 	absolute minimum that it needs in order to render itself. This is really just
 	to help me reason about it - I doubt I'll retain any of this design.
 
+2014-07-11	Layout
+	Last night I realized that my "terribly performant" approach mentioned above
+	actually has a trivial solution with good performance: Make coordinates in
+	render nodes relative. What exactly they are relative to is an open question,
+	but probably just relative to the "top-left" of their parent render node makes
+	sense. This way, when you reposition a node, all of its children go along for
+	the ride, at no cost.
+
+
