@@ -19,7 +19,7 @@ public:
 				nuRenderDomEl( nuInternalID id, nuTag tag );
 
 	nuInternalID					InternalID;			// Reference to our original nuDomEl
-	nuBox							Pos;				// For rectangles, this is the BorderBox
+	nuBox							Pos;				// For rectangles, this is the BorderBox. NO.. let's rather make it the ContentBox.
 	nuTag							Tag;
 };
 
@@ -31,6 +31,9 @@ public:
 	void		Discard();
 	void		SetStyle( nuRenderStack& stack );
 	void		SetPool( nuPool* pool );
+	nuBox		BorderBox() const;
+	nuPos		BorderBoxRight() const		{ return Pos.Right + Style.BorderSize.Right; }
+	nuPos		BorderBoxBottom() const		{ return Pos.Bottom + Style.BorderSize.Bottom; }
 
 	nuStyleRender					Style;
 	nuPoolArray<nuRenderDomEl*>		Children;

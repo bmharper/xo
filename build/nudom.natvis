@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+    <Type Name="nuBox">
+        <DisplayString>{Left},{Top},{Right},{Bottom}</DisplayString>
+		<Expand> 
+		    <Item Name="Left">Left</Item> 
+		    <Item Name="Top">Top</Item> 
+		    <Item Name="Right">Right</Item> 
+		    <Item Name="Bottom">Bottom</Item> 
+		    <Item Name="(Width)">Right-Left</Item> 
+		    <Item Name="(Height)">Bottom-Top</Item> 
+		    <Item Name="px:Left">Left/256</Item> 
+		    <Item Name="px:Top">Top/256</Item> 
+		    <Item Name="px:Right">Right/256</Item> 
+		    <Item Name="px:Bottom">Bottom/256</Item> 
+		    <Item Name="(px:Width)">(Right-Left)/256</Item> 
+		    <Item Name="(px:Height)">(Bottom-Top)/256</Item> 
+  		</Expand>         
+    </Type>
     <Type Name="nuStringRaw">
         <DisplayString>{Z}</DisplayString>
 	    <StringView>Z,s</StringView>

@@ -44,10 +44,39 @@ protected:
 
 	struct LayoutOutput
 	{
+		BindingSet	Binds;
 		nuPos		NodeWidth;
 		nuPos		NodeHeight;
 		nuPos		NodeBaseline;
-		BindingSet	Binds;
+		nuBreakType	Break: 2;		// Keep in mind that you need to mask this off against 3 (ie if (x.Break & 3 == nuBreakAfter)), because of sign extension. ie enums are signed.
+	};
+
+	struct Word
+	{
+		nuPos	Width;
+		int32	Start;
+		int32	End;
+		int32	Length() const { return End - Start; }
+	};
+
+	struct TextRunState
+	{
+		const nuDomText*	Node;
+		nuRenderDomText*	RNode;
+		podvec<Word>		Words;
+		int					GlyphCount;		// Number of non-empty glyphs
+		bool				GlyphsNeeded;
+	};
+
+	struct FlowState
+	{
+		nuPos	PosMinor;		// In default flow, this is the horizontal (X) position
+		nuPos	PosMajor;		// In default flow, this is the vertical (Y) position
+		nuPos	MajorMax;		// In default flow, this is the bottom of the current line
+		// Meh -- implement these when the need arises
+		// bool	IsVertical;		// default true, normal flow
+		// bool	ReverseMajor;	// Major goes from high to low numbers (right to left, or bottom to top)
+		// bool	ReverseMinor;	// Minor goes from high to low numbers (right to left, or bottom to top)
 	};
 
 	const nuDoc*				Doc;
@@ -58,11 +87,15 @@ protected:
 	float						EpToPixel;
 	nuFontTableImmutable		Fonts;
 	fhashset<nuGlyphCacheKey>	GlyphsNeeded;
+	TextRunState				TempText;
 
+	void		RenderGlyphsNeeded();
 	void		LayoutInternal( nuRenderDomNode& root );
 	void		RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOutput& out, nuRenderDomNode* rnode );
-	void		PositionChild( const LayoutInput& cin, const LayoutOutput& cout, nuRenderDomNode* rchild );
-	void		OffsetRecursive( nuRenderDomNode* rnode, nuPoint offset );
+	void		RunText( const nuDomText& node, const LayoutInput& in, LayoutOutput& out, nuRenderDomText* rnode );
+	void		GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, TextRunState& ts );
+	void		PositionChildFromBindings( nuPoint toContent, const LayoutInput& cin, const LayoutOutput& cout, nuRenderDomEl* rchild );
+	void		GenerateTextWords( TextRunState& ts );
 
 	nuPos		ComputeDimension( nuPos container, nuStyleCategories cat );
 	nuPos		ComputeDimension( nuPos container, nuSize size );
@@ -70,8 +103,16 @@ protected:
 	nuBox		ComputeBox( nuPos containerWidth, nuPos containerHeight, nuStyleBox box );
 	BindingSet	ComputeBinds();
 
-	static bool IsDefined( nuPos p )	{ return p != nuPosNULL; }
-	static bool IsNull( nuPos p )		{ return p == nuPosNULL; }
+	static nuPos			HBindOffset( nuHorizontalBindings bind, nuPos width );
+	static nuPos			VBindOffset( nuVerticalBindings bind, nuPos height );
+	static bool				IsSpace( int ch );
+	static bool				IsLinebreak( int ch );
+	static nuGlyphCacheKey	MakeGlyphCacheKey( nuRenderDomText* rnode );
+	static void				FlowNewline( FlowState& flow );
+	static void				FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, nuRenderDomEl* rel );
+
+	static bool				IsDefined( nuPos p )	{ return p != nuPosNULL; }
+	static bool				IsNull( nuPos p )		{ return p == nuPosNULL; }
 
 };
 

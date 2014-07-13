@@ -16,7 +16,7 @@ nuRenderResult nuRenderer::Render( nuImageStore* images, nuStringTable* strings,
 	Driver->PreRender();
 
 	// This phase is probably worth parallelizing
-	RenderEl( root );
+	RenderEl( nuPoint(0,0), root );
 	// After RenderNode we are serial again.
 
 	Driver->PostRenderCleanup();
@@ -27,29 +27,32 @@ nuRenderResult nuRenderer::Render( nuImageStore* images, nuStringTable* strings,
 	return needGlyphs ? nuRenderResultNeedMore : nuRenderResultIdle;
 }
 
-void nuRenderer::RenderEl( nuRenderDomEl* el )
+void nuRenderer::RenderEl( nuPoint base, nuRenderDomEl* el )
 {
 	if ( el->Tag == nuTagText )
-		RenderText( static_cast<nuRenderDomText*>(el) );
+		RenderText( base, static_cast<nuRenderDomText*>(el) );
 	else
 	{
 		nuRenderDomNode* node = static_cast<nuRenderDomNode*>(el);
-		RenderNode( node );
+		RenderNode( base, node );
+		nuPoint newBase = base + nuPoint( node->Pos.Left, node->Pos.Top );
 		for ( intp i = 0; i < node->Children.size(); i++ )
-			RenderEl( node->Children[i] );
+			RenderEl( newBase, node->Children[i] );
 	}
 }
 
-void nuRenderer::RenderNode( nuRenderDomNode* node )
+void nuRenderer::RenderNode( nuPoint base, nuRenderDomNode* node )
 {
 	// always shade rectangles well
 	const bool alwaysGoodRects = true;
 
 	nuStyleRender* style = &node->Style;
-	float bottom = nuPosToReal( node->Pos.Bottom );
-	float top = nuPosToReal( node->Pos.Top );
-	float left = nuPosToReal( node->Pos.Left );
-	float right = nuPosToReal( node->Pos.Right );
+	nuBox pos = node->Pos;
+	pos.Offset( base );
+	float bottom = nuPosToReal( pos.Bottom );
+	float top = nuPosToReal( pos.Top );
+	float left = nuPosToReal( pos.Left );
+	float right = nuPosToReal( pos.Right );
 
 	float radius = style->BorderRadius;
 	bool useRectShader = alwaysGoodRects || radius != 0;
@@ -117,19 +120,19 @@ void nuRenderer::RenderNode( nuRenderDomNode* node )
 	}
 }
 
-void nuRenderer::RenderText( nuRenderDomText* node )
+void nuRenderer::RenderText( nuPoint base, nuRenderDomText* node )
 {
 	bool subPixelGlyphs = node->Flags & nuRenderDomText::FlagSubPixelGlyphs;
 	for ( intp i = 0; i < node->Text.size(); i++ )
 	{
 		if ( subPixelGlyphs )
-			RenderTextChar_SubPixel( node, node->Text[i] );
+			RenderTextChar_SubPixel( base, node, node->Text[i] );
 		else
-			RenderTextChar_WholePixel( node, node->Text[i] );
+			RenderTextChar_WholePixel( base, node, node->Text[i] );
 	}
 }
 
-void nuRenderer::RenderTextChar_SubPixel( nuRenderDomText* node, const nuRenderCharEl& txtEl )
+void nuRenderer::RenderTextChar_SubPixel( nuPoint base, nuRenderDomText* node, const nuRenderCharEl& txtEl )
 {
 	nuGlyphCacheKey glyphKey( node->FontID, txtEl.Char, node->FontSizePx, nuGlyphFlag_SubPixel_RGB );
 	const nuGlyph* glyph = nuGlobal()->GlyphCache->GetGlyph( glyphKey );
@@ -143,8 +146,8 @@ void nuRenderer::RenderTextChar_SubPixel( nuRenderDomText* node, const nuRenderC
 	float atlasScaleX = 1.0f / atlas->GetWidth();
 	float atlasScaleY = 1.0f / atlas->GetHeight();
 
-	float top = nuPosToReal( nuPosRound(txtEl.Y) );
-	float left = nuPosToReal( txtEl.X );
+	float top = nuPosToReal( nuPosRound(base.Y + txtEl.Y) );
+	float left = nuPosToReal( base.X + txtEl.X );
 
 	// Our glyph has a single column on the left and right side, so that our clamped texture
 	// reads will pickup a zero when reading off beyond the edge of the glyph
@@ -210,7 +213,7 @@ void nuRenderer::RenderTextChar_SubPixel( nuRenderDomText* node, const nuRenderC
 	Driver->DrawQuad( corners );
 }
 
-void nuRenderer::RenderTextChar_WholePixel( nuRenderDomText* node, const nuRenderCharEl& txtEl )
+void nuRenderer::RenderTextChar_WholePixel( nuPoint base, nuRenderDomText* node, const nuRenderCharEl& txtEl )
 {
 	nuGlyphCacheKey glyphKey( node->FontID, txtEl.Char, node->FontSizePx, 0 );
 	const nuGlyph* glyph = nuGlobal()->GlyphCache->GetGlyph( glyphKey );
@@ -224,8 +227,8 @@ void nuRenderer::RenderTextChar_WholePixel( nuRenderDomText* node, const nuRende
 	float atlasScaleX = 1.0f / atlas->GetWidth();
 	float atlasScaleY = 1.0f / atlas->GetHeight();
 
-	float top = nuPosToReal( txtEl.Y );
-	float left = nuPosToReal( txtEl.X );
+	float top = nuPosToReal( base.Y + txtEl.Y );
+	float left = nuPosToReal( base.X + txtEl.X );
 
 	// a single pixel of padding is necessary to ensure that we're not short-sampling
 	// the edges of the glyphs

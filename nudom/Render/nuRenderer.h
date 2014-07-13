@@ -17,11 +17,11 @@ protected:
 	nuStringTable*				Strings;
 	fhashset<nuGlyphCacheKey>	GlyphsNeeded;
 
-	void			RenderEl( nuRenderDomEl* node );
-	void			RenderNode( nuRenderDomNode* node );
-	void			RenderText( nuRenderDomText* node );
-	void			RenderTextChar_WholePixel( nuRenderDomText* node, const nuRenderCharEl& txtEl );
-	void			RenderTextChar_SubPixel( nuRenderDomText* node, const nuRenderCharEl& txtEl );
+	void			RenderEl( nuPoint base, nuRenderDomEl* node );
+	void			RenderNode( nuPoint base, nuRenderDomNode* node );
+	void			RenderText( nuPoint base, nuRenderDomText* node );
+	void			RenderTextChar_WholePixel( nuPoint base, nuRenderDomText* node, const nuRenderCharEl& txtEl );
+	void			RenderTextChar_SubPixel( nuPoint base, nuRenderDomText* node, const nuRenderCharEl& txtEl );
 	void			RenderGlyphsNeeded();
 
 	bool			LoadTexture( nuTexture* tex, int texUnit );		// Load a texture and reset invalid rectangle

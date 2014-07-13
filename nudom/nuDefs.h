@@ -4,6 +4,7 @@
 // strive to remain quite small.
 
 #include "nuPlatform.h"
+#include "nuTags.h"
 
 class nuDomEl;
 class nuDomNode;
@@ -99,21 +100,6 @@ enum nuRenderResult
 	nuRenderResultIdle
 };
 
-#define NU_TAGS_DEFINE \
-XX(Body, 1) \
-XY(Div) \
-XY(Text) \
-XY(Lab) \
-XY(END) \
-
-#define XX(a,b) nuTag##a = b,
-#define XY(a) nuTag##a,
-enum nuTag {
-	NU_TAGS_DEFINE
-};
-#undef XX
-#undef XY
-
 //struct nuVec2
 //{
 //	float x,y;
@@ -185,6 +171,8 @@ public:
 	nuPos	HeightOrNull() const					{ return (Top == nuPosNULL || Bottom == nuPosNULL) ? nuPosNULL : Bottom - Top; }
 	void	Offset( int32 x, int32 y )				{ Left += x; Right += x; Top += y; Bottom += y; }
 	void	Offset( nuPoint p )						{ Offset( p.X, p.Y ); }
+	nuBox	OffsetBy( int32 x, int32 y )			{ return nuBox(Left + x, Top + y, Right + x, Bottom + y); }
+	nuBox	OffsetBy( nuPoint p )					{ return nuBox(Left + p.X, Top + p.Y, Right + p.X, Bottom + p.Y); }
 	bool	IsInsideMe( nuPoint p ) const			{ return p.X >= Left && p.Y >= Top && p.X < Right && p.Y < Bottom; }
 	bool	IsAreaZero() const						{ return Width() == 0 || Height() == 0; }
 

@@ -68,3 +68,10 @@
 	absolute minimum that it needs in order to render itself. This is really just
 	to help me reason about it - I doubt I'll retain any of this design.
 
+2014-07-13	Layout
+	It doesn't make sense for an object to participate in flow and binding in the
+	same dimension. For example, if a container has two <lab> objects that both
+	have hcenter:hcenter style. This doesn't make any sense, so it should be
+	flagged, ignored, or disallowed. Perhaps if an object has had a non-zero flow
+	offset applied to it in a particular dimension, then any subsequent bind
+	in that same dimension is ignored or disallowed.

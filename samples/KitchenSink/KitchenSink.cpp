@@ -97,22 +97,49 @@ void DoBaselineAlignment_rev2( nuDoc* doc )
 	// * The first Lab object has no height defined, yet it can center itself
 	// * The second Div object has no height defined, yet it can align itself to the bottom of its parent
 
-	// simple (only 1 deep)
-	auto div1 = root->AddNode( nuTagDiv );
-	div1->StyleParse( "width: 200ep; height: 50ep; box-sizing: margin; background: #ddd; margin: 0 2ep 0 2ep" );
-	auto div1_lab = div1->AddNode( nuTagLab );
-	div1_lab->StyleParse( "hcenter: hcenter; vcenter: vcenter; background: #faa; width: 120ep; height: 20ep" );
-
-	// advanced
-	/*
-	auto div1 = root->AddNode( nuTagDiv );
-	div1->StyleParse( "width: 200ep; height: 30ep; box-sizing: margin; background: #ddd; margin: 0 2ep 0 2ep" );
-	auto div1_lab = div1->AddNode( nuTagLab );
-	div1_lab->StyleParse( "vcenter: vcenter; font-size: 14ep; background: #fdd" );
-	// hack for lack of supporting text
-	div1_lab->AddNode( nuTagDiv )->StyleParse( "width: 150ep; height: 14ep; background: #eee" );
-	//div1_lab->SetText( "Hello" );
-	*/
+	int v = 4;
+	if ( v == 1 )
+	{
+		// only 1 deep
+		auto div1 = root->AddNode( nuTagDiv );
+		div1->StyleParse( "width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep" );
+		auto div1_lab = div1->AddNode( nuTagLab );
+		div1_lab->StyleParse( "hcenter: hcenter; vcenter: vcenter; background: #faa; width: 80ep; height: 50ep" );
+	}
+	else if ( v == 2 )
+	{
+		// inner element's size comes from text impostor
+		auto div1 = root->AddNode( nuTagDiv );
+		div1->StyleParse( "width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep" );
+		auto div1_lab = div1->AddNode( nuTagLab );
+		div1_lab->StyleParse( "hcenter: hcenter; vcenter: vcenter; background: #faa;" );
+		div1_lab->AddNode( nuTagDiv )->StyleParse( "width: 80ep; height: 50ep; background: #eee" ); // hack for lack of supporting text
+	}
+	else if ( v == 3 )
+	{
+		// inner element's size comes from text
+		auto div1 = root->AddNode( nuTagDiv );
+		div1->StyleParse( "width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep" );
+		auto div1_lab = div1->AddNode( nuTagLab );
+		div1_lab->StyleParse( "hcenter: hcenter; vcenter: vcenter; background: #faa;" );
+		div1_lab->SetText( "Hello\nWorld!" );
+	}
+	else if ( v == 4 )
+	{
+		// two text elements beneath each other, centered horizontally
+		// txtContainer needs two passes over its children, so that it can center them after it knows its own width.
+		auto div1 = root->AddNode( nuTagDiv );
+		div1->StyleParse( "width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep" );
+		auto txtContainer = div1->AddNode( nuTagDiv );
+		txtContainer->StyleParse( "hcenter: hcenter; vcenter: vcenter; background: #faa;" );
+		auto lab1 = txtContainer->AddNode( nuTagLab );
+		//txtContainer->AddBreak();
+		lab1->StyleParse( "hcenter: hcenter; background: #afa; break: after" );
+		lab1->SetText( "Hello" );
+		auto lab2 = txtContainer->AddNode( nuTagLab );
+		lab2->StyleParse( "hcenter: hcenter; background: #afa;" );
+		lab2->SetText( "World!" );
+	}
 
 	// 2nd div, that aligns to baseline
 	/*

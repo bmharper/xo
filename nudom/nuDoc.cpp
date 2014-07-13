@@ -228,7 +228,7 @@ void nuDoc::InitializeDefaultTagStyles()
 	nuStyleAttrib afont;
 	afont.SetFont( nuGlobal()->FontStore->InsertByFacename(font) );
 
-	// Other defaults are set inside nuRenderStack::Initialize
+	// Other defaults are set inside nuRenderStack::Initialize()
 
 	TagStyles[nuTagBody].Parse( "background: #fff; width: 100%; height: 100%; box-sizing: margin;", this );
 	TagStyles[nuTagBody].Set( afont );

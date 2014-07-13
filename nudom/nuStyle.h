@@ -3,6 +3,8 @@
 #include "nuDefs.h"
 #include "nuString.h"
 
+// The list of styles that are inherited by child nodes lives in nuInheritedStyleCategories
+
 // Represents a size that is zero, pixels, eye pixels, points, percent.
 // TODO: em
 // Zero is represented as 0 pixels
@@ -100,6 +102,13 @@ enum nuBoxSizeType
 	nuBoxSizeMargin			// Created initially for the <body> element
 };
 
+enum nuBreakType
+{
+	nuBreakNULL,
+	nuBreakBefore,			// Break flow before element
+	nuBreakAfter			// Break flow after element
+};
+
 // The following attributes are "bind sources". You bind a position of your own to a position on your parent node.
 // The "bind targets" that you can bind to on your parent node are the same properties that can be used as bind sources.
 // So if you bind left:right, then you are binding your left edge to your parent content box's right edge.
@@ -122,22 +131,28 @@ XY(Display) \
 XY(Background) \
 XY(BackgroundImage) \
 XY(Text_Align_Vertical) \
-XY(Dummy2_UseMe) \
+\
+XY(Break) \
 XY(Dummy3_UseMe) \
+\
 XY(Margin_Left) \
 XY(Margin_Top) \
 XY(Margin_Right) \
 XY(Margin_Bottom) \
+\
 XY(Padding_Left) \
 XY(Padding_Top) \
 XY(Padding_Right) \
 XY(Padding_Bottom) \
+\
 XY(Border_Left) \
 XY(Border_Top) \
 XY(Border_Right) \
 XY(Border_Bottom) \
+\
 XY(Width) \
 XY(Height) \
+\
 XY(Top) \
 XY(VCenter) \
 XY(Bottom) \
@@ -145,8 +160,10 @@ XY(Baseline) \
 XY(Left) \
 XY(HCenter) \
 XY(Right) \
+\
 XY(FontSize) \
 XY(FontFamily) \
+\
 XY(BorderRadius) \
 XY(Position) \
 XY(Flow_Axis) \
@@ -210,6 +227,7 @@ public:
 	void SetPosition( nuPositionType val )							{ SetU32( nuCatPosition, val ); }
 	void SetFont( nuFontID val )									{ SetU32( nuCatFontFamily, val ); }
 	void SetBackgroundImage( const char* image, nuDoc* doc )		{ SetString( nuCatBackgroundImage, image, doc ); }
+	void SetBreak( nuBreakType type )								{ SetU32( nuCatBreak, type); }
 	void SetFlowAxis( nuFlowAxis axis )								{ SetU32( nuCatFlow_Axis, axis ); }
 	void SetFlowDirectionHorizonal( nuFlowDirection dir )			{ SetU32( nuCatFlow_Direction_Horizontal, dir ); }
 	void SetFlowDirectionVertical( nuFlowDirection dir )			{ SetU32( nuCatFlow_Direction_Vertical, dir ); }
@@ -228,6 +246,7 @@ public:
 	void Set( nuStyleCategories cat, nuSize val )					{ SetSize( cat, val ); }
 	void Set( nuStyleCategories cat, nuDisplayType val )			{ SetDisplay( val ); }
 	void Set( nuStyleCategories cat, nuPositionType val )			{ SetPosition( val ); }
+	void Set( nuStyleCategories cat, nuBreakType val )				{ SetBreak( val ); }
 	void Set( nuStyleCategories cat, nuFlowAxis val )				{ SetFlowAxis( val ); }
 	void Set( nuStyleCategories cat, nuFlowDirection val )			{ SetU32( cat, val ); }
 	void Set( nuStyleCategories cat, nuBoxSizeType val )			{ SetBoxSizing( val ); }
@@ -245,6 +264,7 @@ public:
 	nuColor					GetColor() const						{ return nuColor::Make( ValU32 ); }
 	nuDisplayType			GetDisplayType() const					{ return (nuDisplayType) ValU32; }
 	nuPositionType			GetPositionType() const					{ return (nuPositionType) ValU32; }
+	nuBreakType				GetBreakType() const					{ return (nuBreakType) ValU32; }
 	int						GetStringID() const						{ return (int) ValU32; }
 	nuFlowAxis				GetFlowAxis() const						{ return (nuFlowAxis) ValU32; }
 	nuFlowDirection			GetFlowDirectionMajor() const			{ return (nuFlowDirection) ValU32; }
@@ -385,12 +405,21 @@ protected:
 
 };
 
+struct nuBox16
+{
+	uint16 Left;
+	uint16 Top;
+	uint16 Right;
+	uint16 Bottom;
+};
+
 // The set of style information that is used by the renderer
 // This is baked in by the Layout engine.
 // This struct is present in every single nuRenderDomNode, so it pays to keep it tight.
 class NUAPI nuStyleRender
 {
 public:
+	nuBox16 BorderSize;
 	nuColor BackgroundColor;
 	int		BackgroundImageID;
 	float	BorderRadius;
@@ -424,6 +453,7 @@ protected:
 
 NUAPI bool nuDisplayTypeParse( const char* s, intp len, nuDisplayType& t );
 NUAPI bool nuPositionTypeParse( const char* s, intp len, nuPositionType& t );
+NUAPI bool nuBreakTypeParse( const char* s, intp len, nuBreakType& t );
 NUAPI bool nuFlowAxisParse( const char* s, intp len, nuFlowAxis& t );
 NUAPI bool nuFlowDirectionParse( const char* s, intp len, nuFlowDirection& t );
 NUAPI bool nuBoxSizeParse( const char* s, intp len, nuBoxSizeType& t );

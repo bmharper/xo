@@ -63,7 +63,7 @@ bool nuSize::Parse( const char* s, intp len, nuSize& v )
 	char digits[100];
 	if ( len > 30 )
 	{
-		nuParseFail( "Size too big" );
+		nuParseFail( "Parse failed, size too big (>30 characters)\n" );
 		return false;
 	}
 	nuSize x = nuSize::Pixels(0);
@@ -84,7 +84,7 @@ bool nuSize::Parse( const char* s, intp len, nuSize& v )
 		}
 		else
 		{
-			nuParseFail( "Invalid size: %.*s", (int) len, s );
+			nuParseFail( "Parse failed, invalid size: %.*s\n", (int) len, s );
 			return false;
 		}
 	}
@@ -100,7 +100,7 @@ bool nuSize::Parse( const char* s, intp len, nuSize& v )
 			else if (	s[nondig + 1] == 't' ) x.Type = nuSize::PT;
 			else
 			{
-				nuParseFail( "Invalid size: %.*s", (int) len, s );
+				nuParseFail( "Parse failed, invalid size: %.*s\n", (int) len, s );
 				return false;
 			}
 		}
@@ -192,7 +192,7 @@ bool nuColor::Parse( const char* s, intp len, nuColor& v )
 	}
 	else
 	{
-		nuParseFail( "Invalid color %.*s", (int) len, s );
+		nuParseFail( "Parse failed, invalid color %.*s\n", (int) len, s );
 		return false;
 	}
 	v = c;
@@ -267,7 +267,7 @@ static bool ParseSingleAttrib( const char* s, intp len, bool (*parseFunc)(const 
 	}
 	else
 	{
-		nuParseFail( "Parse failed - unknown value: '%.*s'\n", (int) len, s );
+		nuParseFail( "Parse failed, unknown value: '%.*s'\n", (int) len, s );
 		return false;
 	}
 }
@@ -303,7 +303,7 @@ static bool ParseCompound( const char* s, intp len, bool (*parseFunc)(const char
 	}
 	else
 	{
-		nuParseFail( "Parse failed - unknown value: '%.*s'\n", (int) len, s );
+		nuParseFail( "Parse failed, unknown value: '%.*s'\n", (int) len, s );
 		return false;
 	}
 }
@@ -344,7 +344,7 @@ static bool ParseFontFamily( const char* s, intp len, nuFontID& v )
 		}
 		if ( bufPos >= arraysize(buf) )
 		{
-			nuParseFail( "Font name too long: '%*.s'", (int) len, s );
+			nuParseFail( "Parse failed, font name too long (>63): '%*.s'\n", (int) len, s );
 			return false;
 		}
 	}
@@ -382,6 +382,7 @@ bool nuStyle::Parse( const char* t, nuDoc* doc )
 			//else if ( MATCH(t, startk, eq, "right") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatRight, *this ); }
 			//else if ( MATCH(t, startk, eq, "top") )							{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatTop, *this ); }
 			//else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatBottom, *this ); }
+			else if ( MATCH(t, startk, eq, "break") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuBreakTypeParse, nuCatBreak, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-axis") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowAxisParse, nuCatFlow_Axis, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-direction-horizontal") )	{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Horizontal, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Vertical, *this ); }
@@ -811,6 +812,14 @@ NUAPI bool nuPositionTypeParse( const char* s, intp len, nuPositionType& t )
 	if ( MATCH(s, 0, len, "absolute") ) { t = nuPositionAbsolute; return true; }
 	if ( MATCH(s, 0, len, "relative") ) { t = nuPositionRelative; return true; }
 	if ( MATCH(s, 0, len, "fixed") )	{ t = nuPositionFixed; return true; }
+	return false;
+}
+
+NUAPI bool nuBreakTypeParse( const char* s, intp len, nuBreakType& t )
+{
+	if ( MATCH(s, 0, len, "none") )		{ t = nuBreakNULL; return true; }
+	if ( MATCH(s, 0, len, "before") )	{ t = nuBreakBefore; return true; }
+	if ( MATCH(s, 0, len, "after") )	{ t = nuBreakAfter; return true; }
 	return false;
 }
 

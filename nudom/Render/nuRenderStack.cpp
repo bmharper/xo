@@ -54,7 +54,7 @@ void nuRenderStack::Initialize( const nuDoc* doc, nuPool* pool )
 	Defaults[nuCatBorder_Bottom].SetSize( nuCatBorder_Bottom, nuSize::Zero() );
 	Defaults[nuCatWidth].SetSize( nuCatWidth, nuSize::Null() );
 	Defaults[nuCatHeight].SetSize( nuCatHeight, nuSize::Null() );
-	//Defaults[nuCatTop]
+	//Defaults[nuCatTop].SetTop( nuVerticalBindingNULL ); -- do we need to? We don't.
 	//Defaults[nuCatLeft]
 	//Defaults[nuCatRight]
 	//Defaults[nuCatBottom]

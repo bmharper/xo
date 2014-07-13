@@ -52,6 +52,7 @@ nudom/nuBase_Fmt.h
 nudom/nuString.h
 dependencies/Panacea/Strings/fmt.h
 nudom/nuPlatform.h
+nudom/nuTags.h
 nudom/nuDefs.h
 nudom/nuCloneHelpers.h
 nudom/nuEvent.h
@@ -166,6 +167,7 @@ nudom/nuBase_Fmt.h
 nudom/nuString.h
 dependencies/Panacea/Strings/fmt.h
 nudom/nuPlatform.h
+nudom/nuTags.h
 nudom/nuDefs.h
 nudom/nuMem.h
 nudom/nuCloneHelpers.h
