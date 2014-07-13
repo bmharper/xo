@@ -126,7 +126,9 @@ bool nuDoc::ClassParse( const char* klass, const char* style )
 
 nuDomEl* nuDoc::AllocChild( nuTag tag )
 {
-	// we may want to use a more specialized heap in future, so we keep this path strict
+	NUASSERT(tag != nuTagNULL);
+
+	// we may want to use a more specialized heap in future, so we keep this allocation path strict
 	if ( tag == nuTagText )
 		return new nuDomText( this, tag );
 	else
@@ -135,8 +137,13 @@ nuDomEl* nuDoc::AllocChild( nuTag tag )
 
 void nuDoc::FreeChild( const nuDomEl* el )
 {
-	// we may want to use a more specialized heap in future, so we keep this path strict
+	// we may want to use a more specialized heap in future, so we keep this allocation path strict
 	delete el;
+}
+
+nuString nuDoc::Parse( const char* src )
+{
+	return Root.Parse( src );
 }
 
 void nuDoc::ChildAdded( nuDomEl* el )

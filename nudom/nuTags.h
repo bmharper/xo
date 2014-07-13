@@ -3,7 +3,8 @@
 // The default styles for tags are defined inside nuDoc::InitializeDefaultTagStyles()
 
 #define NU_TAGS_DEFINE \
-XX(Body, 1) \
+XX(NULL, 0) \
+XY(Body) \
 XY(Div) \
 XY(Text) \
 XY(Lab) \
@@ -17,4 +18,4 @@ enum nuTag {
 #undef XX
 #undef XY
 
-#undef NU_TAGS_DEFINE
+extern const char* nuTagNames[nuTagEND + 1];

@@ -136,10 +136,10 @@ nuString::nuString( const nuStringRaw& b )
 	*this = b;
 }
 
-nuString::nuString( const char* z )
+nuString::nuString( const char* z, intp maxLength )
 {
 	Z = nullptr;
-	*this = z;
+	Set( z, maxLength );
 }
 
 nuString::~nuString()
@@ -297,6 +297,13 @@ NUAPI nuString operator+( const nuStringRaw& a, const char* b )
 {
 	nuString r = a;
 	r += b;
+	return r;
+}
+
+NUAPI nuString operator+( const nuStringRaw& a, const nuStringRaw& b )
+{
+	nuString r = a;
+	r += b.Z;
 	return r;
 }
 

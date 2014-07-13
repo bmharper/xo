@@ -42,7 +42,7 @@ public:
 				nuString();
 				nuString( const nuString& b );
 				nuString( const nuStringRaw& b );
-				nuString( const char* z );
+				nuString( const char* z, intp maxLength = -1 );	// Calls Set()
 				~nuString();
 
 	void				Set( const char* z, intp maxLength = -1 );	// checks maxLength against strlen(z) and clamps automatically
@@ -63,6 +63,7 @@ public:
 FHASH_SETUP_CLASS_GETHASHCODE( nuString, nuString );
 
 NUAPI nuString operator+( const nuStringRaw& a, const char* b );
+NUAPI nuString operator+( const nuStringRaw& a, const nuStringRaw& b );
 
 // Use this when you need a temporary 'nuString' object, but you don't need any heap allocs or frees
 class NUAPI nuTempString : public nuString

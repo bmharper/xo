@@ -24,6 +24,7 @@ typedef unsigned short	uint16;
 #endif
 
 void* nuMallocOrDie( size_t bytes );
+void* nuReallocOrDie( void* buf, size_t bytes );
 
 #define NUCHECKALLOC(x)		NUASSERT((x) != NULL)
 #define NUPANIC(msg)		AbcPanic(msg)

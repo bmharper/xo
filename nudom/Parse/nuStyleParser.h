@@ -3,6 +3,8 @@
 #include "nuString.h"
 #include "nuStyle.h"
 
+// ABANDONWARE
+
 class NUAPI nuStyleParser
 {
 public:

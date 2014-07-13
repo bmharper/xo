@@ -33,7 +33,11 @@ public:
 	const nuDomEl*	ChildByIndex( intp index ) const;
 	void			Discard();
 
-	bool			StyleParse( const char* t );
+	// Replace all child elements with the given xml-like string. Returns empty string on success, or error message.
+	nuString		Parse( const char* src );
+	nuString		ParseAppend( const char* src );	// Same as Parse, but append to node
+
+	bool			StyleParse( const char* t, intp maxLen = INT32MAX );
 	bool			StyleParsef( const char* t, ... );
 	// This is here for experiments. Future work needs a better performing method for setting just one attribute of the style.
 	void			HackSetStyle( const nuStyle& style );

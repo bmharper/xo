@@ -43,6 +43,8 @@ public:
 	nuDomEl*		AllocChild( nuTag tag );
 	void			FreeChild( const nuDomEl* el );
 
+	nuString		Parse( const char* src ); // Set the entire document from a single xml-like string. Returns empty string on success, or error message.
+
 	void			ChildAdded( nuDomEl* el );
 	void			ChildAddedFromDocumentClone( nuDomEl* el );
 	void			ChildRemoved( nuDomEl* el );

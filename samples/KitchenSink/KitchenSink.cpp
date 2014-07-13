@@ -97,32 +97,38 @@ void DoBaselineAlignment_rev2( nuDoc* doc )
 	// * The first Lab object has no height defined, yet it can center itself
 	// * The second Div object has no height defined, yet it can align itself to the bottom of its parent
 
+	nuString e;
 	int v = 4;
 	if ( v == 1 )
 	{
 		// only 1 deep
-		auto div1 = root->AddNode( nuTagDiv );
-		div1->StyleParse( "width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep" );
-		auto div1_lab = div1->AddNode( nuTagLab );
-		div1_lab->StyleParse( "hcenter: hcenter; vcenter: vcenter; background: #faa; width: 80ep; height: 50ep" );
+		e = root->Parse( 
+			"<div style='width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep'>"
+			"	<lab style='hcenter: hcenter; vcenter: vcenter; background: #faa; width: 80ep; height: 50ep'/>"
+			"</div>"
+			);
 	}
 	else if ( v == 2 )
 	{
 		// inner element's size comes from text impostor
-		auto div1 = root->AddNode( nuTagDiv );
-		div1->StyleParse( "width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep" );
-		auto div1_lab = div1->AddNode( nuTagLab );
-		div1_lab->StyleParse( "hcenter: hcenter; vcenter: vcenter; background: #faa;" );
-		div1_lab->AddNode( nuTagDiv )->StyleParse( "width: 80ep; height: 50ep; background: #eee" ); // hack for lack of supporting text
+		e = root->Parse(
+			"<div style='width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep'>"
+			"	<lab style='hcenter: hcenter; vcenter: vcenter; background: #faa;'>"
+			"		<div style='width: 80ep; height: 50ep; background: #eee'/>"
+			"	</lab>"
+			"</div>"
+			);
 	}
 	else if ( v == 3 )
 	{
 		// inner element's size comes from text
-		auto div1 = root->AddNode( nuTagDiv );
-		div1->StyleParse( "width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep" );
-		auto div1_lab = div1->AddNode( nuTagLab );
-		div1_lab->StyleParse( "hcenter: hcenter; vcenter: vcenter; background: #faa;" );
-		div1_lab->SetText( "Hello\nWorld!" );
+		e = root->Parse(
+			"<div style='width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep'>"
+			"	<lab style='hcenter: hcenter; vcenter: vcenter; background: #faa;'>"
+			"		Hello\nWorld!"
+			"	</lab>"
+			"</div>"
+			);
 	}
 	else if ( v == 4 )
 	{
@@ -141,6 +147,7 @@ void DoBaselineAlignment_rev2( nuDoc* doc )
 		lab2->SetText( "World!" );
 	}
 
+	NUASSERT(e == "");
 	// 2nd div, that aligns to baseline
 	/*
 	auto div2 = root->AddNode( nuTagDiv );

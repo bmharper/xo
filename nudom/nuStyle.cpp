@@ -355,6 +355,11 @@ static bool ParseFontFamily( const char* s, intp len, nuFontID& v )
 
 bool nuStyle::Parse( const char* t, nuDoc* doc )
 {
+	return Parse( t, INT32MAX, doc );
+}
+
+bool nuStyle::Parse( const char* t, intp maxLen, nuDoc* doc )
+{
 	// "background: #8f8; width: 100%; height: 100%;"
 #define TSTART	(t + startv)
 #define TLEN	(i - startv)
@@ -364,9 +369,10 @@ bool nuStyle::Parse( const char* t, nuDoc* doc )
 	int nerror = 0;
 	for ( intp i = 0; true; i++ )
 	{
+		bool eof = t[i] == 0 || i == maxLen;
 		if ( t[i] == 32 ) {}
 		else if ( t[i] == ':' ) eq = i;
-		else if ( t[i] == ';' || (t[i] == 0 && startv != -1) )
+		else if ( t[i] == ';' || (eof && startv != -1) )
 		{
 			bool ok = true;
 			if ( MATCH(t, startk, eq, "background") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuColor::Parse, nuCatBackground, *this ); }
@@ -414,7 +420,7 @@ bool nuStyle::Parse( const char* t, nuDoc* doc )
 			else if ( startv == -1 && eq != -1 )	startv = i;
 		}
 
-		if ( t[i] == 0 ) break;
+		if ( eof ) break;
 	}
 	return nerror == 0;
 #undef TSTART

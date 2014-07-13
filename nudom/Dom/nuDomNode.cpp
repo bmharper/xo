@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "nuDoc.h"
 #include "nuDomNode.h"
+#include "../Parse/nuDocParser.h"
 
 nuDomNode::nuDomNode( nuDoc* doc, nuTag tag ) : nuDomEl(doc, tag)
 {
@@ -127,10 +128,23 @@ void nuDomNode::Discard()
 	Handlers.hack( 0, 0, NULL );
 }
 
-bool nuDomNode::StyleParse( const char* t )
+nuString nuDomNode::Parse( const char* src )
+{
+	RemoveAllChildren();
+	return ParseAppend( src );
+}
+
+nuString nuDomNode::ParseAppend( const char* src )
+{
+	nuDocParser p;
+	RemoveAllChildren();
+	return p.Parse( src, this );
+}
+
+bool nuDomNode::StyleParse( const char* t, intp maxLen )
 {
 	IncVersion();
-	return Style.Parse( t, Doc );
+	return Style.Parse( t, maxLen, Doc );
 }
 
 bool nuDomNode::StyleParsef( const char* t, ... )

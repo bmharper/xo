@@ -295,6 +295,7 @@ public:
 	podvec<nuStyleAttrib>	Attribs;
 
 	bool					Parse( const char* t, nuDoc* doc );
+	bool					Parse( const char* t, intp maxLen, nuDoc* doc );
 	const nuStyleAttrib*	Get( nuStyleCategories cat ) const;
 	void					SetBox( nuStyleCategories cat, nuStyleBox val );
 	void					GetBox( nuStyleCategories cat, nuStyleBox& box ) const;
