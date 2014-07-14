@@ -8,13 +8,19 @@ struct TempString
 	intp	Capacity;
 	intp	Len;
 	char*	Buf;
-	char	StaticBuf[2];
+	char	StaticBuf[256];
 
 	TempString()
 	{
 		Capacity = arraysize(StaticBuf);
 		Len = 0;
 		Buf = StaticBuf;
+		Buf[0] = 0;
+	}
+	~TempString()
+	{
+		if ( Buf != StaticBuf )
+			free( Buf );
 	}
 	void Add( char c )
 	{
@@ -113,7 +119,7 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 			else
 			{
 				bool w = IsWhiteText(c);
-				if ( c == '&' )				escape = i;
+				if ( c == '&' )				escape = i + 1;
 				else if ( w && !white )		str.Add( ' ' );
 				else if ( !w )				str.Add( c );
 				white = w;

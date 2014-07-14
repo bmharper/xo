@@ -15,8 +15,8 @@ void nuMain( nuMainEvent ev )
 	case nuMainEventInit:
 		{
 			MainWnd = nuSysWnd::CreateWithDoc();
-			// DO NOT COMMIT MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
-			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 800, 60 + 400), nuSysWnd::SetPosition_Move | nuSysWnd::SetPosition_Size );
+			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
+			//MainWnd->SetPosition( nuBox(2100, 60, 2100 + 800, 60 + 400), nuSysWnd::SetPosition_Move | nuSysWnd::SetPosition_Size );
 			nuDoc* doc = MainWnd->Doc();
 			InitDOM( doc );
 			MainWnd->Show();
@@ -133,18 +133,15 @@ void DoBaselineAlignment_rev2( nuDoc* doc )
 	else if ( v == 4 )
 	{
 		// two text elements beneath each other, centered horizontally
-		// txtContainer needs two passes over its children, so that it can center them after it knows its own width.
-		auto div1 = root->AddNode( nuTagDiv );
-		div1->StyleParse( "width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep" );
-		auto txtContainer = div1->AddNode( nuTagDiv );
-		txtContainer->StyleParse( "hcenter: hcenter; vcenter: vcenter; background: #faa;" );
-		auto lab1 = txtContainer->AddNode( nuTagLab );
-		//txtContainer->AddBreak();
-		lab1->StyleParse( "hcenter: hcenter; background: #afa; break: after" );
-		lab1->SetText( "Hello" );
-		auto lab2 = txtContainer->AddNode( nuTagLab );
-		lab2->StyleParse( "hcenter: hcenter; background: #afa;" );
-		lab2->SetText( "World!" );
+		// txtContainer needs two passes over its children, so that it can center them horizontally, after it knows its own width.
+		e = root->Parse( 
+			"<div style='width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep'>"
+			"	<div style='hcenter: hcenter; vcenter: vcenter; background: #faa;'>"
+			"		<lab style='hcenter: hcenter; background: #afa; break: after'>Hello</lab>"
+			"		<lab style='hcenter: hcenter; background: #afa;'>&lt;World&gt;</lab>"
+			"	</div>"
+			"</div>"
+			);
 	}
 
 	NUASSERT(e == "");
