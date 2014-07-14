@@ -118,15 +118,19 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 			}
 			else
 			{
-				bool w = IsWhiteText(c);
+				bool w = IsWhite(c);
 				if ( c == '&' )				escape = i + 1;
-				else if ( w && !white )		str.Add( ' ' );
-				else if ( !w )				str.Add( c );
-				white = w;
+				else if ( w && white )		{}					// trim leading whitespace
+				else if ( c == '\r' )		{}					// ignore '\r'
+				else						str.Add( c );
+				white = white && w;
 			}
 		}
 		if ( escape != -1 )
 			return "Unfinished escape sequence";
+		// trim trailing whitespace
+		while ( str.Len != 0 && IsWhite(str.Buf[str.Len - 1]) )
+			str.Len--;
 		if ( str.Len != 0 )
 		{
 			str.Terminate();
@@ -173,7 +177,7 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 			intp cstart = bodyStart;
 			for ( intp i = bodyStart; i != pos; i++ )
 			{
-				if ( IsWhiteNonText(src[i]) || i == pos - 1 )
+				if ( IsWhite(src[i]) || i == pos - 1 )
 				{
 					intp len = i - cstart;
 					if ( len > 0 )
@@ -208,7 +212,7 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 			if ( c == '<' )						{ s = STagOpen; xStart = pos + 1; e = newText(); break; }
 			else								{ break; }
 		case STagOpen:
-			if ( IsWhiteNonText(c) )			{ s = SAttribs; xEnd = pos; e = newNode(); break; }
+			if ( IsWhite(c) )					{ s = SAttribs; xEnd = pos; e = newNode(); break; }
 			else if ( c == '/' )				{ s = STagClose; xStart = pos + 1; break; }
 			else if ( c == '>' )				{ s = SText; txtStart = pos + 1; xEnd = pos; e = newNode(); break; }
 			else if ( IsAlpha(c) )				{ break; }
@@ -221,7 +225,7 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 			if ( c == '>' )						{ s = SText; txtStart = pos + 1; e = closeNodeCompact(); break; }
 			else								{ return err( "Expected >" ); }
 		case SAttribs:
-			if ( IsWhiteNonText(c) )			{ break; }
+			if ( IsWhite(c) )					{ break; }
 			else if ( IsAlpha(c) )				{ s = SAttribName; xStart = pos; break; }
 			else if ( c == '/' )				{ s = SCompactClose; break; }
 			else if ( c == '>' )				{ s = SText; txtStart = pos + 1; break; }
@@ -252,14 +256,9 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 	return "";
 }
 
-bool nuDocParser::IsWhiteNonText( int c )
+bool nuDocParser::IsWhite( int c )
 {
-	return c == 32 || c == 9 || c == 10 || c == 13;
-}
-
-bool nuDocParser::IsWhiteText( int c )
-{
-	return c == 32 || c == 9;
+	return c == ' ' || c == '\t' || c == '\r' || c == '\n';
 }
 
 bool nuDocParser::IsAlpha( int c )
