@@ -15,8 +15,8 @@ void nuMain( nuMainEvent ev )
 	case nuMainEventInit:
 		{
 			MainWnd = nuSysWnd::CreateWithDoc();
-			//MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
-			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 800, 60 + 400), nuSysWnd::SetPosition_Move | nuSysWnd::SetPosition_Size );
+			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
+			//MainWnd->SetPosition( nuBox(2100, 60, 2100 + 800, 60 + 400), nuSysWnd::SetPosition_Move | nuSysWnd::SetPosition_Size );
 			nuDoc* doc = MainWnd->Doc();
 			InitDOM( doc );
 			MainWnd->Show();
@@ -126,13 +126,13 @@ void DoBaselineAlignment_rev2( nuDoc* doc )
 		// The first block has 20ep text, and the second block has 10ep text.
 		// The first block has text centered inside it. The second block's text is aligned to the baseline of the first.
 		e = root->Parse( 
-			"<div style='width: 120ep; height: 42ep; box-sizing: margin; background: #ddd'>"
-			"	<lab style='vcenter: vcenter; font-size: 30ep; background: #dbb'>"
+			"<div style='width: 150ep; height: 80ep; box-sizing: margin; margin: 0 4ep 0 4ep; background: #ddd'>"
+			"	<lab style='vcenter: vcenter; font-size: 40ep; background: #dbb'>"
 			"		Hello-p"
 			"	</lab>"
 			"</div>"
-			"<div style='width: 80ep; height: 42ep; box-sizing: margin; background: #bbb'>"
-			"	<lab style='baseline: baseline; font-size: 12ep; background: #bdb'>"
+			"<div style='width: 100ep; height: 80ep; box-sizing: margin; margin: 0 8ep 0 8ep; background: #bbb'>"
+			"	<lab style='baseline: baseline; font-size: 16ep; background: #bdb'>"
 			"		world"
 			"	</lab>"
 			"</div>"

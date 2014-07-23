@@ -116,6 +116,7 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 
 	nuPos autoWidth = 0;
 	nuPos autoHeight = 0;
+	nuPos outerBaseline = IsDefined(in.OuterBaseline) ? in.OuterBaseline - toContent.Top : nuPosNULL;
 	nuPos innerBaseline = nuPosNULL;
 	int innerBaselineDefinedBy = -1;
 
@@ -139,7 +140,7 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 		const nuDomEl* c = node.ChildByIndex( i );
 		LayoutInput cin;
 		LayoutOutput cout;
-		cin.OuterBaseline = IsDefined(in.OuterBaseline) ? in.OuterBaseline : innerBaseline;
+		cin.OuterBaseline = IsDefined(outerBaseline) ? outerBaseline : innerBaseline;
 		cin.ParentWidth = contentWidth;
 		cin.ParentHeight = contentHeight;
 		nuPoint offset(0,0);
@@ -178,7 +179,7 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 	if ( !bindOnFirstPass )
 	{
 		LayoutInput cin;
-		cin.OuterBaseline = IsDefined(in.OuterBaseline) ? in.OuterBaseline : innerBaseline;
+		cin.OuterBaseline = IsDefined(outerBaseline) ? outerBaseline : innerBaseline;
 		cin.ParentWidth = contentWidth;
 		cin.ParentHeight = contentHeight;
 		for ( intp i = 0; i < node.ChildCount(); i++ )
@@ -196,7 +197,7 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 	rnode->Style.BackgroundColor = Stack.Get( nuCatBackground ).GetColor();
 	rnode->Style.BorderRadius = 0;
 
-	out.NodeBaseline = innerBaseline;
+	out.NodeBaseline = innerBaseline + toContent.Top;
 	out.NodeWidth = contentWidth;
 	out.NodeHeight = contentHeight;
 	out.Binds = ComputeBinds();

@@ -252,7 +252,7 @@ NUAPI void nuInitialize()
 	nuGlobals = new nuGlobalStruct();
 	nuGlobals->TargetFPS = 60;
 	nuGlobals->NumWorkerThreads = std::min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
-	nuGlobals->MaxSubpixelGlyphSize = 40;
+	nuGlobals->MaxSubpixelGlyphSize = 60;
 	nuGlobals->PreferOpenGL = false;
 	nuGlobals->EnableVSync = false;
 	// Freetype's output is linear coverage percentage, so if we treat our freetype texture as GL_LUMINANCE
