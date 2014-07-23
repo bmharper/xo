@@ -15,8 +15,8 @@ void nuMain( nuMainEvent ev )
 	case nuMainEventInit:
 		{
 			MainWnd = nuSysWnd::CreateWithDoc();
-			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
-			//MainWnd->SetPosition( nuBox(2100, 60, 2100 + 800, 60 + 400), nuSysWnd::SetPosition_Move | nuSysWnd::SetPosition_Size );
+			//MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
+			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 800, 60 + 400), nuSysWnd::SetPosition_Move | nuSysWnd::SetPosition_Size );
 			nuDoc* doc = MainWnd->Doc();
 			InitDOM( doc );
 			MainWnd->Show();
@@ -73,32 +73,9 @@ void DoBaselineAlignment( nuDoc* doc )
 
 void DoBaselineAlignment_rev2( nuDoc* doc )
 {
-	// This creates 2 blocks in a single line.
-	// The first block has 14px text, and the second block has 12px text.
-	// The first block has text centered inside it. The second block's text is aligned to the baseline of the first.
 	auto root = &doc->Root;
-	/*
-		<div width: 30, height:30, sizing:margin-box, background:#ddd, margin:0 2 0 2>
-		  <lab center:center, height:10>
-			Hello
-		  <lab>
-		</div>
-		<div width: 20, height:30, sizing:margin-box, background:#bbb, margin:0 2 0 2>
-		  <lab baseline:baseline, height:7>
-			world
-		  <lab>
-		</div>
-		<edit baseline:baseline, height:7, background:#fff, border: solid 1 #00c, width: 12em>
-		  edit me
-		<edit>
-	*/
-
-	// This demo proves several things:
-	// * The first Lab object has no height defined, yet it can center itself
-	// * The second Div object has no height defined, yet it can align itself to the bottom of its parent
-
 	nuString e;
-	int v = 4;
+	int v = 5;
 	if ( v == 1 )
 	{
 		// only 1 deep
@@ -137,25 +114,38 @@ void DoBaselineAlignment_rev2( nuDoc* doc )
 		e = root->Parse( 
 			"<div style='width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep'>"
 			"	<div style='hcenter: hcenter; vcenter: vcenter; background: #faa;'>"
-			"		<lab style='hcenter: hcenter; background: #afa; break: after'>Hello</lab>"
-			"		<lab style='hcenter: hcenter; background: #afa;'>&lt;World&gt;</lab>"
+			"		<lab style='hcenter: hcenter; background: #cfc; break: after'>Hello</lab>"
+			"		<lab style='hcenter: hcenter; background: #cfc;'>&lt;World&gt;</lab>"
 			"	</div>"
 			"</div>"
 			);
 	}
+	else if ( v == 5 )
+	{
+		// This creates 2 blocks in a row.
+		// The first block has 20ep text, and the second block has 10ep text.
+		// The first block has text centered inside it. The second block's text is aligned to the baseline of the first.
+		e = root->Parse( 
+			"<div style='width: 120ep; height: 42ep; box-sizing: margin; background: #ddd'>"
+			"	<lab style='vcenter: vcenter; font-size: 30ep; background: #dbb'>"
+			"		Hello-p"
+			"	</lab>"
+			"</div>"
+			"<div style='width: 80ep; height: 42ep; box-sizing: margin; background: #bbb'>"
+			"	<lab style='baseline: baseline; font-size: 12ep; background: #bdb'>"
+			"		world"
+			"	</lab>"
+			"</div>"
+			);
+		// TODO:
+		/*
+		<edit baseline:baseline, height:7, background:#fff, border: solid 1 #00c, width: 12em>
+		  edit me
+		<edit>
+		*/
+	}
 
 	NUASSERT(e == "");
-	// 2nd div, that aligns to baseline
-	/*
-	auto div2 = root->AddNode( nuTagDiv );
-	div2->StyleParse( "width: 150ep; height: 20ep; bottom: bottom; box-sizing: margin; background: #eee; margin: 0 2ep 0 2ep" );
-	auto div2_lab = div2->AddNode( nuTagLab );
-	div2_lab->StyleParse( "baseline: baseline; font-size: 12ep; background: #dfd" );
-	div2_lab->StyleParse( "width: 130ep; height: 12ep;" ); // hack for lack of supporting text
-	// hack for lack of supporting text
-	div2_lab->AddNode( nuTagDiv )->StyleParse( "width: 130ep; height: 12ep; background: #fff" );
-	//div2_lab->SetText( "world" );
-	*/
 }
 
 void DoTwoTextRects( nuDoc* doc )

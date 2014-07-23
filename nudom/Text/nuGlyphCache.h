@@ -20,8 +20,10 @@ struct nuGlyph
 	uint16		Y;
 	uint16		Width;
 	uint16		Height;
+	int16		MetricLeft;			// intended for use by SnapSubpixelHorzText
 	int16		MetricLeftx256;
 	int16		MetricTop;
+	int32		MetricHoriAdvance;	// intended for use by SnapSubpixelHorzText
 	int32		MetricLinearHoriAdvancex256;
 
 	// A Null glyph is one that could not be found in the font

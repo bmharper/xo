@@ -166,7 +166,9 @@ void nuRenderer::RenderTextChar_SubPixel( nuPoint base, nuRenderDomText* node, c
 	// is correct regardless, and since we clobber all horizontal hinting, horizontal
 	// grid-fitting should have little effect.
 	//left = (float) floor(left * 3 + 0.5) / 3.0f;
-	//top = (float) floor(top + 0.5); -- vertical rounding is moved to fixed point
+	//top = (float) floor(top + 0.5); -- vertical rounding has been moved to fixed point layout
+	if ( nuGlobal()->SnapSubpixelHorzText )
+		left = floor(left + 0.5f);
 
 	float right = left + roundedWidth;
 	float bottom = top + glyph->Height;

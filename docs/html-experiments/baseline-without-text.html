@@ -1,0 +1,42 @@
+<!DOCTYPE HTML>
+<head>
+</head>
+<!--
+
+If the first item in a line doesn't actually have any text content, does it still define the baseline?
+
+The answer is no.
+
+I'm still not sure whether this is the right thing to do.
+Perhaps we can have a style "baseline-set: always" which forces an element always to emit a baseline, even if it has no text.
+You could also insert a "zero-width-space" character as a work-around. I'm not sure how often this situation would arise.
+
+ -->
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+function load() {
+	$("#mid").click( function(ev) {
+		var txt = $("#midFirst").text(); 
+		$("#midFirst").text(txt == "" ? "First" : "");
+	});
+}
+</script>
+
+<body style="font-size: 20px;" onload="load()">
+	<div style="background-color: #fdd; height: 50px;">
+		<div style="display: inline-block; font-size: 40px; vertical-align: baseline;">First</div>
+		<div style="display: inline-block; font-size: 10px; vertical-align: baseline;">Second</div>
+		<div style="display: inline-block; font-size: 20px; vertical-align: baseline;">Third</div>
+	</div>
+	<div style="background-color: #dfd; height: 50px;" id="mid">
+		<div style="display: inline-block; font-size: 40px; vertical-align: baseline;" id="midFirst"></div>
+		<div style="display: inline-block; font-size: 10px; vertical-align: baseline;">Second</div>
+		<div style="display: inline-block; font-size: 20px; vertical-align: baseline;">Third (click me)... this proves that unless there is actually text, baseline is not defined</div>
+	</div>
+	<div style="background-color: #dfd; height: 50px;">
+		<div style="display: inline-block; font-size: 40px; vertical-align: baseline;">First</div>
+		<div style="display: inline-block; font-size: 10px; vertical-align: baseline;">Second</div>
+		<div style="display: inline-block; font-size: 20px; vertical-align: baseline;">Third</div>
+	</div>
+</body>

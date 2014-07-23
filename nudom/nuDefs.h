@@ -126,11 +126,13 @@ public:
 	nuPoint() : X(0), Y(0) {}
 	nuPoint( nuPos x, nuPos y ) : X(x), Y(y) {}
 
-	void	SetInt( int32 x, int32 y )				{ X = nuRealToPos((float) x); Y = nuRealToPos((float) y); }
-	bool	operator==( const nuPoint& p ) const	{ return X == p.X && Y == p.Y; }
-	bool	operator!=( const nuPoint& p ) const	{ return !(*this == p); }
-	nuPoint	operator+( const nuPoint& p ) const		{ return nuPoint(X + p.X, Y + p.Y); }
-	nuPoint	operator-( const nuPoint& p ) const		{ return nuPoint(X - p.X, Y - p.Y); }
+	void		SetInt( int32 x, int32 y )				{ X = nuRealToPos((float) x); Y = nuRealToPos((float) y); }
+	bool		operator==( const nuPoint& p ) const	{ return X == p.X && Y == p.Y; }
+	bool		operator!=( const nuPoint& p ) const	{ return !(*this == p); }
+	nuPoint		operator+( const nuPoint& p ) const		{ return nuPoint(X + p.X, Y + p.Y); }
+	nuPoint		operator-( const nuPoint& p ) const		{ return nuPoint(X - p.X, Y - p.Y); }
+	nuPoint&	operator+=( const nuPoint& p )			{ X += p.X; Y += p.Y; return *this; }
+	nuPoint&	operator-=( const nuPoint& p )			{ X -= p.X; Y -= p.Y; return *this; }
 };
 
 /*
@@ -330,9 +332,11 @@ struct nuGlobalStruct
 	bool						EnableSRGBFramebuffer;	// Enable sRGB framebuffer (implies linear blending)
 	bool						EnableKerning;			// Enable kerning on text
 	bool						RoundLineHeights;		// Round text line heights to integer amounts, so that text line separation is not subject to sub-pixel positioning differences.
-	//bool						EmulateGammaBlending;	// Only applicable when EnableSRGBFramebuffer = true, this tries to emulate gamma-space blending. You would turn this on to get consistent blending on all devices.
-	float						SubPixelTextGamma;		// Tweak freetype's gamma when doing sub-pixel text rendering.
-	float						WholePixelTextGamma;	// Tweak freetype's gamma when doing whole-pixel text rendering.
+	bool						SnapSubpixelHorzText;	// When rendering subpixel text, snap glyphs to whole pixels, instead of sub-pixel horizontal positioning.
+														// This needs a lot more work to yield decent results, and maybe quite a different approach.
+	//bool						EmulateGammaBlending;	// Only applicable when EnableSRGBFramebuffer = true, this tries to emulate gamma-space blending. You would turn this on to get consistent blending on all devices. FAILED EXPERIMENT - BAD IDEA.
+	float						SubPixelTextGamma;		// Tweak freetype's gamma when doing sub-pixel text rendering. Should be no need to use anything other than 1.0
+	float						WholePixelTextGamma;	// Tweak freetype's gamma when doing whole-pixel text rendering. Should be no need to use anything other than 1.0
 	float						EpToPixel;				// Eye Pixel to Pixel.
 	nuTextureID					MaxTextureID;			// Used to test texture ID wrap-around. Were it not for testing, this could be 2^32 - 1
 	nuColor						ClearColor;				// glClearColor

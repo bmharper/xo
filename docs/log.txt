@@ -84,3 +84,85 @@
 	offset applied to it in a particular dimension, then any subsequent bind
 	in that same dimension is ignored or disallowed.
 
+2014-07-16	Layout - baseline
+	I'm having trouble getting baseline alignment right. There is both the upward
+	propagation of baseline, and the downward propagation of it, and I think
+	perhaps I'm confusing the two. It seems right that a text object never listens
+	to anybody else's baseline, but instead always defines its own. The only
+	object that can be aligned by baseline is a node object. So typically a <lab>
+	with a single text element inside it will be aligned to baseline. But what
+	if you want to align <div><lab>text</lab></div>, all onto the baseline of
+	"text". I'm thinking here of doing something like an edit control, or a
+	radio button, etc, where the entire control's positioning hangs around that
+	text element inside it. So, an object has its own baseline, and that is
+	derived from its children. Then the object's parent also has its own baseline,
+	and those two come together to compute an offset. Yes.. it does indeed look
+	like I'm confusing those two. They need to be kept separate all the way.
+
+2014-07-17	Layout - baseline
+	I have a new way of thinking about baseline: Whenever a baseline:baseline
+	alignment occurs, it destroys the inner "baseline". Actually.. that's wrong.
+
+2014-07-23	Layout - baseline
+	I have decided to ignore the thorny problem of aligning to baseline deep
+	inside the tree. Instead, if one wants baseline:baseline to work, then
+	you must specify it high up in the tree, like so:
+
+	+------------------------------------------------------------------------------+
+	|1                                                                             |
+	| +-------------------------------+                                            |
+	| |2                              |                                            |
+	| |                               |  +-------------------------------------+   |
+	| |                               |  |4                                    |   |
+	| | +---------------------------+ |  |                                     |   |
+	| | |3                          | |  | +---------------------------------+ |   |
+	| | | This defines the baseline | |  | |5 This aligns to the left text   | |   |
+	| | |                           | |  | +---------------------------------+ |   |
+	| | +---------------------------+ |  |                                     |   |
+	| |                               |  |                                     |   |
+	| +-------------------------------+  +-------------------------------------+   |
+	|                                                                              |
+	+------------------------------------------------------------------------------+
+
+
+	In the above diagram, text item 3 defines the inner baseline for itself and in turn
+	items 2, and then item 1.
+
+	Likewise for the right side, text item 5 defines the inner baseline for itself,
+	and then for item 4. It does not override item 1's baseline, because a node's
+	inner baseline is taken from the first item inside it that defines an inner baseline.
+
+	Let's run through the rendering of item 1.
+	Let's assume that item 2 is vertically centered. On the first pass, items 2 and 4 are flowed.
+	Item 2 ended up defining the baseline for 1. The second pass is the alignment pass.
+	First it's item 2's turn to align. It is aligned vcenter:vcenter, so it ends up vertically
+	centered inside item 1. Item 1 remembers that its baseline came from item 2, so it
+	also applies this alignment offset to the baseline.
+	Next, it is item 4's turn to do alignment. Item 4 is aligned baseline:baseline.
+	Item 4 received its inner baseline from item 5. When item 4 is aligned, it aligns
+	its inner baseline with its outer baseline. Item 4's outer baseline is item 1's
+	inner baseline, which originally came from item 3. This works, and there are
+	no complications here or concerns about recursive layout conditions.
+
+	However, imagine that instead of item 4 being aligned baseline:baseline, item 5
+	was aligned baseline:baseline. This would be problematic, because by the time
+	the second phase of item 1's layout runs (ie the alignment phase), it is too late
+	for item 5. By that stage, item 5 has already had its second phase run.
+
+	The takeaway is that if you want to align baseline:baseline, then you need to do so
+	high up in the DOM tree, otherwise you'll end up unaligned due to objects above you
+	being re-aligned after you've aligned to baseline.
+
+	I have tried to think of a more robust solution that allows deeper children to
+	align to baseline, but so far I haven't come up with anything.
+
+	It is also worth mentioning here that nothing stops you from aligning deeper
+	children to baseline. You will get predictable results if the nodes containing
+	that deeper child do not have any alignment applied to them, and if the 
+	node that defined the baseline also has no alignment applied to it.
+
+
+
+
+
+

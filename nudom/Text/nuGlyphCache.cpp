@@ -95,9 +95,6 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 
 	bool isSubPixel = nuGlyphFlag_IsSubPixel(key.Flags);
 
-	if ( key.Char == 32 )
-		int abc = 123;
-
 	uint32 pixSize = key.Size;
 	int32 combinedHorzMultiplier = 1;
 	if ( isSubPixel )
@@ -172,8 +169,10 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	g.X = atlasX;
 	g.Y = atlasY;
 	g.AtlasID = (uint) Atlasses.find( atlas );
+	g.MetricLeft = font->FTFace->glyph->bitmap_left / combinedHorzMultiplier;
 	g.MetricLeftx256 = font->FTFace->glyph->bitmap_left * 256 / combinedHorzMultiplier;
 	g.MetricTop = font->FTFace->glyph->bitmap_top;
+	g.MetricHoriAdvance = font->FTFace->glyph->advance.x / (64 * combinedHorzMultiplier);
 	g.MetricLinearHoriAdvancex256 = ((int32) font->FTFace->glyph->linearHoriAdvance * 256 * (int32) pixSize) / 2048;
 	Table.insert( key, (uint) Glyphs.size() );
 	Glyphs += g;

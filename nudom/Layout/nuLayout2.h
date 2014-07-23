@@ -39,7 +39,7 @@ protected:
 	{
 		nuPos	ParentWidth;
 		nuPos	ParentHeight;
-		nuPos	ParentBaseline;
+		nuPos	OuterBaseline;
 	};
 
 	struct LayoutOutput
@@ -94,7 +94,7 @@ protected:
 	void		RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOutput& out, nuRenderDomNode* rnode );
 	void		RunText( const nuDomText& node, const LayoutInput& in, LayoutOutput& out, nuRenderDomText* rnode );
 	void		GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, TextRunState& ts );
-	void		PositionChildFromBindings( nuPoint toContent, const LayoutInput& cin, const LayoutOutput& cout, nuRenderDomEl* rchild );
+	nuPoint		PositionChildFromBindings( nuPoint toContent, const LayoutInput& cin, const LayoutOutput& cout, nuRenderDomEl* rchild );
 	void		GenerateTextWords( TextRunState& ts );
 
 	nuPos		ComputeDimension( nuPos container, nuStyleCategories cat );
@@ -104,12 +104,12 @@ protected:
 	BindingSet	ComputeBinds();
 
 	static nuPos			HBindOffset( nuHorizontalBindings bind, nuPos width );
-	static nuPos			VBindOffset( nuVerticalBindings bind, nuPos height );
+	static nuPos			VBindOffset( nuVerticalBindings bind, nuPos baseline, nuPos height );
 	static bool				IsSpace( int ch );
 	static bool				IsLinebreak( int ch );
 	static nuGlyphCacheKey	MakeGlyphCacheKey( nuRenderDomText* rnode );
 	static void				FlowNewline( FlowState& flow );
-	static void				FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, nuRenderDomEl* rel );
+	static nuPoint			FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, nuRenderDomEl* rendEl );
 
 	static bool				IsDefined( nuPos p )	{ return p != nuPosNULL; }
 	static bool				IsNull( nuPos p )		{ return p == nuPosNULL; }

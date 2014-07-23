@@ -253,7 +253,7 @@ NUAPI void nuInitialize()
 	nuGlobals->TargetFPS = 60;
 	nuGlobals->NumWorkerThreads = std::min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
 	nuGlobals->MaxSubpixelGlyphSize = 40;
-	nuGlobals->PreferOpenGL = true;
+	nuGlobals->PreferOpenGL = false;
 	nuGlobals->EnableVSync = false;
 	// Freetype's output is linear coverage percentage, so if we treat our freetype texture as GL_LUMINANCE
 	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get perfect results without
@@ -277,10 +277,12 @@ NUAPI void nuInitialize()
 #endif
 	nuGlobals->EnableKerning = true;
 	nuGlobals->RoundLineHeights = nuGlobals->EnableSubpixelText;	// happens to be correlated with sub-pixel text, because with sub-pixel, we snap to vertical pixels (but not horz)
+	nuGlobals->SnapSubpixelHorzText = false;
 	nuGlobals->EpToPixel = ComputeEpToPixel();
 	//nuGlobals->DebugZeroClonedChildList = true;
 	nuGlobals->MaxTextureID = ~((nuTextureID) 0);
-	nuGlobals->ClearColor.Set( 200, 0, 200, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node
+    //nuGlobals->ClearColor.Set( 200, 0, 200, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node
+	nuGlobals->ClearColor.Set( 255, 150, 255, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node
 	nuGlobals->DocAddQueue.Initialize( false );
 	nuGlobals->DocRemoveQueue.Initialize( false );
 	nuGlobals->EventQueue.Initialize( true );
