@@ -31,12 +31,25 @@ struct VertexType_PTCV4
 	float4 v4		: TEXCOORD2;
 };
 
-float4 vertex_color_in(float4 vertex_color)
+float fromSRGB_Component(float srgb)
 {
-	float4 color;
-	color.rgb = pow(abs(vertex_color.rgb), float3(2.2, 2.2, 2.2));
-	color.a = vertex_color.a;
-	return color;
+	float sRGB_Low	= 0.0031308;
+	float sRGB_a	= 0.055;
+
+	if (srgb <= 0.04045)
+		return srgb / 12.92;
+	else
+		return pow(abs((srgb + sRGB_a) / (1.0 + sRGB_a)), 2.4);
+}
+
+float4 fromSRGB(float4 c)
+{
+	float4 linear_c;
+	linear_c.r = fromSRGB_Component(c.r);
+	linear_c.g = fromSRGB_Component(c.g);
+	linear_c.b = fromSRGB_Component(c.b);
+	linear_c.a = c.a;
+	return linear_c;
 }
 
 // SV_Position is in screen space, but in GLSL it is in normalized device space

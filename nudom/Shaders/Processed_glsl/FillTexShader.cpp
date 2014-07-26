@@ -20,34 +20,34 @@ void nuGLProg_FillTex::Reset()
 const char* nuGLProg_FillTex::VertSrc()
 {
 	return
-"	uniform		mat4	mvproj;\n"
-"	attribute	vec4	vpos;\n"
-"	attribute	vec4	vcolor;\n"
-"	attribute	vec2	vtexuv0;\n"
-"	varying		vec4	color;\n"
-"	varying		vec2	texuv0;\n"
-"	void main()\n"
-"	{\n"
-"		gl_Position = mvproj * vpos;\n"
-"		texuv0 = vtexuv0;\n"
-"		color = vec4(pow(vcolor.rgb, vec3(2.2, 2.2, 2.2)), vcolor.a);\n"
-"	}\n"
+	"uniform		mat4	mvproj;\n"
+	"attribute	vec4	vpos;\n"
+	"attribute	vec4	vcolor;\n"
+	"attribute	vec2	vtexuv0;\n"
+	"varying		vec4	color;\n"
+	"varying		vec2	texuv0;\n"
+	"void main()\n"
+	"{\n"
+	"	gl_Position = mvproj * vpos;\n"
+	"	texuv0 = vtexuv0;\n"
+	"	color = vec4(pow(vcolor.rgb, vec3(2.2, 2.2, 2.2)), vcolor.a);\n"
+	"}\n"
 ;
 }
 
 const char* nuGLProg_FillTex::FragSrc()
 {
 	return
-"	#ifdef NU_PLATFORM_ANDROID\n"
-"	precision mediump float;\n"
-"	#endif\n"
-"	uniform sampler2D	tex0;\n"
-"	varying vec4		color;\n"
-"	varying vec2		texuv0;\n"
-"	void main()\n"
-"	{\n"
-"		gl_FragColor = color * texture2D(tex0, texuv0.st);\n"
-"	}\n"
+	"#ifdef NU_PLATFORM_ANDROID\n"
+	"precision mediump float;\n"
+	"#endif\n"
+	"uniform sampler2D	tex0;\n"
+	"varying vec4		color;\n"
+	"varying vec2		texuv0;\n"
+	"void main()\n"
+	"{\n"
+	"	gl_FragColor = color * texture2D(tex0, texuv0.st);\n"
+	"}\n"
 ;
 }
 

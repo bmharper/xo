@@ -18,29 +18,29 @@ void nuGLProg_Fill::Reset()
 const char* nuGLProg_Fill::VertSrc()
 {
 	return
-"	uniform		mat4	mvproj;\n"
-"	attribute	vec4	vpos;\n"
-"	attribute	vec4	vcolor;\n"
-"	varying		vec4	color;\n"
-"	void main()\n"
-"	{\n"
-"		gl_Position = mvproj * vpos;\n"
-"		color = vec4(pow(vcolor.rgb, vec3(2.2, 2.2, 2.2)), vcolor.a);\n"
-"	}\n"
+	"uniform		mat4	mvproj;\n"
+	"attribute	vec4	vpos;\n"
+	"attribute	vec4	vcolor;\n"
+	"varying		vec4	color;\n"
+	"void main()\n"
+	"{\n"
+	"	gl_Position = mvproj * vpos;\n"
+	"	color = vec4(pow(vcolor.rgb, vec3(2.2, 2.2, 2.2)), vcolor.a);\n"
+	"}\n"
 ;
 }
 
 const char* nuGLProg_Fill::FragSrc()
 {
 	return
-"	#ifdef NU_PLATFORM_ANDROID\n"
-"	precision mediump float;\n"
-"	#endif\n"
-"	varying vec4	color;\n"
-"	void main()\n"
-"	{\n"
-"		gl_FragColor = color;\n"
-"	}\n"
+	"#ifdef NU_PLATFORM_ANDROID\n"
+	"precision mediump float;\n"
+	"#endif\n"
+	"varying vec4	color;\n"
+	"void main()\n"
+	"{\n"
+	"	gl_FragColor = color;\n"
+	"}\n"
 ;
 }
 

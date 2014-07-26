@@ -5,6 +5,11 @@ struct VSOutput
 	float4 color	: COLOR;	
 };
 
+#define LEFT x
+#define TOP y
+#define RIGHT z
+#define BOTTOM w
+
 // NOTE: This is a stupid way of doing rectangles.
 // Instead of rendering one big rectangle, we should be rendering it as 4 quadrants.
 // This "one big rectangle" approach forces you to evaluate all 4 corners for every pixel.
@@ -15,24 +20,16 @@ float4 main(VSOutput input) : SV_Target
 	float radius_out = radius;
 	float4 mybox = box;
 	float4 mycolor = input.color;
-	float left_out   = mybox.x + radius_out;
-	float right_out  = mybox.z - radius_out;
-	float top_out    = mybox.y + radius_out;
-	float bottom_out = mybox.w - radius_out;
-
-	float radius_in  = max(border.x, radius); // This is why different border widths screw up.. because we're bound to border.left
-
-	float left_in    = mybox.x + max(border.x, radius);
-	float right_in   = mybox.z - max(border.z, radius);
-	float top_in     = mybox.y + max(border.y, radius);
-	float bottom_in  = mybox.w - max(border.w, radius);
+	float radius_in = max(border.x, radius); // This is why different border widths screw up.. because we're bound to border.left
+	float4 out_box = mybox + float4(radius_out, radius_out, -radius_out, -radius_out);
+	float4 in_box = mybox + float4(max(border.LEFT, radius), max(border.TOP, radius), -max(border.RIGHT, radius), -max(border.BOTTOM, radius));
 
 	float2 cent_in = screenxy;
 	float2 cent_out = screenxy;
-	cent_in.x = clamp(cent_in.x, left_in, right_in);
-	cent_in.y = clamp(cent_in.y, top_in, bottom_in);
-	cent_out.x = clamp(cent_out.x, left_out, right_out);
-	cent_out.y = clamp(cent_out.y, top_out, bottom_out);
+	cent_in.x = clamp(cent_in.x, in_box.LEFT, in_box.RIGHT);
+	cent_in.y = clamp(cent_in.y, in_box.TOP, in_box.BOTTOM);
+	cent_out.x = clamp(cent_out.x, out_box.LEFT, out_box.RIGHT);
+	cent_out.y = clamp(cent_out.y, out_box.TOP, out_box.BOTTOM);
 
 	// If you draw the pixels out on paper, and take cognisance of the fact that
 	// our samples are at pixel centers, then this -0.5 offset makes perfect sense.
@@ -53,7 +50,7 @@ float4 main(VSOutput input) : SV_Target
 	float borderWidth = max(borderWidthX, borderWidthY);
 	float borderMix = clamp(dist_in, 0.0f, 1.0f);
 	if (borderWidth > 0.5f)
-		mycolor = borderMix * border_color + (1 - borderMix) * mycolor;
+		mycolor = lerp(mycolor, border_color, borderMix);
 
 	float4 output;
 	output.rgb = mycolor.rgb;

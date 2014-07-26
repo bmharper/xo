@@ -258,6 +258,10 @@ bool nuRenderDX::CreateVertexLayout( nuDXProg* prog, ID3DBlob* vsBlob )
 
 	static_assert(nuVertexType_END == 3, "Create new vertex layout here");
 
+	// When I try to use DXGI_FORMAT_R8G8B8A8_UNORM_SRGB here, I get a failure without any indication as to what's wrong.
+	// OK.. so it is not supported as "Input assembler vertex buffer resources":
+	// http://www.gamedev.net/topic/643471-creatinputlayout-returns-a-null-pointer/
+	// http://msdn.microsoft.com/en-us/library/windows/desktop/ff471325%28v=vs.85%29.aspx
 	D3D11_INPUT_ELEMENT_DESC layouts[nuVertexType_END - 1][4] =
 	{
 		// nuVertexType_PTC

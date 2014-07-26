@@ -34,9 +34,10 @@ void DoBorder( nuDoc* doc )
 	auto root = &doc->Root;
 	root->StyleParse( "background: #aaa" );
 	root->Parse( 
-		"<div style='border: #040; border: 1px 1px 2px 3px; border-radius: 0px; width: 200ep; height: 200ep; background: #fff; margin: 1px'>aaaaa</div>"
-		"<div style='border: 5px #040; border-radius: 8px; width: 100ep; height: 100ep; background: #fff; margin: 1px'></div>"
-		"<div style='border: 1px #334; width: 150ep; height: 22ep; background: #fff; margin: 1px'></div>"
+		"<div style='border: #070; border: 1px 1px 2px 3px; border-radius: 0px; width: 200ep; height: 200ep; background: #fff; margin: 1px'>aaaaa</div>"
+		"<div style='border: 5px #070; border-radius: 8px; width: 100ep; height: 100ep; background: #fff; margin: 1px'></div>"
+		"<div style='border: 1px #557; width: 150ep; height: 22ep; background: #fff; margin: 1px'></div>"
+		"<div style='border: 5ep #456; width: 40ep; height: 40ep; background: #567; margin: 1px'></div>" // ensure border color goes through sRGB conversion
 		);
 }
 

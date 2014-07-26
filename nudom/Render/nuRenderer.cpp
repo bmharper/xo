@@ -104,7 +104,7 @@ void nuRenderer::RenderNode( nuPoint base, nuRenderDomNode* node )
 			Driver->ShaderPerObject.Border = nuVec4f( border.Left + 0.5f, border.Top + 0.5f, border.Right + 0.5f, border.Bottom + 0.5f );
 			//Driver->ShaderPerObject.Border = nuVec4f( border.Left - 0.5f, border.Top - 0.5f, border.Right - 0.5f, border.Bottom - 0.5f );
 			Driver->ShaderPerObject.Radius = radius + 0.5f; // see the shader for an explanation of this 0.5
-			Driver->ShaderPerObject.BorderColor = style->BorderColor.GetVec4f();
+			Driver->ShaderPerObject.BorderColor = style->BorderColor.GetVec4Linear();
 			Driver->DrawQuad( corners );
 		}
 		else

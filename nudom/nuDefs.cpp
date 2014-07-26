@@ -130,6 +130,23 @@ nuBoxF nuBox16::ToRealBox() const
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+nuVec4f	nuColor::GetVec4sRGB() const
+{
+	float s = 1.0f / 255.0f;
+	return nuVec4f( r * s, g * s, b * s, a * s );
+}
+
+nuVec4f	nuColor::GetVec4Linear() const
+{
+	float s = 1.0f / 255.0f;
+	return nuVec4f( nuSRGB2Linear(r),
+					nuSRGB2Linear(g),
+					nuSRGB2Linear(b),
+					a * s );
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static const float sRGB_Low	= 0.0031308f;
 static const float sRGB_a	= 0.055f;
 

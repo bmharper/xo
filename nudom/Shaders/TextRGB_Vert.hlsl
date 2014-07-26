@@ -11,7 +11,7 @@ VSOutput main(VertexType_PTCV4 vertex)
 {
 	VSOutput output;
 	output.pos = mul(mvproj, vertex.pos);
-	output.color = vertex_color_in(vertex.color);
+	output.color = fromSRGB(vertex.color);
 	output.uv = vertex.uv;
 	output.uvClamp = vertex.v4;
 	return output;

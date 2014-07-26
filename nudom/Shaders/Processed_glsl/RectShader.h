@@ -21,6 +21,7 @@ public:
 	GLint v_radius;           // uniform float
 	GLint v_box;              // uniform vec4
 	GLint v_border;           // uniform vec4
+	GLint v_border_color;     // uniform vec4
 	GLint v_vport_hsize;      // uniform vec2
 };
 

@@ -10,7 +10,7 @@ VSOutput main(VertexType_PTC vertex)
 {
 	VSOutput output;
 	output.pos = mul(mvproj, vertex.pos);
-	output.color = vertex_color_in(vertex.color);
+	output.color = fromSRGB(vertex.color);
 	output.texuv0 = vertex.uv;
 	return output;
 }

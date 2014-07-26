@@ -253,7 +253,8 @@ struct NUAPI nuColor
 
 	void	Set( uint8 _r, uint8 _g, uint8 _b, uint8 _a ) { r = _r; g = _g; b = _b; a = _a; }
 	uint32	GetRGBA() const { nuRGBA x; x.r = r; x.g = g; x.b = b; x.a = a; return x.u; }
-	nuVec4f	GetVec4f() const { float s = 1.0f / 255.0f; return nuVec4f( r * s, g * s, b * s, a * s ); }
+	nuVec4f	GetVec4sRGB() const;
+	nuVec4f	GetVec4Linear() const;
 
 	bool	operator==( const nuColor& x ) const { return u == x.u; }
 	bool	operator!=( const nuColor& x ) const { return u != x.u; }

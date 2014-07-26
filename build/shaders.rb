@@ -130,8 +130,7 @@ end
 def escape_txt(txt)
 	cpp = ""
 	txt.each_line { |line|
-		# The initial tab tends to preserve column formatting better
-		cpp << "\"\t" + line.rstrip.gsub("\"", "\\\"") + "\\n\"\n"
+		cpp << "\t\"" + line.rstrip.gsub("\"", "\\\"") + "\\n\"\n"
 	}
 	return cpp
 end

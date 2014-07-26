@@ -27,6 +27,29 @@ static bool GLIsBooted = false;
 #define GL_ONE_MINUS_SRC1_ALPHA             0x88FB
 #endif
 
+static const char* nu_GLSLPrefix = R"(
+float fromSRGB_Component(float srgb)
+{
+	float sRGB_Low	= 0.0031308;
+	float sRGB_a	= 0.055;
+
+	if (srgb <= 0.04045)
+		return srgb / 12.92;
+	else
+		return pow((srgb + sRGB_a) / (1.0 + sRGB_a), 2.4);
+}
+
+vec4 fromSRGB(vec4 c)
+{
+	vec4 linear_c;
+	linear_c.r = fromSRGB_Component(c.r);
+	linear_c.g = fromSRGB_Component(c.g);
+	linear_c.b = fromSRGB_Component(c.b);
+	linear_c.a = c.a;
+	return linear_c;
+}
+)";
+
 nuRenderGL::nuRenderGL()
 {
 #if NU_PLATFORM_WIN_DESKTOP
@@ -490,6 +513,7 @@ void nuRenderGL::SetShaderObjectUniforms()
 	{
 		glUniform4fv( PRect.v_box, 1, &ShaderPerObject.Box.x );
 		glUniform4fv( PRect.v_border, 1, &ShaderPerObject.Border.x );
+		glUniform4fv( PRect.v_border_color, 1, &ShaderPerObject.BorderColor.x );
 		glUniform1f( PRect.v_radius, ShaderPerObject.Radius );
 	}
 }
@@ -714,6 +738,8 @@ void nuRenderGL::PreparePreprocessor()
 	BaseShader.append( CommonShaderDefines() );
 	if ( nuGlobal()->EnableSRGBFramebuffer && Have_sRGB_Framebuffer )
 		BaseShader.append( "#define NU_SRGB_FRAMEBUFFER\n" );
+
+	BaseShader += nu_GLSLPrefix;
 
 	/*
 	if ( Preprocessor.MacroCount() != 0 )
