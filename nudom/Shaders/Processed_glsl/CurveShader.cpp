@@ -87,7 +87,7 @@ bool nuGLProg_Curve::LoadVariablePositions()
 
 uint32 nuGLProg_Curve::PlatformMask()
 {
-	return nuPlatform_WinDesktop;
+	return nuPlatform_WinDesktop | nuPlatform_LinuxDesktop;
 }
 
 nuVertexType nuGLProg_Curve::VertexType()

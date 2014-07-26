@@ -15,8 +15,8 @@ void nuMain( nuMainEvent ev )
 	case nuMainEventInit:
 		{
 			MainWnd = nuSysWnd::CreateWithDoc();
-			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
-			//MainWnd->SetPosition( nuBox(2100, 60, 2100 + 800, 60 + 400), nuSysWnd::SetPosition_Move | nuSysWnd::SetPosition_Size );
+			//MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
+			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 800, 60 + 400), nuSysWnd::SetPosition_Move | nuSysWnd::SetPosition_Size );
 			nuDoc* doc = MainWnd->Doc();
 			InitDOM( doc );
 			MainWnd->Show();
@@ -27,6 +27,17 @@ void nuMain( nuMainEvent ev )
 		MainWnd = NULL;
 		break;
 	}
+}
+
+void DoBorder( nuDoc* doc )
+{
+	auto root = &doc->Root;
+	root->StyleParse( "background: #aaa" );
+	root->Parse( 
+		"<div style='border: #040; border: 1px 1px 2px 3px; border-radius: 0px; width: 200ep; height: 200ep; background: #fff; margin: 1px'>aaaaa</div>"
+		"<div style='border: 5px #040; border-radius: 8px; width: 100ep; height: 100ep; background: #fff; margin: 1px'></div>"
+		"<div style='border: 1px #334; width: 150ep; height: 22ep; background: #fff; margin: 1px'></div>"
+		);
 }
 
 void DoBaselineAlignment( nuDoc* doc )
@@ -244,8 +255,9 @@ void InitDOM( nuDoc* doc )
 	nuDomNode* body = &doc->Root;
 	body->StyleParse( "font-family: Segoe UI, Droid Sans" );
 
+	DoBorder( doc );
 	//DoBaselineAlignment( doc );
-	DoBaselineAlignment_rev2( doc );
+	//DoBaselineAlignment_rev2( doc );
 	//DoTwoTextRects( doc );
 	//DoBlockMargins( doc );
 	//DoLongText( doc );

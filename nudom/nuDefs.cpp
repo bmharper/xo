@@ -51,6 +51,8 @@ NUAPI size_t nuTexFormatBytesPerPixel( nuTexFormat f )
 	return nuTexFormatBytesPerChannel( f ) * nuTexFormatChannelCount( f );
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void nuTexture::FlipVertical()
 {
 	byte sline[4096];
@@ -67,6 +69,8 @@ void nuTexture::FlipVertical()
 	if ( line != sline )
 		free( line );
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void nuBox::SetInt( int32 left, int32 top, int32 right, int32 bottom )
 {
@@ -101,6 +105,30 @@ nuBox nuBox::ShrunkBy( const nuBox& margins )
 	c.Bottom -= margins.Bottom;
 	return c;
 }
+
+nuBoxF nuBox::ToRealBox() const
+{
+	nuBoxF f;
+	f.Left = nuPosToReal( Left );
+	f.Right = nuPosToReal( Right );
+	f.Top = nuPosToReal( Top );
+	f.Bottom = nuPosToReal( Bottom );
+	return f;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+nuBoxF nuBox16::ToRealBox() const
+{
+	nuBoxF f;
+	f.Left = nuPosToReal( Left );
+	f.Right = nuPosToReal( Right );
+	f.Top = nuPosToReal( Top );
+	f.Bottom = nuPosToReal( Bottom );
+	return f;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static const float sRGB_Low	= 0.0031308f;
 static const float sRGB_a	= 0.055f;

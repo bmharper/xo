@@ -5,6 +5,8 @@ varying vec4	pos;
 varying vec4	color;
 uniform float	radius;
 uniform vec4	box;
+uniform vec4	border;
+uniform vec4	border_Color;
 uniform vec2	vport_hsize;
 
 vec2 to_screen( vec2 unit_pt )
@@ -14,13 +16,14 @@ vec2 to_screen( vec2 unit_pt )
 
 void main()
 {
+	float left		= box.x + border.x + radius;
+	float right		= box.z - border.z - radius;
+	float top		= box.y + border.y + radius;
+	float bottom	= box.w -+ border.w - radius;
+	
 	vec2 screenxy = to_screen(pos.xy);
-	float left = box.x + radius;
-	float right = box.z - radius;
-	float top = box.y + radius;
-	float bottom = box.w - radius;
-	vec2 cent = screenxy;
 
+	vec2 cent = screenxy;
 	cent.x = clamp(cent.x, left, right);
 	cent.y = clamp(cent.y, top, bottom);
 

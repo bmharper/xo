@@ -40,7 +40,8 @@ struct NUAPI nuStyleBox
 	};
 
 	static bool			Parse( const char* s, intp len, nuStyleBox& v );
-	static nuStyleBox	Make( nuSize left, nuSize top, nuSize right, nuSize bottom ) { nuStyleBox b; b.Left = left; b.Top = top; b.Right = right; b.Bottom = bottom; return b; }
+	static nuStyleBox	Make( nuSize left, nuSize top, nuSize right, nuSize bottom )	{ nuStyleBox b; b.Left = left; b.Top = top; b.Right = right; b.Bottom = bottom; return b; }
+	static nuStyleBox	MakeUniform( nuSize all )										{ nuStyleBox b; b.Left = all; b.Top = all; b.Right = all; b.Bottom = all; return b; }
 	static nuStyleBox	MakeZero() { nuStyleBox b; b.SetZero(); return b; }
 	void SetZero() { Left = Top = Right = Bottom = nuSize::Pixels(0); }
 };
@@ -149,6 +150,11 @@ XY(Border_Left) \
 XY(Border_Top) \
 XY(Border_Right) \
 XY(Border_Bottom) \
+\
+XY(BorderColor_Left) \
+XY(BorderColor_Top) \
+XY(BorderColor_Right) \
+XY(BorderColor_Bottom) \
 \
 XY(Width) \
 XY(Height) \
@@ -299,8 +305,11 @@ public:
 	const nuStyleAttrib*	Get( nuStyleCategories cat ) const;
 	void					SetBox( nuStyleCategories cat, nuStyleBox val );
 	void					GetBox( nuStyleCategories cat, nuStyleBox& box ) const;
-	void					Set( const nuStyleAttrib& attrib );
-	void					Set( nuStyleCategories cat, nuStyleBox val );
+	void					SetUniformBox( nuStyleCategories cat, nuStyleAttrib val );
+	void					SetUniformBox( nuStyleCategories cat, nuColor color );
+	void					SetUniformBox( nuStyleCategories cat, nuSize size );
+	void					Set( nuStyleAttrib attrib );
+	void					Set( nuStyleCategories cat, nuStyleBox val );	// This overload is identical to SetBox, but needs to be present for templated parsing functions
 	//void					Compute( const nuDoc& doc, const nuDomEl& node );
 	void					Discard();
 	void					CloneSlowInto( nuStyle& c ) const;
@@ -406,14 +415,6 @@ protected:
 
 };
 
-struct nuBox16
-{
-	uint16 Left;
-	uint16 Top;
-	uint16 Right;
-	uint16 Bottom;
-};
-
 // The set of style information that is used by the renderer
 // This is baked in by the Layout engine.
 // This struct is present in every single nuRenderDomNode, so it pays to keep it tight.
@@ -422,6 +423,7 @@ class NUAPI nuStyleRender
 public:
 	nuBox16 BorderSize;
 	nuColor BackgroundColor;
+	nuColor BorderColor;
 	int		BackgroundImageID;
 	float	BorderRadius;
 
@@ -452,13 +454,14 @@ protected:
 };
 
 
-NUAPI bool nuDisplayTypeParse( const char* s, intp len, nuDisplayType& t );
-NUAPI bool nuPositionTypeParse( const char* s, intp len, nuPositionType& t );
-NUAPI bool nuBreakTypeParse( const char* s, intp len, nuBreakType& t );
-NUAPI bool nuFlowAxisParse( const char* s, intp len, nuFlowAxis& t );
-NUAPI bool nuFlowDirectionParse( const char* s, intp len, nuFlowDirection& t );
-NUAPI bool nuBoxSizeParse( const char* s, intp len, nuBoxSizeType& t );
-NUAPI bool nuTextAlignVerticalParse( const char* s, intp len, nuTextAlignVertical& t );
-NUAPI bool nuHorizontalBindingParse( const char* s, intp len, nuHorizontalBindings& t );
-NUAPI bool nuVerticalBindingParse( const char* s, intp len, nuVerticalBindings& t );
+NUAPI bool nuParseDisplayType( const char* s, intp len, nuDisplayType& t );
+NUAPI bool nuParsePositionType( const char* s, intp len, nuPositionType& t );
+NUAPI bool nuParseBreakType( const char* s, intp len, nuBreakType& t );
+NUAPI bool nuParseFlowAxis( const char* s, intp len, nuFlowAxis& t );
+NUAPI bool nuParseFlowDirection( const char* s, intp len, nuFlowDirection& t );
+NUAPI bool nuParseBoxSize( const char* s, intp len, nuBoxSizeType& t );
+NUAPI bool nuParseTextAlignVertical( const char* s, intp len, nuTextAlignVertical& t );
+NUAPI bool nuParseHorizontalBinding( const char* s, intp len, nuHorizontalBindings& t );
+NUAPI bool nuParseVerticalBinding( const char* s, intp len, nuVerticalBindings& t );
+NUAPI bool nuParseBorder( const char* s, intp len, nuStyle& style );
 

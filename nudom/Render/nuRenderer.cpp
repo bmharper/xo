@@ -49,10 +49,11 @@ void nuRenderer::RenderNode( nuPoint base, nuRenderDomNode* node )
 	nuStyleRender* style = &node->Style;
 	nuBox pos = node->Pos;
 	pos.Offset( base );
-	float bottom = nuPosToReal( pos.Bottom );
-	float top = nuPosToReal( pos.Top );
-	float left = nuPosToReal( pos.Left );
-	float right = nuPosToReal( pos.Right );
+	nuBoxF border = style->BorderSize.ToRealBox();
+	float bottom = nuPosToReal( pos.Bottom ) + border.Bottom;
+	float top = nuPosToReal( pos.Top ) - border.Top;
+	float left = nuPosToReal( pos.Left ) - border.Left;
+	float right = nuPosToReal( pos.Right ) + border.Right;
 
 	float radius = style->BorderRadius;
 	bool useRectShader = alwaysGoodRects || radius != 0;
@@ -99,7 +100,11 @@ void nuRenderer::RenderNode( nuPoint base, nuRenderDomNode* node )
 		{
 			Driver->ActivateShader( nuShaderRect );
 			Driver->ShaderPerObject.Box = nuVec4f( left, top, right, bottom );
+			//Driver->ShaderPerObject.Border = nuVec4f( border.Left, border.Top, border.Right, border.Bottom );
+			Driver->ShaderPerObject.Border = nuVec4f( border.Left + 0.5f, border.Top + 0.5f, border.Right + 0.5f, border.Bottom + 0.5f );
+			//Driver->ShaderPerObject.Border = nuVec4f( border.Left - 0.5f, border.Top - 0.5f, border.Right - 0.5f, border.Bottom - 0.5f );
 			Driver->ShaderPerObject.Radius = radius + 0.5f; // see the shader for an explanation of this 0.5
+			Driver->ShaderPerObject.BorderColor = style->BorderColor.GetVec4f();
 			Driver->DrawQuad( corners );
 		}
 		else

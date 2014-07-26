@@ -11,6 +11,8 @@ cbuffer PerFrame : register(b0)
 cbuffer PerObject : register(b1)
 {
 	float4		box;
+	float4		border;
+	float4		border_color;
 	float		radius;
 };
 

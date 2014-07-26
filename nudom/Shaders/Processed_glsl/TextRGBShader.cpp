@@ -21,7 +21,6 @@ void nuGLProg_TextRGB::Reset()
 const char* nuGLProg_TextRGB::VertSrc()
 {
 	return
-//"version #330\n"
 "	uniform		mat4	mvproj;\n"
 "	attribute	vec4	vpos;\n"
 "	attribute	vec4	vcolor;\n"
@@ -43,7 +42,7 @@ const char* nuGLProg_TextRGB::VertSrc()
 const char* nuGLProg_TextRGB::FragSrc()
 {
 	return
-"#version 130\n"
+"	#version 330\n"
 "	\n"
 "	#ifdef NU_PLATFORM_ANDROID\n"
 "	precision mediump float;\n"

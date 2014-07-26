@@ -489,6 +489,7 @@ void nuRenderGL::SetShaderObjectUniforms()
 	if ( ActiveShader == nuShaderRect )
 	{
 		glUniform4fv( PRect.v_box, 1, &ShaderPerObject.Box.x );
+		glUniform4fv( PRect.v_border, 1, &ShaderPerObject.Border.x );
 		glUniform1f( PRect.v_radius, ShaderPerObject.Radius );
 	}
 }

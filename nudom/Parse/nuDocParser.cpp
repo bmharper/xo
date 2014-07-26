@@ -170,7 +170,7 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 		{
 			if ( node->StyleParse( src + bodyStart, pos - bodyStart ) )
 				return "";
-			return "Invalid style";
+			return nuString( "Invalid style: " ) + nuString( src + bodyStart, pos - bodyStart );
 		}
 		else if ( EqNoCase("class", src + xStart, xEnd - xStart) )
 		{

@@ -44,14 +44,22 @@ void nuRenderStack::Initialize( const nuDoc* doc, nuPool* pool )
 	Defaults[nuCatMargin_Top].SetSize( nuCatMargin_Top, nuSize::Zero() );
 	Defaults[nuCatMargin_Right].SetSize( nuCatMargin_Right, nuSize::Zero() );
 	Defaults[nuCatMargin_Bottom].SetSize( nuCatMargin_Bottom, nuSize::Zero() );
+	
 	Defaults[nuCatPadding_Left].SetSize( nuCatPadding_Left, nuSize::Zero() );
 	Defaults[nuCatPadding_Top].SetSize( nuCatPadding_Top, nuSize::Zero() );
 	Defaults[nuCatPadding_Right].SetSize( nuCatPadding_Right, nuSize::Zero() );
 	Defaults[nuCatPadding_Bottom].SetSize( nuCatPadding_Bottom, nuSize::Zero() );
+	
 	Defaults[nuCatBorder_Left].SetSize( nuCatBorder_Left, nuSize::Zero() );
 	Defaults[nuCatBorder_Top].SetSize( nuCatBorder_Top, nuSize::Zero() );
 	Defaults[nuCatBorder_Right].SetSize( nuCatBorder_Right, nuSize::Zero() );
 	Defaults[nuCatBorder_Bottom].SetSize( nuCatBorder_Bottom, nuSize::Zero() );
+	
+	Defaults[nuCatBorderColor_Left].SetColor( nuCatBorderColor_Left, nuColor::RGBA(0,0,0,255) );
+	Defaults[nuCatBorderColor_Top].SetColor( nuCatBorderColor_Top, nuColor::RGBA(0,0,0,255) );
+	Defaults[nuCatBorderColor_Right].SetColor( nuCatBorderColor_Right, nuColor::RGBA(0,0,0,255) );
+	Defaults[nuCatBorderColor_Bottom].SetColor( nuCatBorderColor_Bottom, nuColor::RGBA(0,0,0,255) );
+	
 	Defaults[nuCatWidth].SetSize( nuCatWidth, nuSize::Null() );
 	Defaults[nuCatHeight].SetSize( nuCatHeight, nuSize::Null() );
 	//Defaults[nuCatTop].SetTop( nuVerticalBindingNULL ); -- do we need to? We don't.

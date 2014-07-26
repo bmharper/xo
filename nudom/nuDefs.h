@@ -6,6 +6,9 @@
 #include "nuPlatform.h"
 #include "nuTags.h"
 
+class nuBox;
+class nuBox16;
+class nuBoxF;
 class nuDomEl;
 class nuDomNode;
 class nuDomText;
@@ -166,6 +169,7 @@ public:
 	void	ExpandToFit( const nuBox& expando );
 	void	ClampTo( const nuBox& clamp );
 	nuBox	ShrunkBy( const nuBox& margins );
+	nuBoxF	ToRealBox() const;
 
 	nuPos	Width() const							{ return Right - Left; }
 	nuPos	Height() const							{ return Bottom - Top; }
@@ -183,6 +187,22 @@ public:
 
 	// $NU_GCC_ALIGN_BUG
 	nuBox&	operator=( const nuBox& b ) { Left = b.Left; Right = b.Right; Top = b.Top; Bottom = b.Bottom; return *this; }
+};
+
+class NUAPI nuBox16
+{
+public:
+	uint16	Left;
+	uint16	Top;
+	uint16	Right;
+	uint16	Bottom;
+
+	nuBox16() : Left(0), Right(0), Top(0), Bottom(0) {}
+	nuBox16( const nuBox& b ) : Left(b.Left), Right(b.Right), Top(b.Top), Bottom(b.Bottom) {}
+	nuBox16( const nuBox16& b ) : Left(b.Left), Right(b.Right), Top(b.Top), Bottom(b.Bottom) {}
+	nuBox16( nuPos left, nuPos top, nuPos right, nuPos bottom ) : Left(left), Right(right), Top(top), Bottom(bottom) {}
+
+	nuBoxF	ToRealBox() const;
 };
 
 class NUAPI nuBoxF
@@ -233,6 +253,7 @@ struct NUAPI nuColor
 
 	void	Set( uint8 _r, uint8 _g, uint8 _b, uint8 _a ) { r = _r; g = _g; b = _b; a = _a; }
 	uint32	GetRGBA() const { nuRGBA x; x.r = r; x.g = g; x.b = b; x.a = a; return x.u; }
+	nuVec4f	GetVec4f() const { float s = 1.0f / 255.0f; return nuVec4f( r * s, g * s, b * s, a * s ); }
 
 	bool	operator==( const nuColor& x ) const { return u == x.u; }
 	bool	operator!=( const nuColor& x ) const { return u != x.u; }

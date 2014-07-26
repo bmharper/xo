@@ -161,6 +161,11 @@
 	that deeper child do not have any alignment applied to them, and if the 
 	node that defined the baseline also has no alignment applied to it.
 
+2014-07-24	Layout - baseline
+	In the interest of consistency it might be a good idea to form a tight binding
+	between the thing that defines the baseline and any box that aligns itself
+	to that baseline. In other words, keep track of such pairs, and perform some
+	kind of fixup late in the layout process. But that is getting quite hackish.
 
 
 

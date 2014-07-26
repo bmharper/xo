@@ -14,6 +14,8 @@ static_assert( (sizeof(nuShaderPerFrame) & 15) == 0, "nuShaderPerFrame size must
 struct nuShaderPerObject
 {
 	nuVec4f		Box;
+	nuVec4f		Border;
+	nuVec4f		BorderColor;
 	float		Radius;
 	float		Padding[3];
 };

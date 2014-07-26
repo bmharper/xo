@@ -14,6 +14,18 @@ const nuStyleCategories nuInheritedStyleCategories[nuNumInheritedStyleCategories
 	nuCatText_Align_Vertical,
 };
 
+inline bool IsNumeric( char c )
+{
+	return (c >= '0' && c <= '9') || (c == '.') || (c == '-');
+}
+
+// This is parsing whitespace, not DOM/textual whitespace
+// In other words, it is the space between the comma and verdana in "font-family: verdana, arial",
+inline bool IsWhitespace( char c )
+{
+	return c == 32 || c == 9;
+}
+
 static bool MATCH( const char* s, intp start, intp end, const char* truth )
 {
 	for ( ; start != end; truth++, start++ )
@@ -41,16 +53,15 @@ static uint8 ParseHexCharSingle( const char* ch )
 	return (v << 4) | v;
 }
 
-inline bool IsNumeric( char c )
+static int FindSpaces( const char* s, intp len, int (&spaces)[10] )
 {
-	return (c >= '0' && c <= '9') || (c == '.') || (c == '-');
-}
-
-// This is parsing whitespace, not DOM/textual whitespace
-// In other words, it is the space between the comma and verdana in "font-family: verdana, arial",
-inline bool IsWhitespace( char c )
-{
-	return c == 32 || c == 9;
+	int nspaces = 0;
+	for ( intp i = 0; i < len && nspaces < arraysize(spaces); i++ )
+	{
+		if ( IsWhitespace(s[i]) )
+			spaces[nspaces++] = (int) i;
+	}
+	return nspaces;
 }
 
 bool nuSize::Parse( const char* s, intp len, nuSize& v )
@@ -115,13 +126,8 @@ bool nuSize::Parse( const char* s, intp len, nuSize& v )
 
 bool nuStyleBox::Parse( const char* s, intp len, nuStyleBox& v )
 {
-	int nspaces = 0;
 	int spaces[10];
-	for ( intp i = 0; i < len && nspaces < arraysize(spaces) - 1; i++ )
-	{
-		if ( IsWhitespace(s[i]) )
-			spaces[nspaces++] = (int) i;
-	}
+	int nspaces = FindSpaces( s, len, spaces );
 
 	// 20px
 	// 1px 2px 3px 4px (TODO)
@@ -308,6 +314,19 @@ static bool ParseCompound( const char* s, intp len, bool (*parseFunc)(const char
 	}
 }
 
+static bool ParseDirect( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, nuStyle& style), nuStyle& style )
+{
+	if ( parseFunc( s, len, style ) )
+	{
+		return true;
+	}
+	else
+	{
+		nuParseFail( "Parse failed on: '%.*s'\n", (int) len, s );
+		return false;
+	}
+}
+
 static bool ParseFontFamily( const char* s, intp len, nuFontID& v )
 {
 	bool onFont = false;
@@ -381,28 +400,29 @@ bool nuStyle::Parse( const char* t, intp maxLen, nuDoc* doc )
 			else if ( MATCH(t, startk, eq, "height") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatHeight, *this ); }
 			else if ( MATCH(t, startk, eq, "padding") )						{ ok = ParseCompound( TSTART, TLEN, &nuStyleBox::Parse, nuCatPadding_Left, *this ); }
 			else if ( MATCH(t, startk, eq, "margin") )						{ ok = ParseCompound( TSTART, TLEN, &nuStyleBox::Parse, nuCatMargin_Left, *this ); }
-			else if ( MATCH(t, startk, eq, "display") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuDisplayTypeParse, nuCatDisplay, *this ); }
-			else if ( MATCH(t, startk, eq, "position") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuPositionTypeParse, nuCatPosition, *this ); }
+			else if ( MATCH(t, startk, eq, "display") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseDisplayType, nuCatDisplay, *this ); }
+			else if ( MATCH(t, startk, eq, "position") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParsePositionType, nuCatPosition, *this ); }
+			else if ( MATCH(t, startk, eq, "border") )						{ ok = ParseDirect( TSTART, TLEN, &nuParseBorder, *this ); }
 			else if ( MATCH(t, startk, eq, "border-radius") )				{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatBorderRadius, *this ); }
 			//else if ( MATCH(t, startk, eq, "left") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatLeft, *this ); }
 			//else if ( MATCH(t, startk, eq, "right") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatRight, *this ); }
 			//else if ( MATCH(t, startk, eq, "top") )							{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatTop, *this ); }
 			//else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatBottom, *this ); }
-			else if ( MATCH(t, startk, eq, "break") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuBreakTypeParse, nuCatBreak, *this ); }
-			else if ( MATCH(t, startk, eq, "flow-axis") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowAxisParse, nuCatFlow_Axis, *this ); }
-			else if ( MATCH(t, startk, eq, "flow-direction-horizontal") )	{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Horizontal, *this ); }
-			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &nuFlowDirectionParse, nuCatFlow_Direction_Vertical, *this ); }
-			else if ( MATCH(t, startk, eq, "box-sizing") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuBoxSizeParse, nuCatBoxSizing, *this ); }
+			else if ( MATCH(t, startk, eq, "break") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseBreakType, nuCatBreak, *this ); }
+			else if ( MATCH(t, startk, eq, "flow-axis") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseFlowAxis, nuCatFlow_Axis, *this ); }
+			else if ( MATCH(t, startk, eq, "flow-direction-horizontal") )	{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseFlowDirection, nuCatFlow_Direction_Horizontal, *this ); }
+			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseFlowDirection, nuCatFlow_Direction_Vertical, *this ); }
+			else if ( MATCH(t, startk, eq, "box-sizing") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseBoxSize, nuCatBoxSizing, *this ); }
 			else if ( MATCH(t, startk, eq, "font-size") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatFontSize, *this ); }
 			else if ( MATCH(t, startk, eq, "font-family") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &ParseFontFamily, nuCatFontFamily, *this ); }
-			else if ( MATCH(t, startk, eq, "text-align-vertical") )			{ ok = ParseSingleAttrib( TSTART, TLEN, &nuTextAlignVerticalParse, nuCatText_Align_Vertical, *this ); }
-			else if ( MATCH(t, startk, eq, "left") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuHorizontalBindingParse, nuCatLeft, *this ); }
-			else if ( MATCH(t, startk, eq, "hcenter") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuHorizontalBindingParse, nuCatHCenter, *this ); }
-			else if ( MATCH(t, startk, eq, "right") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuHorizontalBindingParse, nuCatRight, *this ); }
-			else if ( MATCH(t, startk, eq, "top") )							{ ok = ParseSingleAttrib( TSTART, TLEN, &nuVerticalBindingParse, nuCatTop, *this ); }
-			else if ( MATCH(t, startk, eq, "vcenter") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuVerticalBindingParse, nuCatVCenter, *this ); }
-			else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuVerticalBindingParse, nuCatBottom, *this ); }
-			else if ( MATCH(t, startk, eq, "baseline") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuVerticalBindingParse, nuCatBaseline, *this ); }
+			else if ( MATCH(t, startk, eq, "text-align-vertical") )			{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseTextAlignVertical, nuCatText_Align_Vertical, *this ); }
+			else if ( MATCH(t, startk, eq, "left") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseHorizontalBinding, nuCatLeft, *this ); }
+			else if ( MATCH(t, startk, eq, "hcenter") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseHorizontalBinding, nuCatHCenter, *this ); }
+			else if ( MATCH(t, startk, eq, "right") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseHorizontalBinding, nuCatRight, *this ); }
+			else if ( MATCH(t, startk, eq, "top") )							{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseVerticalBinding, nuCatTop, *this ); }
+			else if ( MATCH(t, startk, eq, "vcenter") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseVerticalBinding, nuCatVCenter, *this ); }
+			else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseVerticalBinding, nuCatBottom, *this ); }
+			else if ( MATCH(t, startk, eq, "baseline") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseVerticalBinding, nuCatBaseline, *this ); }
 			else
 			{
 				ok = false;
@@ -456,6 +476,29 @@ void nuStyle::SetBox( nuStyleCategories cat, nuStyleBox val )
 	else NUASSERT(false);
 }
 
+void nuStyle::SetUniformBox( nuStyleCategories cat, nuStyleAttrib val )
+{
+	cat = nuCatMakeBaseBox(cat);
+	val.Category = (nuStyleCategories) (cat + 0);	Set( val );
+	val.Category = (nuStyleCategories) (cat + 1);	Set( val );
+	val.Category = (nuStyleCategories) (cat + 2);	Set( val );
+	val.Category = (nuStyleCategories) (cat + 3);	Set( val );
+}
+
+void nuStyle::SetUniformBox( nuStyleCategories cat, nuColor color )
+{
+	nuStyleAttrib val;
+	val.SetColor( cat, color );
+	SetUniformBox( cat, val );
+}
+
+void nuStyle::SetUniformBox( nuStyleCategories cat, nuSize size )
+{
+	nuStyleAttrib val;
+	val.SetSize( cat, size );
+	SetUniformBox( cat, val );
+}
+
 void nuStyle::SetBoxInternal( nuStyleCategories catBase, nuStyleBox val )
 {
 	nuStyleAttrib a;
@@ -465,7 +508,7 @@ void nuStyle::SetBoxInternal( nuStyleCategories catBase, nuStyleBox val )
 	a.SetSize( (nuStyleCategories) (catBase + 3), val.Bottom );	Set( a );
 }
 
-void nuStyle::Set( const nuStyleAttrib& attrib )
+void nuStyle::Set( nuStyleAttrib attrib )
 {
 	for ( intp i = 0; i < Attribs.size(); i++ )
 	{
@@ -805,14 +848,14 @@ void nuStyleTable::CloneFastInto( nuStyleTable& c, nuPool* pool ) const
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-NUAPI bool nuDisplayTypeParse( const char* s, intp len, nuDisplayType& t )
+NUAPI bool nuParseDisplayType( const char* s, intp len, nuDisplayType& t )
 {
 	if ( MATCH(s, 0, len, "block") ) { t = nuDisplayBlock; return true; }
 	if ( MATCH(s, 0, len, "inline") ) { t = nuDisplayInline; return true; }
 	return false;
 }
 
-NUAPI bool nuPositionTypeParse( const char* s, intp len, nuPositionType& t )
+NUAPI bool nuParsePositionType( const char* s, intp len, nuPositionType& t )
 {
 	if ( MATCH(s, 0, len, "static") )	{ t = nuPositionStatic; return true; }
 	if ( MATCH(s, 0, len, "absolute") ) { t = nuPositionAbsolute; return true; }
@@ -821,7 +864,7 @@ NUAPI bool nuPositionTypeParse( const char* s, intp len, nuPositionType& t )
 	return false;
 }
 
-NUAPI bool nuBreakTypeParse( const char* s, intp len, nuBreakType& t )
+NUAPI bool nuParseBreakType( const char* s, intp len, nuBreakType& t )
 {
 	if ( MATCH(s, 0, len, "none") )		{ t = nuBreakNULL; return true; }
 	if ( MATCH(s, 0, len, "before") )	{ t = nuBreakBefore; return true; }
@@ -829,21 +872,21 @@ NUAPI bool nuBreakTypeParse( const char* s, intp len, nuBreakType& t )
 	return false;
 }
 
-NUAPI bool nuFlowAxisParse( const char* s, intp len, nuFlowAxis& t )
+NUAPI bool nuParseFlowAxis( const char* s, intp len, nuFlowAxis& t )
 {
 	if ( MATCH(s, 0, len, "horizontal") )	{ t = nuFlowAxisHorizontal; return true; }
 	if ( MATCH(s, 0, len, "vertical") )		{ t = nuFlowAxisVertical; return true; }
 	return false;
 }
 
-NUAPI bool nuFlowDirectionParse( const char* s, intp len, nuFlowDirection& t )
+NUAPI bool nuParseFlowDirection( const char* s, intp len, nuFlowDirection& t )
 {
 	if ( MATCH(s, 0, len, "normal") )	{ t = nuFlowDirectionNormal; return true; }
 	if ( MATCH(s, 0, len, "reverse") )	{ t = nuFlowDirectionReversed; return true; }
 	return false;
 }
 
-NUAPI bool nuBoxSizeParse( const char* s, intp len, nuBoxSizeType& t )
+NUAPI bool nuParseBoxSize( const char* s, intp len, nuBoxSizeType& t )
 {
 	if ( MATCH(s, 0, len, "content") )	{ t = nuBoxSizeContent; return true; }
 	if ( MATCH(s, 0, len, "border") )	{ t = nuBoxSizeBorder; return true; }
@@ -851,14 +894,14 @@ NUAPI bool nuBoxSizeParse( const char* s, intp len, nuBoxSizeType& t )
 	return false;
 }
 
-NUAPI bool nuTextAlignVerticalParse( const char* s, intp len, nuTextAlignVertical& t )
+NUAPI bool nuParseTextAlignVertical( const char* s, intp len, nuTextAlignVertical& t )
 {
 	if ( MATCH(s, 0, len, "baseline") )	{ t = nuTextAlignVerticalBaseline; return true; }
 	if ( MATCH(s, 0, len, "top") )		{ t = nuTextAlignVerticalTop; return true; }
 	return false;
 }
 
-NUAPI bool nuHorizontalBindingParse( const char* s, intp len, nuHorizontalBindings& t )
+NUAPI bool nuParseHorizontalBinding( const char* s, intp len, nuHorizontalBindings& t )
 {
 	if ( MATCH(s, 0, len, "left") )		{ t = nuHorizontalBindingLeft; return true; }
 	if ( MATCH(s, 0, len, "hcenter") )	{ t = nuHorizontalBindingCenter; return true; }
@@ -866,11 +909,66 @@ NUAPI bool nuHorizontalBindingParse( const char* s, intp len, nuHorizontalBindin
 	return false;
 }
 
-NUAPI bool nuVerticalBindingParse( const char* s, intp len, nuVerticalBindings& t )
+NUAPI bool nuParseVerticalBinding( const char* s, intp len, nuVerticalBindings& t )
 {
 	if ( MATCH(s, 0, len, "top") )		{ t = nuVerticalBindingTop; return true; }
 	if ( MATCH(s, 0, len, "vcenter") )	{ t = nuVerticalBindingCenter; return true; }
 	if ( MATCH(s, 0, len, "bottom") )	{ t = nuVerticalBindingBottom; return true; }
 	if ( MATCH(s, 0, len, "baseline") )	{ t = nuVerticalBindingBaseline; return true; }
+	return false;
+}
+
+NUAPI bool nuParseBorder( const char* s, intp len, nuStyle& style )
+{
+	int spaces[10];
+	int nspaces = FindSpaces( s, len, spaces );
+
+	if ( nspaces == 0 )
+	{
+		// 1px		OR
+		// #000
+		nuColor color;
+		if ( nuColor::Parse( s, len, color ) )
+		{
+			style.SetUniformBox( nuCatBorderColor_Left, color );
+			return true;
+		}
+		nuSize size;
+		if ( nuSize::Parse( s, len, size ) )
+		{
+			style.SetBox( nuCatBorder_Left, nuStyleBox::MakeUniform(size) );
+			return true;
+		}
+	}
+	else if ( nspaces == 1 ) 
+	{
+		// 1px #000
+		nuSize size;
+		nuColor color;
+		if ( nuSize::Parse( s, spaces[0], size ) )
+		{
+			if ( nuColor::Parse( s + spaces[0] + 1, len - spaces[0] - 1, color ) )
+			{
+				style.SetBox( nuCatBorder_Left, nuStyleBox::MakeUniform(size) );
+				style.SetUniformBox( nuCatBorderColor_Left, color );
+				return true;
+			}
+		}
+	}
+	else if ( nspaces == 3 )
+	{
+		// 1px 2px 3px 4px
+		nuStyleBox box;
+		bool s1 = nuSize::Parse( s, spaces[0], box.Left );
+		bool s2 = nuSize::Parse( s + spaces[0] + 1, spaces[1] - spaces[0] - 1, box.Top );
+		bool s3 = nuSize::Parse( s + spaces[1] + 1, spaces[2] - spaces[1] - 1, box.Right );
+		bool s4 = nuSize::Parse( s + spaces[2] + 1, len - spaces[2] - 1, box.Bottom );
+		if ( s1 && s2 && s3 && s4 )
+		{
+			style.SetBox( nuCatBorder_Left, box );
+			return true;
+		}
+	}
+
 	return false;
 }

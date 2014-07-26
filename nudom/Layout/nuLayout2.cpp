@@ -85,6 +85,7 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 	rnode->InternalID = node.GetInternalID();
 
 	nuBoxSizeType boxSizing = Stack.Get( nuCatBoxSizing ).GetBoxSizing();
+	nuPos borderRadius = ComputeDimension( 0, nuCatBorderRadius );
 	nuPos contentWidth = ComputeDimension( in.ParentWidth, nuCatWidth );
 	nuPos contentHeight = ComputeDimension( in.ParentHeight, nuCatHeight );
 	nuBox margin = ComputeBox( in.ParentWidth, in.ParentHeight, nuCatMargin_Left );		// it may be wise to disallow percentage sizing here
@@ -195,11 +196,13 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 
 	rnode->Pos = nuBox( 0, 0, contentWidth, contentHeight ).OffsetBy( toContent.Left, toContent.Top );
 	rnode->Style.BackgroundColor = Stack.Get( nuCatBackground ).GetColor();
-	rnode->Style.BorderRadius = 0;
+	rnode->Style.BorderRadius = nuPosToReal( borderRadius );
+	rnode->Style.BorderSize = border;
+	rnode->Style.BorderColor = Stack.Get( nuCatBorderColor_Left ).GetColor();
 
 	out.NodeBaseline = innerBaseline + toContent.Top;
-	out.NodeWidth = contentWidth;
-	out.NodeHeight = contentHeight;
+	out.NodeWidth = contentWidth + border.Left + border.Right + margin.Left + margin.Right + padding.Left + padding.Right;
+	out.NodeHeight = contentHeight + border.Top + border.Bottom + margin.Top + margin.Bottom + padding.Top + padding.Bottom;
 	out.Binds = ComputeBinds();
 	out.Break = Stack.Get( nuCatBreak ).GetBreakType();
 

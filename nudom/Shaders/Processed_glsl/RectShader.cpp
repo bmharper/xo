@@ -15,6 +15,7 @@ void nuGLProg_Rect::Reset()
 	v_vcolor = -1;
 	v_radius = -1;
 	v_box = -1;
+	v_border = -1;
 	v_vport_hsize = -1;
 }
 
@@ -45,6 +46,7 @@ const char* nuGLProg_Rect::FragSrc()
 "	varying vec4	color;\n"
 "	uniform float	radius;\n"
 "	uniform vec4	box;\n"
+"	uniform vec4	border;\n"
 "	uniform vec2	vport_hsize;\n"
 "	\n"
 "	vec2 to_screen( vec2 unit_pt )\n"
@@ -54,13 +56,14 @@ const char* nuGLProg_Rect::FragSrc()
 "	\n"
 "	void main()\n"
 "	{\n"
-"		vec2 screenxy = to_screen(pos.xy);\n"
-"		float left = box.x + radius;\n"
-"		float right = box.z - radius;\n"
-"		float top = box.y + radius;\n"
-"		float bottom = box.w - radius;\n"
-"		vec2 cent = screenxy;\n"
+"		float left		= box.x + border.x + radius;\n"
+"		float right		= box.z - border.z - radius;\n"
+"		float top		= box.y + border.y + radius;\n"
+"		float bottom	= box.w -+ border.w - radius;\n"
 "	\n"
+"		vec2 screenxy = to_screen(pos.xy);\n"
+"	\n"
+"		vec2 cent = screenxy;\n"
 "		cent.x = clamp(cent.x, left, right);\n"
 "		cent.y = clamp(cent.y, top, bottom);\n"
 "	\n"
@@ -102,6 +105,7 @@ bool nuGLProg_Rect::LoadVariablePositions()
 	nfail += (v_vcolor = glGetAttribLocation( Prog, "vcolor" )) == -1;
 	nfail += (v_radius = glGetUniformLocation( Prog, "radius" )) == -1;
 	nfail += (v_box = glGetUniformLocation( Prog, "box" )) == -1;
+	nfail += (v_border = glGetUniformLocation( Prog, "border" )) == -1;
 	nfail += (v_vport_hsize = glGetUniformLocation( Prog, "vport_hsize" )) == -1;
 	if ( nfail != 0 )
 		NUTRACE( "Failed to bind %d variables of shader Rect\n", nfail );
