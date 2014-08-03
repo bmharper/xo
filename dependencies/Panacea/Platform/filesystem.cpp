@@ -10,26 +10,36 @@ bool AbcFilesystemFindFiles( const char* _dir, std::function<bool(const AbcFiles
 		return false;
 
 #ifdef _WIN32
-	std::string fixed;
-	const char* dir = _dir;
+	std::string fixed = _dir;
 	if ( _dir[dirLen - 1] == '\\' )
-	{
-		fixed = _dir;
 		fixed.pop_back();
-		dir = fixed.c_str();
-	}
 
 	WIN32_FIND_DATAA fd;
-	HANDLE handle = FindFirstFileA( dir, &fd );
+	HANDLE handle = FindFirstFileA( (fixed + "\\*").c_str(), &fd );
+	AbcFilesystemItem item;
+	item.Root = fixed.c_str();
 	while ( handle != INVALID_HANDLE_VALUE )
 	{
-		AbcFilesystemItem item;
-		item.IsDir = !!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
-		item.Name = fd.cFileName;
-		item.TimeCreate = AbcFileTimeToUnixSeconds( fd.ftCreationTime );
-		item.TimeModify = AbcFileTimeToUnixSeconds( fd.ftLastWriteTime );
-		if ( !callback( item ) )
-			break;
+		bool ignore =	(fd.cFileName[0] == '.' && fd.cFileName[1] == 0) ||
+						(fd.cFileName[0] == '.' && fd.cFileName[1] == '.' && fd.cFileName[2] == 0);
+		if ( !ignore )
+		{
+			item.IsDir = !!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+			item.Name = fd.cFileName;
+			item.TimeCreate = AbcFileTimeToUnixSeconds( fd.ftCreationTime );
+			item.TimeModify = AbcFileTimeToUnixSeconds( fd.ftLastWriteTime );
+			bool res = callback( item );
+			if ( item.IsDir )
+			{
+				if ( res )
+					AbcFilesystemFindFiles( (fixed + "\\" + item.Name).c_str(), callback );
+			}
+			else
+			{
+				if ( !res )
+					break;
+			}
+		}
 		if ( FALSE == FindNextFileA( handle, &fd ) )
 			break;
 	}

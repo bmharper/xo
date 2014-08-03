@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "nuFontStore.h"
 
+static const int ManifestVersion = 1;
+static const char UnitSeparator = 31;
+
 nuFontTableImmutable::nuFontTableImmutable()
 {
 }
@@ -29,7 +32,21 @@ nuFontStore::nuFontStore()
 	FTLibrary = NULL;
 	Fonts += NULL;
 	NUASSERT( Fonts[nuFontIDNull] == NULL );
+	IsFontTableLoaded = false;
 	AbcCriticalSectionInitialize( Lock );
+
+#if NU_PLATFORM_WIN_DESKTOP
+	wchar_t* wpath;
+	SHGetKnownFolderPath( FOLDERID_Fonts, 0, NULL, &wpath );
+	Directories += ConvertWideToUTF8( wpath ).c_str();
+#elif NU_PLATFORM_LINUX_DESKTOP
+	Directories += "/usr/share/fonts/truetype";
+	Directories += "/usr/share/fonts/truetype/msttcorefonts";
+#elif NU_PLATFORM_ANDROID
+	Directories += "/system/fonts";
+#else
+	NUTODO_STATIC
+#endif
 }
 
 nuFontStore::~nuFontStore()
@@ -96,7 +113,13 @@ nuFontID nuFontStore::InsertByFacename( const char* facename )
 
 	nuFont font;
 	font.Facename = facename;
-	const char* filename = FacenameToFilename( facename );
+	const char* filename = GetFilenameFromFacename( facename );
+
+	if ( filename == nullptr )
+	{
+		NUTRACE( "Failed to load font (facename=%s) (font not found)\n", facename );
+		return nuFontIDNull;
+	}
 
 	FT_Error e = FT_New_Face( FTLibrary, filename, 0, &font.FTFace );
 	if ( e != 0 )
@@ -130,6 +153,12 @@ nuFontTableImmutable nuFontStore::GetImmutableTable()
 	nuFontTableImmutable t;
 	t.Initialize( Fonts );
 	return t;
+}
+
+void nuFontStore::AddFontDirectory( const char* dir )
+{
+	Directories += dir;
+	IsFontTableLoaded = false;
 }
 
 const nuFont* nuFontStore::GetByFacename_Internal( const char* facename ) const
@@ -192,10 +221,33 @@ void nuFontStore::LoadFontTweaks( nuFont& font )
 	// This always looks better with the TT hinter
 	if ( font.Facename == "Segoe UI" )
 		font.MaxAutoHinterSize = 0;
+
+	// This always looks better with the TT hinter
+	if ( font.Facename == "Audiowide" )
+		font.MaxAutoHinterSize = 0;
 }
 
-const char* nuFontStore::FacenameToFilename( const char* facename )
+const char* nuFontStore::GetFilenameFromFacename( const char* facename )
 {
+	if ( !IsFontTableLoaded )
+	{
+		if ( !LoadFontTable() )
+			BuildAndSaveFontTable();
+	}
+
+	nuString name = facename;
+	nuString* fn = FacenameToFilename.getp( name );
+	if ( fn != nullptr )
+		return fn->Z;
+
+	name += " Regular";
+	fn = FacenameToFilename.getp( name );
+	if ( fn != nullptr )
+		return fn->Z;
+
+	return nullptr;
+
+	/*
 	// We need to build a cache here and save it to disk.
 	nuTempString name( facename );
 #if NU_PLATFORM_WIN_DESKTOP
@@ -216,4 +268,129 @@ const char* nuFontStore::FacenameToFilename( const char* facename )
 	if ( name == "Droid Sans Mono" ) return "/system/fonts/DroidSansMono.ttf";
 	return "/system/fonts/DroidSans.ttf";
 #endif
+	*/
+}
+
+void nuFontStore::BuildAndSaveFontTable()
+{
+	podvec<nuString> files;
+	for ( intp i = 0; i < Directories.size(); i++ )
+	{
+		auto cb = [&]( const AbcFilesystemItem& item ) -> bool
+		{
+			if ( IsFontFilename(item.Name) )
+				files += nuString(item.Root) + ABC_DIR_SEP_STR + item.Name;
+			return true;
+		};
+
+		AbcFilesystemFindFiles( Directories[i].Z, cb );
+	}
+
+	FILE* manifest = fopen( (nuCacheDir() + ABC_DIR_SEP_STR + "fonts").Z, "wb" );
+	fprintf( manifest, "%d\n", ManifestVersion );
+	fprintf( manifest, "%llu\n", ComputeFontDirHash() );
+
+	for ( intp i = 0; i < files.size(); i++ )
+	{
+		FT_Face face;
+		FT_Error e = FT_New_Face( FTLibrary, files[i].Z, 0, &face );
+		if ( e == 0 )
+		{
+			nuString facename = face->family_name;
+			nuString style = face->style_name;
+			nuString fullFacename = facename + " " + style;
+			fprintf( manifest, "%s%c%s\n", files[i].Z, UnitSeparator, fullFacename );
+			FT_Done_Face( face );
+		}
+		else
+		{
+			NUTRACE( "Failed to load font (filename=%s)\n", files[i].Z );
+		}
+	}
+
+	fclose( manifest );
+
+	LoadFontTable();
+}
+
+bool nuFontStore::LoadFontTable()
+{
+	FacenameToFilename.clear();
+	FILE* manifest = fopen( (nuCacheDir() + ABC_DIR_SEP_STR + "fonts").Z, "rb" );
+	if ( manifest == nullptr )
+		return false;
+
+	int version = 0;
+	uint64 hash = 0;
+	fscanf( manifest, "%d\n", &version );
+	fscanf( manifest, "%llu\n", &hash );
+	if ( version != ManifestVersion || hash != ComputeFontDirHash() )
+	{
+		fclose( manifest );
+		return false;
+	}
+
+	// Read the rest of the file into one buffer
+	podvec<char> remain;
+	{
+		char buf[1024];
+		size_t nbytes = 0;
+		while ( (nbytes = fread( buf, 1, sizeof(buf), manifest )) != 0 )
+			remain.addn( buf, nbytes );
+	}
+
+	fclose ( manifest );
+
+	// Parse the contents out line by line, using character 31 as a field separator
+	const char* buf = &remain[0];
+	intp lineStart = 0;
+	intp term1 = 0;
+	for ( intp i = 0; true; i++ )
+	{
+		if ( i == remain.size() || buf[i] == '\n' )
+		{
+			nuString path, facename;
+			path.Set( buf + lineStart, term1 - lineStart );
+			facename.Set( buf + term1 + 1, i - term1 - 1 );
+			FacenameToFilename.insert( facename, path );
+			lineStart = i + 1;
+			term1 = lineStart;
+		}
+		if ( i == remain.size() )
+			break;
+		if ( buf[i] == UnitSeparator )
+			term1 = i;
+	}
+
+	IsFontTableLoaded = true;
+
+	return true;
+}
+
+uint64 nuFontStore::ComputeFontDirHash()
+{
+	void* hstate = XXH64_init( 0 );
+
+	auto cb = [&]( const AbcFilesystemItem& item ) -> bool
+	{
+		if ( IsFontFilename(item.Name) )
+		{
+			XXH64_update( hstate, item.Root, (int) strlen(item.Root) );
+			XXH64_update( hstate, item.Name, (int) strlen(item.Name) );
+			XXH64_update( hstate, &item.TimeCreate, sizeof(item.TimeCreate) );
+			XXH64_update( hstate, &item.TimeModify, sizeof(item.TimeModify) );
+		}
+		return true;
+	};
+
+	for ( intp i = 0; i < Directories.size(); i++ )
+		AbcFilesystemFindFiles( Directories[i].Z, cb );
+
+	return (uint64) XXH64_digest( hstate );
+}
+
+bool nuFontStore::IsFontFilename( const char* filename )
+{
+	return	strstr(filename, ".ttf") != nullptr ||
+			strstr(filename, ".ttc ") != nullptr;
 }

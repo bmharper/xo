@@ -57,16 +57,26 @@ public:
 	nuFontID				GetFallbackFontID();							// This is a font that is always available on this platform. Panics if the font is not available.
 	nuFontTableImmutable	GetImmutableTable();
 
+	void					AddFontDirectory( const char* dir );
+
 private:
 	AbcCriticalSection				Lock;
 	pvect<nuFont*>					Fonts;
+	podvec<nuString>				Directories;
 	fhashmap<nuString, nuFontID>	FacenameToFontID;
+	fhashmap<nuString, nuString>	FacenameToFilename;
 	FT_Library						FTLibrary;
+	bool							IsFontTableLoaded;
 
 	const nuFont*	GetByFacename_Internal( const char* facename ) const;
 	nuFontID		Insert_Internal( const nuFont& font );
 	void			LoadFontConstants( nuFont& font );
 	void			LoadFontTweaks( nuFont& font );
-	const char*		FacenameToFilename( const char* facename );
+	const char*		GetFilenameFromFacename( const char* facename );
+	void			BuildAndSaveFontTable();
+	bool			LoadFontTable();
+	uint64			ComputeFontDirHash();
+	
+	static bool		IsFontFilename( const char* filename );
 
 };
