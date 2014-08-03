@@ -167,6 +167,13 @@
 	to that baseline. In other words, keep track of such pairs, and perform some
 	kind of fixup late in the layout process. But that is getting quite hackish.
 
+2014-08-02	Render node reference frame
+	Right now the frame of reference for nuRenderDomEl.Pos is the parent node's content
+	box. This forces us to store Padding inside nuStyleRender. I'm pretty sure this
+	is a waste of space. It would be more efficient to make the frame of reference
+	the border-box of the parent node. I fear I'm going to get confused by doing that,
+	so for now I'm sticking with this. It should be a fairly trivial optimization to
+	fix this up later.
 
 
 

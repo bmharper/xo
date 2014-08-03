@@ -354,6 +354,7 @@ struct nuGlobalStruct
 	bool						EnableSRGBFramebuffer;	// Enable sRGB framebuffer (implies linear blending)
 	bool						EnableKerning;			// Enable kerning on text
 	bool						RoundLineHeights;		// Round text line heights to integer amounts, so that text line separation is not subject to sub-pixel positioning differences.
+	bool						SnapBoxes;				// Round certain boxes up to integer pixels
 	bool						SnapSubpixelHorzText;	// When rendering subpixel text, snap glyphs to whole pixels, instead of sub-pixel horizontal positioning.
 														// This needs a lot more work to yield decent results, and maybe quite a different approach.
 	//bool						EmulateGammaBlending;	// Only applicable when EnableSRGBFramebuffer = true, this tries to emulate gamma-space blending. You would turn this on to get consistent blending on all devices. FAILED EXPERIMENT - BAD IDEA.

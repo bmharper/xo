@@ -8,6 +8,7 @@
 	#include <windows.h>
 	#include <windowsx.h>
 	#include <mmsystem.h>
+	#include <Shlobj.h>
 #else
 	#define NU_BUILD_OPENGL 1
 	#ifdef ANDROID

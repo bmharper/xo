@@ -798,6 +798,11 @@ nuStyleTable::~nuStyleTable()
 {
 }
 
+void nuStyleTable::AddDummyStyleZero()
+{
+	GetOrCreate( "" );
+}
+
 void nuStyleTable::Discard()
 {
 	Styles.hack( 0, 0, NULL );

@@ -137,8 +137,12 @@ nuString nuDomNode::Parse( const char* src )
 nuString nuDomNode::ParseAppend( const char* src )
 {
 	nuDocParser p;
-	RemoveAllChildren();
 	return p.Parse( src, this );
+}
+
+nuString nuDomNode::ParseAppend( const nuStringRaw& src )
+{
+	return ParseAppend( src.Z );
 }
 
 bool nuDomNode::StyleParse( const char* t, intp maxLen )

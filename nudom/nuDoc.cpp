@@ -12,6 +12,7 @@ nuDoc::nuDoc() : Root( this, nuTagDiv )
 {
 	IsReadOnly = false;
 	Version = 0;
+	ClassStyles.AddDummyStyleZero();
 	Root.SetDoc( this );
 	Root.SetDocRoot();
 	ResetInternalIDs();
@@ -223,9 +224,9 @@ void nuDoc::InitializeDefaultTagStyles()
 	//const char* font = "Microsoft Sans Serif";
 	//const char* font = "Consolas";
 	//const char* font = "Times New Roman";
-	const char* font = "Verdana";
+	//const char* font = "Verdana";
 	//const char* font = "Tahoma";
-	//const char* font = "Segoe UI";
+	const char* font = "Segoe UI";
 	//const char* font = "Arial";
 #elif NU_PLATFORM_ANDROID
 	const char* font = "Droid Sans";

@@ -19,7 +19,7 @@ public:
 				nuRenderDomEl( nuInternalID id, nuTag tag );
 
 	nuInternalID					InternalID;			// Reference to our original nuDomEl
-	nuBox							Pos;				// For rectangles, this is the BorderBox. NO.. let's rather make it the ContentBox.
+	nuBox							Pos;				// For rectangles, this is the ContentBox. See log entry from 2014-08-02
 	nuTag							Tag;
 };
 

@@ -14,6 +14,7 @@ void nuMain( nuMainEvent ev )
 	{
 	case nuMainEventInit:
 		{
+			nuGlobal()->FontStore->AddFontDirectory( "C:\\temp\\fonts" );
 			MainWnd = nuSysWnd::CreateWithDoc();
 			//MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
 			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 800, 60 + 400), nuSysWnd::SetPosition_Move | nuSysWnd::SetPosition_Size );
@@ -35,9 +36,9 @@ void DoBorder( nuDoc* doc )
 	root->StyleParse( "background: #aaa" );
 	root->Parse( 
 		"<div style='border: #070; border: 1px 1px 2px 3px; border-radius: 0px; width: 200ep; height: 200ep; background: #fff; margin: 1px'>aaaaa</div>"
-		"<div style='border: 5px #070; border-radius: 8px; width: 100ep; height: 100ep; background: #fff; margin: 1px'></div>"
-		"<div style='border: 1px #557; width: 150ep; height: 22ep; background: #fff; margin: 1px'></div>"
-		"<div style='border: 5ep #456; width: 40ep; height: 40ep; background: #567; margin: 1px'></div>" // ensure border color goes through sRGB conversion
+		"<div style='border: 5px #070; border-radius: 8px; width: 100ep; height: 100ep; background: #fff; margin: 1px'>b</div>"
+		"<div style='border: 1px #557; width: 150ep; height: 22ep; background: #fff; margin: 1px'>c</div>"
+		"<div style='border: 5ep #456; width: 40ep; height: 40ep; background: #567; margin: 1px'>d</div>" // ensure border color goes through sRGB conversion
 		);
 }
 
@@ -53,20 +54,24 @@ void DoBaselineAlignment( nuDoc* doc )
 	root->StyleParse( "padding: 10px;" );
 	root->StyleParse( "background: #ddd" );
 	//root->StyleParse( "text-align-vertical: top" );
+	doc->ClassParse( "baseline", "baseline:baseline" );
 
 	if (1)
 	{
-		auto txt1 = root->AddNode( nuTagDiv );
-		txt1->StyleParse( "font-size: 38px; font-family: Microsoft Sans Serif; background: #fff0f0" );
-		txt1->SetText( "H" );
+		root->ParseAppend( "<div class='baseline' style='font-size: 38px; font-family: Microsoft Sans Serif; background: #fff0f0'>H</div>" );
+		//auto txt1 = root->AddNode( nuTagDiv );
+		//txt1->StyleParse( "font-size: 38px; font-family: Microsoft Sans Serif; background: #fff0f0" );
+		//txt1->SetText( "H" );
 		
-		auto txt2 = root->AddNode( nuTagDiv );
-		txt2->StyleParse( "font-size: 13px; font-family: Microsoft Sans Serif; background: #f0fff0" );
-		txt2->SetText( "ello." );
+		root->ParseAppend( "<div class='baseline' style='font-size: 13px; font-family: Microsoft Sans Serif; background: #f0fff0'>ello.</div>" );
+		//auto txt2 = root->AddNode( nuTagDiv );
+		//txt2->StyleParse( "font-size: 13px; font-family: Microsoft Sans Serif; background: #f0fff0" );
+		//txt2->SetText( "ello." );
 		
-		auto txt3 = root->AddNode( nuTagDiv );
-		txt3->StyleParse( "font-size: 18px; font-family: Times New Roman; background: #f0f0ff" );
-		txt3->SetText( " More times at a smaller size." );
+		root->ParseAppend( "<div class='baseline' style='font-size: 18px; font-family: Times New Roman; background: #f0f0ff'> More times at a smaller size.</div>" );
+		//auto txt3 = root->AddNode( nuTagDiv );
+		//txt3->StyleParse( "font-size: 18px; font-family: Times New Roman; background: #f0f0ff" );
+		//txt3->SetText( " More times at a smaller size." );
 	}
 
 	// ramp of 'e' characters from 8 to 30 pixels
@@ -77,6 +82,7 @@ void DoBaselineAlignment( nuDoc* doc )
 		for ( int size = 8; size < 30; size++ )
 		{
 			auto txt = root->AddNode( nuTagDiv );
+			txt->AddClass( "baseline" );
 			txt->StyleParse( fmt("font-size: %dpx; background: #e0e0e0", size).Z );
 			txt->SetText( "e" );
 		}
@@ -233,22 +239,49 @@ void DoLongText( nuDoc* doc )
 
 void DoBackupSettings( nuDoc* doc )
 {
+	// The goal here is to replicate part of bvckup2's UI
 	nuDomNode* root = &doc->Root;
-	doc->ClassParse( "bg-light", "background: #eee; padding: 8ep" );
-	doc->ClassParse( "bg-dark", "background: #ddd; padding: 8ep" );
-	doc->ClassParse( "button", "background: #fdd; padding: 8ep 1ep 8ep 1ep" );
+	root->StyleParse( "font-family: Segoe UI; font-size: 12px;" );
+	doc->ClassParse( "pad-light", "background: #f8f8f8; width: 140ep; height: 10ep;" );
+	doc->ClassParse( "pad-dark",  "background: #efefef; width: 470ep; height: 10ep;" );
+	doc->ClassParse( "bg-light",  "color: #222; background: #f8f8f8; width: 140ep; height: 36ep; padding: 8ep;" );
+	doc->ClassParse( "bg-dark",   "color: #222; background: #efefef; width: 470ep; height: 36ep; padding: 8ep" );
+	doc->ClassParse( "textbox",   "color: #222; background: #fff; padding: 3ep 3ep 3ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd" );
+	doc->ClassParse( "button",    "color: #222; background: #ececec; margin: 6ep 0ep 6ep 0ep; padding: 14ep 3ep 14ep 3ep; border: 1px #bdbdbd" );
+	doc->ClassParse( "baseline", "baseline:baseline" );
 
-	nuDomNode* label = root->AddNode( nuTagDiv );
-	label->AddClass( "bg-light" );
-	label->SetText( "Backup from" );
+	auto horzPadder =
+		"<div style='break:after'>"
+		"	<div class='pad-light'></div>"
+		"	<div class='pad-dark'></div>"
+		"</div>";
 
-	nuDomNode* txt = root->AddNode( nuTagDiv );
-	txt->AddClass( "bg-dark" );
-	txt->SetText( "this is a text box" );
-	
-	nuDomNode* btn = root->AddNode( nuTagDiv );
-	btn->AddClass( "button" );
-	btn->SetText( "Browse..." );
+	root->ParseAppend( horzPadder );
+
+	auto addLine = [&]( nuString title )
+	{
+		root->ParseAppend(
+			"<div style='break:after'>"
+			"	<div class='bg-light'>" + title + "</div>"
+			"	<div class='bg-dark'>"
+			"		<lab class='textbox baseline' style='width: 320ep'>this is a text box</lab>"
+			"		<lab class='button baseline'>Browse...</lab>"
+			"	</div>"
+			"</div>"
+		);
+	};
+
+	addLine( "Backup from" );
+	addLine( "Backup to" );
+	addLine( "Description" );
+
+	root->ParseAppend( horzPadder );
+}
+
+void DoPadding( nuDoc* doc )
+{
+	nuDomNode* root = &doc->Root;
+	root->ParseAppend( "<div style='padding: 8ep; background: #ddd'><lab>8ep padding</lab></div>" );
 }
 
 void InitDOM( nuDoc* doc )
@@ -256,13 +289,14 @@ void InitDOM( nuDoc* doc )
 	nuDomNode* body = &doc->Root;
 	body->StyleParse( "font-family: Segoe UI, Droid Sans" );
 
-	DoBorder( doc );
-	//DoBaselineAlignment( doc );
+	//DoBorder( doc );
+	DoBaselineAlignment( doc );
 	//DoBaselineAlignment_rev2( doc );
 	//DoTwoTextRects( doc );
 	//DoBlockMargins( doc );
 	//DoLongText( doc );
 	//DoBackupSettings( doc );
+	//DoPadding( doc );
 
 	body->OnClick( [](const nuEvent& ev) -> bool {
 		nuGlobal()->EnableKerning = !nuGlobal()->EnableKerning;

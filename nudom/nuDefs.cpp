@@ -322,6 +322,7 @@ NUAPI void nuInitialize()
 #endif
 	nuGlobals->EnableKerning = true;
 	nuGlobals->RoundLineHeights = nuGlobals->EnableSubpixelText;	// happens to be correlated with sub-pixel text, because with sub-pixel, we snap to vertical pixels (but not horz)
+	nuGlobals->SnapBoxes = true;
 	nuGlobals->SnapSubpixelHorzText = false;
 	nuGlobals->EpToPixel = ComputeEpToPixel();
 	//nuGlobals->DebugZeroClonedChildList = true;

@@ -50,10 +50,11 @@ void nuRenderer::RenderNode( nuPoint base, nuRenderDomNode* node )
 	nuBox pos = node->Pos;
 	pos.Offset( base );
 	nuBoxF border = style->BorderSize.ToRealBox();
-	float bottom = nuPosToReal( pos.Bottom ) + border.Bottom;
-	float top = nuPosToReal( pos.Top ) - border.Top;
-	float left = nuPosToReal( pos.Left ) - border.Left;
-	float right = nuPosToReal( pos.Right ) + border.Right;
+	nuBoxF padding = style->Padding.ToRealBox();
+	float bottom = nuPosToReal( pos.Bottom ) + border.Bottom + padding.Bottom;
+	float top = nuPosToReal( pos.Top ) - border.Top - padding.Top;
+	float left = nuPosToReal( pos.Left ) - border.Left - padding.Left;
+	float right = nuPosToReal( pos.Right ) + border.Right + padding.Right;
 
 	float radius = style->BorderRadius;
 	bool useRectShader = alwaysGoodRects || radius != 0;

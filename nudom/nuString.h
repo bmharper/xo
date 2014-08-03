@@ -62,6 +62,7 @@ public:
 
 FHASH_SETUP_CLASS_GETHASHCODE( nuString, nuString );
 
+NUAPI nuString operator+( const char* a, const nuStringRaw& b );
 NUAPI nuString operator+( const nuStringRaw& a, const char* b );
 NUAPI nuString operator+( const nuStringRaw& a, const nuStringRaw& b );
 

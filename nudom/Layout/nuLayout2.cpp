@@ -25,6 +25,7 @@ void nuLayout2::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderD
 	Pool = pool;
 	Stack.Initialize( Doc, Pool );
 	Fonts = nuGlobal()->FontStore->GetImmutableTable();
+	SnapBoxes = nuGlobal()->SnapBoxes;
 
 	while ( true )
 	{
@@ -80,7 +81,7 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 	NUTRACE_LAYOUT( "Layout (%d) Run 1\n", node.GetInternalID() );
 	nuStyleResolver::ResolveAndPush( Stack, &node );
 	rnode->SetStyle( Stack );
-	
+
 	NUTRACE_LAYOUT( "Layout (%d) Run 2\n", node.GetInternalID() );
 	rnode->InternalID = node.GetInternalID();
 
@@ -113,6 +114,12 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 		if ( IsDefined(contentHeight) )	contentHeight -= margin.Top + margin.Bottom + border.Top + border.Bottom + padding.Top + padding.Bottom;
 	}
 
+	if ( SnapBoxes )
+	{
+		if ( IsDefined(contentWidth) )	contentWidth = nuPosRoundUp( contentWidth );
+		if ( IsDefined(contentHeight) )	contentHeight = nuPosRoundUp( contentHeight );
+	}
+
 	nuPoint borderToContent( border.Left + padding.Left, border.Top + padding.Top );
 
 	nuPos autoWidth = 0;
@@ -121,20 +128,18 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 	nuPos innerBaseline = nuPosNULL;
 	int innerBaselineDefinedBy = -1;
 
+	// I first tried to have an optimized case for binding during first pass, but I have given up on that.
+	// One could revisit it once the design is nailed down.
 	// If we don't know our width and height yet then we need to delay bindings until our first pass is done
 	// The buffer size of 16 here is thumbsuck. One can't make it too big, because this is a recursive function.
-	bool bindOnFirstPass = IsDefined(contentWidth) && IsDefined(contentHeight);
 	StackBufferT<LayoutOutput, 16> outs;
-	if ( !bindOnFirstPass )
-		outs.Init( (int) node.ChildCount() );
+	outs.Init( (int) node.ChildCount() );
 
 	FlowState flow;
 	flow.PosMajor = 0;
 	flow.PosMinor = 0;
 	flow.MajorMax = 0;
-
-	if ( node.ChildCount() == 2 )
-		int abc = 123;
+	flow.NumLines = 0;
 
 	for ( intp i = 0; i < node.ChildCount(); i++ )
 	{
@@ -145,39 +150,42 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 		cin.ParentWidth = contentWidth;
 		cin.ParentHeight = contentHeight;
 		nuPoint offset(0,0);
+		int nlines = flow.NumLines;
 		if ( c->GetTag() == nuTagText )
 		{
-			nuRenderDomText* rchild = new (Pool->AllocT<nuRenderDomText>(false)) nuRenderDomText( c->GetInternalID(), Pool );
-			rnode->Children += rchild;
-			RunText( *static_cast<const nuDomText*>(c), cin, cout, rchild );
-			offset += FlowRun( cin, cout, flow, rchild );
+			nuRenderDomText* rchildTxt = new (Pool->AllocT<nuRenderDomText>(false)) nuRenderDomText( c->GetInternalID(), Pool );
+			rnode->Children += rchildTxt;
+			RunText( *static_cast<const nuDomText*>(c), cin, cout, rchildTxt );
+			offset += FlowRun( cin, cout, flow, rchildTxt );
 			// Text elements cannot choose their layout. They are forced to start in the top-left of their parent, and perform text layout inside that space.
 		}
 		else
 		{
-			nuRenderDomNode* rchild = new (Pool->AllocT<nuRenderDomNode>(false)) nuRenderDomNode( c->GetInternalID(), c->GetTag(), Pool );
-			rnode->Children += rchild;
-			RunNode( *static_cast<const nuDomNode*>(c), cin, cout, rchild );
-			offset += FlowRun( cin, cout, flow, rchild );
-			if ( bindOnFirstPass )
-				offset += PositionChildFromBindings( borderToContent, cin, cout, rchild );
+			nuRenderDomNode* rchildNode = new (Pool->AllocT<nuRenderDomNode>(false)) nuRenderDomNode( c->GetInternalID(), c->GetTag(), Pool );
+			rnode->Children += rchildNode;
+			RunNode( *static_cast<const nuDomNode*>(c), cin, cout, rchildNode );
+			offset += FlowRun( cin, cout, flow, rchildNode );
 		}
-		if ( !bindOnFirstPass )
-			outs[i] = cout;
+		outs[i] = cout;
 		if ( IsNull(innerBaseline) && IsDefined(cout.NodeBaseline) )
 		{
 			innerBaseline = cout.NodeBaseline + offset.Y;
 			innerBaselineDefinedBy = (int) i;
 		}
+		if ( flow.NumLines != nlines )
+		{
+			// Reset inner baseline whenever a line break occurs
+			innerBaseline = nuPosNULL;
+			innerBaselineDefinedBy = -1;
+		}
 		autoWidth = nuMax( autoWidth, flow.PosMinor );
 		autoHeight = nuMax( autoHeight, flow.MajorMax );
 	}
 
-	if ( IsNull(contentWidth) ) contentWidth = autoWidth;
-	if ( IsNull(contentHeight) ) contentHeight = autoHeight;
+	if ( IsNull(contentWidth) ) contentWidth = SnapBoxes ? nuPosRoundUp(autoWidth) : autoWidth;
+	if ( IsNull(contentHeight) ) contentHeight = SnapBoxes ?  nuPosRoundUp(autoHeight) : autoHeight;
 
-	// Now that we know contentWidth and contentHeight, we can apply bindings
-	if ( !bindOnFirstPass )
+	// Apply bindings
 	{
 		LayoutInput cin;
 		cin.OuterBaseline = IsDefined(outerBaseline) ? outerBaseline : innerBaseline;
@@ -188,7 +196,7 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 			const nuDomEl* c = node.ChildByIndex( i );
 			nuPoint offset(0,0);
 			if ( c->GetTag() != nuTagText )
-				offset = PositionChildFromBindings( borderToContent, cin, outs[i], rnode->Children[i] );
+				offset = PositionChildFromBindings( cin, outs[i], rnode->Children[i] );
 			if ( i == innerBaselineDefinedBy )
 				innerBaseline += offset.Y;
 		}
@@ -198,9 +206,10 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 	rnode->Style.BackgroundColor = Stack.Get( nuCatBackground ).GetColor();
 	rnode->Style.BorderRadius = nuPosToReal( borderRadius );
 	rnode->Style.BorderSize = border;
+	rnode->Style.Padding = padding;
 	rnode->Style.BorderColor = Stack.Get( nuCatBorderColor_Left ).GetColor();
 
-	out.NodeBaseline = innerBaseline + toContent.Top;
+	out.NodeBaseline = IsDefined(innerBaseline) ? innerBaseline + toContent.Top : nuPosNULL;
 	out.NodeWidth = contentWidth + border.Left + border.Right + margin.Left + margin.Right + padding.Left + padding.Right;
 	out.NodeHeight = contentHeight + border.Top + border.Bottom + margin.Top + margin.Bottom + padding.Top + padding.Bottom;
 	out.Binds = ComputeBinds();
@@ -243,6 +252,8 @@ void nuLayout2::RunText( const nuDomText& node, const LayoutInput& in, LayoutOut
 	TempText.RNode = rnode;
 	TempText.Words.clear_noalloc();
 	TempText.GlyphCount = 0;
+	//TempText.FontWidthScale = 1.08f;	// Verdana looks a lot better with an extra 8%
+	TempText.FontWidthScale = 1.05f;
 	GenerateTextWords( TempText );
 	if ( !TempText.GlyphsNeeded )
 		GenerateTextOutput( in, out, TempText );
@@ -316,18 +327,20 @@ void nuLayout2::GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, Te
 		bool isSpace = word.Length() == 1 && txt[word.Start] == 32;
 		bool isNewline = word.Length() == 1 && txt[word.Start] == '\n';
 		//bool over = parentHasWidth ? s.PosX + word.Width > s.ParentContentBox.Right : false;
-		//if ( over )
-		//{
-		//	bool futile = s.PosX == s.ParentContentBox.Left && word.Width > s.ParentContentBox.Width();
-		//	if ( !futile )
-		//	{
-		//		NextLine( s );
-		//		baseline = s.PosY + fontAscender;
-		//		// If the line break was performed for a space, then treat that space as "done"
-		//		if ( isSpace )
-		//			continue;
-		//	}
-		//}
+		bool over = parentHasWidth ? posX + word.Width > in.ParentWidth : false;
+		if ( over )
+		{
+			bool futile = posX == 0;
+			if ( !futile )
+			{
+				//NextLine( s );
+				baseline += lineHeight;
+				posX = 0;
+				// If the line break was performed for a space, then treat that space as "done"
+				if ( isSpace )
+					continue;
+			}
+		}
 
 		if ( isSpace )
 		{
@@ -364,7 +377,7 @@ void nuLayout2::GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, Te
 				rtxt.Char = key.Char;
 				rtxt.X = posX + nuRealx256ToPos( glyph->MetricLeftx256 );
 				rtxt.Y = baseline - nuRealToPos( glyph->MetricTop );			// rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
-				posX += nuRealx256ToPos( glyph->MetricLinearHoriAdvancex256 );
+				posX += nuRealx256ToPos( (int32) (glyph->MetricLinearHoriAdvancex256 * ts.FontWidthScale) );
 				posMaxX = nuMax( posMaxX, posX );
 				prevGlyph = glyph;
 			}
@@ -415,18 +428,18 @@ void nuLayout2::GenerateTextWords( TextRunState& ts )
 			continue;
 		}
 		ts.GlyphCount++;
-		word.Width += nuRealx256ToPos(glyph->MetricLinearHoriAdvancex256);
+		word.Width += nuRealx256ToPos((int32) (glyph->MetricLinearHoriAdvancex256 * ts.FontWidthScale));
 	}
 }
 
-nuPoint nuLayout2::PositionChildFromBindings( nuPoint toContent, const LayoutInput& cin, const LayoutOutput& cout, nuRenderDomEl* rchild )
+nuPoint nuLayout2::PositionChildFromBindings( const LayoutInput& cin, const LayoutOutput& cout, nuRenderDomEl* rchild )
 {
 	nuPoint child, parent;
 	child.X = HBindOffset( cout.Binds.HChild, cout.NodeWidth );
 	child.Y = VBindOffset( cout.Binds.VChild, cout.NodeBaseline, cout.NodeHeight );
 	parent.X = HBindOffset( cout.Binds.HParent, cin.ParentWidth );
 	parent.Y = VBindOffset( cout.Binds.VParent, cin.OuterBaseline, cin.ParentHeight );
-	nuPoint offset = toContent + nuPoint( parent.X - child.X, parent.Y - child.Y );
+	nuPoint offset( parent.X - child.X, parent.Y - child.Y );
 	rchild->Pos.Offset( offset );
 	return offset;
 }
@@ -549,6 +562,7 @@ void nuLayout2::FlowNewline( FlowState& flow )
 {
 	flow.PosMinor = 0;
 	flow.PosMajor = flow.MajorMax;
+	flow.NumLines++;
 }
 
 nuPoint nuLayout2::FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, nuRenderDomEl* rendEl )
@@ -560,7 +574,7 @@ nuPoint nuLayout2::FlowRun( const LayoutInput& cin, const LayoutOutput& cout, Fl
 	if ( IsDefined(cin.ParentWidth) )
 	{
 		bool over = flow.PosMinor + cout.NodeWidth > cin.ParentWidth;
-		bool futile = cout.NodeWidth > cin.ParentWidth;
+		bool futile = flow.PosMinor == 0;
 		if ( over && !futile )
 			FlowNewline( flow );
 	}

@@ -36,6 +36,7 @@ public:
 	// Replace all child elements with the given xml-like string. Returns empty string on success, or error message.
 	nuString		Parse( const char* src );
 	nuString		ParseAppend( const char* src );	// Same as Parse, but append to node
+	nuString		ParseAppend( const nuStringRaw& src );
 
 	bool			StyleParse( const char* t, intp maxLen = INT32MAX );
 	bool			StyleParsef( const char* t, ... );

@@ -21,7 +21,6 @@ that is thread safe.
 class NUAPI nuLayout2
 {
 public:
-
 	void Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDomNode& root, nuPool* pool );
 
 protected:
@@ -66,6 +65,7 @@ protected:
 		podvec<Word>		Words;
 		int					GlyphCount;		// Number of non-empty glyphs
 		bool				GlyphsNeeded;
+		float				FontWidthScale;
 	};
 
 	struct FlowState
@@ -73,6 +73,7 @@ protected:
 		nuPos	PosMinor;		// In default flow, this is the horizontal (X) position
 		nuPos	PosMajor;		// In default flow, this is the vertical (Y) position
 		nuPos	MajorMax;		// In default flow, this is the bottom of the current line
+		int		NumLines;
 		// Meh -- implement these when the need arises
 		// bool	IsVertical;		// default true, normal flow
 		// bool	ReverseMajor;	// Major goes from high to low numbers (right to left, or bottom to top)
@@ -88,13 +89,14 @@ protected:
 	nuFontTableImmutable		Fonts;
 	fhashset<nuGlyphCacheKey>	GlyphsNeeded;
 	TextRunState				TempText;
+	bool						SnapBoxes;
 
 	void		RenderGlyphsNeeded();
 	void		LayoutInternal( nuRenderDomNode& root );
 	void		RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOutput& out, nuRenderDomNode* rnode );
 	void		RunText( const nuDomText& node, const LayoutInput& in, LayoutOutput& out, nuRenderDomText* rnode );
 	void		GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, TextRunState& ts );
-	nuPoint		PositionChildFromBindings( nuPoint toContent, const LayoutInput& cin, const LayoutOutput& cout, nuRenderDomEl* rchild );
+	nuPoint		PositionChildFromBindings( const LayoutInput& cin, const LayoutOutput& cout, nuRenderDomEl* rchild );
 	void		GenerateTextWords( TextRunState& ts );
 
 	nuPos		ComputeDimension( nuPos container, nuStyleCategories cat );

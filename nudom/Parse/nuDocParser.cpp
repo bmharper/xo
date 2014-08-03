@@ -175,9 +175,9 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 		else if ( EqNoCase("class", src + xStart, xEnd - xStart) )
 		{
 			intp cstart = bodyStart;
-			for ( intp i = bodyStart; i != pos; i++ )
+			for ( intp i = bodyStart; i <= pos; i++ )
 			{
-				if ( IsWhite(src[i]) || i == pos - 1 )
+				if ( i == pos || IsWhite(src[i]) )
 				{
 					intp len = i - cstart;
 					if ( len > 0 )

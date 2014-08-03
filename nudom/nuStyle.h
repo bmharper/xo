@@ -422,6 +422,7 @@ class NUAPI nuStyleRender
 {
 public:
 	nuBox16 BorderSize;
+	nuBox16 Padding;			// This is probably not necessary. See log entry from 2014-08-02
 	nuColor BackgroundColor;
 	nuColor BorderColor;
 	int		BackgroundImageID;
@@ -439,6 +440,7 @@ public:
 					nuStyleTable();
 					~nuStyleTable();
 
+	void			AddDummyStyleZero();
 	void			Discard();
 	nuStyle*		GetOrCreate( const char* name );
 	const nuStyle*	GetByID( nuStyleID id ) const;
