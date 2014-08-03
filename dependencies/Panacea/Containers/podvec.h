@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string.h>					// memset()
 #include "../Platform/stdint.h"
 #include "../Platform/err.h"
 #include "cont_utils.h"
@@ -61,7 +62,7 @@ struct podvec
 	T*		data;
 
 	static bool ispod()				{ return podvec_ispod<T>(); }
-	static void panic()				{ AbcPanicSilent(); }
+	static void panic()				{ AbcPanicHere(); }
 
 	podvec()
 	{
@@ -145,6 +146,11 @@ struct podvec
 		uintp newcap = _newcap;
 		if ( newcap <= count ) return;		// resize may not alter count, therefore we do nothing in this case
 		resizeto( newcap, false );
+	}
+
+	intp remaining_capacity() const
+	{
+		return capacity - count;
 	}
 
 	void fill( const T& v )

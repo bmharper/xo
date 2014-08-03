@@ -89,8 +89,22 @@ typedef INT16 SHORT;
 typedef UINT16 WORD;
 
 #ifndef _WIN32
-//typedef unsigned long DWORD;
 typedef UINT32 DWORD;
+#endif
+
+// These macros are an unfortunate necessity to deal with the confusion between LP64 and LLP64 models
+// that Unix and Windows employ. Use these macros when declaring 64-bit integer constants.
+#ifdef _MSC_VER
+#	define CONST_I64(n) n ## ll
+#	define CONST_U64(n) n ## ull
+#else
+#	if __WORDSIZE == 64
+#		define CONST_I64(n) n ## l
+#		define CONST_U64(n) n ## ul
+#	else
+#		define CONST_I64(n) n ## ll
+#		define CONST_U64(n) n ## ull
+#	endif
 #endif
 
 // Don't use these. Instead, use %lld and %llu. Those work for all platforms. Note that the 'd' and 'u' are essential.
@@ -108,13 +122,17 @@ typedef UINT32 DWORD;
 #		define  PRIX64  "I64X"
 #		define wPRIX64 L"I64X"
 #	endif
-	typedef  unsigned __int64 PRIX64_t;
 #else
 #	ifndef PRIX64
-#		define  PRIX64  "llX"
-#		define wPRIX64 L"llX"
+//		The GCC stdint.h uses __WORDSIZE == 64 to determine whether int64_t is going to be "long int" or "long long int", so we do the same here.
+#		if __WORDSIZE == 64
+#			define  PRIX64  "lX"
+#			define wPRIX64 L"lX"
+#		else
+#			define  PRIX64  "llX"
+#			define wPRIX64 L"llX"
+#		endif
 #	endif
-	typedef  long long unsigned int PRIX64_t;
 #endif
 
 
@@ -134,22 +152,18 @@ typedef UINT32 DWORD;
 	#define UINT32MAX	_UI32_MAX
 	#define UINT64MAX	_UI64_MAX
 #else
-	#ifdef INT32_MIN
-		#define INTMIN		INT32_MIN
-		#define INTMAX		INT32_MAX
-		#define INT8MIN		INT8_MIN
-		#define INT8MAX		INT8_MAX
-		#define INT16MIN	INT16_MIN
-		#define INT16MAX	INT16_MAX
-		#define INT32MIN	INT32_MIN
-		#define INT32MAX	INT32_MAX
-		#define INT64MIN	INT64_MIN
-		#define INT64MAX	INT64_MAX
-		#define UINT8MAX	UINT8_MAX
-		#define UINT16MAX	UINT16_MAX
-		#define UINT32MAX	UINT32_MAX
-		#define UINT64MAX	UINT64_MAX
-	#else
-		#define INT32MAX	2147483647L
-	#endif
+	#define INTMIN		INT32_MIN
+	#define INTMAX		INT32_MAX
+	#define INT8MIN		INT8_MIN
+	#define INT8MAX		INT8_MAX
+	#define INT16MIN	INT16_MIN
+	#define INT16MAX	INT16_MAX
+	#define INT32MIN	INT32_MIN
+	#define INT32MAX	INT32_MAX
+	#define INT64MIN	INT64_MIN
+	#define INT64MAX	INT64_MAX
+	#define UINT8MAX	UINT8_MAX
+	#define UINT16MAX	UINT16_MAX
+	#define UINT32MAX	UINT32_MAX
+	#define UINT64MAX	UINT64_MAX
 #endif

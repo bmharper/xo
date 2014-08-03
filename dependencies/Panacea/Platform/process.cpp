@@ -5,8 +5,6 @@
 
 #ifdef _WIN32
 #include <Psapi.h>
-#else
-#include <unistd.h>
 #endif
 
 #ifndef _WIN32
@@ -158,6 +156,16 @@ PAPI void			AbcProcessGetPath( char* path, size_t maxPath )
 		return;
 	path[r] = 0;
 }
+#if XSTRING_DEFINED
+PAPI XString		AbcProcessGetPath()
+{
+	// arbitrary thumbsuck constant
+	char p[2048];
+	AbcProcessGetPath( p, sizeof(p) );
+	p[sizeof(p) - 1] = 0;
+	return XString::FromUtf8(p);
+}
+#endif
 PAPI void			AbcProcessesEnum( podvec<AbcProcessID>& pids )
 {
 	AbcAssert(false);

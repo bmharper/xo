@@ -15,7 +15,6 @@
 #define FMT_STRING_LEN(s)	(s).Length()
 #endif
 
-
 /*
 
 fmt: (Yet another) typesafe, cross-platform (Windows,linux) printf replacement.
@@ -60,10 +59,10 @@ public:
 	{
 		const char*		CStr;
 		const wchar_t*	WStr;
-		int32			I32;
-		int32			UI32;
-		int64			I64;
-		int64			UI64;
+		int32_t			I32;
+		uint32_t		UI32;
+		int64_t			I64;
+		uint64_t		UI64;
 		double			Dbl;
 	};
 	Types Type;
@@ -77,16 +76,15 @@ public:
 #endif
 	fmtarg( const std::string& v )			: Type(TCStr), CStr(v.c_str()) {}
 	fmtarg( const std::wstring& v )			: Type(TWStr), WStr(v.c_str()) {}
-	fmtarg( const int32& v )				: Type(TI32), I32(v) {}
-	fmtarg( const uint32& v )				: Type(TU32), UI32(v) {}
-#ifdef _WIN32
-	fmtarg( const long& v )					: Type(TI32), I32(v) {}
-	fmtarg( const unsigned long& v )		: Type(TU32), UI32(v) {}
+	fmtarg( int32_t v )						: Type(TI32), I32(v) {}
+	fmtarg( uint32_t v )					: Type(TU32), UI32(v) {}
+#ifdef _MSC_VER
+	fmtarg( long v )						: Type(TI32), I32(v) {}
+	fmtarg( unsigned long v )				: Type(TU32), UI32(v) {}
 #endif
-	fmtarg( const int64& v )				: Type(TI64), I64(v) {}
-	fmtarg( const uint64& v )				: Type(TU64), UI64(v) {}
-	fmtarg( const double& v )				: Type(TDbl), Dbl(v) {}
-
+	fmtarg( int64_t v )						: Type(TI64), I64(v) {}
+	fmtarg( uint64_t v )					: Type(TU64), UI64(v) {}
+	fmtarg( double v )						: Type(TDbl), Dbl(v) {}
 };
 
 /* This can be used to add custom formatting tokens.

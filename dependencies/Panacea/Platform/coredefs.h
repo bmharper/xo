@@ -7,7 +7,14 @@ char (&ArraySizeHelper(T (&array)[N]))[N];
 #define arraysize(array) (sizeof(ArraySizeHelper(array)))
 
 // A macro to disallow the copy constructor and operator= functions
-// This should be used in the private: declarations for a class
+// This should be used in the private: declarations for a class.
+// A common layout is this:
+//   class Foo
+//   {
+//       DISALLOW_COPY_AND_ASSIGN(Foo);
+//   public:
+//       ...
+//   }
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&);               \
   void operator=(const TypeName&)

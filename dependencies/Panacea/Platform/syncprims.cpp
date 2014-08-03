@@ -1,7 +1,15 @@
 #include "pch.h"
 #include "syncprims.h"
+#include <sys/stat.h>
+
 #ifdef _WIN32
 #include <Psapi.h>
+#include <io.h>
+#include <sys/locking.h>
+#include <fcntl.h>
+#define open _open
+#define close _close
+#define lseek _lseek
 #else
 #include <unistd.h>
 #endif
@@ -9,7 +17,7 @@
 // In linux you can use named semaphores for ipc mutex.
 // Android doesn't support named semaphores though.
 #ifdef _WIN32
-PAPI void			AbcMutexCreate( AbcMutex& mutex, LPCSTR name )
+PAPI void			AbcMutexCreate( AbcMutex& mutex, const char* name )
 {
 	mutex = CreateMutexA( NULL, false, name );
 }
@@ -104,7 +112,7 @@ static bool pthread_mutex_timedlock_emulate_ms( AbcMutex& mutex, DWORD waitMS )
 	return false;
 }
 
-PAPI void			AbcMutexCreate( AbcMutex& mutex, LPCSTR name )
+PAPI void			AbcMutexCreate( AbcMutex& mutex, const char* name )
 {
 	AbcAssert( name == NULL || name[0] == 0 );
 	AbcVerify( 0 == pthread_mutex_init( &mutex, NULL ) );
@@ -195,6 +203,47 @@ PAPI void			AbcSleep( int milliseconds )
 
 #endif
 
+PAPI int			AbcLockFileLock( const char* path )
+{
+#ifdef _WIN32
+	int mode = _S_IREAD | _S_IWRITE;
+#else
+	int mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+#endif
+
+	int f = open( path, O_CREAT | O_WRONLY, mode );
+	if ( f == -1 )
+		return -1;
+
+#ifdef _WIN32
+	int lock = _locking( f, _LK_NBLCK, 1 );
+#else
+	int lock = lockf( f, F_TLOCK, 1 );
+#endif
+	if ( lock == -1 )
+	{
+		close( f );
+		return -1;
+	}
+
+	return f;
+}
+
+PAPI void			AbcLockFileRelease( int f )
+{
+	if ( f == -1 )
+		return;
+
+	lseek( f, 0, SEEK_SET );
+#ifdef _WIN32
+	_locking( f, _LK_UNLCK, 1 );
+#else
+	lockf( f, F_ULOCK, 1 );
+#endif
+	close( f );
+}
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // Cross-platform helpers
 
@@ -209,6 +258,50 @@ PAPI void		AbcSpinLockRelease( volatile unsigned int* p )
 {
 	AbcAssert( *p == 1 );
 	AbcInterlockedSet( p, 0 );
+}
+
+PAPI void		AbcCriticalSectionInitialize( AbcGuardedCriticalSection& cs, unsigned int spinCount )
+{
+	AbcCriticalSectionInitialize( cs.CS, spinCount );
+	cs.ThreadID = 0;
+}
+
+PAPI void		AbcCriticalSectionDestroy( AbcGuardedCriticalSection& cs )
+{
+	AbcAssert( cs.ThreadID == 0 );
+	AbcCriticalSectionDestroy( cs.CS );
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TakeCriticalSection::TakeCriticalSection( AbcCriticalSection& cs )
+{
+	CS = reinterpret_cast<AbcGuardedCriticalSection*>(&cs);
+	UseGuard = false;
+	AbcCriticalSectionEnter( CS->CS );
+}
+
+TakeCriticalSection::TakeCriticalSection( AbcGuardedCriticalSection& cs )
+{
+	CS = &cs;
+	UseGuard = true;
+	AbcCriticalSectionEnter( CS->CS );
+	// On ARM one would have to use mintomic here and do a proper acquire on ThreadID
+	AbcAssert( CS->ThreadID == 0 );
+	CS->ThreadID = AbcThreadCurrentID();
+}
+
+TakeCriticalSection::~TakeCriticalSection()
+{
+	if ( UseGuard )
+	{
+		AbcAssert( CS->ThreadID == AbcThreadCurrentID() );
+		CS->ThreadID = 0;
+		// On ARM one would have to use mintomic here and do a proper release on ThreadID
+	}
+	AbcCriticalSectionLeave( CS->CS );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -4,6 +4,9 @@
 #include <semaphore.h>
 #endif
 
+// We need to include "thread.h" for AbcGuardedCriticalSection::ThreadID
+#include "thread.h"
+
 #ifdef _WIN32
 typedef HANDLE					AbcMutex;
 typedef CRITICAL_SECTION		AbcCriticalSection;
@@ -16,7 +19,20 @@ typedef sem_t					AbcSemaphore;
 #define AbcINFINITE				-1
 #endif
 
-PAPI void				AbcMutexCreate( AbcMutex& mutex, LPCSTR name );
+// A Windows CRITICAL_SECTION is re-enterable, but a pthread_mutex_t is not.
+// This structure allows us to verify that Windows code is not re-entering.
+struct AbcGuardedCriticalSection
+{
+	AbcCriticalSection	CS;			// This must be first. TakeCriticalSection assumes this is true.
+	AbcThreadID			ThreadID;
+
+	bool				DebugIsInside() const	// This is not MT safe, but can be useful for debugging
+	{
+		return ThreadID == AbcThreadCurrentID(); 
+	}
+};
+
+PAPI void				AbcMutexCreate( AbcMutex& mutex, const char* name );
 PAPI void				AbcMutexDestroy( AbcMutex& mutex );
 PAPI bool				AbcMutexWait( AbcMutex& mutex, DWORD waitMS );
 PAPI void				AbcMutexRelease( AbcMutex& mutex );
@@ -25,7 +41,9 @@ PAPI void				AbcMutexRelease( AbcMutex& mutex );
 // So don't write re-entering code.
 // This is a good principle to abide by regardless of your platform: http://cbloomrants.blogspot.com/2012/06/06-19-12-two-learnings.html
 PAPI void				AbcCriticalSectionInitialize( AbcCriticalSection& cs, unsigned int spinCount = 0 );
+PAPI void				AbcCriticalSectionInitialize( AbcGuardedCriticalSection& cs, unsigned int spinCount = 0 );
 PAPI void				AbcCriticalSectionDestroy( AbcCriticalSection& cs );
+PAPI void				AbcCriticalSectionDestroy( AbcGuardedCriticalSection& cs );
 PAPI bool				AbcCriticalSectionTryEnter( AbcCriticalSection& cs );
 PAPI void				AbcCriticalSectionEnter( AbcCriticalSection& cs );
 PAPI void				AbcCriticalSectionLeave( AbcCriticalSection& cs );
@@ -39,6 +57,16 @@ PAPI bool				AbcSemaphoreWait( AbcSemaphore& sem, DWORD waitMS );
 PAPI void				AbcSemaphoreRelease( AbcSemaphore& sem, DWORD count );
 
 PAPI void				AbcSleep( int milliseconds );
+
+// Use AbcPause() inside a spinlock: http://x86.renejeschke.de/html/file_module_x86_id_232.html
+#ifdef _MSC_VER
+#define 				AbcPause()		YieldProcessor()
+#else
+#define					AbcPause()		asm volatile("pause\n": : :"memory")
+#endif
+
+PAPI int				AbcLockFileLock( const char* path );	// Creates a 1 byte file and locks that 1 byte region. Returns -1 on failure. Does not block.
+PAPI void				AbcLockFileRelease( int f );			// Releases a lockfile created with AbcLockFileLock
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // TODO: Get rid of these functions, and replace them with mintomic
@@ -102,21 +130,15 @@ public:
 };
 
 /// Scope-based critical section acquisition
-class TakeCriticalSection
+class PAPI TakeCriticalSection
 {
 public:
-	AbcCriticalSection* CS;
-	TakeCriticalSection( AbcCriticalSection& cs )
-	{
-		CS = &cs;
-		AbcCriticalSectionEnter( *CS );
-		//OutputDebugStringA( XStringPFA( "%d: Taking critical section %x\n", GetCurrentThreadId(), (int) (size_t) &cs ) );
-	}
-	~TakeCriticalSection()
-	{
-		//OutputDebugStringA( XStringPFA( "%d: Leaving critical section %x\n", GetCurrentThreadId(), (int) (size_t) CS ) );
-		AbcCriticalSectionLeave( *CS );
-	}
+	AbcGuardedCriticalSection*	CS;
+	bool						UseGuard;
+
+			TakeCriticalSection( AbcCriticalSection& cs );
+			TakeCriticalSection( AbcGuardedCriticalSection& cs );
+			~TakeCriticalSection();
 };
 
 struct AbcMutexStackEnter

@@ -229,6 +229,7 @@ namespace AbCore
 template < typename VT, size_t TStaticSize >
 class StackBufferT
 {
+	DISALLOW_COPY_AND_ASSIGN(StackBufferT);
 public:
 	u32 Count;
 	VT* Data;

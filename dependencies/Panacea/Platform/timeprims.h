@@ -1,38 +1,22 @@
 #pragma once
 
-#include "../Platform/stdint.h"
+#include "stdint.h"
+#include "winheaders.h"
 
-#ifdef _WIN32
-inline i64 AbcTimeAsFileTime()
-{
-	FILETIME ft;
-	GetSystemTimeAsFileTime( &ft );
-	return ((u64) ft.dwHighDateTime << 32) | ft.dwLowDateTime;
-}
 inline i64 AbcFileTimeToMicroseconds( const FILETIME& ft )
 {
 	u64 time = ((u64) ft.dwHighDateTime << 32) | ft.dwLowDateTime;
 	i64 stime = (i64) time;
 	return stime / 10;
 }
-#endif
 
-// Return time suitable for 120hz
+inline double AbcFileTimeToUnixSeconds( const FILETIME& ft )
+{
+	const i64 days_from_1601_to_1970 = 370 * 365 - 276;
+	const i64 microsecondsPerDay = 24 * 3600 * (i64) 1000000;
+	i64 micro = AbcFileTimeToMicroseconds( ft );
+	return (micro - (days_from_1601_to_1970 * microsecondsPerDay)) * (1.0 / 1000000.0);
+}
 
-#ifdef _WIN32
-inline double AbcTimeAccurateRTSeconds()
-{
-	LARGE_INTEGER t, f;
-	QueryPerformanceCounter( &t );
-	QueryPerformanceFrequency( &f );
-	return t.QuadPart / (double) f.QuadPart;
-}
-#else
-inline double AbcTimeAccurateRTSeconds()
-{
-	timespec t;
-	clock_gettime( CLOCK_MONOTONIC, &t );
-	return t.tv_sec + t.tv_nsec * (1.0 / 1000000000);
-}
-#endif
+PAPI double AbcTimeAccurateRTSeconds();
 

@@ -67,7 +67,7 @@ PAPI AbcThreadHandle AbcThreadCurrent()
 {
 	return pthread_self();
 }
-PAPI AbcThreadID AbcThreadCurrentID()
+PAPI AbcThreadID	AbcThreadCurrentID()
 {
 	return pthread_self();
 }

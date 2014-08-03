@@ -60,23 +60,3 @@ PAPI void AbcSetAllowGUI( bool allowGUI )
 	AllowGUI = allowGUI;
 }
 
-
-PAPI bool AbcWindowStationVisible()
-{
-	bool interactive = true;
-
-#ifdef _INC_WINDOWS
-	HWINSTA hWinStation = GetProcessWindowStation();
-	if ( hWinStation )
-	{
-		USEROBJECTFLAGS uof = {0};
-		if ( GetUserObjectInformation(hWinStation, UOI_FLAGS, &uof, sizeof(USEROBJECTFLAGS), NULL) &&
-					((uof.dwFlags & WSF_VISIBLE) == 0) )
-		{
-			interactive = false;
-		}
-	}
-#endif
-
-	return interactive;
-}
