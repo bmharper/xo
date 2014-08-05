@@ -223,8 +223,8 @@ void nuFontStore::LoadFontTweaks( nuFont& font )
 		font.MaxAutoHinterSize = 0;
 
 	// This always looks better with the TT hinter
-	if ( font.Facename == "Audiowide" )
-		font.MaxAutoHinterSize = 0;
+	//if ( font.Facename == "Audiowide" )
+	//	font.MaxAutoHinterSize = 50;
 }
 
 const char* nuFontStore::GetFilenameFromFacename( const char* facename )

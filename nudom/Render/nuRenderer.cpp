@@ -173,8 +173,10 @@ void nuRenderer::RenderTextChar_SubPixel( nuPoint base, nuRenderDomText* node, c
 	// grid-fitting should have little effect.
 	//left = (float) floor(left * 3 + 0.5) / 3.0f;
 	//top = (float) floor(top + 0.5); -- vertical rounding has been moved to fixed point layout
-	if ( nuGlobal()->SnapSubpixelHorzText )
-		left = floor(left + 0.5f);
+
+	// You cannot do this here - it needs to happen during layout (which it does indeed)
+	//if ( nuGlobal()->SnapSubpixelHorzText )
+	//	left = floor(left + 0.5f);
 
 	float right = left + roundedWidth;
 	float bottom = top + glyph->Height;
@@ -190,9 +192,9 @@ void nuRenderer::RenderTextChar_SubPixel( nuPoint base, nuRenderDomText* node, c
 	corners[2].Pos = NUVEC3(right, bottom, 0);
 	corners[3].Pos = NUVEC3(right, top, 0);
 
-	float u0 = (glyph->X - overdraw * 3 + horzPad) * atlasScaleX;
+	float u0 = (glyph->X + horzPad - overdraw * 3) * atlasScaleX;
 	float v0 = glyph->Y * atlasScaleY;
-	float u1 = (glyph->X + (roundedWidth + overdraw) * 3 - horzPad) * atlasScaleX;
+	float u1 = (glyph->X + horzPad + (roundedWidth + overdraw) * 3) * atlasScaleX;
 	float v1 = (glyph->Y + glyph->Height) * atlasScaleY;
 
 	corners[0].UV = NUVEC2(u0, v0);

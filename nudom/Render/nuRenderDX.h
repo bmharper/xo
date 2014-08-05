@@ -27,6 +27,7 @@ private:
 		ID3D11BlendState*		BlendNormal;
 		ID3D11BlendState*		BlendDual;
 		ID3D11SamplerState*		SamplerLinear;
+		ID3D11SamplerState*		SamplerPoint;
 		ID3D11Buffer*           VertBuffer;
 		ID3D11Buffer*           QuadIndexBuffer;
 		ID3D11Buffer*           ShaderPerFrameConstants;

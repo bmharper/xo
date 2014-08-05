@@ -32,12 +32,12 @@ void nuLayout::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDo
 
 		if ( GlyphsNeeded.size() == 0 )
 		{
-			NUTRACE_LAYOUT( "Layout done\n" );
+			NUTRACE_LAYOUT_VERBOSE( "Layout done\n" );
 			break;
 		}
 		else
 		{
-			NUTRACE_LAYOUT( "Layout done (but need another pass for missing glyphs)\n" );
+			NUTRACE_LAYOUT_VERBOSE( "Layout done (but need another pass for missing glyphs)\n" );
 			RenderGlyphsNeeded();
 		}
 	}
@@ -48,13 +48,13 @@ void nuLayout::LayoutInternal( nuRenderDomNode& root )
 	PtToPixel = 1.0;	// TODO
 	EpToPixel = nuGlobal()->EpToPixel;
 
-	NUTRACE_LAYOUT( "Layout 1\n" );
+	NUTRACE_LAYOUT_VERBOSE( "Layout 1\n" );
 
 	Pool->FreeAll();
 	root.Children.clear();
 	Stack.Reset();
 
-	NUTRACE_LAYOUT( "Layout 2\n" );
+	NUTRACE_LAYOUT_VERBOSE( "Layout 2\n" );
 
 	NodeState s;
 	memset( &s, 0, sizeof(s) );
@@ -68,18 +68,18 @@ void nuLayout::LayoutInternal( nuRenderDomNode& root )
 	s.PosMaxY = s.PosY;
 	s.PosBaselineY = nuPosNULL;
 
-	NUTRACE_LAYOUT( "Layout 3 DocBox = %d,%d,%d,%d\n", s.ParentContentBox.Left, s.ParentContentBox.Top, s.ParentContentBox.Right, s.ParentContentBox.Bottom );
+	NUTRACE_LAYOUT_VERBOSE( "Layout 3 DocBox = %d,%d,%d,%d\n", s.ParentContentBox.Left, s.ParentContentBox.Top, s.ParentContentBox.Right, s.ParentContentBox.Bottom );
 
 	RunNode( s, Doc->Root, &root );
 }
 
 void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rnode )
 {
-	NUTRACE_LAYOUT( "Layout (%d) Run 1\n", node.GetInternalID() );
+	NUTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 1\n", node.GetInternalID() );
 	nuStyleResolver::ResolveAndPush( Stack, &node );
 	rnode->SetStyle( Stack );
 	
-	NUTRACE_LAYOUT( "Layout (%d) Run 2\n", node.GetInternalID() );
+	NUTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 2\n", node.GetInternalID() );
 	rnode->InternalID = node.GetInternalID();
 	if ( rnode->InternalID == 50 )
 		int abc = 123;
@@ -152,7 +152,7 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 		cs.PosY = cs.PosMaxY = contentBox.Top;
 		cs.PosBaselineY = s.PosBaselineY;
 
-		NUTRACE_LAYOUT( "Layout (%d) Run 3 (position = %d) (%d %d)\n", node.GetInternalID(), (int) position, s.ParentContentBoxHasWidth ? 1 : 0, haveWidth ? 1 : 0 );
+		NUTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 3 (position = %d) (%d %d)\n", node.GetInternalID(), (int) position, s.ParentContentBoxHasWidth ? 1 : 0, haveWidth ? 1 : 0 );
 
 		const pvect<nuDomEl*>& nodeChildren = node.GetChildren();
 		for ( int i = 0; i < nodeChildren.size(); i++ )
@@ -197,7 +197,7 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 		break;
 	}
 
-	NUTRACE_LAYOUT( "Layout (%d) marginBox: %d,%d,%d,%d\n", node.GetInternalID(), marginBox.Left, marginBox.Top, marginBox.Right, marginBox.Bottom );
+	NUTRACE_LAYOUT_VERBOSE( "Layout (%d) marginBox: %d,%d,%d,%d\n", node.GetInternalID(), marginBox.Left, marginBox.Top, marginBox.Right, marginBox.Bottom );
 
 	s.PosMaxY = nuMax( s.PosMaxY, marginBox.Bottom );
 	if ( s.PosBaselineY == nuPosNULL )
@@ -208,11 +208,11 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 
 void nuLayout::RunText( NodeState& s, const nuDomText& node, nuRenderDomText* rnode )
 {
-	NUTRACE_LAYOUT( "Layout text (%d) Run 1\n", node.GetInternalID() );
+	NUTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 1\n", node.GetInternalID() );
 	rnode->InternalID = node.GetInternalID();
 	rnode->SetStyle( Stack );
 
-	NUTRACE_LAYOUT( "Layout text (%d) Run 2\n", node.GetInternalID() );
+	NUTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 2\n", node.GetInternalID() );
 
 	rnode->FontID = Stack.Get( nuCatFontFamily ).GetFont();
 
@@ -280,7 +280,7 @@ void nuLayout::GenerateTextWords( NodeState& s, TextRunState& ts )
 			continue;
 		}
 		ts.GlyphCount++;
-		word.Width += nuRealx256ToPos(glyph->MetricLinearHoriAdvancex256);
+		word.Width += nuRealToPos( glyph->MetricLinearHoriAdvance );
 	}
 }
 
@@ -390,7 +390,7 @@ void nuLayout::GenerateTextOutput( NodeState& s, TextRunState& ts )
 				rtxt.Char = key.Char;
 				rtxt.X = s.PosX + nuRealx256ToPos( glyph->MetricLeftx256 );
 				rtxt.Y = baseline - nuRealToPos( glyph->MetricTop );			// rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
-				s.PosX += nuRealx256ToPos( glyph->MetricLinearHoriAdvancex256 );
+				s.PosX += nuRealToPos( glyph->MetricLinearHoriAdvance );
 				s.PosMaxX = nuMax( s.PosMaxX, s.PosX );
 				prevGlyph = glyph;
 			}
@@ -417,14 +417,14 @@ nuPoint nuLayout::PositionBlock( NodeState& s, nuBox& marginBox )
 	if ( marginBox.Right > s.ParentContentBox.Right && !futile )
 	{
 		// Block does not fit on this line, it must move onto the next line.
-		NUTRACE_LAYOUT( "Layout block does not fit %d,%d\n", s.PosX, s.PosY );
+		NUTRACE_LAYOUT_VERBOSE( "Layout block does not fit %d,%d\n", s.PosX, s.PosY );
 		NextLine( s );
 		offset = nuPoint( s.PosX - marginBox.Left, s.PosY - marginBox.Top );
 		marginBox.Offset( offset.X, offset.Y );
 	}
 	else
 	{
-		NUTRACE_LAYOUT( "Layout block fits %d,%d\n", s.PosX, s.PosY );
+		NUTRACE_LAYOUT_VERBOSE( "Layout block fits %d,%d\n", s.PosX, s.PosY );
 	}
 	s.PosX = marginBox.Right;
 	return offset;

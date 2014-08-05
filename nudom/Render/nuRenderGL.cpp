@@ -679,8 +679,8 @@ bool nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
 		glTexImage2D( GL_TEXTURE_2D, 0, iformat, tex->TexWidth, tex->TexHeight, 0, format, GL_UNSIGNED_BYTE, tex->TexData );
 
 		// all assuming this is for a glyph atlas
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 		// Clamping should have no effect for RGB text, since we clamp inside our fragment shader.
 		// Also, when rendering 'whole pixel' glyphs, we shouldn't need clamping either, because
 		// our UV coordinates are exact, and we always have a 1:1 texel:pixel ratio.

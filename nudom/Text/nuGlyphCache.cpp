@@ -9,7 +9,7 @@
 // An alternative would be to separately load just the glyph metrics without performing glyph
 // rendering. That would give us perfect metrics. This only affects the horizontal spacing of
 // glyphs, and I think it's unlikely that one would be able to tell the difference there.
-static const uint32 nuSubPixelHintKillShift = 3;
+static const uint32 nuSubPixelHintKillShift = 0;
 static const uint32 nuSubPixelHintKillMultiplier = (1 << nuSubPixelHintKillShift);
 
 // GCC 4.6 for Android forces us to set the value of this constant in the .cpp file, not in the .h file.
@@ -94,19 +94,23 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	FT_UInt iFTGlyph = FT_Get_Char_Index( font->FTFace, key.Char );
 
 	bool isSubPixel = nuGlyphFlag_IsSubPixel(key.Flags);
+	bool useFTSubpixel = isSubPixel && nuGlobal()->SnapSubpixelHorzText;
 
 	uint32 pixSize = key.Size;
 	int32 combinedHorzMultiplier = 1;
 	if ( isSubPixel )
-		combinedHorzMultiplier = nuSubPixelHintKillMultiplier * 3;
+		combinedHorzMultiplier = nuSubPixelHintKillMultiplier * (useFTSubpixel ? 1 : 3);
 
 	FT_Error e = FT_Set_Pixel_Sizes( font->FTFace, combinedHorzMultiplier * pixSize, pixSize );
 	NUASSERT( e == 0 );
 
 	uint ftflags = FT_LOAD_RENDER | FT_LOAD_LINEAR_DESIGN;
 	// See nuFontStore::LoadFontTweaks for details of why we have this "MaxAutoHinterSize"
-	if ( isSubPixel && pixSize <= font->MaxAutoHinterSize )
-		ftflags |= FT_LOAD_FORCE_AUTOHINT;
+	//if ( isSubPixel && pixSize <= font->MaxAutoHinterSize )
+	//	ftflags |= FT_LOAD_FORCE_AUTOHINT;
+	
+	if ( useFTSubpixel )
+		ftflags |= FT_LOAD_TARGET_LCD;
 
 	e = FT_Load_Glyph( font->FTFace, iFTGlyph, ftflags );
 	if ( e != 0 )
@@ -162,6 +166,9 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	else
 		CopyBitmap( font, atlas->TexDataAt(atlasX, atlasY), atlas->GetStride() );
 
+	if ( key.Char == '1' )
+		int abc = 123;
+
 	nuGlyph g;
 	g.FTGlyphIndex = iFTGlyph;
 	g.Width = isEmpty ? 0 : naturalWidth + horzPad * 2;
@@ -173,7 +180,7 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	g.MetricLeftx256 = font->FTFace->glyph->bitmap_left * 256 / combinedHorzMultiplier;
 	g.MetricTop = font->FTFace->glyph->bitmap_top;
 	g.MetricHoriAdvance = font->FTFace->glyph->advance.x / (64 * combinedHorzMultiplier);
-	g.MetricLinearHoriAdvancex256 = ((int32) font->FTFace->glyph->linearHoriAdvance * 256 * (int32) pixSize) / 2048;
+	g.MetricLinearHoriAdvance = (font->FTFace->glyph->linearHoriAdvance * (int32) pixSize) / (float) font->FTFace->units_per_EM;
 	Table.insert( key, (uint) Glyphs.size() );
 	Glyphs += g;
 	return (uint) (Glyphs.size() - 1);

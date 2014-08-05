@@ -26,6 +26,7 @@ void nuLayout2::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderD
 	Stack.Initialize( Doc, Pool );
 	Fonts = nuGlobal()->FontStore->GetImmutableTable();
 	SnapBoxes = nuGlobal()->SnapBoxes;
+	SnapSubpixelHorzText = nuGlobal()->SnapSubpixelHorzText;
 
 	while ( true )
 	{
@@ -33,12 +34,12 @@ void nuLayout2::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderD
 
 		if ( GlyphsNeeded.size() == 0 )
 		{
-			NUTRACE_LAYOUT( "Layout done\n" );
+			NUTRACE_LAYOUT_VERBOSE( "Layout done\n" );
 			break;
 		}
 		else
 		{
-			NUTRACE_LAYOUT( "Layout done (but need another pass for missing glyphs)\n" );
+			NUTRACE_LAYOUT_VERBOSE( "Layout done (but need another pass for missing glyphs)\n" );
 			RenderGlyphsNeeded();
 		}
 	}
@@ -56,13 +57,13 @@ void nuLayout2::LayoutInternal( nuRenderDomNode& root )
 	PtToPixel = 1.0;	// TODO
 	EpToPixel = nuGlobal()->EpToPixel;
 
-	NUTRACE_LAYOUT( "Layout 1\n" );
+	NUTRACE_LAYOUT_VERBOSE( "Layout 1\n" );
 
 	Pool->FreeAll();
 	root.Children.clear();
 	Stack.Reset();
 
-	NUTRACE_LAYOUT( "Layout 2\n" );
+	NUTRACE_LAYOUT_VERBOSE( "Layout 2\n" );
 
 	LayoutInput in;
 	in.ParentWidth = nuIntToPos( DocWidth );
@@ -71,18 +72,18 @@ void nuLayout2::LayoutInternal( nuRenderDomNode& root )
 
 	LayoutOutput out;
 
-	NUTRACE_LAYOUT( "Layout 3 DocBox = %d,%d,%d,%d\n", s.ParentContentBox.Left, s.ParentContentBox.Top, s.ParentContentBox.Right, s.ParentContentBox.Bottom );
+	NUTRACE_LAYOUT_VERBOSE( "Layout 3 DocBox = %d,%d,%d,%d\n", s.ParentContentBox.Left, s.ParentContentBox.Top, s.ParentContentBox.Right, s.ParentContentBox.Bottom );
 
 	RunNode( Doc->Root, in, out, &root );
 }
 
 void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOutput& out, nuRenderDomNode* rnode )
 {
-	NUTRACE_LAYOUT( "Layout (%d) Run 1\n", node.GetInternalID() );
+	NUTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 1\n", node.GetInternalID() );
 	nuStyleResolver::ResolveAndPush( Stack, &node );
 	rnode->SetStyle( Stack );
 
-	NUTRACE_LAYOUT( "Layout (%d) Run 2\n", node.GetInternalID() );
+	NUTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 2\n", node.GetInternalID() );
 	rnode->InternalID = node.GetInternalID();
 
 	nuBoxSizeType boxSizing = Stack.Get( nuCatBoxSizing ).GetBoxSizing();
@@ -220,11 +221,11 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 
 void nuLayout2::RunText( const nuDomText& node, const LayoutInput& in, LayoutOutput& out, nuRenderDomText* rnode )
 {
-	NUTRACE_LAYOUT( "Layout text (%d) Run 1\n", node.GetInternalID() );
+	NUTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 1\n", node.GetInternalID() );
 	rnode->InternalID = node.GetInternalID();
 	rnode->SetStyle( Stack );
 
-	NUTRACE_LAYOUT( "Layout text (%d) Run 2\n", node.GetInternalID() );
+	NUTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 2\n", node.GetInternalID() );
 
 	rnode->FontID = Stack.Get( nuCatFontFamily ).GetFont();
 
@@ -253,7 +254,8 @@ void nuLayout2::RunText( const nuDomText& node, const LayoutInput& in, LayoutOut
 	TempText.Words.clear_noalloc();
 	TempText.GlyphCount = 0;
 	//TempText.FontWidthScale = 1.08f;	// Verdana looks a lot better with an extra 8%
-	TempText.FontWidthScale = 1.05f;
+	//TempText.FontWidthScale = 1.05f;
+	TempText.FontWidthScale = 1.0f;
 	GenerateTextWords( TempText );
 	if ( !TempText.GlyphsNeeded )
 		GenerateTextOutput( in, out, TempText );
@@ -377,7 +379,7 @@ void nuLayout2::GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, Te
 				rtxt.Char = key.Char;
 				rtxt.X = posX + nuRealx256ToPos( glyph->MetricLeftx256 );
 				rtxt.Y = baseline - nuRealToPos( glyph->MetricTop );			// rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
-				posX += nuRealx256ToPos( (int32) (glyph->MetricLinearHoriAdvancex256 * ts.FontWidthScale) );
+				posX += HoriAdvance( glyph, ts );
 				posMaxX = nuMax( posMaxX, posX );
 				prevGlyph = glyph;
 			}
@@ -428,7 +430,7 @@ void nuLayout2::GenerateTextWords( TextRunState& ts )
 			continue;
 		}
 		ts.GlyphCount++;
-		word.Width += nuRealx256ToPos((int32) (glyph->MetricLinearHoriAdvancex256 * ts.FontWidthScale));
+		word.Width += HoriAdvance( glyph, ts );
 	}
 }
 
@@ -506,6 +508,14 @@ nuLayout2::BindingSet nuLayout2::ComputeBinds()
 	return binds;
 }
 
+nuPos nuLayout2::HoriAdvance( const nuGlyph* glyph, const TextRunState& ts )
+{
+	if ( SnapSubpixelHorzText )
+		return nuIntToPos( glyph->MetricHoriAdvance );
+	else
+		return nuRealToPos( glyph->MetricLinearHoriAdvance * ts.FontWidthScale );
+}
+
 nuPos nuLayout2::HBindOffset( nuHorizontalBindings bind, nuPos width )
 {
 	switch ( bind )
@@ -533,7 +543,7 @@ nuPos nuLayout2::VBindOffset( nuVerticalBindings bind, nuPos baseline, nuPos hei
 			return baseline;
 		else
 		{
-			NUTRACE_LAYOUT( "Undefined baseline used in alignment\n" );
+			NUTRACE_LAYOUT_WARNING( "Undefined baseline used in alignment\n" );
 			return height;
 		}
 	default:

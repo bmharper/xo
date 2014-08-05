@@ -139,8 +139,12 @@ bool nuRenderDX::InitializeDXDevice( nuSysWnd& wnd )
 	sampler.BorderColor[3] = 0;
 	sampler.MinLOD = 0;
 	sampler.MaxLOD = D3D11_FLOAT32_MAX;
-	HRESULT eSampler = D3D.Device->CreateSamplerState( &sampler, &D3D.SamplerLinear );
-	CHECK_HR(eSampler, "CreateSamplerLinear");
+	HRESULT eSampler1 = D3D.Device->CreateSamplerState( &sampler, &D3D.SamplerLinear );
+	CHECK_HR(eSampler1, "CreateSamplerLinear");
+
+	sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+	HRESULT eSampler2 = D3D.Device->CreateSamplerState( &sampler, &D3D.SamplerPoint );
+	CHECK_HR(eSampler2, "CreateSamplerPoint");
 
 	return true;
 }
@@ -546,7 +550,8 @@ void nuRenderDX::ActivateShader( nuShaders shader )
 	else
 		D3D.Context->OMSetBlendState( D3D.BlendNormal, blendFactors, sampleMask );
 
-	D3D.Context->PSSetSamplers( 0, 1, &D3D.SamplerLinear );
+	//D3D.Context->PSSetSamplers( 0, 1, &D3D.SamplerLinear );
+	D3D.Context->PSSetSamplers( 0, 1, &D3D.SamplerPoint );
 }
 
 void nuRenderDX::DrawQuad( const void* v )

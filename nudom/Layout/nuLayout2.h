@@ -90,6 +90,7 @@ protected:
 	fhashset<nuGlyphCacheKey>	GlyphsNeeded;
 	TextRunState				TempText;
 	bool						SnapBoxes;
+	bool						SnapSubpixelHorzText;
 
 	void		RenderGlyphsNeeded();
 	void		LayoutInternal( nuRenderDomNode& root );
@@ -104,6 +105,8 @@ protected:
 	nuBox		ComputeBox( nuPos containerWidth, nuPos containerHeight, nuStyleCategories cat );
 	nuBox		ComputeBox( nuPos containerWidth, nuPos containerHeight, nuStyleBox box );
 	BindingSet	ComputeBinds();
+
+	nuPos		HoriAdvance( const nuGlyph* glyph, const TextRunState& ts );
 
 	static nuPos			HBindOffset( nuHorizontalBindings bind, nuPos width );
 	static nuPos			VBindOffset( nuVerticalBindings bind, nuPos baseline, nuPos height );

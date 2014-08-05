@@ -58,20 +58,9 @@ void DoBaselineAlignment( nuDoc* doc )
 
 	if (1)
 	{
-		root->ParseAppend( "<div class='baseline' style='font-size: 38px; font-family: Microsoft Sans Serif; background: #fff0f0'>H</div>" );
-		//auto txt1 = root->AddNode( nuTagDiv );
-		//txt1->StyleParse( "font-size: 38px; font-family: Microsoft Sans Serif; background: #fff0f0" );
-		//txt1->SetText( "H" );
-		
+		root->ParseAppend( "<div style='font-size: 38px; font-family: Microsoft Sans Serif; background: #fff0f0'>H</div>" );
 		root->ParseAppend( "<div class='baseline' style='font-size: 13px; font-family: Microsoft Sans Serif; background: #f0fff0'>ello.</div>" );
-		//auto txt2 = root->AddNode( nuTagDiv );
-		//txt2->StyleParse( "font-size: 13px; font-family: Microsoft Sans Serif; background: #f0fff0" );
-		//txt2->SetText( "ello." );
-		
 		root->ParseAppend( "<div class='baseline' style='font-size: 18px; font-family: Times New Roman; background: #f0f0ff'> More times at a smaller size.</div>" );
-		//auto txt3 = root->AddNode( nuTagDiv );
-		//txt3->StyleParse( "font-size: 18px; font-family: Times New Roman; background: #f0f0ff" );
-		//txt3->SetText( " More times at a smaller size." );
 	}
 
 	// ramp of 'e' characters from 8 to 30 pixels
@@ -242,12 +231,13 @@ void DoBackupSettings( nuDoc* doc )
 	// The goal here is to replicate part of bvckup2's UI
 	nuDomNode* root = &doc->Root;
 	root->StyleParse( "font-family: Segoe UI; font-size: 12px;" );
+	//root->StyleParse( "font-family: Audiowide; font-size: 12px;" );
 	doc->ClassParse( "pad-light", "background: #f8f8f8; width: 140ep; height: 10ep;" );
 	doc->ClassParse( "pad-dark",  "background: #efefef; width: 470ep; height: 10ep;" );
-	doc->ClassParse( "bg-light",  "color: #222; background: #f8f8f8; width: 140ep; height: 36ep; padding: 8ep;" );
-	doc->ClassParse( "bg-dark",   "color: #222; background: #efefef; width: 470ep; height: 36ep; padding: 8ep" );
-	doc->ClassParse( "textbox",   "color: #222; background: #fff; padding: 3ep 3ep 3ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd" );
-	doc->ClassParse( "button",    "color: #222; background: #ececec; margin: 6ep 0ep 6ep 0ep; padding: 14ep 3ep 14ep 3ep; border: 1px #bdbdbd" );
+	doc->ClassParse( "bg-light",  "color: #000; background: #f8f8f8; width: 140ep; height: 36ep; padding: 8ep;" );
+	doc->ClassParse( "bg-dark",   "color: #000; background: #efefef; width: 470ep; height: 36ep; padding: 8ep" );
+	doc->ClassParse( "textbox",   "color: #000; background: #fff; padding: 3ep 3ep 3ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd" );
+	doc->ClassParse( "button",    "color: #000; background: #ececec; margin: 6ep 0ep 6ep 0ep; padding: 14ep 3ep 14ep 3ep; border: 1px #bdbdbd" );
 	doc->ClassParse( "baseline", "baseline:baseline" );
 
 	auto horzPadder =
@@ -284,19 +274,29 @@ void DoPadding( nuDoc* doc )
 	root->ParseAppend( "<div style='padding: 8ep; background: #ddd'><lab>8ep padding</lab></div>" );
 }
 
+void DoTextQuality( nuDoc* doc )
+{
+	//doc->Root.ParseAppend( "<div style='font-family: Microsoft Sans Serif'>The quick brown fox jumps over the laxy dog<div>" );
+	//doc->Root.ParseAppend( "<div style='padding: 20px; font-family: Microsoft Sans Serif'>h<div>" );
+	//doc->Root.ParseAppend( "<div style='font-family: Microsoft Sans Serif'>Backup from<div>" );
+	doc->Root.StyleParse( "background: #f0f0f0" );
+	doc->Root.ParseAppend( "<div style='font-family: Segoe UI; font-size: 12px'>Backup from<div>" );
+}
+
 void InitDOM( nuDoc* doc )
 {
 	nuDomNode* body = &doc->Root;
 	body->StyleParse( "font-family: Segoe UI, Droid Sans" );
 
 	//DoBorder( doc );
-	DoBaselineAlignment( doc );
+	//DoBaselineAlignment( doc );
 	//DoBaselineAlignment_rev2( doc );
 	//DoTwoTextRects( doc );
 	//DoBlockMargins( doc );
 	//DoLongText( doc );
-	//DoBackupSettings( doc );
+	DoBackupSettings( doc );
 	//DoPadding( doc );
+	//DoTextQuality( doc );
 
 	body->OnClick( [](const nuEvent& ev) -> bool {
 		nuGlobal()->EnableKerning = !nuGlobal()->EnableKerning;

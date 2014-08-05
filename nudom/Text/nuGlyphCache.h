@@ -24,10 +24,10 @@ struct nuGlyph
 	int16		MetricLeftx256;
 	int16		MetricTop;
 	int32		MetricHoriAdvance;	// intended for use by SnapSubpixelHorzText
-	int32		MetricLinearHoriAdvancex256;
+	float		MetricLinearHoriAdvance;
 
 	// A Null glyph is one that could not be found in the font
-	bool IsNull() const { return Width == 0 && MetricLinearHoriAdvancex256 == 0; }
+	bool IsNull() const { return Width == 0 && MetricLinearHoriAdvance == 0; }
 	void SetNull()		{ memset(this, 0, sizeof(*this)); }
 };
 

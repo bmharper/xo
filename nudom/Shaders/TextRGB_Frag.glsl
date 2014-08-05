@@ -34,9 +34,12 @@ void main()
 	float tap5 = texture2D(tex0, vec2(clamp(uv.s + offset * 2.0, texClamp.x, texClamp.z), uv.t)).r;
 	float tap6 = texture2D(tex0, vec2(clamp(uv.s + offset * 3.0, texClamp.x, texClamp.z), uv.t)).r;
 
-	float w0 = 0.60;
+	float w0 = 0.56;
 	float w1 = 0.28;
-	float w2 = 0.12;
+	float w2 = 0.16;
+	//float w0 = 0.60;
+	//float w1 = 0.28;
+	//float w2 = 0.12;
 	//float w0 = 0.98;
 	//float w1 = 0.01;
 	//float w2 = 0.01;
