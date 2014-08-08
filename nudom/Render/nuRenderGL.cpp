@@ -64,8 +64,8 @@ nuRenderGL::nuRenderGL()
 	AllProgs[2] = &PFillTex;
 	AllProgs[3] = &PTextRGB;
 	AllProgs[4] = &PTextWhole;
-	AllProgs[5] = &PCurve;
-	static_assert(NumProgs == 6, "Add your new shader here");
+	//AllProgs[5] = &PCurve;
+	static_assert(NumProgs == 5, "Add your new shader here");
 	Reset();
 }
 

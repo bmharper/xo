@@ -17,6 +17,11 @@
 		#include <jni.h>
 		#include <android/log.h>
 		#include <sys/atomics.h>
+	#else
+		#include <sys/types.h>
+		#include <sys/stat.h>
+		#include <unistd.h>
+		#include <pwd.h>
 	#endif
 	#ifdef NU_BUILD_OPENGL_ES
 		#include <GLES2/gl2.h>

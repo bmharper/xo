@@ -14,7 +14,6 @@ struct AbcFilesystemItem
 {
 	const char* Root;		// Directory of file
 	const char* Name;		// Name of file
-	double		TimeCreate;	// Seconds since unix epoch, UTC
 	double		TimeModify;	// Seconds since unix epoch, UTC
 	bool		IsDir : 1;
 };

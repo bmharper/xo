@@ -288,7 +288,7 @@ void nuFontStore::BuildAndSaveFontTable()
 
 	FILE* manifest = fopen( (nuCacheDir() + ABC_DIR_SEP_STR + "fonts").Z, "wb" );
 	fprintf( manifest, "%d\n", ManifestVersion );
-	fprintf( manifest, "%llu\n", ComputeFontDirHash() );
+	fprintf( manifest, "%llu\n", (long long unsigned) ComputeFontDirHash() );
 
 	for ( intp i = 0; i < files.size(); i++ )
 	{
@@ -299,7 +299,7 @@ void nuFontStore::BuildAndSaveFontTable()
 			nuString facename = face->family_name;
 			nuString style = face->style_name;
 			nuString fullFacename = facename + " " + style;
-			fprintf( manifest, "%s%c%s\n", files[i].Z, UnitSeparator, fullFacename );
+			fprintf( manifest, "%s%c%s\n", files[i].Z, UnitSeparator, fullFacename.Z );
 			FT_Done_Face( face );
 		}
 		else
@@ -323,7 +323,7 @@ bool nuFontStore::LoadFontTable()
 	int version = 0;
 	uint64 hash = 0;
 	fscanf( manifest, "%d\n", &version );
-	fscanf( manifest, "%llu\n", &hash );
+	fscanf( manifest, "%llu\n", (long long unsigned*) &hash );
 	if ( version != ManifestVersion || hash != ComputeFontDirHash() )
 	{
 		fclose( manifest );
@@ -349,10 +349,13 @@ bool nuFontStore::LoadFontTable()
 	{
 		if ( i == remain.size() || buf[i] == '\n' )
 		{
-			nuString path, facename;
-			path.Set( buf + lineStart, term1 - lineStart );
-			facename.Set( buf + term1 + 1, i - term1 - 1 );
-			FacenameToFilename.insert( facename, path );
+			if ( i - term1 > 1 )
+			{
+				nuString path, facename;
+				path.Set( buf + lineStart, term1 - lineStart );
+				facename.Set( buf + term1 + 1, i - term1 - 1 );
+				FacenameToFilename.insert( facename, path );
+			}
 			lineStart = i + 1;
 			term1 = lineStart;
 		}
@@ -377,7 +380,6 @@ uint64 nuFontStore::ComputeFontDirHash()
 		{
 			XXH64_update( hstate, item.Root, (int) strlen(item.Root) );
 			XXH64_update( hstate, item.Name, (int) strlen(item.Name) );
-			XXH64_update( hstate, &item.TimeCreate, sizeof(item.TimeCreate) );
 			XXH64_update( hstate, &item.TimeModify, sizeof(item.TimeModify) );
 		}
 		return true;

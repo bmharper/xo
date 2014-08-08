@@ -42,7 +42,7 @@ const char* nuGLProg_TextRGB::VertSrc()
 const char* nuGLProg_TextRGB::FragSrc()
 {
 	return
-	"#version 330\n"
+	"#version 130\n"
 	"\n"
 	"#ifdef NU_PLATFORM_ANDROID\n"
 	"precision mediump float;\n"

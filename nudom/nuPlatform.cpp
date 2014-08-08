@@ -29,7 +29,13 @@ nuString nuCacheDir()
 	CreateDirectoryW( path.c_str(), NULL );
 	return ConvertWideToUTF8( path ).c_str();
 #elif NU_PLATFORM_LINUX_DESKTOP
-	NUTODO_STATIC
+	struct stat st = {0};
+	struct passwd *pw = getpwuid(getuid());
+	nuString path = pw->pw_dir;
+	path += "/.xo";
+	if ( stat(path.Z, &st) == -1 )
+		mkdir(path.Z, 0700);
+	return path;
 #elif NU_PLATFORM_ANDROID
 	NUTODO_STATIC
 #else
