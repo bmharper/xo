@@ -19,8 +19,9 @@ nuString nuCacheDir()
 {
 #if NU_PLATFORM_WIN_DESKTOP
 	wchar_t* wpath;
-	SHGetKnownFolderPath( FOLDERID_LocalAppData, 0, NULL, &wpath );
-	std::wstring path = wpath;
+	std::wstring path;
+	if ( SUCCEEDED(SHGetKnownFolderPath( FOLDERID_LocalAppData, 0, NULL, &wpath )) )
+		path = wpath;
 	path.append( ABC_DIR_SEP_STR_W );
 	path.append( L"xo" );
 	CreateDirectoryW( path.c_str(), NULL );

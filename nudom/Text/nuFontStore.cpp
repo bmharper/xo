@@ -37,8 +37,8 @@ nuFontStore::nuFontStore()
 
 #if NU_PLATFORM_WIN_DESKTOP
 	wchar_t* wpath;
-	SHGetKnownFolderPath( FOLDERID_Fonts, 0, NULL, &wpath );
-	Directories += ConvertWideToUTF8( wpath ).c_str();
+	if ( SUCCEEDED(SHGetKnownFolderPath( FOLDERID_Fonts, 0, NULL, &wpath )) )
+		Directories += ConvertWideToUTF8( wpath ).c_str();
 #elif NU_PLATFORM_LINUX_DESKTOP
 	Directories += "/usr/share/fonts/truetype";
 	Directories += "/usr/share/fonts/truetype/msttcorefonts";
@@ -299,7 +299,7 @@ void nuFontStore::BuildAndSaveFontTable()
 			nuString facename = face->family_name;
 			nuString style = face->style_name;
 			nuString fullFacename = facename + " " + style;
-			fprintf( manifest, "%s%c%s\n", files[i].Z, UnitSeparator, fullFacename );
+			fprintf( manifest, "%s%c%s\n", files[i].Z, UnitSeparator, fullFacename.Z );
 			FT_Done_Face( face );
 		}
 		else
@@ -322,8 +322,9 @@ bool nuFontStore::LoadFontTable()
 
 	int version = 0;
 	uint64 hash = 0;
-	fscanf( manifest, "%d\n", &version );
-	fscanf( manifest, "%llu\n", &hash );
+	bool ok = true;
+	ok = ok && 1 == fscanf( manifest, "%d\n", &version );
+	ok = ok && 1 == fscanf( manifest, "%llu\n", &hash );
 	if ( version != ManifestVersion || hash != ComputeFontDirHash() )
 	{
 		fclose( manifest );
