@@ -494,7 +494,7 @@ nuLayout2::BindingSet nuLayout2::ComputeBinds()
 	nuVerticalBindings bottom = Stack.Get( nuCatBottom ).GetVerticalBinding();
 	nuVerticalBindings baseline = Stack.Get( nuCatBaseline ).GetVerticalBinding();
 
-	BindingSet binds = {0};
+	BindingSet binds = {nuHorizontalBindingNULL, nuHorizontalBindingNULL, nuVerticalBindingNULL, nuVerticalBindingNULL};
 
 	if ( left != nuHorizontalBindingNULL )		{ binds.HChild = nuHorizontalBindingLeft; binds.HParent = left; }
 	if ( hcenter != nuHorizontalBindingNULL )	{ binds.HChild = nuHorizontalBindingCenter; binds.HParent = hcenter; }

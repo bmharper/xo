@@ -12,6 +12,7 @@
 #define lseek _lseek
 #else
 #include <unistd.h>
+#include <fcntl.h>
 #endif
 
 // In linux you can use named semaphores for ipc mutex.

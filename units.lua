@@ -251,7 +251,7 @@ local nudom = SharedLibrary {
 		"nudom/Text/nuFontStore.cpp",
 		"nudom/Text/nuGlyphCache.cpp",
 		"nudom/Text/nuTextDefs.cpp",
-		"nudom/Shaders/Processed_glsl/CurveShader.cpp",
+		--"nudom/Shaders/Processed_glsl/CurveShader.cpp",
 		"nudom/Shaders/Processed_glsl/FillShader.cpp",
 		"nudom/Shaders/Processed_glsl/FillTexShader.cpp",
 		"nudom/Shaders/Processed_glsl/RectShader.cpp",
@@ -313,6 +313,7 @@ local HelloAmalgamation = Program {
 local KitchenSink = Program {
 	Name = "KitchenSink",
 	Includes = { "nudom" },
+	Libs = { "stdc++"; Config = "linux-*" },
 	Depends = {
 		crt,
 		nudom

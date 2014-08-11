@@ -3,7 +3,7 @@
 #include "nuRenderGL_Defs.h"
 #include "nuRenderBase.h"
 #include "../Shaders/Helpers/nuPreprocessor.h"
-#include "../Shaders/Processed_glsl/CurveShader.h"
+//#include "../Shaders/Processed_glsl/CurveShader.h"
 #include "../Shaders/Processed_glsl/FillShader.h"
 #include "../Shaders/Processed_glsl/FillTexShader.h"
 #include "../Shaders/Processed_glsl/RectShader.h"
@@ -23,8 +23,8 @@ public:
 	nuGLProg_FillTex	PFillTex;
 	nuGLProg_TextRGB	PTextRGB;
 	nuGLProg_TextWhole	PTextWhole;
-	nuGLProg_Curve		PCurve;
-	static const int	NumProgs = 6;
+	//nuGLProg_Curve		PCurve;
+	static const int	NumProgs = 5;
 	nuGLProg*			AllProgs[NumProgs];	// All of the above programs
 
 					nuRenderGL();

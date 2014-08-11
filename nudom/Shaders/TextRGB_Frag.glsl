@@ -1,6 +1,6 @@
 #NU_PLATFORM_WIN_DESKTOP
 #NU_PLATFORM_LINUX_DESKTOP
-#version 330
+#version 130
 
 #ifdef NU_PLATFORM_ANDROID
 precision mediump float;

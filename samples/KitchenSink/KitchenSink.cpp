@@ -1,4 +1,4 @@
-#include "../../nuDom/nuDom.h"
+#include "../../nudom/nuDom.h"
 
 /*
 This sample was created when developing the layout concepts
