@@ -50,6 +50,9 @@ void DoBaselineAlignment( nuDoc* doc )
 	// preserved when entering those DOM Nodes. If this were not true, then the baselines of the different
 	// sized text elements would not line up.
 
+	// Another thing to do with this example is to narrow the window until text starts wrapping.
+	// Every new line should define its own baseline.
+
 	auto root = &doc->Root;
 	root->StyleParse( "padding: 10px;" );
 	root->StyleParse( "background: #ddd" );
@@ -58,7 +61,7 @@ void DoBaselineAlignment( nuDoc* doc )
 
 	if (1)
 	{
-		root->ParseAppend( "<div style='font-size: 38px; font-family: Microsoft Sans Serif; background: #fff0f0'>H</div>" );
+		root->ParseAppend( "<div                  style='font-size: 38px; font-family: Microsoft Sans Serif; background: #fff0f0'>H</div>" );
 		root->ParseAppend( "<div class='baseline' style='font-size: 13px; font-family: Microsoft Sans Serif; background: #f0fff0'>ello.</div>" );
 		root->ParseAppend( "<div class='baseline' style='font-size: 18px; font-family: Times New Roman; background: #f0f0ff'> More times at a smaller size.</div>" );
 	}
@@ -153,6 +156,25 @@ void DoBaselineAlignment_rev2( nuDoc* doc )
 	}
 
 	NUASSERT(e == "");
+}
+
+void DoBaselineAlignment_Multiline( nuDoc* doc )
+{
+	auto root = &doc->Root;
+	doc->ClassParse( "baseline", "baseline: baseline" );
+	doc->ClassParse( "big", "font-size: 20ep" );
+	doc->ClassParse( "small", "font-size: 11ep" );
+	doc->ClassParse( "breakbefore", "break: before" );
+	doc->ClassParse( "breakafter", "break: after" );
+	root->Parse(
+		"<div class='big'                     >Line 1, text item A</div><div class='small baseline'>Line 1, text item B (break before)</div>"
+		"<div class='big baseline breakbefore'>Line 2, text item A</div><div class='small baseline'>Line 2, text item B (break before)</div>"
+		"<div class='big baseline breakbefore'>Line 3, text item A</div><div class='small baseline'>Line 3, text item B (break before)</div>"
+		
+		"<div class='big breakbefore'         >Line 1, text item A</div><div class='small baseline breakafter'>Line 1, text item B (break after)</div>"
+		"<div class='big baseline'            >Line 2, text item A</div><div class='small baseline breakafter'>Line 2, text item B (break after)</div>"
+		"<div class='big baseline'            >Line 3, text item A</div><div class='small baseline breakafter'>Line 3, text item B (break after)</div>"
+	);
 }
 
 void DoTwoTextRects( nuDoc* doc )
@@ -279,8 +301,11 @@ void DoTextQuality( nuDoc* doc )
 	//doc->Root.ParseAppend( "<div style='font-family: Microsoft Sans Serif'>The quick brown fox jumps over the laxy dog<div>" );
 	//doc->Root.ParseAppend( "<div style='padding: 20px; font-family: Microsoft Sans Serif'>h<div>" );
 	//doc->Root.ParseAppend( "<div style='font-family: Microsoft Sans Serif'>Backup from<div>" );
-	doc->Root.StyleParse( "background: #f0f0f0" );
-	doc->Root.ParseAppend( "<div style='font-family: Segoe UI; font-size: 12px'>Backup from<div>" );
+	
+	//doc->Root.StyleParse( "background: #f0f0f0" );
+	//doc->Root.ParseAppend( "<div style='font-family: Segoe UI; font-size: 12px'>Backup from<div>" );
+
+	//doc->Root.ParseAppend( "<div style='font-family: Consolas; font-size: 12px; color: #383'>DoBaselineAlignment_Multiline<div>" );
 }
 
 void InitDOM( nuDoc* doc )
@@ -291,10 +316,11 @@ void InitDOM( nuDoc* doc )
 	//DoBorder( doc );
 	//DoBaselineAlignment( doc );
 	//DoBaselineAlignment_rev2( doc );
+	DoBaselineAlignment_Multiline( doc );
 	//DoTwoTextRects( doc );
 	//DoBlockMargins( doc );
 	//DoLongText( doc );
-	DoBackupSettings( doc );
+	//DoBackupSettings( doc );
 	//DoPadding( doc );
 	//DoTextQuality( doc );
 

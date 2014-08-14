@@ -24,6 +24,8 @@ void nuLayout2::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderD
 	DocHeight = docHeight;
 	Pool = pool;
 	Stack.Initialize( Doc, Pool );
+	ChildOutStack.Init( 1024 * 1024 );
+	LineBoxStack.Init( 1024 * 1024 );
 	Fonts = nuGlobal()->FontStore->GetImmutableTable();
 	SnapBoxes = nuGlobal()->SnapBoxes;
 	SnapSubpixelHorzText = nuGlobal()->SnapSubpixelHorzText;
@@ -126,15 +128,19 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 	nuPos autoWidth = 0;
 	nuPos autoHeight = 0;
 	nuPos outerBaseline = IsDefined(in.OuterBaseline) ? in.OuterBaseline - toContent.Top : nuPosNULL;
-	nuPos innerBaseline = nuPosNULL;
-	int innerBaselineDefinedBy = -1;
+	//nuPos innerBaseline = nuPosNULL;
+	//int innerBaselineDefinedBy = -1;
 
-	// I first tried to have an optimized case for binding during first pass, but I have given up on that.
-	// One could revisit it once the design is nailed down.
 	// If we don't know our width and height yet then we need to delay bindings until our first pass is done
 	// The buffer size of 16 here is thumbsuck. One can't make it too big, because this is a recursive function.
-	StackBufferT<LayoutOutput, 16> outs;
-	outs.Init( (int) node.ChildCount() );
+	// -- I first tried to have an optimized case for binding during first pass, but I have given up on that.
+	// -- One could revisit it once the design is nailed down.
+	//StackBufferT<LayoutOutput, 16> outs;
+	//outs.Init( (int) node.ChildCount() );
+	nuLifoVector<LayoutOutput> outs( ChildOutStack );
+	outs.AddN( node.ChildCount() );
+	nuLifoVector<LineBox> lineBoxes( LineBoxStack );
+	lineBoxes.Push( LineBox::Make( nuPosNULL, -1, INT32MAX ) );
 
 	FlowState flow;
 	flow.PosMajor = 0;
@@ -147,16 +153,18 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 		const nuDomEl* c = node.ChildByIndex( i );
 		LayoutInput cin;
 		LayoutOutput cout;
-		cin.OuterBaseline = IsDefined(outerBaseline) ? outerBaseline : innerBaseline;
+		cin.OuterBaseline = IsDefined(outerBaseline) ? outerBaseline : lineBoxes.Back().InnerBaseline;
 		cin.ParentWidth = contentWidth;
 		cin.ParentHeight = contentHeight;
 		nuPoint offset(0,0);
 		int nlines = flow.NumLines;
+		bool breakBefore = false;
 		if ( c->GetTag() == nuTagText )
 		{
 			nuRenderDomText* rchildTxt = new (Pool->AllocT<nuRenderDomText>(false)) nuRenderDomText( c->GetInternalID(), Pool );
 			rnode->Children += rchildTxt;
 			RunText( *static_cast<const nuDomText*>(c), cin, cout, rchildTxt );
+			breakBefore = FlowBreakBefore( cout, flow );
 			offset += FlowRun( cin, cout, flow, rchildTxt );
 			// Text elements cannot choose their layout. They are forced to start in the top-left of their parent, and perform text layout inside that space.
 		}
@@ -165,19 +173,26 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 			nuRenderDomNode* rchildNode = new (Pool->AllocT<nuRenderDomNode>(false)) nuRenderDomNode( c->GetInternalID(), c->GetTag(), Pool );
 			rnode->Children += rchildNode;
 			RunNode( *static_cast<const nuDomNode*>(c), cin, cout, rchildNode );
+			breakBefore = FlowBreakBefore( cout, flow );
 			offset += FlowRun( cin, cout, flow, rchildNode );
 		}
 		outs[i] = cout;
-		if ( IsNull(innerBaseline) && IsDefined(cout.NodeBaseline) )
+		if ( flow.NumLines != nlines && breakBefore )
 		{
-			innerBaseline = cout.NodeBaseline + offset.Y;
-			innerBaselineDefinedBy = (int) i;
+			// Create a new linebox BEFORE adding this child's state
+			lineBoxes.Back().LastChild = int(i - 1);
+			lineBoxes += LineBox::Make( nuPosNULL, -1, INT32MAX );
 		}
-		if ( flow.NumLines != nlines )
+		if ( IsNull(lineBoxes.Back().InnerBaseline) && IsDefined(cout.NodeBaseline) )
 		{
-			// Reset inner baseline whenever a line break occurs
-			innerBaseline = nuPosNULL;
-			innerBaselineDefinedBy = -1;
+			lineBoxes.Back().InnerBaseline = cout.NodeBaseline + offset.Y;
+			lineBoxes.Back().InnerBaselineDefinedBy = (int) i;
+		}
+		if ( flow.NumLines != nlines && !breakBefore )
+		{
+			// Create a new linebox AFTER adding this child's state
+			lineBoxes.Back().LastChild = (int) i;
+			lineBoxes += LineBox::Make( nuPosNULL, -1, INT32MAX );
 		}
 		autoWidth = nuMax( autoWidth, flow.PosMinor );
 		autoHeight = nuMax( autoHeight, flow.MajorMax );
@@ -188,8 +203,9 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 
 	// Apply bindings
 	{
+		int iLineBox = 0;
 		LayoutInput cin;
-		cin.OuterBaseline = IsDefined(outerBaseline) ? outerBaseline : innerBaseline;
+		cin.OuterBaseline = IsDefined(outerBaseline) ? outerBaseline : lineBoxes[iLineBox].InnerBaseline;
 		cin.ParentWidth = contentWidth;
 		cin.ParentHeight = contentHeight;
 		for ( intp i = 0; i < node.ChildCount(); i++ )
@@ -198,8 +214,10 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 			nuPoint offset(0,0);
 			if ( c->GetTag() != nuTagText )
 				offset = PositionChildFromBindings( cin, outs[i], rnode->Children[i] );
-			if ( i == innerBaselineDefinedBy )
-				innerBaseline += offset.Y;
+			if ( i == lineBoxes[iLineBox].InnerBaselineDefinedBy )
+				lineBoxes[iLineBox].InnerBaseline += offset.Y;
+			if ( lineBoxes[iLineBox].LastChild == i )
+				iLineBox++;
 		}
 	}
 
@@ -210,7 +228,7 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 	rnode->Style.Padding = padding;
 	rnode->Style.BorderColor = Stack.Get( nuCatBorderColor_Left ).GetColor();
 
-	out.NodeBaseline = IsDefined(innerBaseline) ? innerBaseline + toContent.Top : nuPosNULL;
+	out.NodeBaseline = IsDefined(lineBoxes[0].InnerBaseline) ? lineBoxes[0].InnerBaseline + toContent.Top : nuPosNULL;
 	out.NodeWidth = contentWidth + border.Left + border.Right + margin.Left + margin.Right + padding.Left + padding.Right;
 	out.NodeHeight = contentHeight + border.Top + border.Bottom + margin.Top + margin.Bottom + padding.Top + padding.Bottom;
 	out.Binds = ComputeBinds();
@@ -575,11 +593,20 @@ void nuLayout2::FlowNewline( FlowState& flow )
 	flow.NumLines++;
 }
 
-nuPoint nuLayout2::FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, nuRenderDomEl* rendEl )
+bool nuLayout2::FlowBreakBefore( const LayoutOutput& cout, FlowState& flow )
 {
 	nuBreakType breakType = nuBreakType(cout.Break & 3);	// need to mask off because of enum sign extension
 	if ( breakType == nuBreakBefore )
+	{
 		FlowNewline( flow );
+		return true;
+	}
+	return false;
+}
+
+nuPoint nuLayout2::FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, nuRenderDomEl* rendEl )
+{
+	nuBreakType breakType = nuBreakType(cout.Break & 3);	// need to mask off because of enum sign extension
 
 	if ( IsDefined(cin.ParentWidth) )
 	{

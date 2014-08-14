@@ -136,23 +136,94 @@ protected:
 	}
 };
 
-/* A very simple heap that is specialized for one type of object only.
-When you free an object, it goes into the 'free list'. Allocations are
-first made from the free list, before resorting to growing the linear array.
-*/
-// I started making this for a Doc's list of nuDomEl objects, but I think I'll defer that
-// until it's clear that we're really winning over the generic heap.
-/*
-template<typename T>
-class nuSpecialHeap
+// Last-in-first-out buffer. This is used instead of stack storage.
+// There is a hard limit here - the buffer size you request is
+// allocated up front. The assumed usage is identical to that of a stack.
+// This was created to lessen the burden on the actual thread stack during
+// layout.
+// You must free objects in the reverse order that you allocated them.
+class NUAPI nuLifoBuf
 {
 public:
-	T* Alloc()
-	{
-	}
+			nuLifoBuf();
+			nuLifoBuf( size_t size );	// This simply calls Init(size)
+			~nuLifoBuf();
 
+	// Initialize the buffer.
+	// This will panic if the buffer is not empty.
+	void	Init( size_t size );
+
+	// Allocate a new item.
+	// It is legal to allocate 0 bytes. You can then us Realloc to grow. Regardless
+	// of the size of your initial allocation, you must always call Free() on anything
+	// that you have Alloc'ed.
+	// This will panic if the buffer size is exhausted.
+	void*	Alloc( size_t bytes );
+	
+	// Grow the most recently allocated item to the specified size.
+	// This will panic if buf is not the most recently allocated item, or if the buffer size is exhausted.
+	void	Realloc( void* buf, size_t bytes );
+
+	// This is a less safe version of Realloc. The only check it performs is whether we will run out of space.
+	void	GrowLast( size_t moreBytes );
+
+	// Free the most recently allocated item
+	// This will panic if buf is not the most recently allocated item, and buf is not null.
+	void	Free( void* buf );
 
 private:
-	podvec<T>	List;
+	podvec<intp>	ItemSizes;
+	void*			Buffer;
+	intp			Size;
+	intp			Pos;
 };
-*/
+
+// Vector that uses nuLifoBuf for storage. This is made for PODs - it does not do
+// object construction or destruction.
+template<typename T>
+class nuLifoVector
+{
+public:
+	nuLifoVector( nuLifoBuf& lifo )
+	{
+		Lifo = &lifo;
+	}
+	~nuLifoVector()
+	{
+		Lifo->Free( Data );
+	}
+
+	void AddN( intp numElementsToAdd )
+	{
+		if ( Data == nullptr )
+			Data = (T*) Lifo->Alloc( numElementsToAdd * sizeof(T) );
+		else
+			Lifo->GrowLast( numElementsToAdd * sizeof(T) );
+		Count += numElementsToAdd;
+	}
+
+	void Push( const T& t )
+	{
+		intp c = Count;
+		AddN( 1 );
+		Data[c] = t;
+	}
+
+	T& Back()
+	{
+		return Data[Count - 1];
+	}
+
+	nuLifoVector& operator+=( const T& t )
+	{
+		Push( t );
+		return *this;
+	}
+
+	T& operator[]( intp i ) { return Data[i]; }
+
+private:
+	nuLifoBuf*	Lifo;
+	T*			Data = nullptr;
+	intp		Count = 0;
+};

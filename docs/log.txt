@@ -175,6 +175,14 @@
 	so for now I'm sticking with this. It should be a fairly trivial optimization to
 	fix this up later.
 
+2014-08-11	Baseline after linebreak
+	Every time you do a linebreak, you need to reset your inner baseline to null.
+	I wonder now whether it would be a good idea to place every line in its own box.
+	HTML certainly does something like this. I'm going to first try not creating
+	virtual boxes, and just maintaining a unique inner baseline for every line inside
+	a box.
+	UPDATE: That seems to work OK.
+
 
 
 

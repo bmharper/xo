@@ -74,3 +74,72 @@ void* nuPool::Alloc( size_t bytes, bool zeroInit )
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+nuLifoBuf::nuLifoBuf()
+{
+	Buffer = nullptr;
+	Size = 0;
+	Pos = 0;
+}
+
+nuLifoBuf::nuLifoBuf( size_t size ) : nuLifoBuf()
+{
+	Init( size );
+}
+
+nuLifoBuf::~nuLifoBuf()
+{
+	NUASSERT( Pos == 0 ); // This assertion might be a nuisance. If so, just remove it.
+	free( Buffer );
+}
+
+void nuLifoBuf::Init( size_t size )
+{
+	NUASSERT( Pos == 0 );
+	Size = size;
+	free( Buffer );
+	Buffer = nuMallocOrDie( size );
+}
+
+void* nuLifoBuf::Alloc( size_t _bytes )
+{
+	NUASSERT( (size_t) Pos + _bytes <= (size_t) Size );
+	NUASSERT( (intp) _bytes >= 0 );
+	intp bytes = _bytes;
+
+	void* pos = (byte*) Buffer + Pos;
+	ItemSizes += bytes;
+	Pos += bytes;
+	
+	return pos;
+}
+
+void nuLifoBuf::Realloc( void* buf, size_t bytes )
+{
+	NUASSERT( ItemSizes.size() > 0 && buf == (byte*) Buffer + (Pos - ItemSizes.back()) );
+	NUASSERT( (size_t) Pos - (size_t) ItemSizes.back() + bytes <= (size_t) Size );
+	NUASSERT( (intp) bytes >= 0 );
+	intp delta = (intp) bytes - ItemSizes.back();
+	ItemSizes.back() += delta;
+	Pos += delta;
+}
+
+void nuLifoBuf::GrowLast( size_t moreBytes )
+{
+	NUASSERT( (size_t) Pos + moreBytes <= (size_t) Size );
+	ItemSizes.back() += (intp) moreBytes;
+	Pos += (intp) moreBytes;
+}
+
+void nuLifoBuf::Free( void* buf )
+{
+	if ( buf == nullptr )
+		return;
+	NUASSERT( ItemSizes.size() > 0 && buf == (byte*) Buffer + (Pos - ItemSizes.back()) );
+	Pos -= ItemSizes.back();
+	ItemSizes.pop();
+}

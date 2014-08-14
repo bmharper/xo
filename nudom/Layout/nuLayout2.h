@@ -5,6 +5,7 @@
 #include "Render/nuRenderStack.h"
 #include "Text/nuGlyphCache.h"
 #include "Text/nuFontStore.h"
+#include "../nuMem.h"
 
 /* This performs box layout.
 
@@ -50,6 +51,15 @@ protected:
 		nuBreakType	Break: 2;		// Keep in mind that you need to mask this off against 3 (ie if (x.Break & 3 == nuBreakAfter)), because of sign extension. ie enums are signed.
 	};
 
+	// Every time we start a new line, another one of these is created
+	struct LineBox
+	{
+		nuPos		InnerBaseline;
+		int			InnerBaselineDefinedBy;
+		int			LastChild;
+		static LineBox Make( nuPos innerBaseline, int innerBaselineDefinedBy, int lastChild ) { return {innerBaseline, innerBaselineDefinedBy, lastChild}; }
+	};
+
 	struct Word
 	{
 		nuPos	Width;
@@ -84,6 +94,8 @@ protected:
 	u32							DocWidth, DocHeight;
 	nuPool*						Pool;
 	nuRenderStack				Stack;
+	nuLifoBuf					ChildOutStack;
+	nuLifoBuf					LineBoxStack;
 	float						PtToPixel;
 	float						EpToPixel;
 	nuFontTableImmutable		Fonts;
@@ -114,6 +126,7 @@ protected:
 	static bool				IsLinebreak( int ch );
 	static nuGlyphCacheKey	MakeGlyphCacheKey( nuRenderDomText* rnode );
 	static void				FlowNewline( FlowState& flow );
+	static bool				FlowBreakBefore( const LayoutOutput& cout, FlowState& flow );
 	static nuPoint			FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, nuRenderDomEl* rendEl );
 
 	static bool				IsDefined( nuPos p )	{ return p != nuPosNULL; }
