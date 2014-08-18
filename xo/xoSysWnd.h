@@ -1,10 +1,10 @@
 #pragma once
 
-#include "nuDefs.h"
+#include "xoDefs.h"
 
 /* A system window, or view.
 */
-class NUAPI nuSysWnd
+class XOAPI xoSysWnd
 {
 public:
 	enum SetPositionFlags
@@ -12,11 +12,11 @@ public:
 		SetPosition_Move = 1,
 		SetPosition_Size = 2,
 	};
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	HWND					SysWnd;
-#elif NU_PLATFORM_ANDROID
-	nuBox					RelativeClientRect;		// Set by NuLib_init
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_ANDROID
+	xoBox					RelativeClientRect;		// Set by NuLib_init
+#elif XO_PLATFORM_LINUX_DESKTOP
 	Display*				XDisplay;
 	Window					XWindowRoot;
 	//GLint					att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
@@ -26,30 +26,30 @@ public:
 	GLXContext				GLContext;
 	XEvent					Event;
 #else
-	NUTODO_STATIC;
+	XOTODO_STATIC;
 #endif
-	nuDocGroup*			DocGroup;
-	nuRenderBase*		Renderer;
+	xoDocGroup*			DocGroup;
+	xoRenderBase*		Renderer;
 
-	nuSysWnd();
-	~nuSysWnd();
+	xoSysWnd();
+	~xoSysWnd();
 
-	static nuSysWnd*	Create();
-	static nuSysWnd*	CreateWithDoc();
+	static xoSysWnd*	Create();
+	static xoSysWnd*	CreateWithDoc();
 	static void			PlatformInitialize();
 
-	void	Attach( nuDoc* doc, bool destroyDocWithProcessor );
+	void	Attach( xoDoc* doc, bool destroyDocWithProcessor );
 	void	Show();
-	nuDoc*	Doc();
+	xoDoc*	Doc();
 	bool	BeginRender();				// Basically wglMakeCurrent()
 	void	EndRender();				// SwapBuffers followed by wglMakeCurrent(NULL)
 	void	SurfaceLost();				// Surface lost, and now regained. Reinitialize GL state (textures, shaders, etc).
-	void	SetPosition( nuBox box, uint setPosFlags );
-	nuBox	GetRelativeClientRect();	// Returns the client rectangle (in screen coordinates), relative to the non-client window
+	void	SetPosition( xoBox box, uint setPosFlags );
+	xoBox	GetRelativeClientRect();	// Returns the client rectangle (in screen coordinates), relative to the non-client window
 
 protected:
 	bool	InitializeRenderer();
 
 	template<typename TRenderer>
-	bool	InitializeRenderer_Any( nuRenderBase*& renderer );
+	bool	InitializeRenderer_Any( xoRenderBase*& renderer );
 };

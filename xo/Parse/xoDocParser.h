@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../nuString.h"
+#include "../xoString.h"
 
-class nuDomNode;
+class xoDomNode;
 
 /* Parse xml-like document format into a DOM node.
 This doesn't make any special attempts to be fast.
@@ -34,10 +34,10 @@ Examples:
 	<div>some   text</div>				"some   text"
 
 */
-class NUAPI nuDocParser
+class XOAPI xoDocParser
 {
 public:
-	nuString Parse( const char* src, nuDomNode* target );
+	xoString Parse( const char* src, xoDomNode* target );
 
 protected:
 	static bool IsWhite( int c );

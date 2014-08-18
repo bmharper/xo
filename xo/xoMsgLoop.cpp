@@ -1,25 +1,25 @@
 #include "pch.h"
-#include "nuDefs.h"
-#include "nuDocGroup.h"
-#include "nuSysWnd.h"
-#include "nuEvent.h"
+#include "xoDefs.h"
+#include "xoDocGroup.h"
+#include "xoSysWnd.h"
+#include "xoEvent.h"
 
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 
-//#define MSGTRACE NUTRACE
+//#define MSGTRACE XOTRACE
 #define MSGTRACE(...)
 
 static bool AnyDocsDirty()
 {
-	for ( int i = 0; i < nuGlobal()->Docs.size(); i++ )
+	for ( int i = 0; i < xoGlobal()->Docs.size(); i++ )
 	{
-		if ( nuGlobal()->Docs[i]->IsDocVersionDifferentToRenderer() )
+		if ( xoGlobal()->Docs[i]->IsDocVersionDifferentToRenderer() )
 			return true;
 	}
 	return false;
 }
 
-NUAPI void nuRunWin32MessageLoop()
+XOAPI void xoRunWin32MessageLoop()
 {
 	const double HEAT_TIME = 0.3;
 	double lastFrameStart = AbcTimeAccurateRTSeconds();
@@ -67,16 +67,16 @@ NUAPI void nuRunWin32MessageLoop()
 		}
 
 		double now = AbcTimeAccurateRTSeconds();
-		double nextFrameStart = lastFrameStart + 1.0 / nuGlobal()->TargetFPS;
+		double nextFrameStart = lastFrameStart + 1.0 / xoGlobal()->TargetFPS;
 		if ( now >= nextFrameStart || AnyDocsDirty() )
 		{
 			MSGTRACE( "Render enter\n" );
 			renderIdle = true;
 			lastFrameStart = now;
-			for ( int i = 0; i < nuGlobal()->Docs.size(); i++ )
+			for ( int i = 0; i < xoGlobal()->Docs.size(); i++ )
 			{
-				nuRenderResult rr = nuGlobal()->Docs[i]->Render();
-				if ( rr != nuRenderResultIdle )
+				xoRenderResult rr = xoGlobal()->Docs[i]->Render();
+				if ( rr != xoRenderResultIdle )
 					renderIdle = false;
 			}
 		}
@@ -88,19 +88,19 @@ NUAPI void nuRunWin32MessageLoop()
 				AbcSleep(0);
 		}
 
-		nuProcessDocQueue();
+		xoProcessDocQueue();
 	}
 
 	//timeEndPeriod( 5 );
 }
 
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_LINUX_DESKTOP
 
-extern nuSysWnd* SingleMainWnd;
+extern xoSysWnd* SingleMainWnd;
 
-NUAPI void nuRunXMessageLoop()
+XOAPI void xoRunXMessageLoop()
 {
-	nuProcessDocQueue();
+	xoProcessDocQueue();
 
 	while(1)
 	{
@@ -118,40 +118,40 @@ NUAPI void nuRunXMessageLoop()
 			//glXSwapBuffers(dpy, win);
 			glXMakeCurrent( SingleMainWnd->XDisplay, None, Null );
 			*/
-			nuEvent nev;
-			nev.Type = nuEventWindowSize;
+			xoEvent nev;
+			nev.Type = xoEventWindowSize;
 			nev.Points[0].x = wa.width;
 			nev.Points[0].y = wa.height;
-			for ( int i = 0; i < nuGlobal()->Docs.size(); i++ )
-				nuGlobal()->Docs[i]->ProcessEvent( nev );
+			for ( int i = 0; i < xoGlobal()->Docs.size(); i++ )
+				xoGlobal()->Docs[i]->ProcessEvent( nev );
 
 		}
 		else if ( xev.type == KeyPress )
 		{
-			NUTRACE( "key = %d\n", xev.xkey.keycode );
+			XOTRACE( "key = %d\n", xev.xkey.keycode );
 			if ( xev.xkey.keycode == 24 ) // 'q'
 				break;
 		}
 		else if ( xev.type == MotionNotify )
 		{
-			//NUTRACE( "x,y = %d,%d\n", xev.xmotion.x, xev.xmotion.y );
-			nuEvent nev;
-			nev.Type = nuEventMouseMove;
+			//XOTRACE( "x,y = %d,%d\n", xev.xmotion.x, xev.xmotion.y );
+			xoEvent nev;
+			nev.Type = xoEventMouseMove;
 			nev.Points[0].x = xev.xmotion.x;
 			nev.Points[0].y = xev.xmotion.y;
-			for ( int i = 0; i < nuGlobal()->Docs.size(); i++ )
-				nuGlobal()->Docs[i]->ProcessEvent( nev );
+			for ( int i = 0; i < xoGlobal()->Docs.size(); i++ )
+				xoGlobal()->Docs[i]->ProcessEvent( nev );
 		}
 
-		for ( int i = 0; i < nuGlobal()->Docs.size(); i++ )
+		for ( int i = 0; i < xoGlobal()->Docs.size(); i++ )
 		{
-			nuRenderResult rr = nuGlobal()->Docs[i]->Render();
-			//NUTRACE( "rr = %d\n", rr );
-			//if ( rr != nuRenderResultIdle )
+			xoRenderResult rr = xoGlobal()->Docs[i]->Render();
+			//XOTRACE( "rr = %d\n", rr );
+			//if ( rr != xoRenderResultIdle )
 			//	renderIdle = false;
 		}
 
-		nuProcessDocQueue();
+		xoProcessDocQueue();
 	}
 }
 

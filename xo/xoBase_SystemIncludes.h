@@ -10,10 +10,10 @@
 	#include <mmsystem.h>
 	#include <Shlobj.h>
 #else
-	#define NU_BUILD_OPENGL 1
+	#define XO_BUILD_OPENGL 1
 	#ifdef ANDROID
 		// Android
-		#define NU_BUILD_OPENGL_ES 1
+		#define XO_BUILD_OPENGL_ES 1
 		#include <jni.h>
 		#include <android/log.h>
 		#include <sys/atomics.h>
@@ -23,7 +23,7 @@
 		#include <unistd.h>
 		#include <pwd.h>
 	#endif
-	#ifdef NU_BUILD_OPENGL_ES
+	#ifdef XO_BUILD_OPENGL_ES
 		#include <GLES2/gl2.h>
 		#include <GLES2/gl2ext.h>
 	#else
@@ -36,7 +36,7 @@
 	#include <math.h>
 #endif
 
-#if NU_BUILD_DIRECTX
+#if XO_BUILD_DIRECTX
 	#include <D3D11.h>
 	#include <d3dcompiler.h>
 	#include <directxmath.h>

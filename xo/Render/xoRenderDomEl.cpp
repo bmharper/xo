@@ -1,8 +1,8 @@
 #include "pch.h"
-#include "nuRenderDomEl.h"
-#include "nuRenderStack.h"
+#include "xoRenderDomEl.h"
+#include "xoRenderStack.h"
 
-nuRenderDomEl::nuRenderDomEl( nuInternalID id, nuTag tag ) : InternalID(id), Tag(tag)
+xoRenderDomEl::xoRenderDomEl( xoInternalID id, xoTag tag ) : InternalID(id), Tag(tag)
 {
 }
 
@@ -10,33 +10,33 @@ nuRenderDomEl::nuRenderDomEl( nuInternalID id, nuTag tag ) : InternalID(id), Tag
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nuRenderDomNode::nuRenderDomNode( nuInternalID id, nuTag tag, nuPool* pool ) : nuRenderDomEl(id, tag)
+xoRenderDomNode::xoRenderDomNode( xoInternalID id, xoTag tag, xoPool* pool ) : xoRenderDomEl(id, tag)
 {
 	SetPool( pool );
 }
 
-void nuRenderDomNode::Discard()
+void xoRenderDomNode::Discard()
 {
 	InternalID = 0;
 	Children.clear();
 }
 
-void nuRenderDomNode::SetStyle( nuRenderStack& stack )
+void xoRenderDomNode::SetStyle( xoRenderStack& stack )
 {
-	auto bgColor = stack.Get( nuCatBackground );
-	auto bgImage = stack.Get( nuCatBackgroundImage );
+	auto bgColor = stack.Get( xoCatBackground );
+	auto bgImage = stack.Get( xoCatBackgroundImage );
 	if ( !bgColor.IsNull() ) Style.BackgroundColor = bgColor.GetColor();
 	if ( !bgImage.IsNull() ) Style.BackgroundImageID = bgImage.GetStringID();
 }
 
-void nuRenderDomNode::SetPool( nuPool* pool )
+void xoRenderDomNode::SetPool( xoPool* pool )
 {
 	Children.Pool = pool;
 }
 
-nuBox nuRenderDomNode::BorderBox() const
+xoBox xoRenderDomNode::BorderBox() const
 {
-	nuBox box = Pos;
+	xoBox box = Pos;
 	box.Left -= Style.BorderSize.Left;
 	box.Top -= Style.BorderSize.Top;
 	box.Right += Style.BorderSize.Right;
@@ -48,16 +48,16 @@ nuBox nuRenderDomNode::BorderBox() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nuRenderDomText::nuRenderDomText( nuInternalID id, nuPool* pool ) : nuRenderDomEl( id, nuTagText )
+xoRenderDomText::xoRenderDomText( xoInternalID id, xoPool* pool ) : xoRenderDomEl( id, xoTagText )
 {
 	Text.Pool = pool;
-	FontID = nuFontIDNull;
+	FontID = xoFontIDNull;
 	Char = 0;
 	FontSizePx = 0;
 	Flags = 0;
 }
 
-void nuRenderDomText::SetStyle( nuRenderStack& stack )
+void xoRenderDomText::SetStyle( xoRenderStack& stack )
 {
-	Color = stack.Get( nuCatColor ).GetColor();
+	Color = stack.Get( xoCatColor ).GetColor();
 }

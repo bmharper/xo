@@ -1,21 +1,21 @@
-#include "../../amalgamation/nuDom-amalgamation.h"
+#include "../../amalgamation/xoDom-amalgamation.h"
 
-static nuSysWnd* MainWnd;
+static xoSysWnd* MainWnd;
 
-void nuMain( nuMainEvent ev )
+void xoMain( xoMainEvent ev )
 {
 	switch ( ev )
 	{
-	case nuMainEventInit:
+	case xoMainEventInit:
 		{
-			NUTRACE( "Hello 1\n" );
-			MainWnd = nuSysWnd::CreateWithDoc();
-			nuDoc* doc = MainWnd->Doc();
+			XOTRACE( "Hello 1\n" );
+			MainWnd = xoSysWnd::CreateWithDoc();
+			xoDoc* doc = MainWnd->Doc();
 			doc->Root.SetText( "Hello amalgamation" );
 			MainWnd->Show();
 		}
 		break;
-	case nuMainEventShutdown:
+	case xoMainEventShutdown:
 		delete MainWnd;
 		MainWnd = NULL;
 		break;

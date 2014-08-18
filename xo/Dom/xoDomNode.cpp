@@ -1,33 +1,33 @@
 #include "pch.h"
-#include "nuDoc.h"
-#include "nuDomNode.h"
-#include "../Parse/nuDocParser.h"
+#include "xoDoc.h"
+#include "xoDomNode.h"
+#include "../Parse/xoDocParser.h"
 
-nuDomNode::nuDomNode( nuDoc* doc, nuTag tag ) : nuDomEl(doc, tag)
+xoDomNode::xoDomNode( xoDoc* doc, xoTag tag ) : xoDomEl(doc, tag)
 {
 	AllEventMask = 0;
 }
 
-nuDomNode::~nuDomNode()
+xoDomNode::~xoDomNode()
 {
 	for ( intp i = 0; i < Children.size(); i++ )
 		Doc->FreeChild( Children[i] );
 	Children.clear();
 }
 
-void nuDomNode::SetText( const char* txt )
+void xoDomNode::SetText( const char* txt )
 {
-	if ( Children.size() != 1 || Children[0]->GetTag() != nuTagText )
+	if ( Children.size() != 1 || Children[0]->GetTag() != xoTagText )
 	{
 		RemoveAllChildren();
-		AddChild( nuTagText );
+		AddChild( xoTagText );
 	}
 	Children[0]->SetText( txt );
 }
 
-const char* nuDomNode::GetText() const
+const char* xoDomNode::GetText() const
 {
-	if ( Children.size() == 1 && Children[0]->GetTag() == nuTagText )
+	if ( Children.size() == 1 && Children[0]->GetTag() == xoTagText )
 	{
 		return Children[0]->GetText();
 	}
@@ -37,11 +37,11 @@ const char* nuDomNode::GetText() const
 	}
 }
 
-void nuDomNode::CloneSlowInto( nuDomEl& c, uint cloneFlags ) const
+void xoDomNode::CloneSlowInto( xoDomEl& c, uint cloneFlags ) const
 {
 	CloneSlowIntoBase( c, cloneFlags );
-	nuDomNode& cnode = static_cast<nuDomNode&>(c);
-	nuDoc* cDoc = c.GetDoc();
+	xoDomNode& cnode = static_cast<xoDomNode&>(c);
+	xoDoc* cDoc = c.GetDoc();
 	
 	Style.CloneSlowInto( cnode.Style );
 	cnode.Classes = Classes;
@@ -52,49 +52,49 @@ void nuDomNode::CloneSlowInto( nuDomEl& c, uint cloneFlags ) const
 	for ( intp i = 0; i < Children.size(); i++ )
 		cnode.Children += cDoc->GetChildByInternalIDMutable( Children[i]->GetInternalID() );
 
-	if ( !!(cloneFlags & nuCloneFlagEvents) )
-		NUPANIC("clone events is TODO");
+	if ( !!(cloneFlags & xoCloneFlagEvents) )
+		XOPANIC("clone events is TODO");
 }
 
-void nuDomNode::ForgetChildren()
+void xoDomNode::ForgetChildren()
 {
 	Children.clear_noalloc();
 }
 
-nuDomEl* nuDomNode::AddChild( nuTag tag )
+xoDomEl* xoDomNode::AddChild( xoTag tag )
 {
 	IncVersion();
-	nuDomEl* c = Doc->AllocChild( tag );
+	xoDomEl* c = Doc->AllocChild( tag );
 	Children += c;
 	Doc->ChildAdded( c );
 	return c;
 }
 
-nuDomNode* nuDomNode::AddNode( nuTag tag )
+xoDomNode* xoDomNode::AddNode( xoTag tag )
 {
-	AbcAssert( tag != nuTagText );
-	return static_cast<nuDomNode*>(AddChild(tag));
+	AbcAssert( tag != xoTagText );
+	return static_cast<xoDomNode*>(AddChild(tag));
 }
 
-nuDomText* nuDomNode::AddText( const char* txt )
+xoDomText* xoDomNode::AddText( const char* txt )
 {
-	nuDomText* el = static_cast<nuDomText*>(AddChild(nuTagText));
+	xoDomText* el = static_cast<xoDomText*>(AddChild(xoTagText));
 	el->SetText( txt );
 	return el;
 }
 
-void nuDomNode::RemoveChild( nuDomEl* c )
+void xoDomNode::RemoveChild( xoDomEl* c )
 {
 	if ( !c ) return;
 	IncVersion();
 	intp ix = Children.find( c );
-	NUASSERT( ix != -1 );
+	XOASSERT( ix != -1 );
 	Children.erase(ix);
 	Doc->ChildRemoved( c );
 	Doc->FreeChild( c );
 }
 
-void nuDomNode::RemoveAllChildren()
+void xoDomNode::RemoveAllChildren()
 {
 	IncVersion();
 	for ( intp i = 0; i < Children.size(); i++ )
@@ -105,19 +105,19 @@ void nuDomNode::RemoveAllChildren()
 	Children.clear();
 }
 
-nuDomEl* nuDomNode::ChildByIndex( intp index )
+xoDomEl* xoDomNode::ChildByIndex( intp index )
 {
-	NUASSERT( (uintp) index < (uintp) Children.size() );
+	XOASSERT( (uintp) index < (uintp) Children.size() );
 	return Children[index];
 }
 
-const nuDomEl* nuDomNode::ChildByIndex( intp index ) const
+const xoDomEl* xoDomNode::ChildByIndex( intp index ) const
 {
-	NUASSERT( (uintp) index < (uintp) Children.size() );
+	XOASSERT( (uintp) index < (uintp) Children.size() );
 	return Children[index];
 }
 
-void nuDomNode::Discard()
+void xoDomNode::Discard()
 {
 	InternalID = 0;
 	AllEventMask = 0;
@@ -128,30 +128,30 @@ void nuDomNode::Discard()
 	Handlers.hack( 0, 0, NULL );
 }
 
-nuString nuDomNode::Parse( const char* src )
+xoString xoDomNode::Parse( const char* src )
 {
 	RemoveAllChildren();
 	return ParseAppend( src );
 }
 
-nuString nuDomNode::ParseAppend( const char* src )
+xoString xoDomNode::ParseAppend( const char* src )
 {
-	nuDocParser p;
+	xoDocParser p;
 	return p.Parse( src, this );
 }
 
-nuString nuDomNode::ParseAppend( const nuStringRaw& src )
+xoString xoDomNode::ParseAppend( const xoStringRaw& src )
 {
 	return ParseAppend( src.Z );
 }
 
-bool nuDomNode::StyleParse( const char* t, intp maxLen )
+bool xoDomNode::StyleParse( const char* t, intp maxLen )
 {
 	IncVersion();
 	return Style.Parse( t, maxLen, Doc );
 }
 
-bool nuDomNode::StyleParsef( const char* t, ... )
+bool xoDomNode::StyleParsef( const char* t, ... )
 {
 	char buff[8192];
 	va_list va;
@@ -165,44 +165,44 @@ bool nuDomNode::StyleParsef( const char* t, ... )
 	}
 	else
 	{
-		nuString str = nuString(t);
+		xoString str = xoString(t);
 		str.Z[50] = 0;
-		nuParseFail( "Parse string is too long for StyleParsef: %s...", str.Z );
-		NUASSERTDEBUG(false);
+		xoParseFail( "Parse string is too long for StyleParsef: %s...", str.Z );
+		XOASSERTDEBUG(false);
 		return false;
 	}
 }
 
-void nuDomNode::HackSetStyle( const nuStyle& style )
+void xoDomNode::HackSetStyle( const xoStyle& style )
 {
 	IncVersion();
 	Style = style;
 }
 
-void nuDomNode::AddClass( const char* klass )
+void xoDomNode::AddClass( const char* klass )
 {
 	IncVersion();
-	nuStyleID id = Doc->ClassStyles.GetStyleID( klass );
+	xoStyleID id = Doc->ClassStyles.GetStyleID( klass );
 	if ( Classes.find( id ) == -1 )
 		Classes += id;
 }
 
-void nuDomNode::RemoveClass( const char* klass )
+void xoDomNode::RemoveClass( const char* klass )
 {
 	IncVersion();
-	nuStyleID id = Doc->ClassStyles.GetStyleID( klass );
+	xoStyleID id = Doc->ClassStyles.GetStyleID( klass );
 	intp index = Classes.find( id );
 	if ( index != -1 )
 		Classes.erase( index );
 }
 
-void nuDomNode::AddHandler( nuEvents ev, nuEventHandlerF func, bool isLambda, void* context )
+void xoDomNode::AddHandler( xoEvents ev, xoEventHandlerF func, bool isLambda, void* context )
 {
 	for ( intp i = 0; i < Handlers.size(); i++ )
 	{
 		if ( Handlers[i].Context == context && Handlers[i].Func == func )
 		{
-			NUASSERT(isLambda == Handlers[i].IsLambda());
+			XOASSERT(isLambda == Handlers[i].IsLambda());
 			Handlers[i].Mask |= ev;
 			RecalcAllEventMask();
 			return;
@@ -217,18 +217,18 @@ void nuDomNode::AddHandler( nuEvents ev, nuEventHandlerF func, bool isLambda, vo
 	RecalcAllEventMask();
 }
 
-void nuDomNode::AddHandler( nuEvents ev, nuEventHandlerLambda lambda )
+void xoDomNode::AddHandler( xoEvents ev, xoEventHandlerLambda lambda )
 {
-	nuEventHandlerLambda* copy = new nuEventHandlerLambda( lambda );
-	AddHandler( ev, nuEventHandler_LambdaStaticFunc, true, copy );
+	xoEventHandlerLambda* copy = new xoEventHandlerLambda( lambda );
+	AddHandler( ev, xoEventHandler_LambdaStaticFunc, true, copy );
 }
 
-void nuDomNode::AddHandler( nuEvents ev, nuEventHandlerF func, void* context )
+void xoDomNode::AddHandler( xoEvents ev, xoEventHandlerF func, void* context )
 {
 	AddHandler( ev, func, false, context );
 }
 
-void nuDomNode::RecalcAllEventMask()
+void xoDomNode::RecalcAllEventMask()
 {
 	uint32 m = 0;
 	for ( intp i = 0; i < Handlers.size(); i++ )

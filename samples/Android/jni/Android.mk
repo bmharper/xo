@@ -37,39 +37,39 @@ FREETYPE_SRC = \
 ../../../dependencies/freetype/src/type42/type42.c \
 ../../../dependencies/freetype/src/winfonts/winfnt.c \
 
-NU_SRC = \
-../../../templates/nuAndroid.cpp \
-../../../nudom/nuDefs.cpp \
-../../../nudom/nuDoc.cpp \
-../../../nudom/nuEvent.cpp \
-../../../nudom/nuMem.cpp \
-../../../nudom/nuPlatform.cpp \
-../../../nudom/nuString.cpp \
-../../../nudom/nuStringTable.cpp \
-../../../nudom/nuStyle.cpp \
-../../../nudom/nuStyleParser.cpp \
-../../../nudom/nuSysWnd.cpp \
-../../../nudom/nuDocGroup.cpp \
-../../../nudom/Dom/nuDomEl.cpp \
-../../../nudom/Dom/nuDomNode.cpp \
-../../../nudom/Dom/nuDomText.cpp \
-../../../nudom/Image/nuImage.cpp \
-../../../nudom/Image/nuImageStore.cpp \
-../../../nudom/Layout/nuLayout.cpp \
-../../../nudom/Layout/nuTextLayout.cpp \
-../../../nudom/Render/nuRenderer.cpp \
-../../../nudom/Render/nuRenderBase.cpp \
-../../../nudom/Render/nuRenderGL.cpp \
-../../../nudom/Render/nuRenderGL_Defs.cpp \
-../../../nudom/Render/nuRenderDoc.cpp \
-../../../nudom/Render/nuRenderDomEl.cpp \
-../../../nudom/Render/nuRenderStack.cpp \
-../../../nudom/Render/nuStyleResolve.cpp \
-../../../nudom/Render/nuTextureAtlas.cpp \
-../../../nudom/Render/nuVertexTypes.cpp \
-../../../nudom/Text/nuFontStore.cpp \
-../../../nudom/Text/nuGlyphCache.cpp \
-../../../nudom/Text/nuTextDefs.cpp \
+XO_SRC = \
+../../../templates/xoAndroid.cpp \
+../../../nudom/xoDefs.cpp \
+../../../nudom/xoDoc.cpp \
+../../../nudom/xoEvent.cpp \
+../../../nudom/xoMem.cpp \
+../../../nudom/xoPlatform.cpp \
+../../../nudom/xoString.cpp \
+../../../nudom/xoStringTable.cpp \
+../../../nudom/xoStyle.cpp \
+../../../nudom/xoStyleParser.cpp \
+../../../nudom/xoSysWnd.cpp \
+../../../nudom/xoDocGroup.cpp \
+../../../nudom/Dom/xoDomEl.cpp \
+../../../nudom/Dom/xoDomNode.cpp \
+../../../nudom/Dom/xoDomText.cpp \
+../../../nudom/Image/xoImage.cpp \
+../../../nudom/Image/xoImageStore.cpp \
+../../../nudom/Layout/xoLayout.cpp \
+../../../nudom/Layout/xoTextLayout.cpp \
+../../../nudom/Render/xoRenderer.cpp \
+../../../nudom/Render/xoRenderBase.cpp \
+../../../nudom/Render/xoRenderGL.cpp \
+../../../nudom/Render/xoRenderGL_Defs.cpp \
+../../../nudom/Render/xoRenderDoc.cpp \
+../../../nudom/Render/xoRenderDomEl.cpp \
+../../../nudom/Render/xoRenderStack.cpp \
+../../../nudom/Render/xoStyleResolve.cpp \
+../../../nudom/Render/xoTextureAtlas.cpp \
+../../../nudom/Render/xoVertexTypes.cpp \
+../../../nudom/Text/xoFontStore.cpp \
+../../../nudom/Text/xoGlyphCache.cpp \
+../../../nudom/Text/xoTextDefs.cpp \
 ../../../nudom/Shaders/Processed_glsl/CurveShader.cpp \
 ../../../nudom/Shaders/Processed_glsl/FillShader.cpp \
 ../../../nudom/Shaders/Processed_glsl/FillTexShader.cpp \
@@ -85,11 +85,11 @@ NU_SRC = \
 
 MY_SRC = ../../HelloWorld/HelloWorld.cpp
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../nudom $(LOCAL_PATH)/../../../dependencies/freetype/include
-LOCAL_MODULE     := libnudom
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../xo $(LOCAL_PATH)/../../../dependencies/freetype/include
+LOCAL_MODULE     := libxo
 LOCAL_CFLAGS     := -Werror -DFT2_BUILD_LIBRARY
 LOCAL_CPPFLAGS   := -Werror -std=c++11
-LOCAL_SRC_FILES  := $(FREETYPE_SRC) $(NU_SRC) $(MY_SRC)
+LOCAL_SRC_FILES  := $(FREETYPE_SRC) $(XO_SRC) $(MY_SRC)
 LOCAL_LDLIBS     := -llog -lGLESv2
 
 include $(BUILD_SHARED_LIBRARY)

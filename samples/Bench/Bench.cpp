@@ -1,25 +1,25 @@
-#include "../../nuDom/nuDom.h"
+#include "../../xoDom/xo.h"
 
-static nuSysWnd* MainWnd;
+static xoSysWnd* MainWnd;
 
-void nuMain( nuMainEvent ev )
+void xoMain( xoMainEvent ev )
 {
 	switch ( ev )
 	{
-	case nuMainEventInit:
+	case xoMainEventInit:
 		{
-			MainWnd = nuSysWnd::CreateWithDoc();
-			nuDoc* doc = MainWnd->Doc();
+			MainWnd = xoSysWnd::CreateWithDoc();
+			xoDoc* doc = MainWnd->Doc();
 
 			int nx = 100;
 			int ny = 100;
 			for ( int y = 0; y < ny; y++ )
 			{
-				nuDomEl* line = doc->Root.AddChild( nuTagDiv );
+				xoDomEl* line = doc->Root.AddChild( xoTagDiv );
 				line->StyleParse( "width: 100%; height: 1%; margin: 1px; display: block;" );
 				for ( int x = 0; x < nx; x++ )
 				{
-					nuDomEl* div = line->AddChild( nuTagDiv );
+					xoDomEl* div = line->AddChild( xoTagDiv );
 					div->StyleParse( "width: 1%; height: 100%; border-radius: 2px; margin: 1px; display: inline;" );
 					div->StyleParsef( "background: #%02x%02x%02x%02x", (uint8) (x * 5), 0, 0, 255 );
 				}
@@ -28,7 +28,7 @@ void nuMain( nuMainEvent ev )
 			MainWnd->Show();
 		}
 		break;
-	case nuMainEventShutdown:
+	case xoMainEventShutdown:
 		delete MainWnd;
 		MainWnd = NULL;
 		break;

@@ -1,29 +1,29 @@
 #pragma once
 
-#include "nuDefs.h"
-#include "../Text/nuGlyphCache.h"
+#include "xoDefs.h"
+#include "../Text/xoGlyphCache.h"
 
 /* An instance of this is created for each render.
-Any state that is persisted between renderings is stored in nuRenderGL.
+Any state that is persisted between renderings is stored in xoRenderGL.
 */
-class NUAPI nuRenderer
+class XOAPI xoRenderer
 {
 public:
-	nuRenderResult	Render( nuImageStore* images, nuStringTable* strings, nuRenderBase* driver, nuRenderDomNode* root, int width, int height );
+	xoRenderResult	Render( xoImageStore* images, xoStringTable* strings, xoRenderBase* driver, xoRenderDomNode* root, int width, int height );
 
 protected:
-	nuRenderBase*				Driver;
-	nuImageStore*				Images;
-	nuStringTable*				Strings;
-	fhashset<nuGlyphCacheKey>	GlyphsNeeded;
+	xoRenderBase*				Driver;
+	xoImageStore*				Images;
+	xoStringTable*				Strings;
+	fhashset<xoGlyphCacheKey>	GlyphsNeeded;
 
-	void			RenderEl( nuPoint base, nuRenderDomEl* node );
-	void			RenderNode( nuPoint base, nuRenderDomNode* node );
-	void			RenderText( nuPoint base, nuRenderDomText* node );
-	void			RenderTextChar_WholePixel( nuPoint base, nuRenderDomText* node, const nuRenderCharEl& txtEl );
-	void			RenderTextChar_SubPixel( nuPoint base, nuRenderDomText* node, const nuRenderCharEl& txtEl );
+	void			RenderEl( xoPoint base, xoRenderDomEl* node );
+	void			RenderNode( xoPoint base, xoRenderDomNode* node );
+	void			RenderText( xoPoint base, xoRenderDomText* node );
+	void			RenderTextChar_WholePixel( xoPoint base, xoRenderDomText* node, const xoRenderCharEl& txtEl );
+	void			RenderTextChar_SubPixel( xoPoint base, xoRenderDomText* node, const xoRenderCharEl& txtEl );
 	void			RenderGlyphsNeeded();
 
-	bool			LoadTexture( nuTexture* tex, int texUnit );		// Load a texture and reset invalid rectangle
+	bool			LoadTexture( xoTexture* tex, int texUnit );		// Load a texture and reset invalid rectangle
 
 };

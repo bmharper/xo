@@ -1,13 +1,13 @@
 #include "pch.h"
-#if NU_BUILD_OPENGL
+#if XO_BUILD_OPENGL
 #include "RectShader.h"
 
-nuGLProg_Rect::nuGLProg_Rect()
+xoGLProg_Rect::xoGLProg_Rect()
 {
 	Reset();
 }
 
-void nuGLProg_Rect::Reset()
+void xoGLProg_Rect::Reset()
 {
 	ResetBase();
 	v_mvproj = -1;
@@ -20,7 +20,7 @@ void nuGLProg_Rect::Reset()
 	v_vport_hsize = -1;
 }
 
-const char* nuGLProg_Rect::VertSrc()
+const char* xoGLProg_Rect::VertSrc()
 {
 	return
 	"uniform		mat4	mvproj;\n"
@@ -37,10 +37,10 @@ const char* nuGLProg_Rect::VertSrc()
 ;
 }
 
-const char* nuGLProg_Rect::FragSrc()
+const char* xoGLProg_Rect::FragSrc()
 {
 	return
-	"#ifdef NU_PLATFORM_ANDROID\n"
+	"#ifdef XO_PLATFORM_ANDROID\n"
 	"precision mediump float;\n"
 	"#endif\n"
 	"varying vec4	pos;\n"
@@ -98,7 +98,7 @@ const char* nuGLProg_Rect::FragSrc()
 	"\n"
 	"	outcolor.a *= clamp(radius_out - dist_out, 0.0, 1.0);\n"
 	"\n"
-	"#ifdef NU_SRGB_FRAMEBUFFER\n"
+	"#ifdef XO_SRGB_FRAMEBUFFER\n"
 	"	gl_FragColor = outcolor;\n"
 	"#else\n"
 	"	float igamma = 1.0/2.2;\n"
@@ -109,13 +109,13 @@ const char* nuGLProg_Rect::FragSrc()
 ;
 }
 
-const char* nuGLProg_Rect::Name()
+const char* xoGLProg_Rect::Name()
 {
 	return "Rect";
 }
 
 
-bool nuGLProg_Rect::LoadVariablePositions()
+bool xoGLProg_Rect::LoadVariablePositions()
 {
 	int nfail = 0;
 
@@ -128,20 +128,20 @@ bool nuGLProg_Rect::LoadVariablePositions()
 	nfail += (v_border_color = glGetUniformLocation( Prog, "border_color" )) == -1;
 	nfail += (v_vport_hsize = glGetUniformLocation( Prog, "vport_hsize" )) == -1;
 	if ( nfail != 0 )
-		NUTRACE( "Failed to bind %d variables of shader Rect\n", nfail );
+		XOTRACE( "Failed to bind %d variables of shader Rect\n", nfail );
 
 	return nfail == 0;
 }
 
-uint32 nuGLProg_Rect::PlatformMask()
+uint32 xoGLProg_Rect::PlatformMask()
 {
-	return nuPlatform_All;
+	return xoPlatform_All;
 }
 
-nuVertexType nuGLProg_Rect::VertexType()
+xoVertexType xoGLProg_Rect::VertexType()
 {
-	return nuVertexType_NULL;
+	return xoVertexType_NULL;
 }
 
-#endif // NU_BUILD_OPENGL
+#endif // XO_BUILD_OPENGL
 

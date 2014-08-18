@@ -1,15 +1,15 @@
 #include "pch.h"
-#include "nuVertexTypes.h"
+#include "xoVertexTypes.h"
 
-NUAPI size_t nuVertexSize( nuVertexType t )
+XOAPI size_t xoVertexSize( xoVertexType t )
 {
 	switch ( t )
 	{
-	case nuVertexType_NULL:		return 0;
-	case nuVertexType_PTC:		return sizeof(nuVx_PTC);
-	case nuVertexType_PTCV4:	return sizeof(nuVx_PTCV4);
+	case xoVertexType_NULL:		return 0;
+	case xoVertexType_PTC:		return sizeof(xoVx_PTC);
+	case xoVertexType_PTCV4:	return sizeof(xoVx_PTCV4);
 	default:
-		NUTODO;
+		XOTODO;
 		return 0;
 	}
 }

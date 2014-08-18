@@ -1,10 +1,10 @@
 
 =begin
 
-Shader Generator for nuDom
-==========================
+Shader Generator for xo
+=======================
 
-Input is pairs of .glsl files inside nudom/Shaders, such as "RectFrag.glsl", "RectVert.glsl".
+Input is pairs of .glsl files inside xo/Shaders, such as "RectFrag.glsl", "RectVert.glsl".
 Output is 2 files per shader, such as "RectShader.cpp", "RectShader.h".
 
 Eventually I'd like to incorporate this into the tundra build.
@@ -15,19 +15,19 @@ CombinedBaseH_Start = <<-END
 #pragma once
 #if IF_BUILD
 
-#include "../../Render/nuRenderGLDX_Defs.h"
+#include "../../Render/xoRenderGLDX_Defs.h"
 
-class nuGLDXProg_NAME : public nuGLDXProg
+class xoGLDXProg_NAME : public xoGLDXProg
 {
 public:
-	nuGLDXProg_NAME();
+	xoGLDXProg_NAME();
 	virtual void			Reset();
 	virtual const char*		VertSrc();
 	virtual const char*		FragSrc();
 	virtual const char*		Name();
 	virtual bool			LoadVariablePositions();	// Performs glGet[Uniform|Attrib]Location for all variables. Returns true if all variables are found.
-	virtual uint32			PlatformMask();				// Combination of nuPlatform bits.
-	virtual nuVertexType	VertexType();				// Only meaningful on DirectX
+	virtual uint32			PlatformMask();				// Combination of xoPlatform bits.
+	virtual xoVertexType	VertexType();				// Only meaningful on DirectX
 
 END
 
@@ -42,36 +42,36 @@ CombinedBaseCpp = <<-END
 #if IF_BUILD
 #include "NAMEShader.h"
 
-nuGLDXProg_NAME::nuGLDXProg_NAME()
+xoGLDXProg_NAME::xoGLDXProg_NAME()
 {
 	Reset();
 }
 
-void nuGLDXProg_NAME::Reset()
+void xoGLDXProg_NAME::Reset()
 {
 	ResetBase();
 RESET
 }
 
-const char* nuGLDXProg_NAME::VertSrc()
+const char* xoGLDXProg_NAME::VertSrc()
 {
 	return
 VERT_SRC;
 }
 
-const char* nuGLDXProg_NAME::FragSrc()
+const char* xoGLDXProg_NAME::FragSrc()
 {
 	return
 FRAG_SRC;
 }
 
-const char* nuGLDXProg_NAME::Name()
+const char* xoGLDXProg_NAME::Name()
 {
 	return "NAME";
 }
 
 
-bool nuGLDXProg_NAME::LoadVariablePositions()
+bool xoGLDXProg_NAME::LoadVariablePositions()
 {
 	int nfail = 0;
 
@@ -79,12 +79,12 @@ LOAD_FUNC_BODY
 	return nfail == 0;
 }
 
-uint32 nuGLDXProg_NAME::PlatformMask()
+uint32 xoGLDXProg_NAME::PlatformMask()
 {
 	return PLATFORM_MASK;
 }
 
-nuVertexType nuGLDXProg_NAME::VertexType()
+xoVertexType xoGLDXProg_NAME::VertexType()
 {
 	return VERTEX_TYPE;
 }
@@ -144,7 +144,7 @@ def extract_vertex_type(vert_src, name)
 	# VSOutput main(VertexType_PTCV4 vertex)
 	vert_src.each_line{ |line|
 		if line =~ /main\(VertexType_(\w+)/
-			return "nuVertexType_" + $1
+			return "xoVertexType_" + $1
 		end
 	}
 	die("Couldn't find vertex type for shader #{name}")
@@ -167,13 +167,13 @@ def gen_combined(common, ext, vert, frag, name, filename_base)
 				variables << Variable.new("attribute", $1, $2)
 			end
 
-			if line =~ /#NU_PLATFORM_(\w+)/
+			if line =~ /#XO_PLATFORM_(\w+)/
 				use_line = false
 				platform = $1
 				case platform
-				when "WIN_DESKTOP" then platforms[:nuPlatform_WinDesktop] = 1
-				when "LINUX_DESKTOP" then platforms[:nuPlatform_LinuxDesktop] = 1
-				when "ANDROID" then platforms[:nuPlatform_Android] = 1
+				when "WIN_DESKTOP" then platforms[:xoPlatform_WinDesktop] = 1
+				when "LINUX_DESKTOP" then platforms[:xoPlatform_LinuxDesktop] = 1
+				when "ANDROID" then platforms[:xoPlatform_Android] = 1
 				else raise "Unrecognized platform #{platform}"
 				end
 			end
@@ -186,10 +186,10 @@ def gen_combined(common, ext, vert, frag, name, filename_base)
 	vert_src = common + vert_src
 	frag_src = common + frag_src
 
-	vertex_type = "nuVertexType_NULL"
+	vertex_type = "xoVertexType_NULL"
 	vertex_type = extract_vertex_type(vert_src, name) if ext2name(ext) == "DX"
 
-	platforms[:nuPlatform_All] = 1 if platforms.length == 0
+	platforms[:xoPlatform_All] = 1 if platforms.length == 0
 
 	replace = lambda { |txt|
 		rep = txt
@@ -198,7 +198,7 @@ def gen_combined(common, ext, vert, frag, name, filename_base)
 		rep = rep.gsub("GLDX", ext2name(ext))
 		rep = rep.gsub("VERT_SRC", escape_txt(vert_src))
 		rep = rep.gsub("FRAG_SRC", escape_txt(frag_src))
-		rep = rep.gsub("IF_BUILD", "NU_BUILD_" + ext2namelong(ext))
+		rep = rep.gsub("IF_BUILD", "XO_BUILD_" + ext2namelong(ext))
 		rep = rep.gsub("PLATFORM_MASK", platforms.keys.join(" | "))
 		rep = rep.gsub("VERTEX_TYPE", vertex_type)
 		return rep
@@ -230,7 +230,7 @@ def gen_combined(common, ext, vert, frag, name, filename_base)
 			end
 		}
 		load_func_body << "\tif ( nfail != 0 )\n"
-		load_func_body << "\t\tNUTRACE( \"Failed to bind %d variables of shader #{name}\\n\", nfail );\n"
+		load_func_body << "\t\tXOTRACE( \"Failed to bind %d variables of shader #{name}\\n\", nfail );\n"
 		reset.rstrip!
 		txt = replace.call(txt)
 		txt.gsub!("RESET", reset)
@@ -268,5 +268,5 @@ def run_dir(base_dir, ext)
 	}
 end
 
-run_dir("nudom/Shaders", "glsl")
-run_dir("nudom/Shaders", "hlsl")
+run_dir("xo/Shaders", "glsl")
+run_dir("xo/Shaders", "hlsl")

@@ -2,7 +2,7 @@
 
 
 #include "pch.h"
-#include "nuPreprocessor.h"
+#include "xoPreprocessor.h"
 #ifdef _MSC_VER
 	#define long ptrdiff_t
 #endif
@@ -13,10 +13,10 @@
 	int					SrcPos; \
 	int					SrcLen; \
 	podvec<char>		Out; \
-	nuString			Error; \
-	nuPreprocessor*		PP; \
+	xoString			Error; \
+	xoPreprocessor*		PP; \
 	podvec<bool>		OnStack; \
-	podvec<nuString>	Expression; \
+	podvec<xoString>	Expression; \
 	podvec<char>		MacroBuf; \
 	bool				Negate; \
 	void				WriteIfDir( const char* txt ); \
@@ -915,17 +915,17 @@ void yycontext::LogicalAnd()
 	Expression += "&&";
 }
 
-void nuPreprocessor::SetMacro( const char* name, const char* value )
+void xoPreprocessor::SetMacro( const char* name, const char* value )
 {
 	Macros.insert( name, value );
 }
 
-void nuPreprocessor::ClearMacros()
+void xoPreprocessor::ClearMacros()
 {
 	Macros.clear();
 }
 
-nuString nuPreprocessor::Run( const char* raw )
+xoString xoPreprocessor::Run( const char* raw )
 {
 	yycontext ctx;
 	memset( &ctx, 0, sizeof(ctx) );
@@ -945,10 +945,10 @@ nuString nuPreprocessor::Run( const char* raw )
 	if ( ctx.Error.Length() != 0 )
 		return fmt( "Error: %v", ctx.Error.Z );
 	else
-		return nuString( &ctx.Out[0] );
+		return xoString( &ctx.Out[0] );
 }
 
-bool nuPreprocessor::IsIdentChar( char c )
+bool xoPreprocessor::IsIdentChar( char c )
 {
 	return	(c >= 'A' && c <= 'Z') ||
 			(c >= 'a' && c <= 'z') ||
@@ -956,7 +956,7 @@ bool nuPreprocessor::IsIdentChar( char c )
 			(c == '_');
 }
 
-bool nuPreprocessor::Match( const char* buf, uintp bufPos, const nuString& find )
+bool xoPreprocessor::Match( const char* buf, uintp bufPos, const xoString& find )
 {
 	for ( intp i = 0; find.Z[i] != 0; i++ )
 	{
@@ -974,7 +974,7 @@ bool nuPreprocessor::Match( const char* buf, uintp bufPos, const nuString& find 
 	return true;
 }
 
-void nuPreprocessor::RunMacros( const char* raw, podvec<char>& out )
+void xoPreprocessor::RunMacros( const char* raw, podvec<char>& out )
 {
 	// This only supports replacing whole tokens.
 	// It does not do macro "functions" with arguments
@@ -984,11 +984,11 @@ void nuPreprocessor::RunMacros( const char* raw, podvec<char>& out )
 		bool matched = false;
 		for ( auto it = Macros.begin(); it != Macros.end(); it++ )
 		{
-			const nuString& macro = it.key();
+			const xoString& macro = it.key();
 			if ( Match( raw, i, macro ) )
 			{
 				matched = true;
-				const nuString& replace = it.val();
+				const xoString& replace = it.val();
 				for ( uintp j = 0; replace.Z[j] != 0; j++ )
 					out += replace.Z[j];
 				i += macro.Length() - 1;

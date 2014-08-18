@@ -1,8 +1,8 @@
-#NU_PLATFORM_WIN_DESKTOP
-#NU_PLATFORM_LINUX_DESKTOP
+#XO_PLATFORM_WIN_DESKTOP
+#XO_PLATFORM_LINUX_DESKTOP
 #version 130
 
-#ifdef NU_PLATFORM_ANDROID
+#ifdef XO_PLATFORM_ANDROID
 precision mediump float;
 #endif
 
@@ -23,7 +23,7 @@ out		vec4		outputColor0;
 out		vec4		outputColor1;
 void main()
 {
-	float offset = 1.0 / NU_GLYPH_ATLAS_SIZE;
+	float offset = 1.0 / XO_GLYPH_ATLAS_SIZE;
 	vec2 uv = texuv0;
 
 	float tap0 = texture2D(tex0, vec2(clamp(uv.s - offset * 3.0, texClamp.x, texClamp.z), uv.t)).r;

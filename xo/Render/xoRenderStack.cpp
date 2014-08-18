@@ -1,13 +1,13 @@
 #include "pch.h"
-#include "nuRenderStack.h"
+#include "xoRenderStack.h"
 
-void nuRenderStackEl::Reset()
+void xoRenderStackEl::Reset()
 {
 	Styles.Reset();
 	Pool = NULL;
 }
 
-nuRenderStackEl& nuRenderStackEl::operator=( const nuRenderStackEl& b )
+xoRenderStackEl& xoRenderStackEl::operator=( const xoRenderStackEl& b )
 {
 	memcpy( this, &b, sizeof(*this) );
 	return *this;
@@ -17,102 +17,102 @@ nuRenderStackEl& nuRenderStackEl::operator=( const nuRenderStackEl& b )
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nuRenderStack::nuRenderStack()
+xoRenderStack::xoRenderStack()
 {
 }
 
-nuRenderStack::~nuRenderStack()
+xoRenderStack::~xoRenderStack()
 {
 	delete_all( Stack_Pools );
 }
 
-void nuRenderStack::Initialize( const nuDoc* doc, nuPool* pool )
+void xoRenderStack::Initialize( const xoDoc* doc, xoPool* pool )
 {
 	Doc = doc;
 	Pool = pool;
 	Stack.Pool = pool;
 
 	memset( Defaults, 0, sizeof(Defaults) );
-	Defaults[nuCatColor].SetColor( nuCatColor, nuColor::RGBA(0,0,0,255) );
-	Defaults[nuCatDisplay].SetDisplay( nuDisplayInline );
-	Defaults[nuCatBackground].SetColor( nuCatBackground, nuColor::RGBA(0,0,0,0) );
-	//Defaults[nuCatBackgroundImage]
-	Defaults[nuCatText_Align_Vertical].SetTextAlignVertical( nuTextAlignVerticalBaseline );
-	//Defaults[nuCatDummy2_UseMe]
-	//Defaults[nuCatDummy3_UseMe]
-	Defaults[nuCatMargin_Left].SetSize( nuCatMargin_Left, nuSize::Zero() );
-	Defaults[nuCatMargin_Top].SetSize( nuCatMargin_Top, nuSize::Zero() );
-	Defaults[nuCatMargin_Right].SetSize( nuCatMargin_Right, nuSize::Zero() );
-	Defaults[nuCatMargin_Bottom].SetSize( nuCatMargin_Bottom, nuSize::Zero() );
+	Defaults[xoCatColor].SetColor( xoCatColor, xoColor::RGBA(0,0,0,255) );
+	Defaults[xoCatDisplay].SetDisplay( xoDisplayInline );
+	Defaults[xoCatBackground].SetColor( xoCatBackground, xoColor::RGBA(0,0,0,0) );
+	//Defaults[xoCatBackgroundImage]
+	Defaults[xoCatText_Align_Vertical].SetTextAlignVertical( xoTextAlignVerticalBaseline );
+	//Defaults[xoCatDummy2_UseMe]
+	//Defaults[xoCatDummy3_UseMe]
+	Defaults[xoCatMargin_Left].SetSize( xoCatMargin_Left, xoSize::Zero() );
+	Defaults[xoCatMargin_Top].SetSize( xoCatMargin_Top, xoSize::Zero() );
+	Defaults[xoCatMargin_Right].SetSize( xoCatMargin_Right, xoSize::Zero() );
+	Defaults[xoCatMargin_Bottom].SetSize( xoCatMargin_Bottom, xoSize::Zero() );
 	
-	Defaults[nuCatPadding_Left].SetSize( nuCatPadding_Left, nuSize::Zero() );
-	Defaults[nuCatPadding_Top].SetSize( nuCatPadding_Top, nuSize::Zero() );
-	Defaults[nuCatPadding_Right].SetSize( nuCatPadding_Right, nuSize::Zero() );
-	Defaults[nuCatPadding_Bottom].SetSize( nuCatPadding_Bottom, nuSize::Zero() );
+	Defaults[xoCatPadding_Left].SetSize( xoCatPadding_Left, xoSize::Zero() );
+	Defaults[xoCatPadding_Top].SetSize( xoCatPadding_Top, xoSize::Zero() );
+	Defaults[xoCatPadding_Right].SetSize( xoCatPadding_Right, xoSize::Zero() );
+	Defaults[xoCatPadding_Bottom].SetSize( xoCatPadding_Bottom, xoSize::Zero() );
 	
-	Defaults[nuCatBorder_Left].SetSize( nuCatBorder_Left, nuSize::Zero() );
-	Defaults[nuCatBorder_Top].SetSize( nuCatBorder_Top, nuSize::Zero() );
-	Defaults[nuCatBorder_Right].SetSize( nuCatBorder_Right, nuSize::Zero() );
-	Defaults[nuCatBorder_Bottom].SetSize( nuCatBorder_Bottom, nuSize::Zero() );
+	Defaults[xoCatBorder_Left].SetSize( xoCatBorder_Left, xoSize::Zero() );
+	Defaults[xoCatBorder_Top].SetSize( xoCatBorder_Top, xoSize::Zero() );
+	Defaults[xoCatBorder_Right].SetSize( xoCatBorder_Right, xoSize::Zero() );
+	Defaults[xoCatBorder_Bottom].SetSize( xoCatBorder_Bottom, xoSize::Zero() );
 	
-	Defaults[nuCatBorderColor_Left].SetColor( nuCatBorderColor_Left, nuColor::RGBA(0,0,0,255) );
-	Defaults[nuCatBorderColor_Top].SetColor( nuCatBorderColor_Top, nuColor::RGBA(0,0,0,255) );
-	Defaults[nuCatBorderColor_Right].SetColor( nuCatBorderColor_Right, nuColor::RGBA(0,0,0,255) );
-	Defaults[nuCatBorderColor_Bottom].SetColor( nuCatBorderColor_Bottom, nuColor::RGBA(0,0,0,255) );
+	Defaults[xoCatBorderColor_Left].SetColor( xoCatBorderColor_Left, xoColor::RGBA(0,0,0,255) );
+	Defaults[xoCatBorderColor_Top].SetColor( xoCatBorderColor_Top, xoColor::RGBA(0,0,0,255) );
+	Defaults[xoCatBorderColor_Right].SetColor( xoCatBorderColor_Right, xoColor::RGBA(0,0,0,255) );
+	Defaults[xoCatBorderColor_Bottom].SetColor( xoCatBorderColor_Bottom, xoColor::RGBA(0,0,0,255) );
 	
-	Defaults[nuCatWidth].SetSize( nuCatWidth, nuSize::Null() );
-	Defaults[nuCatHeight].SetSize( nuCatHeight, nuSize::Null() );
-	//Defaults[nuCatTop].SetTop( nuVerticalBindingNULL ); -- do we need to? We don't.
-	//Defaults[nuCatLeft]
-	//Defaults[nuCatRight]
-	//Defaults[nuCatBottom]
-	Defaults[nuCatFontSize].SetSize( nuCatFontSize, nuSize::Pixels(12) );
-	// Font should inherit from body. nuDoc initializes the default font for nuTagBody
-	//Defaults[nuCatFontFamily].SetFont( doc->TagStyles[nuTagBody].Get().GetFont( doc ).Z, doc );
-	Defaults[nuCatBorderRadius].SetSize( nuCatBorderRadius, nuSize::Zero() );
-	Defaults[nuCatPosition].SetPosition( nuPositionStatic );
-	Defaults[nuCatBoxSizing].SetBoxSizing( nuBoxSizeBorder );	// HTML default is Content
+	Defaults[xoCatWidth].SetSize( xoCatWidth, xoSize::Null() );
+	Defaults[xoCatHeight].SetSize( xoCatHeight, xoSize::Null() );
+	//Defaults[xoCatTop].SetTop( xoVerticalBindingNULL ); -- do we need to? We don't.
+	//Defaults[xoCatLeft]
+	//Defaults[xoCatRight]
+	//Defaults[xoCatBottom]
+	Defaults[xoCatFontSize].SetSize( xoCatFontSize, xoSize::Pixels(12) );
+	// Font should inherit from body. xoDoc initializes the default font for xoTagBody
+	//Defaults[xoCatFontFamily].SetFont( doc->TagStyles[xoTagBody].Get().GetFont( doc ).Z, doc );
+	Defaults[xoCatBorderRadius].SetSize( xoCatBorderRadius, xoSize::Zero() );
+	Defaults[xoCatPosition].SetPosition( xoPositionStatic );
+	Defaults[xoCatBoxSizing].SetBoxSizing( xoBoxSizeBorder );	// HTML default is Content
 	//XY(END)
 }
 
-void nuRenderStack::Reset()
+void xoRenderStack::Reset()
 {
 	delete_all( Stack_Pools );
 	Stack.clear();
 }
 
-nuStyleAttrib nuRenderStack::Get( nuStyleCategories cat ) const
+xoStyleAttrib xoRenderStack::Get( xoStyleCategories cat ) const
 {
-	nuStyleAttrib v = Stack.back().Styles.Get( cat );
+	xoStyleAttrib v = Stack.back().Styles.Get( cat );
 	if ( v.IsNull() )
 		return Defaults[cat];
 	else
 		return v;
 }
 
-void nuRenderStack::GetBox( nuStyleCategories cat, nuStyleBox& box ) const
+void xoRenderStack::GetBox( xoStyleCategories cat, xoStyleBox& box ) const
 {
-	nuStyleCategories base = nuCatMakeBaseBox(cat);
-	box.Left = Get( (nuStyleCategories) (base + 0) ).GetSize();
-	box.Top = Get( (nuStyleCategories) (base + 1) ).GetSize();
-	box.Right = Get( (nuStyleCategories) (base + 2) ).GetSize();
-	box.Bottom = Get( (nuStyleCategories) (base + 3) ).GetSize();
+	xoStyleCategories base = xoCatMakeBaseBox(cat);
+	box.Left = Get( (xoStyleCategories) (base + 0) ).GetSize();
+	box.Top = Get( (xoStyleCategories) (base + 1) ).GetSize();
+	box.Right = Get( (xoStyleCategories) (base + 2) ).GetSize();
+	box.Bottom = Get( (xoStyleCategories) (base + 3) ).GetSize();
 }
 
-void nuRenderStack::StackPop()
+void xoRenderStack::StackPop()
 {
 	// Stack_Pools never gets downsized
 	Stack_Pools.back()->FreeAllExceptOne();
 	Stack.pop();
 }
 
-nuRenderStackEl& nuRenderStack::StackPush()
+xoRenderStackEl& xoRenderStack::StackPush()
 {
-	nuRenderStackEl& el = Stack.add();
+	xoRenderStackEl& el = Stack.add();
 	while ( Stack_Pools.size() < Stack.size() )
 	{
-		Stack_Pools += new nuPool();
-		Stack_Pools.back()->SetChunkSize( 8 * 1024 ); // this is mentioned in nuRenderStack docs, so keep that up to date if you change this
+		Stack_Pools += new xoPool();
+		Stack_Pools.back()->SetChunkSize( 8 * 1024 ); // this is mentioned in xoRenderStack docs, so keep that up to date if you change this
 	}
 	el.Pool = Stack_Pools[Stack.size() - 1];
 	return el;

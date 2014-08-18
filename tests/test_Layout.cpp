@@ -1,11 +1,11 @@
 #include "pch.h"
-#include "nuImageTester.h"
+#include "xoImageTester.h"
 
 TESTFUNC(Layout)
 {
 	// this was consolas 11px
-	nuImageTester itest;
-	itest.TruthImage( "hello-world", []( nuDomNode& root ) {
+	xoImageTester itest;
+	itest.TruthImage( "hello-world", []( xoDomNode& root ) {
 		root.StyleParse( "margin: 20px;" );
 		root.SetText( "hello whirled" );
 	});

@@ -7,7 +7,7 @@
             android:debuggable="true"
             >
         <!-- android:theme="@android:style/Theme.NoTitleBar.Fullscreen" -->     
-        <activity android:name="NuActivity"
+        <activity android:name="XoActivity"
             	android:launchMode="singleTask"
             	android:theme="@android:style/Theme.NoTitleBar"
             	android:configChanges="orientation|keyboardHidden">

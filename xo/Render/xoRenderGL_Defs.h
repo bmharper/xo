@@ -1,18 +1,18 @@
 #pragma once
-#if NU_BUILD_OPENGL
+#if XO_BUILD_OPENGL
 
-#include "../nuDefs.h"
-#include "nuVertexTypes.h"
+#include "../xoDefs.h"
+#include "xoVertexTypes.h"
 
-class NUAPI nuGLProg : public nuProgBase
+class XOAPI xoGLProg : public xoProgBase
 {
 public:
 	GLuint Vert;
 	GLuint Frag;
 	GLuint Prog;
 
-							nuGLProg();
-	virtual					~nuGLProg();
+							xoGLProg();
+	virtual					~xoGLProg();
 	
 	// All of these virtual functions are overridden by auto-generated shader objects
 	virtual void			Reset();
@@ -20,10 +20,10 @@ public:
 	virtual const char*		FragSrc();
 	virtual const char*		Name();
 	virtual bool			LoadVariablePositions();
-	virtual uint32			PlatformMask(); 			// Combination of nuPlatformMask bits.
-	virtual nuVertexType	VertexType();				// Not used on GL
+	virtual uint32			PlatformMask(); 			// Combination of xoPlatformMask bits.
+	virtual xoVertexType	VertexType();				// Not used on GL
 
-	bool					UseOnThisPlatform() { return !!(PlatformMask() & NU_PLATFORM); }
+	bool					UseOnThisPlatform() { return !!(PlatformMask() & XO_PLATFORM); }
 
 protected:
 	void					ResetBase();

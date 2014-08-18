@@ -1,20 +1,20 @@
 #pragma once
 
-#include "../nuStyle.h"
-#include "../nuMem.h"
+#include "../xoStyle.h"
+#include "../xoMem.h"
 
 // A single item on the render stack
-class NUAPI nuRenderStackEl
+class XOAPI xoRenderStackEl
 {
 public:
-	nuStyleSet	Styles;
-	nuPool*		Pool;		// This *could* be stored only inside nuRenderStack.Stack_Pools, but it is convenient to duplicate it here.
+	xoStyleSet	Styles;
+	xoPool*		Pool;		// This *could* be stored only inside xoRenderStack.Stack_Pools, but it is convenient to duplicate it here.
 
 	void Reset();
 
-	// $NU_GCC_ALIGN_BUG.
+	// $XO_GCC_ALIGN_BUG.
 	// WARNING. This is a straight memcpy
-	nuRenderStackEl& operator=( const nuRenderStackEl& b );
+	xoRenderStackEl& operator=( const xoRenderStackEl& b );
 };
 
 /* This is used during layout and rendering.
@@ -31,30 +31,30 @@ rewound to zero (but its memory is left intact).
 The pools inside Stack_Pools have a chunk size of 8 KB. I don't expect resolved
 styles to blow that limit often. If they do, then it's simply a performance hit.
 */
-class NUAPI nuRenderStack
+class XOAPI xoRenderStack
 {
 public:
-	const nuDoc*					Doc;
-	nuPool*							Pool;
-	nuStyleAttrib					Defaults[nuCatEND];
+	const xoDoc*					Doc;
+	xoPool*							Pool;
+	xoStyleAttrib					Defaults[xoCatEND];
 
-						nuRenderStack();
-						~nuRenderStack();
+						xoRenderStack();
+						~xoRenderStack();
 
-	void				Initialize( const nuDoc* doc, nuPool* pool );
+	void				Initialize( const xoDoc* doc, xoPool* pool );
 	void				Reset();
-	nuStyleAttrib		Get( nuStyleCategories cat ) const;
-	void				GetBox( nuStyleCategories cat, nuStyleBox& box ) const;
+	xoStyleAttrib		Get( xoStyleCategories cat ) const;
+	void				GetBox( xoStyleCategories cat, xoStyleBox& box ) const;
 	
-	nuStyleBox			GetBox( nuStyleCategories cat ) const { nuStyleBox b; GetBox(cat, b); return b; }
+	xoStyleBox			GetBox( xoStyleCategories cat ) const { xoStyleBox b; GetBox(cat, b); return b; }
 	
 	void				StackPop();
-	nuRenderStackEl&	StackPush();
-	nuRenderStackEl&	StackBack()			{ return Stack.back(); }
-	nuRenderStackEl&	StackAt( intp pos )	{ return Stack[pos]; }
+	xoRenderStackEl&	StackPush();
+	xoRenderStackEl&	StackBack()			{ return Stack.back(); }
+	xoRenderStackEl&	StackAt( intp pos )	{ return Stack[pos]; }
 	intp				StackSize() const	{ return Stack.size(); }
 
 protected:
-	nuPoolArray<nuRenderStackEl>	Stack;
-	pvect<nuPool*>					Stack_Pools;	// Every position on the stack gets its own pool
+	xoPoolArray<xoRenderStackEl>	Stack;
+	pvect<xoPool*>					Stack_Pools;	// Every position on the stack gets its own pool
 };

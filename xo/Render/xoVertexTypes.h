@@ -1,30 +1,30 @@
 #pragma once
 
 // Position, UV, Color
-struct NUAPI nuVx_PTC
+struct XOAPI xoVx_PTC
 {
-	// Note that nuRenderGL::DrawQuad assumes that we share our base layout with nuVx_PTCV4
-	nuVec3f		Pos;
-	nuVec2f		UV;
+	// Note that xoRenderGL::DrawQuad assumes that we share our base layout with xoVx_PTCV4
+	xoVec3f		Pos;
+	xoVec2f		UV;
 	uint32		Color;
 };
 
 // Position, UV, Color, Vec4
-struct NUAPI nuVx_PTCV4
+struct XOAPI xoVx_PTCV4
 {
-	// Note that nuRenderGL::DrawQuad assumes that we share our base layout with nuVx_PTC
-	nuVec3f		Pos;
-	nuVec2f		UV;
+	// Note that xoRenderGL::DrawQuad assumes that we share our base layout with xoVx_PTC
+	xoVec3f		Pos;
+	xoVec2f		UV;
 	uint32		Color;
-	nuVec4f		V4;
+	xoVec4f		V4;
 };
 
-enum nuVertexType
+enum xoVertexType
 {
-	nuVertexType_NULL,
-	nuVertexType_PTC,
-	nuVertexType_PTCV4,
-	nuVertexType_END,
+	xoVertexType_NULL,
+	xoVertexType_PTC,
+	xoVertexType_PTCV4,
+	xoVertexType_END,
 };
 
-NUAPI size_t nuVertexSize( nuVertexType t );
+XOAPI size_t xoVertexSize( xoVertexType t );

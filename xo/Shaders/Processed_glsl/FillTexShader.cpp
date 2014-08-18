@@ -1,13 +1,13 @@
 #include "pch.h"
-#if NU_BUILD_OPENGL
+#if XO_BUILD_OPENGL
 #include "FillTexShader.h"
 
-nuGLProg_FillTex::nuGLProg_FillTex()
+xoGLProg_FillTex::xoGLProg_FillTex()
 {
 	Reset();
 }
 
-void nuGLProg_FillTex::Reset()
+void xoGLProg_FillTex::Reset()
 {
 	ResetBase();
 	v_mvproj = -1;
@@ -17,7 +17,7 @@ void nuGLProg_FillTex::Reset()
 	v_tex0 = -1;
 }
 
-const char* nuGLProg_FillTex::VertSrc()
+const char* xoGLProg_FillTex::VertSrc()
 {
 	return
 	"uniform		mat4	mvproj;\n"
@@ -35,10 +35,10 @@ const char* nuGLProg_FillTex::VertSrc()
 ;
 }
 
-const char* nuGLProg_FillTex::FragSrc()
+const char* xoGLProg_FillTex::FragSrc()
 {
 	return
-	"#ifdef NU_PLATFORM_ANDROID\n"
+	"#ifdef XO_PLATFORM_ANDROID\n"
 	"precision mediump float;\n"
 	"#endif\n"
 	"uniform sampler2D	tex0;\n"
@@ -51,13 +51,13 @@ const char* nuGLProg_FillTex::FragSrc()
 ;
 }
 
-const char* nuGLProg_FillTex::Name()
+const char* xoGLProg_FillTex::Name()
 {
 	return "FillTex";
 }
 
 
-bool nuGLProg_FillTex::LoadVariablePositions()
+bool xoGLProg_FillTex::LoadVariablePositions()
 {
 	int nfail = 0;
 
@@ -67,20 +67,20 @@ bool nuGLProg_FillTex::LoadVariablePositions()
 	nfail += (v_vtexuv0 = glGetAttribLocation( Prog, "vtexuv0" )) == -1;
 	nfail += (v_tex0 = glGetUniformLocation( Prog, "tex0" )) == -1;
 	if ( nfail != 0 )
-		NUTRACE( "Failed to bind %d variables of shader FillTex\n", nfail );
+		XOTRACE( "Failed to bind %d variables of shader FillTex\n", nfail );
 
 	return nfail == 0;
 }
 
-uint32 nuGLProg_FillTex::PlatformMask()
+uint32 xoGLProg_FillTex::PlatformMask()
 {
-	return nuPlatform_All;
+	return xoPlatform_All;
 }
 
-nuVertexType nuGLProg_FillTex::VertexType()
+xoVertexType xoGLProg_FillTex::VertexType()
 {
-	return nuVertexType_NULL;
+	return xoVertexType_NULL;
 }
 
-#endif // NU_BUILD_OPENGL
+#endif // XO_BUILD_OPENGL
 

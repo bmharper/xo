@@ -1,10 +1,10 @@
 #include "pch.h"
-#if NU_BUILD_OPENGL
-#include "nuRenderGL.h"
-#include "../Image/nuImage.h"
-#include "nuTextureAtlas.h"
-#include "../Text/nuGlyphCache.h"
-#include "../nuSysWnd.h"
+#if XO_BUILD_OPENGL
+#include "xoRenderGL.h"
+#include "../Image/xoImage.h"
+#include "xoTextureAtlas.h"
+#include "../Text/xoGlyphCache.h"
+#include "../xoSysWnd.h"
 
 static bool GLIsBooted = false;
 
@@ -50,9 +50,9 @@ vec4 fromSRGB(vec4 c)
 }
 )";
 
-nuRenderGL::nuRenderGL()
+xoRenderGL::xoRenderGL()
 {
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	GLRC = NULL;
 	DC = NULL;
 #endif
@@ -69,28 +69,28 @@ nuRenderGL::nuRenderGL()
 	Reset();
 }
 
-nuRenderGL::~nuRenderGL()
+xoRenderGL::~xoRenderGL()
 {
 }
 
-void nuRenderGL::Reset()
+void xoRenderGL::Reset()
 {
 	for ( int i = 0; i < NumProgs; i++ )
 		AllProgs[i]->Reset();
 	memset( BoundTextures, 0, sizeof(BoundTextures) );
-	ActiveShader = nuShaderInvalid;
+	ActiveShader = xoShaderInvalid;
 }
 
-const char*	nuRenderGL::RendererName()
+const char*	xoRenderGL::RendererName()
 {
 	return "OpenGL";
 }
 
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 
 typedef BOOL (*_wglChoosePixelFormatARB) (HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats);
 
-static void nuBootGL_FillPFD( PIXELFORMATDESCRIPTOR& pfd )
+static void xoBootGL_FillPFD( PIXELFORMATDESCRIPTOR& pfd )
 {
 	const DWORD flags = 0
 		| PFD_DRAW_TO_WINDOW	// support window
@@ -121,13 +121,13 @@ static void nuBootGL_FillPFD( PIXELFORMATDESCRIPTOR& pfd )
 	pfd = base;
 }
 
-static bool nuBootGL( HWND wnd )
+static bool xoBootGL( HWND wnd )
 {
 	HDC dc = GetDC( wnd );
 
 	// get the best available match of pixel format for the device context  
 	PIXELFORMATDESCRIPTOR pfd;
-	nuBootGL_FillPFD( pfd );
+	xoBootGL_FillPFD( pfd );
 	int iPixelFormat = ChoosePixelFormat( dc, &pfd );
 
 	if ( iPixelFormat != 0 )
@@ -138,8 +138,8 @@ static bool nuBootGL( HWND wnd )
 		wglMakeCurrent( dc, rc );
 		int wglLoad = wgl_LoadFunctions( dc );
 		int oglLoad = ogl_LoadFunctions();
-		NUTRACE( "wgl_Load: %d\n", wglLoad );
-		NUTRACE( "ogl_Load: %d\n", oglLoad );
+		XOTRACE( "wgl_Load: %d\n", wglLoad );
+		XOTRACE( "ogl_Load: %d\n", oglLoad );
 		GLIsBooted = true;
 		wglMakeCurrent( NULL, NULL ); 
 		wglDeleteContext( rc );
@@ -151,12 +151,12 @@ static bool nuBootGL( HWND wnd )
 }
 #endif
 
-#if NU_PLATFORM_WIN_DESKTOP
-bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
+#if XO_PLATFORM_WIN_DESKTOP
+bool xoRenderGL::InitializeDevice( xoSysWnd& wnd )
 {
 	if ( !GLIsBooted )
 	{
-		if ( !nuBootGL( wnd.SysWnd ) )
+		if ( !xoBootGL( wnd.SysWnd ) )
 			return false;
 	}
 
@@ -180,7 +180,7 @@ bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
 		0
 	};
 	PIXELFORMATDESCRIPTOR pfd;
-	nuBootGL_FillPFD( pfd );
+	xoBootGL_FillPFD( pfd );
 	int formats[20];
 	uint numformats = 0;
 	BOOL chooseOK = wglChoosePixelFormatARB( dc, attribs, NULL, arraysize(formats), formats, &numformats );
@@ -191,13 +191,13 @@ bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
 			rc = wglCreateContext( dc );
 			wglMakeCurrent( dc, rc );
 			if ( wglSwapIntervalEXT )
-				wglSwapIntervalEXT( nuGlobal()->EnableVSync ? 1 : 0 );
+				wglSwapIntervalEXT( xoGlobal()->EnableVSync ? 1 : 0 );
 			allGood = CreateShaders();
 			wglMakeCurrent( NULL, NULL );
 		}
 		else
 		{
-			NUTRACE( "SetPixelFormat failed: %d\n", GetLastError() );
+			XOTRACE( "SetPixelFormat failed: %d\n", GetLastError() );
 		}
 	}
 
@@ -213,30 +213,30 @@ bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
 	GLRC = rc;
 	return GLRC != NULL;
 }
-#elif NU_PLATFORM_ANDROID
-bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
+#elif XO_PLATFORM_ANDROID
+bool xoRenderGL::InitializeDevice( xoSysWnd& wnd )
 {
 	if ( !CreateShaders() )
 		return false;
 	return true;
 }
-#elif NU_PLATFORM_LINUX_DESKTOP
-bool nuRenderGL::InitializeDevice( nuSysWnd& wnd )
+#elif XO_PLATFORM_LINUX_DESKTOP
+bool xoRenderGL::InitializeDevice( xoSysWnd& wnd )
 {
 	int oglLoad = ogl_LoadFunctions();
 	int glxLoad = glx_LoadFunctions( wnd.XDisplay, 0 );
-	NUTRACE( "oglload: %d\n", oglLoad );
-	NUTRACE( "glxload: %d\n", glxLoad );
+	XOTRACE( "oglload: %d\n", oglLoad );
+	XOTRACE( "glxload: %d\n", glxLoad );
 	if ( !CreateShaders() )
 		return false;
-	NUTRACE( "Shaders created\n" );
+	XOTRACE( "Shaders created\n" );
 	return true;
 }
 #else
-NUTODO_STATIC
+XOTODO_STATIC
 #endif
 
-void nuRenderGL::CheckExtensions()
+void xoRenderGL::CheckExtensions()
 {
 	const char* ver = (const char*) glGetString( GL_VERSION );
 	const char* ext = (const char*) glGetString( GL_EXTENSIONS );
@@ -254,7 +254,7 @@ void nuRenderGL::CheckExtensions()
 		}
 	};
 
-	NUTRACE( "Checking OpenGL extensions\n" );
+	XOTRACE( "Checking OpenGL extensions\n" );
 	// On my desktop Nvidia I get "4.3.0"
 
 	int dot = (int) (strstr(ver, ".") - ver);
@@ -262,24 +262,24 @@ void nuRenderGL::CheckExtensions()
 	int minor = ver[dot + 1] - '0';
 	int version = major * 10 + minor;
 
-	NUTRACE( "OpenGL version: %s\n", ver );
-	NUTRACE( "OpenGL extensions: %s\n", ext );
+	XOTRACE( "OpenGL version: %s\n", ver );
+	XOTRACE( "OpenGL extensions: %s\n", ext );
 
 	if ( strstr(ver, "OpenGL ES") )
 	{
-		NUTRACE( "OpenGL ES\n" );
+		XOTRACE( "OpenGL ES\n" );
 		Have_Unpack_RowLength = version >= 30 || hasExtension( "GL_EXT_unpack_subimage" );
 		Have_sRGB_Framebuffer = version >= 30 || hasExtension( "GL_EXT_sRGB" );
 	}
 	else
 	{
-		NUTRACE( "OpenGL Regular (non-ES)\n" );
+		XOTRACE( "OpenGL Regular (non-ES)\n" );
 		Have_Unpack_RowLength = true;
 		Have_sRGB_Framebuffer = version >= 40 || hasExtension( "ARB_framebuffer_sRGB" ) || hasExtension( "GL_EXT_framebuffer_sRGB" );
 	}
 
 	Have_BlendFuncExtended = hasExtension( "GL_ARB_blend_func_extended" );
-	NUTRACE( "OpenGL Extensions ("
+	XOTRACE( "OpenGL Extensions ("
 		"UNPACK_SUBIMAGE=%d, "
 		"sRGB_FrameBuffer=%d, "
 		"blend_func_extended=%d"
@@ -289,7 +289,7 @@ void nuRenderGL::CheckExtensions()
 		Have_BlendFuncExtended ? 1 : 0);
 }
 
-bool nuRenderGL::CreateShaders()
+bool xoRenderGL::CreateShaders()
 {
 	Check();
 
@@ -313,9 +313,9 @@ bool nuRenderGL::CreateShaders()
 	return true;
 }
 
-void nuRenderGL::DeleteShadersAndTextures()
+void xoRenderGL::DeleteShadersAndTextures()
 {
-	for ( int i = nuMaxTextureUnits - 1; i >= 0; i-- )
+	for ( int i = xoMaxTextureUnits - 1; i >= 0; i-- )
 	{
 		glActiveTexture( GL_TEXTURE0 + i );
 		glBindTexture( GL_TEXTURE_2D, 0 );
@@ -323,7 +323,7 @@ void nuRenderGL::DeleteShadersAndTextures()
 
 	podvec<GLuint> textures;
 	for ( intp i = 0; i < TexIDToNative.size(); i++ )
-		textures += GetTextureDeviceHandleInt( FirstTextureID() + (nuTextureID) i );
+		textures += GetTextureDeviceHandleInt( FirstTextureID() + (xoTextureID) i );
 
 	glDeleteTextures( (GLsizei) textures.size(), &textures[0] );
 
@@ -333,31 +333,31 @@ void nuRenderGL::DeleteShadersAndTextures()
 		DeleteProgram( *AllProgs[i] );
 }
 
-nuProgBase* nuRenderGL::GetShader( nuShaders shader )
+xoProgBase* xoRenderGL::GetShader( xoShaders shader )
 {
 	switch ( shader )
 	{
-	case nuShaderFill:		return &PFill;
-	case nuShaderFillTex:	return &PFillTex;
-	case nuShaderRect:		return &PRect;
-	case nuShaderTextRGB:	return &PTextRGB;
-	case nuShaderTextWhole:	return &PTextWhole;
+	case xoShaderFill:		return &PFill;
+	case xoShaderFillTex:	return &PFillTex;
+	case xoShaderRect:		return &PRect;
+	case xoShaderTextRGB:	return &PTextRGB;
+	case xoShaderTextWhole:	return &PTextWhole;
 	default:
-		NUASSERT(false);
+		XOASSERT(false);
 		return NULL;
 	}
 }
 
-void nuRenderGL::ActivateShader( nuShaders shader )
+void xoRenderGL::ActivateShader( xoShaders shader )
 {
 	if ( ActiveShader == shader )
 		return;
-	nuGLProg* p = (nuGLProg*) GetShader( shader );
+	xoGLProg* p = (xoGLProg*) GetShader( shader );
 	ActiveShader = shader;
-	NUASSERT( p->Prog != 0 );
-	NUTRACE_RENDER( "Activate shader %s\n", p->Name() );
+	XOASSERT( p->Prog != 0 );
+	XOTRACE_RENDER( "Activate shader %s\n", p->Name() );
 	glUseProgram( p->Prog );
-	if ( ActiveShader == nuShaderTextRGB )
+	if ( ActiveShader == xoShaderTextRGB )
 	{
 		// outputColor0 = vec4(color.r, color.g, color.b, avgA);
 		// outputColor1 = vec4(aR, aG, aB, avgA);
@@ -380,9 +380,9 @@ void nuRenderGL::ActivateShader( nuShaders shader )
 	Check();
 }
 
-void nuRenderGL::DestroyDevice( nuSysWnd& wnd )
+void xoRenderGL::DestroyDevice( xoSysWnd& wnd )
 {
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	if ( GLRC != NULL )
 	{
 		DC = GetDC( wnd.SysWnd );
@@ -397,20 +397,20 @@ void nuRenderGL::DestroyDevice( nuSysWnd& wnd )
 #endif
 }
 
-void nuRenderGL::SurfaceLost()
+void xoRenderGL::SurfaceLost()
 {
 	Reset();
 	SurfaceLost_ForgetTextures();
 	CreateShaders();
 }
 
-bool nuRenderGL::BeginRender( nuSysWnd& wnd )
+bool xoRenderGL::BeginRender( xoSysWnd& wnd )
 {
 	auto rect = wnd.GetRelativeClientRect();
 	FBWidth = rect.Width();
 	FBHeight = rect.Height();
-	NUTRACE_RENDER( "BeginRender %d x %d\n", FBWidth, FBHeight );
-#if NU_PLATFORM_WIN_DESKTOP
+	XOTRACE_RENDER( "BeginRender %d x %d\n", FBWidth, FBHeight );
+#if XO_PLATFORM_WIN_DESKTOP
 	if ( GLRC )
 	{
 		DC = GetDC( wnd.SysWnd );
@@ -421,48 +421,48 @@ bool nuRenderGL::BeginRender( nuSysWnd& wnd )
 		}
 	}
 	return false;
-#elif NU_PLATFORM_ANDROID
+#elif XO_PLATFORM_ANDROID
 	return true
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_LINUX_DESKTOP
 	glXMakeCurrent( wnd.XDisplay, wnd.XWindow, wnd.GLContext );
 #else
 	return true;
 #endif
 }
 
-void nuRenderGL::EndRender( nuSysWnd& wnd )
+void xoRenderGL::EndRender( xoSysWnd& wnd )
 {
-#if NU_PLATFORM_WIN_DESKTOP
-	NUTRACE_LATENCY( "SwapBuffers (begin)\n" );
+#if XO_PLATFORM_WIN_DESKTOP
+	XOTRACE_LATENCY( "SwapBuffers (begin)\n" );
 	SwapBuffers( DC );
 	wglMakeCurrent( NULL, NULL );
 	ReleaseDC( wnd.SysWnd, DC );
 	DC = NULL;
-	NUTRACE_LATENCY( "SwapBuffers (done)\n" );
-#elif NU_PLATFORM_ANDROID
-#elif NU_PLATFORM_LINUX_DESKTOP
-	NUTRACE_LATENCY( "SwapBuffers (begin)\n" );
+	XOTRACE_LATENCY( "SwapBuffers (done)\n" );
+#elif XO_PLATFORM_ANDROID
+#elif XO_PLATFORM_LINUX_DESKTOP
+	XOTRACE_LATENCY( "SwapBuffers (begin)\n" );
 	glXSwapBuffers( wnd.XDisplay, wnd.XWindow );
 	glXMakeCurrent( wnd.XDisplay, None, NULL );
-	NUTRACE_LATENCY( "SwapBuffers (done)\n" );
+	XOTRACE_LATENCY( "SwapBuffers (done)\n" );
 #endif
 }
 
-void nuRenderGL::PreRender()
+void xoRenderGL::PreRender()
 {
 	Check();
 
-	NUTRACE_RENDER( "PreRender %d %d\n", FBWidth, FBHeight );
+	XOTRACE_RENDER( "PreRender %d %d\n", FBWidth, FBHeight );
 	Check();
 
 	glViewport( 0, 0, FBWidth, FBHeight );
 
-	auto clear = nuGlobal()->ClearColor;
+	auto clear = xoGlobal()->ClearColor;
 
-	if ( nuGlobal()->EnableSRGBFramebuffer && Have_sRGB_Framebuffer )
+	if ( xoGlobal()->EnableSRGBFramebuffer && Have_sRGB_Framebuffer )
 	{
 		glEnable( GL_FRAMEBUFFER_SRGB );
-		glClearColor( nuSRGB2Linear(clear.r), nuSRGB2Linear(clear.g), nuSRGB2Linear(clear.b), clear.a / 255.0f );
+		glClearColor( xoSRGB2Linear(clear.r), xoSRGB2Linear(clear.g), xoSRGB2Linear(clear.b), clear.a / 255.0f );
 	}
 	else
 	{
@@ -472,7 +472,7 @@ void nuRenderGL::PreRender()
 	//glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT );
 
-	NUTRACE_RENDER( "PreRender 2\n" );
+	XOTRACE_RENDER( "PreRender 2\n" );
 	Check();
 
 	// Enable CULL_FACE because it will make sure that we are consistent about vertex orientation
@@ -482,34 +482,34 @@ void nuRenderGL::PreRender()
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 
-	NUTRACE_RENDER( "PreRender 3\n" );
+	XOTRACE_RENDER( "PreRender 3\n" );
 	Check();
 
 	SetShaderFrameUniforms();
 
-	NUTRACE_RENDER( "PreRender done\n" );
+	XOTRACE_RENDER( "PreRender done\n" );
 }
 
-void nuRenderGL::SetShaderFrameUniforms()
+void xoRenderGL::SetShaderFrameUniforms()
 {
-	NUTRACE_RENDER( "FB %d x %d\n", FBWidth, FBHeight );
-	nuMat4f mvproj;
+	XOTRACE_RENDER( "FB %d x %d\n", FBWidth, FBHeight );
+	xoMat4f mvproj;
 	mvproj.Identity();
 	Ortho( mvproj, 0, FBWidth, FBHeight, 0, 1, 0 );
-	nuMat4f mvprojT = mvproj.Transposed();
+	xoMat4f mvprojT = mvproj.Transposed();
 
-	if ( SetMVProj( nuShaderRect, PRect, mvprojT ) )
+	if ( SetMVProj( xoShaderRect, PRect, mvprojT ) )
 		glUniform2f( PRect.v_vport_hsize, FBWidth / 2.0f, FBHeight / 2.0f );
 
-	SetMVProj( nuShaderFill, PFill, mvprojT );
-	SetMVProj( nuShaderFillTex, PFillTex, mvprojT );
-	SetMVProj( nuShaderTextRGB, PTextRGB, mvprojT );
-	SetMVProj( nuShaderTextWhole, PTextWhole, mvprojT );
+	SetMVProj( xoShaderFill, PFill, mvprojT );
+	SetMVProj( xoShaderFillTex, PFillTex, mvprojT );
+	SetMVProj( xoShaderTextRGB, PTextRGB, mvprojT );
+	SetMVProj( xoShaderTextWhole, PTextWhole, mvprojT );
 }
 
-void nuRenderGL::SetShaderObjectUniforms()
+void xoRenderGL::SetShaderObjectUniforms()
 {
-	if ( ActiveShader == nuShaderRect )
+	if ( ActiveShader == xoShaderRect )
 	{
 		glUniform4fv( PRect.v_box, 1, &ShaderPerObject.Box.x );
 		glUniform4fv( PRect.v_border, 1, &ShaderPerObject.Border.x );
@@ -519,16 +519,16 @@ void nuRenderGL::SetShaderObjectUniforms()
 }
 
 template<typename TProg>
-bool nuRenderGL::SetMVProj( nuShaders shader, TProg& prog, const Mat4f& mvprojTransposed )
+bool xoRenderGL::SetMVProj( xoShaders shader, TProg& prog, const Mat4f& mvprojTransposed )
 {
 	if ( prog.Prog == 0 )
 	{
-		NUTRACE_RENDER( "SetMVProj skipping %s, because not compiled\n", (const char*) prog.Name() );
+		XOTRACE_RENDER( "SetMVProj skipping %s, because not compiled\n", (const char*) prog.Name() );
 		return false;
 	}
 	else
 	{
-		NUTRACE_RENDER( "SetMVProj %s (%d)\n", (const char*) prog.Name(), prog.v_mvproj );
+		XOTRACE_RENDER( "SetMVProj %s (%d)\n", (const char*) prog.Name(), prog.v_mvproj );
 		ActivateShader( shader );
 		Check();
 		// GLES doesn't support TRANSPOSE = TRUE
@@ -537,19 +537,19 @@ bool nuRenderGL::SetMVProj( nuShaders shader, TProg& prog, const Mat4f& mvprojTr
 	}
 }
 
-void nuRenderGL::PostRenderCleanup()
+void xoRenderGL::PostRenderCleanup()
 {
 	glUseProgram( 0 );
-	ActiveShader = nuShaderInvalid;
+	ActiveShader = xoShaderInvalid;
 }
 
-void nuRenderGL::DrawQuad( const void* v )
+void xoRenderGL::DrawQuad( const void* v )
 {
-	NUTRACE_RENDER( "DrawQuad\n" );
+	XOTRACE_RENDER( "DrawQuad\n" );
 
 	SetShaderObjectUniforms();
 
-	int stride = sizeof(nuVx_PTC);
+	int stride = sizeof(xoVx_PTC);
 	const byte* vbyte = (const byte*) v;
 
 	GLint varvpos = 0;
@@ -559,30 +559,30 @@ void nuRenderGL::DrawQuad( const void* v )
 	GLint vartexUnit0 = 0;
 	switch ( ActiveShader )
 	{
-	case nuShaderRect:
+	case xoShaderRect:
 		varvpos = PRect.v_vpos;
 		varvcol = PRect.v_vcolor;
 		break;
-	case nuShaderFill:
+	case xoShaderFill:
 		varvpos = PFill.v_vpos;
 		varvcol = PFill.v_vcolor;
-		NUTRACE_RENDER( "vv %d %d\n", varvpos, varvcol );
+		XOTRACE_RENDER( "vv %d %d\n", varvpos, varvcol );
 		break;
-	case nuShaderFillTex:
+	case xoShaderFillTex:
 		varvpos = PFillTex.v_vpos;
 		varvcol = PFillTex.v_vcolor;
 		varvtex0 = PFillTex.v_vtexuv0;
 		vartexUnit0 = PFillTex.v_tex0;
 		break;
-	case nuShaderTextRGB:
-		stride = sizeof(nuVx_PTCV4);
+	case xoShaderTextRGB:
+		stride = sizeof(xoVx_PTCV4);
 		varvpos = PTextRGB.v_vpos;
 		varvcol = PTextRGB.v_vcolor;
 		varvtex0 = PTextRGB.v_vtexuv0;
 		varvtexClamp = PTextRGB.v_vtexClamp;
 		vartexUnit0 = PTextRGB.v_tex0;
 		break;
-	case nuShaderTextWhole:
+	case xoShaderTextWhole:
 		varvpos = PTextWhole.v_vpos;
 		varvcol = PTextWhole.v_vcolor;
 		varvtex0 = PTextWhole.v_vtexuv0;
@@ -590,22 +590,22 @@ void nuRenderGL::DrawQuad( const void* v )
 		break;
 	}
 
-	// We assume here that nuVx_PTC and nuVx_PTCV4 share the same base layout
+	// We assume here that xoVx_PTC and xoVx_PTCV4 share the same base layout
 	glVertexAttribPointer( varvpos, 3, GL_FLOAT, false, stride, vbyte );
 	glEnableVertexAttribArray( varvpos );
 	
-	glVertexAttribPointer( varvcol, 4, GL_UNSIGNED_BYTE, true, stride, vbyte + offsetof(nuVx_PTC, Color) );
+	glVertexAttribPointer( varvcol, 4, GL_UNSIGNED_BYTE, true, stride, vbyte + offsetof(xoVx_PTC, Color) );
 	glEnableVertexAttribArray( varvcol );
 
 	if ( varvtex0 != 0 )
 	{
 		glUniform1i( vartexUnit0, 0 );
-		glVertexAttribPointer( varvtex0, 2, GL_FLOAT, true, stride, vbyte + offsetof(nuVx_PTC, UV) );
+		glVertexAttribPointer( varvtex0, 2, GL_FLOAT, true, stride, vbyte + offsetof(xoVx_PTC, UV) );
 		glEnableVertexAttribArray( varvtex0 );
 	}
 	if ( varvtexClamp != 0 )
 	{
-		glVertexAttribPointer( varvtexClamp, 4, GL_FLOAT, true, stride, vbyte + offsetof(nuVx_PTCV4, V4) );
+		glVertexAttribPointer( varvtexClamp, 4, GL_FLOAT, true, stride, vbyte + offsetof(xoVx_PTCV4, V4) );
 		glEnableVertexAttribArray( varvtexClamp );
 	}
 
@@ -616,23 +616,23 @@ void nuRenderGL::DrawQuad( const void* v )
 	indices[3] = 2;
 	glDrawElements( GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, indices );
 
-	//auto vx = (nuVx_PTC*) vbyte;
-	//NUTRACE_RENDER( "DrawQuad done (%f,%f) (%f,%f) (%f,%f) (%f,%f)\n", vx[0].Pos.x, vx[0].Pos.y, vx[1].Pos.x, vx[1].Pos.y, vx[2].Pos.x, vx[2].Pos.y, vx[3].Pos.x, vx[3].Pos.y );
+	//auto vx = (xoVx_PTC*) vbyte;
+	//XOTRACE_RENDER( "DrawQuad done (%f,%f) (%f,%f) (%f,%f) (%f,%f)\n", vx[0].Pos.x, vx[0].Pos.y, vx[1].Pos.x, vx[1].Pos.y, vx[2].Pos.x, vx[2].Pos.y, vx[3].Pos.x, vx[3].Pos.y );
 
 	Check();
 }
 
 /*
-void nuRenderGL::DrawTriangles( int nvert, const void* v, const uint16* indices )
+void xoRenderGL::DrawTriangles( int nvert, const void* v, const uint16* indices )
 {
-	int stride = sizeof(nuVx_PTC);
+	int stride = sizeof(xoVx_PTC);
 	const byte* vbyte = (const byte*) v;
 	glDrawElements( GL_TRIANGLES, nvert, GL_UNSIGNED_SHORT, indices );
 	Check();
 }
 */
 
-bool nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
+bool xoRenderGL::LoadTexture( xoTexture* tex, int texUnit )
 {
 	EnsureTextureProperlyDefined( tex, texUnit );
 
@@ -653,8 +653,8 @@ bool nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
 	}
 
 	// If the texture has not been updated, then we are done
-	nuBox invRect = tex->TexInvalidRect;
-	nuBox fullRect = nuBox(0, 0, tex->TexWidth, tex->TexHeight);
+	xoBox invRect = tex->TexInvalidRect;
+	xoBox fullRect = xoBox(0, 0, tex->TexWidth, tex->TexHeight);
 	invRect.ClampTo( fullRect );
 	if ( invRect.IsAreaZero() )
 		return true;
@@ -662,12 +662,12 @@ bool nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
 	int format = 0;
 	switch ( tex->TexFormat )
 	{
-	case nuTexFormatGrey8: format = GL_RED; break;	// was luminance
+	case xoTexFormatGrey8: format = GL_RED; break;	// was luminance
 	//case : format = GL_RG;
 	//case : format = GL_RGB;
-	case nuTexFormatRGBA8: format = GL_RGBA; break;
+	case xoTexFormatRGBA8: format = GL_RGBA; break;
 	default:
-		NUTODO;
+		XOTODO;
 	}
 	int iformat = format;
 
@@ -698,9 +698,9 @@ bool nuRenderGL::LoadTexture( nuTexture* tex, int texUnit )
 	return true;
 }
 
-bool nuRenderGL::ReadBackbuffer( nuImage& image )
+bool xoRenderGL::ReadBackbuffer( xoImage& image )
 {
-	image.Alloc( nuTexFormatRGBA8, FBWidth, FBHeight );
+	image.Alloc( xoTexFormatRGBA8, FBWidth, FBHeight );
 	if ( Have_Unpack_RowLength )
 		glPixelStorei( GL_UNPACK_ROW_LENGTH, image.TexStride / 4 );
 
@@ -716,28 +716,28 @@ bool nuRenderGL::ReadBackbuffer( nuImage& image )
 	return true;
 }
 
-void nuRenderGL::PreparePreprocessor()
+void xoRenderGL::PreparePreprocessor()
 {
 	if ( BaseShader.size() != 0 )
 		return;
 
-#if NU_PLATFORM_WIN_DESKTOP
-	BaseShader.append( "#define NU_PLATFORM_WIN_DESKTOP\n" );
-#elif NU_PLATFORM_ANDROID
-	BaseShader.append( "#define NU_PLATFORM_ANDROID\n" );
-#elif NU_PLATFORM_LINUX_DESKTOP
-	BaseShader.append( "#define NU_PLATFORM_LINUX_DESKTOP\n" );
+#if XO_PLATFORM_WIN_DESKTOP
+	BaseShader.append( "#define XO_PLATFORM_WIN_DESKTOP\n" );
+#elif XO_PLATFORM_ANDROID
+	BaseShader.append( "#define XO_PLATFORM_ANDROID\n" );
+#elif XO_PLATFORM_LINUX_DESKTOP
+	BaseShader.append( "#define XO_PLATFORM_LINUX_DESKTOP\n" );
 #else
 	#ifdef _MSC_VER
-		#pragma error( "Unknown nuDom platform" )
+		#pragma error( "Unknown xoDom platform" )
 	#else
-		#error Unknown nuDom platform
+		#error Unknown xoDom platform
 	#endif
 #endif
 
 	BaseShader.append( CommonShaderDefines() );
-	if ( nuGlobal()->EnableSRGBFramebuffer && Have_sRGB_Framebuffer )
-		BaseShader.append( "#define NU_SRGB_FRAMEBUFFER\n" );
+	if ( xoGlobal()->EnableSRGBFramebuffer && Have_sRGB_Framebuffer )
+		BaseShader.append( "#define XO_SRGB_FRAMEBUFFER\n" );
 
 	BaseShader += nu_GLSLPrefix;
 
@@ -745,38 +745,38 @@ void nuRenderGL::PreparePreprocessor()
 	if ( Preprocessor.MacroCount() != 0 )
 		return;
 
-	Preprocessor.SetMacro( "NU_GLYPH_ATLAS_SIZE", fmt("%v", nuGlyphAtlasSize).Z );
+	Preprocessor.SetMacro( "XO_GLYPH_ATLAS_SIZE", fmt("%v", xoGlyphAtlasSize).Z );
 
-	if ( nuGlobal()->EnableSRGBFramebuffer )
-		Preprocessor.SetMacro( "NU_SRGB_FRAMEBUFFER", "" );
+	if ( xoGlobal()->EnableSRGBFramebuffer )
+		Preprocessor.SetMacro( "XO_SRGB_FRAMEBUFFER", "" );
 		*/
 
-	//if ( nuGlobal()->EnableSRGBFramebuffer && nuGlobal()->EmulateGammaBlending )
-	//	Preprocessor.SetMacro( "NU_EMULATE_GAMMA_BLENDING", "" );
+	//if ( xoGlobal()->EnableSRGBFramebuffer && xoGlobal()->EmulateGammaBlending )
+	//	Preprocessor.SetMacro( "XO_EMULATE_GAMMA_BLENDING", "" );
 }
 
-void nuRenderGL::DeleteProgram( nuGLProg& prog )
+void xoRenderGL::DeleteProgram( xoGLProg& prog )
 {
 	if ( prog.Prog ) glDeleteShader( prog.Prog );
 	if ( prog.Vert ) glDeleteShader( prog.Vert );
 	if ( prog.Frag ) glDeleteShader( prog.Frag );
-	prog = nuGLProg();
+	prog = xoGLProg();
 }
 
-bool nuRenderGL::LoadProgram( nuGLProg& prog )
+bool xoRenderGL::LoadProgram( xoGLProg& prog )
 {
 	return LoadProgram( prog.Vert, prog.Frag, prog.Prog, prog.Name(), prog.VertSrc(), prog.FragSrc() );
 }
 
-bool nuRenderGL::LoadProgram( nuGLProg& prog, const char* name, const char* vsrc, const char* fsrc )
+bool xoRenderGL::LoadProgram( xoGLProg& prog, const char* name, const char* vsrc, const char* fsrc )
 {
 	return LoadProgram( prog.Vert, prog.Frag, prog.Prog, name, vsrc, fsrc );
 }
 
-bool nuRenderGL::LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, const char* name, const char* vsrc, const char* fsrc )
+bool xoRenderGL::LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, const char* name, const char* vsrc, const char* fsrc )
 {
-	NUTRACE("Loading shader %s\n", name);
-	NUASSERT(glGetError() == GL_NO_ERROR);
+	XOTRACE("Loading shader %s\n", name);
+	XOASSERT(glGetError() == GL_NO_ERROR);
 
 	bool isTextRGB = strcmp(name, "TextRGB") == 0;
 
@@ -805,19 +805,19 @@ bool nuRenderGL::LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, cons
 	glGetProgramInfoLog( prog, maxBuff, &ilen, ibuff );
 	if ( ibuff[0] != 0 )
 	{
-		NUTRACE( "Shader: %s\n", name );
-		NUTRACE( ibuff );
-		NUTRACE( "\n" );
+		XOTRACE( "Shader: %s\n", name );
+		XOTRACE( ibuff );
+		XOTRACE( "\n" );
 	}
 	bool ok = linkStat != 0 && glGetError() == GL_NO_ERROR;
 	if ( !ok )
-		NUTRACE( "Failed to load shader %s: glGetError = %d, linkStat = %d\n", name, glGetError(), linkStat );
+		XOTRACE( "Failed to load shader %s: glGetError = %d, linkStat = %d\n", name, glGetError(), linkStat );
 	return ok;
 }
 
-bool nuRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* name, const char* raw_src )
+bool xoRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* name, const char* raw_src )
 {
-	NUASSERT(glGetError() == GL_NO_ERROR);
+	XOASSERT(glGetError() == GL_NO_ERROR);
 
 	shader = glCreateShader( shaderType );
 
@@ -833,9 +833,9 @@ bool nuRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* name
 
 	PreparePreprocessor();
 	std::string processed = raw_prefix + BaseShader + raw_other;
-	//nuString processed = Preprocessor.Run( raw_src );
-	//nuString processed(raw_src);
-	//processed.ReplaceAll( "NU_GLYPH_ATLAS_SIZE", fmt("%v", nuGlyphAtlasSize).Z );
+	//xoString processed = Preprocessor.Run( raw_src );
+	//xoString processed(raw_src);
+	//processed.ReplaceAll( "XO_GLYPH_ATLAS_SIZE", fmt("%v", xoGlyphAtlasSize).Z );
 	//fputs( processed.c_str(), stderr );
 
 	GLchar* vstring[1];
@@ -854,8 +854,8 @@ bool nuRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* name
 	//glGetInfoLogARB( shader, maxBuff, &ilen, ibuff );
 	if ( ibuff[0] != 0 )
 	{
-		NUTRACE( "Shader %s (%s)\n", name, shaderType == GL_FRAGMENT_SHADER ? "frag" : "vert" );
-		NUTRACE( ibuff );
+		XOTRACE( "Shader %s (%s)\n", name, shaderType == GL_FRAGMENT_SHADER ? "frag" : "vert" );
+		XOTRACE( ibuff );
 	}
 	if ( compileStat == 0 )
 		return false;
@@ -863,14 +863,14 @@ bool nuRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* name
 	return glGetError() == GL_NO_ERROR;
 }
 
-void nuRenderGL::Check()
+void xoRenderGL::Check()
 {
 	int e = glGetError();
 	if ( e != GL_NO_ERROR )
 	{
-		NUTRACE( "glError = %d\n", e );
+		XOTRACE( "glError = %d\n", e );
 	}
-	//NUASSERT( glGetError() == GL_NO_ERROR );
+	//XOASSERT( glGetError() == GL_NO_ERROR );
 }
 
 #endif

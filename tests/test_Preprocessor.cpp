@@ -44,7 +44,7 @@ static const char* IfDefined3 =
 
 TESTFUNC(Preprocessor)
 {
-	nuPreprocessor p;
+	xoPreprocessor p;
 	IDENTITY("");
 	IDENTITY(" ");
 	IDENTITY("\n");

@@ -1,4 +1,4 @@
-#NU_PLATFORM_WIN_DESKTOP
+#XO_PLATFORM_WIN_DESKTOP
 varying vec4 pos;
 varying vec2 texuv0;
 void main()

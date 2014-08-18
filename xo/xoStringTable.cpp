@@ -1,27 +1,27 @@
 #include "pch.h"
-#include "nuStringTable.h"
+#include "xoStringTable.h"
  
-nuStringTable::nuStringTable()
+xoStringTable::xoStringTable()
 {
 	IdToName += "";
 	NameToId.insert( IdToName[0], 0 );
 }
 
-nuStringTable::~nuStringTable()
+xoStringTable::~xoStringTable()
 {
 }
 
-const char* nuStringTable::GetStr( int id ) const
+const char* xoStringTable::GetStr( int id ) const
 {
 	if ( (uint32) id >= (uint32) IdToName.size() )
 		return "";
 	return IdToName[id];
 }
 
-int nuStringTable::GetId( const char* str )
+int xoStringTable::GetId( const char* str )
 {
-	NUASSERT( str != nullptr );
-	nuTempString s(str);
+	XOASSERT( str != nullptr );
+	xoTempString s(str);
 	int v = 0;
 	if ( NameToId.get( s, v ) )
 		return v;
@@ -34,11 +34,11 @@ int nuStringTable::GetId( const char* str )
 	return (int) IdToName.size() - 1;
 }
 
-void nuStringTable::CloneFrom_Incremental( const nuStringTable& src )
+void xoStringTable::CloneFrom_Incremental( const xoStringTable& src )
 {
 	for ( intp i = IdToName.size(); i < src.IdToName.size(); i++ )
 	{
 		int id = GetId( src.IdToName[i] );
-		NUASSERT( id == i );
+		XOASSERT( id == i );
 	}
 }

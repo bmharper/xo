@@ -1,4 +1,4 @@
-package com.android.nudom;
+package com.android.xo;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -9,9 +9,9 @@ import android.view.*;
 import java.io.File;
 
 
-public class NuActivity extends Activity {
+public class XoActivity extends Activity {
 
-    NuView mView;
+    XoView mView;
 
     @Override protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
@@ -19,7 +19,7 @@ public class NuActivity extends Activity {
         DisplayMetrics metrics = new DisplayMetrics();
     	getWindowManager().getDefaultDisplay().getMetrics(metrics);
     	
-        mView = new NuView(getApplication(), metrics.scaledDensity);
+        mView = new XoView(getApplication(), metrics.scaledDensity);
         setContentView(mView);
     }
 
@@ -35,7 +35,7 @@ public class NuActivity extends Activity {
 
     @Override protected void onDestroy() {
         super.onDestroy();
-        NuLib.destroy( isFinishing() ? 0 : 1 );
+        XoLib.destroy( isFinishing() ? 0 : 1 );
     }
     
     @Override public boolean onTouchEvent( MotionEvent event ) {
@@ -47,7 +47,7 @@ public class NuActivity extends Activity {
     		x[i] = event.getX(i);
     		y[i] = event.getY(i);
     	}
-    	NuLib.input( 1, x, y );
+    	XoLib.input( 1, x, y );
     	mView.requestRender();
     	return true;
     }

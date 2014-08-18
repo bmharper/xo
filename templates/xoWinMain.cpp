@@ -1,12 +1,12 @@
-#include "nuDom.h"
-#include "nuDocGroup.h"
+#include "xo.h"
+#include "xoDocGroup.h"
 
 // This file should be compiled and linked into your exe
 
 // This is your "main" function, which you define in your own code
-void nuMain( nuMainEvent ev );
+void xoMain( xoMainEvent ev );
 
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 
 static int __cdecl CrtAllocHook( int allocType, void *pvData, size_t size, int blockUse, long request, const unsigned char *filename, int fileLine );
 
@@ -14,13 +14,13 @@ static int __cdecl CrtAllocHook( int allocType, void *pvData, size_t size, int b
 
 int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow )
 {
-	//NUTRACE("sizeof(nuDomEl) = %d\n", (int) sizeof(nuDomEl));
+	//XOTRACE("sizeof(xoDomEl) = %d\n", (int) sizeof(xoDomEl));
 	_CrtSetAllocHook( CrtAllocHook );
-	nuInitialize();
-	nuMain( nuMainEventInit );
-	nuRunWin32MessageLoop();
-	nuMain( nuMainEventShutdown );
-	nuShutdown();
+	xoInitialize();
+	xoMain( xoMainEventInit );
+	xoRunWin32MessageLoop();
+	xoMain( xoMainEventShutdown );
+	xoShutdown();
 	_CrtDumpMemoryLeaks();
 	return 0;
 }
@@ -32,18 +32,18 @@ static int __cdecl CrtAllocHook( int allocType, void *pvData, size_t size, int b
 	return TRUE;
 }
 
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_LINUX_DESKTOP
 
 int main( int argc, char** argv )
 {
-	nuInitialize();
-	nuMain( nuMainEventInit );
-	nuRunXMessageLoop();
-	nuMain( nuMainEventShutdown );
-	nuShutdown();
+	xoInitialize();
+	xoMain( xoMainEventInit );
+	xoRunXMessageLoop();
+	xoMain( xoMainEventShutdown );
+	xoShutdown();
 	return 0;
 }
 
 #else
-NUTODO_STATIC;
+XOTODO_STATIC;
 #endif

@@ -1,29 +1,29 @@
 #include "pch.h"
-#include "nuImageStore.h"
-#include "nuImage.h"
+#include "xoImageStore.h"
+#include "xoImage.h"
 
-const char* nuImageStore::NullImageName = "NULL";
+const char* xoImageStore::NullImageName = "NULL";
 
-nuImageStore::nuImageStore()
+xoImageStore::xoImageStore()
 {
-	nuImage* nimg = new nuImage();
+	xoImage* nimg = new xoImage();
 	u32 ndata[2][2] = {
 		{0xffffffff, 0xff000000},
 		{0xff000000, 0xffffffff},
 	};
-	nimg->Set( nuTexFormatRGBA8, 2, 2, ndata );
-	NUASSERT( NullImageIndex == ImageList.size() );
+	nimg->Set( xoTexFormatRGBA8, 2, 2, ndata );
+	XOASSERT( NullImageIndex == ImageList.size() );
 	Set( NullImageName, nimg );
 }
 
-nuImageStore::~nuImageStore()
+xoImageStore::~xoImageStore()
 {
 	delete_all( ImageList );
 }
 
-void nuImageStore::Set( const char* name, nuImage* img )
+void xoImageStore::Set( const char* name, xoImage* img )
 {
-	nuTempString sname(name);
+	xoTempString sname(name);
 	int index = -1;
 	bool exists = NameToIndex.get( sname, index );
 	if ( exists )
@@ -38,29 +38,29 @@ void nuImageStore::Set( const char* name, nuImage* img )
 	}
 }
 
-nuImage* nuImageStore::Get( const char* name ) const
+xoImage* xoImageStore::Get( const char* name ) const
 {
 	int index = -1;
-	if ( NameToIndex.get( nuTempString(name), index ) )
+	if ( NameToIndex.get( xoTempString(name), index ) )
 		return ImageList[index];
 	else
 		return NULL;
 }
 
-nuImage* nuImageStore::GetOrNull( const char* name ) const
+xoImage* xoImageStore::GetOrNull( const char* name ) const
 {
-	nuImage* img = Get( name );
+	xoImage* img = Get( name );
 	if ( img )
 		return img;
 	return ImageList[NullImageIndex];
 }
 
-const nuImage* nuImageStore::GetNull() const
+const xoImage* xoImageStore::GetNull() const
 {
 	return ImageList[NullImageIndex];
 }
 
-void nuImageStore::CloneFrom( const nuImageStore& src )
+void xoImageStore::CloneFrom( const xoImageStore& src )
 {
 	delete_all( ImageList );
 	NameToIndex.clear();

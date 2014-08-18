@@ -1,19 +1,19 @@
 #include "pch.h"
-#if NU_BUILD_DIRECTX
+#if XO_BUILD_DIRECTX
 #include "FillShader.h"
 
-nuDXProg_Fill::nuDXProg_Fill()
+xoDXProg_Fill::xoDXProg_Fill()
 {
 	Reset();
 }
 
-void nuDXProg_Fill::Reset()
+void xoDXProg_Fill::Reset()
 {
 	ResetBase();
 
 }
 
-const char* nuDXProg_Fill::VertSrc()
+const char* xoDXProg_Fill::VertSrc()
 {
 	return
 	"\n"
@@ -92,7 +92,7 @@ const char* nuDXProg_Fill::VertSrc()
 ;
 }
 
-const char* nuDXProg_Fill::FragSrc()
+const char* xoDXProg_Fill::FragSrc()
 {
 	return
 	"\n"
@@ -168,31 +168,31 @@ const char* nuDXProg_Fill::FragSrc()
 ;
 }
 
-const char* nuDXProg_Fill::Name()
+const char* xoDXProg_Fill::Name()
 {
 	return "Fill";
 }
 
 
-bool nuDXProg_Fill::LoadVariablePositions()
+bool xoDXProg_Fill::LoadVariablePositions()
 {
 	int nfail = 0;
 
 	if ( nfail != 0 )
-		NUTRACE( "Failed to bind %d variables of shader Fill\n", nfail );
+		XOTRACE( "Failed to bind %d variables of shader Fill\n", nfail );
 
 	return nfail == 0;
 }
 
-uint32 nuDXProg_Fill::PlatformMask()
+uint32 xoDXProg_Fill::PlatformMask()
 {
-	return nuPlatform_All;
+	return xoPlatform_All;
 }
 
-nuVertexType nuDXProg_Fill::VertexType()
+xoVertexType xoDXProg_Fill::VertexType()
 {
-	return nuVertexType_PTC;
+	return xoVertexType_PTC;
 }
 
-#endif // NU_BUILD_DIRECTX
+#endif // XO_BUILD_DIRECTX
 

@@ -183,6 +183,7 @@
 	a box.
 	UPDATE: That seems to work OK.
 
+2014-08-18	Rename project to "xo"
 
 
 

@@ -1,19 +1,19 @@
 #include "pch.h"
-#if NU_BUILD_DIRECTX
+#if XO_BUILD_DIRECTX
 #include "TextRGBShader.h"
 
-nuDXProg_TextRGB::nuDXProg_TextRGB()
+xoDXProg_TextRGB::xoDXProg_TextRGB()
 {
 	Reset();
 }
 
-void nuDXProg_TextRGB::Reset()
+void xoDXProg_TextRGB::Reset()
 {
 	ResetBase();
 
 }
 
-const char* nuDXProg_TextRGB::VertSrc()
+const char* xoDXProg_TextRGB::VertSrc()
 {
 	return
 	"\n"
@@ -96,7 +96,7 @@ const char* nuDXProg_TextRGB::VertSrc()
 ;
 }
 
-const char* nuDXProg_TextRGB::FragSrc()
+const char* xoDXProg_TextRGB::FragSrc()
 {
 	return
 	"\n"
@@ -179,7 +179,7 @@ const char* nuDXProg_TextRGB::FragSrc()
 	"	//col = input.color * float4(1,1,1, shader_texture.Sample(sample_type, input.texuv0).r);\n"
 	"    //return col;\n"
 	"\n"
-	"	float offset = 1.0 / NU_GLYPH_ATLAS_SIZE;\n"
+	"	float offset = 1.0 / XO_GLYPH_ATLAS_SIZE;\n"
 	"	float2 uv = input.uv;\n"
 	"	float4 clamps = input.uvClamp;\n"
 	"\n"
@@ -221,31 +221,31 @@ const char* nuDXProg_TextRGB::FragSrc()
 ;
 }
 
-const char* nuDXProg_TextRGB::Name()
+const char* xoDXProg_TextRGB::Name()
 {
 	return "TextRGB";
 }
 
 
-bool nuDXProg_TextRGB::LoadVariablePositions()
+bool xoDXProg_TextRGB::LoadVariablePositions()
 {
 	int nfail = 0;
 
 	if ( nfail != 0 )
-		NUTRACE( "Failed to bind %d variables of shader TextRGB\n", nfail );
+		XOTRACE( "Failed to bind %d variables of shader TextRGB\n", nfail );
 
 	return nfail == 0;
 }
 
-uint32 nuDXProg_TextRGB::PlatformMask()
+uint32 xoDXProg_TextRGB::PlatformMask()
 {
-	return nuPlatform_All;
+	return xoPlatform_All;
 }
 
-nuVertexType nuDXProg_TextRGB::VertexType()
+xoVertexType xoDXProg_TextRGB::VertexType()
 {
-	return nuVertexType_PTCV4;
+	return xoVertexType_PTCV4;
 }
 
-#endif // NU_BUILD_DIRECTX
+#endif // XO_BUILD_DIRECTX
 

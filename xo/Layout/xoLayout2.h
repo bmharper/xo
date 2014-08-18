@@ -1,11 +1,11 @@
 #pragma once
 
-#include "nuDefs.h"
-#include "nuStyle.h"
-#include "Render/nuRenderStack.h"
-#include "Text/nuGlyphCache.h"
-#include "Text/nuFontStore.h"
-#include "../nuMem.h"
+#include "xoDefs.h"
+#include "xoStyle.h"
+#include "Render/xoRenderStack.h"
+#include "Text/xoGlyphCache.h"
+#include "Text/xoFontStore.h"
+#include "../xoMem.h"
 
 /* This performs box layout.
 
@@ -19,53 +19,53 @@ Hidden things that would bite you if you tried to multithread this:
 that is thread safe.
 
 */
-class NUAPI nuLayout2
+class XOAPI xoLayout2
 {
 public:
-	void Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDomNode& root, nuPool* pool );
+	void Layout( const xoDoc& doc, u32 docWidth, u32 docHeight, xoRenderDomNode& root, xoPool* pool );
 
 protected:
 
 	// Packed set of bindings between child and parent node
 	struct BindingSet
 	{
-		nuHorizontalBindings	HChild:		8;
-		nuHorizontalBindings	HParent:	8;
-		nuVerticalBindings		VChild:		8;
-		nuVerticalBindings		VParent:	8;
+		xoHorizontalBindings	HChild:		8;
+		xoHorizontalBindings	HParent:	8;
+		xoVerticalBindings		VChild:		8;
+		xoVerticalBindings		VParent:	8;
 	};
 
 	struct LayoutInput
 	{
-		nuPos	ParentWidth;
-		nuPos	ParentHeight;
-		nuPos	OuterBaseline;
+		xoPos	ParentWidth;
+		xoPos	ParentHeight;
+		xoPos	OuterBaseline;
 	};
 
 	struct LayoutOutput
 	{
 		BindingSet		Binds;
-		nuPos			NodeWidth;
-		nuPos			NodeHeight;
-		nuPos			NodeBaseline;
-		nuBreakType		Break: 2;		// Keep in mind that you need to mask this off against 3 (ie if (x.Break & 3 == nuBreakAfter)), because of sign extension. ie enums are signed.
-		//nuPositionType	Position: 3;
-		nuBreakType		GetBreak() const		{ return nuBreakType(Break & 3); }
-		//nuPositionType	GetPosition() const		{ return nuPositionType(Position & 7); }
+		xoPos			NodeWidth;
+		xoPos			NodeHeight;
+		xoPos			NodeBaseline;
+		xoBreakType		Break: 2;		// Keep in mind that you need to mask this off against 3 (ie if (x.Break & 3 == xoBreakAfter)), because of sign extension. ie enums are signed.
+		//xoPositionType	Position: 3;
+		xoBreakType		GetBreak() const		{ return xoBreakType(Break & 3); }
+		//xoPositionType	GetPosition() const		{ return xoPositionType(Position & 7); }
 	};
 
 	// Every time we start a new line, another one of these is created
 	struct LineBox
 	{
-		nuPos		InnerBaseline;
+		xoPos		InnerBaseline;
 		int			InnerBaselineDefinedBy;
 		int			LastChild;
-		static LineBox Make( nuPos innerBaseline, int innerBaselineDefinedBy, int lastChild ) { return {innerBaseline, innerBaselineDefinedBy, lastChild}; }
+		static LineBox Make( xoPos innerBaseline, int innerBaselineDefinedBy, int lastChild ) { return {innerBaseline, innerBaselineDefinedBy, lastChild}; }
 	};
 
 	struct Word
 	{
-		nuPos	Width;
+		xoPos	Width;
 		int32	Start;
 		int32	End;
 		int32	Length() const { return End - Start; }
@@ -73,8 +73,8 @@ protected:
 
 	struct TextRunState
 	{
-		const nuDomText*	Node;
-		nuRenderDomText*	RNode;
+		const xoDomText*	Node;
+		xoRenderDomText*	RNode;
 		podvec<Word>		Words;
 		int					GlyphCount;		// Number of non-empty glyphs
 		bool				GlyphsNeeded;
@@ -83,9 +83,9 @@ protected:
 
 	struct FlowState
 	{
-		nuPos	PosMinor;		// In default flow, this is the horizontal (X) position
-		nuPos	PosMajor;		// In default flow, this is the vertical (Y) position
-		nuPos	MajorMax;		// In default flow, this is the bottom of the current line
+		xoPos	PosMinor;		// In default flow, this is the horizontal (X) position
+		xoPos	PosMajor;		// In default flow, this is the vertical (Y) position
+		xoPos	MajorMax;		// In default flow, this is the bottom of the current line
 		int		NumLines;
 		// Meh -- implement these when the need arises
 		// bool	IsVertical;		// default true, normal flow
@@ -93,48 +93,48 @@ protected:
 		// bool	ReverseMinor;	// Minor goes from high to low numbers (right to left, or bottom to top)
 	};
 
-	const nuDoc*				Doc;
+	const xoDoc*				Doc;
 	u32							DocWidth, DocHeight;
-	nuPool*						Pool;
-	nuRenderStack				Stack;
-	nuLifoBuf					ChildOutStack;
-	nuLifoBuf					LineBoxStack;
+	xoPool*						Pool;
+	xoRenderStack				Stack;
+	xoLifoBuf					ChildOutStack;
+	xoLifoBuf					LineBoxStack;
 	float						PtToPixel;
 	float						EpToPixel;
-	nuFontTableImmutable		Fonts;
-	fhashset<nuGlyphCacheKey>	GlyphsNeeded;
+	xoFontTableImmutable		Fonts;
+	fhashset<xoGlyphCacheKey>	GlyphsNeeded;
 	TextRunState				TempText;
 	bool						SnapBoxes;
 	bool						SnapSubpixelHorzText;
 
 	void		RenderGlyphsNeeded();
-	void		LayoutInternal( nuRenderDomNode& root );
-	void		RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOutput& out, nuRenderDomNode* rnode );
-	void		RunText( const nuDomText& node, const LayoutInput& in, LayoutOutput& out, nuRenderDomText* rnode );
+	void		LayoutInternal( xoRenderDomNode& root );
+	void		RunNode( const xoDomNode& node, const LayoutInput& in, LayoutOutput& out, xoRenderDomNode* rnode );
+	void		RunText( const xoDomText& node, const LayoutInput& in, LayoutOutput& out, xoRenderDomText* rnode );
 	void		GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, TextRunState& ts );
-	nuPoint		PositionChildFromBindings( const LayoutInput& cin, const LayoutOutput& cout, nuRenderDomEl* rchild );
+	xoPoint		PositionChildFromBindings( const LayoutInput& cin, const LayoutOutput& cout, xoRenderDomEl* rchild );
 	void		GenerateTextWords( TextRunState& ts );
 
-	nuPos		ComputeDimension( nuPos container, nuStyleCategories cat );
-	nuPos		ComputeDimension( nuPos container, nuSize size );
-	nuBox		ComputeBox( nuPos containerWidth, nuPos containerHeight, nuStyleCategories cat );
-	nuBox		ComputeBox( nuPos containerWidth, nuPos containerHeight, nuStyleBox box );
+	xoPos		ComputeDimension( xoPos container, xoStyleCategories cat );
+	xoPos		ComputeDimension( xoPos container, xoSize size );
+	xoBox		ComputeBox( xoPos containerWidth, xoPos containerHeight, xoStyleCategories cat );
+	xoBox		ComputeBox( xoPos containerWidth, xoPos containerHeight, xoStyleBox box );
 	BindingSet	ComputeBinds();
 
-	nuPos		HoriAdvance( const nuGlyph* glyph, const TextRunState& ts );
+	xoPos		HoriAdvance( const xoGlyph* glyph, const TextRunState& ts );
 
-	static nuPos			HBindOffset( nuHorizontalBindings bind, nuPos width );
-	static nuPos			VBindOffset( nuVerticalBindings bind, nuPos baseline, nuPos height );
+	static xoPos			HBindOffset( xoHorizontalBindings bind, xoPos width );
+	static xoPos			VBindOffset( xoVerticalBindings bind, xoPos baseline, xoPos height );
 	static bool				IsSpace( int ch );
 	static bool				IsLinebreak( int ch );
-	static nuGlyphCacheKey	MakeGlyphCacheKey( nuRenderDomText* rnode );
+	static xoGlyphCacheKey	MakeGlyphCacheKey( xoRenderDomText* rnode );
 	static void				FlowNewline( FlowState& flow );
 	static bool				FlowBreakBefore( const LayoutOutput& cout, FlowState& flow );
-	static nuPoint			FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, nuRenderDomEl* rendEl );
-	static nuPoint			ApplyPosition( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, nuRenderDomEl* rendEl );
+	static xoPoint			FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl );
+	static xoPoint			ApplyPosition( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl );
 
-	static bool				IsDefined( nuPos p )	{ return p != nuPosNULL; }
-	static bool				IsNull( nuPos p )		{ return p == nuPosNULL; }
+	static bool				IsDefined( xoPos p )	{ return p != xoPosNULL; }
+	static bool				IsNull( xoPos p )		{ return p == xoPosNULL; }
 
 };
 

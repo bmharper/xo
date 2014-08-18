@@ -1,58 +1,58 @@
 #pragma once
 
-#include "nuDefs.h"
+#include "xoDefs.h"
 
 // It will be good if we can keep these inside 32 bits, for easy masking of handlers. If not, just use as many 32-bit words as necessary.
-enum nuEvents
+enum xoEvents
 {
-	nuEventTouch		= BIT(0),
-	nuEventMouseMove	= BIT(1),
-	nuEventWindowSize	= BIT(2),
-	nuEventTimer		= BIT(3),
-	nuEventClick		= BIT(4),
+	xoEventTouch		= BIT(0),
+	xoEventMouseMove	= BIT(1),
+	xoEventWindowSize	= BIT(2),
+	xoEventTimer		= BIT(3),
+	xoEventClick		= BIT(4),
 };
 
 /* User interface event (keyboard, mouse, touch, etc).
 */
-class NUAPI nuEvent
+class XOAPI xoEvent
 {
 public:
-	nuDocGroup*		DocGroup;
+	xoDocGroup*		DocGroup;
 	void*			Context;
-	nuDomEl*		Target;
-	nuEvents		Type;
+	xoDomEl*		Target;
+	xoEvents		Type;
 	int				PointCount;					// Mouse = 1	Touch >= 1
-	nuVec2f			Points[NU_MAX_TOUCHES];
+	xoVec2f			Points[XO_MAX_TOUCHES];
 
-	nuEvent();
-	~nuEvent();
+	xoEvent();
+	~xoEvent();
 
 	void MakeWindowSize( int w, int h );
 };
 
-typedef std::function<bool(const nuEvent& ev)> nuEventHandlerLambda;
+typedef std::function<bool(const xoEvent& ev)> xoEventHandlerLambda;
 
-typedef bool (*nuEventHandlerF)(const nuEvent& ev);
+typedef bool (*xoEventHandlerF)(const xoEvent& ev);
 
-NUAPI bool nuEventHandler_LambdaStaticFunc(const nuEvent& ev);
+XOAPI bool xoEventHandler_LambdaStaticFunc(const xoEvent& ev);
 
-enum nuEventHandlerFlags
+enum xoEventHandlerFlags
 {
-	nuEventHandlerFlag_IsLambda = 1,
+	xoEventHandlerFlag_IsLambda = 1,
 };
 
-class NUAPI nuEventHandler
+class XOAPI xoEventHandler
 {
 public:
 	uint32				Mask;
 	uint32				Flags;
 	void*				Context;
-	nuEventHandlerF		Func;
+	xoEventHandlerF		Func;
 
-			nuEventHandler();
-			~nuEventHandler();
+			xoEventHandler();
+			~xoEventHandler();
 
-	bool	Handles( nuEvents ev ) const	{ return !!(Mask & ev); }
-	bool	IsLambda() const				{ return !!(Flags & nuEventHandlerFlag_IsLambda); }
-	void	SetLambda()						{ Flags |= nuEventHandlerFlag_IsLambda; }
+	bool	Handles( xoEvents ev ) const	{ return !!(Mask & ev); }
+	bool	IsLambda() const				{ return !!(Flags & xoEventHandlerFlag_IsLambda); }
+	void	SetLambda()						{ Flags |= xoEventHandlerFlag_IsLambda; }
 };

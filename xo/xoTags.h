@@ -1,8 +1,8 @@
 #pragma once
 
-// The default styles for tags are defined inside nuDoc::InitializeDefaultTagStyles()
+// The default styles for tags are defined inside xoDoc::InitializeDefaultTagStyles()
 
-#define NU_TAGS_DEFINE \
+#define XO_TAGS_DEFINE \
 XX(NULL, 0) \
 XY(Body) \
 XY(Div) \
@@ -10,12 +10,12 @@ XY(Text) \
 XY(Lab) \
 XY(END) \
 
-#define XX(a,b) nuTag##a = b,
-#define XY(a) nuTag##a,
-enum nuTag {
-	NU_TAGS_DEFINE
+#define XX(a,b) xoTag##a = b,
+#define XY(a) xoTag##a,
+enum xoTag {
+	XO_TAGS_DEFINE
 };
 #undef XX
 #undef XY
 
-extern const char* nuTagNames[nuTagEND + 1];
+extern const char* xoTagNames[xoTagEND + 1];

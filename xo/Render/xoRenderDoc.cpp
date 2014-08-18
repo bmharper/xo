@@ -1,46 +1,46 @@
 #include "pch.h"
-#include "../Layout/nuLayout.h"
-#include "../Layout/nuLayout2.h"
-#include "nuRenderDoc.h"
-#include "nuRenderer.h"
-#include "nuRenderDX.h"
-#include "nuRenderGL.h"
+#include "../Layout/xoLayout.h"
+#include "../Layout/xoLayout2.h"
+#include "xoRenderDoc.h"
+#include "xoRenderer.h"
+#include "xoRenderDX.h"
+#include "xoRenderGL.h"
 
-nuRenderDoc::nuRenderDoc()
+xoRenderDoc::xoRenderDoc()
 {
 	WindowWidth = 0;
 	WindowHeight = 0;
 	RenderRoot.SetPool( &RenderPool );
 }
 
-nuRenderDoc::~nuRenderDoc()
+xoRenderDoc::~xoRenderDoc()
 {
 }
 
-void nuRenderDoc::ResetRenderData()
+void xoRenderDoc::ResetRenderData()
 {
 	RenderRoot.Discard();
 	RenderPool.FreeAll();
 	RenderRoot.InternalID = Doc.Root.GetInternalID();
 }
 
-nuRenderResult nuRenderDoc::Render( nuRenderBase* driver )
+xoRenderResult xoRenderDoc::Render( xoRenderBase* driver )
 {
-	NUTRACE_RENDER( "RenderDoc: Reset\n" );
+	XOTRACE_RENDER( "RenderDoc: Reset\n" );
 	ResetRenderData();
 	
-	NUTRACE_RENDER( "RenderDoc: Layout\n" );
-	nuLayout2 lay;
+	XOTRACE_RENDER( "RenderDoc: Layout\n" );
+	xoLayout2 lay;
 	lay.Layout( Doc, WindowWidth, WindowHeight, RenderRoot, &RenderPool );
 
-	NUTRACE_RENDER( "RenderDoc: Render\n" );
-	nuRenderer rend;
-	nuRenderResult res = rend.Render( &ClonedImages, &Doc.Strings, driver, &RenderRoot, WindowWidth, WindowHeight );
+	XOTRACE_RENDER( "RenderDoc: Render\n" );
+	xoRenderer rend;
+	xoRenderResult res = rend.Render( &ClonedImages, &Doc.Strings, driver, &RenderRoot, WindowWidth, WindowHeight );
 
 	return res;
 }
 
-void nuRenderDoc::CopyFromCanonical( const nuDoc& canonical, nuRenderStats& stats )
+void xoRenderDoc::CopyFromCanonical( const xoDoc& canonical, xoRenderStats& stats )
 {
 	// Find nodes that have changed, so that we can apply transitions
 	//ModifiedNodeIDs.clear();
@@ -54,7 +54,7 @@ void nuRenderDoc::CopyFromCanonical( const nuDoc& canonical, nuRenderStats& stat
 }
 
 /*
-nuInternalID nuRenderDoc::FindElement( const nuRenderDomEl& el, nuPoint pos )
+xoInternalID xoRenderDoc::FindElement( const xoRenderDomEl& el, xoPoint pos )
 {
 	if ( el.Children.size() == 0 )
 		return el.InternalID;
@@ -63,22 +63,22 @@ nuInternalID nuRenderDoc::FindElement( const nuRenderDomEl& el, nuPoint pos )
 	{
 		if ( el.Children[i]->Pos.IsInsideMe( pos ) )
 		{
-			nuInternalID id = FindElement( *el.Children[i], pos );
-			if ( id != nuInternalIDNull )
+			xoInternalID id = FindElement( *el.Children[i], pos );
+			if ( id != xoInternalIDNull )
 				return id;
 		}
 	}
 
-	return nuInternalIDNull;
+	return xoInternalIDNull;
 }
 */
 
 /*
-void nuRenderDoc::FindAlteredNodes( const nuDoc* original, const nuDoc* modified, podvec<nuInternalID>& alteredNodeIDs )
+void xoRenderDoc::FindAlteredNodes( const xoDoc* original, const xoDoc* modified, podvec<xoInternalID>& alteredNodeIDs )
 {
 	int top = (int) min( original->ChildByInternalIDListSize(), modified->ChildByInternalIDListSize() );
-	const nuDomEl** org = original->ChildByInternalIDList();
-	const nuDomEl** mod = modified->ChildByInternalIDList();
+	const xoDomEl** org = original->ChildByInternalIDList();
+	const xoDomEl** mod = modified->ChildByInternalIDList();
 	for ( int i = 0; i < top; i++ )
 	{
 		if (	(org[i] && mod[i]) &&

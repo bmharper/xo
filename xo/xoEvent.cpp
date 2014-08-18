@@ -1,34 +1,34 @@
 #include "pch.h"
-#include "nuEvent.h"
+#include "xoEvent.h"
 
-NUAPI bool nuEventHandler_LambdaStaticFunc(const nuEvent& ev)
+XOAPI bool xoEventHandler_LambdaStaticFunc(const xoEvent& ev)
 {
-	nuEventHandlerLambda* lambda = reinterpret_cast<nuEventHandlerLambda*>(ev.Context);
+	xoEventHandlerLambda* lambda = reinterpret_cast<xoEventHandlerLambda*>(ev.Context);
 	return (*lambda)(ev);
 }
 
-nuEvent::nuEvent()
+xoEvent::xoEvent()
 {
 	DocGroup = NULL;
 	Context = NULL;
 	Target = NULL;
-	Type = nuEventMouseMove;
+	Type = xoEventMouseMove;
 	PointCount = 0;
 	memset( Points, 0, sizeof(Points) );
 }
 
-nuEvent::~nuEvent()
+xoEvent::~xoEvent()
 {
 }
 
-void nuEvent::MakeWindowSize( int w, int h )
+void xoEvent::MakeWindowSize( int w, int h )
 {
-	Type = nuEventWindowSize;
+	Type = xoEventWindowSize;
 	Points[0].x = (float) w;
 	Points[0].y = (float) h;
 }
 
-nuEventHandler::nuEventHandler()
+xoEventHandler::xoEventHandler()
 {
 	Mask = 0;
 	Flags = 0;
@@ -36,8 +36,8 @@ nuEventHandler::nuEventHandler()
 	Func = NULL;
 }
 
-nuEventHandler::~nuEventHandler()
+xoEventHandler::~xoEventHandler()
 {
 	if ( IsLambda() )
-		delete reinterpret_cast<nuEventHandlerLambda*>(Context);
+		delete reinterpret_cast<xoEventHandlerLambda*>(Context);
 }

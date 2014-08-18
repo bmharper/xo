@@ -1,36 +1,36 @@
-#include "../../nudom/nuDom.h"
+#include "../../xo/xo.h"
 
 /*
 This sample was created when developing the layout concepts
 */
 
-static nuSysWnd* MainWnd;
+static xoSysWnd* MainWnd;
 
-void InitDOM( nuDoc* doc );
+void InitDOM( xoDoc* doc );
 
-void nuMain( nuMainEvent ev )
+void xoMain( xoMainEvent ev )
 {
 	switch ( ev )
 	{
-	case nuMainEventInit:
+	case xoMainEventInit:
 		{
-			nuGlobal()->FontStore->AddFontDirectory( "C:\\temp\\fonts" );
-			MainWnd = nuSysWnd::CreateWithDoc();
-			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
-			//MainWnd->SetPosition( nuBox(2100, 60, 2100 + 800, 60 + 400), nuSysWnd::SetPosition_Move | nuSysWnd::SetPosition_Size );
-			nuDoc* doc = MainWnd->Doc();
+			xoGlobal()->FontStore->AddFontDirectory( "C:\\temp\\fonts" );
+			MainWnd = xoSysWnd::CreateWithDoc();
+			MainWnd->SetPosition( xoBox(2100, 60, 2100 + 1300, 60 + 800), /*xoSysWnd::SetPosition_Move |*/ xoSysWnd::SetPosition_Size );
+			//MainWnd->SetPosition( xoBox(2100, 60, 2100 + 800, 60 + 400), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size );
+			xoDoc* doc = MainWnd->Doc();
 			InitDOM( doc );
 			MainWnd->Show();
 		}
 		break;
-	case nuMainEventShutdown:
+	case xoMainEventShutdown:
 		delete MainWnd;
 		MainWnd = NULL;
 		break;
 	}
 }
 
-void DoBorder( nuDoc* doc )
+void DoBorder( xoDoc* doc )
 {
 	auto root = &doc->Root;
 	root->StyleParse( "background: #aaa" );
@@ -42,7 +42,7 @@ void DoBorder( nuDoc* doc )
 		);
 }
 
-void DoBaselineAlignment( nuDoc* doc )
+void DoBaselineAlignment( xoDoc* doc )
 {
 	// Text DOM elements cannot define styles on themselves - they MUST inherit all of their styling from
 	// their parents. Therefore, if you want different font styles on the same line, then you must wrap
@@ -73,7 +73,7 @@ void DoBaselineAlignment( nuDoc* doc )
 		
 		for ( int size = 8; size < 30; size++ )
 		{
-			auto txt = root->AddNode( nuTagDiv );
+			auto txt = root->AddNode( xoTagDiv );
 			txt->AddClass( "baseline" );
 			txt->StyleParse( fmt("font-size: %dpx; background: #e0e0e0", size).Z );
 			txt->SetText( "e" );
@@ -81,10 +81,10 @@ void DoBaselineAlignment( nuDoc* doc )
 	}
 }
 
-void DoBaselineAlignment_rev2( nuDoc* doc )
+void DoBaselineAlignment_rev2( xoDoc* doc )
 {
 	auto root = &doc->Root;
-	nuString e;
+	xoString e;
 	int v = 5;
 	if ( v == 1 )
 	{
@@ -155,10 +155,10 @@ void DoBaselineAlignment_rev2( nuDoc* doc )
 		*/
 	}
 
-	NUASSERT(e == "");
+	XOASSERT(e == "");
 }
 
-void DoBaselineAlignment_Multiline( nuDoc* doc )
+void DoBaselineAlignment_Multiline( xoDoc* doc )
 {
 	auto root = &doc->Root;
 	doc->ClassParse( "baseline", "baseline: baseline" );
@@ -177,11 +177,11 @@ void DoBaselineAlignment_Multiline( nuDoc* doc )
 	);
 }
 
-void DoTwoTextRects( nuDoc* doc )
+void DoTwoTextRects( xoDoc* doc )
 {
 	if (1)
 	{
-		nuDomNode* div = doc->Root.AddNode( nuTagDiv );
+		xoDomNode* div = doc->Root.AddNode( xoTagDiv );
 		div->StyleParse( "width: 90px; height: 90px; background: #faa; margin: 4px" );
 		div->StyleParse( "font-size: 13px" );
 		//div->StyleParse( "text-align-vertical: top" );
@@ -192,14 +192,14 @@ void DoTwoTextRects( nuDoc* doc )
 	{
 		// This block has width=height=unspecified, so it gets its size from its children
 		// We expect to see the green background behind this text
-		nuDomNode* div = doc->Root.AddNode( nuTagDiv );
+		xoDomNode* div = doc->Root.AddNode( xoTagDiv );
 		div->StyleParse( "background: #afa8; margin: 4px" );
 		div->StyleParse( "font-size: 13px" );
 		div->SetText( "Parent has no size, but this text gives it size. Expect green background behind this text.\nPpPp\npPpP\n\naaa\naaapq" );
 	}
 }
 
-void DoBlockMargins( nuDoc* doc )
+void DoBlockMargins( xoDoc* doc )
 {
 	doc->Root.StyleParse( "padding: 4px" );
 
@@ -209,7 +209,7 @@ void DoBlockMargins( nuDoc* doc )
 	{
 		for ( int i = 0; i < 20; i++ )
 		{
-			nuDomNode* div = doc->Root.AddNode( nuTagDiv );
+			xoDomNode* div = doc->Root.AddNode( xoTagDiv );
 			div->StyleParse( "width: 150px; height: 80px; background: #faa8; margin: 4px; border-radius: 5px;" );
 			div->StyleParse( "font-size: 13px" );
 			div->SetText( fmt("  block %v", i).Z );
@@ -220,15 +220,15 @@ void DoBlockMargins( nuDoc* doc )
 	// We expect to see a 4 pixel margin around the first block, regardless of the second block's settings
 	if (0)
 	{
-		doc->Root.AddNode( nuTagDiv )->StyleParse( "width: 90px; height: 90px; background: #faa8; margin: 4px; border-radius: 5px;" );
-		doc->Root.AddNode( nuTagDiv )->StyleParse( "width: 90px; height: 90px; background: #faa8; margin: 0px; border-radius: 5px;" );
-		doc->Root.AddNode( nuTagDiv )->StyleParse( "width: 90px; height: 90px; background: #faa8; margin: 0px; border-radius: 5px;" );
+		doc->Root.AddNode( xoTagDiv )->StyleParse( "width: 90px; height: 90px; background: #faa8; margin: 4px; border-radius: 5px;" );
+		doc->Root.AddNode( xoTagDiv )->StyleParse( "width: 90px; height: 90px; background: #faa8; margin: 0px; border-radius: 5px;" );
+		doc->Root.AddNode( xoTagDiv )->StyleParse( "width: 90px; height: 90px; background: #faa8; margin: 0px; border-radius: 5px;" );
 	}
 }
 
-void DoLongText( nuDoc* doc )
+void DoLongText( xoDoc* doc )
 {
-	auto div = doc->Root.AddNode( nuTagDiv );
+	auto div = doc->Root.AddNode( xoTagDiv );
 	div->StyleParse( "padding: 10px; width: 500px; font-family: Times New Roman; font-size: 19px; color: #333;" );
 	div->SetText(
 		"It is an ancient Mariner,\n"
@@ -248,10 +248,10 @@ void DoLongText( nuDoc* doc )
 		);
 }
 
-void DoBackupSettings( nuDoc* doc )
+void DoBackupSettings( xoDoc* doc )
 {
 	// The goal here is to replicate part of bvckup2's UI
-	nuDomNode* root = &doc->Root;
+	xoDomNode* root = &doc->Root;
 	root->StyleParse( "font-family: Segoe UI; font-size: 12px;" );
 	//root->StyleParse( "font-family: Audiowide; font-size: 12px;" );
 	doc->ClassParse( "pad-light", "background: #f8f8f8; width: 140ep; height: 10ep;" );
@@ -270,7 +270,7 @@ void DoBackupSettings( nuDoc* doc )
 
 	root->ParseAppend( horzPadder );
 
-	auto addLine = [&]( nuString title )
+	auto addLine = [&]( xoString title )
 	{
 		root->ParseAppend(
 			"<div style='break:after'>"
@@ -290,13 +290,13 @@ void DoBackupSettings( nuDoc* doc )
 	root->ParseAppend( horzPadder );
 }
 
-void DoPadding( nuDoc* doc )
+void DoPadding( xoDoc* doc )
 {
-	nuDomNode* root = &doc->Root;
+	xoDomNode* root = &doc->Root;
 	root->ParseAppend( "<div style='padding: 8ep; background: #ddd'><lab>8ep padding</lab></div>" );
 }
 
-void DoTextQuality( nuDoc* doc )
+void DoTextQuality( xoDoc* doc )
 {
 	//doc->Root.ParseAppend( "<div style='font-family: Microsoft Sans Serif'>The quick brown fox jumps over the laxy dog<div>" );
 	//doc->Root.ParseAppend( "<div style='padding: 20px; font-family: Microsoft Sans Serif'>h<div>" );
@@ -308,9 +308,9 @@ void DoTextQuality( nuDoc* doc )
 	//doc->Root.ParseAppend( "<div style='font-family: Consolas; font-size: 12px; color: #383'>DoBaselineAlignment_Multiline<div>" );
 }
 
-void InitDOM( nuDoc* doc )
+void InitDOM( xoDoc* doc )
 {
-	nuDomNode* body = &doc->Root;
+	xoDomNode* body = &doc->Root;
 	body->StyleParse( "font-family: Segoe UI, Droid Sans" );
 
 	//DoBorder( doc );
@@ -324,8 +324,8 @@ void InitDOM( nuDoc* doc )
 	//DoPadding( doc );
 	//DoTextQuality( doc );
 
-	body->OnClick( [](const nuEvent& ev) -> bool {
-		nuGlobal()->EnableKerning = !nuGlobal()->EnableKerning;
+	body->OnClick( [](const xoEvent& ev) -> bool {
+		xoGlobal()->EnableKerning = !xoGlobal()->EnableKerning;
 		return true;
 	});
 }

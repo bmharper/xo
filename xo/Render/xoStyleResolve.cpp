@@ -1,20 +1,20 @@
 #include "pch.h"
-#include "nuStyleResolve.h"
-#include "nuRenderStack.h"
+#include "xoStyleResolve.h"
+#include "xoRenderStack.h"
 
-void nuStyleResolver::ResolveAndPush( nuRenderStack& stack, const nuDomNode* node )
+void xoStyleResolver::ResolveAndPush( xoRenderStack& stack, const xoDomNode* node )
 {
-	nuRenderStackEl& result = stack.StackPush();
+	xoRenderStackEl& result = stack.StackPush();
 
 	// 1. Inherited by default
-	for ( int i = 0; i < nuNumInheritedStyleCategories; i++ )
-		SetInherited( stack, node, nuInheritedStyleCategories[i] );
+	for ( int i = 0; i < xoNumInheritedStyleCategories; i++ )
+		SetInherited( stack, node, xoInheritedStyleCategories[i] );
 
 	// 2. Tag style
 	Set( stack, node, stack.Doc->TagStyles[node->GetTag()] );
 
 	// 3. Classes
-	const podvec<nuStyleID>& classes = node->GetClasses();
+	const podvec<xoStyleID>& classes = node->GetClasses();
 	for ( intp i = 0; i < classes.size(); i++ )
 		Set( stack, node, *stack.Doc->ClassStyles.GetByID( classes[i] ) );
 
@@ -22,14 +22,14 @@ void nuStyleResolver::ResolveAndPush( nuRenderStack& stack, const nuDomNode* nod
 	Set( stack, node, node->GetStyle() );
 }
 
-void nuStyleResolver::Set( nuRenderStack& stack, const nuDomEl* node, const nuStyle& style )
+void xoStyleResolver::Set( xoRenderStack& stack, const xoDomEl* node, const xoStyle& style )
 {
 	Set( stack, node, style.Attribs.size(), &style.Attribs[0] );
 }
 
-void nuStyleResolver::Set( nuRenderStack& stack, const nuDomEl* node, intp n, const nuStyleAttrib* vals )
+void xoStyleResolver::Set( xoRenderStack& stack, const xoDomEl* node, intp n, const xoStyleAttrib* vals )
 {
-	nuRenderStackEl& result = stack.StackBack();
+	xoRenderStackEl& result = stack.StackBack();
 
 	for ( intp i = 0; i < n; i++ )
 	{
@@ -40,14 +40,14 @@ void nuStyleResolver::Set( nuRenderStack& stack, const nuDomEl* node, intp n, co
 	}
 }
 
-void nuStyleResolver::SetInherited( nuRenderStack& stack, const nuDomEl* node, nuStyleCategories cat )
+void xoStyleResolver::SetInherited( xoRenderStack& stack, const xoDomEl* node, xoStyleCategories cat )
 {
-	nuRenderStackEl& result = stack.StackBack();
+	xoRenderStackEl& result = stack.StackBack();
 	intp stackSize = stack.StackSize();
 
 	for ( intp j = stackSize - 2; j >= 0; j-- )
 	{
-		nuStyleAttrib attrib = stack.StackAt(j).Styles.Get( cat );
+		xoStyleAttrib attrib = stack.StackAt(j).Styles.Get( cat );
 		if ( !attrib.IsNull() )
 		{
 			result.Styles.Set( attrib, result.Pool );

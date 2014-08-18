@@ -1,14 +1,14 @@
 #pragma once
 
-#include "../nuDefs.h"
+#include "../xoDefs.h"
 
 // This is brain dead naive. We obviously need a better box packer. The one from freetype-gl looks decent.
-class NUAPI nuTextureAtlas : public nuTexture
+class XOAPI xoTextureAtlas : public xoTexture
 {
 public:
-				nuTextureAtlas();
-				~nuTextureAtlas();
-	void		Initialize( uint width, uint height, nuTexFormat format, uint padding );
+				xoTextureAtlas();
+				~xoTextureAtlas();
+	void		Initialize( uint width, uint height, xoTexFormat format, uint padding );
 	void		Zero();
 	void		Free();
 	bool		Alloc( uint16 width, uint16 height, uint16& x, uint16& y );

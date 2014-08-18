@@ -1,7 +1,7 @@
 Threads
 -------
 
-Nudom splits the world up into two logical thread groups: We call them Render and UI.
+XO splits the world up into two logical thread groups: We call them Render and UI.
 The Render thread is responsible for performing document layout, resolving all the
 styles, and finally putting pixels onto the screen. There can in fact be multiple
 render threads, but you can think of those as worker threads, that are coordinated
@@ -9,11 +9,11 @@ by the single main render thread. In these docs, we will frequently refer to
 "The Render Thread", but what we really mean there is all of the threads that
 perform rendering. For the most part, it is good enough to simply think of rendering
 as happening on one thread, and UI on another thread. The Render thread only runs
-nudom code. It never runs 'user' code, which is what the UI thread is for. 
+xo code. It never runs 'user' code, which is what the UI thread is for. 
 
 The UI thread fetches input messages from the OS, and calls the appropriate event
 handlers. These event handlers are what we call 'user' code, because this is code
-that is not part of nudom. The document is only mutated from the UI thread.
+that is not part of xo. The document is only mutated from the UI thread.
 The Renderer never alters the document - it merely creates structures necessary
 to perform it's job. As far as the renderer is concerned, the document is immutable.
 
@@ -58,7 +58,7 @@ we have 700 / 60 = 11.6 MB/frame. Of course we need to do a lot of other work,
 so let's say a conservative estimate for total document size then is 1 MB.
 At a document size of 1MB, we would use roughly a tenth of the total memory
 bandwidth just to copy the document over from UI thread to render thread.
-A single node in the DOM tree is represented by nuDomEl, and sizeof(nuDomEl) = 128.
+A single node in the DOM tree is represented by xoDomEl, and sizeof(xoDomEl) = 128.
 1 MB / 128 = 8192, so the largest practical document size that we want to
 target is one with 8192 nodes in the DOM. This seems pretty small.
 
@@ -70,7 +70,7 @@ Why do we even care about optimizing for a full document clone per frame?
 The reason is because it allows one to do a purely functional UI, where
 you build up the entire UI from scratch, on every frame. This has its place
 (see IMGUI for an example and further discussions on the topic). The design
-of nuDom does not exactly lend itself to that style of UI code though, since if
+of xoDom does not exactly lend itself to that style of UI code though, since if
 you throw away your entire DOM on every frame, then you're losing the
 ability to let the framework handle things like transition animations
 for you, as well as any other similar functionality that might exist inside

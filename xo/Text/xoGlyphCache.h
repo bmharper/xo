@@ -1,18 +1,18 @@
 #pragma once
 
-#include "nuDefs.h"
+#include "xoDefs.h"
 
-class nuTextureAtlas;
-class nuFont;
+class xoTextureAtlas;
+class xoFont;
 
-enum nuGlyphFlags
+enum xoGlyphFlags
 {
-	nuGlyphFlag_SubPixel_RGB = 1
+	xoGlyphFlag_SubPixel_RGB = 1
 };
 
-inline bool nuGlyphFlag_IsSubPixel( uint32 flags ) { return !!(flags & nuGlyphFlag_SubPixel_RGB); }
+inline bool xoGlyphFlag_IsSubPixel( uint32 flags ) { return !!(flags & xoGlyphFlag_SubPixel_RGB); }
 
-struct nuGlyph
+struct xoGlyph
 {
 	uint		AtlasID;
 	uint		FTGlyphIndex;
@@ -31,61 +31,61 @@ struct nuGlyph
 	void SetNull()		{ memset(this, 0, sizeof(*this)); }
 };
 
-struct nuGlyphCacheKey
+struct xoGlyphCacheKey
 {
-	nuFontID	FontID;
+	xoFontID	FontID;
 	uint32		Char;
 	uint8		Size;
 	uint8		Flags;
 	
-	nuGlyphCacheKey() : FontID(0), Char(0), Size(0), Flags(0) {}
-	nuGlyphCacheKey( nuFontID fid, uint32 ch, uint8 size, uint32 flags ) : FontID(fid), Char(ch), Size(size), Flags(flags) {}
+	xoGlyphCacheKey() : FontID(0), Char(0), Size(0), Flags(0) {}
+	xoGlyphCacheKey( xoFontID fid, uint32 ch, uint8 size, uint32 flags ) : FontID(fid), Char(ch), Size(size), Flags(flags) {}
 
 	int	GetHashCode() const
 	{
 		// Assume we'll have less than 1024 fonts
 		return (FontID << 22) ^ (Flags << 20) ^ (Size << 10) ^ Char;
 	}
-	bool operator==( const nuGlyphCacheKey& b ) const { return FontID == b.FontID && Char == b.Char && Size == b.Size && Flags == b.Flags; }
+	bool operator==( const xoGlyphCacheKey& b ) const { return FontID == b.FontID && Char == b.Char && Size == b.Size && Flags == b.Flags; }
 };
-FHASH_SETUP_POD_GETHASHCODE(nuGlyphCacheKey);
+FHASH_SETUP_POD_GETHASHCODE(xoGlyphCacheKey);
 
-static const int nuGlyphAtlasSize = 512; // 512 x 512 x 8bit = 256k per atlas
+static const int xoGlyphAtlasSize = 512; // 512 x 512 x 8bit = 256k per atlas
 
 /* Maintains a cache of all information (including textures) that is needed to render text.
 During a render, the cache is read-only. After rendering, we go in and resolve all the cache
 misses. On the next render, those glyphs will get rendered.
 
-If a glyph render fails, then the resulting nuGlyph will have .IsNull() == true.
+If a glyph render fails, then the resulting xoGlyph will have .IsNull() == true.
 */
-class NUAPI nuGlyphCache
+class XOAPI xoGlyphCache
 {
 public:
-			nuGlyphCache();
-			~nuGlyphCache();
+			xoGlyphCache();
+			~xoGlyphCache();
 
 	void			Clear();
-	//bool			GetGlyphFromChar( const nuString& facename, int ch, uint8 size, uint8 flags, nuGlyph& glyph );
-	//bool			GetGlyphFromChar( nuFontID fontID, int ch, uint8 size, uint8 flags, nuGlyph& glyph );
+	//bool			GetGlyphFromChar( const xoString& facename, int ch, uint8 size, uint8 flags, xoGlyph& glyph );
+	//bool			GetGlyphFromChar( xoFontID fontID, int ch, uint8 size, uint8 flags, xoGlyph& glyph );
 	
 	// Returns NULL if the glyph is not in the cache. Even if the glyph pointer is not NULL, you must still check
-	// whether it is the logical "null glyph", which is empty. You can detect that with nuGlyph.IsNull().
-	const nuGlyph*		GetGlyph( const nuGlyphCacheKey& key ) const;
+	// whether it is the logical "null glyph", which is empty. You can detect that with xoGlyph.IsNull().
+	const xoGlyph*		GetGlyph( const xoGlyphCacheKey& key ) const;
 
-	uint				RenderGlyph( const nuGlyphCacheKey& key );
+	uint				RenderGlyph( const xoGlyphCacheKey& key );
 
-	const nuTextureAtlas*	GetAtlas( uint i ) const		{ return Atlasses[i]; }
-	nuTextureAtlas*			GetAtlasMutable( uint i )		{ return Atlasses[i]; }
+	const xoTextureAtlas*	GetAtlas( uint i ) const		{ return Atlasses[i]; }
+	xoTextureAtlas*			GetAtlasMutable( uint i )		{ return Atlasses[i]; }
 
 	static const uint					NullGlyphIndex;	// = 0. Our first element in 'Glyphs' is always the null glyph (GCC 4.6 won't allow us to write =0 here)
 
 protected:
-	pvect<nuTextureAtlas*>				Atlasses;
-	podvec<nuGlyph>						Glyphs;
-	fhashmap<nuGlyphCacheKey, uint>		Table;
-	nuGlyph								NullGlyph;
+	pvect<xoTextureAtlas*>				Atlasses;
+	podvec<xoGlyph>						Glyphs;
+	fhashmap<xoGlyphCacheKey, uint>		Table;
+	xoGlyph								NullGlyph;
 
 	void	Initialize();
-	void	FilterAndCopyBitmap( const nuFont* font, void* target, int target_stride );
-	void	CopyBitmap( const nuFont* font, void* target, int target_stride );
+	void	FilterAndCopyBitmap( const xoFont* font, void* target, int target_stride );
+	void	CopyBitmap( const xoFont* font, void* target, int target_stride );
 };

@@ -1,44 +1,44 @@
 #include "pch.h"
-#include "nuImage.h"
+#include "xoImage.h"
 
-nuImage::nuImage()
+xoImage::xoImage()
 {
 }
 
-nuImage::~nuImage()
+xoImage::~xoImage()
 {
 	Free();
 }
 
-nuImage* nuImage::Clone() const
+xoImage* xoImage::Clone() const
 {
-	nuImage* c = new nuImage();
+	xoImage* c = new xoImage();
 	c->Set( TexFormat, GetWidth(), GetHeight(), GetData() );
 	return c;
 }
 
-void nuImage::Free()
+void xoImage::Free()
 {
 	if ( TexData )
 	{
 		AbcAlignedFree( TexData );
 		TexData = NULL;
 	}
-	TexID = nuTextureIDNull;
+	TexID = xoTextureIDNull;
 }
 
-void nuImage::Set( nuTexFormat format, u32 width, u32 height, const void* bytes )
+void xoImage::Set( xoTexFormat format, u32 width, u32 height, const void* bytes )
 {
 	Alloc( format, width, height );
-	size_t size = TexWidth * TexHeight * nuTexFormatBytesPerPixel(format);
+	size_t size = TexWidth * TexHeight * xoTexFormatBytesPerPixel(format);
 	if ( size != 0 )
 		memcpy( TexData, bytes, size );
 }
 
-void nuImage::Alloc( nuTexFormat format, u32 width, u32 height )
+void xoImage::Alloc( xoTexFormat format, u32 width, u32 height )
 {
-	size_t existingFormatBPP = nuTexFormatBytesPerPixel(TexFormat);
-	size_t requiredFormatBPP = nuTexFormatBytesPerPixel(format);
+	size_t existingFormatBPP = xoTexFormatBytesPerPixel(TexFormat);
+	size_t requiredFormatBPP = xoTexFormatBytesPerPixel(format);
 
 	if ( width == TexWidth && height == TexHeight && existingFormatBPP == requiredFormatBPP )
 	{

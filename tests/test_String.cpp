@@ -1,12 +1,12 @@
 #include "pch.h"
-#include "../nudom/nuDom.h"
+#include "../xo/xo.h"
 
 TESTFUNC(String)
 {
 	{
 		// Strange heap issues here when statically linking to MSVC CRT.
 		// Mentioned more inside units.lua
-		nuString x = "<>";
+		xoString x = "<>";
 		x.Split( "<>" );
 		x.Split( "<>" );
 		x.Split( "<>" );
@@ -15,40 +15,40 @@ TESTFUNC(String)
 	}
 
 	{
-		fhashmap<nuString, int> tab1;
+		fhashmap<xoString, int> tab1;
 		tab1.insert( "a", 1 );
 	}
 	{
-		fhashmap<nuString, int> tab1, tab2;
+		fhashmap<xoString, int> tab1, tab2;
 		tab1.insert( "a", 1 );
 		tab1.insert( "b", 2 );
 		tab2 = tab1;
 		tab1 = tab2;
 	}
 	{
-		podvec<nuString> p;
+		podvec<xoString> p;
 
-		p = nuString("a<>b").Split( "<>" );
+		p = xoString("a<>b").Split( "<>" );
 		TTASSERT( p.size() == 2 && p[0] == "a" && p[1] == "b" );
-		TTASSERT( nuString::Join(p, "()") == "a()b" );
-		TTASSERT( nuString::Join(p, "") == "ab" );
-		TTASSERT( nuString::Join(p, nullptr) == "ab" );
+		TTASSERT( xoString::Join(p, "()") == "a()b" );
+		TTASSERT( xoString::Join(p, "") == "ab" );
+		TTASSERT( xoString::Join(p, nullptr) == "ab" );
 
-		p = nuString("a<>b<>").Split( "<>" );
+		p = xoString("a<>b<>").Split( "<>" );
 		TTASSERT( p.size() == 3 && p[0] == "a" && p[1] == "b" && p[2] == "" );
-		TTASSERT( nuString::Join(p, "()") == "a()b()" );
+		TTASSERT( xoString::Join(p, "()") == "a()b()" );
 
-		p = nuString("<>").Split( "<>" );
+		p = xoString("<>").Split( "<>" );
 		TTASSERT( p.size() == 2 && p[0] == "" && p[1] == "" );
-		TTASSERT( nuString::Join(p, "()") == "()" );
+		TTASSERT( xoString::Join(p, "()") == "()" );
 
-		p = nuString("x").Split( "<>" );
+		p = xoString("x").Split( "<>" );
 		TTASSERT( p.size() == 1 && p[0] == "x" );
-		TTASSERT( nuString::Join(p, "()") == "x" );
+		TTASSERT( xoString::Join(p, "()") == "x" );
 
-		TTASSERT( nuString::Join(podvec<nuString>(), "") == "" );
-		TTASSERT( nuString::Join(podvec<nuString>(), "x") == "" );
-		TTASSERT( nuString::Join(podvec<nuString>(), nullptr) == "" );
+		TTASSERT( xoString::Join(podvec<xoString>(), "") == "" );
+		TTASSERT( xoString::Join(podvec<xoString>(), "x") == "" );
+		TTASSERT( xoString::Join(podvec<xoString>(), nullptr) == "" );
 
 	}
 }

@@ -5,17 +5,17 @@
 #pragma warning( disable: 4345 )	// POD constructed with () is default-initialized
 #endif
 
-class nuPool;
+class xoPool;
 
 // This has no constructors or destructors so that we can put it in unions, etc. We know that there is no implicit
 // memory management going on here.
-class NUAPI nuStringRaw
+class XOAPI xoStringRaw
 {
 public:
 	char*	Z;
 
 	intp	Length() const;
-	void	CloneFastInto( nuStringRaw& b, nuPool* pool ) const;
+	void	CloneFastInto( xoStringRaw& b, xoPool* pool ) const;
 	void	Discard();
 	u32		GetHashCode() const;
 	intp	Index( const char* find ) const;
@@ -23,55 +23,55 @@ public:
 
 	bool	operator==( const char* b ) const;
 	bool	operator!=( const char* b ) const			{ return !(*this == b); }
-	bool	operator==( const nuStringRaw& b ) const;
-	bool	operator!=( const nuStringRaw& b ) const	{ return !(*this == b); }
+	bool	operator==( const xoStringRaw& b ) const;
+	bool	operator!=( const xoStringRaw& b ) const	{ return !(*this == b); }
 
-	bool	operator<( const nuStringRaw& b ) const;
+	bool	operator<( const xoStringRaw& b ) const;
 
 protected:
-	static nuStringRaw Temp( char* b );
+	static xoStringRaw Temp( char* b );
 
 	void	Alloc( uintp chars );
 	void	Free();
 };
 
 // This is the classic thing you'd expect from a string. The destructor will free the memory.
-class NUAPI nuString : public nuStringRaw
+class XOAPI xoString : public xoStringRaw
 {
 public:
-				nuString();
-				nuString( const nuString& b );
-				nuString( const nuStringRaw& b );
-				nuString( const char* z, intp maxLength = -1 );	// Calls Set()
-				~nuString();
+				xoString();
+				xoString( const xoString& b );
+				xoString( const xoStringRaw& b );
+				xoString( const char* z, intp maxLength = -1 );	// Calls Set()
+				~xoString();
 
 	void				Set( const char* z, intp maxLength = -1 );	// checks maxLength against strlen(z) and clamps automatically
 	void				ReplaceAll( const char* find, const char* replace );
-	podvec<nuString>	Split( const char* splitter ) const;
-	nuString			SubStr( intp start, intp end ) const;	// Returns [start .. end - 1]
+	podvec<xoString>	Split( const char* splitter ) const;
+	xoString			SubStr( intp start, intp end ) const;	// Returns [start .. end - 1]
 
-	nuString&	operator=( const nuString& b );
-	nuString&	operator=( const nuStringRaw& b );
-	nuString&	operator=( const char* b );
-	nuString&	operator+=( const nuStringRaw& b );
-	nuString&	operator+=( const char* b );
+	xoString&	operator=( const xoString& b );
+	xoString&	operator=( const xoStringRaw& b );
+	xoString&	operator=( const char* b );
+	xoString&	operator+=( const xoStringRaw& b );
+	xoString&	operator+=( const char* b );
 
-	static nuString		Join( const podvec<nuString>& parts, const char* joiner );
+	static xoString		Join( const podvec<xoString>& parts, const char* joiner );
 
 };
 
-FHASH_SETUP_CLASS_GETHASHCODE( nuString, nuString );
+FHASH_SETUP_CLASS_GETHASHCODE( xoString, xoString );
 
-NUAPI nuString operator+( const char* a, const nuStringRaw& b );
-NUAPI nuString operator+( const nuStringRaw& a, const char* b );
-NUAPI nuString operator+( const nuStringRaw& a, const nuStringRaw& b );
+XOAPI xoString operator+( const char* a, const xoStringRaw& b );
+XOAPI xoString operator+( const xoStringRaw& a, const char* b );
+XOAPI xoString operator+( const xoStringRaw& a, const xoStringRaw& b );
 
-// Use this when you need a temporary 'nuString' object, but you don't need any heap allocs or frees
-class NUAPI nuTempString : public nuString
+// Use this when you need a temporary 'xoString' object, but you don't need any heap allocs or frees
+class XOAPI xoTempString : public xoString
 {
 public:
-	nuTempString( const char* z );
-	~nuTempString();
+	xoTempString( const char* z );
+	~xoTempString();
 };
 
 #ifdef _WIN32

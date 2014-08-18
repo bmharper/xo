@@ -1,19 +1,19 @@
 #include "pch.h"
-#include "nuRenderBase.h"
-#include "../Text/nuGlyphCache.h"
+#include "xoRenderBase.h"
+#include "../Text/xoGlyphCache.h"
 
-nuRenderBase::nuRenderBase()
+xoRenderBase::xoRenderBase()
 {
 	TexIDOffset = 0;
 }
 
-nuRenderBase::~nuRenderBase()
+xoRenderBase::~xoRenderBase()
 {
 }
 
-void nuRenderBase::Ortho( nuMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar )
+void xoRenderBase::Ortho( xoMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar )
 {
-	nuMat4f m;
+	xoMat4f m;
 	m.Zero();
 	double A = 2 / (right - left);
 	double B = 2 / (top - bottom);
@@ -31,24 +31,24 @@ void nuRenderBase::Ortho( nuMat4f &imat, double left, double right, double botto
 	imat = imat * m;
 }
 
-void nuRenderBase::SurfaceLost_ForgetTextures()
+void xoRenderBase::SurfaceLost_ForgetTextures()
 {
 	TexIDOffset++;
-	if ( TexIDOffset >= nuGlobal()->MaxTextureID )
+	if ( TexIDOffset >= xoGlobal()->MaxTextureID )
 		TexIDOffset = 0;
 	TexIDToNative.clear();
 }
 
-bool nuRenderBase::IsTextureValid( nuTextureID texID ) const
+bool xoRenderBase::IsTextureValid( xoTextureID texID ) const
 {
-	nuTextureID relativeID = texID - TEX_OFFSET_ONE - TexIDOffset;
-	return relativeID < (nuTextureID) TexIDToNative.size();
+	xoTextureID relativeID = texID - TEX_OFFSET_ONE - TexIDOffset;
+	return relativeID < (xoTextureID) TexIDToNative.size();
 }
 
-nuTextureID nuRenderBase::RegisterTexture( void* deviceTexID )
+xoTextureID xoRenderBase::RegisterTexture( void* deviceTexID )
 {
-	nuTextureID maxTexID = nuGlobal()->MaxTextureID;
-	nuTextureID id = TexIDOffset + (nuTextureID) TexIDToNative.size();
+	xoTextureID maxTexID = xoGlobal()->MaxTextureID;
+	xoTextureID id = TexIDOffset + (xoTextureID) TexIDToNative.size();
 	if ( id > maxTexID )
 		id -= maxTexID;
 
@@ -56,76 +56,76 @@ nuTextureID nuRenderBase::RegisterTexture( void* deviceTexID )
 	return id + TEX_OFFSET_ONE;
 }
 
-void* nuRenderBase::GetTextureDeviceHandle( nuTextureID texID ) const
+void* xoRenderBase::GetTextureDeviceHandle( xoTextureID texID ) const
 {
-	nuTextureID absolute = texID - TEX_OFFSET_ONE - TexIDOffset;
-	if ( absolute >= (nuTextureID) TexIDToNative.size() )
+	xoTextureID absolute = texID - TEX_OFFSET_ONE - TexIDOffset;
+	if ( absolute >= (xoTextureID) TexIDToNative.size() )
 	{
-		NUPANIC( "nuRenderBase::GetTextureDeviceHandle: Invalid texture ID. Use IsTextureValid() to check if a texture is valid." );
+		XOPANIC( "xoRenderBase::GetTextureDeviceHandle: Invalid texture ID. Use IsTextureValid() to check if a texture is valid." );
 		return NULL;
 	}
 	return TexIDToNative[absolute];
 }
 
-void nuRenderBase::EnsureTextureProperlyDefined( nuTexture* tex, int texUnit )
+void xoRenderBase::EnsureTextureProperlyDefined( xoTexture* tex, int texUnit )
 {
-	NUASSERT( tex->TexWidth != 0 && tex->TexHeight != 0 );
-	NUASSERT( tex->TexFormat != nuTexFormatInvalid );
-	NUASSERT( texUnit < nuMaxTextureUnits );
+	XOASSERT( tex->TexWidth != 0 && tex->TexHeight != 0 );
+	XOASSERT( tex->TexFormat != xoTexFormatInvalid );
+	XOASSERT( texUnit < xoMaxTextureUnits );
 }
 
-std::string nuRenderBase::CommonShaderDefines()
+std::string xoRenderBase::CommonShaderDefines()
 {
 	std::string s;
-	s.append( fmt( "#define NU_GLYPH_ATLAS_SIZE %v\n", nuGlyphAtlasSize ).Z );
+	s.append( fmt( "#define XO_GLYPH_ATLAS_SIZE %v\n", xoGlyphAtlasSize ).Z );
 	return s;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool nuRenderDummy::InitializeDevice( nuSysWnd& wnd )
+bool xoRenderDummy::InitializeDevice( xoSysWnd& wnd )
 {
 	return false;
 }
-void nuRenderDummy::DestroyDevice( nuSysWnd& wnd )
+void xoRenderDummy::DestroyDevice( xoSysWnd& wnd )
 {
 }
-void nuRenderDummy::SurfaceLost()
+void xoRenderDummy::SurfaceLost()
 {
 }
 	 
-bool nuRenderDummy::BeginRender( nuSysWnd& wnd )
+bool xoRenderDummy::BeginRender( xoSysWnd& wnd )
 {
 	return false;
 }
-void nuRenderDummy::EndRender( nuSysWnd& wnd )
+void xoRenderDummy::EndRender( xoSysWnd& wnd )
 {
 }
 	 
-void nuRenderDummy::PreRender()
+void xoRenderDummy::PreRender()
 {
 }
-void nuRenderDummy::PostRenderCleanup()
+void xoRenderDummy::PostRenderCleanup()
 {
 }
 
-nuProgBase* nuRenderDummy::GetShader( nuShaders shader )
+xoProgBase* xoRenderDummy::GetShader( xoShaders shader )
 {
 	return NULL;
 }
-void nuRenderDummy::ActivateShader( nuShaders shader )
+void xoRenderDummy::ActivateShader( xoShaders shader )
 {
 }
 
-void nuRenderDummy::DrawQuad( const void* v )
+void xoRenderDummy::DrawQuad( const void* v )
 {
 }
 
-bool nuRenderDummy::LoadTexture( nuTexture* tex, int texUnit )
+bool xoRenderDummy::LoadTexture( xoTexture* tex, int texUnit )
 {
 	return true;
 }
-bool nuRenderDummy::ReadBackbuffer( nuImage& image )
+bool xoRenderDummy::ReadBackbuffer( xoImage& image )
 {
 	return false;
 }

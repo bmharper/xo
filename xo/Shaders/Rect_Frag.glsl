@@ -1,4 +1,4 @@
-#ifdef NU_PLATFORM_ANDROID
+#ifdef XO_PLATFORM_ANDROID
 precision mediump float;
 #endif
 varying vec4	pos;
@@ -56,7 +56,7 @@ void main()
 
 	outcolor.a *= clamp(radius_out - dist_out, 0.0, 1.0);
 
-#ifdef NU_SRGB_FRAMEBUFFER
+#ifdef XO_SRGB_FRAMEBUFFER
 	gl_FragColor = outcolor;
 #else
 	float igamma = 1.0/2.2;

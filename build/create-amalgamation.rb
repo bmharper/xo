@@ -1,4 +1,4 @@
-# This script builds "nuDom-amalgamation.cpp" and "nuDom-amalgamation.h"
+# This script builds "xo-amalgamation.cpp" and "xo-amalgamation.h"
 
 # STATUS:
 # I stopped working on this once I started getting Freetype compilation errors.
@@ -38,110 +38,110 @@ dependencies/Panacea/Vec/Mat4.h
 )
 
 parts_cpp_1 = %w(
-nudom/nuApiDecl.h
-nudom/nuBase_SystemIncludes.h
+xo/xoApiDecl.h
+xo/xoBase_SystemIncludes.h
 dependencies/biggle.h
 dependencies/biggle_additions.h
 )
 
 parts_cpp_2 = %w(
-nudom/nuBase.h
+xo/xoBase.h
 ) + local_includes + %w(
-nudom/nuBase_Vector.h
-nudom/nuBase_Fmt.h
-nudom/nuString.h
+xo/xoBase_Vector.h
+xo/xoBase_Fmt.h
+xo/xoString.h
 dependencies/Panacea/Strings/fmt.h
-nudom/nuPlatform.h
-nudom/nuTags.h
-nudom/nuDefs.h
-nudom/nuCloneHelpers.h
-nudom/nuEvent.h
-nudom/nuMem.h
-nudom/nuStringTable.h
-nudom/nuStyle.h
-nudom/nuStyleParser.h
-nudom/nuSysWnd.h
-nudom/warnings.h
-nudom/Dom/nuDomEl.h
-nudom/Dom/nuDomNode.h
-nudom/Dom/nuDomText.h
-nudom/Image/nuImage.h
-nudom/Image/nuImageStore.h
-nudom/nuDoc.h
-nudom/nuDocGroup.h
-nudom/Text/nuTextDefs.h
-nudom/Text/nuGlyphCache.h
-nudom/Text/nuFontStore.h
-nudom/Render/nuVertexTypes.h
-nudom/Render/nuRenderGL_Defs.h
-nudom/Render/nuRenderDX_Defs.h
-nudom/Shaders/Processed_glsl/CurveShader.h
-nudom/Shaders/Processed_glsl/FillShader.h
-nudom/Shaders/Processed_glsl/FillTexShader.h
-nudom/Shaders/Processed_glsl/RectShader.h
-nudom/Shaders/Processed_glsl/TextRGBShader.h
-nudom/Shaders/Processed_glsl/TextWholeShader.h
-nudom/Shaders/Processed_hlsl/FillShader.h
-nudom/Shaders/Processed_hlsl/RectShader.h
-nudom/Shaders/Processed_hlsl/TextRGBShader.h
-nudom/Shaders/Processed_hlsl/TextWholeShader.h
-nudom/Render/nuRenderBase.h
-nudom/Render/nuRenderDomEl.h
-nudom/Render/nuRenderDoc.h
-nudom/Render/nuRenderDX.h
-nudom/Render/nuRenderer.h
-nudom/Render/nuRenderGL.h
-nudom/Render/nuRenderStack.h
-nudom/Render/nuStyleResolve.h
-nudom/Render/nuTextureAtlas.h
-nudom/Layout/nuLayout.h
-nudom/Layout/nuTextLayout.h
+xo/xoPlatform.h
+xo/xoTags.h
+xo/xoDefs.h
+xo/xoCloneHelpers.h
+xo/xoEvent.h
+xo/xoMem.h
+xo/xoStringTable.h
+xo/xoStyle.h
+xo/xoStyleParser.h
+xo/xoSysWnd.h
+xo/warnings.h
+xo/Dom/xoDomEl.h
+xo/Dom/xoDomNode.h
+xo/Dom/xoDomText.h
+xo/Image/xoImage.h
+xo/Image/xoImageStore.h
+xo/xoDoc.h
+xo/xoDocGroup.h
+xo/Text/xoTextDefs.h
+xo/Text/xoGlyphCache.h
+xo/Text/xoFontStore.h
+xo/Render/xoVertexTypes.h
+xo/Render/xoRenderGL_Defs.h
+xo/Render/xoRenderDX_Defs.h
+xo/Shaders/Processed_glsl/CurveShader.h
+xo/Shaders/Processed_glsl/FillShader.h
+xo/Shaders/Processed_glsl/FillTexShader.h
+xo/Shaders/Processed_glsl/RectShader.h
+xo/Shaders/Processed_glsl/TextRGBShader.h
+xo/Shaders/Processed_glsl/TextWholeShader.h
+xo/Shaders/Processed_hlsl/FillShader.h
+xo/Shaders/Processed_hlsl/RectShader.h
+xo/Shaders/Processed_hlsl/TextRGBShader.h
+xo/Shaders/Processed_hlsl/TextWholeShader.h
+xo/Render/xoRenderBase.h
+xo/Render/xoRenderDomEl.h
+xo/Render/xoRenderDoc.h
+xo/Render/xoRenderDX.h
+xo/Render/xoRenderer.h
+xo/Render/xoRenderGL.h
+xo/Render/xoRenderStack.h
+xo/Render/xoStyleResolve.h
+xo/Render/xoTextureAtlas.h
+xo/Layout/xoLayout.h
+xo/Layout/xoTextLayout.h
 
-nudom/nuDefs.cpp
-nudom/nuEvent.cpp
-nudom/nuMem.cpp
-nudom/nuMsgLoop_Windows.cpp
-nudom/nuPlatform.cpp
-nudom/nuString.cpp
-nudom/nuStringTable.cpp
-nudom/nuStyle.cpp
-nudom/nuStyleParser.cpp
-nudom/nuSysWnd.cpp
-nudom/nuDocGroup.cpp
-nudom/nuDocGroup_Windows.cpp
-nudom/Dom/nuDomEl.cpp
-nudom/Dom/nuDomNode.cpp
-nudom/Dom/nuDomText.cpp
-nudom/Image/nuImage.cpp
-nudom/Image/nuImageStore.cpp
-nudom/Layout/nuLayout.cpp
-nudom/Layout/nuTextLayout.cpp
-nudom/Render/nuRenderBase.cpp
-nudom/Render/nuRenderDX.cpp
-nudom/Render/nuRenderDX_Defs.cpp
-nudom/Render/nuRenderer.cpp
-nudom/Render/nuRenderGL.cpp
-nudom/Render/nuRenderGL_Defs.cpp
-nudom/Render/nuRenderDoc.cpp
-nudom/Render/nuRenderDomEl.cpp
-nudom/Render/nuRenderStack.cpp
-nudom/Render/nuStyleResolve.cpp
-nudom/Render/nuTextureAtlas.cpp
-nudom/Render/nuVertexTypes.cpp
-nudom/Text/nuFontStore.cpp
-nudom/Text/nuGlyphCache.cpp
-nudom/Text/nuTextDefs.cpp
-nudom/nuDoc.cpp
-nudom/Shaders/Processed_glsl/CurveShader.cpp
-nudom/Shaders/Processed_glsl/FillShader.cpp
-nudom/Shaders/Processed_glsl/FillTexShader.cpp
-nudom/Shaders/Processed_glsl/RectShader.cpp
-nudom/Shaders/Processed_glsl/TextRGBShader.cpp
-nudom/Shaders/Processed_glsl/TextWholeShader.cpp
-nudom/Shaders/Processed_hlsl/FillShader.cpp
-nudom/Shaders/Processed_hlsl/RectShader.cpp
-nudom/Shaders/Processed_hlsl/TextRGBShader.cpp
-nudom/Shaders/Processed_hlsl/TextWholeShader.cpp
+xo/xoDefs.cpp
+xo/xoEvent.cpp
+xo/xoMem.cpp
+xo/xoMsgLoop_Windows.cpp
+xo/xoPlatform.cpp
+xo/xoString.cpp
+xo/xoStringTable.cpp
+xo/xoStyle.cpp
+xo/xoStyleParser.cpp
+xo/xoSysWnd.cpp
+xo/xoDocGroup.cpp
+xo/xoDocGroup_Windows.cpp
+xo/Dom/xoDomEl.cpp
+xo/Dom/xoDomNode.cpp
+xo/Dom/xoDomText.cpp
+xo/Image/xoImage.cpp
+xo/Image/xoImageStore.cpp
+xo/Layout/xoLayout.cpp
+xo/Layout/xoTextLayout.cpp
+xo/Render/xoRenderBase.cpp
+xo/Render/xoRenderDX.cpp
+xo/Render/xoRenderDX_Defs.cpp
+xo/Render/xoRenderer.cpp
+xo/Render/xoRenderGL.cpp
+xo/Render/xoRenderGL_Defs.cpp
+xo/Render/xoRenderDoc.cpp
+xo/Render/xoRenderDomEl.cpp
+xo/Render/xoRenderStack.cpp
+xo/Render/xoStyleResolve.cpp
+xo/Render/xoTextureAtlas.cpp
+xo/Render/xoVertexTypes.cpp
+xo/Text/xoFontStore.cpp
+xo/Text/xoGlyphCache.cpp
+xo/Text/xoTextDefs.cpp
+xo/xoDoc.cpp
+xo/Shaders/Processed_glsl/CurveShader.cpp
+xo/Shaders/Processed_glsl/FillShader.cpp
+xo/Shaders/Processed_glsl/FillTexShader.cpp
+xo/Shaders/Processed_glsl/RectShader.cpp
+xo/Shaders/Processed_glsl/TextRGBShader.cpp
+xo/Shaders/Processed_glsl/TextWholeShader.cpp
+xo/Shaders/Processed_hlsl/FillShader.cpp
+xo/Shaders/Processed_hlsl/RectShader.cpp
+xo/Shaders/Processed_hlsl/TextRGBShader.cpp
+xo/Shaders/Processed_hlsl/TextWholeShader.cpp
 dependencies/Panacea/Containers/queue.cpp
 dependencies/Panacea/Platform/cpu.cpp
 dependencies/Panacea/Platform/err.cpp
@@ -155,34 +155,34 @@ dependencies/stb_image.c
 )
 
 parts_h_1 = %w(
-nudom/nuApiDecl.h
-nudom/nuBase_SystemIncludes.h
+xo/xoApiDecl.h
+xo/xoBase_SystemIncludes.h
 )
 
 parts_h_2 = %w(
-nudom/nuBase.h
+xo/xoBase.h
 ) + local_includes + %w(
-nudom/nuBase_Vector.h
-nudom/nuBase_Fmt.h
-nudom/nuString.h
+xo/xoBase_Vector.h
+xo/xoBase_Fmt.h
+xo/xoString.h
 dependencies/Panacea/Strings/fmt.h
-nudom/nuPlatform.h
-nudom/nuTags.h
-nudom/nuDefs.h
-nudom/nuMem.h
-nudom/nuCloneHelpers.h
-nudom/nuEvent.h
-nudom/nuStyle.h
-nudom/Dom/nuDomEl.h
-nudom/Dom/nuDomNode.h
-nudom/Dom/nuDomText.h
-nudom/nuStringTable.h
-nudom/Image/nuImage.h
-nudom/Image/nuImageStore.h
-nudom/nuDoc.h
-nudom/nuDocGroup.h
-nudom/nuDom.h
-nudom/nuSysWnd.h
+xo/xoPlatform.h
+xo/xoTags.h
+xo/xoDefs.h
+xo/xoMem.h
+xo/xoCloneHelpers.h
+xo/xoEvent.h
+xo/xoStyle.h
+xo/Dom/xoDomEl.h
+xo/Dom/xoDomNode.h
+xo/Dom/xoDomText.h
+xo/xoStringTable.h
+xo/Image/xoImage.h
+xo/Image/xoImageStore.h
+xo/xoDoc.h
+xo/xoDocGroup.h
+xo/xo.h
+xo/xoSysWnd.h
 )
 
 prelude = <<END
@@ -204,7 +204,7 @@ prelude = <<END
 	#endif
 #endif
 
-#define NU_BUILD_OPENGL 1
+#define XO_BUILD_OPENGL 1
 END
 
 epilogue = <<END
@@ -260,5 +260,5 @@ amal_h = fixlines(amal_h)
 #amal_cpp.gsub!(/[(^\r)]\n/, "\1\r\n")
 #amal_h.gsub!(/[(^\r)]\n/, "\1\r\n")
 Dir.mkdir("amalgamation") if !Dir.exist?("amalgamation")
-File.open("amalgamation/nuDom-amalgamation.cpp", "wb") { |f| f.write(amal_cpp) }
-File.open("amalgamation/nuDom-amalgamation.h", "wb") { |f| f.write(amal_h) }
+File.open("amalgamation/xo-amalgamation.cpp", "wb") { |f| f.write(amal_cpp) }
+File.open("amalgamation/xo-amalgamation.h", "wb") { |f| f.write(amal_h) }

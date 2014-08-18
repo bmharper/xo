@@ -1,7 +1,7 @@
 #include "pch.h"
 
 // erg.... intellisense on VS 2012 is broken without this bogus include here
-//#include "../nudom/nuDoc.h"
+//#include "../xo/xoDoc.h"
 
 static AbcThreadReturnType AbcKernelCallbackDecl ui_thread( void* tp )
 {
@@ -17,8 +17,8 @@ static AbcThreadReturnType AbcKernelCallbackDecl rend_thread( void* tp )
 {
 	/*
 	int niter = 10000;
-	nuDoc* srcDoc = (nuDoc*) tp;
-	nuRenderDoc rdoc;
+	xoDoc* srcDoc = (xoDoc*) tp;
+	xoRenderDoc rdoc;
 
 	for ( int iter = 0; iter < niter; iter++ )
 	{
@@ -31,8 +31,8 @@ static AbcThreadReturnType AbcKernelCallbackDecl rend_thread( void* tp )
 // Simulate a single document that is mutated by a UI thread, and a renderer thread that continually consumes it.
 TESTFUNC(DocumentClone_Junk)
 {
-	nuDoc d1;
-	nuDomNode* div = d1.Root.AddNode( nuTagDiv );
+	xoDoc d1;
+	xoDomNode* div = d1.Root.AddNode( xoTagDiv );
 	div->StyleParse( "margin: 3px;" );
 
 	AbcThreadHandle t_ui, t_render;
@@ -44,22 +44,22 @@ TESTFUNC(DocumentClone_Junk)
 	AbcThreadCloseHandle( t_ui );
 	AbcThreadCloseHandle( t_render );
 
-	//nuDoc d2;
+	//xoDoc d2;
 	//d1.CloneFastInto( d2, 0 );
 }
 
 TESTFUNC(DocumentClone)
 {
-	nuDocGroup g;
-	g.Doc = new nuDoc();
+	xoDocGroup g;
+	g.Doc = new xoDoc();
 	g.DestroyDocWithGroup = true;
 	g.Render();
 	g.RenderDoc->WindowWidth = 16;
 	g.RenderDoc->WindowHeight = 16;
 	TTASSERT( g.RenderStats.Clone_NumEls == 0 );
-	nuDoc* d = g.Doc;
+	xoDoc* d = g.Doc;
 
-	nuDomNode* div1 = d->Root.AddNode( nuTagDiv );
+	xoDomNode* div1 = d->Root.AddNode( xoTagDiv );
 	for ( int i = 0; i < 5; i++ )
 	{
 		g.Render();

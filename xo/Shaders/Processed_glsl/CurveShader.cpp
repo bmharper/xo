@@ -1,19 +1,19 @@
 #include "pch.h"
-#if NU_BUILD_OPENGL
+#if XO_BUILD_OPENGL
 #include "CurveShader.h"
 
-nuGLProg_Curve::nuGLProg_Curve()
+xoGLProg_Curve::xoGLProg_Curve()
 {
 	Reset();
 }
 
-void nuGLProg_Curve::Reset()
+void xoGLProg_Curve::Reset()
 {
 	ResetBase();
 
 }
 
-const char* nuGLProg_Curve::VertSrc()
+const char* xoGLProg_Curve::VertSrc()
 {
 	return
 	"varying vec4 pos;\n"
@@ -29,7 +29,7 @@ const char* nuGLProg_Curve::VertSrc()
 ;
 }
 
-const char* nuGLProg_Curve::FragSrc()
+const char* xoGLProg_Curve::FragSrc()
 {
 	return
 	"// This is from Jim Blinn and Charles Loop's paper \"Resolution Independent Curve Rendering using Programmable Graphics Hardware\"\n"
@@ -69,31 +69,31 @@ const char* nuGLProg_Curve::FragSrc()
 ;
 }
 
-const char* nuGLProg_Curve::Name()
+const char* xoGLProg_Curve::Name()
 {
 	return "Curve";
 }
 
 
-bool nuGLProg_Curve::LoadVariablePositions()
+bool xoGLProg_Curve::LoadVariablePositions()
 {
 	int nfail = 0;
 
 	if ( nfail != 0 )
-		NUTRACE( "Failed to bind %d variables of shader Curve\n", nfail );
+		XOTRACE( "Failed to bind %d variables of shader Curve\n", nfail );
 
 	return nfail == 0;
 }
 
-uint32 nuGLProg_Curve::PlatformMask()
+uint32 xoGLProg_Curve::PlatformMask()
 {
-	return nuPlatform_WinDesktop | nuPlatform_LinuxDesktop;
+	return xoPlatform_WinDesktop | xoPlatform_LinuxDesktop;
 }
 
-nuVertexType nuGLProg_Curve::VertexType()
+xoVertexType xoGLProg_Curve::VertexType()
 {
-	return nuVertexType_NULL;
+	return xoVertexType_NULL;
 }
 
-#endif // NU_BUILD_OPENGL
+#endif // XO_BUILD_OPENGL
 

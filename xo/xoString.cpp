@@ -1,13 +1,13 @@
 #include "pch.h"
-#include "nuDefs.h"
-#include "nuString.h"
+#include "xoDefs.h"
+#include "xoString.h"
 
-intp nuStringRaw::Length() const
+intp xoStringRaw::Length() const
 {
 	return Z == nullptr ? 0 : strlen(Z);
 }
 
-void nuStringRaw::CloneFastInto( nuStringRaw& b, nuPool* pool ) const
+void xoStringRaw::CloneFastInto( xoStringRaw& b, xoPool* pool ) const
 {
 	auto len = Length();
 	if ( len != 0 )
@@ -21,24 +21,24 @@ void nuStringRaw::CloneFastInto( nuStringRaw& b, nuPool* pool ) const
 	}
 }
 
-void nuStringRaw::Discard()
+void xoStringRaw::Discard()
 {
 	Z = nullptr;
 }
 
-void nuStringRaw::Alloc( uintp chars )
+void xoStringRaw::Alloc( uintp chars )
 {
 	Z = (char*) malloc( chars );
-	NUASSERT(Z);
+	XOASSERT(Z);
 }
 
-void nuStringRaw::Free()
+void xoStringRaw::Free()
 {
 	free(Z);
 	Z = nullptr;
 }
 
-u32 nuStringRaw::GetHashCode() const
+u32 xoStringRaw::GetHashCode() const
 {
 	if ( Z == nullptr )
 		return 0;
@@ -52,7 +52,7 @@ u32 nuStringRaw::GetHashCode() const
 	return hash;
 }
 
-intp nuStringRaw::Index( const char* find ) const
+intp xoStringRaw::Index( const char* find ) const
 {
 	const char* p = strstr( Z, find );
 	if ( p == nullptr )
@@ -60,7 +60,7 @@ intp nuStringRaw::Index( const char* find ) const
 	return p - Z;
 }
 
-intp nuStringRaw::RIndex( const char* find ) const
+intp xoStringRaw::RIndex( const char* find ) const
 {
 	intp pos = 0;
 	intp last = -1;
@@ -72,16 +72,16 @@ intp nuStringRaw::RIndex( const char* find ) const
 		last = p - Z;
 		pos = last + 1;
 	}
-	NUPANIC("supposed to be unreachable");
+	XOPANIC("supposed to be unreachable");
 	return last;
 }
 
-bool nuStringRaw::operator==( const char* b ) const
+bool xoStringRaw::operator==( const char* b ) const
 {
 	return *this == Temp(const_cast<char*>(b));
 }
 
-bool nuStringRaw::operator==( const nuStringRaw& b ) const
+bool xoStringRaw::operator==( const xoStringRaw& b ) const
 {
 	if ( Z == nullptr )
 	{
@@ -95,7 +95,7 @@ bool nuStringRaw::operator==( const nuStringRaw& b ) const
 	return strcmp( Z, b.Z ) == 0;
 }
 
-bool nuStringRaw::operator<( const nuStringRaw& b ) const
+bool xoStringRaw::operator<( const xoStringRaw& b ) const
 {
 	if ( Z == nullptr )
 	{
@@ -108,9 +108,9 @@ bool nuStringRaw::operator<( const nuStringRaw& b ) const
 	return strcmp( Z, b.Z ) < 0;
 }
 
-nuStringRaw nuStringRaw::Temp( char* b )
+xoStringRaw xoStringRaw::Temp( char* b )
 {
-	nuStringRaw r;
+	xoStringRaw r;
 	r.Z = b;
 	return r;
 }
@@ -119,42 +119,42 @@ nuStringRaw nuStringRaw::Temp( char* b )
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nuString::nuString()
+xoString::xoString()
 {
 	Z = nullptr;
 }
 
-nuString::nuString( const nuString& b )
-{
-	Z = nullptr;
-	*this = b;
-}
-
-nuString::nuString( const nuStringRaw& b )
+xoString::xoString( const xoString& b )
 {
 	Z = nullptr;
 	*this = b;
 }
 
-nuString::nuString( const char* z, intp maxLength )
+xoString::xoString( const xoStringRaw& b )
+{
+	Z = nullptr;
+	*this = b;
+}
+
+xoString::xoString( const char* z, intp maxLength )
 {
 	Z = nullptr;
 	Set( z, maxLength );
 }
 
-nuString::~nuString()
+xoString::~xoString()
 {
 	Free();
 }
 
-void nuString::Set( const char* z, intp maxLength )
+void xoString::Set( const char* z, intp maxLength )
 {
 	intp newLength = 0;
 	if ( z != nullptr )
 		newLength = strlen(z);
 	
 	if ( maxLength >= 0 )
-		newLength = nuMin( newLength, maxLength );
+		newLength = xoMin( newLength, maxLength );
 
 	if ( Length() == newLength )
 	{
@@ -173,7 +173,7 @@ void nuString::Set( const char* z, intp maxLength )
 	}
 }
 
-void nuString::ReplaceAll( const char* find, const char* replace )
+void xoString::ReplaceAll( const char* find, const char* replace )
 {
 	size_t findLen = strlen(find);
 	size_t replaceLen = strlen(replace);
@@ -187,9 +187,9 @@ void nuString::ReplaceAll( const char* find, const char* replace )
 	*this = self.c_str();
 }
 
-podvec<nuString> nuString::Split( const char* splitter ) const
+podvec<xoString> xoString::Split( const char* splitter ) const
 {
-	podvec<nuString> v;
+	podvec<xoString> v;
 	intp splitLen = strlen(splitter);
 	intp pos = 0;
 	intp len = Length();
@@ -210,40 +210,40 @@ podvec<nuString> nuString::Split( const char* splitter ) const
 	return v;
 }
 
-nuString nuString::SubStr( intp start, intp end ) const
+xoString xoString::SubStr( intp start, intp end ) const
 {
 	auto len = Length();
-	start = nuClamp<intp>( start, 0, len );
-	end = nuClamp<intp>( end, 0, len );
-	nuString s;
+	start = xoClamp<intp>( start, 0, len );
+	end = xoClamp<intp>( end, 0, len );
+	xoString s;
 	s.Set( Z + start, end - start );
 	return s;
 }
 
-nuString& nuString::operator=( const nuString& b )
+xoString& xoString::operator=( const xoString& b )
 {
 	Set( b.Z );
 	return *this;
 }
 
-nuString& nuString::operator=( const nuStringRaw& b )
+xoString& xoString::operator=( const xoStringRaw& b )
 {
 	Set( b.Z );
 	return *this;
 }
 
-nuString& nuString::operator=( const char* b )
+xoString& xoString::operator=( const char* b )
 {
 	Set( b );
 	return *this;
 }
 
-nuString& nuString::operator+=( const nuStringRaw& b )
+xoString& xoString::operator+=( const xoStringRaw& b )
 {
 	intp len1 = Length();
 	intp len2 = b.Length();
 	char* newZ = (char*) malloc( len1 + len2 + 1 );
-	NUASSERT(newZ);
+	XOASSERT(newZ);
 	memcpy( newZ, Z, len1 );
 	memcpy( newZ + len1, b.Z, len2 );
 	newZ[len1 + len2] = 0;
@@ -252,15 +252,15 @@ nuString& nuString::operator+=( const nuStringRaw& b )
 	return *this;
 }
 
-nuString& nuString::operator+=( const char* b )
+xoString& xoString::operator+=( const char* b )
 {
-	*this += nuTempString(b);
+	*this += xoTempString(b);
 	return *this;
 }
 
-nuString nuString::Join( const podvec<nuString>& parts, const char* joiner )
+xoString xoString::Join( const podvec<xoString>& parts, const char* joiner )
 {
-	nuString r;
+	xoString r;
 	if ( parts.size() != 0 )
 	{
 		intp jlen = joiner == nullptr ? 0 : (intp) strlen(joiner);
@@ -293,23 +293,23 @@ nuString nuString::Join( const podvec<nuString>& parts, const char* joiner )
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-NUAPI nuString operator+( const char* a, const nuStringRaw& b )
+XOAPI xoString operator+( const char* a, const xoStringRaw& b )
 {
-	nuString r = a;
+	xoString r = a;
 	r += b;
 	return r;
 }
 
-NUAPI nuString operator+( const nuStringRaw& a, const char* b )
+XOAPI xoString operator+( const xoStringRaw& a, const char* b )
 {
-	nuString r = a;
+	xoString r = a;
 	r += b;
 	return r;
 }
 
-NUAPI nuString operator+( const nuStringRaw& a, const nuStringRaw& b )
+XOAPI xoString operator+( const xoStringRaw& a, const xoStringRaw& b )
 {
-	nuString r = a;
+	xoString r = a;
 	r += b.Z;
 	return r;
 }
@@ -318,12 +318,12 @@ NUAPI nuString operator+( const nuStringRaw& a, const nuStringRaw& b )
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nuTempString::nuTempString( const char* z )
+xoTempString::xoTempString( const char* z )
 {
 	Z = const_cast<char*>(z);
 }
 
-nuTempString::~nuTempString()
+xoTempString::~xoTempString()
 {
 	Z = nullptr;
 }

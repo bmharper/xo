@@ -29,7 +29,7 @@ framebuffer, convert that from sRGB to linear, then perform the blend
 with your linear output, convert the result back into sRGB, and write
 that result into the sRGB framebuffer.
 
-So what does nuDom do with this? Where possible, we use an sRGB
+So what does xo do with this? Where possible, we use an sRGB
 framebuffer, because linear blending yields better results. You
 can fake these kinds of results if you know that your background
 is always light and your text (or whatever) is always dark, but
@@ -58,7 +58,7 @@ which is then sent to the blender. We do no raising of that alpha value
 to any power, nor do any other non-linear operations on it. The same
 is not true for vertex colors though.
 
-Vertex colors in nuDom almost always originate NOT from a
+Vertex colors in xo almost always originate NOT from a
 coverage-generating rasterizer, but from a human being setting a color
 such as #ff000080 = rgba(255,0,0,128). People are accustomed by now to
 seeing the alpha channel cause blending in gamma space. In other words,
@@ -67,7 +67,7 @@ if you compose a red of 255 onto a black background, with an alpha of
 gamma-space blending. It certainly is wrong from a certain point of view,
 but it is what's expected. More important than that however, is the
 fact that many mobile GPUs do not support linear framebuffer blending,
-and it would not earn nuDom any thanks if it rendered differently on
+and it would not earn xo any thanks if it rendered differently on
 devices that claim to be supported.
 
 So we have a problem: We want to use linear blending when rendering
@@ -80,7 +80,7 @@ numbers I get are always a little off (like 2 or 3 out of 255).
 
 Having said all that, I do believe that having linear blending
 turned on for all operations would actually be a good thing. Since
-nuDom is embedded, applications are free to choose the mode they
+xo is embedded, applications are free to choose the mode they
 want. I'm going to leave a global switch in there that enables it
 for all operations (not only text).
 

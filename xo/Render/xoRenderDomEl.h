@@ -1,61 +1,61 @@
 #pragma once
 
-#include "nuStyle.h"
-#include "nuMem.h"
+#include "xoStyle.h"
+#include "xoMem.h"
 
-class nuRenderStack;
+class xoRenderStack;
 
-struct NUAPI nuRenderCharEl
+struct XOAPI xoRenderCharEl
 {
 	int		Char;
-	nuPos	X;
-	nuPos	Y;
+	xoPos	X;
+	xoPos	Y;
 };
 
 // Element that is ready for rendering
-class NUAPI nuRenderDomEl
+class XOAPI xoRenderDomEl
 {
 public:
-				nuRenderDomEl( nuInternalID id, nuTag tag );
+				xoRenderDomEl( xoInternalID id, xoTag tag );
 
-	nuInternalID					InternalID;			// Reference to our original nuDomEl
-	nuBox							Pos;				// For rectangles, this is the ContentBox. See log entry from 2014-08-02
-	nuTag							Tag;
+	xoInternalID					InternalID;			// Reference to our original xoDomEl
+	xoBox							Pos;				// For rectangles, this is the ContentBox. See log entry from 2014-08-02
+	xoTag							Tag;
 };
 
-class NUAPI nuRenderDomNode : public nuRenderDomEl
+class XOAPI xoRenderDomNode : public xoRenderDomEl
 {
 public:
-				nuRenderDomNode( nuInternalID id = nuInternalIDNull, nuTag tag = nuTagBody, nuPool* pool = NULL );
+				xoRenderDomNode( xoInternalID id = xoInternalIDNull, xoTag tag = xoTagBody, xoPool* pool = NULL );
 
 	void		Discard();
-	void		SetStyle( nuRenderStack& stack );
-	void		SetPool( nuPool* pool );
-	nuBox		BorderBox() const;
-	nuPos		BorderBoxRight() const		{ return Pos.Right + Style.BorderSize.Right; }
-	nuPos		BorderBoxBottom() const		{ return Pos.Bottom + Style.BorderSize.Bottom; }
+	void		SetStyle( xoRenderStack& stack );
+	void		SetPool( xoPool* pool );
+	xoBox		BorderBox() const;
+	xoPos		BorderBoxRight() const		{ return Pos.Right + Style.BorderSize.Right; }
+	xoPos		BorderBoxBottom() const		{ return Pos.Bottom + Style.BorderSize.Bottom; }
 
-	nuStyleRender					Style;
-	nuPoolArray<nuRenderDomEl*>		Children;
+	xoStyleRender					Style;
+	xoPoolArray<xoRenderDomEl*>		Children;
 };
 
-class NUAPI nuRenderDomText : public nuRenderDomEl
+class XOAPI xoRenderDomText : public xoRenderDomEl
 {
 public:
 	enum Flag
 	{
 		FlagSubPixelGlyphs = 1,
 	};
-				nuRenderDomText( nuInternalID id, nuPool* pool );
+				xoRenderDomText( xoInternalID id, xoPool* pool );
 
-	void		SetStyle( nuRenderStack& stack );
+	void		SetStyle( xoRenderStack& stack );
 	
 	bool		IsSubPixel() const { return !!(Flags & FlagSubPixelGlyphs); }
 
-	nuFontID						FontID;
-	nuPoolArray<nuRenderCharEl>		Text;
+	xoFontID						FontID;
+	xoPoolArray<xoRenderCharEl>		Text;
 	int								Char;
-	nuColor							Color;
+	xoColor							Color;
 	uint8							FontSizePx;
 	uint8							Flags;
 };

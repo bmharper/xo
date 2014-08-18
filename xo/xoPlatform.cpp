@@ -1,23 +1,23 @@
 #include "pch.h"
-#include "nuPlatform.h"
+#include "xoPlatform.h"
 
-void* nuMallocOrDie( size_t bytes )
+void* xoMallocOrDie( size_t bytes )
 {
 	void* b = malloc( bytes );
-	NUASSERT(b);
+	XOASSERT(b);
 	return b;
 }
 
-void* nuReallocOrDie( void* buf, size_t bytes )
+void* xoReallocOrDie( void* buf, size_t bytes )
 {
 	void* b = realloc( buf, bytes );
-	NUASSERT(b);
+	XOASSERT(b);
 	return b;
 }
 
-nuString nuCacheDir()
+xoString xoCacheDir()
 {
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	wchar_t* wpath;
 	std::wstring path;
 	if ( SUCCEEDED(SHGetKnownFolderPath( FOLDERID_LocalAppData, 0, NULL, &wpath )) )
@@ -29,17 +29,17 @@ nuString nuCacheDir()
 	path.append( L"cache" );
 	CreateDirectoryW( path.c_str(), NULL );
 	return ConvertWideToUTF8( path ).c_str();
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_LINUX_DESKTOP
 	struct stat st = {0};
 	struct passwd *pw = getpwuid(getuid());
-	nuString path = pw->pw_dir;
+	xoString path = pw->pw_dir;
 	path += "/.xo";
 	if ( stat(path.Z, &st) == -1 )
 		mkdir(path.Z, 0700);
 	return path;
-#elif NU_PLATFORM_ANDROID
-	NUTODO_STATIC
+#elif XO_PLATFORM_ANDROID
+	XOTODO_STATIC
 #else
-	NUTODO_STATIC
+	XOTODO_STATIC
 #endif
 }

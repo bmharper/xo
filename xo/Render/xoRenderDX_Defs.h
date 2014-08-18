@@ -1,19 +1,19 @@
 #pragma once
 
-#include "nuDefs.h"
-#include "nuVertexTypes.h"
+#include "xoDefs.h"
+#include "xoVertexTypes.h"
 
-#if NU_BUILD_DIRECTX
+#if XO_BUILD_DIRECTX
 
-class NUAPI nuDXProg : public nuProgBase
+class XOAPI xoDXProg : public xoProgBase
 {
 public:
 	ID3D11VertexShader*		Vert;
 	ID3D11PixelShader*		Frag;
 	ID3D11InputLayout*      VertLayout;
 
-							nuDXProg();
-	virtual					~nuDXProg();
+							xoDXProg();
+	virtual					~xoDXProg();
 	
 	// All of these virtual functions are overridden by auto-generated shader objects
 	virtual void			Reset();
@@ -21,10 +21,10 @@ public:
 	virtual const char*		FragSrc();
 	virtual const char*		Name();
 	virtual bool			LoadVariablePositions();
-	virtual uint32			PlatformMask(); 			// Combination of nuPlatformMask bits.
-	virtual nuVertexType	VertexType();
+	virtual uint32			PlatformMask(); 			// Combination of xoPlatformMask bits.
+	virtual xoVertexType	VertexType();
 
-	bool					UseOnThisPlatform() { return !!(PlatformMask() & NU_PLATFORM); }
+	bool					UseOnThisPlatform() { return !!(PlatformMask() & XO_PLATFORM); }
 
 protected:
 	void					ResetBase();

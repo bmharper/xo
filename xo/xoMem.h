@@ -1,11 +1,11 @@
 #pragma once
 
 // A memory pool
-class NUAPI nuPool
+class XOAPI xoPool
 {
 public:
-	nuPool();
-	~nuPool();
+	xoPool();
+	~xoPool();
 
 	void	SetChunkSize( size_t size );
 
@@ -27,17 +27,17 @@ protected:
 	podvec<void*>	BigBlocks;
 };
 
-// A vector that allocates its storage from a nuPool object
+// A vector that allocates its storage from a xoPool object
 template<typename T>
-class nuPoolArray
+class xoPoolArray
 {
 public:
-	nuPool*		Pool;
+	xoPool*		Pool;
 	T*			Data;
 	uintp		Count;
 	uintp		Capacity;
 
-	nuPoolArray()
+	xoPoolArray()
 	{
 		Pool = NULL;
 		Data = NULL;
@@ -45,7 +45,7 @@ public:
 		Capacity = 0;
 	}
 
-	nuPoolArray& operator+=( const T& v )
+	xoPoolArray& operator+=( const T& v )
 	{
 		add( &v );
 		return *this;
@@ -73,7 +73,7 @@ public:
 
 	void pop()
 	{
-		NUASSERTDEBUG(Count > 0);
+		XOASSERTDEBUG(Count > 0);
 		Count--;
 	}
 
@@ -128,7 +128,7 @@ protected:
 	void growto( uintp ncap )
 	{
 		T* ndata = (T*) Pool->Alloc( sizeof(T) * ncap, false );
-		NUCHECKALLOC(ndata);
+		XOCHECKALLOC(ndata);
 		memcpy( ndata, Data, sizeof(T) * Capacity );
 		memset( ndata + Capacity, 0, sizeof(T) * (ncap - Capacity) );
 		Capacity = ncap;
@@ -142,12 +142,12 @@ protected:
 // This was created to lessen the burden on the actual thread stack during
 // layout.
 // You must free objects in the reverse order that you allocated them.
-class NUAPI nuLifoBuf
+class XOAPI xoLifoBuf
 {
 public:
-			nuLifoBuf();
-			nuLifoBuf( size_t size );	// This simply calls Init(size)
-			~nuLifoBuf();
+			xoLifoBuf();
+			xoLifoBuf( size_t size );	// This simply calls Init(size)
+			~xoLifoBuf();
 
 	// Initialize the buffer.
 	// This will panic if the buffer is not empty.
@@ -178,17 +178,17 @@ private:
 	intp			Pos;
 };
 
-// Vector that uses nuLifoBuf for storage. This is made for PODs - it does not do
+// Vector that uses xoLifoBuf for storage. This is made for PODs - it does not do
 // object construction or destruction.
 template<typename T>
-class nuLifoVector
+class xoLifoVector
 {
 public:
-	nuLifoVector( nuLifoBuf& lifo )
+	xoLifoVector( xoLifoBuf& lifo )
 	{
 		Lifo = &lifo;
 	}
-	~nuLifoVector()
+	~xoLifoVector()
 	{
 		Lifo->Free( Data );
 	}
@@ -214,7 +214,7 @@ public:
 		return Data[Count - 1];
 	}
 
-	nuLifoVector& operator+=( const T& t )
+	xoLifoVector& operator+=( const T& t )
 	{
 		Push( t );
 		return *this;
@@ -223,7 +223,7 @@ public:
 	T& operator[]( intp i ) { return Data[i]; }
 
 private:
-	nuLifoBuf*	Lifo;
+	xoLifoBuf*	Lifo;
 	T*			Data = nullptr;
 	intp		Count = 0;
 };

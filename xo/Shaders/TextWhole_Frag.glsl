@@ -1,4 +1,4 @@
-#ifdef NU_PLATFORM_ANDROID
+#ifdef XO_PLATFORM_ANDROID
 precision mediump float;
 #endif
 uniform sampler2D	tex0;

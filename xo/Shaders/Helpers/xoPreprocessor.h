@@ -1,8 +1,8 @@
 #pragma once
 
-#include "nuDefs.h"
+#include "../../xoDefs.h"
 
-class NUAPI nuPreprocessor
+class XOAPI xoPreprocessor
 {
 public:
 	friend struct _yycontext;
@@ -10,12 +10,12 @@ public:
 	void		SetMacro( const char* name, const char* value );
 	void		ClearMacros();
 	intp		MacroCount() { return Macros.size(); }
-	nuString	Run( const char* raw );
+	xoString	Run( const char* raw );
 
 protected:
-	fhashmap<nuString, nuString>	Macros;
+	fhashmap<xoString, xoString>	Macros;
 
-	static bool	Match( const char* buf, uintp bufPos, const nuString& find );
+	static bool	Match( const char* buf, uintp bufPos, const xoString& find );
 	static bool	IsIdentChar( char c );
 
 	void		RunMacros( const char* raw, podvec<char>& out );

@@ -1,13 +1,13 @@
 #include "pch.h"
-#include "nuRenderDX.h"
-#include "../Image/nuImage.h"
-#include "../nuSysWnd.h"
+#include "xoRenderDX.h"
+#include "../Image/xoImage.h"
+#include "../xoSysWnd.h"
 
-#if NU_BUILD_DIRECTX
+#if XO_BUILD_DIRECTX
 
-#define CHECK_HR(hresult, msg) if (FAILED(hresult)) { NUTRACE("%s failed: 0x%08x\n", msg, hresult); return false; }
+#define CHECK_HR(hresult, msg) if (FAILED(hresult)) { XOTRACE("%s failed: 0x%08x\n", msg, hresult); return false; }
 
-nuRenderDX::nuRenderDX()
+xoRenderDX::xoRenderDX()
 {
 	memset( &D3D, 0, sizeof(D3D) );
 	FBWidth = FBHeight = 0;
@@ -18,16 +18,16 @@ nuRenderDX::nuRenderDX()
 	static_assert(NumProgs == 4, "Add new shader here");
 }
 
-nuRenderDX::~nuRenderDX()
+xoRenderDX::~xoRenderDX()
 {
 }
 
-const char*	nuRenderDX::RendererName()
+const char*	xoRenderDX::RendererName()
 {
 	return "DirectX 11";
 }
 
-bool nuRenderDX::InitializeDevice( nuSysWnd& wnd )
+bool xoRenderDX::InitializeDevice( xoSysWnd& wnd )
 {
 	if ( !InitializeDXDevice(wnd) )
 		return false;
@@ -38,7 +38,7 @@ bool nuRenderDX::InitializeDevice( nuSysWnd& wnd )
 	return true;
 }
 
-bool nuRenderDX::InitializeDXDevice( nuSysWnd& wnd )
+bool xoRenderDX::InitializeDXDevice( xoSysWnd& wnd )
 {
 	DXGI_SWAP_CHAIN_DESC swap;
 	memset( &swap, 0, sizeof(swap) );
@@ -47,7 +47,7 @@ bool nuRenderDX::InitializeDXDevice( nuSysWnd& wnd )
 	swap.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	swap.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_PROGRESSIVE;
 	swap.BufferDesc.Scaling = DXGI_MODE_SCALING_CENTERED;
-	if ( nuGlobal()->EnableVSync )
+	if ( xoGlobal()->EnableVSync )
 	{
 		// This has no effect on windowed rendering. Also, it is dumb to assume 60 hz.
 		swap.BufferDesc.RefreshRate.Numerator = 1;
@@ -149,7 +149,7 @@ bool nuRenderDX::InitializeDXDevice( nuSysWnd& wnd )
 	return true;
 }
 
-bool nuRenderDX::InitializeDXSurface( nuSysWnd& wnd )
+bool xoRenderDX::InitializeDXSurface( xoSysWnd& wnd )
 {
 	HRESULT hr = S_OK;
 
@@ -168,7 +168,7 @@ bool nuRenderDX::InitializeDXSurface( nuSysWnd& wnd )
 	return true;
 }
 
-bool nuRenderDX::WindowResized()
+bool xoRenderDX::WindowResized()
 {
 	HRESULT hr = S_OK;
 
@@ -205,7 +205,7 @@ bool nuRenderDX::WindowResized()
 	return true;
 }
 
-bool nuRenderDX::CreateShaders()
+bool xoRenderDX::CreateShaders()
 {
 	for ( int i = 0; i < NumProgs; i++ )
 	{
@@ -215,7 +215,7 @@ bool nuRenderDX::CreateShaders()
 	return true;
 }
 
-bool nuRenderDX::CreateShader( nuDXProg* prog )
+bool xoRenderDX::CreateShader( xoDXProg* prog )
 {
 	std::string name = prog->Name();
 
@@ -230,7 +230,7 @@ bool nuRenderDX::CreateShader( nuDXProg* prog )
 	HRESULT hr = D3D.Device->CreateVertexShader( vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), NULL, &prog->Vert );
 	if ( FAILED(hr) )
 	{	
-		NUTRACE( "CreateVertexShader failed (0x%08x) for %s", hr, (const char*) prog->Name() );
+		XOTRACE( "CreateVertexShader failed (0x%08x) for %s", hr, (const char*) prog->Name() );
 		vsBlob->Release();
 		return false;
 	}
@@ -249,52 +249,52 @@ bool nuRenderDX::CreateShader( nuDXProg* prog )
 	psBlob->Release();
 	if( FAILED(hr) )
 	{
-		NUTRACE( "CreatePixelShader failed (0x%08x) for %s", hr, (const char*) prog->Name() );
+		XOTRACE( "CreatePixelShader failed (0x%08x) for %s", hr, (const char*) prog->Name() );
 		return false;
 	}
 
 	return true;
 }
 
-bool nuRenderDX::CreateVertexLayout( nuDXProg* prog, ID3DBlob* vsBlob )
+bool xoRenderDX::CreateVertexLayout( xoDXProg* prog, ID3DBlob* vsBlob )
 {
-	nuVertexType vtype = prog->VertexType();
+	xoVertexType vtype = prog->VertexType();
 
-	static_assert(nuVertexType_END == 3, "Create new vertex layout here");
+	static_assert(xoVertexType_END == 3, "Create new vertex layout here");
 
 	// When I try to use DXGI_FORMAT_R8G8B8A8_UNORM_SRGB here, I get a failure without any indication as to what's wrong.
 	// OK.. so it is not supported as "Input assembler vertex buffer resources":
 	// http://www.gamedev.net/topic/643471-creatinputlayout-returns-a-null-pointer/
 	// http://msdn.microsoft.com/en-us/library/windows/desktop/ff471325%28v=vs.85%29.aspx
-	D3D11_INPUT_ELEMENT_DESC layouts[nuVertexType_END - 1][4] =
+	D3D11_INPUT_ELEMENT_DESC layouts[xoVertexType_END - 1][4] =
 	{
-		// nuVertexType_PTC
+		// xoVertexType_PTC
 		{
-			{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, offsetof(nuVx_PTC,Pos),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, offsetof(nuVx_PTC,UV),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "COLOR",		0, DXGI_FORMAT_R8G8B8A8_UNORM,		0, offsetof(nuVx_PTC,Color),	D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, offsetof(xoVx_PTC,Pos),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,		0, offsetof(xoVx_PTC,UV),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "COLOR",		0, DXGI_FORMAT_R8G8B8A8_UNORM,		0, offsetof(xoVx_PTC,Color),	D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		},
-		// nuVertexType_PTCV4
+		// xoVertexType_PTCV4
 		{
-			{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, offsetof(nuVx_PTCV4,Pos),	D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD",	1, DXGI_FORMAT_R32G32_FLOAT,		0, offsetof(nuVx_PTCV4,UV),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "COLOR",		0, DXGI_FORMAT_R8G8B8A8_UNORM,		0, offsetof(nuVx_PTCV4,Color),	D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD",	2, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, offsetof(nuVx_PTCV4,V4),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT,		0, offsetof(xoVx_PTCV4,Pos),	D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD",	1, DXGI_FORMAT_R32G32_FLOAT,		0, offsetof(xoVx_PTCV4,UV),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "COLOR",		0, DXGI_FORMAT_R8G8B8A8_UNORM,		0, offsetof(xoVx_PTCV4,Color),	D3D11_INPUT_PER_VERTEX_DATA, 0 },
+			{ "TEXCOORD",	2, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, offsetof(xoVx_PTCV4,V4),		D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		},
 	};
-	int layoutSizes[nuVertexType_END - 1] =
+	int layoutSizes[xoVertexType_END - 1] =
 	{
 		3,	// PTC
 		4,	// PTCV4
 	};
 
-	static_assert(nuVertexType_NULL == 0, "nuVertexType_NULL = 0");
+	static_assert(xoVertexType_NULL == 0, "xoVertexType_NULL = 0");
 	int index = vtype - 1;
 
 	HRESULT hr = D3D.Device->CreateInputLayout( layouts[index], layoutSizes[index], vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &prog->VertLayout );
 	if ( FAILED(hr) )
 	{
-		NUTRACE( "Vertex layout for %s invalid (0x%08x)", (const char*) prog->Name(), hr );
+		XOTRACE( "Vertex layout for %s invalid (0x%08x)", (const char*) prog->Name(), hr );
 		return false;
 	}
 
@@ -303,7 +303,7 @@ bool nuRenderDX::CreateVertexLayout( nuDXProg* prog, ID3DBlob* vsBlob )
 
 DISABLE_CODE_ANALYSIS_WARNINGS_PUSH_USING_FAILED_CALL_VALUE
 
-bool nuRenderDX::CompileShader( const char* name, const char* source, const char* shaderTarget, ID3DBlob** blob )
+bool xoRenderDX::CompileShader( const char* name, const char* source, const char* shaderTarget, ID3DBlob** blob )
 {
 	//D3D_SHADER_MACRO macros[1] = {
 	//	{NULL,NULL}
@@ -317,11 +317,11 @@ bool nuRenderDX::CompileShader( const char* name, const char* source, const char
 	{
 		if ( err != NULL )
 		{
-			NUTRACE( "Shader %s compilation failed (0x%08x): %s\n", name, hr, (const char*) err->GetBufferPointer() );
+			XOTRACE( "Shader %s compilation failed (0x%08x): %s\n", name, hr, (const char*) err->GetBufferPointer() );
 			err->Release();
 		}
 		else
-			NUTRACE( "Shader %s compilation failed (0x%08x)\n", name, hr );
+			XOTRACE( "Shader %s compilation failed (0x%08x)\n", name, hr );
 		return false;
 	}
 
@@ -330,36 +330,36 @@ bool nuRenderDX::CompileShader( const char* name, const char* source, const char
 
 DISABLE_CODE_ANALYSIS_WARNINGS_POP
 
-bool nuRenderDX::SetupBuffers()
+bool xoRenderDX::SetupBuffers()
 {
-	if ( NULL == (D3D.VertBuffer = CreateBuffer( sizeof(nuVx_PTCV4) * 4, D3D11_USAGE_DYNAMIC, D3D11_BIND_VERTEX_BUFFER, D3D11_CPU_ACCESS_WRITE, NULL )) )
+	if ( NULL == (D3D.VertBuffer = CreateBuffer( sizeof(xoVx_PTCV4) * 4, D3D11_USAGE_DYNAMIC, D3D11_BIND_VERTEX_BUFFER, D3D11_CPU_ACCESS_WRITE, NULL )) )
 		return false;
 
 	uint16 quadIndices[4] = {0, 1, 3, 2};
 	if ( NULL == (D3D.QuadIndexBuffer = CreateBuffer( sizeof(quadIndices), D3D11_USAGE_IMMUTABLE, D3D11_BIND_INDEX_BUFFER, 0, quadIndices )) )
 		return false;
 
-	if ( NULL == (D3D.ShaderPerFrameConstants = CreateBuffer( sizeof(nuShaderPerFrame), D3D11_USAGE_DYNAMIC, D3D11_BIND_CONSTANT_BUFFER, D3D11_CPU_ACCESS_WRITE, NULL )) )
+	if ( NULL == (D3D.ShaderPerFrameConstants = CreateBuffer( sizeof(xoShaderPerFrame), D3D11_USAGE_DYNAMIC, D3D11_BIND_CONSTANT_BUFFER, D3D11_CPU_ACCESS_WRITE, NULL )) )
 		return false;
 
-	if ( NULL == (D3D.ShaderPerObjectConstants = CreateBuffer( sizeof(nuShaderPerObject), D3D11_USAGE_DYNAMIC, D3D11_BIND_CONSTANT_BUFFER, D3D11_CPU_ACCESS_WRITE, NULL )) )
+	if ( NULL == (D3D.ShaderPerObjectConstants = CreateBuffer( sizeof(xoShaderPerObject), D3D11_USAGE_DYNAMIC, D3D11_BIND_CONSTANT_BUFFER, D3D11_CPU_ACCESS_WRITE, NULL )) )
 		return false;
 
 	return true;
 }
 
-void nuRenderDX::DestroyDevice( nuSysWnd& wnd )
+void xoRenderDX::DestroyDevice( xoSysWnd& wnd )
 {
 	// free up all buffers etc
 }
 
-void nuRenderDX::SurfaceLost()
+void xoRenderDX::SurfaceLost()
 {
 }
 
-bool nuRenderDX::BeginRender( nuSysWnd& wnd )
+bool xoRenderDX::BeginRender( xoSysWnd& wnd )
 {
-	nuBox rect = wnd.GetRelativeClientRect();
+	xoBox rect = wnd.GetRelativeClientRect();
 	if ( rect.Width() != FBWidth || rect.Height() != FBHeight )
 	{
 		FBWidth = rect.Width();
@@ -371,11 +371,11 @@ bool nuRenderDX::BeginRender( nuSysWnd& wnd )
 	return true;
 }
 
-void nuRenderDX::EndRender( nuSysWnd& wnd )
+void xoRenderDX::EndRender( xoSysWnd& wnd )
 {
 	HRESULT hr = D3D.SwapChain->Present( 0, 0 );
 	if (!SUCCEEDED(hr))
-		NUTRACE( "DirectX Present failed: 0x%08x", hr );
+		XOTRACE( "DirectX Present failed: 0x%08x", hr );
 
 	D3D.ActiveProgram = nullptr;
 
@@ -385,24 +385,24 @@ void nuRenderDX::EndRender( nuSysWnd& wnd )
 	// as described here: http://msdn.microsoft.com/en-us/library/windows/apps/dn458383.aspx "Handling device removed scenarios in Direct3D 11"
 }
 
-void nuRenderDX::PreRender()
+void xoRenderDX::PreRender()
 {
 	D3D.Context->RSSetState( D3D.Rasterizer );
 
 	// Clear the back buffer 
-	auto clear = nuGlobal()->ClearColor;
+	auto clear = xoGlobal()->ClearColor;
 	float clearColor[4] = {clear.r / 255.0f, clear.g / 255.0f, clear.b / 255.0f, clear.a / 255.0f};
-	clearColor[0] = nuSRGB2Linear( clear.r );
-	clearColor[1] = nuSRGB2Linear( clear.g );
-	clearColor[2] = nuSRGB2Linear( clear.b );
+	clearColor[0] = xoSRGB2Linear( clear.r );
+	clearColor[1] = xoSRGB2Linear( clear.g );
+	clearColor[2] = xoSRGB2Linear( clear.b );
 	D3D.Context->ClearRenderTargetView( D3D.RenderTargetView, clearColor );
 
 	SetShaderFrameUniforms();
 }
 
-bool nuRenderDX::SetShaderFrameUniforms()
+bool xoRenderDX::SetShaderFrameUniforms()
 {
-	nuMat4f mvproj;
+	xoMat4f mvproj;
 	mvproj.Identity();
 	Ortho( mvproj, 0, FBWidth, FBHeight, 0, 0, 1 );
 	ShaderPerFrame.MVProj = mvproj.Transposed();
@@ -417,7 +417,7 @@ bool nuRenderDX::SetShaderFrameUniforms()
 	return true;
 }
 
-bool nuRenderDX::SetShaderObjectUniforms()
+bool xoRenderDX::SetShaderObjectUniforms()
 {
 	D3D11_MAPPED_SUBRESOURCE sub;
 	if ( FAILED(D3D.Context->Map( D3D.ShaderPerObjectConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &sub )) )
@@ -429,7 +429,7 @@ bool nuRenderDX::SetShaderObjectUniforms()
 	return true;
 }
 
-ID3D11Buffer* nuRenderDX::CreateBuffer( size_t sizeBytes, D3D11_USAGE usage, D3D11_BIND_FLAG bind, uint cpuAccess, const void* initialContent )
+ID3D11Buffer* xoRenderDX::CreateBuffer( size_t sizeBytes, D3D11_USAGE usage, D3D11_BIND_FLAG bind, uint cpuAccess, const void* initialContent )
 {
 	ID3D11Buffer* buffer = nullptr;
 	D3D11_BUFFER_DESC bd;
@@ -446,12 +446,12 @@ ID3D11Buffer* nuRenderDX::CreateBuffer( size_t sizeBytes, D3D11_USAGE usage, D3D
 	if ( !SUCCEEDED(hr) )
 	{
 		buffer = nullptr;
-		NUTRACE( "CreateBuffer failed: %08x", hr );
+		XOTRACE( "CreateBuffer failed: %08x", hr );
 	}
 	return buffer;
 }
 
-bool nuRenderDX::CreateTexture2D( nuTexture* tex )
+bool xoRenderDX::CreateTexture2D( xoTexture* tex )
 {
 	D3D11_TEXTURE2D_DESC desc;
 	memset( &desc, 0, sizeof(desc) );
@@ -466,15 +466,15 @@ bool nuRenderDX::CreateTexture2D( nuTexture* tex )
 	desc.MiscFlags = 0;
 	switch ( tex->TexFormat )
 	{
-	case nuTexFormatRGBA8:	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; break;
-	case nuTexFormatGrey8:	desc.Format = DXGI_FORMAT_R8_UNORM; break;
-	default:				NUPANIC("Unrecognized texture format");
+	case xoTexFormatRGBA8:	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; break;
+	case xoTexFormatGrey8:	desc.Format = DXGI_FORMAT_R8_UNORM; break;
+	default:				XOPANIC("Unrecognized texture format");
 	}
 	ID3D11Texture2D* dxTex = NULL;
 	HRESULT hr = D3D.Device->CreateTexture2D( &desc, NULL, &dxTex );
 	if ( !SUCCEEDED(hr) )
 	{
-		NUTRACE( "CreateTexture2D failed: %08x", hr );
+		XOTRACE( "CreateTexture2D failed: %08x", hr );
 		return false;
 	}
 	Texture2D* t = new Texture2D();
@@ -482,7 +482,7 @@ bool nuRenderDX::CreateTexture2D( nuTexture* tex )
 	hr = D3D.Device->CreateShaderResourceView( dxTex, NULL, &t->View );
 	if ( !SUCCEEDED(hr) )
 	{
-		NUTRACE( "CreateTexture2D.CreateShaderResourceView failed: %08x", hr );
+		XOTRACE( "CreateTexture2D.CreateShaderResourceView failed: %08x", hr );
 		delete t;
 		dxTex->Release();
 		return false;
@@ -492,10 +492,10 @@ bool nuRenderDX::CreateTexture2D( nuTexture* tex )
 	return true;
 }
 
-void nuRenderDX::UpdateTexture2D( ID3D11Texture2D* dxTex, nuTexture* tex )
+void xoRenderDX::UpdateTexture2D( ID3D11Texture2D* dxTex, xoTexture* tex )
 {
-	nuBox invRect = tex->TexInvalidRect;
-	nuBox fullRect = nuBox(0, 0, tex->TexWidth, tex->TexHeight);
+	xoBox invRect = tex->TexInvalidRect;
+	xoBox fullRect = xoBox(0, 0, tex->TexWidth, tex->TexHeight);
 	invRect.ClampTo( fullRect );
 
 	if ( invRect.IsAreaZero() )
@@ -510,28 +510,28 @@ void nuRenderDX::UpdateTexture2D( ID3D11Texture2D* dxTex, nuTexture* tex )
 	D3D.Context->UpdateSubresource( dxTex, 0, &box, tex->TexDataAt(invRect.Left, invRect.Top), tex->TexStride, 0 );
 }
 
-void nuRenderDX::PostRenderCleanup()
+void xoRenderDX::PostRenderCleanup()
 {
 }
 
-nuProgBase* nuRenderDX::GetShader( nuShaders shader )
+xoProgBase* xoRenderDX::GetShader( xoShaders shader )
 {
 	switch ( shader )
 	{
-	case nuShaderFill:		return &PFill;
-	//case nuShaderFillTex:	return &PFillTex;
-	case nuShaderRect:		return &PRect;
-	case nuShaderTextRGB:	return &PTextRGB;
-	case nuShaderTextWhole:	return &PTextWhole;
+	case xoShaderFill:		return &PFill;
+	//case xoShaderFillTex:	return &PFillTex;
+	case xoShaderRect:		return &PRect;
+	case xoShaderTextRGB:	return &PTextRGB;
+	case xoShaderTextWhole:	return &PTextWhole;
 	default:
-		NUTODO;
+		XOTODO;
 		return NULL;
 	}
 }
 
-void nuRenderDX::ActivateShader( nuShaders shader )
+void xoRenderDX::ActivateShader( xoShaders shader )
 {
-	nuDXProg* p = (nuDXProg*) GetShader( shader );
+	xoDXProg* p = (xoDXProg*) GetShader( shader );
 	if ( p == D3D.ActiveProgram )
 		return;
 
@@ -545,7 +545,7 @@ void nuRenderDX::ActivateShader( nuShaders shader )
 	float blendFactors[4] = {0,0,0,0};
 	uint sampleMask = 0xffffffff;
 
-	if ( shader == nuShaderTextRGB )
+	if ( shader == xoShaderTextRGB )
 		D3D.Context->OMSetBlendState( D3D.BlendDual, blendFactors, sampleMask );
 	else
 		D3D.Context->OMSetBlendState( D3D.BlendNormal, blendFactors, sampleMask );
@@ -554,7 +554,7 @@ void nuRenderDX::ActivateShader( nuShaders shader )
 	D3D.Context->PSSetSamplers( 0, 1, &D3D.SamplerPoint );
 }
 
-void nuRenderDX::DrawQuad( const void* v )
+void xoRenderDX::DrawQuad( const void* v )
 {
 	SetShaderObjectUniforms();
 
@@ -567,12 +567,12 @@ void nuRenderDX::DrawQuad( const void* v )
 	HRESULT hr = D3D.Context->Map( D3D.VertBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map );
 	if ( FAILED(hr) )
 	{
-		NUTRACE_RENDER( "Vertex buffer map failed: %d", hr);
+		XOTRACE_RENDER( "Vertex buffer map failed: %d", hr);
 		return;
 	}
 
 	//int vertexSize = D3D.ActiveProgramInfo->VertexSize;
-	int vertexSize = (int) nuVertexSize( D3D.ActiveProgram->VertexType() );
+	int vertexSize = (int) xoVertexSize( D3D.ActiveProgram->VertexType() );
 
 	memcpy( map.pData, v, nvert * vertexSize );
 	D3D.Context->Unmap( D3D.VertBuffer, 0 );
@@ -589,7 +589,7 @@ void nuRenderDX::DrawQuad( const void* v )
 	//D3D.Context->Draw( 3, 0 );
 }
 
-bool nuRenderDX::LoadTexture( nuTexture* tex, int texUnit )
+bool xoRenderDX::LoadTexture( xoTexture* tex, int texUnit )
 {
 	EnsureTextureProperlyDefined( tex, texUnit );
 
@@ -607,7 +607,7 @@ bool nuRenderDX::LoadTexture( nuTexture* tex, int texUnit )
 	return true;
 }
 
-bool nuRenderDX::ReadBackbuffer( nuImage& image )
+bool xoRenderDX::ReadBackbuffer( xoImage& image )
 {
 	D3D11_TEXTURE2D_DESC desc;
 	memset( &desc, 0, sizeof(desc) );
@@ -625,7 +625,7 @@ bool nuRenderDX::ReadBackbuffer( nuImage& image )
 	HRESULT hr = D3D.Device->CreateTexture2D( &desc, NULL, &tempTex );
 	if ( !SUCCEEDED(hr) )
 	{
-		NUTRACE( "CreateTexture2D for ReadBackBuffer failed: %08x", hr );
+		XOTRACE( "CreateTexture2D for ReadBackBuffer failed: %08x", hr );
 		return false;
 	}
 
@@ -641,7 +641,7 @@ bool nuRenderDX::ReadBackbuffer( nuImage& image )
 		D3D11_MAPPED_SUBRESOURCE map;
 		if ( SUCCEEDED(D3D.Context->Map( tempTex, 0, D3D11_MAP_READ, 0, &map )) )
 		{
-			image.Alloc( nuTexFormatRGBA8, FBWidth, FBHeight );
+			image.Alloc( xoTexFormatRGBA8, FBWidth, FBHeight );
 			for ( int i = 0; i < FBHeight; i++ )
 				memcpy( image.TexDataAtLine(i), (char*) map.pData + map.RowPitch * (uint) i, image.TexStride );
 			D3D.Context->Unmap( tempTex, 0 );

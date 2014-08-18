@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "../nuDefs.h"
-#include "../nuDoc.h"
-#include "nuDocParser.h"
+#include "../xoDefs.h"
+#include "../xoDoc.h"
+#include "xoDocParser.h"
 
 struct TempString
 {
@@ -29,13 +29,13 @@ struct TempString
 			if ( Capacity == arraysize(StaticBuf) )
 			{
 				Capacity *= 2;
-				Buf = (char*) nuMallocOrDie( Capacity );
+				Buf = (char*) xoMallocOrDie( Capacity );
 				memcpy( Buf, StaticBuf, Len );
 			}
 			else
 			{
 				Capacity *= 2;
-				Buf = (char*) nuReallocOrDie( Buf, Capacity );
+				Buf = (char*) xoReallocOrDie( Buf, Capacity );
 			}
 		}
 		Buf[Len++] = c;
@@ -50,7 +50,7 @@ struct TempString
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nuString nuDocParser::Parse( const char* src, nuDomNode* target )
+xoString xoDocParser::Parse( const char* src, xoDomNode* target )
 {
 	enum States
 	{
@@ -70,33 +70,33 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 	intp xStart = 0;
 	intp xEnd = 0;
 	intp txtStart = 0;
-	pvect<nuDomNode*> stack;
+	pvect<xoDomNode*> stack;
 	stack += target;
 
-	auto err = [&]( const char* msg ) -> nuString
+	auto err = [&]( const char* msg ) -> xoString
 	{
-		intp start = nuMax<intp>( pos - 1, 0 );
-		nuString sample;
+		intp start = xoMax<intp>( pos - 1, 0 );
+		xoString sample;
 		sample.Set( src + start, 10 );
 		return fmt( "Parse error at position %v (%v): %v", pos, sample.Z, msg );
 	};
 
-	auto newNode = [&]() -> nuString
+	auto newNode = [&]() -> xoString
 	{
 		if ( xEnd - xStart <= 0 ) return "Tag is empty";
 		intp i = 0;
-		for ( ; i < nuTagEND; i++ )
+		for ( ; i < xoTagEND; i++ )
 		{
-			if ( EqNoCase(nuTagNames[i], src + xStart, xEnd - xStart) )
+			if ( EqNoCase(xoTagNames[i], src + xStart, xEnd - xStart) )
 				break;
 		}
-		if ( i == nuTagEND )
-			return nuString("Unrecognized tag ") + nuString( src + xStart, xEnd - xStart );
-		stack += stack.back()->AddNode( (nuTag) i );
+		if ( i == xoTagEND )
+			return xoString("Unrecognized tag ") + xoString( src + xStart, xEnd - xStart );
+		stack += stack.back()->AddNode( (xoTag) i );
 		return "";
 	};
 
-	auto newText = [&]() -> nuString
+	auto newText = [&]() -> xoString
 	{
 		bool white = true;
 		intp escape = -1;
@@ -112,7 +112,7 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 					if (		len == 2 && src[escape] == 'l' && src[escape + 1] == 't' ) str.Add( '<' );
 					else if (	len == 2 && src[escape] == 'g' && src[escape + 1] == 't' ) str.Add( '>' );
 					else if (	len == 3 && src[escape] == 'a' && src[escape + 1] == 'm' && src[escape + 2] == 'p' ) str.Add( '&' );
-					else return fmt( "Invalid escape sequence (%v)", nuString(src + escape, len).Z );
+					else return fmt( "Invalid escape sequence (%v)", xoString(src + escape, len).Z );
 					escape = -1;
 				}
 			}
@@ -139,7 +139,7 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 		return "";
 	};
 
-	auto closeNodeCompact = [&]() -> nuString
+	auto closeNodeCompact = [&]() -> xoString
 	{
 		if ( stack.size() == 1 )
 			return "Too many closing tags"; // not sure if this is reachable; suspect not.
@@ -147,22 +147,22 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 		return "";
 	};
 
-	auto closeNode = [&]() -> nuString
+	auto closeNode = [&]() -> xoString
 	{
 		if ( stack.size() == 1 )
 			return "Too many closing tags";
-		nuDomNode* top = stack.back();
-		if ( !EqNoCase(nuTagNames[top->GetTag()], src + xStart, xEnd - xStart) )
-			return fmt( "Cannot close %v here. Expected %v close.", nuString(src + xStart, xEnd - xStart).Z, nuTagNames[top->GetTag()] );
+		xoDomNode* top = stack.back();
+		if ( !EqNoCase(xoTagNames[top->GetTag()], src + xStart, xEnd - xStart) )
+			return fmt( "Cannot close %v here. Expected %v close.", xoString(src + xStart, xEnd - xStart).Z, xoTagNames[top->GetTag()] );
 		stack.pop();
 		return "";
 	};
 
-	auto setAttrib = [&]() -> nuString
+	auto setAttrib = [&]() -> xoString
 	{
 		if ( xEnd - xStart <= 0 ) return "Attribute name is empty"; // should be impossible to reach this, due to possible state transitions
 		
-		nuDomNode* node = stack.back();
+		xoDomNode* node = stack.back();
 		char buf[64];
 
 		intp bodyStart = xEnd + 2;
@@ -170,7 +170,7 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 		{
 			if ( node->StyleParse( src + bodyStart, pos - bodyStart ) )
 				return "";
-			return nuString( "Invalid style: " ) + nuString( src + bodyStart, pos - bodyStart );
+			return xoString( "Invalid style: " ) + xoString( src + bodyStart, pos - bodyStart );
 		}
 		else if ( EqNoCase("class", src + xStart, xEnd - xStart) )
 		{
@@ -190,7 +190,7 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 						}
 						else
 						{
-							node->AddClass( nuString(src + cstart, i - cstart).Z );
+							node->AddClass( xoString(src + cstart, i - cstart).Z );
 						}
 					}
 					cstart = i + 1;
@@ -199,13 +199,13 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 			return "";
 		}
 
-		return nuString("Unrecognized attribute ") + nuString( src + xStart, xEnd - xStart );
+		return xoString("Unrecognized attribute ") + xoString( src + xStart, xEnd - xStart );
 	};
 
 	for ( ; src[pos]; pos++ )
 	{
 		int c = src[pos];
-		nuString e;
+		xoString e;
 		switch ( s )
 		{
 		case SText:
@@ -256,17 +256,17 @@ nuString nuDocParser::Parse( const char* src, nuDomNode* target )
 	return "";
 }
 
-bool nuDocParser::IsWhite( int c )
+bool xoDocParser::IsWhite( int c )
 {
 	return c == ' ' || c == '\t' || c == '\r' || c == '\n';
 }
 
-bool nuDocParser::IsAlpha( int c )
+bool xoDocParser::IsAlpha( int c )
 {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
 
-bool nuDocParser::EqNoCase( const char* a, const char* b, intp bLen )
+bool xoDocParser::EqNoCase( const char* a, const char* b, intp bLen )
 {
 	for ( intp i = 0; ; i++ )
 	{
@@ -278,6 +278,6 @@ bool nuDocParser::EqNoCase( const char* a, const char* b, intp bLen )
 		if ( aa != bb ) return false;
 	}
 	// should be unreachable
-	NUASSERTDEBUG(false);
+	XOASSERTDEBUG(false);
 	return false;
 }

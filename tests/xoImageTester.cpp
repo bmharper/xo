@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "nuImageTester.h"
+#include "xoImageTester.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #ifdef _MSC_VER
@@ -11,33 +11,33 @@
 	#pragma warning(pop)
 #endif
 
-nuImageTester::nuImageTester()
+xoImageTester::xoImageTester()
 {
-	Wnd = nuSysWnd::CreateWithDoc();
-	nuProcessDocQueue();
+	Wnd = xoSysWnd::CreateWithDoc();
+	xoProcessDocQueue();
 	SetSize( 256, 256 );
 	Wnd->Show();
 }
 
-nuImageTester::~nuImageTester()
+xoImageTester::~xoImageTester()
 {
 	delete Wnd;
-	nuProcessDocQueue();
+	xoProcessDocQueue();
 }
 
-void nuImageTester::SetSize( u32 width, u32 height )
+void xoImageTester::SetSize( u32 width, u32 height )
 {
 	// This sets the non-client rectangle, but we want our client size to be width,height
-	Wnd->SetPosition( nuBox(0, 0, width, height), nuSysWnd::SetPosition_Size );
-	nuBox client = Wnd->GetRelativeClientRect();
+	Wnd->SetPosition( xoBox(0, 0, width, height), xoSysWnd::SetPosition_Size );
+	xoBox client = Wnd->GetRelativeClientRect();
 	// Compensate by making non-client larger
 	u32 nwidth = width + (width - client.Width());
 	u32 nheight = height + (height - client.Height());
 	if ( nwidth != width || nheight != height )
-		Wnd->SetPosition( nuBox(0, 0, nwidth, nheight), nuSysWnd::SetPosition_Size );
+		Wnd->SetPosition( xoBox(0, 0, nwidth, nheight), xoSysWnd::SetPosition_Size );
 }
 
-void nuImageTester::TruthImage( const char* filename, std::function<void(nuDomNode& root)> setup )
+void xoImageTester::TruthImage( const char* filename, std::function<void(xoDomNode& root)> setup )
 {
 	// The plan is to have an interactive GUI here someday where you get presented
 	// with the failing image pair, and you can choose whether to mark the new one as "correct".
@@ -45,17 +45,17 @@ void nuImageTester::TruthImage( const char* filename, std::function<void(nuDomNo
 	CreateOrVerifyTruthImage( overwrite_DO_NOT_COMMIT_THIS_CHANGE, filename, setup );
 }
 
-void nuImageTester::VerifyWithImage( const char* filename, std::function<void(nuDomNode& root)> setup )
+void xoImageTester::VerifyWithImage( const char* filename, std::function<void(xoDomNode& root)> setup )
 {
 	CreateOrVerifyTruthImage( false, filename, setup );
 }
 
-void nuImageTester::CreateTruthImage( const char* filename, std::function<void(nuDomNode& root)> setup )
+void xoImageTester::CreateTruthImage( const char* filename, std::function<void(xoDomNode& root)> setup )
 {
 	CreateOrVerifyTruthImage( true, filename, setup );
 }
 
-bool nuImageTester::ImageEquals( u32 width1, u32 height1, int stride1, const void* data1, u32 width2, u32 height2, int stride2, const void* data2 )
+bool xoImageTester::ImageEquals( u32 width1, u32 height1, int stride1, const void* data1, u32 width2, u32 height2, int stride2, const void* data2 )
 {
 	if (	width1 != width2 ||
 			height1 != height2 )
@@ -85,17 +85,17 @@ bool nuImageTester::ImageEquals( u32 width1, u32 height1, int stride1, const voi
 	return true;
 }
 
-void nuImageTester::CreateOrVerifyTruthImage( bool create, const char* filename, std::function<void(nuDomNode& root)> setup )
+void xoImageTester::CreateOrVerifyTruthImage( bool create, const char* filename, std::function<void(xoDomNode& root)> setup )
 {
 	// populate the document
 	Wnd->DocGroup->Doc->Reset();
 	setup( Wnd->DocGroup->Doc->Root );
 
-	nuString truthFile = FullPath(filename);
-	nuString newSample = FullPath((nuString(filename) + "-observed-result").Z);
+	xoString truthFile = FullPath(filename);
+	xoString newSample = FullPath((xoString(filename) + "-observed-result").Z);
 
-	nuImage img;
-	nuRenderResult res = Wnd->DocGroup->RenderToImage( img );
+	xoImage img;
+	xoRenderResult res = Wnd->DocGroup->RenderToImage( img );
 	if ( create )
 	{
 		stbi_write_png( truthFile.Z, img.GetWidth(), img.GetHeight(), 4, img.TexDataAtLine(0), img.TexStride );
@@ -114,19 +114,19 @@ void nuImageTester::CreateOrVerifyTruthImage( bool create, const char* filename,
 	}
 }
 
-nuString nuImageTester::FullPath( const char* path )
+xoString xoImageTester::FullPath( const char* path )
 {
-	// binPath: C:\dev\individual\nudom\t2-output\win64-msvc2013-debug-default\Test.exe
-	// result:  C:/dev/individual/nudom/testdata/<path>
+	// binPath: C:\dev\individual\xo\t2-output\win64-msvc2013-debug-default\Test.exe
+	// result:  C:/dev/individual/xo/testdata/<path>
 	char binPath[2048];
 	AbcProcessGetPath( binPath, arraysize(binPath) );
-	nuString fullPath = binPath;
+	xoString fullPath = binPath;
 	fullPath.ReplaceAll( "\\", "/" );
 	auto parts = fullPath.Split( "/" );
 	parts.pop();
 	parts.pop();
 	parts.pop();
-	fullPath = nuString::Join( parts, "/" );
+	fullPath = xoString::Join( parts, "/" );
 	fullPath += "/testdata/";
 	fullPath += path;
 	fullPath += ".png";

@@ -1,42 +1,42 @@
 #include "pch.h"
-#include "nuTextureAtlas.h"
+#include "xoTextureAtlas.h"
 
-nuTextureAtlas::nuTextureAtlas()
+xoTextureAtlas::xoTextureAtlas()
 {
 	memset( this, 0, sizeof(*this) );
 }
 
-nuTextureAtlas::~nuTextureAtlas()
+xoTextureAtlas::~xoTextureAtlas()
 {
 }
 
-void nuTextureAtlas::Initialize( uint width, uint height, nuTexFormat format, uint padding )
+void xoTextureAtlas::Initialize( uint width, uint height, xoTexFormat format, uint padding )
 {
 	TexWidth = width;
 	TexHeight = height;
 	Padding = padding;
 	TexFormat = format;
-	TexStride = (int) (width * nuTexFormatBytesPerPixel(format));
+	TexStride = (int) (width * xoTexFormatBytesPerPixel(format));
 	size_t nbytes = height * TexStride;
-	TexData = (byte*) nuMallocOrDie( nbytes );
+	TexData = (byte*) xoMallocOrDie( nbytes );
 	PosTop = Padding;
 	PosBottom = Padding;
 	PosRight = Padding;
 }
 
-void nuTextureAtlas::Zero()
+void xoTextureAtlas::Zero()
 {
 	memset( TexData, 0, std::abs(TexStride) * TexHeight );
 }
 
-void nuTextureAtlas::Free()
+void xoTextureAtlas::Free()
 {
 	free(TexData);
 	memset( this, 0, sizeof(*this) );
-	TexID = nuTextureIDNull;
+	TexID = xoTextureIDNull;
 }
 
-bool nuTextureAtlas::Alloc( uint16 width, uint16 height, uint16& x, uint16& y )
+bool xoTextureAtlas::Alloc( uint16 width, uint16 height, uint16& x, uint16& y )
 {
 	if ( width > TexWidth )
 		return false;
@@ -53,6 +53,6 @@ bool nuTextureAtlas::Alloc( uint16 width, uint16 height, uint16& x, uint16& y )
 	y = PosTop;
 	PosRight += width + Padding;
 	PosBottom = std::max(PosBottom, PosTop + height + Padding);
-	TexInvalidRect.ExpandToFit( nuBox(x, y, x + width, y + height) );
+	TexInvalidRect.ExpandToFit( xoBox(x, y, x + width, y + height) );
 	return true;
 }

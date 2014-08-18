@@ -1,16 +1,16 @@
 #include "pch.h"
-#include "nuDoc.h"
-#include "nuDocGroup.h"
+#include "xoDoc.h"
+#include "xoDocGroup.h"
 
-LRESULT CALLBACK nuDocGroup::StaticWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
+LRESULT CALLBACK xoDocGroup::StaticWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-	nuDocGroup* proc = (nuDocGroup*) GetWindowLongPtr( hWnd, GWLP_USERDATA );
+	xoDocGroup* proc = (xoDocGroup*) GetWindowLongPtr( hWnd, GWLP_USERDATA );
 	if ( proc == NULL && lParam != NULL && message == WM_NCCREATE )
 	{
 		// This is passed in via CreateWindow()
 		// The one message that we unfortunately miss is WM_GETMINMAXINFO, which gets sent before WM_NCCREATE
 		CREATESTRUCT* cs = (CREATESTRUCT*) lParam;
-		proc = (nuDocGroup*) cs->lpCreateParams;
+		proc = (xoDocGroup*) cs->lpCreateParams;
 		SetWindowLongPtr( hWnd, GWLP_USERDATA, (LONG_PTR) proc );
 	}
 
@@ -44,15 +44,15 @@ enum Timers
 	TimerGenericEvent				= 2,
 };
 
-LRESULT nuDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
+LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-	NUASSERT( Doc != NULL );
+	XOASSERT( Doc != NULL );
 	PAINTSTRUCT ps;
 	HDC dc;
-	nuEvent ev;
+	xoEvent ev;
 	ev.DocGroup = this;
 	LRESULT result = 0;
-	auto cursor = NUVEC2( (float) GET_X_LPARAM(lParam), (float) GET_Y_LPARAM(lParam) );
+	auto cursor = XOVEC2( (float) GET_X_LPARAM(lParam), (float) GET_Y_LPARAM(lParam) );
 
 	switch (message)
 	{
@@ -71,7 +71,7 @@ LRESULT nuDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
 	case WM_SIZE:
 		ev.MakeWindowSize( int(lParam & 0xffff), int((lParam >> 16) & 0xffff) );
-		nuGlobal()->EventQueue.Add( ev );
+		xoGlobal()->EventQueue.Add( ev );
 		break;
 
 	case WM_TIMER:
@@ -79,14 +79,14 @@ LRESULT nuDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 			Render();
 		else if ( wParam == TimerGenericEvent )
 		{
-			ev.Type = nuEventTimer;
-			nuGlobal()->EventQueue.Add( ev );
+			ev.Type = xoEventTimer;
+			xoGlobal()->EventQueue.Add( ev );
 		}
 		break;
 
 	case WM_NCLBUTTONDOWN:
 		// Explanation above titled 'WM_NCLBUTTONDOWN'
-		SetTimer( hWnd, TimerRenderOutsideMainMsgPump, 1000 / nuGlobal()->TargetFPS, NULL );
+		SetTimer( hWnd, TimerRenderOutsideMainMsgPump, 1000 / xoGlobal()->TargetFPS, NULL );
 		result = DefWindowProc(hWnd, message, wParam, lParam);
 		KillTimer( hWnd, TimerRenderOutsideMainMsgPump );
 		return result;
@@ -96,20 +96,20 @@ LRESULT nuDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		break;
 
 	case WM_MOUSEMOVE:
-		ev.Type = nuEventMouseMove;
+		ev.Type = xoEventMouseMove;
 		ev.PointCount = 1;
 		ev.Points[0] = cursor;
-		NUTRACE_LATENCY("MouseMove\n");
-		nuGlobal()->EventQueue.Add( ev );
+		XOTRACE_LATENCY("MouseMove\n");
+		xoGlobal()->EventQueue.Add( ev );
 		break;
 
 	case WM_LBUTTONUP:
 		// Click event needs refinement (ie on down, capture, etc)
-		ev.Type = nuEventClick;
+		ev.Type = xoEventClick;
 		ev.PointCount = 1;
-		NUTRACE_LATENCY("LButtonUp\n");
+		XOTRACE_LATENCY("LButtonUp\n");
 		ev.Points[0] = cursor;
-		nuGlobal()->EventQueue.Add( ev );
+		xoGlobal()->EventQueue.Add( ev );
 		break;
 
 	default:

@@ -1,13 +1,13 @@
 #include "pch.h"
-#if NU_BUILD_OPENGL
+#if XO_BUILD_OPENGL
 #include "TextWholeShader.h"
 
-nuGLProg_TextWhole::nuGLProg_TextWhole()
+xoGLProg_TextWhole::xoGLProg_TextWhole()
 {
 	Reset();
 }
 
-void nuGLProg_TextWhole::Reset()
+void xoGLProg_TextWhole::Reset()
 {
 	ResetBase();
 	v_mvproj = -1;
@@ -17,7 +17,7 @@ void nuGLProg_TextWhole::Reset()
 	v_tex0 = -1;
 }
 
-const char* nuGLProg_TextWhole::VertSrc()
+const char* xoGLProg_TextWhole::VertSrc()
 {
 	return
 	"uniform		mat4	mvproj;\n"
@@ -35,10 +35,10 @@ const char* nuGLProg_TextWhole::VertSrc()
 ;
 }
 
-const char* nuGLProg_TextWhole::FragSrc()
+const char* xoGLProg_TextWhole::FragSrc()
 {
 	return
-	"#ifdef NU_PLATFORM_ANDROID\n"
+	"#ifdef XO_PLATFORM_ANDROID\n"
 	"precision mediump float;\n"
 	"#endif\n"
 	"uniform sampler2D	tex0;\n"
@@ -53,13 +53,13 @@ const char* nuGLProg_TextWhole::FragSrc()
 ;
 }
 
-const char* nuGLProg_TextWhole::Name()
+const char* xoGLProg_TextWhole::Name()
 {
 	return "TextWhole";
 }
 
 
-bool nuGLProg_TextWhole::LoadVariablePositions()
+bool xoGLProg_TextWhole::LoadVariablePositions()
 {
 	int nfail = 0;
 
@@ -69,20 +69,20 @@ bool nuGLProg_TextWhole::LoadVariablePositions()
 	nfail += (v_vtexuv0 = glGetAttribLocation( Prog, "vtexuv0" )) == -1;
 	nfail += (v_tex0 = glGetUniformLocation( Prog, "tex0" )) == -1;
 	if ( nfail != 0 )
-		NUTRACE( "Failed to bind %d variables of shader TextWhole\n", nfail );
+		XOTRACE( "Failed to bind %d variables of shader TextWhole\n", nfail );
 
 	return nfail == 0;
 }
 
-uint32 nuGLProg_TextWhole::PlatformMask()
+uint32 xoGLProg_TextWhole::PlatformMask()
 {
-	return nuPlatform_All;
+	return xoPlatform_All;
 }
 
-nuVertexType nuGLProg_TextWhole::VertexType()
+xoVertexType xoGLProg_TextWhole::VertexType()
 {
-	return nuVertexType_NULL;
+	return xoVertexType_NULL;
 }
 
-#endif // NU_BUILD_OPENGL
+#endif // XO_BUILD_OPENGL
 

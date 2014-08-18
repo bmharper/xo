@@ -1,17 +1,17 @@
 #pragma once
 
-#include "../nuDefs.h"
+#include "../xoDefs.h"
 
-class NUAPI nuImage : public nuTexture
+class XOAPI xoImage : public xoTexture
 {
 public:
-					nuImage();
-					~nuImage();
+					xoImage();
+					~xoImage();
 	
-	nuImage*		Clone() const;
+	xoImage*		Clone() const;
 	void			Free();
-	void			Set( nuTexFormat format, u32 width, u32 height, const void* bytes );
-	void			Alloc( nuTexFormat format, u32 width, u32 height );
+	void			Set( xoTexFormat format, u32 width, u32 height, const void* bytes );
+	void			Alloc( xoTexFormat format, u32 width, u32 height );
 	u32				GetWidth() const	{ return TexWidth; }
 	u32				GetHeight() const	{ return TexHeight; }
 	const void*		GetData() const		{ return TexData; }

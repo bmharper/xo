@@ -1,14 +1,14 @@
 #include "pch.h"
-#include "nuDoc.h"
-#include "nuDocGroup.h"
-#include "Layout/nuLayout.h"
-#include "Layout/nuLayout2.h"
-#include "Render/nuRenderer.h"
-#include "Text/nuFontStore.h"
-#include "nuCloneHelpers.h"
-#include "nuStyle.h"
+#include "xoDoc.h"
+#include "xoDocGroup.h"
+#include "Layout/xoLayout.h"
+#include "Layout/xoLayout2.h"
+#include "Render/xoRenderer.h"
+#include "Text/xoFontStore.h"
+#include "xoCloneHelpers.h"
+#include "xoStyle.h"
 
-nuDoc::nuDoc() : Root( this, nuTagDiv )
+xoDoc::xoDoc() : Root( this, xoTagDiv )
 {
 	IsReadOnly = false;
 	Version = 0;
@@ -19,35 +19,35 @@ nuDoc::nuDoc() : Root( this, nuTagDiv )
 	InitializeDefaultTagStyles();
 }
 
-nuDoc::~nuDoc()
+xoDoc::~xoDoc()
 {
 	// TODO: Ensure that all of your events in the process-wide event queue have been dealt with,
 	// because the event processor is going to try to access this doc.
 	Reset();
 }
 
-void nuDoc::IncVersion()
+void xoDoc::IncVersion()
 {
 	Version++;
 }
 
-void nuDoc::ResetModifiedBitmap()
+void xoDoc::ResetModifiedBitmap()
 {
 	if ( ChildIsModified.Size() > 0 )
 		ChildIsModified.Fill( 0, ChildIsModified.Size() - 1, false );
 }
 
-void nuDoc::MakeFreeIDsUsable()
+void xoDoc::MakeFreeIDsUsable()
 {
 	UsableIDs += FreeIDs;
 	FreeIDs.clear();
 }
 
 /*
-void nuDoc::CloneFastInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) const
+void xoDoc::CloneFastInto( xoDoc& c, uint cloneFlags, xoRenderStats& stats ) const
 {
 	// this code path died...
-	NUASSERT(false);
+	XOASSERT(false);
 
 	//c.Reset();
 
@@ -57,12 +57,12 @@ void nuDoc::CloneFastInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) con
 	Root.CloneFastInto( c.Root, &c.Pool, cloneFlags );
 	
 	ClassStyles.CloneFastInto( c.ClassStyles, &c.Pool );
-	nuCloneStaticArrayWithCloneFastInto( c.TagStyles, TagStyles, &c.Pool );
+	xoCloneStaticArrayWithCloneFastInto( c.TagStyles, TagStyles, &c.Pool );
 }
 */
 
 // This clones only the objects that are marked as modified.
-void nuDoc::CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) const
+void xoDoc::CloneSlowInto( xoDoc& c, uint cloneFlags, xoRenderStats& stats ) const
 {
 	c.IsReadOnly = true;
 
@@ -79,12 +79,12 @@ void nuDoc::CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) con
 		if ( ChildIsModified.Get(i) )
 		{
 			stats.Clone_NumEls++;
-			const nuDomEl* src = GetChildByInternalID( i );
-			nuDomEl* dst = c.GetChildByInternalIDMutable( i );
+			const xoDomEl* src = GetChildByInternalID( i );
+			xoDomEl* dst = c.GetChildByInternalIDMutable( i );
 			if ( src && !dst )
 			{
 				// create in destination
-				nuDomEl* newChild = c.AllocChild( src->GetTag() );
+				xoDomEl* newChild = c.AllocChild( src->GetTag() );
 				newChild->SetDoc( &c );
 				c.ChildByInternalID[i] = newChild;
 			}
@@ -103,54 +103,54 @@ void nuDoc::CloneSlowInto( nuDoc& c, uint cloneFlags, nuRenderStats& stats ) con
 	{
 		if ( ChildIsModified.Get(i) )
 		{
-			const nuDomEl* src = GetChildByInternalID( i );
-			nuDomEl* dst = c.GetChildByInternalIDMutable( i );
+			const xoDomEl* src = GetChildByInternalID( i );
+			xoDomEl* dst = c.GetChildByInternalIDMutable( i );
 			if ( src )
 				src->CloneSlowInto( *dst, cloneFlags );
 		}
 	}
 
 	ClassStyles.CloneSlowInto( c.ClassStyles );
-	nuCloneStaticArrayWithCloneSlowInto( c.TagStyles, TagStyles );
+	xoCloneStaticArrayWithCloneSlowInto( c.TagStyles, TagStyles );
 
 	c.Strings.CloneFrom_Incremental( Strings );
 
 	c.Version = Version;
 }
 
-bool nuDoc::ClassParse( const char* klass, const char* style )
+bool xoDoc::ClassParse( const char* klass, const char* style )
 {
-	nuStyle* s = ClassStyles.GetOrCreate( klass );
+	xoStyle* s = ClassStyles.GetOrCreate( klass );
 	s->Attribs.clear();
 	return s->Parse( style, this );
 }
 
-nuDomEl* nuDoc::AllocChild( nuTag tag )
+xoDomEl* xoDoc::AllocChild( xoTag tag )
 {
-	NUASSERT(tag != nuTagNULL);
+	XOASSERT(tag != xoTagNULL);
 
 	// we may want to use a more specialized heap in future, so we keep this allocation path strict
-	if ( tag == nuTagText )
-		return new nuDomText( this, tag );
+	if ( tag == xoTagText )
+		return new xoDomText( this, tag );
 	else
-		return new nuDomNode( this, tag );
+		return new xoDomNode( this, tag );
 }
 
-void nuDoc::FreeChild( const nuDomEl* el )
+void xoDoc::FreeChild( const xoDomEl* el )
 {
 	// we may want to use a more specialized heap in future, so we keep this allocation path strict
 	delete el;
 }
 
-nuString nuDoc::Parse( const char* src )
+xoString xoDoc::Parse( const char* src )
 {
 	return Root.Parse( src );
 }
 
-void nuDoc::ChildAdded( nuDomEl* el )
+void xoDoc::ChildAdded( xoDomEl* el )
 {
-	NUASSERT(el->GetDoc() == this);
-	NUASSERT(el->GetInternalID() == 0);
+	XOASSERT(el->GetDoc() == this);
+	XOASSERT(el->GetInternalID() == 0);
 	if ( UsableIDs.size() != 0 )
 	{
 		el->SetInternalID( UsableIDs.rpop() );
@@ -158,40 +158,40 @@ void nuDoc::ChildAdded( nuDomEl* el )
 	}
 	else
 	{
-		el->SetInternalID( (nuInternalID) ChildByInternalID.size() );
+		el->SetInternalID( (xoInternalID) ChildByInternalID.size() );
 		ChildByInternalID += el;
 	}
 	SetChildModified( el->GetInternalID() );
 }
 
-void nuDoc::ChildAddedFromDocumentClone( nuDomEl* el )
+void xoDoc::ChildAddedFromDocumentClone( xoDomEl* el )
 {
-	nuInternalID elID = el->GetInternalID();
-	NUASSERTDEBUG(elID != 0);
-	NUASSERTDEBUG(elID < ChildByInternalID.size());		// The clone should have resized ChildByInternalID before copying the DOM elements
+	xoInternalID elID = el->GetInternalID();
+	XOASSERTDEBUG(elID != 0);
+	XOASSERTDEBUG(elID < ChildByInternalID.size());		// The clone should have resized ChildByInternalID before copying the DOM elements
 	ChildByInternalID[elID] = el;
 }
 
-void nuDoc::ChildRemoved( nuDomEl* el )
+void xoDoc::ChildRemoved( xoDomEl* el )
 {
-	nuInternalID elID = el->GetInternalID();
-	NUASSERT(elID != 0);
-	NUASSERT(el->GetDoc() == this);
+	xoInternalID elID = el->GetInternalID();
+	XOASSERT(elID != 0);
+	XOASSERT(el->GetDoc() == this);
 	IncVersion();
 	SetChildModified( elID );
 	ChildByInternalID[elID] = NULL;
 	el->SetDoc( NULL );
-	el->SetInternalID( nuInternalIDNull );
+	el->SetInternalID( xoInternalIDNull );
 	FreeIDs += elID;
 }
 
-void nuDoc::SetChildModified( nuInternalID id )
+void xoDoc::SetChildModified( xoInternalID id )
 {
 	ChildIsModified.SetAutoGrow( id, true, false );
 	IncVersion();
 }
 
-void nuDoc::Reset()
+void xoDoc::Reset()
 {
 	/*
 	if ( IsReadOnly )
@@ -202,24 +202,24 @@ void nuDoc::Reset()
 	*/
 	IncVersion();
 	Pool.FreeAll();
-	Root.SetInternalID( nuInternalIDNull );	// Root will be assigned nuInternalIDRoot when we call ChildAdded() on it.
+	Root.SetInternalID( xoInternalIDNull );	// Root will be assigned xoInternalIDRoot when we call ChildAdded() on it.
 	ChildIsModified.Clear();
 	ResetInternalIDs();
 }
 
-void nuDoc::ResetInternalIDs()
+void xoDoc::ResetInternalIDs()
 {
 	FreeIDs.clear();
 	UsableIDs.clear();
 	ChildByInternalID.clear();
 	ChildByInternalID += NULL;	// zero is NULL
 	ChildAdded( &Root );
-	NUASSERT( Root.GetInternalID() == nuInternalIDRoot );
+	XOASSERT( Root.GetInternalID() == xoInternalIDRoot );
 }
 
-void nuDoc::InitializeDefaultTagStyles()
+void xoDoc::InitializeDefaultTagStyles()
 {
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	//const char* font = "Trebuchet MS";
 	//const char* font = "Microsoft Sans Serif";
 	//const char* font = "Consolas";
@@ -228,23 +228,23 @@ void nuDoc::InitializeDefaultTagStyles()
 	//const char* font = "Tahoma";
 	const char* font = "Segoe UI";
 	//const char* font = "Arial";
-#elif NU_PLATFORM_ANDROID
+#elif XO_PLATFORM_ANDROID
 	const char* font = "Droid Sans";
 #else
 	const char* font = "Helvetica";
 #endif
-	nuStyleAttrib afont;
-	afont.SetFont( nuGlobal()->FontStore->InsertByFacename(font) );
+	xoStyleAttrib afont;
+	afont.SetFont( xoGlobal()->FontStore->InsertByFacename(font) );
 
-	// Other defaults are set inside nuRenderStack::Initialize()
+	// Other defaults are set inside xoRenderStack::Initialize()
 
-	TagStyles[nuTagBody].Parse( "background: #fff; width: 100%; height: 100%; box-sizing: margin;", this );
-	TagStyles[nuTagBody].Set( afont );
-	//TagStyles[nuTagBody].Parse( "background: #000; width: 100%; height: 100%;", this );
-	//TagStyles[nuTagDiv].Parse( "display: block;", this );
+	TagStyles[xoTagBody].Parse( "background: #fff; width: 100%; height: 100%; box-sizing: margin;", this );
+	TagStyles[xoTagBody].Set( afont );
+	//TagStyles[xoTagBody].Parse( "background: #000; width: 100%; height: 100%;", this );
+	//TagStyles[xoTagDiv].Parse( "display: block;", this );
 	// Hack to give text some size
-	//TagStyles[nuTagText].Parse( "width: 70px; height: 30px;", this );
-	//TagStyles[nuTagLab]...
+	//TagStyles[xoTagText].Parse( "width: 70px; height: 30px;", this );
+	//TagStyles[xoTagLab]...
 
-	static_assert(nuTagLab == nuTagEND - 1, "add default style for new tag");
+	static_assert(xoTagLab == xoTagEND - 1, "add default style for new tag");
 }

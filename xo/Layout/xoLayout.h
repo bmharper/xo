@@ -1,17 +1,17 @@
 #pragma once
 
-#include "nuDefs.h"
-#include "nuStyle.h"
-#include "Render/nuRenderStack.h"
-#include "Text/nuGlyphCache.h"
-#include "Text/nuFontStore.h"
+#include "xoDefs.h"
+#include "xoStyle.h"
+#include "Render/xoRenderStack.h"
+#include "Text/xoGlyphCache.h"
+#include "Text/xoFontStore.h"
 
 /* A box that has been laid out.
 */
-class NUAPI nuLayoutEl
+class XOAPI xoLayoutEl
 {
 public:
-	nuBox Box;
+	xoBox Box;
 };
 
 /* This performs box layout.
@@ -26,32 +26,32 @@ Hidden things that would bite you if you tried to multithread this:
 that is thread safe.
 
 */
-class NUAPI nuLayout
+class XOAPI xoLayout
 {
 public:
 
-	void Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDomNode& root, nuPool* pool );
+	void Layout( const xoDoc& doc, u32 docWidth, u32 docHeight, xoRenderDomNode& root, xoPool* pool );
 
 protected:
 
 	struct NodeState
 	{
 		// Immutable
-		nuBox	ParentContentBox;
+		xoBox	ParentContentBox;
 		bool	ParentContentBoxHasWidth;
 		bool	ParentContentBoxHasHeight;
 
 		// Mutable
-		nuPos	PosMaxX;			// Right-most edge of the current line
-		nuPos	PosMaxY;			// Bottom of the current line
-		nuPos	PosX;
-		nuPos	PosY;
-		nuPos	PosBaselineY;		// First text element sets this, and it is thereafter fixed until the next line
+		xoPos	PosMaxX;			// Right-most edge of the current line
+		xoPos	PosMaxY;			// Bottom of the current line
+		xoPos	PosX;
+		xoPos	PosY;
+		xoPos	PosBaselineY;		// First text element sets this, and it is thereafter fixed until the next line
 	};
 
 	struct Word
 	{
-		nuPos	Width;
+		xoPos	Width;
 		int32	Start;
 		int32	End;
 		int32	Length() const { return End - Start; }
@@ -59,44 +59,44 @@ protected:
 
 	struct TextRunState
 	{
-		const nuDomText*	Node;
-		nuRenderDomText*	RNode;
+		const xoDomText*	Node;
+		xoRenderDomText*	RNode;
 		podvec<Word>		Words;
 		int					GlyphCount;		// Number of non-empty glyphs
 		bool				GlyphsNeeded;
 	};
 
-	const nuDoc*				Doc;
+	const xoDoc*				Doc;
 	u32							DocWidth, DocHeight;
-	nuPool*						Pool;
-	nuRenderStack				Stack;
+	xoPool*						Pool;
+	xoRenderStack				Stack;
 	float						PtToPixel;
 	float						EpToPixel;
-	nuFontTableImmutable		Fonts;
-	fhashset<nuGlyphCacheKey>	GlyphsNeeded;
+	xoFontTableImmutable		Fonts;
+	fhashset<xoGlyphCacheKey>	GlyphsNeeded;
 
 	TextRunState				TempText;
 
-	nuPos	ComputeDimension( nuPos container, bool isContainerDefined, nuStyleCategories cat );
-	nuPos	ComputeDimension( nuPos container, bool isContainerDefined, nuSize size );
-	nuBox	ComputeBox( nuBox container, bool widthDefined, bool heightDefined, nuStyleCategories cat );
-	nuBox	ComputeBox( nuBox container, bool widthDefined, bool heightDefined, nuStyleBox box );
-	nuBox	ComputeSpecifiedPosition( const NodeState& s );
-	void	ComputeRelativeOffset( const NodeState& s, nuBox& box );
+	xoPos	ComputeDimension( xoPos container, bool isContainerDefined, xoStyleCategories cat );
+	xoPos	ComputeDimension( xoPos container, bool isContainerDefined, xoSize size );
+	xoBox	ComputeBox( xoBox container, bool widthDefined, bool heightDefined, xoStyleCategories cat );
+	xoBox	ComputeBox( xoBox container, bool widthDefined, bool heightDefined, xoStyleBox box );
+	xoBox	ComputeSpecifiedPosition( const NodeState& s );
+	void	ComputeRelativeOffset( const NodeState& s, xoBox& box );
 
-	void	LayoutInternal( nuRenderDomNode& root );
+	void	LayoutInternal( xoRenderDomNode& root );
 	void	RenderGlyphsNeeded();
-	void	RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rnode );
-	void	RunText( NodeState& s, const nuDomText& node, nuRenderDomText* rnode );
+	void	RunNode( NodeState& s, const xoDomNode& node, xoRenderDomNode* rnode );
+	void	RunText( NodeState& s, const xoDomText& node, xoRenderDomText* rnode );
 	void	GenerateTextWords( NodeState& s, TextRunState& ts );
 	void	GenerateTextOutput( NodeState& s, TextRunState& ts );
 	void	NextLine( NodeState& s );
-	nuPoint	PositionBlock( NodeState& s, nuBox& marginBox );
-	void	OffsetRecursive( nuRenderDomNode* rnode, nuPoint offset );
+	xoPoint	PositionBlock( NodeState& s, xoBox& marginBox );
+	void	OffsetRecursive( xoRenderDomNode* rnode, xoPoint offset );
 
 	static bool				IsSpace( int ch );
 	static bool				IsLinebreak( int ch );
-	static nuGlyphCacheKey	MakeGlyphCacheKey( nuRenderDomText* rnode );
+	static xoGlyphCacheKey	MakeGlyphCacheKey( xoRenderDomText* rnode );
 
 };
 

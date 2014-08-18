@@ -1,19 +1,19 @@
 #pragma once
-#if NU_BUILD_OPENGL
+#if XO_BUILD_OPENGL
 
-#include "../../Render/nuRenderGL_Defs.h"
+#include "../../Render/xoRenderGL_Defs.h"
 
-class nuGLProg_FillTex : public nuGLProg
+class xoGLProg_FillTex : public xoGLProg
 {
 public:
-	nuGLProg_FillTex();
+	xoGLProg_FillTex();
 	virtual void			Reset();
 	virtual const char*		VertSrc();
 	virtual const char*		FragSrc();
 	virtual const char*		Name();
 	virtual bool			LoadVariablePositions();	// Performs glGet[Uniform|Attrib]Location for all variables. Returns true if all variables are found.
-	virtual uint32			PlatformMask();				// Combination of nuPlatform bits.
-	virtual nuVertexType	VertexType();				// Only meaningful on DirectX
+	virtual uint32			PlatformMask();				// Combination of xoPlatform bits.
+	virtual xoVertexType	VertexType();				// Only meaningful on DirectX
 
 	GLint v_mvproj;           // uniform mat4
 	GLint v_vpos;             // attribute vec4
@@ -22,5 +22,5 @@ public:
 	GLint v_tex0;             // uniform sampler2D
 };
 
-#endif // NU_BUILD_OPENGL
+#endif // XO_BUILD_OPENGL
 

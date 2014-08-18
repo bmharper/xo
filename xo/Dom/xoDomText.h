@@ -1,18 +1,18 @@
 #pragma once
-#include "nuDomEl.h"
+#include "xoDomEl.h"
 
-class NUAPI nuDomText : public nuDomEl
+class XOAPI xoDomText : public xoDomEl
 {
-	DISALLOW_COPY_AND_ASSIGN(nuDomText);
+	DISALLOW_COPY_AND_ASSIGN(xoDomText);
 public:
-					nuDomText( nuDoc* doc, nuTag tag );
-					virtual ~nuDomText();
+					xoDomText( xoDoc* doc, xoTag tag );
+					virtual ~xoDomText();
 
 	virtual void			SetText( const char* txt ) override;
 	virtual const char*		GetText() const override;
-	virtual void			CloneSlowInto( nuDomEl& c, uint cloneFlags ) const override;
+	virtual void			CloneSlowInto( xoDomEl& c, uint cloneFlags ) const override;
 	virtual void			ForgetChildren() override;
 
 protected:
-	nuString				Text;			// Applicable only to nuTagText elements
+	xoString				Text;			// Applicable only to xoTagText elements
 };

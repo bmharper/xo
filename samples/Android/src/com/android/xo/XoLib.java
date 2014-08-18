@@ -1,11 +1,11 @@
-package com.android.nudom;
+package com.android.xo;
 
 // Wrapper for native library
 
-public class NuLib {
+public class XoLib {
 
      static {
-         System.loadLibrary("nudom");
+         System.loadLibrary("xo");
      }
 
     /**

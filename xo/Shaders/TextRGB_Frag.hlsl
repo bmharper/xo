@@ -19,7 +19,7 @@ PSOutput main(VSOutput input)
 	//col = input.color * float4(1,1,1, shader_texture.Sample(sample_type, input.texuv0).r);
     //return col;
 
-	float offset = 1.0 / NU_GLYPH_ATLAS_SIZE;
+	float offset = 1.0 / XO_GLYPH_ATLAS_SIZE;
 	float2 uv = input.uv;
 	float4 clamps = input.uvClamp;
 

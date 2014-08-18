@@ -1,23 +1,23 @@
 #include "pch.h"
-#if NU_BUILD_OPENGL
-#include "nuRenderGL_Defs.h"
+#if XO_BUILD_OPENGL
+#include "xoRenderGL_Defs.h"
 
-nuGLProg::nuGLProg()
+xoGLProg::xoGLProg()
 {
 	ResetBase();
 }
 
-nuGLProg::~nuGLProg()
+xoGLProg::~xoGLProg()
 {
 }
 
-void			nuGLProg::Reset()					{ ResetBase(); }
-const char*		nuGLProg::VertSrc()					{ return NULL; }
-const char*		nuGLProg::FragSrc()					{ return NULL; }
-const char*		nuGLProg::Name()					{ return "<unnamed shader>"; }
-void			nuGLProg::ResetBase()				{ Vert = Frag = Prog = 0; }
-bool			nuGLProg::LoadVariablePositions()	{ return false; }
-uint32			nuGLProg::PlatformMask()			{ return nuPlatform_All; }
-nuVertexType	nuGLProg::VertexType()				{ return nuVertexType_NULL; }
+void			xoGLProg::Reset()					{ ResetBase(); }
+const char*		xoGLProg::VertSrc()					{ return NULL; }
+const char*		xoGLProg::FragSrc()					{ return NULL; }
+const char*		xoGLProg::Name()					{ return "<unnamed shader>"; }
+void			xoGLProg::ResetBase()				{ Vert = Frag = Prog = 0; }
+bool			xoGLProg::LoadVariablePositions()	{ return false; }
+uint32			xoGLProg::PlatformMask()			{ return xoPlatform_All; }
+xoVertexType	xoGLProg::VertexType()				{ return xoVertexType_NULL; }
 
 #endif

@@ -10,13 +10,13 @@
 	#include <windows.h>
 #endif
 
-#include "../nuDom/nuDom.h"
+#include "../xo/xo.h"
 #include "../dependencies/stb_image_write.h"
 
 #define STBI_HEADER_FILE_ONLY
 #include "../dependencies/stb_image.c"
 #undef STBI_HEADER_FILE_ONLY
 
-#define TT_MODULE_NAME nudom
+#define TT_MODULE_NAME xo
 #include "../dependencies/TinyTest/TinyTest.h"
 #define TESTFUNC(f) TT_TEST_FUNC(NULL, NULL, TTSizeSmall, f, TTParallelDontCare)

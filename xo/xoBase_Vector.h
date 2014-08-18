@@ -1,12 +1,12 @@
 #pragma once
 
-typedef VecBase2T<float> nuVecBase2f;
-typedef VecBase3T<float> nuVecBase3f;
-typedef VecBase4T<float> nuVecBase4f;
+typedef VecBase2T<float> xoVecBase2f;
+typedef VecBase3T<float> xoVecBase3f;
+typedef VecBase4T<float> xoVecBase4f;
 
-typedef Vec2T<float> nuVec2f;
-typedef Vec3T<float> nuVec3f;
-typedef Vec4T<float> nuVec4f;
+typedef Vec2T<float> xoVec2f;
+typedef Vec3T<float> xoVec3f;
+typedef Vec4T<float> xoVec4f;
 
-#define NU_MAT4F_DEFINED
-typedef Mat4T<float> nuMat4f;
+#define XO_MAT4F_DEFINED
+typedef Mat4T<float> xoMat4f;

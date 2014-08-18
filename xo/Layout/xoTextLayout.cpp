@@ -1,20 +1,20 @@
 #include "pch.h"
-#include "nuTextLayout.h"
-#include "Dom/nuDomText.h"
-#include "Render/nuRenderDomEl.h"
-#include "Text/nuFontStore.h"
-#include "Text/nuGlyphCache.h"
+#include "xoTextLayout.h"
+#include "Dom/xoDomText.h"
+#include "Render/xoRenderDomEl.h"
+#include "Text/xoFontStore.h"
+#include "Text/xoGlyphCache.h"
 
 /*
-nuTextLayout::nuTextLayout()
+xoTextLayout::xoTextLayout()
 {
 }
 
-nuTextLayout::~nuTextLayout()
+xoTextLayout::~xoTextLayout()
 {
 }
 
-void nuTextLayout::GenerateBoxes( const nuDomText& node, nuRenderDomText* rnode )
+void xoTextLayout::GenerateBoxes( const xoDomText& node, xoRenderDomText* rnode )
 {
 }
 

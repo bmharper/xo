@@ -1,74 +1,74 @@
 #pragma once
-#include "nuDomEl.h"
+#include "xoDomEl.h"
 
 /* DOM node that is not text
 It is vital that this data structure does not grow much bigger than this.
 Right now it's 128 bytes on Windows x64.
 */
-class NUAPI nuDomNode : public nuDomEl
+class XOAPI xoDomNode : public xoDomEl
 {
-	DISALLOW_COPY_AND_ASSIGN(nuDomNode);
+	DISALLOW_COPY_AND_ASSIGN(xoDomNode);
 public:
-					nuDomNode( nuDoc* doc, nuTag tag );
-					virtual ~nuDomNode();
+					xoDomNode( xoDoc* doc, xoTag tag );
+					virtual ~xoDomNode();
 
 	virtual void			SetText( const char* txt ) override;
 	virtual const char*		GetText() const override;
-	virtual void			CloneSlowInto( nuDomEl& c, uint cloneFlags ) const override;
+	virtual void			CloneSlowInto( xoDomEl& c, uint cloneFlags ) const override;
 	virtual void			ForgetChildren() override;
 
-	const pvect<nuDomEl*>&			GetChildren() const			{ return Children; }
-	podvec<nuStyleID>&				GetClassesMutable()			{ IncVersion(); return Classes; }
-	const podvec<nuStyleID>&		GetClasses() const			{ return Classes; }
-	const podvec<nuEventHandler>&	GetHandlers() const			{ return Handlers; }
-	const nuStyle&					GetStyle() const			{ return Style; }
+	const pvect<xoDomEl*>&			GetChildren() const			{ return Children; }
+	podvec<xoStyleID>&				GetClassesMutable()			{ IncVersion(); return Classes; }
+	const podvec<xoStyleID>&		GetClasses() const			{ return Classes; }
+	const podvec<xoEventHandler>&	GetHandlers() const			{ return Handlers; }
+	const xoStyle&					GetStyle() const			{ return Style; }
 
-	nuDomEl*		AddChild( nuTag tag );
-	nuDomNode*		AddNode( nuTag tag );
-	nuDomText*		AddText( const char* txt = nullptr );
-	void			RemoveChild( nuDomEl* c );
+	xoDomEl*		AddChild( xoTag tag );
+	xoDomNode*		AddNode( xoTag tag );
+	xoDomText*		AddText( const char* txt = nullptr );
+	void			RemoveChild( xoDomEl* c );
 	void			RemoveAllChildren();
 	intp			ChildCount() const { return Children.size(); }
-	nuDomEl*		ChildByIndex( intp index );
-	const nuDomEl*	ChildByIndex( intp index ) const;
+	xoDomEl*		ChildByIndex( intp index );
+	const xoDomEl*	ChildByIndex( intp index ) const;
 	void			Discard();
 
 	// Replace all child elements with the given xml-like string. Returns empty string on success, or error message.
-	nuString		Parse( const char* src );
-	nuString		ParseAppend( const char* src );	// Same as Parse, but append to node
-	nuString		ParseAppend( const nuStringRaw& src );
+	xoString		Parse( const char* src );
+	xoString		ParseAppend( const char* src );	// Same as Parse, but append to node
+	xoString		ParseAppend( const xoStringRaw& src );
 
 	bool			StyleParse( const char* t, intp maxLen = INT32MAX );
 	bool			StyleParsef( const char* t, ... );
 	// This is here for experiments. Future work needs a better performing method for setting just one attribute of the style.
-	void			HackSetStyle( const nuStyle& style );
+	void			HackSetStyle( const xoStyle& style );
 
 	// Classes
 	void			AddClass( const char* klass );
 	void			RemoveClass( const char* klass );
 
 	// Events
-	void			AddHandler( nuEvents ev, nuEventHandlerF func, void* context = NULL );
-	void			AddHandler( nuEvents ev, nuEventHandlerLambda lambda );
-	bool			HandlesEvent( nuEvents ev ) const { return !!(AllEventMask & ev); }
+	void			AddHandler( xoEvents ev, xoEventHandlerF func, void* context = NULL );
+	void			AddHandler( xoEvents ev, xoEventHandlerLambda lambda );
+	bool			HandlesEvent( xoEvents ev ) const { return !!(AllEventMask & ev); }
 
-	void			OnTouch( nuEventHandlerF func, void* context )				{ AddHandler( nuEventTouch, func, context ); }
-	void			OnMouseMove( nuEventHandlerF func, void* context )			{ AddHandler( nuEventMouseMove, func, context ); }
-	void			OnClick( nuEventHandlerF func, void* context )				{ AddHandler( nuEventClick, func, context ); }
-	void			OnTimer( nuEventHandlerF func, void* context )				{ AddHandler( nuEventTimer, func, context ); }
+	void			OnTouch( xoEventHandlerF func, void* context )				{ AddHandler( xoEventTouch, func, context ); }
+	void			OnMouseMove( xoEventHandlerF func, void* context )			{ AddHandler( xoEventMouseMove, func, context ); }
+	void			OnClick( xoEventHandlerF func, void* context )				{ AddHandler( xoEventClick, func, context ); }
+	void			OnTimer( xoEventHandlerF func, void* context )				{ AddHandler( xoEventTimer, func, context ); }
 
-	void			OnTouch( nuEventHandlerLambda lambda )						{ AddHandler( nuEventTouch, lambda ); }
-	void			OnMouseMove( nuEventHandlerLambda lambda )					{ AddHandler( nuEventMouseMove, lambda ); }
-	void			OnClick( nuEventHandlerLambda lambda )						{ AddHandler( nuEventClick, lambda ); }
-	void			OnTimer( nuEventHandlerLambda lambda )						{ AddHandler( nuEventTimer, lambda ); }
+	void			OnTouch( xoEventHandlerLambda lambda )						{ AddHandler( xoEventTouch, lambda ); }
+	void			OnMouseMove( xoEventHandlerLambda lambda )					{ AddHandler( xoEventMouseMove, lambda ); }
+	void			OnClick( xoEventHandlerLambda lambda )						{ AddHandler( xoEventClick, lambda ); }
+	void			OnTimer( xoEventHandlerLambda lambda )						{ AddHandler( xoEventTimer, lambda ); }
 
 protected:
 	uint32					AllEventMask;
-	nuStyle					Style;			// Styles that override those referenced by the Tag and the Classes.
-	podvec<nuEventHandler>	Handlers;
-	pvect<nuDomEl*>			Children;
-	podvec<nuStyleID>		Classes;		// Classes of styles
+	xoStyle					Style;			// Styles that override those referenced by the Tag and the Classes.
+	podvec<xoEventHandler>	Handlers;
+	pvect<xoDomEl*>			Children;
+	podvec<xoStyleID>		Classes;		// Classes of styles
 
 	void			RecalcAllEventMask();
-	void			AddHandler( nuEvents ev, nuEventHandlerF func, bool isLambda, void* context );
+	void			AddHandler( xoEvents ev, xoEventHandlerF func, bool isLambda, void* context );
 };

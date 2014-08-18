@@ -1,12 +1,12 @@
 #include "pch.h"
-#include "nuLayout2.h"
-#include "nuDoc.h"
-#include "Dom/nuDomNode.h"
-#include "Dom/nuDomText.h"
-#include "Render/nuRenderDomEl.h"
-#include "Render/nuStyleResolve.h"
-#include "Text/nuFontStore.h"
-#include "Text/nuGlyphCache.h"
+#include "xoLayout2.h"
+#include "xoDoc.h"
+#include "Dom/xoDomNode.h"
+#include "Dom/xoDomText.h"
+#include "Render/xoRenderDomEl.h"
+#include "Render/xoStyleResolve.h"
+#include "Text/xoFontStore.h"
+#include "Text/xoGlyphCache.h"
 
 /* This is called serially.
 
@@ -17,7 +17,7 @@ Missing glyphs are a once-off cost (ie once per application instance),
 so it's not worth trying to use a mutable glyph cache.
 
 */
-void nuLayout2::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDomNode& root, nuPool* pool )
+void xoLayout2::Layout( const xoDoc& doc, u32 docWidth, u32 docHeight, xoRenderDomNode& root, xoPool* pool )
 {
 	Doc = &doc;
 	DocWidth = docWidth;
@@ -26,9 +26,9 @@ void nuLayout2::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderD
 	Stack.Initialize( Doc, Pool );
 	ChildOutStack.Init( 1024 * 1024 );
 	LineBoxStack.Init( 1024 * 1024 );
-	Fonts = nuGlobal()->FontStore->GetImmutableTable();
-	SnapBoxes = nuGlobal()->SnapBoxes;
-	SnapSubpixelHorzText = nuGlobal()->SnapSubpixelHorzText;
+	Fonts = xoGlobal()->FontStore->GetImmutableTable();
+	SnapBoxes = xoGlobal()->SnapBoxes;
+	SnapSubpixelHorzText = xoGlobal()->SnapSubpixelHorzText;
 
 	while ( true )
 	{
@@ -36,82 +36,82 @@ void nuLayout2::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderD
 
 		if ( GlyphsNeeded.size() == 0 )
 		{
-			NUTRACE_LAYOUT_VERBOSE( "Layout done\n" );
+			XOTRACE_LAYOUT_VERBOSE( "Layout done\n" );
 			break;
 		}
 		else
 		{
-			NUTRACE_LAYOUT_VERBOSE( "Layout done (but need another pass for missing glyphs)\n" );
+			XOTRACE_LAYOUT_VERBOSE( "Layout done (but need another pass for missing glyphs)\n" );
 			RenderGlyphsNeeded();
 		}
 	}
 }
 
-void nuLayout2::RenderGlyphsNeeded()
+void xoLayout2::RenderGlyphsNeeded()
 {
 	for ( auto it = GlyphsNeeded.begin(); it != GlyphsNeeded.end(); it++ )
-		nuGlobal()->GlyphCache->RenderGlyph( *it );
+		xoGlobal()->GlyphCache->RenderGlyph( *it );
 	GlyphsNeeded.clear();
 }
 
-void nuLayout2::LayoutInternal( nuRenderDomNode& root )
+void xoLayout2::LayoutInternal( xoRenderDomNode& root )
 {
 	PtToPixel = 1.0;	// TODO
-	EpToPixel = nuGlobal()->EpToPixel;
+	EpToPixel = xoGlobal()->EpToPixel;
 
-	NUTRACE_LAYOUT_VERBOSE( "Layout 1\n" );
+	XOTRACE_LAYOUT_VERBOSE( "Layout 1\n" );
 
 	Pool->FreeAll();
 	root.Children.clear();
 	Stack.Reset();
 
-	NUTRACE_LAYOUT_VERBOSE( "Layout 2\n" );
+	XOTRACE_LAYOUT_VERBOSE( "Layout 2\n" );
 
 	LayoutInput in;
-	in.ParentWidth = nuIntToPos( DocWidth );
-	in.ParentHeight = nuIntToPos( DocHeight );
-	in.OuterBaseline = nuPosNULL;
+	in.ParentWidth = xoIntToPos( DocWidth );
+	in.ParentHeight = xoIntToPos( DocHeight );
+	in.OuterBaseline = xoPosNULL;
 
 	LayoutOutput out;
 
-	NUTRACE_LAYOUT_VERBOSE( "Layout 3 DocBox = %d,%d,%d,%d\n", s.ParentContentBox.Left, s.ParentContentBox.Top, s.ParentContentBox.Right, s.ParentContentBox.Bottom );
+	XOTRACE_LAYOUT_VERBOSE( "Layout 3 DocBox = %d,%d,%d,%d\n", s.ParentContentBox.Left, s.ParentContentBox.Top, s.ParentContentBox.Right, s.ParentContentBox.Bottom );
 
 	RunNode( Doc->Root, in, out, &root );
 }
 
-void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOutput& out, nuRenderDomNode* rnode )
+void xoLayout2::RunNode( const xoDomNode& node, const LayoutInput& in, LayoutOutput& out, xoRenderDomNode* rnode )
 {
-	NUTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 1\n", node.GetInternalID() );
-	nuStyleResolver::ResolveAndPush( Stack, &node );
+	XOTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 1\n", node.GetInternalID() );
+	xoStyleResolver::ResolveAndPush( Stack, &node );
 	rnode->SetStyle( Stack );
 
-	NUTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 2\n", node.GetInternalID() );
+	XOTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 2\n", node.GetInternalID() );
 	rnode->InternalID = node.GetInternalID();
 
-	nuBoxSizeType boxSizing = Stack.Get( nuCatBoxSizing ).GetBoxSizing();
-	nuPos borderRadius = ComputeDimension( 0, nuCatBorderRadius );
-	nuPos contentWidth = ComputeDimension( in.ParentWidth, nuCatWidth );
-	nuPos contentHeight = ComputeDimension( in.ParentHeight, nuCatHeight );
-	nuBox margin = ComputeBox( in.ParentWidth, in.ParentHeight, nuCatMargin_Left );		// it may be wise to disallow percentage sizing here
-	nuBox padding = ComputeBox( in.ParentWidth, in.ParentHeight, nuCatPadding_Left );	// same here
-	nuBox border = ComputeBox( in.ParentWidth, in.ParentHeight, nuCatBorder_Left );		// and here
+	xoBoxSizeType boxSizing = Stack.Get( xoCatBoxSizing ).GetBoxSizing();
+	xoPos borderRadius = ComputeDimension( 0, xoCatBorderRadius );
+	xoPos contentWidth = ComputeDimension( in.ParentWidth, xoCatWidth );
+	xoPos contentHeight = ComputeDimension( in.ParentHeight, xoCatHeight );
+	xoBox margin = ComputeBox( in.ParentWidth, in.ParentHeight, xoCatMargin_Left );		// it may be wise to disallow percentage sizing here
+	xoBox padding = ComputeBox( in.ParentWidth, in.ParentHeight, xoCatPadding_Left );	// same here
+	xoBox border = ComputeBox( in.ParentWidth, in.ParentHeight, xoCatBorder_Left );		// and here
 	
 	// It might make for less arithmetic if we work with marginBoxWidth and marginBoxHeight instead of contentBoxWidth and contentBoxHeight. We'll see.
 
 	// This box holds the offsets from the 4 sides of our origin, to our content box. (Our origin is our parent's content box, but since it's relative here, it starts at 0,0)
-	nuBox toContent;
+	xoBox toContent;
 	toContent.Left = margin.Left + border.Left + padding.Left;
 	toContent.Right = margin.Right + border.Right + padding.Right;
 	toContent.Top = margin.Top + border.Top + padding.Top;
 	toContent.Bottom = margin.Bottom + border.Bottom + padding.Bottom;
 
-	if ( boxSizing == nuBoxSizeContent ) {}
-	else if ( boxSizing == nuBoxSizeBorder )
+	if ( boxSizing == xoBoxSizeContent ) {}
+	else if ( boxSizing == xoBoxSizeBorder )
 	{
 		if ( IsDefined(contentWidth) )	contentWidth -= border.Left + border.Right + padding.Left + padding.Right;
 		if ( IsDefined(contentHeight) )	contentHeight -= border.Top + border.Bottom + padding.Top + padding.Bottom;
 	}
-	else if ( boxSizing == nuBoxSizeMargin )
+	else if ( boxSizing == xoBoxSizeMargin )
 	{
 		if ( IsDefined(contentWidth) )	contentWidth -= margin.Left + margin.Right + border.Left + border.Right + padding.Left + padding.Right;
 		if ( IsDefined(contentHeight) )	contentHeight -= margin.Top + margin.Bottom + border.Top + border.Bottom + padding.Top + padding.Bottom;
@@ -119,23 +119,23 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 
 	if ( SnapBoxes )
 	{
-		if ( IsDefined(contentWidth) )	contentWidth = nuPosRoundUp( contentWidth );
-		if ( IsDefined(contentHeight) )	contentHeight = nuPosRoundUp( contentHeight );
+		if ( IsDefined(contentWidth) )	contentWidth = xoPosRoundUp( contentWidth );
+		if ( IsDefined(contentHeight) )	contentHeight = xoPosRoundUp( contentHeight );
 	}
 
-	nuPos autoWidth = 0;
-	nuPos autoHeight = 0;
-	nuPos outerBaseline = IsDefined(in.OuterBaseline) ? in.OuterBaseline - toContent.Top : nuPosNULL;
+	xoPos autoWidth = 0;
+	xoPos autoHeight = 0;
+	xoPos outerBaseline = IsDefined(in.OuterBaseline) ? in.OuterBaseline - toContent.Top : xoPosNULL;
 
 	// If we don't know our width and height yet then we need to delay bindings until our first pass is done
 	// The buffer size of 16 here is thumbsuck. One can't make it too big, because this is a recursive function.
 	// -- I first tried to have an optimized case for binding during first pass, but I have given up on that.
 	// -- One could revisit it once the design is nailed down.
-	nuLifoVector<LayoutOutput> outs( ChildOutStack );
+	xoLifoVector<LayoutOutput> outs( ChildOutStack );
 	outs.AddN( node.ChildCount() );
 
-	nuLifoVector<LineBox> lineBoxes( LineBoxStack );
-	lineBoxes.Push( LineBox::Make( nuPosNULL, -1, INT32MAX ) );
+	xoLifoVector<LineBox> lineBoxes( LineBoxStack );
+	lineBoxes.Push( LineBox::Make( xoPosNULL, -1, INT32MAX ) );
 
 	FlowState flow;
 	flow.PosMajor = 0;
@@ -145,29 +145,29 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 
 	for ( intp i = 0; i < node.ChildCount(); i++ )
 	{
-		const nuDomEl* c = node.ChildByIndex( i );
+		const xoDomEl* c = node.ChildByIndex( i );
 		LayoutInput cin;
 		LayoutOutput cout;
 		cin.OuterBaseline = IsDefined(outerBaseline) ? outerBaseline : lineBoxes.Back().InnerBaseline;
 		cin.ParentWidth = contentWidth;
 		cin.ParentHeight = contentHeight;
-		nuPoint offset(0,0);
+		xoPoint offset(0,0);
 		int nlines = flow.NumLines;
 		bool breakBefore = false;
-		if ( c->GetTag() == nuTagText )
+		if ( c->GetTag() == xoTagText )
 		{
-			nuRenderDomText* rchildTxt = new (Pool->AllocT<nuRenderDomText>(false)) nuRenderDomText( c->GetInternalID(), Pool );
+			xoRenderDomText* rchildTxt = new (Pool->AllocT<xoRenderDomText>(false)) xoRenderDomText( c->GetInternalID(), Pool );
 			rnode->Children += rchildTxt;
-			RunText( *static_cast<const nuDomText*>(c), cin, cout, rchildTxt );
+			RunText( *static_cast<const xoDomText*>(c), cin, cout, rchildTxt );
 			breakBefore = FlowBreakBefore( cout, flow );
 			offset += FlowRun( cin, cout, flow, rchildTxt );
 			// Text elements cannot choose their layout. They are forced to start in the top-left of their parent, and perform text layout inside that space.
 		}
 		else
 		{
-			nuRenderDomNode* rchildNode = new (Pool->AllocT<nuRenderDomNode>(false)) nuRenderDomNode( c->GetInternalID(), c->GetTag(), Pool );
+			xoRenderDomNode* rchildNode = new (Pool->AllocT<xoRenderDomNode>(false)) xoRenderDomNode( c->GetInternalID(), c->GetTag(), Pool );
 			rnode->Children += rchildNode;
-			RunNode( *static_cast<const nuDomNode*>(c), cin, cout, rchildNode );
+			RunNode( *static_cast<const xoDomNode*>(c), cin, cout, rchildNode );
 			breakBefore = FlowBreakBefore( cout, flow );
 			offset += FlowRun( cin, cout, flow, rchildNode );
 		}
@@ -176,7 +176,7 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 		{
 			// Create a new linebox BEFORE adding this child's state
 			lineBoxes.Back().LastChild = int(i - 1);
-			lineBoxes += LineBox::Make( nuPosNULL, -1, INT32MAX );
+			lineBoxes += LineBox::Make( xoPosNULL, -1, INT32MAX );
 		}
 		if ( IsNull(lineBoxes.Back().InnerBaseline) && IsDefined(cout.NodeBaseline) )
 		{
@@ -187,14 +187,14 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 		{
 			// Create a new linebox AFTER adding this child's state
 			lineBoxes.Back().LastChild = (int) i;
-			lineBoxes += LineBox::Make( nuPosNULL, -1, INT32MAX );
+			lineBoxes += LineBox::Make( xoPosNULL, -1, INT32MAX );
 		}
-		autoWidth = nuMax( autoWidth, flow.PosMinor );
-		autoHeight = nuMax( autoHeight, flow.MajorMax );
+		autoWidth = xoMax( autoWidth, flow.PosMinor );
+		autoHeight = xoMax( autoHeight, flow.MajorMax );
 	}
 
-	if ( IsNull(contentWidth) ) contentWidth = SnapBoxes ? nuPosRoundUp(autoWidth) : autoWidth;
-	if ( IsNull(contentHeight) ) contentHeight = SnapBoxes ?  nuPosRoundUp(autoHeight) : autoHeight;
+	if ( IsNull(contentWidth) ) contentWidth = SnapBoxes ? xoPosRoundUp(autoWidth) : autoWidth;
+	if ( IsNull(contentHeight) ) contentHeight = SnapBoxes ?  xoPosRoundUp(autoHeight) : autoHeight;
 
 	// Apply bindings
 	{
@@ -205,9 +205,9 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 		cin.ParentHeight = contentHeight;
 		for ( intp i = 0; i < node.ChildCount(); i++ )
 		{
-			const nuDomEl* c = node.ChildByIndex( i );
-			nuPoint offset(0,0);
-			if ( c->GetTag() != nuTagText )
+			const xoDomEl* c = node.ChildByIndex( i );
+			xoPoint offset(0,0);
+			if ( c->GetTag() != xoTagText )
 				offset = PositionChildFromBindings( cin, outs[i], rnode->Children[i] );
 			if ( i == lineBoxes[iLineBox].InnerBaselineDefinedBy )
 				lineBoxes[iLineBox].InnerBaseline += offset.Y;
@@ -216,40 +216,40 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 		}
 	}
 
-	rnode->Pos = nuBox( 0, 0, contentWidth, contentHeight ).OffsetBy( toContent.Left, toContent.Top );
-	rnode->Style.BackgroundColor = Stack.Get( nuCatBackground ).GetColor();
-	rnode->Style.BorderRadius = nuPosToReal( borderRadius );
+	rnode->Pos = xoBox( 0, 0, contentWidth, contentHeight ).OffsetBy( toContent.Left, toContent.Top );
+	rnode->Style.BackgroundColor = Stack.Get( xoCatBackground ).GetColor();
+	rnode->Style.BorderRadius = xoPosToReal( borderRadius );
 	rnode->Style.BorderSize = border;
 	rnode->Style.Padding = padding;
-	rnode->Style.BorderColor = Stack.Get( nuCatBorderColor_Left ).GetColor();
+	rnode->Style.BorderColor = Stack.Get( xoCatBorderColor_Left ).GetColor();
 
-	out.NodeBaseline = IsDefined(lineBoxes[0].InnerBaseline) ? lineBoxes[0].InnerBaseline + toContent.Top : nuPosNULL;
+	out.NodeBaseline = IsDefined(lineBoxes[0].InnerBaseline) ? lineBoxes[0].InnerBaseline + toContent.Top : xoPosNULL;
 	out.NodeWidth = contentWidth + border.Left + border.Right + margin.Left + margin.Right + padding.Left + padding.Right;
 	out.NodeHeight = contentHeight + border.Top + border.Bottom + margin.Top + margin.Bottom + padding.Top + padding.Bottom;
 	out.Binds = ComputeBinds();
-	out.Break = Stack.Get( nuCatBreak ).GetBreakType();
-	//out.Position = Stack.Get( nuCatPosition ).GetPositionType();
+	out.Break = Stack.Get( xoCatBreak ).GetBreakType();
+	//out.Position = Stack.Get( xoCatPosition ).GetPositionType();
 
 	Stack.StackPop();
 }
 
-void nuLayout2::RunText( const nuDomText& node, const LayoutInput& in, LayoutOutput& out, nuRenderDomText* rnode )
+void xoLayout2::RunText( const xoDomText& node, const LayoutInput& in, LayoutOutput& out, xoRenderDomText* rnode )
 {
-	NUTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 1\n", node.GetInternalID() );
+	XOTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 1\n", node.GetInternalID() );
 	rnode->InternalID = node.GetInternalID();
 	rnode->SetStyle( Stack );
 
-	NUTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 2\n", node.GetInternalID() );
+	XOTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 2\n", node.GetInternalID() );
 
-	rnode->FontID = Stack.Get( nuCatFontFamily ).GetFont();
+	rnode->FontID = Stack.Get( xoCatFontFamily ).GetFont();
 
-	nuStyleAttrib fontSizeAttrib = Stack.Get( nuCatFontSize );
-	nuPos fontHeight = ComputeDimension( in.ParentHeight, fontSizeAttrib.GetSize() );
+	xoStyleAttrib fontSizeAttrib = Stack.Get( xoCatFontSize );
+	xoPos fontHeight = ComputeDimension( in.ParentHeight, fontSizeAttrib.GetSize() );
 
-	float fontSizePxUnrounded = nuPosToReal( fontHeight );
+	float fontSizePxUnrounded = xoPosToReal( fontHeight );
 	
 	// round font size to integer units
-	rnode->FontSizePx = (uint8) nuRound( fontSizePxUnrounded );
+	rnode->FontSizePx = (uint8) xoRound( fontSizePxUnrounded );
 
 	out.NodeWidth = 0;
 	out.NodeHeight = 0;
@@ -259,9 +259,9 @@ void nuLayout2::RunText( const nuDomText& node, const LayoutInput& in, LayoutOut
 	if ( rnode->FontSizePx < 1 )
 		return;
 
-	bool subPixel = nuGlobal()->EnableSubpixelText && rnode->FontSizePx <= nuGlobal()->MaxSubpixelGlyphSize;
+	bool subPixel = xoGlobal()->EnableSubpixelText && rnode->FontSizePx <= xoGlobal()->MaxSubpixelGlyphSize;
 	if ( subPixel )
-		rnode->Flags |= nuRenderDomText::FlagSubPixelGlyphs;
+		rnode->Flags |= xoRenderDomText::FlagSubPixelGlyphs;
 
 	TempText.Node = &node;
 	TempText.RNode = rnode;
@@ -298,43 +298,43 @@ descender   X  |                    X              |             X
           
 
 */
-void nuLayout2::GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, TextRunState& ts )
+void xoLayout2::GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, TextRunState& ts )
 {
 	const char* txt = ts.Node->GetText();
-	nuGlyphCache* glyphCache = nuGlobal()->GlyphCache;
-	nuGlyphCacheKey key = MakeGlyphCacheKey( ts.RNode );
-	const nuFont* font = Fonts.GetByFontID( ts.RNode->FontID );
+	xoGlyphCache* glyphCache = xoGlobal()->GlyphCache;
+	xoGlyphCacheKey key = MakeGlyphCacheKey( ts.RNode );
+	const xoFont* font = Fonts.GetByFontID( ts.RNode->FontID );
 
-	nuPos fontHeightRounded = nuRealToPos( ts.RNode->FontSizePx );
-	nuPos fontAscender = nuRealx256ToPos( font->Ascender_x256 * ts.RNode->FontSizePx );
-	//nuTextAlignVertical valign = Stack.Get( nuCatText_Align_Vertical ).GetTextAlignVertical();
+	xoPos fontHeightRounded = xoRealToPos( ts.RNode->FontSizePx );
+	xoPos fontAscender = xoRealx256ToPos( font->Ascender_x256 * ts.RNode->FontSizePx );
+	//xoTextAlignVertical valign = Stack.Get( xoCatText_Align_Vertical ).GetTextAlignVertical();
 	
 	// if we add a "line-height" style then we'll want to multiply that by this
-	nuPos lineHeight = nuRealx256ToPos( ts.RNode->FontSizePx * font->LineHeight_x256 ); 
-	if ( nuGlobal()->RoundLineHeights )
-		lineHeight = nuPosRoundUp( lineHeight );
+	xoPos lineHeight = xoRealx256ToPos( ts.RNode->FontSizePx * font->LineHeight_x256 ); 
+	if ( xoGlobal()->RoundLineHeights )
+		lineHeight = xoPosRoundUp( lineHeight );
 
 	int fontHeightPx = ts.RNode->FontSizePx;
 	ts.RNode->Text.reserve( ts.GlyphCount );
 	bool parentHasWidth = IsDefined(in.ParentWidth);
-	bool enableKerning = nuGlobal()->EnableKerning;
+	bool enableKerning = xoGlobal()->EnableKerning;
 
-	//nuPos baseline = 0;
-	//if ( valign == nuTextAlignVerticalTop || s.PosBaselineY == nuPosNULL )		baseline = s.PosY + fontAscender;
-	//else if ( valign == nuTextAlignVerticalBaseline )							baseline = s.PosBaselineY;
-	//else																		NUTODO;
+	//xoPos baseline = 0;
+	//if ( valign == xoTextAlignVerticalTop || s.PosBaselineY == xoPosNULL )		baseline = s.PosY + fontAscender;
+	//else if ( valign == xoTextAlignVerticalBaseline )							baseline = s.PosBaselineY;
+	//else																		XOTODO;
 	
 	// First text in the line defines the baseline
-	//if ( s.PosBaselineY == nuPosNULL )
+	//if ( s.PosBaselineY == xoPosNULL )
 	//	s.PosBaselineY = baseline;
 	if ( strcmp(txt, "world") == 0 )
 		int abc = 123;
 
-	nuPos posX = 0;
-	nuPos posMaxX = 0;
-	nuPos posMaxY = 0;
-	//nuPos baseline = IsDefined(in.ParentBaseline) ? in.ParentBaseline : fontAscender;
-	nuPos baseline = fontAscender;
+	xoPos posX = 0;
+	xoPos posMaxX = 0;
+	xoPos posMaxY = 0;
+	//xoPos baseline = IsDefined(in.ParentBaseline) ? in.ParentBaseline : fontAscender;
+	xoPos baseline = fontAscender;
 	out.NodeBaseline = baseline;
 
 	for ( intp iword = 0; iword < ts.Words.size(); iword++ )
@@ -360,7 +360,7 @@ void nuLayout2::GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, Te
 
 		if ( isSpace )
 		{
-			posX += nuRealx256ToPos( font->LinearHoriAdvance_Space_x256 ) * fontHeightPx;
+			posX += xoRealx256ToPos( font->LinearHoriAdvance_Space_x256 ) * fontHeightPx;
 		}
 		else if ( isNewline )
 		{
@@ -370,11 +370,11 @@ void nuLayout2::GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, Te
 		}
 		else
 		{
-			const nuGlyph* prevGlyph = nullptr;
+			const xoGlyph* prevGlyph = nullptr;
 			for ( intp i = word.Start; i < word.End; i++ )
 			{
 				key.Char = txt[i];
-				const nuGlyph* glyph = glyphCache->GetGlyph( key );
+				const xoGlyph* glyph = glyphCache->GetGlyph( key );
 				__analysis_assume( glyph != nullptr );
 				if ( glyph->IsNull() )
 					continue;
@@ -385,31 +385,31 @@ void nuLayout2::GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, Te
 					// be better off caching the kerning for frequent pairs of glyphs in a hash table.
 					FT_Vector kern;
 					FT_Get_Kerning( font->FTFace, prevGlyph->FTGlyphIndex, glyph->FTGlyphIndex, FT_KERNING_UNSCALED, &kern );
-					nuPos kerning = ((kern.x * fontHeightPx) << nuPosShift) / font->FTFace->units_per_EM;
+					xoPos kerning = ((kern.x * fontHeightPx) << xoPosShift) / font->FTFace->units_per_EM;
 					posX += kerning;
 				}
 				ts.RNode->Text.Count++;
-				nuRenderCharEl& rtxt = ts.RNode->Text.back();
+				xoRenderCharEl& rtxt = ts.RNode->Text.back();
 				rtxt.Char = key.Char;
-				rtxt.X = posX + nuRealx256ToPos( glyph->MetricLeftx256 );
-				rtxt.Y = baseline - nuRealToPos( glyph->MetricTop );			// rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
+				rtxt.X = posX + xoRealx256ToPos( glyph->MetricLeftx256 );
+				rtxt.Y = baseline - xoRealToPos( glyph->MetricTop );			// rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
 				posX += HoriAdvance( glyph, ts );
-				posMaxX = nuMax( posMaxX, posX );
+				posMaxX = xoMax( posMaxX, posX );
 				prevGlyph = glyph;
 			}
 		}
-		posMaxY = nuMax( posMaxY, baseline - fontAscender + lineHeight );
+		posMaxY = xoMax( posMaxY, baseline - fontAscender + lineHeight );
 	}
 
 	out.NodeWidth = posMaxX;
 	out.NodeHeight = posMaxY;
 }
 
-void nuLayout2::GenerateTextWords( TextRunState& ts )
+void xoLayout2::GenerateTextWords( TextRunState& ts )
 {
 	const char* txt = ts.Node->GetText();
-	nuGlyphCache* glyphCache = nuGlobal()->GlyphCache;
-	nuGlyphCacheKey key = MakeGlyphCacheKey( ts.RNode );
+	xoGlyphCache* glyphCache = xoGlobal()->GlyphCache;
+	xoGlyphCacheKey key = MakeGlyphCacheKey( ts.RNode );
 
 	ts.GlyphsNeeded = false;
 	bool onSpace = false;
@@ -431,7 +431,7 @@ void nuLayout2::GenerateTextWords( TextRunState& ts )
 		if ( txt[i] == 0 )
 			break;
 		key.Char = txt[i];
-		const nuGlyph* glyph = glyphCache->GetGlyph( key );
+		const xoGlyph* glyph = glyphCache->GetGlyph( key );
 		if ( !glyph )
 		{
 			ts.GlyphsNeeded = true;
@@ -448,48 +448,48 @@ void nuLayout2::GenerateTextWords( TextRunState& ts )
 	}
 }
 
-nuPoint nuLayout2::PositionChildFromBindings( const LayoutInput& cin, const LayoutOutput& cout, nuRenderDomEl* rchild )
+xoPoint xoLayout2::PositionChildFromBindings( const LayoutInput& cin, const LayoutOutput& cout, xoRenderDomEl* rchild )
 {
-	nuPoint child, parent;
+	xoPoint child, parent;
 	child.X = HBindOffset( cout.Binds.HChild, cout.NodeWidth );
 	child.Y = VBindOffset( cout.Binds.VChild, cout.NodeBaseline, cout.NodeHeight );
 	parent.X = HBindOffset( cout.Binds.HParent, cin.ParentWidth );
 	parent.Y = VBindOffset( cout.Binds.VParent, cin.OuterBaseline, cin.ParentHeight );
-	nuPoint offset( parent.X - child.X, parent.Y - child.Y );
+	xoPoint offset( parent.X - child.X, parent.Y - child.Y );
 	rchild->Pos.Offset( offset );
 	return offset;
 }
 
-nuPos nuLayout2::ComputeDimension( nuPos container, nuStyleCategories cat )
+xoPos xoLayout2::ComputeDimension( xoPos container, xoStyleCategories cat )
 {
 	return ComputeDimension( container, Stack.Get( cat ).GetSize() );
 }
 
-nuPos nuLayout2::ComputeDimension( nuPos container, nuSize size )
+xoPos xoLayout2::ComputeDimension( xoPos container, xoSize size )
 {
 	switch ( size.Type )
 	{
-	case nuSize::NONE: return nuPosNULL;
-	case nuSize::PX: return nuRealToPos( size.Val );
-	case nuSize::PT: return nuRealToPos( size.Val * PtToPixel );
-	case nuSize::EP: return nuRealToPos( size.Val * EpToPixel );
-	case nuSize::PERCENT:
-		if ( container == nuPosNULL )
-			return nuPosNULL;
+	case xoSize::NONE: return xoPosNULL;
+	case xoSize::PX: return xoRealToPos( size.Val );
+	case xoSize::PT: return xoRealToPos( size.Val * PtToPixel );
+	case xoSize::EP: return xoRealToPos( size.Val * EpToPixel );
+	case xoSize::PERCENT:
+		if ( container == xoPosNULL )
+			return xoPosNULL;
 		else
-			return nuPos( nuRound((float) container * (size.Val * 0.01f)) ); // this might be sloppy floating point. Small rational percentages like 25% (1/4) ought to be preserved precisely.
-	default: NUPANIC("Unrecognized size type"); return 0;
+			return xoPos( xoRound((float) container * (size.Val * 0.01f)) ); // this might be sloppy floating point. Small rational percentages like 25% (1/4) ought to be preserved precisely.
+	default: XOPANIC("Unrecognized size type"); return 0;
 	}
 }
 
-nuBox nuLayout2::ComputeBox( nuPos containerWidth, nuPos containerHeight, nuStyleCategories cat )
+xoBox xoLayout2::ComputeBox( xoPos containerWidth, xoPos containerHeight, xoStyleCategories cat )
 {
 	return ComputeBox( containerWidth, containerHeight, Stack.GetBox( cat ) );
 }
 
-nuBox nuLayout2::ComputeBox( nuPos containerWidth, nuPos containerHeight, nuStyleBox box )
+xoBox xoLayout2::ComputeBox( xoPos containerWidth, xoPos containerHeight, xoStyleBox box )
 {
-	nuBox b;
+	xoBox b;
 	b.Left = ComputeDimension( containerWidth, box.Left );
 	b.Right = ComputeDimension( containerWidth, box.Right );
 	b.Top = ComputeDimension( containerHeight, box.Top );
@@ -497,101 +497,101 @@ nuBox nuLayout2::ComputeBox( nuPos containerWidth, nuPos containerHeight, nuStyl
 	return b;
 }
 
-nuLayout2::BindingSet nuLayout2::ComputeBinds()
+xoLayout2::BindingSet xoLayout2::ComputeBinds()
 {
-	nuHorizontalBindings left = Stack.Get( nuCatLeft ).GetHorizontalBinding();
-	nuHorizontalBindings hcenter = Stack.Get( nuCatHCenter ).GetHorizontalBinding();
-	nuHorizontalBindings right = Stack.Get( nuCatRight ).GetHorizontalBinding();
+	xoHorizontalBindings left = Stack.Get( xoCatLeft ).GetHorizontalBinding();
+	xoHorizontalBindings hcenter = Stack.Get( xoCatHCenter ).GetHorizontalBinding();
+	xoHorizontalBindings right = Stack.Get( xoCatRight ).GetHorizontalBinding();
 
-	nuVerticalBindings top = Stack.Get( nuCatTop ).GetVerticalBinding();
-	nuVerticalBindings vcenter = Stack.Get( nuCatVCenter ).GetVerticalBinding();
-	nuVerticalBindings bottom = Stack.Get( nuCatBottom ).GetVerticalBinding();
-	nuVerticalBindings baseline = Stack.Get( nuCatBaseline ).GetVerticalBinding();
+	xoVerticalBindings top = Stack.Get( xoCatTop ).GetVerticalBinding();
+	xoVerticalBindings vcenter = Stack.Get( xoCatVCenter ).GetVerticalBinding();
+	xoVerticalBindings bottom = Stack.Get( xoCatBottom ).GetVerticalBinding();
+	xoVerticalBindings baseline = Stack.Get( xoCatBaseline ).GetVerticalBinding();
 
-	BindingSet binds = {nuHorizontalBindingNULL, nuHorizontalBindingNULL, nuVerticalBindingNULL, nuVerticalBindingNULL};
+	BindingSet binds = {xoHorizontalBindingNULL, xoHorizontalBindingNULL, xoVerticalBindingNULL, xoVerticalBindingNULL};
 
-	if ( left != nuHorizontalBindingNULL )		{ binds.HChild = nuHorizontalBindingLeft; binds.HParent = left; }
-	if ( hcenter != nuHorizontalBindingNULL )	{ binds.HChild = nuHorizontalBindingCenter; binds.HParent = hcenter; }
-	if ( right != nuHorizontalBindingNULL )		{ binds.HChild = nuHorizontalBindingRight; binds.HParent = right; }
+	if ( left != xoHorizontalBindingNULL )		{ binds.HChild = xoHorizontalBindingLeft; binds.HParent = left; }
+	if ( hcenter != xoHorizontalBindingNULL )	{ binds.HChild = xoHorizontalBindingCenter; binds.HParent = hcenter; }
+	if ( right != xoHorizontalBindingNULL )		{ binds.HChild = xoHorizontalBindingRight; binds.HParent = right; }
 
-	if ( top != nuVerticalBindingNULL )			{ binds.VChild = nuVerticalBindingTop; binds.VParent = top; }
-	if ( vcenter != nuVerticalBindingNULL )		{ binds.VChild = nuVerticalBindingCenter; binds.VParent = vcenter; }
-	if ( bottom != nuVerticalBindingNULL )		{ binds.VChild = nuVerticalBindingBottom; binds.VParent = bottom; }
-	if ( baseline != nuVerticalBindingNULL )	{ binds.VChild = nuVerticalBindingBaseline; binds.VParent = baseline; }
+	if ( top != xoVerticalBindingNULL )			{ binds.VChild = xoVerticalBindingTop; binds.VParent = top; }
+	if ( vcenter != xoVerticalBindingNULL )		{ binds.VChild = xoVerticalBindingCenter; binds.VParent = vcenter; }
+	if ( bottom != xoVerticalBindingNULL )		{ binds.VChild = xoVerticalBindingBottom; binds.VParent = bottom; }
+	if ( baseline != xoVerticalBindingNULL )	{ binds.VChild = xoVerticalBindingBaseline; binds.VParent = baseline; }
 
 	return binds;
 }
 
-nuPos nuLayout2::HoriAdvance( const nuGlyph* glyph, const TextRunState& ts )
+xoPos xoLayout2::HoriAdvance( const xoGlyph* glyph, const TextRunState& ts )
 {
 	if ( SnapSubpixelHorzText )
-		return nuIntToPos( glyph->MetricHoriAdvance );
+		return xoIntToPos( glyph->MetricHoriAdvance );
 	else
-		return nuRealToPos( glyph->MetricLinearHoriAdvance * ts.FontWidthScale );
+		return xoRealToPos( glyph->MetricLinearHoriAdvance * ts.FontWidthScale );
 }
 
-nuPos nuLayout2::HBindOffset( nuHorizontalBindings bind, nuPos width )
+xoPos xoLayout2::HBindOffset( xoHorizontalBindings bind, xoPos width )
 {
 	switch ( bind )
 	{
-	case nuHorizontalBindingNULL:
-	case nuHorizontalBindingLeft:	return 0;
-	case nuHorizontalBindingCenter:	return width / 2;
-	case nuHorizontalBindingRight:	return width;
+	case xoHorizontalBindingNULL:
+	case xoHorizontalBindingLeft:	return 0;
+	case xoHorizontalBindingCenter:	return width / 2;
+	case xoHorizontalBindingRight:	return width;
 	default:
-		NUASSERTDEBUG(false);
+		XOASSERTDEBUG(false);
 		return 0;
 	}
 }
 
-nuPos nuLayout2::VBindOffset( nuVerticalBindings bind, nuPos baseline, nuPos height )
+xoPos xoLayout2::VBindOffset( xoVerticalBindings bind, xoPos baseline, xoPos height )
 {
 	switch ( bind )
 	{
-	case nuVerticalBindingNULL:
-	case nuVerticalBindingTop:		return 0;
-	case nuVerticalBindingCenter:	return height / 2;
-	case nuVerticalBindingBottom:	return height;
-	case nuVerticalBindingBaseline:
+	case xoVerticalBindingNULL:
+	case xoVerticalBindingTop:		return 0;
+	case xoVerticalBindingCenter:	return height / 2;
+	case xoVerticalBindingBottom:	return height;
+	case xoVerticalBindingBaseline:
 		if ( IsDefined(baseline) )
 			return baseline;
 		else
 		{
-			NUTRACE_LAYOUT_WARNING( "Undefined baseline used in alignment\n" );
+			XOTRACE_LAYOUT_WARNING( "Undefined baseline used in alignment\n" );
 			return height;
 		}
 	default:
-		NUASSERTDEBUG(false);
+		XOASSERTDEBUG(false);
 		return 0;
 	}
 }
 
-bool nuLayout2::IsSpace( int ch )
+bool xoLayout2::IsSpace( int ch )
 {
 	return ch == 32;
 }
 
-bool nuLayout2::IsLinebreak( int ch )
+bool xoLayout2::IsLinebreak( int ch )
 {
 	return ch == '\r' || ch == '\n';
 }
 
-nuGlyphCacheKey	nuLayout2::MakeGlyphCacheKey( nuRenderDomText* rnode )
+xoGlyphCacheKey	xoLayout2::MakeGlyphCacheKey( xoRenderDomText* rnode )
 {
-	uint8 glyphFlags = rnode->IsSubPixel() ? nuGlyphFlag_SubPixel_RGB : 0;
-	return nuGlyphCacheKey( rnode->FontID, 0, rnode->FontSizePx, glyphFlags );
+	uint8 glyphFlags = rnode->IsSubPixel() ? xoGlyphFlag_SubPixel_RGB : 0;
+	return xoGlyphCacheKey( rnode->FontID, 0, rnode->FontSizePx, glyphFlags );
 }
 
-void nuLayout2::FlowNewline( FlowState& flow )
+void xoLayout2::FlowNewline( FlowState& flow )
 {
 	flow.PosMinor = 0;
 	flow.PosMajor = flow.MajorMax;
 	flow.NumLines++;
 }
 
-bool nuLayout2::FlowBreakBefore( const LayoutOutput& cout, FlowState& flow )
+bool xoLayout2::FlowBreakBefore( const LayoutOutput& cout, FlowState& flow )
 {
-	if ( cout.GetBreak() == nuBreakBefore )
+	if ( cout.GetBreak() == xoBreakBefore )
 	{
 		FlowNewline( flow );
 		return true;
@@ -599,7 +599,7 @@ bool nuLayout2::FlowBreakBefore( const LayoutOutput& cout, FlowState& flow )
 	return false;
 }
 
-nuPoint nuLayout2::FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, nuRenderDomEl* rendEl )
+xoPoint xoLayout2::FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl )
 {
 	if ( IsDefined(cin.ParentWidth) )
 	{
@@ -608,12 +608,12 @@ nuPoint nuLayout2::FlowRun( const LayoutInput& cin, const LayoutOutput& cout, Fl
 		if ( over && !futile )
 			FlowNewline( flow );
 	}
-	nuPoint offset( flow.PosMinor, flow.PosMajor );
+	xoPoint offset( flow.PosMinor, flow.PosMajor );
 	rendEl->Pos.Offset( offset.X, offset.Y );
 	flow.PosMinor += cout.NodeWidth;
-	flow.MajorMax = nuMax( flow.MajorMax, flow.PosMajor + cout.NodeHeight );
+	flow.MajorMax = xoMax( flow.MajorMax, flow.PosMajor + cout.NodeHeight );
 
-	if ( cout.GetBreak() == nuBreakAfter )
+	if ( cout.GetBreak() == xoBreakAfter )
 		FlowNewline( flow );
 
 	return offset;

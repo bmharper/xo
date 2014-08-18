@@ -1,16 +1,16 @@
 #pragma once
 
-#include "nuRenderBase.h"
-#include "nuRenderDX_Defs.h"
+#include "xoRenderBase.h"
+#include "xoRenderDX_Defs.h"
 
-#if NU_BUILD_DIRECTX
+#if XO_BUILD_DIRECTX
 
 #include "../Shaders/Processed_hlsl/FillShader.h"
 #include "../Shaders/Processed_hlsl/RectShader.h"
 #include "../Shaders/Processed_hlsl/TextWholeShader.h"
 #include "../Shaders/Processed_hlsl/TextRGBShader.h"
 
-class NUAPI nuRenderDX : public nuRenderBase
+class XOAPI xoRenderDX : public xoRenderBase
 {
 private:
 	static const int ConstantSlotPerFrame = 0;
@@ -36,32 +36,32 @@ private:
 		D3D_FEATURE_LEVEL		FeatureLevel;
 
 		// our own state that
-		nuDXProg*				ActiveProgram;
+		xoDXProg*				ActiveProgram;
 	};
 
 public:
-						nuRenderDX();
-	virtual				~nuRenderDX();
+						xoRenderDX();
+	virtual				~xoRenderDX();
 
 	virtual const char*	RendererName();
 
-	virtual bool		InitializeDevice( nuSysWnd& wnd );
-	virtual void		DestroyDevice( nuSysWnd& wnd );
+	virtual bool		InitializeDevice( xoSysWnd& wnd );
+	virtual void		DestroyDevice( xoSysWnd& wnd );
 	virtual void		SurfaceLost();
 
-	virtual bool		BeginRender( nuSysWnd& wnd );
-	virtual void		EndRender( nuSysWnd& wnd );
+	virtual bool		BeginRender( xoSysWnd& wnd );
+	virtual void		EndRender( xoSysWnd& wnd );
 
 	virtual void		PreRender();
 	virtual void		PostRenderCleanup();
 	
-	virtual nuProgBase* GetShader( nuShaders shader );
-	virtual void		ActivateShader( nuShaders shader );
+	virtual xoProgBase* GetShader( xoShaders shader );
+	virtual void		ActivateShader( xoShaders shader );
 
 	virtual void		DrawQuad( const void* v );
 
-	virtual bool		LoadTexture( nuTexture* tex, int texUnit );
-	virtual bool		ReadBackbuffer( nuImage& image );
+	virtual bool		LoadTexture( xoTexture* tex, int texUnit );
+	virtual bool		ReadBackbuffer( xoImage& image );
 
 private:
 	struct Texture2D
@@ -73,35 +73,35 @@ private:
 	D3DState				D3D;
 	int						FBWidth, FBHeight;
 
-	nuDXProg_Fill			PFill;
-	nuDXProg_Rect			PRect;
-	nuDXProg_TextRGB		PTextRGB;
-	nuDXProg_TextWhole		PTextWhole;
+	xoDXProg_Fill			PFill;
+	xoDXProg_Rect			PRect;
+	xoDXProg_TextRGB		PTextRGB;
+	xoDXProg_TextWhole		PTextWhole;
 	static const int		NumProgs = 4;
-	nuDXProg*				AllProgs[NumProgs];
+	xoDXProg*				AllProgs[NumProgs];
 
-	bool				InitializeDXDevice( nuSysWnd& wnd );
-	bool				InitializeDXSurface( nuSysWnd& wnd );
+	bool				InitializeDXDevice( xoSysWnd& wnd );
+	bool				InitializeDXSurface( xoSysWnd& wnd );
 	bool				WindowResized();
 	bool				CreateShaders();
-	bool				CreateShader( nuDXProg* prog );
-	bool				CreateVertexLayout( nuDXProg* prog, ID3DBlob* vsBlob );
+	bool				CreateShader( xoDXProg* prog );
+	bool				CreateVertexLayout( xoDXProg* prog, ID3DBlob* vsBlob );
 	bool				CompileShader( const char* name, const char* source, const char* shaderTarget, ID3DBlob** blob );
 	bool				SetupBuffers();
 	bool				SetShaderFrameUniforms();
 	bool				SetShaderObjectUniforms();
 	ID3D11Buffer*		CreateBuffer( size_t sizeBytes, D3D11_USAGE usage, D3D11_BIND_FLAG bind, uint cpuAccess, const void* initialContent );
-	bool				CreateTexture2D( nuTexture* tex );
-	void				UpdateTexture2D( ID3D11Texture2D* dxTex, nuTexture* tex );
+	bool				CreateTexture2D( xoTexture* tex );
+	void				UpdateTexture2D( ID3D11Texture2D* dxTex, xoTexture* tex );
 	
-	nuTextureID			RegisterTextureDX( Texture2D* tex )			{ return RegisterTexture(tex); }
-	Texture2D*			GetTextureDX( nuTextureID texID ) const		{ return (Texture2D*) GetTextureDeviceHandle(texID); }
+	xoTextureID			RegisterTextureDX( Texture2D* tex )			{ return RegisterTexture(tex); }
+	Texture2D*			GetTextureDX( xoTextureID texID ) const		{ return (Texture2D*) GetTextureDeviceHandle(texID); }
 
 };
 
 #else
 
-class NUAPI nuRenderDX : public nuRenderDummy
+class XOAPI xoRenderDX : public xoRenderDummy
 {
 };
 

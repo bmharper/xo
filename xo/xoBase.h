@@ -5,7 +5,7 @@
 	typedef const char* LPCSTR;
 #endif
 
-#if PROJECT_NUDOM
+#if PROJECT_XO
 	#ifdef _WIN32
 		#define PAPI __declspec(dllexport)
 	#else

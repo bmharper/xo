@@ -1,17 +1,17 @@
 #include "pch.h"
-#include "nuDoc.h"
-#include "nuStyle.h"
-#include "nuCloneHelpers.h"
-#include "Text/nuFontStore.h"
+#include "xoDoc.h"
+#include "xoStyle.h"
+#include "xoCloneHelpers.h"
+#include "Text/xoFontStore.h"
 
 #define EQ(a,b) (strcmp(a,b) == 0)
 
 // Styles that are inherited by default
-const nuStyleCategories nuInheritedStyleCategories[nuNumInheritedStyleCategories] = {
-	nuCatFontFamily,
-	nuCatFontSize,
-	nuCatColor,
-	nuCatText_Align_Vertical,
+const xoStyleCategories xoInheritedStyleCategories[xoNumInheritedStyleCategories] = {
+	xoCatFontFamily,
+	xoCatFontSize,
+	xoCatColor,
+	xoCatText_Align_Vertical,
 };
 
 inline bool IsNumeric( char c )
@@ -64,7 +64,7 @@ static int FindSpaces( const char* s, intp len, int (&spaces)[10] )
 	return nspaces;
 }
 
-bool nuSize::Parse( const char* s, intp len, nuSize& v )
+bool xoSize::Parse( const char* s, intp len, xoSize& v )
 {
 	// 1.23px
 	// 1.23ep
@@ -74,10 +74,10 @@ bool nuSize::Parse( const char* s, intp len, nuSize& v )
 	char digits[100];
 	if ( len > 30 )
 	{
-		nuParseFail( "Parse failed, size too big (>30 characters)\n" );
+		xoParseFail( "Parse failed, size too big (>30 characters)\n" );
 		return false;
 	}
-	nuSize x = nuSize::Pixels(0);
+	xoSize x = xoSize::Pixels(0);
 	intp nondig = 0;
 	for ( ; nondig < len; nondig++ )
 	{
@@ -95,7 +95,7 @@ bool nuSize::Parse( const char* s, intp len, nuSize& v )
 		}
 		else
 		{
-			nuParseFail( "Parse failed, invalid size: %.*s\n", (int) len, s );
+			xoParseFail( "Parse failed, invalid size: %.*s\n", (int) len, s );
 			return false;
 		}
 	}
@@ -103,39 +103,39 @@ bool nuSize::Parse( const char* s, intp len, nuSize& v )
 	{
 		if ( s[nondig] == '%' )
 		{
-			x.Type = nuSize::PERCENT;
+			x.Type = xoSize::PERCENT;
 		}
 		else if ( s[nondig] == 'p' && len - nondig >= 2 )
 		{
-			if (		s[nondig + 1] == 'x' ) x.Type = nuSize::PX;
-			else if (	s[nondig + 1] == 't' ) x.Type = nuSize::PT;
+			if (		s[nondig + 1] == 'x' ) x.Type = xoSize::PX;
+			else if (	s[nondig + 1] == 't' ) x.Type = xoSize::PT;
 			else
 			{
-				nuParseFail( "Parse failed, invalid size: %.*s\n", (int) len, s );
+				xoParseFail( "Parse failed, invalid size: %.*s\n", (int) len, s );
 				return false;
 			}
 		}
 		else if ( s[nondig] == 'e' && len - nondig >= 2 && s[nondig + 1] == 'p' )
 		{
-			x.Type = nuSize::EP;
+			x.Type = xoSize::EP;
 		}
 	}
 	v = x;
 	return true;
 }
 
-bool nuStyleBox::Parse( const char* s, intp len, nuStyleBox& v )
+bool xoStyleBox::Parse( const char* s, intp len, xoStyleBox& v )
 {
 	int spaces[10];
 	int nspaces = FindSpaces( s, len, spaces );
 
 	// 20px
 	// 1px 2px 3px 4px (TODO)
-	nuStyleBox b;
+	xoStyleBox b;
 	if ( nspaces == 0 )
 	{
-		nuSize one;
-		if ( nuSize::Parse( s, len, one ) )
+		xoSize one;
+		if ( xoSize::Parse( s, len, one ) )
 		{
 			b.Left = b.Top = b.Bottom = b.Right = one;
 			v = b;
@@ -146,10 +146,10 @@ bool nuStyleBox::Parse( const char* s, intp len, nuStyleBox& v )
 	// 1px 2px 3px 4px
 	if ( nspaces == 3 )
 	{
-		bool ok1 = nuSize::Parse( s, spaces[0], b.Left );
-		bool ok2 = nuSize::Parse( s + spaces[0] + 1, spaces[1] - spaces[0] - 1, b.Top );
-		bool ok3 = nuSize::Parse( s + spaces[1] + 1, spaces[2] - spaces[1] - 1, b.Right );
-		bool ok4 = nuSize::Parse( s + spaces[2] + 1, (int) len - spaces[2] - 1, b.Bottom );
+		bool ok1 = xoSize::Parse( s, spaces[0], b.Left );
+		bool ok2 = xoSize::Parse( s + spaces[0] + 1, spaces[1] - spaces[0] - 1, b.Top );
+		bool ok3 = xoSize::Parse( s + spaces[1] + 1, spaces[2] - spaces[1] - 1, b.Right );
+		bool ok4 = xoSize::Parse( s + spaces[2] + 1, (int) len - spaces[2] - 1, b.Bottom );
 		if ( ok1 && ok2 && ok3 && ok4 )
 		{
 			v = b;
@@ -159,9 +159,9 @@ bool nuStyleBox::Parse( const char* s, intp len, nuStyleBox& v )
 	return false;
 }
 
-bool nuColor::Parse( const char* s, intp len, nuColor& v )
+bool xoColor::Parse( const char* s, intp len, xoColor& v )
 {
-	nuColor c = nuColor::RGBA(0,0,0,0);
+	xoColor c = xoColor::RGBA(0,0,0,0);
 	s++;
 	// #rgb
 	// #rgba
@@ -173,7 +173,7 @@ bool nuColor::Parse( const char* s, intp len, nuColor& v )
 		c.g = ParseHexCharSingle( s + 1 );
 		c.b = ParseHexCharSingle( s + 2 );
 		c.a = 255;
-		//NUTRACE( "color %s -> %d\n", s, (int) c.r );
+		//XOTRACE( "color %s -> %d\n", s, (int) c.r );
 	}
 	else if ( len == 5 )
 	{
@@ -198,7 +198,7 @@ bool nuColor::Parse( const char* s, intp len, nuColor& v )
 	}
 	else
 	{
-		nuParseFail( "Parse failed, invalid color %.*s\n", (int) len, s );
+		xoParseFail( "Parse failed, invalid color %.*s\n", (int) len, s );
 		return false;
 	}
 	v = c;
@@ -209,49 +209,49 @@ bool nuColor::Parse( const char* s, intp len, nuColor& v )
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nuStyleAttrib::nuStyleAttrib()
+xoStyleAttrib::xoStyleAttrib()
 {
 	memset( this, 0, sizeof(*this) );
 }
 
-void nuStyleAttrib::SetU32( nuStyleCategories cat, uint32 val )
+void xoStyleAttrib::SetU32( xoStyleCategories cat, uint32 val )
 {
 	Category = cat;
 	ValU32 = val;
 }
 
-void nuStyleAttrib::SetWithSubtypeU32( nuStyleCategories cat, uint8 subtype, uint32 val )
+void xoStyleAttrib::SetWithSubtypeU32( xoStyleCategories cat, uint8 subtype, uint32 val )
 {
 	Category = cat;
 	SubType = subtype;
 	ValU32 = val;
 }
 
-void nuStyleAttrib::SetWithSubtypeF( nuStyleCategories cat, uint8 subtype, float val )
+void xoStyleAttrib::SetWithSubtypeF( xoStyleCategories cat, uint8 subtype, float val )
 {
 	Category = cat;
 	SubType = subtype;
 	ValF = val;
 }
 
-void nuStyleAttrib::SetString( nuStyleCategories cat, const char* str, nuDoc* doc )
+void xoStyleAttrib::SetString( xoStyleCategories cat, const char* str, xoDoc* doc )
 {
 	Category = cat;
 	ValU32 = doc->Strings.GetId( str );
 }
 
-void nuStyleAttrib::SetInherit( nuStyleCategories cat )
+void xoStyleAttrib::SetInherit( xoStyleCategories cat )
 {
 	Category = cat;
 	Flags = FlagInherit;
 }
 
-const char* nuStyleAttrib::GetBackgroundImage( nuStringTable* strings ) const
+const char* xoStyleAttrib::GetBackgroundImage( xoStringTable* strings ) const
 {
 	return strings->GetStr( ValU32 );
 }
 
-nuFontID nuStyleAttrib::GetFont() const
+xoFontID xoStyleAttrib::GetFont() const
 {
 	return ValU32;
 }
@@ -261,28 +261,28 @@ nuFontID nuStyleAttrib::GetFont() const
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<typename T>
-static bool ParseSingleAttrib( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, T& t), nuStyleCategories cat, nuStyle& style )
+static bool ParseSingleAttrib( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, T& t), xoStyleCategories cat, xoStyle& style )
 {
 	T val;
 	if ( parseFunc( s, len, val ) )
 	{
-		nuStyleAttrib attrib;
+		xoStyleAttrib attrib;
 		attrib.Set( cat, val );
 		style.Set( attrib );
 		return true;
 	}
 	else
 	{
-		nuParseFail( "Parse failed, unknown value: '%.*s'\n", (int) len, s );
+		xoParseFail( "Parse failed, unknown value: '%.*s'\n", (int) len, s );
 		return false;
 	}
 }
 
-// This was added when font-family was stored as a string, but it is now stored as a nuFontID
-static void ParseString( const char* s, intp len, nuStyleCategories cat, nuDoc* doc, nuStyle& style )
+// This was added when font-family was stored as a string, but it is now stored as a xoFontID
+static void ParseString( const char* s, intp len, xoStyleCategories cat, xoDoc* doc, xoStyle& style )
 {
 	char stat[64];
-	nuStyleAttrib attrib;
+	xoStyleAttrib attrib;
 	if ( len < sizeof(stat) )
 	{
 		memcpy( stat, s, len );
@@ -291,7 +291,7 @@ static void ParseString( const char* s, intp len, nuStyleCategories cat, nuDoc* 
 	}
 	else
 	{
-		nuString copy;
+		xoString copy;
 		copy.Set( s, len );
 		attrib.Set( cat, copy.Z, doc );
 	}
@@ -299,7 +299,7 @@ static void ParseString( const char* s, intp len, nuStyleCategories cat, nuDoc* 
 }
 
 template<typename T>
-static bool ParseCompound( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, T& t), nuStyleCategories cat, nuStyle& style )
+static bool ParseCompound( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, T& t), xoStyleCategories cat, xoStyle& style )
 {
 	T val;
 	if ( parseFunc( s, len, val ) )
@@ -309,12 +309,12 @@ static bool ParseCompound( const char* s, intp len, bool (*parseFunc)(const char
 	}
 	else
 	{
-		nuParseFail( "Parse failed, unknown value: '%.*s'\n", (int) len, s );
+		xoParseFail( "Parse failed, unknown value: '%.*s'\n", (int) len, s );
 		return false;
 	}
 }
 
-static bool ParseDirect( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, nuStyle& style), nuStyle& style )
+static bool ParseDirect( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, xoStyle& style), xoStyle& style )
 {
 	if ( parseFunc( s, len, style ) )
 	{
@@ -322,12 +322,12 @@ static bool ParseDirect( const char* s, intp len, bool (*parseFunc)(const char* 
 	}
 	else
 	{
-		nuParseFail( "Parse failed on: '%.*s'\n", (int) len, s );
+		xoParseFail( "Parse failed on: '%.*s'\n", (int) len, s );
 		return false;
 	}
 }
 
-static bool ParseFontFamily( const char* s, intp len, nuFontID& v )
+static bool ParseFontFamily( const char* s, intp len, xoFontID& v )
 {
 	bool onFont = false;
 	char buf[64];
@@ -339,8 +339,8 @@ static bool ParseFontFamily( const char* s, intp len, nuFontID& v )
 			if ( s[i] == ',' || i == len )
 			{
 				buf[bufPos] = 0;
-				v = nuGlobal()->FontStore->InsertByFacename( buf );
-				if ( v != nuFontIDNull )
+				v = xoGlobal()->FontStore->InsertByFacename( buf );
+				if ( v != xoFontIDNull )
 					return true;
 				onFont = false;
 				bufPos = 0;
@@ -363,21 +363,21 @@ static bool ParseFontFamily( const char* s, intp len, nuFontID& v )
 		}
 		if ( bufPos >= arraysize(buf) )
 		{
-			nuParseFail( "Parse failed, font name too long (>63): '%*.s'\n", (int) len, s );
+			xoParseFail( "Parse failed, font name too long (>63): '%*.s'\n", (int) len, s );
 			return false;
 		}
 	}
 	// not sure whether we should do this. One might want no font to be set instead.
-	v = nuGlobal()->FontStore->GetFallbackFontID();
+	v = xoGlobal()->FontStore->GetFallbackFontID();
 	return true;
 }
 
-bool nuStyle::Parse( const char* t, nuDoc* doc )
+bool xoStyle::Parse( const char* t, xoDoc* doc )
 {
 	return Parse( t, INT32MAX, doc );
 }
 
-bool nuStyle::Parse( const char* t, intp maxLen, nuDoc* doc )
+bool xoStyle::Parse( const char* t, intp maxLen, xoDoc* doc )
 {
 	// "background: #8f8; width: 100%; height: 100%;"
 #define TSTART	(t + startv)
@@ -394,39 +394,39 @@ bool nuStyle::Parse( const char* t, intp maxLen, nuDoc* doc )
 		else if ( t[i] == ';' || (eof && startv != -1) )
 		{
 			bool ok = true;
-			if ( MATCH(t, startk, eq, "background") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuColor::Parse, nuCatBackground, *this ); }
-			else if ( MATCH(t, startk, eq, "color") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuColor::Parse, nuCatColor, *this ); }
-			else if ( MATCH(t, startk, eq, "width") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatWidth, *this ); }
-			else if ( MATCH(t, startk, eq, "height") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatHeight, *this ); }
-			else if ( MATCH(t, startk, eq, "padding") )						{ ok = ParseCompound( TSTART, TLEN, &nuStyleBox::Parse, nuCatPadding_Left, *this ); }
-			else if ( MATCH(t, startk, eq, "margin") )						{ ok = ParseCompound( TSTART, TLEN, &nuStyleBox::Parse, nuCatMargin_Left, *this ); }
-			else if ( MATCH(t, startk, eq, "display") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseDisplayType, nuCatDisplay, *this ); }
-			else if ( MATCH(t, startk, eq, "position") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParsePositionType, nuCatPosition, *this ); }
-			else if ( MATCH(t, startk, eq, "border") )						{ ok = ParseDirect( TSTART, TLEN, &nuParseBorder, *this ); }
-			else if ( MATCH(t, startk, eq, "border-radius") )				{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatBorderRadius, *this ); }
-			//else if ( MATCH(t, startk, eq, "left") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatLeft, *this ); }
-			//else if ( MATCH(t, startk, eq, "right") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatRight, *this ); }
-			//else if ( MATCH(t, startk, eq, "top") )							{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatTop, *this ); }
-			//else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatBottom, *this ); }
-			else if ( MATCH(t, startk, eq, "break") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseBreakType, nuCatBreak, *this ); }
-			else if ( MATCH(t, startk, eq, "flow-axis") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseFlowAxis, nuCatFlow_Axis, *this ); }
-			else if ( MATCH(t, startk, eq, "flow-direction-horizontal") )	{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseFlowDirection, nuCatFlow_Direction_Horizontal, *this ); }
-			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseFlowDirection, nuCatFlow_Direction_Vertical, *this ); }
-			else if ( MATCH(t, startk, eq, "box-sizing") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseBoxSize, nuCatBoxSizing, *this ); }
-			else if ( MATCH(t, startk, eq, "font-size") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuSize::Parse, nuCatFontSize, *this ); }
-			else if ( MATCH(t, startk, eq, "font-family") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &ParseFontFamily, nuCatFontFamily, *this ); }
-			else if ( MATCH(t, startk, eq, "text-align-vertical") )			{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseTextAlignVertical, nuCatText_Align_Vertical, *this ); }
-			else if ( MATCH(t, startk, eq, "left") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseHorizontalBinding, nuCatLeft, *this ); }
-			else if ( MATCH(t, startk, eq, "hcenter") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseHorizontalBinding, nuCatHCenter, *this ); }
-			else if ( MATCH(t, startk, eq, "right") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseHorizontalBinding, nuCatRight, *this ); }
-			else if ( MATCH(t, startk, eq, "top") )							{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseVerticalBinding, nuCatTop, *this ); }
-			else if ( MATCH(t, startk, eq, "vcenter") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseVerticalBinding, nuCatVCenter, *this ); }
-			else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseVerticalBinding, nuCatBottom, *this ); }
-			else if ( MATCH(t, startk, eq, "baseline") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &nuParseVerticalBinding, nuCatBaseline, *this ); }
+			if ( MATCH(t, startk, eq, "background") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoColor::Parse, xoCatBackground, *this ); }
+			else if ( MATCH(t, startk, eq, "color") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoColor::Parse, xoCatColor, *this ); }
+			else if ( MATCH(t, startk, eq, "width") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatWidth, *this ); }
+			else if ( MATCH(t, startk, eq, "height") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatHeight, *this ); }
+			else if ( MATCH(t, startk, eq, "padding") )						{ ok = ParseCompound( TSTART, TLEN, &xoStyleBox::Parse, xoCatPadding_Left, *this ); }
+			else if ( MATCH(t, startk, eq, "margin") )						{ ok = ParseCompound( TSTART, TLEN, &xoStyleBox::Parse, xoCatMargin_Left, *this ); }
+			else if ( MATCH(t, startk, eq, "display") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseDisplayType, xoCatDisplay, *this ); }
+			else if ( MATCH(t, startk, eq, "position") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParsePositionType, xoCatPosition, *this ); }
+			else if ( MATCH(t, startk, eq, "border") )						{ ok = ParseDirect( TSTART, TLEN, &xoParseBorder, *this ); }
+			else if ( MATCH(t, startk, eq, "border-radius") )				{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatBorderRadius, *this ); }
+			//else if ( MATCH(t, startk, eq, "left") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatLeft, *this ); }
+			//else if ( MATCH(t, startk, eq, "right") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatRight, *this ); }
+			//else if ( MATCH(t, startk, eq, "top") )							{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatTop, *this ); }
+			//else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatBottom, *this ); }
+			else if ( MATCH(t, startk, eq, "break") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseBreakType, xoCatBreak, *this ); }
+			else if ( MATCH(t, startk, eq, "flow-axis") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowAxis, xoCatFlow_Axis, *this ); }
+			else if ( MATCH(t, startk, eq, "flow-direction-horizontal") )	{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowDirection, xoCatFlow_Direction_Horizontal, *this ); }
+			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowDirection, xoCatFlow_Direction_Vertical, *this ); }
+			else if ( MATCH(t, startk, eq, "box-sizing") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseBoxSize, xoCatBoxSizing, *this ); }
+			else if ( MATCH(t, startk, eq, "font-size") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatFontSize, *this ); }
+			else if ( MATCH(t, startk, eq, "font-family") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &ParseFontFamily, xoCatFontFamily, *this ); }
+			else if ( MATCH(t, startk, eq, "text-align-vertical") )			{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseTextAlignVertical, xoCatText_Align_Vertical, *this ); }
+			else if ( MATCH(t, startk, eq, "left") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseHorizontalBinding, xoCatLeft, *this ); }
+			else if ( MATCH(t, startk, eq, "hcenter") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseHorizontalBinding, xoCatHCenter, *this ); }
+			else if ( MATCH(t, startk, eq, "right") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseHorizontalBinding, xoCatRight, *this ); }
+			else if ( MATCH(t, startk, eq, "top") )							{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseVerticalBinding, xoCatTop, *this ); }
+			else if ( MATCH(t, startk, eq, "vcenter") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseVerticalBinding, xoCatVCenter, *this ); }
+			else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseVerticalBinding, xoCatBottom, *this ); }
+			else if ( MATCH(t, startk, eq, "baseline") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseVerticalBinding, xoCatBaseline, *this ); }
 			else
 			{
 				ok = false;
-				nuParseFail( "Parse failed - unknown property: '%.*s'\n", int(eq - startk), t + startk );
+				xoParseFail( "Parse failed - unknown property: '%.*s'\n", int(eq - startk), t + startk );
 			}
 			if ( !ok )
 				nerror++;
@@ -447,7 +447,7 @@ bool nuStyle::Parse( const char* t, intp maxLen, nuDoc* doc )
 #undef TLEN
 }
 
-const nuStyleAttrib* nuStyle::Get( nuStyleCategories cat ) const
+const xoStyleAttrib* xoStyle::Get( xoStyleCategories cat ) const
 {
 	for ( intp i = 0; i < Attribs.size(); i++ )
 	{
@@ -456,9 +456,9 @@ const nuStyleAttrib* nuStyle::Get( nuStyleCategories cat ) const
 	return NULL;
 }
 
-void nuStyle::GetBox( nuStyleCategories cat, nuStyleBox& box ) const
+void xoStyle::GetBox( xoStyleCategories cat, xoStyleBox& box ) const
 {
-	nuStyleCategories base = nuCatMakeBaseBox(cat);
+	xoStyleCategories base = xoCatMakeBaseBox(cat);
 	for ( intp i = 0; i < Attribs.size(); i++ )
 	{
 		uint pindex = uint(Attribs[i].Category - base);
@@ -467,48 +467,48 @@ void nuStyle::GetBox( nuStyleCategories cat, nuStyleBox& box ) const
 	}
 }
 
-void nuStyle::SetBox( nuStyleCategories cat, nuStyleBox val )
+void xoStyle::SetBox( xoStyleCategories cat, xoStyleBox val )
 {
-	if ( cat >= nuCatMargin_Left && cat <= nuCatBorder_Bottom )
+	if ( cat >= xoCatMargin_Left && cat <= xoCatBorder_Bottom )
 	{
-		SetBoxInternal( nuCatMakeBaseBox(cat), val );
+		SetBoxInternal( xoCatMakeBaseBox(cat), val );
 	}
-	else NUASSERT(false);
+	else XOASSERT(false);
 }
 
-void nuStyle::SetUniformBox( nuStyleCategories cat, nuStyleAttrib val )
+void xoStyle::SetUniformBox( xoStyleCategories cat, xoStyleAttrib val )
 {
-	cat = nuCatMakeBaseBox(cat);
-	val.Category = (nuStyleCategories) (cat + 0);	Set( val );
-	val.Category = (nuStyleCategories) (cat + 1);	Set( val );
-	val.Category = (nuStyleCategories) (cat + 2);	Set( val );
-	val.Category = (nuStyleCategories) (cat + 3);	Set( val );
+	cat = xoCatMakeBaseBox(cat);
+	val.Category = (xoStyleCategories) (cat + 0);	Set( val );
+	val.Category = (xoStyleCategories) (cat + 1);	Set( val );
+	val.Category = (xoStyleCategories) (cat + 2);	Set( val );
+	val.Category = (xoStyleCategories) (cat + 3);	Set( val );
 }
 
-void nuStyle::SetUniformBox( nuStyleCategories cat, nuColor color )
+void xoStyle::SetUniformBox( xoStyleCategories cat, xoColor color )
 {
-	nuStyleAttrib val;
+	xoStyleAttrib val;
 	val.SetColor( cat, color );
 	SetUniformBox( cat, val );
 }
 
-void nuStyle::SetUniformBox( nuStyleCategories cat, nuSize size )
+void xoStyle::SetUniformBox( xoStyleCategories cat, xoSize size )
 {
-	nuStyleAttrib val;
+	xoStyleAttrib val;
 	val.SetSize( cat, size );
 	SetUniformBox( cat, val );
 }
 
-void nuStyle::SetBoxInternal( nuStyleCategories catBase, nuStyleBox val )
+void xoStyle::SetBoxInternal( xoStyleCategories catBase, xoStyleBox val )
 {
-	nuStyleAttrib a;
-	a.SetSize( (nuStyleCategories) (catBase + 0), val.Left );	Set( a );
-	a.SetSize( (nuStyleCategories) (catBase + 1), val.Top );	Set( a );
-	a.SetSize( (nuStyleCategories) (catBase + 2), val.Right );	Set( a );
-	a.SetSize( (nuStyleCategories) (catBase + 3), val.Bottom );	Set( a );
+	xoStyleAttrib a;
+	a.SetSize( (xoStyleCategories) (catBase + 0), val.Left );	Set( a );
+	a.SetSize( (xoStyleCategories) (catBase + 1), val.Top );	Set( a );
+	a.SetSize( (xoStyleCategories) (catBase + 2), val.Right );	Set( a );
+	a.SetSize( (xoStyleCategories) (catBase + 3), val.Bottom );	Set( a );
 }
 
-void nuStyle::Set( nuStyleAttrib attrib )
+void xoStyle::Set( xoStyleAttrib attrib )
 {
 	for ( intp i = 0; i < Attribs.size(); i++ )
 	{
@@ -521,13 +521,13 @@ void nuStyle::Set( nuStyleAttrib attrib )
 	Attribs += attrib;
 }
 
-void nuStyle::Set( nuStyleCategories cat, nuStyleBox val )
+void xoStyle::Set( xoStyleCategories cat, xoStyleBox val )
 {
 	SetBox( cat, val );
 }
 
 /*
-void nuStyle::MergeInZeroCopy( int n, const nuStyle** src )
+void xoStyle::MergeInZeroCopy( int n, const xoStyle** src )
 {
 	if ( n == 0 ) return;
 
@@ -535,10 +535,10 @@ void nuStyle::MergeInZeroCopy( int n, const nuStyle** src )
 	// If the list of attributes balloons, then we should probably use something like a two level tree here.
 	// This table is:
 	// Category > Attrib Index
-	u8 lut[nuCatEND];
+	u8 lut[xoCatEND];
 	static const u8 EMPTY = 255;
 	memset( lut, EMPTY, sizeof(lut) );
-	static_assert( nuCatEND < EMPTY, "nuCat__ fits in a byte" );
+	static_assert( xoCatEND < EMPTY, "xoCat__ fits in a byte" );
 
 	int isrc = 0;
 	if ( Attribs.size() == 0 )
@@ -553,7 +553,7 @@ void nuStyle::MergeInZeroCopy( int n, const nuStyle** src )
 		isrc = 1;
 	}
 
-	// Apply each nuStyle in turn. Later nuStyles override earlier ones.
+	// Apply each xoStyle in turn. Later xoStyles override earlier ones.
 	for ( ; isrc < n; isrc++ )
 	{
 		auto& s = src[isrc]->Attribs;
@@ -577,27 +577,27 @@ void nuStyle::MergeInZeroCopy( int n, const nuStyle** src )
 }
 */
 
-void nuStyle::Discard()
+void xoStyle::Discard()
 {
 	Attribs.clear_noalloc();
 	//Name.Discard();
 }
 
-void nuStyle::CloneSlowInto( nuStyle& c ) const
+void xoStyle::CloneSlowInto( xoStyle& c ) const
 {
 	c.Attribs = Attribs;
 }
 
-void nuStyle::CloneFastInto( nuStyle& c, nuPool* pool ) const
+void xoStyle::CloneFastInto( xoStyle& c, xoPool* pool ) const
 {
 	//Name.CloneFastInto( c.Name, pool );
-	nuClonePodvecWithMemCopy( c.Attribs, Attribs, pool );
+	xoClonePodvecWithMemCopy( c.Attribs, Attribs, pool );
 }
 
 #define XX(name, type, setfunc, cat) \
-void nuStyle::Set##name( type value ) \
+void xoStyle::Set##name( type value ) \
 { \
-	nuStyleAttrib a; \
+	xoStyleAttrib a; \
 	a.setfunc( cat, value ); \
 	Set( a ); \
 }
@@ -605,9 +605,9 @@ NUSTYLE_SETTERS_2P
 #undef XX
 
 #define XX(name, type, setfunc) \
-void nuStyle::Set##name( type value ) \
+void xoStyle::Set##name( type value ) \
 { \
-	nuStyleAttrib a; \
+	xoStyleAttrib a; \
 	a.setfunc( value ); \
 	Set( a ); \
 }
@@ -616,16 +616,16 @@ NUSTYLE_SETTERS_1P
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nuStyleSet::nuStyleSet()
+xoStyleSet::xoStyleSet()
 {
 	Reset();
 }
 
-nuStyleSet::~nuStyleSet()
+xoStyleSet::~xoStyleSet()
 {
 }
 
-void nuStyleSet::Reset()
+void xoStyleSet::Reset()
 {
 	Lookup = NULL;
 	Attribs = NULL;
@@ -636,19 +636,19 @@ void nuStyleSet::Reset()
 	GetSlotF = NULL;
 }
 
-void nuStyleSet::Grow( nuPool* pool )
+void xoStyleSet::Grow( xoPool* pool )
 {
-	NUASSERT( BitsPerSlot != 8 );
+	XOASSERT( BitsPerSlot != 8 );
 	uint32 newbits = BitsPerSlot == 0 ? InitialBitsPerSlot : BitsPerSlot * 2;
-	uint32 totalBits = newbits * nuCatEND;
+	uint32 totalBits = newbits * xoCatEND;
 	void*			newlookup = pool->Alloc( (totalBits + 7) / 8, true );
-	nuStyleAttrib*	newattribs = pool->AllocNT<nuStyleAttrib>( CapacityAt(newbits), false ); 
+	xoStyleAttrib*	newattribs = pool->AllocNT<xoStyleAttrib>( CapacityAt(newbits), false ); 
 	if ( BitsPerSlot )
 	{
 		if ( newbits == 4 )			MigrateLookup( Lookup, newlookup, &GetSlot2, &SetSlot4 );
 		else if ( newbits == 8 )	MigrateLookup( Lookup, newlookup, &GetSlot4, &SetSlot8 );
 
-		memcpy( newattribs, Attribs, CapacityAt(BitsPerSlot) * sizeof(nuStyleAttrib) );
+		memcpy( newattribs, Attribs, CapacityAt(BitsPerSlot) * sizeof(xoStyleAttrib) );
 	}
 	Capacity = CapacityAt(newbits);
 	Lookup = newlookup;
@@ -659,15 +659,15 @@ void nuStyleSet::Grow( nuPool* pool )
 	else if ( newbits == 8 )	{ SetSlotF = &SetSlot8; GetSlotF = &GetSlot8; }
 }
 
-void nuStyleSet::Set( int n, const nuStyleAttrib* attribs, nuPool* pool )
+void xoStyleSet::Set( int n, const xoStyleAttrib* attribs, xoPool* pool )
 {
 	for ( int i = 0; i < n; i++ )
 		Set( attribs[i], pool );
 }
 
-void nuStyleSet::Set( const nuStyleAttrib& attrib, nuPool* pool )
+void xoStyleSet::Set( const xoStyleAttrib& attrib, xoPool* pool )
 {
-	if ( attrib.Category == nuCatFontSize )
+	if ( attrib.Category == xoCatFontSize )
 		int abc = 123;
 	int32 slot = GetSlot( attrib.GetCategory() );
 	if ( slot != 0 )
@@ -683,52 +683,52 @@ void nuStyleSet::Set( const nuStyleAttrib& attrib, nuPool* pool )
 	//DebugCheckSanity();
 }
 
-nuStyleAttrib nuStyleSet::Get( nuStyleCategories cat ) const
+xoStyleAttrib xoStyleSet::Get( xoStyleCategories cat ) const
 {
 	int32 slot = GetSlot( cat ) - SlotOffset;
 	if ( slot == -1 )
-		return nuStyleAttrib();
+		return xoStyleAttrib();
 	return Attribs[slot];
 }
 
-void nuStyleSet::DebugCheckSanity() const
+void xoStyleSet::DebugCheckSanity() const
 {
-	for ( int i = nuCatFIRST; i < nuCatEND; i++ )
+	for ( int i = xoCatFIRST; i < xoCatEND; i++ )
 	{
-		nuStyleCategories cat = (nuStyleCategories) i;
-		nuStyleAttrib val = Get( cat );
-		NUASSERTDEBUG( val.IsNull() || val.Category == cat );
+		xoStyleCategories cat = (xoStyleCategories) i;
+		xoStyleAttrib val = Get( cat );
+		XOASSERTDEBUG( val.IsNull() || val.Category == cat );
 	}
 }
 
-bool nuStyleSet::Contains( nuStyleCategories cat ) const
+bool xoStyleSet::Contains( xoStyleCategories cat ) const
 {
 	return GetSlot( cat ) != 0;
 }
 
-void nuStyleSet::MigrateLookup( const void* lutsrc, void* lutdst, GetSlotFunc getter, SetSlotFunc setter )
+void xoStyleSet::MigrateLookup( const void* lutsrc, void* lutdst, GetSlotFunc getter, SetSlotFunc setter )
 {
-	for ( int i = nuCatFIRST; i < nuCatEND; i++ )
+	for ( int i = xoCatFIRST; i < xoCatEND; i++ )
 	{
-		int32 slot = getter( lutsrc, (nuStyleCategories) i );
+		int32 slot = getter( lutsrc, (xoStyleCategories) i );
 		if ( slot != 0 )
-			setter( lutdst, (nuStyleCategories) i, slot );
+			setter( lutdst, (xoStyleCategories) i, slot );
 	}
 }
 
-int32 nuStyleSet::GetSlot( nuStyleCategories cat ) const
+int32 xoStyleSet::GetSlot( xoStyleCategories cat ) const
 {
 	if ( !GetSlotF ) return 0;
 	return GetSlotF( Lookup, cat );
 }
 
-void nuStyleSet::SetSlot( nuStyleCategories cat, int32 slot )
+void xoStyleSet::SetSlot( xoStyleCategories cat, int32 slot )
 {
 	SetSlotF( Lookup, cat, slot );
 }
 
 template<uint32 BITS_PER_SLOT>
-void nuStyleSet::TSetSlot( void* lookup, nuStyleCategories cat, int32 slot )
+void xoStyleSet::TSetSlot( void* lookup, xoStyleCategories cat, int32 slot )
 {
 	const uint32	mask	= (1 << BITS_PER_SLOT) - 1;
 	uint8*			lookup8	= (uint8*) lookup;
@@ -755,7 +755,7 @@ void nuStyleSet::TSetSlot( void* lookup, nuStyleCategories cat, int32 slot )
 }
 
 template<uint32 BITS_PER_SLOT>
-int32 nuStyleSet::TGetSlot( const void* lookup, nuStyleCategories cat )
+int32 xoStyleSet::TGetSlot( const void* lookup, xoStyleCategories cat )
 {
 	const uint32 mask		= (1 << BITS_PER_SLOT) - 1;
 	const uint8* lookup8	= (const uint8*) lookup;
@@ -780,43 +780,43 @@ int32 nuStyleSet::TGetSlot( const void* lookup, nuStyleCategories cat )
 	}
 }
 
-int32 nuStyleSet::GetSlot2( const void* lookup, nuStyleCategories cat ) { return TGetSlot<2>( lookup, cat ); }
-int32 nuStyleSet::GetSlot4( const void* lookup, nuStyleCategories cat ) { return TGetSlot<4>( lookup, cat ); }
-int32 nuStyleSet::GetSlot8( const void* lookup, nuStyleCategories cat ) { return TGetSlot<8>( lookup, cat ); }
+int32 xoStyleSet::GetSlot2( const void* lookup, xoStyleCategories cat ) { return TGetSlot<2>( lookup, cat ); }
+int32 xoStyleSet::GetSlot4( const void* lookup, xoStyleCategories cat ) { return TGetSlot<4>( lookup, cat ); }
+int32 xoStyleSet::GetSlot8( const void* lookup, xoStyleCategories cat ) { return TGetSlot<8>( lookup, cat ); }
 
-void nuStyleSet::SetSlot2( void* lookup, nuStyleCategories cat, int32 slot ) { TSetSlot<2>( lookup, cat, slot ); }
-void nuStyleSet::SetSlot4( void* lookup, nuStyleCategories cat, int32 slot ) { TSetSlot<4>( lookup, cat, slot ); }
-void nuStyleSet::SetSlot8( void* lookup, nuStyleCategories cat, int32 slot ) { TSetSlot<8>( lookup, cat, slot ); }
+void xoStyleSet::SetSlot2( void* lookup, xoStyleCategories cat, int32 slot ) { TSetSlot<2>( lookup, cat, slot ); }
+void xoStyleSet::SetSlot4( void* lookup, xoStyleCategories cat, int32 slot ) { TSetSlot<4>( lookup, cat, slot ); }
+void xoStyleSet::SetSlot8( void* lookup, xoStyleCategories cat, int32 slot ) { TSetSlot<8>( lookup, cat, slot ); }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nuStyleTable::nuStyleTable()
+xoStyleTable::xoStyleTable()
 {
 }
 
-nuStyleTable::~nuStyleTable()
+xoStyleTable::~xoStyleTable()
 {
 }
 
-void nuStyleTable::AddDummyStyleZero()
+void xoStyleTable::AddDummyStyleZero()
 {
 	GetOrCreate( "" );
 }
 
-void nuStyleTable::Discard()
+void xoStyleTable::Discard()
 {
 	Styles.hack( 0, 0, NULL );
 	Names.hack( 0, 0, NULL );
 }
 
-const nuStyle* nuStyleTable::GetByID( nuStyleID id ) const
+const xoStyle* xoStyleTable::GetByID( xoStyleID id ) const
 {
 	return &Styles[id];
 }
 
-nuStyle* nuStyleTable::GetOrCreate( const char* name )
+xoStyle* xoStyleTable::GetOrCreate( const char* name )
 {
-	nuTempString n(name);
+	xoTempString n(name);
 	// find existing
 	int* pindex = NameToIndex.getp( n );
 	if ( pindex ) return &Styles[*pindex];
@@ -825,105 +825,105 @@ nuStyle* nuStyleTable::GetOrCreate( const char* name )
 	int index = (int) Styles.size();
 	Styles.add();
 	Names.add();
-	nuStyle* s = &Styles[index];
+	xoStyle* s = &Styles[index];
 	NameToIndex.insert( n, index );
-	Names[index] = nuString( name );
+	Names[index] = xoString( name );
 	return s;
 }
 
-nuStyleID nuStyleTable::GetStyleID( const char* name )
+xoStyleID xoStyleTable::GetStyleID( const char* name )
 {
-	nuTempString n(name);
+	xoTempString n(name);
 	int* pindex = NameToIndex.getp( n );
-	if ( pindex )	return nuStyleID( *pindex );
-	else			return nuStyleID(0);
+	if ( pindex )	return xoStyleID( *pindex );
+	else			return xoStyleID(0);
 }
 
-void nuStyleTable::CloneSlowInto( nuStyleTable& c ) const
+void xoStyleTable::CloneSlowInto( xoStyleTable& c ) const
 {
 	// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
 	c.Styles = Styles;
 }
 
-void nuStyleTable::CloneFastInto( nuStyleTable& c, nuPool* pool ) const
+void xoStyleTable::CloneFastInto( xoStyleTable& c, xoPool* pool ) const
 {
 	// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
-	nuClonePodvecWithMemCopy( c.Styles, Styles, pool );
+	xoClonePodvecWithMemCopy( c.Styles, Styles, pool );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-NUAPI bool nuParseDisplayType( const char* s, intp len, nuDisplayType& t )
+XOAPI bool xoParseDisplayType( const char* s, intp len, xoDisplayType& t )
 {
-	if ( MATCH(s, 0, len, "block") ) { t = nuDisplayBlock; return true; }
-	if ( MATCH(s, 0, len, "inline") ) { t = nuDisplayInline; return true; }
+	if ( MATCH(s, 0, len, "block") ) { t = xoDisplayBlock; return true; }
+	if ( MATCH(s, 0, len, "inline") ) { t = xoDisplayInline; return true; }
 	return false;
 }
 
-NUAPI bool nuParsePositionType( const char* s, intp len, nuPositionType& t )
+XOAPI bool xoParsePositionType( const char* s, intp len, xoPositionType& t )
 {
-	if ( MATCH(s, 0, len, "static") )	{ t = nuPositionStatic; return true; }
-	if ( MATCH(s, 0, len, "absolute") ) { t = nuPositionAbsolute; return true; }
-	if ( MATCH(s, 0, len, "relative") ) { t = nuPositionRelative; return true; }
-	if ( MATCH(s, 0, len, "fixed") )	{ t = nuPositionFixed; return true; }
+	if ( MATCH(s, 0, len, "static") )	{ t = xoPositionStatic; return true; }
+	if ( MATCH(s, 0, len, "absolute") ) { t = xoPositionAbsolute; return true; }
+	if ( MATCH(s, 0, len, "relative") ) { t = xoPositionRelative; return true; }
+	if ( MATCH(s, 0, len, "fixed") )	{ t = xoPositionFixed; return true; }
 	return false;
 }
 
-NUAPI bool nuParseBreakType( const char* s, intp len, nuBreakType& t )
+XOAPI bool xoParseBreakType( const char* s, intp len, xoBreakType& t )
 {
-	if ( MATCH(s, 0, len, "none") )		{ t = nuBreakNULL; return true; }
-	if ( MATCH(s, 0, len, "before") )	{ t = nuBreakBefore; return true; }
-	if ( MATCH(s, 0, len, "after") )	{ t = nuBreakAfter; return true; }
+	if ( MATCH(s, 0, len, "none") )		{ t = xoBreakNULL; return true; }
+	if ( MATCH(s, 0, len, "before") )	{ t = xoBreakBefore; return true; }
+	if ( MATCH(s, 0, len, "after") )	{ t = xoBreakAfter; return true; }
 	return false;
 }
 
-NUAPI bool nuParseFlowAxis( const char* s, intp len, nuFlowAxis& t )
+XOAPI bool xoParseFlowAxis( const char* s, intp len, xoFlowAxis& t )
 {
-	if ( MATCH(s, 0, len, "horizontal") )	{ t = nuFlowAxisHorizontal; return true; }
-	if ( MATCH(s, 0, len, "vertical") )		{ t = nuFlowAxisVertical; return true; }
+	if ( MATCH(s, 0, len, "horizontal") )	{ t = xoFlowAxisHorizontal; return true; }
+	if ( MATCH(s, 0, len, "vertical") )		{ t = xoFlowAxisVertical; return true; }
 	return false;
 }
 
-NUAPI bool nuParseFlowDirection( const char* s, intp len, nuFlowDirection& t )
+XOAPI bool xoParseFlowDirection( const char* s, intp len, xoFlowDirection& t )
 {
-	if ( MATCH(s, 0, len, "normal") )	{ t = nuFlowDirectionNormal; return true; }
-	if ( MATCH(s, 0, len, "reverse") )	{ t = nuFlowDirectionReversed; return true; }
+	if ( MATCH(s, 0, len, "normal") )	{ t = xoFlowDirectionNormal; return true; }
+	if ( MATCH(s, 0, len, "reverse") )	{ t = xoFlowDirectionReversed; return true; }
 	return false;
 }
 
-NUAPI bool nuParseBoxSize( const char* s, intp len, nuBoxSizeType& t )
+XOAPI bool xoParseBoxSize( const char* s, intp len, xoBoxSizeType& t )
 {
-	if ( MATCH(s, 0, len, "content") )	{ t = nuBoxSizeContent; return true; }
-	if ( MATCH(s, 0, len, "border") )	{ t = nuBoxSizeBorder; return true; }
-	if ( MATCH(s, 0, len, "margin") )	{ t = nuBoxSizeMargin; return true; }
+	if ( MATCH(s, 0, len, "content") )	{ t = xoBoxSizeContent; return true; }
+	if ( MATCH(s, 0, len, "border") )	{ t = xoBoxSizeBorder; return true; }
+	if ( MATCH(s, 0, len, "margin") )	{ t = xoBoxSizeMargin; return true; }
 	return false;
 }
 
-NUAPI bool nuParseTextAlignVertical( const char* s, intp len, nuTextAlignVertical& t )
+XOAPI bool xoParseTextAlignVertical( const char* s, intp len, xoTextAlignVertical& t )
 {
-	if ( MATCH(s, 0, len, "baseline") )	{ t = nuTextAlignVerticalBaseline; return true; }
-	if ( MATCH(s, 0, len, "top") )		{ t = nuTextAlignVerticalTop; return true; }
+	if ( MATCH(s, 0, len, "baseline") )	{ t = xoTextAlignVerticalBaseline; return true; }
+	if ( MATCH(s, 0, len, "top") )		{ t = xoTextAlignVerticalTop; return true; }
 	return false;
 }
 
-NUAPI bool nuParseHorizontalBinding( const char* s, intp len, nuHorizontalBindings& t )
+XOAPI bool xoParseHorizontalBinding( const char* s, intp len, xoHorizontalBindings& t )
 {
-	if ( MATCH(s, 0, len, "left") )		{ t = nuHorizontalBindingLeft; return true; }
-	if ( MATCH(s, 0, len, "hcenter") )	{ t = nuHorizontalBindingCenter; return true; }
-	if ( MATCH(s, 0, len, "right") )	{ t = nuHorizontalBindingRight; return true; }
+	if ( MATCH(s, 0, len, "left") )		{ t = xoHorizontalBindingLeft; return true; }
+	if ( MATCH(s, 0, len, "hcenter") )	{ t = xoHorizontalBindingCenter; return true; }
+	if ( MATCH(s, 0, len, "right") )	{ t = xoHorizontalBindingRight; return true; }
 	return false;
 }
 
-NUAPI bool nuParseVerticalBinding( const char* s, intp len, nuVerticalBindings& t )
+XOAPI bool xoParseVerticalBinding( const char* s, intp len, xoVerticalBindings& t )
 {
-	if ( MATCH(s, 0, len, "top") )		{ t = nuVerticalBindingTop; return true; }
-	if ( MATCH(s, 0, len, "vcenter") )	{ t = nuVerticalBindingCenter; return true; }
-	if ( MATCH(s, 0, len, "bottom") )	{ t = nuVerticalBindingBottom; return true; }
-	if ( MATCH(s, 0, len, "baseline") )	{ t = nuVerticalBindingBaseline; return true; }
+	if ( MATCH(s, 0, len, "top") )		{ t = xoVerticalBindingTop; return true; }
+	if ( MATCH(s, 0, len, "vcenter") )	{ t = xoVerticalBindingCenter; return true; }
+	if ( MATCH(s, 0, len, "bottom") )	{ t = xoVerticalBindingBottom; return true; }
+	if ( MATCH(s, 0, len, "baseline") )	{ t = xoVerticalBindingBaseline; return true; }
 	return false;
 }
 
-NUAPI bool nuParseBorder( const char* s, intp len, nuStyle& style )
+XOAPI bool xoParseBorder( const char* s, intp len, xoStyle& style )
 {
 	int spaces[10];
 	int nspaces = FindSpaces( s, len, spaces );
@@ -932,30 +932,30 @@ NUAPI bool nuParseBorder( const char* s, intp len, nuStyle& style )
 	{
 		// 1px		OR
 		// #000
-		nuColor color;
-		if ( nuColor::Parse( s, len, color ) )
+		xoColor color;
+		if ( xoColor::Parse( s, len, color ) )
 		{
-			style.SetUniformBox( nuCatBorderColor_Left, color );
+			style.SetUniformBox( xoCatBorderColor_Left, color );
 			return true;
 		}
-		nuSize size;
-		if ( nuSize::Parse( s, len, size ) )
+		xoSize size;
+		if ( xoSize::Parse( s, len, size ) )
 		{
-			style.SetBox( nuCatBorder_Left, nuStyleBox::MakeUniform(size) );
+			style.SetBox( xoCatBorder_Left, xoStyleBox::MakeUniform(size) );
 			return true;
 		}
 	}
 	else if ( nspaces == 1 ) 
 	{
 		// 1px #000
-		nuSize size;
-		nuColor color;
-		if ( nuSize::Parse( s, spaces[0], size ) )
+		xoSize size;
+		xoColor color;
+		if ( xoSize::Parse( s, spaces[0], size ) )
 		{
-			if ( nuColor::Parse( s + spaces[0] + 1, len - spaces[0] - 1, color ) )
+			if ( xoColor::Parse( s + spaces[0] + 1, len - spaces[0] - 1, color ) )
 			{
-				style.SetBox( nuCatBorder_Left, nuStyleBox::MakeUniform(size) );
-				style.SetUniformBox( nuCatBorderColor_Left, color );
+				style.SetBox( xoCatBorder_Left, xoStyleBox::MakeUniform(size) );
+				style.SetUniformBox( xoCatBorderColor_Left, color );
 				return true;
 			}
 		}
@@ -963,14 +963,14 @@ NUAPI bool nuParseBorder( const char* s, intp len, nuStyle& style )
 	else if ( nspaces == 3 )
 	{
 		// 1px 2px 3px 4px
-		nuStyleBox box;
-		bool s1 = nuSize::Parse( s, spaces[0], box.Left );
-		bool s2 = nuSize::Parse( s + spaces[0] + 1, spaces[1] - spaces[0] - 1, box.Top );
-		bool s3 = nuSize::Parse( s + spaces[1] + 1, spaces[2] - spaces[1] - 1, box.Right );
-		bool s4 = nuSize::Parse( s + spaces[2] + 1, len - spaces[2] - 1, box.Bottom );
+		xoStyleBox box;
+		bool s1 = xoSize::Parse( s, spaces[0], box.Left );
+		bool s2 = xoSize::Parse( s + spaces[0] + 1, spaces[1] - spaces[0] - 1, box.Top );
+		bool s3 = xoSize::Parse( s + spaces[1] + 1, spaces[2] - spaces[1] - 1, box.Right );
+		bool s4 = xoSize::Parse( s + spaces[2] + 1, len - spaces[2] - 1, box.Bottom );
 		if ( s1 && s2 && s3 && s4 )
 		{
-			style.SetBox( nuCatBorder_Left, box );
+			style.SetBox( xoCatBorder_Left, box );
 			return true;
 		}
 	}

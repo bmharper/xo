@@ -1,32 +1,32 @@
 #include "pch.h"
-#include "nuDomText.h"
+#include "xoDomText.h"
 
-nuDomText::nuDomText( nuDoc* doc, nuTag tag ) : nuDomEl(doc, tag)
+xoDomText::xoDomText( xoDoc* doc, xoTag tag ) : xoDomEl(doc, tag)
 {
 }
 
-nuDomText::~nuDomText()
+xoDomText::~xoDomText()
 {
 }
 
-void nuDomText::SetText( const char* txt )
+void xoDomText::SetText( const char* txt )
 {
 	Text = txt;
 }
 
-const char* nuDomText::GetText() const
+const char* xoDomText::GetText() const
 {
 	return Text.Z;
 }
 
-void nuDomText::CloneSlowInto( nuDomEl& c, uint cloneFlags ) const
+void xoDomText::CloneSlowInto( xoDomEl& c, uint cloneFlags ) const
 {
 	CloneSlowIntoBase( c, cloneFlags );
-	nuDomText& ctext = static_cast<nuDomText&>(c);
+	xoDomText& ctext = static_cast<xoDomText&>(c);
 	
 	ctext.Text = Text;
 }
 
-void nuDomText::ForgetChildren()
+void xoDomText::ForgetChildren()
 {
 }

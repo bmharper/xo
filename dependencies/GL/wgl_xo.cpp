@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
-#include "wgl_nudom.h"
+#include "wgl_xo.h"
 
 #if defined(__APPLE__)
 #include <mach-o/dyld.h>

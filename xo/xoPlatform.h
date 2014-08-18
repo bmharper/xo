@@ -13,55 +13,55 @@ typedef unsigned short	uint16;
 #endif
 
 // This executes in ALL BUILDS (not just debug).
-#define NUASSERT(x)			AbcAssert(x)
+#define XOASSERT(x)			AbcAssert(x)
 
 #ifdef _DEBUG
-	#define NUVERIFY(x)			NUASSERT(x)
-	#define NUASSERTDEBUG(x)	NUASSERT(x)
+	#define XOVERIFY(x)			XOASSERT(x)
+	#define XOASSERTDEBUG(x)	XOASSERT(x)
 #else
-	#define NUVERIFY(x)			((void)(x))
-	#define NUASSERTDEBUG(x)	((void)0)
+	#define XOVERIFY(x)			((void)(x))
+	#define XOASSERTDEBUG(x)	((void)0)
 #endif
 
-void*		nuMallocOrDie( size_t bytes );
-void*		nuReallocOrDie( void* buf, size_t bytes );
-nuString	nuCacheDir();
+void*		xoMallocOrDie( size_t bytes );
+void*		xoReallocOrDie( void* buf, size_t bytes );
+xoString	xoCacheDir();
 
-#define NUCHECKALLOC(x)		NUASSERT((x) != NULL)
-#define NUPANIC(msg)		AbcPanic(msg)
-#define NUTODO				NUPANIC("not yet implemented") 
-#define NUTODO_STATIC		static_assert(false, "Implement me");
+#define XOCHECKALLOC(x)		XOASSERT((x) != NULL)
+#define XOPANIC(msg)		AbcPanic(msg)
+#define XOTODO				XOPANIC("not yet implemented") 
+#define XOTODO_STATIC		static_assert(false, "Implement me");
 
-enum nuPlatform
+enum xoPlatform
 {
-	nuPlatform_WinDesktop		= 1,
-	nuPlatform_Android			= 2,
-	nuPlatform_LinuxDesktop		= 4,
-	nuPlatform_All			= 1 | 2 | 4,
+	xoPlatform_WinDesktop		= 1,
+	xoPlatform_Android			= 2,
+	xoPlatform_LinuxDesktop		= 4,
+	xoPlatform_All			= 1 | 2 | 4,
 };
 
 #if defined(_WIN32)
-	#define NU_PLATFORM_ANDROID			0
-	#define NU_PLATFORM_WIN_DESKTOP		1
-	#define NU_PLATFORM_LINUX_DESKTOP	0
-	#define NU_PLATFORM					nuPlatform_WinDesktop
-	#define NUTRACE_WRITE				OutputDebugStringA
+	#define XO_PLATFORM_ANDROID			0
+	#define XO_PLATFORM_WIN_DESKTOP		1
+	#define XO_PLATFORM_LINUX_DESKTOP	0
+	#define XO_PLATFORM					xoPlatform_WinDesktop
+	#define XOTRACE_WRITE				OutputDebugStringA
 #elif defined(ANDROID)
-	#define NU_PLATFORM_ANDROID			1
-	#define NU_PLATFORM_WIN_DESKTOP		0
-	#define NU_PLATFORM_LINUX_DESKTOP	0
-	#define NU_PLATFORM					nuPlatform_Android
-	#define NUTRACE_WRITE(msg)			__android_log_write(ANDROID_LOG_INFO, "nudom", msg)
+	#define XO_PLATFORM_ANDROID			1
+	#define XO_PLATFORM_WIN_DESKTOP		0
+	#define XO_PLATFORM_LINUX_DESKTOP	0
+	#define XO_PLATFORM					xoPlatform_Android
+	#define XOTRACE_WRITE(msg)			__android_log_write(ANDROID_LOG_INFO, "xo", msg)
 #elif defined(__linux__)
-	#define NU_PLATFORM_ANDROID			0
-	#define NU_PLATFORM_WIN_DESKTOP		0
-	#define NU_PLATFORM_LINUX_DESKTOP	1
-	#define NU_PLATFORM					nuPlatform_LinuxDesktop
-	#define NUTRACE_WRITE(msg)			fputs(msg, stderr)
+	#define XO_PLATFORM_ANDROID			0
+	#define XO_PLATFORM_WIN_DESKTOP		0
+	#define XO_PLATFORM_LINUX_DESKTOP	1
+	#define XO_PLATFORM					xoPlatform_LinuxDesktop
+	#define XOTRACE_WRITE(msg)			fputs(msg, stderr)
 #else
 	#ifdef _MSC_VER
-		#pragma error( "Unknown nuDom platform" )
+		#pragma error( "Unknown xoDom platform" )
 	#else
-		#error Unknown nuDom platform
+		#error Unknown xoDom platform
 	#endif
 #endif

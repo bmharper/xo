@@ -1,25 +1,25 @@
 #include "pch.h"
-#include "nuFontStore.h"
+#include "xoFontStore.h"
 
 static const int ManifestVersion = 1;
 static const char UnitSeparator = 31;
 
-nuFontTableImmutable::nuFontTableImmutable()
+xoFontTableImmutable::xoFontTableImmutable()
 {
 }
 
-nuFontTableImmutable::~nuFontTableImmutable()
+xoFontTableImmutable::~xoFontTableImmutable()
 {
 }
 
-void nuFontTableImmutable::Initialize( const pvect<nuFont*>& fonts )
+void xoFontTableImmutable::Initialize( const pvect<xoFont*>& fonts )
 {
 	Fonts = fonts;
 }
 
-const nuFont* nuFontTableImmutable::GetByFontID( nuFontID fontID ) const
+const xoFont* xoFontTableImmutable::GetByFontID( xoFontID fontID ) const
 {
-	NUASSERT( fontID != nuFontIDNull && fontID < Fonts.size() );
+	XOASSERT( fontID != xoFontIDNull && fontID < Fonts.size() );
 	return Fonts[fontID];
 }
 
@@ -27,37 +27,37 @@ const nuFont* nuFontTableImmutable::GetByFontID( nuFontID fontID ) const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nuFontStore::nuFontStore()
+xoFontStore::xoFontStore()
 {
 	FTLibrary = NULL;
 	Fonts += NULL;
-	NUASSERT( Fonts[nuFontIDNull] == NULL );
+	XOASSERT( Fonts[xoFontIDNull] == NULL );
 	IsFontTableLoaded = false;
 	AbcCriticalSectionInitialize( Lock );
 
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	wchar_t* wpath;
 	if ( SUCCEEDED(SHGetKnownFolderPath( FOLDERID_Fonts, 0, NULL, &wpath )) )
 		Directories += ConvertWideToUTF8( wpath ).c_str();
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_LINUX_DESKTOP
 	Directories += "/usr/share/fonts/truetype";
 	Directories += "/usr/share/fonts/truetype/msttcorefonts";
-#elif NU_PLATFORM_ANDROID
+#elif XO_PLATFORM_ANDROID
 	Directories += "/system/fonts";
 #else
-	NUTODO_STATIC
+	XOTODO_STATIC
 #endif
 }
 
-nuFontStore::~nuFontStore()
+xoFontStore::~xoFontStore()
 {
 	AbcCriticalSectionDestroy( Lock );
 }
 
-void nuFontStore::Clear()
+void xoFontStore::Clear()
 {
 	TakeCriticalSection lock(Lock);
-	for ( intp i = nuFontIDNull + 1; i < Fonts.size(); i++ ) 
+	for ( intp i = xoFontIDNull + 1; i < Fonts.size(); i++ ) 
 	{
 		FT_Done_Face( Fonts[i]->FTFace );
 		Fonts[i]->FTFace = NULL;
@@ -66,115 +66,115 @@ void nuFontStore::Clear()
 	FacenameToFontID.clear();
 }
 
-void nuFontStore::InitializeFreetype()
+void xoFontStore::InitializeFreetype()
 {
 	FT_Init_FreeType( &FTLibrary );
 }
 
-void nuFontStore::ShutdownFreetype()
+void xoFontStore::ShutdownFreetype()
 {
 	FT_Done_FreeType( FTLibrary );
 	FTLibrary = NULL;
 }
 
-const nuFont* nuFontStore::GetByFontID( nuFontID fontID )
+const xoFont* xoFontStore::GetByFontID( xoFontID fontID )
 {
-	NUASSERT( fontID != nuFontIDNull && fontID < Fonts.size() );
+	XOASSERT( fontID != xoFontIDNull && fontID < Fonts.size() );
 	TakeCriticalSection lock(Lock);
 	return Fonts[fontID];
 }
 
-const nuFont* nuFontStore::GetByFacename( const char* facename )
+const xoFont* xoFontStore::GetByFacename( const char* facename )
 {
 	TakeCriticalSection lock(Lock);
 	return GetByFacename_Internal( facename );
 }
 
-nuFontID nuFontStore::Insert( const nuFont& font )
+xoFontID xoFontStore::Insert( const xoFont& font )
 {
-	NUASSERT( font.ID == nuFontIDNull );
-	NUASSERT( font.Facename.Length() != 0 );
+	XOASSERT( font.ID == xoFontIDNull );
+	XOASSERT( font.Facename.Length() != 0 );
 	TakeCriticalSection lock(Lock);
 	
-	const nuFont* existing = GetByFacename_Internal( font.Facename.Z );
+	const xoFont* existing = GetByFacename_Internal( font.Facename.Z );
 	if ( existing )
 		return existing->ID;
 
 	return Insert_Internal( font );
 }
 
-nuFontID nuFontStore::InsertByFacename( const char* facename )
+xoFontID xoFontStore::InsertByFacename( const char* facename )
 {
 	TakeCriticalSection lock(Lock);
 
-	const nuFont* existing = GetByFacename_Internal( facename );
+	const xoFont* existing = GetByFacename_Internal( facename );
 	if ( existing )
 		return existing->ID;
 
-	nuFont font;
+	xoFont font;
 	font.Facename = facename;
 	const char* filename = GetFilenameFromFacename( facename );
 
 	if ( filename == nullptr )
 	{
-		NUTRACE( "Failed to load font (facename=%s) (font not found)\n", facename );
-		return nuFontIDNull;
+		XOTRACE( "Failed to load font (facename=%s) (font not found)\n", facename );
+		return xoFontIDNull;
 	}
 
 	FT_Error e = FT_New_Face( FTLibrary, filename, 0, &font.FTFace );
 	if ( e != 0 )
 	{
-		NUTRACE( "Failed to load font (facename=%s) (filename=%s)\n", facename, filename );
-		return nuFontIDNull;
+		XOTRACE( "Failed to load font (facename=%s) (filename=%s)\n", facename, filename );
+		return xoFontIDNull;
 	}
 
 	return Insert_Internal( font );
 }
 
-nuFontID nuFontStore::GetFallbackFontID()
+xoFontID xoFontStore::GetFallbackFontID()
 {
-	nuFontID fid = nuFontIDNull;
-#if NU_PLATFORM_WIN_DESKTOP
+	xoFontID fid = xoFontIDNull;
+#if XO_PLATFORM_WIN_DESKTOP
 	fid = InsertByFacename( "Arial" );
-#elif NU_PLATFORM_ANDROID
+#elif XO_PLATFORM_ANDROID
 	fid = InsertByFacename( "Droid Sans" );
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_LINUX_DESKTOP
 	fid = InsertByFacename( "Arial" );
 #else
-	NUTODO_STATIC;
+	XOTODO_STATIC;
 #endif
-	NUASSERT( fid != nuFontIDNull );
+	XOASSERT( fid != xoFontIDNull );
 	return fid;
 }
 
-nuFontTableImmutable nuFontStore::GetImmutableTable()
+xoFontTableImmutable xoFontStore::GetImmutableTable()
 {
 	TakeCriticalSection lock(Lock);
-	nuFontTableImmutable t;
+	xoFontTableImmutable t;
 	t.Initialize( Fonts );
 	return t;
 }
 
-void nuFontStore::AddFontDirectory( const char* dir )
+void xoFontStore::AddFontDirectory( const char* dir )
 {
 	Directories += dir;
 	IsFontTableLoaded = false;
 }
 
-const nuFont* nuFontStore::GetByFacename_Internal( const char* facename ) const
+const xoFont* xoFontStore::GetByFacename_Internal( const char* facename ) const
 {
-	nuFontID id;
-	if ( FacenameToFontID.get( nuTempString(facename), id ) )
+	xoFontID id;
+	if ( FacenameToFontID.get( xoTempString(facename), id ) )
 		return Fonts[id];
 	else
 		return NULL;
 }
 
-nuFontID nuFontStore::Insert_Internal( const nuFont& font )
+xoFontID xoFontStore::Insert_Internal( const xoFont& font )
 {
-	nuFont* copy = new nuFont();
+	xoFont* copy = new xoFont();
 	*copy = font;
-	copy->ID = (nuFontID) Fonts.size();
+	copy->ID = (xoFontID) Fonts.size();
 	Fonts += copy;
 	FacenameToFontID.insert( copy->Facename, copy->ID );
 	LoadFontConstants( *copy );
@@ -184,16 +184,16 @@ nuFontID nuFontStore::Insert_Internal( const nuFont& font )
 
 #define EM_TO_256(x) ((int32) ((x) * 256 / font.FTFace->units_per_EM))
 
-void nuFontStore::LoadFontConstants( nuFont& font )
+void xoFontStore::LoadFontConstants( xoFont& font )
 {
 	uint ftflags = FT_LOAD_LINEAR_DESIGN;
 	FT_UInt iFTGlyph = FT_Get_Char_Index( font.FTFace, 32 );
 	FT_Error e = FT_Set_Pixel_Sizes( font.FTFace, 100, 100 );
-	NUASSERT( e == 0 );
+	XOASSERT( e == 0 );
 	e = FT_Load_Glyph( font.FTFace, iFTGlyph, ftflags );
 	if ( e != 0 )
 	{
-		NUTRACE( "Failed to load glyph for character %d (%d)\n", 32, iFTGlyph );
+		XOTRACE( "Failed to load glyph for character %d (%d)\n", 32, iFTGlyph );
 		font.LinearHoriAdvance_Space_x256 = 0;
 	}
 	else
@@ -205,7 +205,7 @@ void nuFontStore::LoadFontConstants( nuFont& font )
 	font.Descender_x256 = EM_TO_256(font.FTFace->descender);
 }
 
-void nuFontStore::LoadFontTweaks( nuFont& font )
+void xoFontStore::LoadFontTweaks( xoFont& font )
 {
 	// The default of 15 is a number taken from observations of a bunch of different fonts
 	// The auto hinter fails to produce clean horizontal stems when the text gets larger
@@ -227,7 +227,7 @@ void nuFontStore::LoadFontTweaks( nuFont& font )
 	//	font.MaxAutoHinterSize = 50;
 }
 
-const char* nuFontStore::GetFilenameFromFacename( const char* facename )
+const char* xoFontStore::GetFilenameFromFacename( const char* facename )
 {
 	if ( !IsFontTableLoaded )
 	{
@@ -235,8 +235,8 @@ const char* nuFontStore::GetFilenameFromFacename( const char* facename )
 			BuildAndSaveFontTable();
 	}
 
-	nuString name = facename;
-	nuString* fn = FacenameToFilename.getp( name );
+	xoString name = facename;
+	xoString* fn = FacenameToFilename.getp( name );
 	if ( fn != nullptr )
 		return fn->Z;
 
@@ -249,8 +249,8 @@ const char* nuFontStore::GetFilenameFromFacename( const char* facename )
 
 	/*
 	// We need to build a cache here and save it to disk.
-	nuTempString name( facename );
-#if NU_PLATFORM_WIN_DESKTOP
+	xoTempString name( facename );
+#if XO_PLATFORM_WIN_DESKTOP
 	if ( name == "Arial" ) return "c:\\Windows\\Fonts\\arial.ttf";
 	if ( name == "Times New Roman" ) return "c:\\Windows\\Fonts\\times.ttf";
 	if ( name == "Consolas" ) return "c:\\Windows\\Fonts\\consola.ttf";
@@ -259,7 +259,7 @@ const char* nuFontStore::GetFilenameFromFacename( const char* facename )
 	if ( name == "Tahoma" ) return "c:\\Windows\\Fonts\\tahoma.ttf";
 	if ( name == "Segoe UI" ) return "c:\\Windows\\Fonts\\segoeui.ttf";
 	return "c:\\Windows\\Fonts\\arial.ttf";
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_LINUX_DESKTOP
 	if ( name == "Arial" ) return "/usr/share/fonts/truetype/msttcorefonts/arial.ttf";
 	if ( name == "Times New Roman" ) return "/usr/share/fonts/truetype/msttcorefonts/times.ttf";
 	return "/usr/share/fonts/truetype/msttcorefonts/arial.ttf";
@@ -271,22 +271,22 @@ const char* nuFontStore::GetFilenameFromFacename( const char* facename )
 	*/
 }
 
-void nuFontStore::BuildAndSaveFontTable()
+void xoFontStore::BuildAndSaveFontTable()
 {
-	podvec<nuString> files;
+	podvec<xoString> files;
 	for ( intp i = 0; i < Directories.size(); i++ )
 	{
 		auto cb = [&]( const AbcFilesystemItem& item ) -> bool
 		{
 			if ( IsFontFilename(item.Name) )
-				files += nuString(item.Root) + ABC_DIR_SEP_STR + item.Name;
+				files += xoString(item.Root) + ABC_DIR_SEP_STR + item.Name;
 			return true;
 		};
 
 		AbcFilesystemFindFiles( Directories[i].Z, cb );
 	}
 
-	FILE* manifest = fopen( (nuCacheDir() + ABC_DIR_SEP_STR + "fonts").Z, "wb" );
+	FILE* manifest = fopen( (xoCacheDir() + ABC_DIR_SEP_STR + "fonts").Z, "wb" );
 	fprintf( manifest, "%d\n", ManifestVersion );
 	fprintf( manifest, "%llu\n", (long long unsigned) ComputeFontDirHash() );
 
@@ -296,15 +296,15 @@ void nuFontStore::BuildAndSaveFontTable()
 		FT_Error e = FT_New_Face( FTLibrary, files[i].Z, 0, &face );
 		if ( e == 0 )
 		{
-			nuString facename = face->family_name;
-			nuString style = face->style_name;
-			nuString fullFacename = facename + " " + style;
+			xoString facename = face->family_name;
+			xoString style = face->style_name;
+			xoString fullFacename = facename + " " + style;
 			fprintf( manifest, "%s%c%s\n", files[i].Z, UnitSeparator, fullFacename.Z );
 			FT_Done_Face( face );
 		}
 		else
 		{
-			NUTRACE( "Failed to load font (filename=%s)\n", files[i].Z );
+			XOTRACE( "Failed to load font (filename=%s)\n", files[i].Z );
 		}
 	}
 
@@ -313,10 +313,10 @@ void nuFontStore::BuildAndSaveFontTable()
 	LoadFontTable();
 }
 
-bool nuFontStore::LoadFontTable()
+bool xoFontStore::LoadFontTable()
 {
 	FacenameToFilename.clear();
-	FILE* manifest = fopen( (nuCacheDir() + ABC_DIR_SEP_STR + "fonts").Z, "rb" );
+	FILE* manifest = fopen( (xoCacheDir() + ABC_DIR_SEP_STR + "fonts").Z, "rb" );
 	if ( manifest == nullptr )
 		return false;
 
@@ -352,7 +352,7 @@ bool nuFontStore::LoadFontTable()
 		{
 			if ( i - term1 > 1 )
 			{
-				nuString path, facename;
+				xoString path, facename;
 				path.Set( buf + lineStart, term1 - lineStart );
 				facename.Set( buf + term1 + 1, i - term1 - 1 );
 				FacenameToFilename.insert( facename, path );
@@ -371,7 +371,7 @@ bool nuFontStore::LoadFontTable()
 	return true;
 }
 
-uint64 nuFontStore::ComputeFontDirHash()
+uint64 xoFontStore::ComputeFontDirHash()
 {
 	void* hstate = XXH64_init( 0 );
 
@@ -392,7 +392,7 @@ uint64 nuFontStore::ComputeFontDirHash()
 	return (uint64) XXH64_digest( hstate );
 }
 
-bool nuFontStore::IsFontFilename( const char* filename )
+bool xoFontStore::IsFontFilename( const char* filename )
 {
 	return	strstr(filename, ".ttf") != nullptr ||
 			strstr(filename, ".ttc ") != nullptr;

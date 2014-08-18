@@ -12,7 +12,7 @@ is vertical and the minor axis is horizontal.
 A box can also specify that an axis direction is reversed.
 The normal direction for vertical is top to bottom.
 The normal direction for horizontal is left to right.
-nuFlowDirection is the enum used to control this.
+xoFlowDirection is the enum used to control this.
 
 To set horizontal to reversed, use the following style:
 

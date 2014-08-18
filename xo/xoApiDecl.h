@@ -1,11 +1,11 @@
 #pragma once
 
 #ifdef _WIN32
-	#ifndef NUAPI
-		#define NUAPI __declspec(dllexport)
+	#ifndef XOAPI
+		#define XOAPI __declspec(dllexport)
 	#else
-		#define NUAPI __declspec(dllimport)
+		#define XOAPI __declspec(dllimport)
 	#endif
 #else
-	#define NUAPI
+	#define XOAPI
 #endif

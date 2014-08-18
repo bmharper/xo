@@ -1,13 +1,13 @@
 #include "pch.h"
-#if NU_BUILD_OPENGL
+#if XO_BUILD_OPENGL
 #include "FillShader.h"
 
-nuGLProg_Fill::nuGLProg_Fill()
+xoGLProg_Fill::xoGLProg_Fill()
 {
 	Reset();
 }
 
-void nuGLProg_Fill::Reset()
+void xoGLProg_Fill::Reset()
 {
 	ResetBase();
 	v_mvproj = -1;
@@ -15,7 +15,7 @@ void nuGLProg_Fill::Reset()
 	v_vcolor = -1;
 }
 
-const char* nuGLProg_Fill::VertSrc()
+const char* xoGLProg_Fill::VertSrc()
 {
 	return
 	"uniform		mat4	mvproj;\n"
@@ -30,10 +30,10 @@ const char* nuGLProg_Fill::VertSrc()
 ;
 }
 
-const char* nuGLProg_Fill::FragSrc()
+const char* xoGLProg_Fill::FragSrc()
 {
 	return
-	"#ifdef NU_PLATFORM_ANDROID\n"
+	"#ifdef XO_PLATFORM_ANDROID\n"
 	"precision mediump float;\n"
 	"#endif\n"
 	"varying vec4	color;\n"
@@ -44,13 +44,13 @@ const char* nuGLProg_Fill::FragSrc()
 ;
 }
 
-const char* nuGLProg_Fill::Name()
+const char* xoGLProg_Fill::Name()
 {
 	return "Fill";
 }
 
 
-bool nuGLProg_Fill::LoadVariablePositions()
+bool xoGLProg_Fill::LoadVariablePositions()
 {
 	int nfail = 0;
 
@@ -58,20 +58,20 @@ bool nuGLProg_Fill::LoadVariablePositions()
 	nfail += (v_vpos = glGetAttribLocation( Prog, "vpos" )) == -1;
 	nfail += (v_vcolor = glGetAttribLocation( Prog, "vcolor" )) == -1;
 	if ( nfail != 0 )
-		NUTRACE( "Failed to bind %d variables of shader Fill\n", nfail );
+		XOTRACE( "Failed to bind %d variables of shader Fill\n", nfail );
 
 	return nfail == 0;
 }
 
-uint32 nuGLProg_Fill::PlatformMask()
+uint32 xoGLProg_Fill::PlatformMask()
 {
-	return nuPlatform_All;
+	return xoPlatform_All;
 }
 
-nuVertexType nuGLProg_Fill::VertexType()
+xoVertexType xoGLProg_Fill::VertexType()
 {
-	return nuVertexType_NULL;
+	return xoVertexType_NULL;
 }
 
-#endif // NU_BUILD_OPENGL
+#endif // XO_BUILD_OPENGL
 

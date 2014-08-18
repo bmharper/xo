@@ -6,6 +6,6 @@ and run 'ndk-build'.
 
 You can bring build times down by using 'ndk-build -j8' (or however many logical cores you have).
 
-That ought to give you libs/<platform>/libnudom.so
+That ought to give you libs/<platform>/libxo.so
 
 You should now be able to load the project in eclipse, and deploy to a device.

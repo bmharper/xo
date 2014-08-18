@@ -1,77 +1,77 @@
 #pragma once
 
-#include "nuDefs.h"
-#include "nuTextDefs.h"
+#include "xoDefs.h"
+#include "xoTextDefs.h"
 
 // This is used during layout to get an immutable set of fonts that we can access
-// without having to take any locks. Once a nuFont object has been created, it is
+// without having to take any locks. Once a xoFont object has been created, it is
 // never mutated. the Freetype internals are most definitely mutated as we generate
-// more glyphs, but the info directly stored inside nuFont is immutable.
+// more glyphs, but the info directly stored inside xoFont is immutable.
 // Of particular importance is LinearHoriAdvance_Space_x256, which is used a lot
 // during layout.
-class NUAPI nuFontTableImmutable
+class XOAPI xoFontTableImmutable
 {
 public:
-					nuFontTableImmutable();
-					~nuFontTableImmutable();
+					xoFontTableImmutable();
+					~xoFontTableImmutable();
 
-	void			Initialize( const pvect<nuFont*>& fonts );
-	const nuFont*	GetByFontID( nuFontID fontID ) const;
+	void			Initialize( const pvect<xoFont*>& fonts );
+	const xoFont*	GetByFontID( xoFontID fontID ) const;
 
 protected:
-	pvect<nuFont*>	Fonts;
+	pvect<xoFont*>	Fonts;
 };
 
 /* This stores only font metadata such as filename.
 
-If you're looking for glyphs, they are stored inside nuGlyphCache.
+If you're looking for glyphs, they are stored inside xoGlyphCache.
 
 All public members are thread safe.
 
 Members suffixed by "_Internal" assume that the appropriate locks have been acquired.
 
-Once a nuFont* object has been created, it will never be destroyed.
-Also, since a nuFont object is immutable once created, we can return
-a nuFontStoreTable object and know that the objects inside it are
+Once a xoFont* object has been created, it will never be destroyed.
+Also, since a xoFont object is immutable once created, we can return
+a xoFontStoreTable object and know that the objects inside it are
 safe to access from many threads, while we still go ahead on the main
 thread and create more fonts.
 
-Although the public API of this class is thread safe, the nuFont* objects returned are
+Although the public API of this class is thread safe, the xoFont* objects returned are
 most definitely not thread safe. Freetype stores a lot of glyph rendering state inside
 the FT_Face object, so only one thread can use a Freetype face at a time.
 
 */
-class NUAPI nuFontStore
+class XOAPI xoFontStore
 {
 public:
-							nuFontStore();
-							~nuFontStore();
+							xoFontStore();
+							~xoFontStore();
 
 	void					Clear();
 	void					InitializeFreetype();
 	void					ShutdownFreetype();
-	const nuFont*			GetByFontID( nuFontID fontID );
-	const nuFont*			GetByFacename( const char* facename );
-	nuFontID				Insert( const nuFont& font );
-	nuFontID				InsertByFacename( const char* facename );		// This is safe to call if the font is already loaded
-	nuFontID				GetFallbackFontID();							// This is a font that is always available on this platform. Panics if the font is not available.
-	nuFontTableImmutable	GetImmutableTable();
+	const xoFont*			GetByFontID( xoFontID fontID );
+	const xoFont*			GetByFacename( const char* facename );
+	xoFontID				Insert( const xoFont& font );
+	xoFontID				InsertByFacename( const char* facename );		// This is safe to call if the font is already loaded
+	xoFontID				GetFallbackFontID();							// This is a font that is always available on this platform. Panics if the font is not available.
+	xoFontTableImmutable	GetImmutableTable();
 
 	void					AddFontDirectory( const char* dir );
 
 private:
 	AbcCriticalSection				Lock;
-	pvect<nuFont*>					Fonts;
-	podvec<nuString>				Directories;
-	fhashmap<nuString, nuFontID>	FacenameToFontID;
-	fhashmap<nuString, nuString>	FacenameToFilename;
+	pvect<xoFont*>					Fonts;
+	podvec<xoString>				Directories;
+	fhashmap<xoString, xoFontID>	FacenameToFontID;
+	fhashmap<xoString, xoString>	FacenameToFilename;
 	FT_Library						FTLibrary;
 	bool							IsFontTableLoaded;
 
-	const nuFont*	GetByFacename_Internal( const char* facename ) const;
-	nuFontID		Insert_Internal( const nuFont& font );
-	void			LoadFontConstants( nuFont& font );
-	void			LoadFontTweaks( nuFont& font );
+	const xoFont*	GetByFacename_Internal( const char* facename ) const;
+	xoFontID		Insert_Internal( const xoFont& font );
+	void			LoadFontConstants( xoFont& font );
+	void			LoadFontTweaks( xoFont& font );
 	const char*		GetFilenameFromFacename( const char* facename );
 	void			BuildAndSaveFontTable();
 	bool			LoadFontTable();

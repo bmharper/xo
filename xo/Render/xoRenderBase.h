@@ -1,25 +1,25 @@
 #pragma once
 
-#include "../nuDefs.h"
-#include "nuVertexTypes.h"
+#include "../xoDefs.h"
+#include "xoVertexTypes.h"
 
-struct nuShaderPerFrame
+struct xoShaderPerFrame
 {
-	nuMat4f		MVProj;
-	nuVec2f		VPort_HSize;
+	xoMat4f		MVProj;
+	xoVec2f		VPort_HSize;
 	float		Padding[2];
 };
-static_assert( (sizeof(nuShaderPerFrame) & 15) == 0, "nuShaderPerFrame size must be a multiple of 16 bytes (This is a DirectX constant buffer requirement)" );
+static_assert( (sizeof(xoShaderPerFrame) & 15) == 0, "xoShaderPerFrame size must be a multiple of 16 bytes (This is a DirectX constant buffer requirement)" );
 
-struct nuShaderPerObject
+struct xoShaderPerObject
 {
-	nuVec4f		Box;
-	nuVec4f		Border;
-	nuVec4f		BorderColor;
+	xoVec4f		Box;
+	xoVec4f		Border;
+	xoVec4f		BorderColor;
 	float		Radius;
 	float		Padding[3];
 };
-static_assert( (sizeof(nuShaderPerObject) & 15) == 0, "nuShaderPerFrame size must be a multiple of 16 bytes (This is a DirectX constant buffer requirement)" );
+static_assert( (sizeof(xoShaderPerObject) & 15) == 0, "xoShaderPerFrame size must be a multiple of 16 bytes (This is a DirectX constant buffer requirement)" );
 
 /* Base class of device-specific renderer (such as GL or DX).
 
@@ -42,79 +42,79 @@ at the start of every frame - that would guarantee that such an unlikely
 calamity becomes impossible.
 
 */
-class NUAPI nuRenderBase
+class XOAPI xoRenderBase
 {
 public:
-	friend struct nuRenderBase_OnceOff;
+	friend struct xoRenderBase_OnceOff;
 
-	nuShaderPerFrame		ShaderPerFrame;
-	nuShaderPerObject		ShaderPerObject;
+	xoShaderPerFrame		ShaderPerFrame;
+	xoShaderPerObject		ShaderPerObject;
 
-						nuRenderBase();
-	virtual				~nuRenderBase();
+						xoRenderBase();
+	virtual				~xoRenderBase();
 
 	// Setup a matrix equivalent to glOrtho. The matrix 'imat' is multiplied by the ortho matrix.
-	void				Ortho( nuMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar );
+	void				Ortho( xoMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar );
 
 	void				SurfaceLost_ForgetTextures();
-	bool				IsTextureValid( nuTextureID texID ) const;
-	nuTextureID			FirstTextureID() const								{ return TexIDOffset + TEX_OFFSET_ONE; }
+	bool				IsTextureValid( xoTextureID texID ) const;
+	xoTextureID			FirstTextureID() const								{ return TexIDOffset + TEX_OFFSET_ONE; }
 
 	// Register a new texture. There is no "unregister".
-	nuTextureID			RegisterTexture( void* deviceTexID );
-	nuTextureID			RegisterTextureInt( uint deviceTexID )				{ return RegisterTexture( reinterpret_cast<void*>(deviceTexID) );  }
-	void*				GetTextureDeviceHandle( nuTextureID texID ) const;
-	uint				GetTextureDeviceHandleInt( nuTextureID texID ) const	{ return (uint) reinterpret_cast<uintptr_t>(GetTextureDeviceHandle( texID )); }
+	xoTextureID			RegisterTexture( void* deviceTexID );
+	xoTextureID			RegisterTextureInt( uint deviceTexID )				{ return RegisterTexture( reinterpret_cast<void*>(deviceTexID) );  }
+	void*				GetTextureDeviceHandle( xoTextureID texID ) const;
+	uint				GetTextureDeviceHandleInt( xoTextureID texID ) const	{ return (uint) reinterpret_cast<uintptr_t>(GetTextureDeviceHandle( texID )); }
 
 	virtual const char*	RendererName() = 0;
 
-	virtual bool		InitializeDevice( nuSysWnd& wnd ) = 0;	// Initialize this device
-	virtual void		DestroyDevice( nuSysWnd& wnd ) = 0;		// Destroy this device and all associated textures, etc
+	virtual bool		InitializeDevice( xoSysWnd& wnd ) = 0;	// Initialize this device
+	virtual void		DestroyDevice( xoSysWnd& wnd ) = 0;		// Destroy this device and all associated textures, etc
 	virtual void		SurfaceLost() = 0;
 	
-	virtual bool		BeginRender( nuSysWnd& wnd ) = 0;		// Start of a frame
-	virtual void		EndRender( nuSysWnd& wnd ) = 0;			// Frame is finished. Present it.
+	virtual bool		BeginRender( xoSysWnd& wnd ) = 0;		// Start of a frame
+	virtual void		EndRender( xoSysWnd& wnd ) = 0;			// Frame is finished. Present it.
 
 	virtual void		PreRender() = 0;
 	virtual void		PostRenderCleanup() = 0;
 
-	virtual nuProgBase* GetShader( nuShaders shader ) = 0;
-	virtual void		ActivateShader( nuShaders shader ) = 0;
+	virtual xoProgBase* GetShader( xoShaders shader ) = 0;
+	virtual void		ActivateShader( xoShaders shader ) = 0;
 
 	virtual void		DrawQuad( const void* v ) = 0;
 
-	virtual bool		LoadTexture( nuTexture* tex, int texUnit ) = 0;
-	virtual bool		ReadBackbuffer( nuImage& image ) = 0;
+	virtual bool		LoadTexture( xoTexture* tex, int texUnit ) = 0;
+	virtual bool		ReadBackbuffer( xoImage& image ) = 0;
 
 protected:
-	static const nuTextureID	TEX_OFFSET_ONE = 1;	// This constant causes the nuTextureID that we expose to never be zero.
-	nuTextureID					TexIDOffset;
-	podvec<void*>				TexIDToNative;		// Maps from nuTextureID to native device texture (eg. GLuint or ID3D11Texture2D*). We're wasting 4 bytes here on OpenGL.
+	static const xoTextureID	TEX_OFFSET_ONE = 1;	// This constant causes the xoTextureID that we expose to never be zero.
+	xoTextureID					TexIDOffset;
+	podvec<void*>				TexIDToNative;		// Maps from xoTextureID to native device texture (eg. GLuint or ID3D11Texture2D*). We're wasting 4 bytes here on OpenGL.
 
-	void				EnsureTextureProperlyDefined( nuTexture* tex, int texUnit );
+	void				EnsureTextureProperlyDefined( xoTexture* tex, int texUnit );
 	std::string			CommonShaderDefines();
 };
 
 // This reduces the amount of #ifdef-ing needed, so that on non-Windows platforms
-// we can still have a nuRenderDX class defined.
-class NUAPI nuRenderDummy
+// we can still have a xoRenderDX class defined.
+class XOAPI xoRenderDummy
 {
 public:
-	virtual bool		InitializeDevice( nuSysWnd& wnd );
-	virtual void		DestroyDevice( nuSysWnd& wnd );
+	virtual bool		InitializeDevice( xoSysWnd& wnd );
+	virtual void		DestroyDevice( xoSysWnd& wnd );
 	virtual void		SurfaceLost();
 	
-	virtual bool		BeginRender( nuSysWnd& wnd );
-	virtual void		EndRender( nuSysWnd& wnd );
+	virtual bool		BeginRender( xoSysWnd& wnd );
+	virtual void		EndRender( xoSysWnd& wnd );
 
 	virtual void		PreRender();
 	virtual void		PostRenderCleanup();
 
-	virtual nuProgBase* GetShader( nuShaders shader );
-	virtual void		ActivateShader( nuShaders shader );
+	virtual xoProgBase* GetShader( xoShaders shader );
+	virtual void		ActivateShader( xoShaders shader );
 
 	virtual void		DrawQuad( const void* v );
 
-	virtual bool		LoadTexture( nuTexture* tex, int texUnit );
-	virtual bool		ReadBackbuffer( nuImage& image );
+	virtual bool		LoadTexture( xoTexture* tex, int texUnit );
+	virtual bool		ReadBackbuffer( xoImage& image );
 };

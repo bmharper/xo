@@ -7,4 +7,4 @@ caused by data misalignment. I can only blame the compiler for generating
 invalid code. This is happening on Samsung S3.
 The compiler used here is GCC 4.6, with the NDK r9.
 The workaround is to create an explicit assignment operator.
-Wherever you see that, it is labelled with $NU_GCC_ALIGN_BUG
+Wherever you see that, it is labelled with $XO_GCC_ALIGN_BUG

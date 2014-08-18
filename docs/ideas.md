@@ -9,4 +9,4 @@ $.el.table(
     $.el.td('Stelmach'))
 ).appendTo(document.body);
 
-I quite like that - it might be nice to do something similar inside C++ with nudom, probably with a C++ DSL.
+I quite like that - it might be nice to do something similar inside C++ with xo, probably with a C++ DSL.

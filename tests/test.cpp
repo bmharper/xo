@@ -11,15 +11,15 @@ int main( int argc, char** argv )
 {
 	_CrtSetAllocHook( hook );
 
-	nuInitialize();
+	xoInitialize();
 
 	// Uncomment this line to run tests on DirectX
-	//nuGlobal()->PreferOpenGL = false;
+	//xoGlobal()->PreferOpenGL = false;
 
 	int retval = 0;
 	TTRun( argc, argv, &retval );
 
-	nuShutdown();
+	xoShutdown();
 
 #ifdef _WIN32
 	TTASSERT( _CrtDumpMemoryLeaks() == FALSE );

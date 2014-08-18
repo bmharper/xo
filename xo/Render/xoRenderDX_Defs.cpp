@@ -1,23 +1,23 @@
 #include "pch.h"
-#if NU_BUILD_DIRECTX
-#include "nuRenderDX_Defs.h"
+#if XO_BUILD_DIRECTX
+#include "xoRenderDX_Defs.h"
 
-nuDXProg::nuDXProg()
+xoDXProg::xoDXProg()
 {
 	ResetBase();
 }
 
-nuDXProg::~nuDXProg()
+xoDXProg::~xoDXProg()
 {
 }
 
-void			nuDXProg::Reset()					{ ResetBase(); }
-const char*		nuDXProg::VertSrc()					{ return NULL; }
-const char*		nuDXProg::FragSrc()					{ return NULL; }
-const char*		nuDXProg::Name()					{ return "<unnamed shader>"; }
-void			nuDXProg::ResetBase()				{ Vert = NULL; Frag = NULL; VertLayout = NULL; }
-bool			nuDXProg::LoadVariablePositions()	{ return false; }
-uint32			nuDXProg::PlatformMask()			{ return nuPlatform_All; }
-nuVertexType	nuDXProg::VertexType()				{ return nuVertexType_NULL; }
+void			xoDXProg::Reset()					{ ResetBase(); }
+const char*		xoDXProg::VertSrc()					{ return NULL; }
+const char*		xoDXProg::FragSrc()					{ return NULL; }
+const char*		xoDXProg::Name()					{ return "<unnamed shader>"; }
+void			xoDXProg::ResetBase()				{ Vert = NULL; Frag = NULL; VertLayout = NULL; }
+bool			xoDXProg::LoadVariablePositions()	{ return false; }
+uint32			xoDXProg::PlatformMask()			{ return xoPlatform_All; }
+xoVertexType	xoDXProg::VertexType()				{ return xoVertexType_NULL; }
 
 #endif

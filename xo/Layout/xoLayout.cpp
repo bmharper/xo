@@ -1,12 +1,12 @@
 #include "pch.h"
-#include "nuLayout.h"
-#include "nuDoc.h"
-#include "Dom/nuDomNode.h"
-#include "Dom/nuDomText.h"
-#include "Render/nuRenderDomEl.h"
-#include "Render/nuStyleResolve.h"
-#include "Text/nuFontStore.h"
-#include "Text/nuGlyphCache.h"
+#include "xoLayout.h"
+#include "xoDoc.h"
+#include "Dom/xoDomNode.h"
+#include "Dom/xoDomText.h"
+#include "Render/xoRenderDomEl.h"
+#include "Render/xoStyleResolve.h"
+#include "Text/xoFontStore.h"
+#include "Text/xoGlyphCache.h"
 
 /* This is called serially.
 
@@ -17,14 +17,14 @@ Missing glyphs are a once-off cost (ie once per application instance),
 so it's not worth trying to use a mutable glyph cache.
 
 */
-void nuLayout::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDomNode& root, nuPool* pool )
+void xoLayout::Layout( const xoDoc& doc, u32 docWidth, u32 docHeight, xoRenderDomNode& root, xoPool* pool )
 {
 	Doc = &doc;
 	DocWidth = docWidth;
 	DocHeight = docHeight;
 	Pool = pool;
 	Stack.Initialize( Doc, Pool );
-	Fonts = nuGlobal()->FontStore->GetImmutableTable();
+	Fonts = xoGlobal()->FontStore->GetImmutableTable();
 
 	while ( true )
 	{
@@ -32,29 +32,29 @@ void nuLayout::Layout( const nuDoc& doc, u32 docWidth, u32 docHeight, nuRenderDo
 
 		if ( GlyphsNeeded.size() == 0 )
 		{
-			NUTRACE_LAYOUT_VERBOSE( "Layout done\n" );
+			XOTRACE_LAYOUT_VERBOSE( "Layout done\n" );
 			break;
 		}
 		else
 		{
-			NUTRACE_LAYOUT_VERBOSE( "Layout done (but need another pass for missing glyphs)\n" );
+			XOTRACE_LAYOUT_VERBOSE( "Layout done (but need another pass for missing glyphs)\n" );
 			RenderGlyphsNeeded();
 		}
 	}
 }
 
-void nuLayout::LayoutInternal( nuRenderDomNode& root )
+void xoLayout::LayoutInternal( xoRenderDomNode& root )
 {
 	PtToPixel = 1.0;	// TODO
-	EpToPixel = nuGlobal()->EpToPixel;
+	EpToPixel = xoGlobal()->EpToPixel;
 
-	NUTRACE_LAYOUT_VERBOSE( "Layout 1\n" );
+	XOTRACE_LAYOUT_VERBOSE( "Layout 1\n" );
 
 	Pool->FreeAll();
 	root.Children.clear();
 	Stack.Reset();
 
-	NUTRACE_LAYOUT_VERBOSE( "Layout 2\n" );
+	XOTRACE_LAYOUT_VERBOSE( "Layout 2\n" );
 
 	NodeState s;
 	memset( &s, 0, sizeof(s) );
@@ -66,53 +66,53 @@ void nuLayout::LayoutInternal( nuRenderDomNode& root )
 	s.PosY = s.ParentContentBox.Top;
 	s.PosMaxX = s.PosX;
 	s.PosMaxY = s.PosY;
-	s.PosBaselineY = nuPosNULL;
+	s.PosBaselineY = xoPosNULL;
 
-	NUTRACE_LAYOUT_VERBOSE( "Layout 3 DocBox = %d,%d,%d,%d\n", s.ParentContentBox.Left, s.ParentContentBox.Top, s.ParentContentBox.Right, s.ParentContentBox.Bottom );
+	XOTRACE_LAYOUT_VERBOSE( "Layout 3 DocBox = %d,%d,%d,%d\n", s.ParentContentBox.Left, s.ParentContentBox.Top, s.ParentContentBox.Right, s.ParentContentBox.Bottom );
 
 	RunNode( s, Doc->Root, &root );
 }
 
-void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rnode )
+void xoLayout::RunNode( NodeState& s, const xoDomNode& node, xoRenderDomNode* rnode )
 {
-	NUTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 1\n", node.GetInternalID() );
-	nuStyleResolver::ResolveAndPush( Stack, &node );
+	XOTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 1\n", node.GetInternalID() );
+	xoStyleResolver::ResolveAndPush( Stack, &node );
 	rnode->SetStyle( Stack );
 	
-	NUTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 2\n", node.GetInternalID() );
+	XOTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 2\n", node.GetInternalID() );
 	rnode->InternalID = node.GetInternalID();
 	if ( rnode->InternalID == 50 )
 		int abc = 123;
 
-	//auto display = Stack.Get( nuCatDisplay ).GetDisplayType();
-	auto position = Stack.Get( nuCatPosition ).GetPositionType();
-	auto boxSizing = Stack.Get( nuCatBoxSizing ).GetBoxSizing();
-	nuPos contentWidth = ComputeDimension( s.ParentContentBox.Width(), s.ParentContentBoxHasWidth, nuCatWidth );
-	nuPos contentHeight = ComputeDimension( s.ParentContentBox.Height(), s.ParentContentBoxHasHeight, nuCatHeight );
-	nuPos borderRadius = ComputeDimension( 0, false, nuCatBorderRadius );
-	nuBox margin = ComputeBox( s.ParentContentBox, s.ParentContentBoxHasWidth, s.ParentContentBoxHasHeight, nuCatMargin_Left );
-	nuBox padding = ComputeBox( s.ParentContentBox, s.ParentContentBoxHasWidth, s.ParentContentBoxHasHeight, nuCatPadding_Left );
-	nuBox border = ComputeBox( s.ParentContentBox, s.ParentContentBoxHasWidth, s.ParentContentBoxHasHeight, nuCatBorder_Left );
+	//auto display = Stack.Get( xoCatDisplay ).GetDisplayType();
+	auto position = Stack.Get( xoCatPosition ).GetPositionType();
+	auto boxSizing = Stack.Get( xoCatBoxSizing ).GetBoxSizing();
+	xoPos contentWidth = ComputeDimension( s.ParentContentBox.Width(), s.ParentContentBoxHasWidth, xoCatWidth );
+	xoPos contentHeight = ComputeDimension( s.ParentContentBox.Height(), s.ParentContentBoxHasHeight, xoCatHeight );
+	xoPos borderRadius = ComputeDimension( 0, false, xoCatBorderRadius );
+	xoBox margin = ComputeBox( s.ParentContentBox, s.ParentContentBoxHasWidth, s.ParentContentBoxHasHeight, xoCatMargin_Left );
+	xoBox padding = ComputeBox( s.ParentContentBox, s.ParentContentBoxHasWidth, s.ParentContentBoxHasHeight, xoCatPadding_Left );
+	xoBox border = ComputeBox( s.ParentContentBox, s.ParentContentBoxHasWidth, s.ParentContentBoxHasHeight, xoCatBorder_Left );
 	
 	// It might make for less arithmetic if we work with marginBoxWidth and marginBoxHeight instead of contentBoxWidth and contentBoxHeight. We'll see.
-	bool haveWidth = contentWidth != nuPosNULL;
-	bool haveHeight = contentHeight != nuPosNULL;
-	rnode->Style.BorderRadius = nuPosToReal( borderRadius );
+	bool haveWidth = contentWidth != xoPosNULL;
+	bool haveHeight = contentHeight != xoPosNULL;
+	rnode->Style.BorderRadius = xoPosToReal( borderRadius );
 
-	if ( boxSizing == nuBoxSizeContent ) {}
-	else if ( boxSizing == nuBoxSizeBorder )
+	if ( boxSizing == xoBoxSizeContent ) {}
+	else if ( boxSizing == xoBoxSizeBorder )
 	{
 		if ( haveWidth )	contentWidth -= border.Left + border.Right + padding.Left + padding.Right;
 		if ( haveHeight )	contentHeight -= border.Top + border.Bottom + padding.Top + padding.Bottom;
 	}
-	else if ( boxSizing == nuBoxSizeMargin )
+	else if ( boxSizing == xoBoxSizeMargin )
 	{
 		if ( haveWidth )	contentWidth -= margin.Left + margin.Right + border.Left + border.Right + padding.Left + padding.Right;
 		if ( haveHeight )	contentHeight -= margin.Top + margin.Bottom + border.Top + border.Bottom + padding.Top + padding.Bottom;
 	}
 
-	nuBox marginBox;
-	if ( position == nuPositionAbsolute )
+	xoBox marginBox;
+	if ( position == xoPositionAbsolute )
 	{
 		marginBox = ComputeSpecifiedPosition( s );
 	}
@@ -125,7 +125,7 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 	}
 
 	// Check if this block overflows. If we don't have width yet, then we'll check overflow after laying out our children
-	if ( position == nuPositionStatic && s.ParentContentBoxHasWidth && haveWidth )
+	if ( position == xoPositionStatic && s.ParentContentBoxHasWidth && haveWidth )
 		PositionBlock( s, marginBox );
 	
 	bool enableRecursiveLayout = false;
@@ -134,9 +134,9 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 	NodeState cs;
 	for ( int pass = 0; true; pass++ )
 	{
-		NUASSERTDEBUG( pass < 2 );
+		XOASSERTDEBUG( pass < 2 );
 
-		nuBox contentBox = marginBox;
+		xoBox contentBox = marginBox;
 		contentBox.Left += border.Left + padding.Left + margin.Left;
 		contentBox.Top += border.Top + padding.Top + margin.Top;
 		if ( haveWidth )	contentBox.Right -= border.Right + padding.Right + margin.Right;
@@ -152,23 +152,23 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 		cs.PosY = cs.PosMaxY = contentBox.Top;
 		cs.PosBaselineY = s.PosBaselineY;
 
-		NUTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 3 (position = %d) (%d %d)\n", node.GetInternalID(), (int) position, s.ParentContentBoxHasWidth ? 1 : 0, haveWidth ? 1 : 0 );
+		XOTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 3 (position = %d) (%d %d)\n", node.GetInternalID(), (int) position, s.ParentContentBoxHasWidth ? 1 : 0, haveWidth ? 1 : 0 );
 
-		const pvect<nuDomEl*>& nodeChildren = node.GetChildren();
+		const pvect<xoDomEl*>& nodeChildren = node.GetChildren();
 		for ( int i = 0; i < nodeChildren.size(); i++ )
 		{
-			const nuDomEl* child = nodeChildren[i];
-			if ( child->GetTag() == nuTagText )
+			const xoDomEl* child = nodeChildren[i];
+			if ( child->GetTag() == xoTagText )
 			{
-				nuRenderDomText* rchild = new (Pool->AllocT<nuRenderDomText>(false)) nuRenderDomText( child->GetInternalID(), Pool );
+				xoRenderDomText* rchild = new (Pool->AllocT<xoRenderDomText>(false)) xoRenderDomText( child->GetInternalID(), Pool );
 				rnode->Children += rchild;
-				RunText( cs, *static_cast<const nuDomText*>(child), rchild );
+				RunText( cs, *static_cast<const xoDomText*>(child), rchild );
 			}
 			else
 			{
-				nuRenderDomNode* rchild = new (Pool->AllocT<nuRenderDomNode>(false)) nuRenderDomNode( child->GetInternalID(), child->GetTag(), Pool );
+				xoRenderDomNode* rchild = new (Pool->AllocT<xoRenderDomNode>(false)) xoRenderDomNode( child->GetInternalID(), child->GetTag(), Pool );
 				rnode->Children += rchild;
-				RunNode( cs, *static_cast<const nuDomNode*>(child), rchild );
+				RunNode( cs, *static_cast<const xoDomNode*>(child), rchild );
 			}
 		}
 
@@ -177,10 +177,10 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 
 		// Since our width was undefined, we couldn't check for overflow until we'd layed out our children.
 		// If we do overflow now, then we need to retrofit all of our child boxes with an offset.
-		if ( enableRecursiveLayout && position == nuPositionStatic && s.ParentContentBoxHasWidth && !haveWidth )
+		if ( enableRecursiveLayout && position == xoPositionStatic && s.ParentContentBoxHasWidth && !haveWidth )
 		{
-			nuPoint offset = PositionBlock( s, marginBox );
-			if ( offset != nuPoint(0,0) )
+			xoPoint offset = PositionBlock( s, marginBox );
+			if ( offset != xoPoint(0,0) )
 			{
 				haveWidth = true;
 				//haveHeight = true;		// We do in fact NOT know height, because it can be altered by the resetting of the baseline on the new line
@@ -197,40 +197,40 @@ void nuLayout::RunNode( NodeState& s, const nuDomNode& node, nuRenderDomNode* rn
 		break;
 	}
 
-	NUTRACE_LAYOUT_VERBOSE( "Layout (%d) marginBox: %d,%d,%d,%d\n", node.GetInternalID(), marginBox.Left, marginBox.Top, marginBox.Right, marginBox.Bottom );
+	XOTRACE_LAYOUT_VERBOSE( "Layout (%d) marginBox: %d,%d,%d,%d\n", node.GetInternalID(), marginBox.Left, marginBox.Top, marginBox.Right, marginBox.Bottom );
 
-	s.PosMaxY = nuMax( s.PosMaxY, marginBox.Bottom );
-	if ( s.PosBaselineY == nuPosNULL )
+	s.PosMaxY = xoMax( s.PosMaxY, marginBox.Bottom );
+	if ( s.PosBaselineY == xoPosNULL )
 		s.PosBaselineY = cs.PosBaselineY;
 
 	Stack.StackPop();
 }
 
-void nuLayout::RunText( NodeState& s, const nuDomText& node, nuRenderDomText* rnode )
+void xoLayout::RunText( NodeState& s, const xoDomText& node, xoRenderDomText* rnode )
 {
-	NUTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 1\n", node.GetInternalID() );
+	XOTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 1\n", node.GetInternalID() );
 	rnode->InternalID = node.GetInternalID();
 	rnode->SetStyle( Stack );
 
-	NUTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 2\n", node.GetInternalID() );
+	XOTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 2\n", node.GetInternalID() );
 
-	rnode->FontID = Stack.Get( nuCatFontFamily ).GetFont();
+	rnode->FontID = Stack.Get( xoCatFontFamily ).GetFont();
 
-	nuStyleAttrib fontSizeAttrib = Stack.Get( nuCatFontSize );
-	nuPos fontHeight = ComputeDimension( s.ParentContentBox.Height(), s.ParentContentBoxHasHeight, fontSizeAttrib.GetSize() );
+	xoStyleAttrib fontSizeAttrib = Stack.Get( xoCatFontSize );
+	xoPos fontHeight = ComputeDimension( s.ParentContentBox.Height(), s.ParentContentBoxHasHeight, fontSizeAttrib.GetSize() );
 
-	float fontSizePxUnrounded = nuPosToReal( fontHeight );
+	float fontSizePxUnrounded = xoPosToReal( fontHeight );
 	
 	// round font size to integer units
-	rnode->FontSizePx = (uint8) nuRound( fontSizePxUnrounded );
+	rnode->FontSizePx = (uint8) xoRound( fontSizePxUnrounded );
 
 	// Nothing prevents somebody from setting a font size to zero
 	if ( rnode->FontSizePx < 1 )
 		return;
 
-	bool subPixel = nuGlobal()->EnableSubpixelText && rnode->FontSizePx <= nuGlobal()->MaxSubpixelGlyphSize;
+	bool subPixel = xoGlobal()->EnableSubpixelText && rnode->FontSizePx <= xoGlobal()->MaxSubpixelGlyphSize;
 	if ( subPixel )
-		rnode->Flags |= nuRenderDomText::FlagSubPixelGlyphs;
+		rnode->Flags |= xoRenderDomText::FlagSubPixelGlyphs;
 
 	TempText.Node = &node;
 	TempText.RNode = rnode;
@@ -241,11 +241,11 @@ void nuLayout::RunText( NodeState& s, const nuDomText& node, nuRenderDomText* rn
 		GenerateTextOutput( s, TempText );
 }
 
-void nuLayout::GenerateTextWords( NodeState& s, TextRunState& ts )
+void xoLayout::GenerateTextWords( NodeState& s, TextRunState& ts )
 {
 	const char* txt = ts.Node->GetText();
-	nuGlyphCache* glyphCache = nuGlobal()->GlyphCache;
-	nuGlyphCacheKey key = MakeGlyphCacheKey( ts.RNode );
+	xoGlyphCache* glyphCache = xoGlobal()->GlyphCache;
+	xoGlyphCacheKey key = MakeGlyphCacheKey( ts.RNode );
 
 	ts.GlyphsNeeded = false;
 	bool onSpace = false;
@@ -267,7 +267,7 @@ void nuLayout::GenerateTextWords( NodeState& s, TextRunState& ts )
 		if ( txt[i] == 0 )
 			break;
 		key.Char = txt[i];
-		const nuGlyph* glyph = glyphCache->GetGlyph( key );
+		const xoGlyph* glyph = glyphCache->GetGlyph( key );
 		if ( !glyph )
 		{
 			ts.GlyphsNeeded = true;
@@ -280,7 +280,7 @@ void nuLayout::GenerateTextWords( NodeState& s, TextRunState& ts )
 			continue;
 		}
 		ts.GlyphCount++;
-		word.Width += nuRealToPos( glyph->MetricLinearHoriAdvance );
+		word.Width += xoRealToPos( glyph->MetricLinearHoriAdvance );
 	}
 }
 
@@ -307,34 +307,34 @@ descender   X  |                    X              |             X
           
 
 */
-void nuLayout::GenerateTextOutput( NodeState& s, TextRunState& ts )
+void xoLayout::GenerateTextOutput( NodeState& s, TextRunState& ts )
 {
 	const char* txt = ts.Node->GetText();
-	nuGlyphCache* glyphCache = nuGlobal()->GlyphCache;
-	nuGlyphCacheKey key = MakeGlyphCacheKey( ts.RNode );
-	const nuFont* font = Fonts.GetByFontID( ts.RNode->FontID );
+	xoGlyphCache* glyphCache = xoGlobal()->GlyphCache;
+	xoGlyphCacheKey key = MakeGlyphCacheKey( ts.RNode );
+	const xoFont* font = Fonts.GetByFontID( ts.RNode->FontID );
 
-	nuPos fontHeightRounded = nuRealToPos( ts.RNode->FontSizePx );
-	nuPos fontAscender = nuRealx256ToPos( font->Ascender_x256 * ts.RNode->FontSizePx );
-	nuTextAlignVertical valign = Stack.Get( nuCatText_Align_Vertical ).GetTextAlignVertical();
+	xoPos fontHeightRounded = xoRealToPos( ts.RNode->FontSizePx );
+	xoPos fontAscender = xoRealx256ToPos( font->Ascender_x256 * ts.RNode->FontSizePx );
+	xoTextAlignVertical valign = Stack.Get( xoCatText_Align_Vertical ).GetTextAlignVertical();
 	
 	// if we add a "line-height" style then we'll want to multiply that by this
-	nuPos lineHeight = nuRealx256ToPos( ts.RNode->FontSizePx * font->LineHeight_x256 ); 
-	if ( nuGlobal()->RoundLineHeights )
-		lineHeight = nuPosRoundUp( lineHeight );
+	xoPos lineHeight = xoRealx256ToPos( ts.RNode->FontSizePx * font->LineHeight_x256 ); 
+	if ( xoGlobal()->RoundLineHeights )
+		lineHeight = xoPosRoundUp( lineHeight );
 
 	int fontHeightPx = ts.RNode->FontSizePx;
 	ts.RNode->Text.reserve( ts.GlyphCount );
 	bool parentHasWidth = s.ParentContentBoxHasWidth;
-	bool enableKerning = nuGlobal()->EnableKerning;
+	bool enableKerning = xoGlobal()->EnableKerning;
 
-	nuPos baseline = 0;
-	if ( valign == nuTextAlignVerticalTop || s.PosBaselineY == nuPosNULL )		baseline = s.PosY + fontAscender;
-	else if ( valign == nuTextAlignVerticalBaseline )							baseline = s.PosBaselineY;
-	else																		NUTODO;
+	xoPos baseline = 0;
+	if ( valign == xoTextAlignVerticalTop || s.PosBaselineY == xoPosNULL )		baseline = s.PosY + fontAscender;
+	else if ( valign == xoTextAlignVerticalBaseline )							baseline = s.PosBaselineY;
+	else																		XOTODO;
 	
 	// First text in the line defines the baseline
-	if ( s.PosBaselineY == nuPosNULL )
+	if ( s.PosBaselineY == xoPosNULL )
 		s.PosBaselineY = baseline;
 
 	for ( intp iword = 0; iword < ts.Words.size(); iword++ )
@@ -358,7 +358,7 @@ void nuLayout::GenerateTextOutput( NodeState& s, TextRunState& ts )
 
 		if ( isSpace )
 		{
-			s.PosX += nuRealx256ToPos( font->LinearHoriAdvance_Space_x256 ) * fontHeightPx;
+			s.PosX += xoRealx256ToPos( font->LinearHoriAdvance_Space_x256 ) * fontHeightPx;
 		}
 		else if ( isNewline )
 		{
@@ -367,11 +367,11 @@ void nuLayout::GenerateTextOutput( NodeState& s, TextRunState& ts )
 		}
 		else
 		{
-			const nuGlyph* prevGlyph = nullptr;
+			const xoGlyph* prevGlyph = nullptr;
 			for ( intp i = word.Start; i < word.End; i++ )
 			{
 				key.Char = txt[i];
-				const nuGlyph* glyph = glyphCache->GetGlyph( key );
+				const xoGlyph* glyph = glyphCache->GetGlyph( key );
 				__analysis_assume( glyph != nullptr );
 				if ( glyph->IsNull() )
 					continue;
@@ -382,62 +382,62 @@ void nuLayout::GenerateTextOutput( NodeState& s, TextRunState& ts )
 					// be better off caching the kerning for frequent pairs of glyphs in a hash table.
 					FT_Vector kern;
 					FT_Get_Kerning( font->FTFace, prevGlyph->FTGlyphIndex, glyph->FTGlyphIndex, FT_KERNING_UNSCALED, &kern );
-					nuPos kerning = ((kern.x * fontHeightPx) << nuPosShift) / font->FTFace->units_per_EM;
+					xoPos kerning = ((kern.x * fontHeightPx) << xoPosShift) / font->FTFace->units_per_EM;
 					s.PosX += kerning;
 				}
 				ts.RNode->Text.Count++;
-				nuRenderCharEl& rtxt = ts.RNode->Text.back();
+				xoRenderCharEl& rtxt = ts.RNode->Text.back();
 				rtxt.Char = key.Char;
-				rtxt.X = s.PosX + nuRealx256ToPos( glyph->MetricLeftx256 );
-				rtxt.Y = baseline - nuRealToPos( glyph->MetricTop );			// rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
-				s.PosX += nuRealToPos( glyph->MetricLinearHoriAdvance );
-				s.PosMaxX = nuMax( s.PosMaxX, s.PosX );
+				rtxt.X = s.PosX + xoRealx256ToPos( glyph->MetricLeftx256 );
+				rtxt.Y = baseline - xoRealToPos( glyph->MetricTop );			// rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
+				s.PosX += xoRealToPos( glyph->MetricLinearHoriAdvance );
+				s.PosMaxX = xoMax( s.PosMaxX, s.PosX );
 				prevGlyph = glyph;
 			}
 		}
-		s.PosMaxY = nuMax( s.PosMaxY, baseline - fontAscender + lineHeight );
+		s.PosMaxY = xoMax( s.PosMaxY, baseline - fontAscender + lineHeight );
 	}
 }
 
-void nuLayout::NextLine( NodeState& s )
+void xoLayout::NextLine( NodeState& s )
 {
 	s.PosX = s.ParentContentBox.Left;
 	s.PosY = s.PosMaxY;
-	s.PosBaselineY = nuPosNULL;
+	s.PosBaselineY = xoPosNULL;
 }
 
-nuPoint nuLayout::PositionBlock( NodeState& s, nuBox& marginBox )
+xoPoint xoLayout::PositionBlock( NodeState& s, xoBox& marginBox )
 {
-	NUASSERTDEBUG(s.ParentContentBoxHasWidth);
+	XOASSERTDEBUG(s.ParentContentBoxHasWidth);
 	
-	nuPoint offset(0,0);
+	xoPoint offset(0,0);
 
 	// Going to next line is futile if this block is as far to the left as possible
 	const bool futile = marginBox.Left == s.ParentContentBox.Left;
 	if ( marginBox.Right > s.ParentContentBox.Right && !futile )
 	{
 		// Block does not fit on this line, it must move onto the next line.
-		NUTRACE_LAYOUT_VERBOSE( "Layout block does not fit %d,%d\n", s.PosX, s.PosY );
+		XOTRACE_LAYOUT_VERBOSE( "Layout block does not fit %d,%d\n", s.PosX, s.PosY );
 		NextLine( s );
-		offset = nuPoint( s.PosX - marginBox.Left, s.PosY - marginBox.Top );
+		offset = xoPoint( s.PosX - marginBox.Left, s.PosY - marginBox.Top );
 		marginBox.Offset( offset.X, offset.Y );
 	}
 	else
 	{
-		NUTRACE_LAYOUT_VERBOSE( "Layout block fits %d,%d\n", s.PosX, s.PosY );
+		XOTRACE_LAYOUT_VERBOSE( "Layout block fits %d,%d\n", s.PosX, s.PosY );
 	}
 	s.PosX = marginBox.Right;
 	return offset;
 }
 
-void nuLayout::OffsetRecursive( nuRenderDomNode* rnode, nuPoint offset )
+void xoLayout::OffsetRecursive( xoRenderDomNode* rnode, xoPoint offset )
 {
 	rnode->Pos.Offset( offset );
 	for ( intp i = 0; i < rnode->Children.size(); i++ )
 	{
-		if ( rnode->Children[i]->Tag == nuTagText )
+		if ( rnode->Children[i]->Tag == xoTagText )
 		{
-			nuRenderDomText* txt = static_cast<nuRenderDomText*>(rnode->Children[i]);
+			xoRenderDomText* txt = static_cast<xoRenderDomText*>(rnode->Children[i]);
 			for ( intp j = 0; j < txt->Text.size(); j++ )
 			{
 				txt->Text[j].X += offset.X;
@@ -446,70 +446,70 @@ void nuLayout::OffsetRecursive( nuRenderDomNode* rnode, nuPoint offset )
 		}
 		else
 		{
-			nuRenderDomNode* node = static_cast<nuRenderDomNode*>(rnode->Children[i]);
+			xoRenderDomNode* node = static_cast<xoRenderDomNode*>(rnode->Children[i]);
 			OffsetRecursive( node, offset );
 		}
 	}
 }
 
-bool nuLayout::IsSpace( int ch )
+bool xoLayout::IsSpace( int ch )
 {
 	return ch == 32;
 }
 
-bool nuLayout::IsLinebreak( int ch )
+bool xoLayout::IsLinebreak( int ch )
 {
 	return ch == '\r' || ch == '\n';
 }
 
-nuGlyphCacheKey	nuLayout::MakeGlyphCacheKey( nuRenderDomText* rnode )
+xoGlyphCacheKey	xoLayout::MakeGlyphCacheKey( xoRenderDomText* rnode )
 {
-	uint8 glyphFlags = rnode->IsSubPixel() ? nuGlyphFlag_SubPixel_RGB : 0;
-	return nuGlyphCacheKey( rnode->FontID, 0, rnode->FontSizePx, glyphFlags );
+	uint8 glyphFlags = rnode->IsSubPixel() ? xoGlyphFlag_SubPixel_RGB : 0;
+	return xoGlyphCacheKey( rnode->FontID, 0, rnode->FontSizePx, glyphFlags );
 }
 
-void nuLayout::RenderGlyphsNeeded()
+void xoLayout::RenderGlyphsNeeded()
 {
 	for ( auto it = GlyphsNeeded.begin(); it != GlyphsNeeded.end(); it++ )
-		nuGlobal()->GlyphCache->RenderGlyph( *it );
+		xoGlobal()->GlyphCache->RenderGlyph( *it );
 	GlyphsNeeded.clear();
 }
 
-nuPos nuLayout::ComputeDimension( nuPos container, bool isContainerDefined, nuStyleCategories cat )
+xoPos xoLayout::ComputeDimension( xoPos container, bool isContainerDefined, xoStyleCategories cat )
 {
 	return ComputeDimension( container, isContainerDefined, Stack.Get( cat ).GetSize() );
 }
 
-nuPos nuLayout::ComputeDimension( nuPos container, bool isContainerDefined, nuSize size )
+xoPos xoLayout::ComputeDimension( xoPos container, bool isContainerDefined, xoSize size )
 {
 	switch ( size.Type )
 	{
-	case nuSize::NONE: return nuPosNULL;
-	case nuSize::PX: return nuRealToPos( size.Val );
-	case nuSize::PT: return nuRealToPos( size.Val * PtToPixel );
-	case nuSize::EP: return nuRealToPos( size.Val * EpToPixel );
-	case nuSize::PERCENT:
-		if ( container == nuPosNULL || !isContainerDefined )
-			return nuPosNULL;
+	case xoSize::NONE: return xoPosNULL;
+	case xoSize::PX: return xoRealToPos( size.Val );
+	case xoSize::PT: return xoRealToPos( size.Val * PtToPixel );
+	case xoSize::EP: return xoRealToPos( size.Val * EpToPixel );
+	case xoSize::PERCENT:
+		if ( container == xoPosNULL || !isContainerDefined )
+			return xoPosNULL;
 		else
-			return nuPos((float) container * (size.Val * 0.01f));
-	default: NUPANIC("Unrecognized size type"); return 0;
+			return xoPos((float) container * (size.Val * 0.01f));
+	default: XOPANIC("Unrecognized size type"); return 0;
 	}
 }
 
-nuBox nuLayout::ComputeSpecifiedPosition( const NodeState& s )
+xoBox xoLayout::ComputeSpecifiedPosition( const NodeState& s )
 {
-	//nuBox reference = s.PositionedAncestor;
-	nuBox reference = s.ParentContentBox;
-	nuBox box = reference;
+	//xoBox reference = s.PositionedAncestor;
+	xoBox reference = s.ParentContentBox;
+	xoBox box = reference;
 	bool refWidthDefined = s.ParentContentBoxHasWidth;
 	bool refHeightDefined = s.ParentContentBoxHasHeight;
-	auto left = Stack.Get( nuCatLeft );
-	auto right = Stack.Get( nuCatRight );
-	auto top = Stack.Get( nuCatTop );
-	auto bottom = Stack.Get( nuCatBottom );
-	auto width = Stack.Get( nuCatWidth );
-	auto height = Stack.Get( nuCatHeight );
+	auto left = Stack.Get( xoCatLeft );
+	auto right = Stack.Get( xoCatRight );
+	auto top = Stack.Get( xoCatTop );
+	auto bottom = Stack.Get( xoCatBottom );
+	auto width = Stack.Get( xoCatWidth );
+	auto height = Stack.Get( xoCatHeight );
 	if ( !left.IsNull() )	box.Left = reference.Left + ComputeDimension( reference.Width(), refWidthDefined, left.GetSize() );
 	if ( !right.IsNull() )	box.Right = reference.Right + ComputeDimension( reference.Width(), refWidthDefined, right.GetSize() );
 	if ( !top.IsNull() )	box.Top = reference.Top + ComputeDimension( reference.Height(), refHeightDefined, top.GetSize() );
@@ -521,23 +521,23 @@ nuBox nuLayout::ComputeSpecifiedPosition( const NodeState& s )
 	return box;
 }
 
-void nuLayout::ComputeRelativeOffset( const NodeState& s, nuBox& box )
+void xoLayout::ComputeRelativeOffset( const NodeState& s, xoBox& box )
 {
-	NUTODO;
-	//auto left = Stack.Get( nuCatLeft );
-	//auto top = Stack.Get( nuCatTop );
+	XOTODO;
+	//auto left = Stack.Get( xoCatLeft );
+	//auto top = Stack.Get( xoCatTop );
 	//if ( !left.IsNull() )		box.Left += ComputeDimension( s.ParentContentBox.Width(), s.ParentContentBoxHasWidth, left.GetSize() );
 	//if ( !top.IsNull() )		box.Top += ComputeDimension( s.ParentContentBox.Height(), s.ParentContentBoxHasHeight, top.GetSize() );
 }
 
-nuBox nuLayout::ComputeBox( nuBox container, bool widthDefined, bool heightDefined, nuStyleCategories cat )
+xoBox xoLayout::ComputeBox( xoBox container, bool widthDefined, bool heightDefined, xoStyleCategories cat )
 {
 	return ComputeBox( container, widthDefined, heightDefined, Stack.GetBox( cat ) );
 }
 
-nuBox nuLayout::ComputeBox( nuBox container, bool widthDefined, bool heightDefined, nuStyleBox box )
+xoBox xoLayout::ComputeBox( xoBox container, bool widthDefined, bool heightDefined, xoStyleBox box )
 {
-	nuBox b;
+	xoBox b;
 	b.Left = ComputeDimension( container.Width(), widthDefined, box.Left );
 	b.Right = ComputeDimension( container.Width(), widthDefined, box.Right );
 	b.Top = ComputeDimension( container.Height(), heightDefined, box.Top );

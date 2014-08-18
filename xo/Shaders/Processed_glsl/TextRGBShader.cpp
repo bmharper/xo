@@ -1,13 +1,13 @@
 #include "pch.h"
-#if NU_BUILD_OPENGL
+#if XO_BUILD_OPENGL
 #include "TextRGBShader.h"
 
-nuGLProg_TextRGB::nuGLProg_TextRGB()
+xoGLProg_TextRGB::xoGLProg_TextRGB()
 {
 	Reset();
 }
 
-void nuGLProg_TextRGB::Reset()
+void xoGLProg_TextRGB::Reset()
 {
 	ResetBase();
 	v_mvproj = -1;
@@ -18,7 +18,7 @@ void nuGLProg_TextRGB::Reset()
 	v_tex0 = -1;
 }
 
-const char* nuGLProg_TextRGB::VertSrc()
+const char* xoGLProg_TextRGB::VertSrc()
 {
 	return
 	"uniform		mat4	mvproj;\n"
@@ -39,12 +39,12 @@ const char* nuGLProg_TextRGB::VertSrc()
 ;
 }
 
-const char* nuGLProg_TextRGB::FragSrc()
+const char* xoGLProg_TextRGB::FragSrc()
 {
 	return
 	"#version 130\n"
 	"\n"
-	"#ifdef NU_PLATFORM_ANDROID\n"
+	"#ifdef XO_PLATFORM_ANDROID\n"
 	"precision mediump float;\n"
 	"#endif\n"
 	"\n"
@@ -65,7 +65,7 @@ const char* nuGLProg_TextRGB::FragSrc()
 	"out		vec4		outputColor1;\n"
 	"void main()\n"
 	"{\n"
-	"	float offset = 1.0 / NU_GLYPH_ATLAS_SIZE;\n"
+	"	float offset = 1.0 / XO_GLYPH_ATLAS_SIZE;\n"
 	"	vec2 uv = texuv0;\n"
 	"\n"
 	"	float tap0 = texture2D(tex0, vec2(clamp(uv.s - offset * 3.0, texClamp.x, texClamp.z), uv.t)).r;\n"
@@ -104,13 +104,13 @@ const char* nuGLProg_TextRGB::FragSrc()
 ;
 }
 
-const char* nuGLProg_TextRGB::Name()
+const char* xoGLProg_TextRGB::Name()
 {
 	return "TextRGB";
 }
 
 
-bool nuGLProg_TextRGB::LoadVariablePositions()
+bool xoGLProg_TextRGB::LoadVariablePositions()
 {
 	int nfail = 0;
 
@@ -121,20 +121,20 @@ bool nuGLProg_TextRGB::LoadVariablePositions()
 	nfail += (v_vtexClamp = glGetAttribLocation( Prog, "vtexClamp" )) == -1;
 	nfail += (v_tex0 = glGetUniformLocation( Prog, "tex0" )) == -1;
 	if ( nfail != 0 )
-		NUTRACE( "Failed to bind %d variables of shader TextRGB\n", nfail );
+		XOTRACE( "Failed to bind %d variables of shader TextRGB\n", nfail );
 
 	return nfail == 0;
 }
 
-uint32 nuGLProg_TextRGB::PlatformMask()
+uint32 xoGLProg_TextRGB::PlatformMask()
 {
-	return nuPlatform_WinDesktop | nuPlatform_LinuxDesktop;
+	return xoPlatform_WinDesktop | xoPlatform_LinuxDesktop;
 }
 
-nuVertexType nuGLProg_TextRGB::VertexType()
+xoVertexType xoGLProg_TextRGB::VertexType()
 {
-	return nuVertexType_NULL;
+	return xoVertexType_NULL;
 }
 
-#endif // NU_BUILD_OPENGL
+#endif // XO_BUILD_OPENGL
 

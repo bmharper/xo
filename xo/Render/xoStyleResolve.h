@@ -1,14 +1,14 @@
 #pragma once
 
-#include "../nuDoc.h"
-#include "nuRenderDomEl.h"
+#include "../xoDoc.h"
+#include "xoRenderDomEl.h"
 
-class nuRenderStack;
+class xoRenderStack;
 
 /* This is responsible for producing an exact list of style attributes for every DOM element.
 
 [This whole rambling on parallelizing this was from before the time that I
-created the nuRenderStack. The parallelization discussion now belongs at a higher
+created the xoRenderStack. The parallelization discussion now belongs at a higher
 level than just here]
 
 I'm not sure how best to parallelize this. I suspect there is some well known algorithm
@@ -31,14 +31,14 @@ NOTE: All of the protected functions assume that the style busy being resolved i
 of the stack. Our only public function "Resolve" adds this blank style to the top of the stack
 before passing control to the other functions.
 */
-class NUAPI nuStyleResolver
+class XOAPI xoStyleResolver
 {
 public:
 	// Resolves the given node, and places its style on the top of the stack
-	static void		ResolveAndPush( nuRenderStack& stack, const nuDomNode* node );
+	static void		ResolveAndPush( xoRenderStack& stack, const xoDomNode* node );
 
 protected:
-	static void		Set( nuRenderStack& stack, const nuDomEl* node, intp n, const nuStyleAttrib* vals );
-	static void		Set( nuRenderStack& stack, const nuDomEl* node, const nuStyle& style );
-	static void		SetInherited( nuRenderStack& stack, const nuDomEl* node, nuStyleCategories cat );
+	static void		Set( xoRenderStack& stack, const xoDomEl* node, intp n, const xoStyleAttrib* vals );
+	static void		Set( xoRenderStack& stack, const xoDomEl* node, const xoStyle& style );
+	static void		SetInherited( xoRenderStack& stack, const xoDomEl* node, xoStyleCategories cat );
 };

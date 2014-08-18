@@ -1,28 +1,28 @@
 #include "pch.h"
-#include "nuSysWnd.h"
-#include "nuDocGroup.h"
-#include "nuDoc.h"
-#include "Render/nuRenderGL.h"
-#include "Render/nuRenderDX.h"
+#include "xoSysWnd.h"
+#include "xoDocGroup.h"
+#include "xoDoc.h"
+#include "Render/xoRenderGL.h"
+#include "Render/xoRenderDX.h"
 
-static const char*		WClass = "nuDom";
+static const char*		WClass = "xo";
 
-#if NU_PLATFORM_ANDROID
-nuSysWnd*				SingleMainWnd = NULL;
-#elif NU_PLATFORM_LINUX_DESKTOP
+#if XO_PLATFORM_ANDROID
+xoSysWnd*				SingleMainWnd = NULL;
+#elif XO_PLATFORM_LINUX_DESKTOP
 // TODO: multiple windows
-nuSysWnd*				SingleMainWnd = NULL;
+xoSysWnd*				SingleMainWnd = NULL;
 #endif
 
-void nuSysWnd::PlatformInitialize()
+void xoSysWnd::PlatformInitialize()
 {
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	WNDCLASSEX wcex;
 
 	wcex.cbSize = sizeof(WNDCLASSEX);
 
 	wcex.style			= 0;//CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-	wcex.lpfnWndProc	= nuDocGroup::StaticWndProc;
+	wcex.lpfnWndProc	= xoDocGroup::StaticWndProc;
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
 	wcex.hInstance		= GetModuleHandle(NULL);
@@ -34,21 +34,21 @@ void nuSysWnd::PlatformInitialize()
 	wcex.hIconSm		= NULL;
 
 	ATOM wclass_atom = RegisterClassEx(&wcex);
-#elif NU_PLATFORM_ANDROID
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_ANDROID
+#elif XO_PLATFORM_LINUX_DESKTOP
 #else
-	NUTODO_STATIC
+	XOTODO_STATIC
 #endif
 }
 
-nuSysWnd::nuSysWnd()
+xoSysWnd::xoSysWnd()
 {
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	SysWnd = NULL;
-#elif NU_PLATFORM_ANDROID
+#elif XO_PLATFORM_ANDROID
 	SingleMainWnd = this;
-	RelativeClientRect = nuBox(0,0,0,0);
-#elif NU_PLATFORM_LINUX_DESKTOP
+	RelativeClientRect = xoBox(0,0,0,0);
+#elif XO_PLATFORM_LINUX_DESKTOP
 	XDisplay = NULL;
 	//XWindowRoot = NULL;
 	VisualInfo = NULL;
@@ -59,16 +59,16 @@ nuSysWnd::nuSysWnd()
 	//WindowAttributes = NULL;
 	//Event = NULL;
 #else
-	NUTODO_STATIC
+	XOTODO_STATIC
 #endif
-	DocGroup = new nuDocGroup();
+	DocGroup = new xoDocGroup();
 	DocGroup->Wnd = this;
 	Renderer = NULL;
 }
 
-nuSysWnd::~nuSysWnd()
+xoSysWnd::~xoSysWnd()
 {
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	if ( Renderer )
 	{
 		Renderer->DestroyDevice( *this );
@@ -76,9 +76,9 @@ nuSysWnd::~nuSysWnd()
 		Renderer = NULL;
 	}
 	DestroyWindow( SysWnd );
-#elif NU_PLATFORM_ANDROID
+#elif XO_PLATFORM_ANDROID
 	SingleMainWnd = NULL;
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_LINUX_DESKTOP
 	if ( XDisplay != nullptr )
 	{
 		glXMakeCurrent( XDisplay, None, NULL );
@@ -88,19 +88,19 @@ nuSysWnd::~nuSysWnd()
 	}
 	SingleMainWnd = NULL;
 #else
-	NUTODO_STATIC
+	XOTODO_STATIC
 #endif
-	nuGlobal()->DocRemoveQueue.Add( DocGroup );
+	xoGlobal()->DocRemoveQueue.Add( DocGroup );
 	DocGroup = NULL;
 }
 
-nuSysWnd* nuSysWnd::Create()
+xoSysWnd* xoSysWnd::Create()
 {
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	bool ok = false;
-	nuSysWnd* w = new nuSysWnd();
-	NUTRACE("DocGroup = %p\n", w->DocGroup);
-	w->SysWnd = CreateWindow( WClass, "nuDom", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup );
+	xoSysWnd* w = new xoSysWnd();
+	XOTRACE("DocGroup = %p\n", w->DocGroup);
+	w->SysWnd = CreateWindow( WClass, "xo", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup );
 	if ( w->SysWnd )
 	{
 		if ( w->InitializeRenderer() )
@@ -112,26 +112,26 @@ nuSysWnd* nuSysWnd::Create()
 		w = NULL;
 	}
 	return w;
-#elif NU_PLATFORM_ANDROID
-	nuSysWnd* w = new nuSysWnd();
+#elif XO_PLATFORM_ANDROID
+	xoSysWnd* w = new xoSysWnd();
 	w->InitializeRenderer();
 	return w;
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_LINUX_DESKTOP
 	GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None };
-	nuSysWnd* w = new nuSysWnd();
+	xoSysWnd* w = new xoSysWnd();
 	w->XDisplay = XOpenDisplay( NULL );
-	if ( w->XDisplay == NULL ) { NUTRACE("Cannot connect to X server\n" ); delete w; return nullptr; }
+	if ( w->XDisplay == NULL ) { XOTRACE("Cannot connect to X server\n" ); delete w; return nullptr; }
 	w->XWindowRoot = DefaultRootWindow( w->XDisplay );
 	w->VisualInfo = glXChooseVisual( w->XDisplay, 0, att );
-	if ( w->VisualInfo == NULL ) { NUTRACE("no appropriate visual found\n" ); delete w; return nullptr; }
-	NUTRACE( "visual %p selected\n", (void*) w->VisualInfo->visualid );
+	if ( w->VisualInfo == NULL ) { XOTRACE("no appropriate visual found\n" ); delete w; return nullptr; }
+	XOTRACE( "visual %p selected\n", (void*) w->VisualInfo->visualid );
 	w->ColorMap = XCreateColormap( w->XDisplay, w->XWindowRoot, w->VisualInfo->visual, AllocNone );
 	XSetWindowAttributes swa;
 	swa.colormap = w->ColorMap;
 	swa.event_mask = ExposureMask | KeyPressMask | PointerMotionMask;
 	w->XWindow = XCreateWindow( w->XDisplay, w->XWindowRoot, 0, 0, 600, 600, 0, w->VisualInfo->depth, InputOutput, w->VisualInfo->visual, CWColormap | CWEventMask, &swa );
 	XMapWindow( w->XDisplay, w->XWindow );
-	XStoreName( w->XDisplay, w->XWindow, "nudom" );
+	XStoreName( w->XDisplay, w->XWindow, "xo" );
 	w->GLContext = glXCreateContext( w->XDisplay, w->VisualInfo, NULL, GL_TRUE );
 	glXMakeCurrent( w->XDisplay, w->XWindow, w->GLContext );
  	w->InitializeRenderer();
@@ -139,43 +139,43 @@ nuSysWnd* nuSysWnd::Create()
 	SingleMainWnd = w;
 	return w;
 #else
-	NUTODO_STATIC
+	XOTODO_STATIC
 #endif
 }
 
-nuSysWnd* nuSysWnd::CreateWithDoc()
+xoSysWnd* xoSysWnd::CreateWithDoc()
 {
-	nuSysWnd* w = Create();
+	xoSysWnd* w = Create();
 	if ( !w )
 		return NULL;
-	w->Attach( new nuDoc(), true );
-	nuGlobal()->DocAddQueue.Add( w->DocGroup );
+	w->Attach( new xoDoc(), true );
+	xoGlobal()->DocAddQueue.Add( w->DocGroup );
 	return w;
 }
 
-void nuSysWnd::Show()
+void xoSysWnd::Show()
 {
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	ShowWindow( SysWnd, SW_SHOW );
-#elif NU_PLATFORM_ANDROID
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_ANDROID
+#elif XO_PLATFORM_LINUX_DESKTOP
 #else
-	NUTODO_STATIC
+	XOTODO_STATIC
 #endif
 }
 
-nuDoc* nuSysWnd::Doc()
+xoDoc* xoSysWnd::Doc()
 {
 	return DocGroup->Doc;
 }
 
-void nuSysWnd::Attach( nuDoc* doc, bool destroyDocWithGroup )
+void xoSysWnd::Attach( xoDoc* doc, bool destroyDocWithGroup )
 {
 	DocGroup->Doc = doc;
 	DocGroup->DestroyDocWithGroup = destroyDocWithGroup;
 }
 
-bool nuSysWnd::BeginRender()
+bool xoSysWnd::BeginRender()
 {
 	if ( Renderer )
 		return Renderer->BeginRender( *this );
@@ -183,84 +183,84 @@ bool nuSysWnd::BeginRender()
 		return false;
 }
 
-void nuSysWnd::EndRender()
+void xoSysWnd::EndRender()
 {
 	if ( Renderer )
 		Renderer->EndRender( *this );
 }
 
-void nuSysWnd::SurfaceLost()
+void xoSysWnd::SurfaceLost()
 {
 	if ( Renderer )
 		Renderer->SurfaceLost();
 }
 
-void nuSysWnd::SetPosition( nuBox box, uint setPosFlags )
+void xoSysWnd::SetPosition( xoBox box, uint setPosFlags )
 {
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	uint wflags = SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE;
 	if ( !!(setPosFlags & SetPosition_Move) ) wflags = wflags & ~SWP_NOMOVE;
 	if ( !!(setPosFlags & SetPosition_Size) ) wflags = wflags & ~SWP_NOSIZE;
 	SetWindowPos( SysWnd, NULL, box.Left, box.Top, box.Width(), box.Height(), wflags );
-#elif NU_PLATFORM_ANDROID
-#elif NU_PLATFORM_LINUX_DESKTOP
-	NUTRACE( "nuSysWnd.SetPosition is not implemented\n" );
+#elif XO_PLATFORM_ANDROID
+#elif XO_PLATFORM_LINUX_DESKTOP
+	XOTRACE( "xoSysWnd.SetPosition is not implemented\n" );
 #else
-	NUTODO_STATIC
+	XOTODO_STATIC
 #endif
 }
 
-nuBox nuSysWnd::GetRelativeClientRect()
+xoBox xoSysWnd::GetRelativeClientRect()
 {
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	RECT r;
 	POINT p0 = {0,0};
 	ClientToScreen( SysWnd, &p0 );
 	GetClientRect( SysWnd, &r );
-	nuBox box = r;
+	xoBox box = r;
 	box.Offset( p0.x, p0.y );
 	return box;
-#elif NU_PLATFORM_ANDROID
+#elif XO_PLATFORM_ANDROID
 	return RelativeClientRect;
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_LINUX_DESKTOP
 	XWindowAttributes wa;
 	XGetWindowAttributes( XDisplay, XWindow, &wa );
-	return nuBox( wa.x, wa.y, wa.x + wa.width, wa.y + wa.height );
+	return xoBox( wa.x, wa.y, wa.x + wa.width, wa.y + wa.height );
 #else
-	NUTODO_STATIC
+	XOTODO_STATIC
 #endif
 }
 
-bool nuSysWnd::InitializeRenderer()
+bool xoSysWnd::InitializeRenderer()
 {
-#if NU_PLATFORM_WIN_DESKTOP
-	if ( nuGlobal()->PreferOpenGL )
+#if XO_PLATFORM_WIN_DESKTOP
+	if ( xoGlobal()->PreferOpenGL )
 	{
-		if ( InitializeRenderer_Any<nuRenderGL>( Renderer ) )
+		if ( InitializeRenderer_Any<xoRenderGL>( Renderer ) )
 			return true;
-		if ( InitializeRenderer_Any<nuRenderDX>( Renderer ) )
+		if ( InitializeRenderer_Any<xoRenderDX>( Renderer ) )
 			return true;
 	}
 	else
 	{
-		if ( InitializeRenderer_Any<nuRenderDX>( Renderer ) )
+		if ( InitializeRenderer_Any<xoRenderDX>( Renderer ) )
 			return true;
-		if ( InitializeRenderer_Any<nuRenderGL>( Renderer ) )
+		if ( InitializeRenderer_Any<xoRenderGL>( Renderer ) )
 			return true;
 	}
 	return false;
 #else
-	InitializeRenderer_Any<nuRenderGL>( Renderer );
+	InitializeRenderer_Any<xoRenderGL>( Renderer );
 #endif
 }
 
 template<typename TRenderer>
-bool nuSysWnd::InitializeRenderer_Any( nuRenderBase*& renderer )
+bool xoSysWnd::InitializeRenderer_Any( xoRenderBase*& renderer )
 {
 	renderer = new TRenderer();
 	if ( renderer->InitializeDevice( *this ) )
 	{
-		NUTRACE( "Successfully initialized %s renderer\n", renderer->RendererName() );
+		XOTRACE( "Successfully initialized %s renderer\n", renderer->RendererName() );
 		return true;
 	}
 	else

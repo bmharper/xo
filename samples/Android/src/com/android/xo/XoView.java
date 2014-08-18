@@ -1,4 +1,4 @@
-package com.android.nudom;
+package com.android.xo;
 
 import android.content.Context;
 import android.graphics.PixelFormat;
@@ -33,21 +33,21 @@ import javax.microedition.khronos.opengles.GL10;
  *   that matches it exactly (with regards to red/green/blue/alpha channels
  *   bit depths). Failure to do so would result in an EGL_BAD_MATCH error.
  */
-class NuView extends GLSurfaceView {
-    private static String TAG = "NuView";
+class XoView extends GLSurfaceView {
+    private static String TAG = "XoView";
     private static final boolean DEBUG = false;
     public static final int RENDER_RESULT_NEED_MORE = 0;
     public static final int RENDER_RESULT_IDLE = 1;
     
     public float scaledDensity;
 
-    public NuView(Context context, float scaledDensity) {
+    public XoView(Context context, float scaledDensity) {
         super(context);
     	this.scaledDensity = scaledDensity;
         init(false, 0, 0);
     }
 
-    public NuView(Context context, boolean translucent, int depth, int stencil) {
+    public XoView(Context context, boolean translucent, int depth, int stencil) {
         super(context);
         init(translucent, depth, stencil);
     }
@@ -78,7 +78,7 @@ class NuView extends GLSurfaceView {
                              new ConfigChooser(8, 8, 8, 0, depth, stencil) );
 
         /* Set the renderer responsible for frame rendering */
-        setRenderer(new NuRenderer(this));
+        setRenderer(new XoRenderer(this));
         setRenderMode(RENDERMODE_WHEN_DIRTY);
     }
 
@@ -290,25 +290,25 @@ class NuView extends GLSurfaceView {
         private int[] mValue = new int[1];
     }
 
-    private class NuRenderer implements GLSurfaceView.Renderer {
-    	public NuView myView;
+    private class XoRenderer implements GLSurfaceView.Renderer {
+    	public XoView myView;
     	
-    	public NuRenderer(NuView view) {
+    	public XoRenderer(XoView view) {
     		myView = view;
     	}
     	
         public void onSurfaceChanged(GL10 gl, int width, int height) {
-            NuLib.init(width, height, myView.scaledDensity);
+            XoLib.init(width, height, myView.scaledDensity);
         }
 
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         	// This is a 'surface lost' message.
-        	NuLib.surfacelost();
+        	XoLib.surfacelost();
         }
         
         public void onDrawFrame(GL10 gl) {
-        	int res = NuLib.step();
-        	if ( res == NuView.RENDER_RESULT_IDLE ) {
+        	int res = XoLib.step();
+        	if ( res == XoView.RENDER_RESULT_IDLE ) {
         		//Log.i("nu", "idle");
         		myView.setRenderMode(RENDERMODE_WHEN_DIRTY);
         	}

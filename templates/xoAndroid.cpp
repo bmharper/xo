@@ -1,15 +1,15 @@
-#include "../nudom/pch.h"
-#include "../nudom/nuDefs.h"
-#include "../nudom/nuDoc.h"
-#include "../nudom/Render/nuRenderer.h"
-#include "../nudom/Render/nuRenderGL.h"
-#include "../nudom/Render/nuRenderDoc.h"
-#include "../nudom/nuDocGroup.h"
-#include "../nudom/nuEvent.h"
-#include "../nudom/nuSysWnd.h"
+#include "../xo/pch.h"
+#include "../xo/xoDefs.h"
+#include "../xo/xoDoc.h"
+#include "../xo/Render/xoRenderer.h"
+#include "../xo/Render/xoRenderGL.h"
+#include "../xo/Render/xoRenderDoc.h"
+#include "../xo/xoDocGroup.h"
+#include "../xo/xoEvent.h"
+#include "../xo/xoSysWnd.h"
 #include <stdlib.h>
 
-#define  LOG_TAG    "nudom"
+#define  LOG_TAG    "xo"
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
@@ -17,27 +17,27 @@
 //static float		GREEN = 0;
 //static float		BLUE = 0;
 static bool			Initialized = false;
-//static nuRenderGL*	RGL = NULL;
-//static nuDocGroup*	Proc = NULL;
-extern nuSysWnd*	SingleMainWnd;
-void nuMain( nuMainEvent ev );
+//static xoRenderGL*	RGL = NULL;
+//static xoDocGroup*	Proc = NULL;
+extern xoSysWnd*	SingleMainWnd;
+void xoMain( xoMainEvent ev );
 
 #define CLAMP(a,mmin,mmax) (((a) < (mmin) ? (mmin) : ((a) > (mmax) ? (mmax) : (a))))
 
 extern "C" {
-    JNIEXPORT void	JNICALL Java_com_android_nudom_NuLib_init(JNIEnv * env, jobject obj,  jint width, jint height, jfloat scaledDensity);
-	JNIEXPORT void	JNICALL Java_com_android_nudom_NuLib_surfacelost(JNIEnv * env, jobject obj);
-    JNIEXPORT void	JNICALL Java_com_android_nudom_NuLib_destroy(JNIEnv * env, jint iskilling);
-    JNIEXPORT int	JNICALL Java_com_android_nudom_NuLib_step(JNIEnv * env, jobject obj);
-    JNIEXPORT void	JNICALL Java_com_android_nudom_NuLib_input(JNIEnv * env, jobject obj, jint type, jfloatArray x, jfloatArray y);
+    JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_init(JNIEnv * env, jobject obj,  jint width, jint height, jfloat scaledDensity);
+	JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_surfacelost(JNIEnv * env, jobject obj);
+    JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_destroy(JNIEnv * env, jint iskilling);
+    JNIEXPORT int	JNICALL Java_com_android_xo_XoLib_step(JNIEnv * env, jobject obj);
+    JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_input(JNIEnv * env, jobject obj, jint type, jfloatArray x, jfloatArray y);
 };
 
 // Right now our Android applications can have only one window, 
 // but we might have more windows if we were doing things such as
 // notifications or widgets.
-static nuEvent MakeEvent()
+static xoEvent MakeEvent()
 {
-	nuEvent e;
+	xoEvent e;
 	e.DocGroup = SingleMainWnd->DocGroup;
 	return e;
 }
@@ -46,11 +46,11 @@ static void ProcessAllEvents()
 {
 	while ( true )
 	{
-		nuProcessDocQueue();
-		if ( !AbcSemaphoreWait( nuGlobal()->EventQueue.SemaphoreObj(), 0 ) )
+		xoProcessDocQueue();
+		if ( !AbcSemaphoreWait( xoGlobal()->EventQueue.SemaphoreObj(), 0 ) )
 			break;
-		nuEvent ev;
-		NUVERIFY( nuGlobal()->EventQueue.PopTail( ev ) );
+		xoEvent ev;
+		XOVERIFY( xoGlobal()->EventQueue.PopTail( ev ) );
 		ev.DocGroup->ProcessEvent( ev );
 	}
 }
@@ -61,60 +61,60 @@ static void ProcessAllEvents()
 // It is good to keep it in this style, because it means that in future we can switch
 // to a purely native application, where we DO control the message loop, and we want
 // to process UI on a dedicated thread, the same as we do for Win32.
-static void PostEvent( const nuEvent& ev )
+static void PostEvent( const xoEvent& ev )
 {
-	nuGlobal()->EventQueue.Add( ev );
+	xoGlobal()->EventQueue.Add( ev );
 	ProcessAllEvents();
 }
 
-JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_init(JNIEnv * env, jobject obj, jint width, jint height, jfloat scaledDensity)
+JNIEXPORT void JNICALL Java_com_android_xo_XoLib_init(JNIEnv * env, jobject obj, jint width, jint height, jfloat scaledDensity)
 {
-    LOGI("NuLib_init 1 (%d, %d)", width, height);
+    LOGI("XoLib_init 1 (%d, %d)", width, height);
 	if ( !Initialized )
 	{
 		Initialized = true;
 	    
-		LOGI("NuLib_init 2");
-		nuInitialize();
+		LOGI("XoLib_init 2");
+		xoInitialize();
 
-		LOGI("NuLib_init scaledDensity = %f", scaledDensity);
-		nuGlobal()->EpToPixel = scaledDensity;
+		LOGI("XoLib_init scaledDensity = %f", scaledDensity);
+		xoGlobal()->EpToPixel = scaledDensity;
 
-		LOGI("NuLib_init 3");
-		nuMain( nuMainEventInit );
+		LOGI("XoLib_init 3");
+		xoMain( xoMainEventInit );
 	    
-		LOGI("NuLib_init 4");
+		LOGI("XoLib_init 4");
 	}
 	
 	if ( SingleMainWnd )
 	{
-		SingleMainWnd->RelativeClientRect = nuBox( 0, 0, width, height );
-		nuEvent ev = MakeEvent();
+		SingleMainWnd->RelativeClientRect = xoBox( 0, 0, width, height );
+		xoEvent ev = MakeEvent();
 		ev.MakeWindowSize( width, height );
 		PostEvent( ev );
-		LOGI("NuLib_init 5");
+		LOGI("XoLib_init 5");
 	}
 }
 
-JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_destroy(JNIEnv * env, jint iskilling)
+JNIEXPORT void JNICALL Java_com_android_xo_XoLib_destroy(JNIEnv * env, jint iskilling)
 {
 	if ( Initialized )
 	{
 		Initialized = false;
 	    LOGI("destroy");
-		nuMain( nuMainEventShutdown );
-		nuShutdown();
+		xoMain( xoMainEventShutdown );
+		xoShutdown();
 	}
 }
 
-JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_surfacelost(JNIEnv * env, jobject obj)
+JNIEXPORT void JNICALL Java_com_android_xo_XoLib_surfacelost(JNIEnv * env, jobject obj)
 {
-	LOGI("NuLib_surfacelost");
+	LOGI("XoLib_surfacelost");
 	if ( SingleMainWnd )
 		SingleMainWnd->SurfaceLost();
 }
 
-JNIEXPORT int JNICALL Java_com_android_nudom_NuLib_step(JNIEnv * env, jobject obj)
+JNIEXPORT int JNICALL Java_com_android_xo_XoLib_step(JNIEnv * env, jobject obj)
 {
 	if ( SingleMainWnd )
 	{
@@ -129,10 +129,10 @@ JNIEXPORT int JNICALL Java_com_android_nudom_NuLib_step(JNIEnv * env, jobject ob
 		//LOGI("render done");
 		return r;
 	}
-	return nuRenderResultNeedMore;
+	return xoRenderResultNeedMore;
 }
 
-JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_input(JNIEnv * env, jobject obj, jint type, jfloatArray x, jfloatArray y)
+JNIEXPORT void JNICALL Java_com_android_xo_XoLib_input(JNIEnv * env, jobject obj, jint type, jfloatArray x, jfloatArray y)
 {
     jfloat* xe = env->GetFloatArrayElements( x, 0 );
 	jfloat* ye = env->GetFloatArrayElements( y, 0 );
@@ -149,8 +149,8 @@ JNIEXPORT void JNICALL Java_com_android_nudom_NuLib_input(JNIEnv * env, jobject 
 	{
 	    //LOGI("dispatching touch input %d", type);
 
-		nuEvent ev = MakeEvent();
-		ev.Type = nuEventTouch;
+		xoEvent ev = MakeEvent();
+		ev.Type = xoEventTouch;
 		ev.PointCount = n;
 		for ( int i = 0; i < n; i++ )
 		{

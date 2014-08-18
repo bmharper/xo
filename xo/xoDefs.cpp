@@ -1,59 +1,59 @@
 #include "pch.h"
-#include "nuDefs.h"
-#include "nuDocGroup.h"
-#include "nuDoc.h"
-#include "nuSysWnd.h"
-#include "Render/nuRenderGL.h"
-#include "Text/nuFontStore.h"
-#include "Text/nuGlyphCache.h"
+#include "xoDefs.h"
+#include "xoDocGroup.h"
+#include "xoDoc.h"
+#include "xoSysWnd.h"
+#include "Render/xoRenderGL.h"
+#include "Text/xoFontStore.h"
+#include "Text/xoGlyphCache.h"
 
 static const int					MAX_WORKER_THREADS = 32;
 static volatile uint32				ExitSignalled = 0;
 static int							InitializeCount = 0;
-static nuStyle*						DefaultTagStyles[nuTagEND];
+static xoStyle*						DefaultTagStyles[xoTagEND];
 static AbcThreadHandle				WorkerThreads[MAX_WORKER_THREADS];
 
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 static AbcThreadHandle				UIThread = NULL;
 #endif
 
 // Single globally accessible data
-static nuGlobalStruct*				nuGlobals = NULL;
+static xoGlobalStruct*				xoGlobals = NULL;
 
-NUAPI size_t nuTexFormatChannelCount( nuTexFormat f )
+XOAPI size_t xoTexFormatChannelCount( xoTexFormat f )
 {
 	switch ( f )
 	{
-	case nuTexFormatInvalid:	return 0;
-	case nuTexFormatRGBA8:		return 4;
-	case nuTexFormatGrey8:		return 1;
+	case xoTexFormatInvalid:	return 0;
+	case xoTexFormatRGBA8:		return 4;
+	case xoTexFormatGrey8:		return 1;
 	default:
-		NUTODO;
+		XOTODO;
 		return 0;
 	}
 }
 
-NUAPI size_t nuTexFormatBytesPerChannel( nuTexFormat f )
+XOAPI size_t xoTexFormatBytesPerChannel( xoTexFormat f )
 {
 	switch ( f )
 	{
-	case nuTexFormatInvalid:	return 0;
-	case nuTexFormatRGBA8:		return 1;
-	case nuTexFormatGrey8:		return 1;
+	case xoTexFormatInvalid:	return 0;
+	case xoTexFormatRGBA8:		return 1;
+	case xoTexFormatGrey8:		return 1;
 	default:
-		NUTODO;
+		XOTODO;
 		return 0;
 	}
 }
 
-NUAPI size_t nuTexFormatBytesPerPixel( nuTexFormat f )
+XOAPI size_t xoTexFormatBytesPerPixel( xoTexFormat f )
 {
-	return nuTexFormatBytesPerChannel( f ) * nuTexFormatChannelCount( f );
+	return xoTexFormatBytesPerChannel( f ) * xoTexFormatChannelCount( f );
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void nuTexture::FlipVertical()
+void xoTexture::FlipVertical()
 {
 	byte sline[4096];
 	byte* line = sline;
@@ -72,15 +72,15 @@ void nuTexture::FlipVertical()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void nuBox::SetInt( int32 left, int32 top, int32 right, int32 bottom )
+void xoBox::SetInt( int32 left, int32 top, int32 right, int32 bottom )
 {
-	Left = nuRealToPos((float) left);
-	Top = nuRealToPos((float) top);
-	Right = nuRealToPos((float) right);
-	Bottom = nuRealToPos((float) bottom);
+	Left = xoRealToPos((float) left);
+	Top = xoRealToPos((float) top);
+	Right = xoRealToPos((float) right);
+	Bottom = xoRealToPos((float) bottom);
 }
 
-void nuBox::ExpandToFit( const nuBox& expando )
+void xoBox::ExpandToFit( const xoBox& expando )
 {
 	Left = std::min(Left, expando.Left);
 	Top = std::min(Top, expando.Top);
@@ -88,7 +88,7 @@ void nuBox::ExpandToFit( const nuBox& expando )
 	Bottom = std::max(Bottom, expando.Bottom);
 }
 
-void nuBox::ClampTo( const nuBox& clamp )
+void xoBox::ClampTo( const xoBox& clamp )
 {
 	Left = std::max(Left, clamp.Left);
 	Top = std::max(Top, clamp.Top);
@@ -96,9 +96,9 @@ void nuBox::ClampTo( const nuBox& clamp )
 	Bottom = std::min(Bottom, clamp.Bottom);
 }
 
-nuBox nuBox::ShrunkBy( const nuBox& margins )
+xoBox xoBox::ShrunkBy( const xoBox& margins )
 {
-	nuBox c = *this;
+	xoBox c = *this;
 	c.Left += margins.Left;
 	c.Right -= margins.Right;
 	c.Top += margins.Top;
@@ -106,42 +106,42 @@ nuBox nuBox::ShrunkBy( const nuBox& margins )
 	return c;
 }
 
-nuBoxF nuBox::ToRealBox() const
+xoBoxF xoBox::ToRealBox() const
 {
-	nuBoxF f;
-	f.Left = nuPosToReal( Left );
-	f.Right = nuPosToReal( Right );
-	f.Top = nuPosToReal( Top );
-	f.Bottom = nuPosToReal( Bottom );
+	xoBoxF f;
+	f.Left = xoPosToReal( Left );
+	f.Right = xoPosToReal( Right );
+	f.Top = xoPosToReal( Top );
+	f.Bottom = xoPosToReal( Bottom );
 	return f;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nuBoxF nuBox16::ToRealBox() const
+xoBoxF xoBox16::ToRealBox() const
 {
-	nuBoxF f;
-	f.Left = nuPosToReal( Left );
-	f.Right = nuPosToReal( Right );
-	f.Top = nuPosToReal( Top );
-	f.Bottom = nuPosToReal( Bottom );
+	xoBoxF f;
+	f.Left = xoPosToReal( Left );
+	f.Right = xoPosToReal( Right );
+	f.Top = xoPosToReal( Top );
+	f.Bottom = xoPosToReal( Bottom );
 	return f;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nuVec4f	nuColor::GetVec4sRGB() const
+xoVec4f	xoColor::GetVec4sRGB() const
 {
 	float s = 1.0f / 255.0f;
-	return nuVec4f( r * s, g * s, b * s, a * s );
+	return xoVec4f( r * s, g * s, b * s, a * s );
 }
 
-nuVec4f	nuColor::GetVec4Linear() const
+xoVec4f	xoColor::GetVec4Linear() const
 {
 	float s = 1.0f / 255.0f;
-	return nuVec4f( nuSRGB2Linear(r),
-					nuSRGB2Linear(g),
-					nuSRGB2Linear(b),
+	return xoVec4f( xoSRGB2Linear(r),
+					xoSRGB2Linear(g),
+					xoSRGB2Linear(b),
 					a * s );
 }
 
@@ -150,7 +150,7 @@ nuVec4f	nuColor::GetVec4Linear() const
 static const float sRGB_Low	= 0.0031308f;
 static const float sRGB_a	= 0.055f;
 
-NUAPI float	nuSRGB2Linear( uint8 srgb )
+XOAPI float	xoSRGB2Linear( uint8 srgb )
 {
 	float g = srgb * (1.0f / 255.0f);
 	if ( g <= 0.04045 )
@@ -159,74 +159,74 @@ NUAPI float	nuSRGB2Linear( uint8 srgb )
 		return pow( (g + sRGB_a) / (1.0f + sRGB_a), 2.4f );
 }
 
-NUAPI uint8	nuLinear2SRGB( float linear )
+XOAPI uint8	xoLinear2SRGB( float linear )
 {
 	float g;
 	if ( linear <= sRGB_Low )
 		g = 12.92f * linear;
 	else
 		g = (1.0f + sRGB_a) * pow(linear, 1.0f / 2.4f) - sRGB_a;
-	return (uint8) nuRound( 255.0f * g );
+	return (uint8) xoRound( 255.0f * g );
 }
 
-void nuRenderStats::Reset()
+void xoRenderStats::Reset()
 {
 	memset( this, 0, sizeof(*this) );
 }
 
 // add or remove documents that are queued for addition or removal
-NUAPI void nuProcessDocQueue()
+XOAPI void xoProcessDocQueue()
 {
-	nuDocGroup* p = NULL;
+	xoDocGroup* p = NULL;
 
-	while ( p = nuGlobal()->DocRemoveQueue.PopTailR() )
-		erase_delete( nuGlobal()->Docs, nuGlobal()->Docs.find(p) );
+	while ( p = xoGlobal()->DocRemoveQueue.PopTailR() )
+		erase_delete( xoGlobal()->Docs, xoGlobal()->Docs.find(p) );
 
-	while ( p = nuGlobal()->DocAddQueue.PopTailR() )
-		nuGlobal()->Docs += p;
+	while ( p = xoGlobal()->DocAddQueue.PopTailR() )
+		xoGlobal()->Docs += p;
 }
 
-AbcThreadReturnType AbcKernelCallbackDecl nuWorkerThreadFunc( void* threadContext )
+AbcThreadReturnType AbcKernelCallbackDecl xoWorkerThreadFunc( void* threadContext )
 {
 	while ( true )
 	{
-		AbcSemaphoreWait( nuGlobal()->JobQueue.SemaphoreObj(), AbcINFINITE );
+		AbcSemaphoreWait( xoGlobal()->JobQueue.SemaphoreObj(), AbcINFINITE );
 		if ( ExitSignalled )
 			break;
-		nuJob job;
-		NUVERIFY( nuGlobal()->JobQueue.PopTail( job ) );
+		xoJob job;
+		XOVERIFY( xoGlobal()->JobQueue.PopTail( job ) );
 		job.JobFunc( job.JobData );
 	}
 
 	return 0;
 }
 
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 
-AbcThreadReturnType AbcKernelCallbackDecl nuUIThread( void* threadContext )
+AbcThreadReturnType AbcKernelCallbackDecl xoUIThread( void* threadContext )
 {
 	while ( true )
 	{
-		AbcSemaphoreWait( nuGlobal()->EventQueue.SemaphoreObj(), INFINITE );
+		AbcSemaphoreWait( xoGlobal()->EventQueue.SemaphoreObj(), INFINITE );
 		if ( ExitSignalled )
 			break;
-		nuEvent ev;
-		NUVERIFY( nuGlobal()->EventQueue.PopTail( ev ) );
+		xoEvent ev;
+		XOVERIFY( xoGlobal()->EventQueue.PopTail( ev ) );
 		ev.DocGroup->ProcessEvent( ev );
 	}
 	return 0;
 }
 
-static void nuInitialize_Win32()
+static void xoInitialize_Win32()
 {
-	NUVERIFY( AbcThreadCreate( &nuUIThread, NULL, UIThread ) );
+	XOVERIFY( AbcThreadCreate( &xoUIThread, NULL, UIThread ) );
 }
 
-static void nuShutdown_Win32()
+static void xoShutdown_Win32()
 {
 	if ( UIThread != NULL )
 	{
-		nuGlobal()->EventQueue.Add( nuEvent() );
+		xoGlobal()->EventQueue.Add( xoEvent() );
 		for ( uint waitNum = 0; true; waitNum++ )
 		{
 			if ( WaitForSingleObject( UIThread, waitNum ) == WAIT_OBJECT_0 )
@@ -244,14 +244,14 @@ static void nuShutdown_Win32()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-NUAPI nuGlobalStruct* nuGlobal()
+XOAPI xoGlobalStruct* xoGlobal()
 {
-	return nuGlobals;
+	return xoGlobals;
 }
 
 static float ComputeEpToPixel()
 {
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	float scale = 1;
 	HDC dc = GetDC( NULL );
 	if ( dc != NULL )
@@ -261,29 +261,29 @@ static float ComputeEpToPixel()
 		ReleaseDC( NULL, dc );
 	}
 	return scale;
-#elif NU_PLATFORM_ANDROID
-	// nuGlobals->EpToPixel is injected by Java_com_android_nudom_NuLib_init after it calls nuInitialize()
+#elif XO_PLATFORM_ANDROID
+	// xoGlobals->EpToPixel is injected by Java_com_android_xo_NuLib_init after it calls xoInitialize()
 	return 1;
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_LINUX_DESKTOP
 	// TODO
 	return 1;
 #else
-	NUTODO_STATIC
+	XOTODO_STATIC
 #endif
 }
 
 static void InitializePlatform()
 {
-#if NU_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	SetProcessDPIAware();
-#elif NU_PLATFORM_ANDROID
-#elif NU_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_ANDROID
+#elif XO_PLATFORM_LINUX_DESKTOP
 #else
-	NUTODO_STATIC;
+	XOTODO_STATIC;
 #endif
 }
 
-NUAPI void nuInitialize()
+XOAPI void xoInitialize()
 {
 	InitializeCount++;
 	if ( InitializeCount != 1 )
@@ -294,12 +294,12 @@ NUAPI void nuInitialize()
 	AbcMachineInformation minf;
 	AbcMachineInformationGet( minf );
 
-	nuGlobals = new nuGlobalStruct();
-	nuGlobals->TargetFPS = 60;
-	nuGlobals->NumWorkerThreads = std::min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
-	nuGlobals->MaxSubpixelGlyphSize = 60;
-	nuGlobals->PreferOpenGL = false;
-	nuGlobals->EnableVSync = false;
+	xoGlobals = new xoGlobalStruct();
+	xoGlobals->TargetFPS = 60;
+	xoGlobals->NumWorkerThreads = std::min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
+	xoGlobals->MaxSubpixelGlyphSize = 60;
+	xoGlobals->PreferOpenGL = false;
+	xoGlobals->EnableVSync = false;
 	// Freetype's output is linear coverage percentage, so if we treat our freetype texture as GL_LUMINANCE
 	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get perfect results without
 	// doing any tweaking to the freetype glyphs.
@@ -309,94 +309,94 @@ NUAPI void nuInitialize()
 	// a reasonable blend between the "correct weight" and "prior art".
 	// CORRECTION. A gamma of anything other than 1.0 looks bad at small font sizes (like 12 or 13 pixels)
 	// We might want to have a "gamma curve" of pixel size vs gamma.
-	nuGlobals->SubPixelTextGamma = 1.0f;
-	nuGlobals->WholePixelTextGamma = 1.0f;
-#if NU_PLATFORM_WIN_DESKTOP || NU_PLATFORM_LINUX_DESKTOP
-	nuGlobals->EnableSubpixelText = true;
-	nuGlobals->EnableSRGBFramebuffer = true;
-	//nuGlobals->EmulateGammaBlending = true;
+	xoGlobals->SubPixelTextGamma = 1.0f;
+	xoGlobals->WholePixelTextGamma = 1.0f;
+#if XO_PLATFORM_WIN_DESKTOP || XO_PLATFORM_LINUX_DESKTOP
+	xoGlobals->EnableSubpixelText = true;
+	xoGlobals->EnableSRGBFramebuffer = true;
+	//xoGlobals->EmulateGammaBlending = true;
 #else
-	nuGlobals->EnableSubpixelText = false;
-	nuGlobals->EnableSRGBFramebuffer = false;
-	//nuGlobals->EmulateGammaBlending = false;
+	xoGlobals->EnableSubpixelText = false;
+	xoGlobals->EnableSRGBFramebuffer = false;
+	//xoGlobals->EmulateGammaBlending = false;
 #endif
-	nuGlobals->EnableKerning = true;
-	nuGlobals->RoundLineHeights = nuGlobals->EnableSubpixelText;	// happens to be correlated with sub-pixel text, because with sub-pixel, we snap to vertical pixels (but not horz)
-	nuGlobals->SnapBoxes = true;
-	nuGlobals->SnapSubpixelHorzText = true;
-	nuGlobals->EpToPixel = ComputeEpToPixel();
-	//nuGlobals->DebugZeroClonedChildList = true;
-	nuGlobals->MaxTextureID = ~((nuTextureID) 0);
-    //nuGlobals->ClearColor.Set( 200, 0, 200, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node
-	nuGlobals->ClearColor.Set( 255, 150, 255, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node
-	nuGlobals->DocAddQueue.Initialize( false );
-	nuGlobals->DocRemoveQueue.Initialize( false );
-	nuGlobals->EventQueue.Initialize( true );
-	nuGlobals->JobQueue.Initialize( true );
-	nuGlobals->FontStore = new nuFontStore();
-	nuGlobals->FontStore->InitializeFreetype();
-	nuGlobals->GlyphCache = new nuGlyphCache();
-	nuSysWnd::PlatformInitialize();
-#if NU_PLATFORM_WIN_DESKTOP
-	nuInitialize_Win32();
+	xoGlobals->EnableKerning = true;
+	xoGlobals->RoundLineHeights = xoGlobals->EnableSubpixelText;	// happens to be correlated with sub-pixel text, because with sub-pixel, we snap to vertical pixels (but not horz)
+	xoGlobals->SnapBoxes = true;
+	xoGlobals->SnapSubpixelHorzText = true;
+	xoGlobals->EpToPixel = ComputeEpToPixel();
+	//xoGlobals->DebugZeroClonedChildList = true;
+	xoGlobals->MaxTextureID = ~((xoTextureID) 0);
+    //xoGlobals->ClearColor.Set( 200, 0, 200, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node
+	xoGlobals->ClearColor.Set( 255, 150, 255, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node
+	xoGlobals->DocAddQueue.Initialize( false );
+	xoGlobals->DocRemoveQueue.Initialize( false );
+	xoGlobals->EventQueue.Initialize( true );
+	xoGlobals->JobQueue.Initialize( true );
+	xoGlobals->FontStore = new xoFontStore();
+	xoGlobals->FontStore->InitializeFreetype();
+	xoGlobals->GlyphCache = new xoGlyphCache();
+	xoSysWnd::PlatformInitialize();
+#if XO_PLATFORM_WIN_DESKTOP
+	xoInitialize_Win32();
 #endif
-	NUTRACE( "Using %d/%d processors.\n", (int) nuGlobals->NumWorkerThreads, (int) minf.LogicalCoreCount );
-	for ( int i = 0; i < nuGlobals->NumWorkerThreads; i++ )
+	XOTRACE( "Using %d/%d processors.\n", (int) xoGlobals->NumWorkerThreads, (int) minf.LogicalCoreCount );
+	for ( int i = 0; i < xoGlobals->NumWorkerThreads; i++ )
 	{
-		NUVERIFY( AbcThreadCreate( nuWorkerThreadFunc, NULL, WorkerThreads[i] ) );
+		XOVERIFY( AbcThreadCreate( xoWorkerThreadFunc, NULL, WorkerThreads[i] ) );
 	}
 }
 
-NUAPI void nuSurfaceLost()
+XOAPI void xoSurfaceLost()
 {
 
 }
 
-NUAPI void nuShutdown()
+XOAPI void xoShutdown()
 {
-	NUASSERT(InitializeCount > 0);
+	XOASSERT(InitializeCount > 0);
 	InitializeCount--;
 	if ( InitializeCount != 0 ) return;
 
 	AbcInterlockedSet( &ExitSignalled, 1 );
 
-	for ( int i = 0; i < nuTagEND; i++ )
+	for ( int i = 0; i < xoTagEND; i++ )
 		delete DefaultTagStyles[i];
 
 	// allow documents scheduled for deletion to be deleted
-	nuProcessDocQueue();
+	xoProcessDocQueue();
 
-#if NU_PLATFORM_WIN_DESKTOP
-	nuShutdown_Win32();
+#if XO_PLATFORM_WIN_DESKTOP
+	xoShutdown_Win32();
 #endif
 
 	// signal all threads to exit
-	nuJob nullJob = nuJob();
-	for ( int i = 0; i < nuGlobal()->NumWorkerThreads; i++ )
-		nuGlobal()->JobQueue.Add( nullJob );
+	xoJob nullJob = xoJob();
+	for ( int i = 0; i < xoGlobal()->NumWorkerThreads; i++ )
+		xoGlobal()->JobQueue.Add( nullJob );
 
 	// wait for each thread in turn
-	for ( int i = 0; i < nuGlobal()->NumWorkerThreads; i++ )
-		NUVERIFY( AbcThreadJoin( WorkerThreads[i] ) );
+	for ( int i = 0; i < xoGlobal()->NumWorkerThreads; i++ )
+		XOVERIFY( AbcThreadJoin( WorkerThreads[i] ) );
 
-	nuGlobals->GlyphCache->Clear();
-	delete nuGlobals->GlyphCache;
-	nuGlobals->GlyphCache = NULL;
+	xoGlobals->GlyphCache->Clear();
+	delete xoGlobals->GlyphCache;
+	xoGlobals->GlyphCache = NULL;
 
-	nuGlobals->FontStore->Clear();
-	nuGlobals->FontStore->ShutdownFreetype();
-	delete nuGlobals->FontStore;
-	nuGlobals->FontStore = NULL;
+	xoGlobals->FontStore->Clear();
+	xoGlobals->FontStore->ShutdownFreetype();
+	delete xoGlobals->FontStore;
+	xoGlobals->FontStore = NULL;
 
-	delete nuGlobals;
+	delete xoGlobals;
 }
 
-NUAPI nuStyle** nuDefaultTagStyles()
+XOAPI xoStyle** xoDefaultTagStyles()
 {
 	return DefaultTagStyles;
 }
 
-NUAPI void nuParseFail( const char* msg, ... )
+XOAPI void xoParseFail( const char* msg, ... )
 {
 	char buff[4096] = "";
 	va_list va;
@@ -404,10 +404,10 @@ NUAPI void nuParseFail( const char* msg, ... )
 	uint r = vsnprintf( buff, arraysize(buff), msg, va );
 	va_end( va );
 	if ( r < arraysize(buff) )
-		NUTRACE_WRITE(buff);
+		XOTRACE_WRITE(buff);
 }
 
-NUAPI void NUTRACE( const char* msg, ... )
+XOAPI void XOTRACE( const char* msg, ... )
 {
 	char buff[4096] = "";
 	va_list va;
@@ -415,10 +415,10 @@ NUAPI void NUTRACE( const char* msg, ... )
 	uint r = vsnprintf( buff, arraysize(buff), msg, va );
 	va_end( va );
 	if ( r < arraysize(buff) )
-		NUTRACE_WRITE(buff);
+		XOTRACE_WRITE(buff);
 }
 
-NUAPI void NUTIME( const char* msg, ... )
+XOAPI void NUTIME( const char* msg, ... )
 {
 	const int timeChars = 16;
 	char buff[4096] = "";
@@ -428,5 +428,5 @@ NUAPI void NUTIME( const char* msg, ... )
 	uint r = vsnprintf( buff + timeChars, arraysize(buff) - timeChars, msg, va );
 	va_end( va );
 	if ( r < arraysize(buff) )
-		NUTRACE_WRITE(buff);
+		XOTRACE_WRITE(buff);
 }

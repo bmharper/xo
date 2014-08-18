@@ -1,14 +1,14 @@
 #include "pch.h"
-#include "../nudom/nuDom.h"
+#include "../xo/xo.h"
 
-static nuStyleAttrib AttribAtPos( int pos )
+static xoStyleAttrib AttribAtPos( int pos )
 {
-	nuStyleAttrib a;
-	a.SetSize( (nuStyleCategories) (pos + 1), nuSize::Pixels((float) pos) );
+	xoStyleAttrib a;
+	a.SetSize( (xoStyleCategories) (pos + 1), xoSize::Pixels((float) pos) );
 	return a;
 }
 
-static bool EQUALS( const nuStyleAttrib& a, const nuStyleAttrib& b )
+static bool EQUALS( const xoStyleAttrib& a, const xoStyleAttrib& b )
 {
 	if ( a.Category != b.Category ) return false;
 	if ( a.SubType != b.SubType ) return false;
@@ -21,8 +21,8 @@ TESTFUNC(StyleSet)
 {
 	{
 		// set 0,1,1
-		nuPool pool;
-		nuStyleSet set;
+		xoPool pool;
+		xoStyleSet set;
 		set.Set( AttribAtPos(0), &pool );
 		set.Set( AttribAtPos(1), &pool );
 		set.Set( AttribAtPos(1), &pool );
@@ -31,8 +31,8 @@ TESTFUNC(StyleSet)
 	}
 	{
 		// set 0,1,0
-		nuPool pool;
-		nuStyleSet set;
+		xoPool pool;
+		xoStyleSet set;
 		set.Set( AttribAtPos(0), &pool );
 		set.Set( AttribAtPos(1), &pool );
 		set.Set( AttribAtPos(0), &pool );
@@ -40,17 +40,17 @@ TESTFUNC(StyleSet)
 		TTASSERT( EQUALS(set.Get(AttribAtPos(1).GetCategory()), AttribAtPos(1)) );
 	}
 
-	for ( int nstyle = 1; nstyle < nuCatEND; nstyle++ )
+	for ( int nstyle = 1; nstyle < xoCatEND; nstyle++ )
 	{
-		nuPool pool;
-		nuStyleSet set;
+		xoPool pool;
+		xoStyleSet set;
 		for ( int i = 0; i < nstyle; i++ )
 		{
 			set.Set( AttribAtPos(i), &pool );
 			for ( int j = 0; j <= i; j++ )
 			{
-				nuStyleAttrib truth = AttribAtPos(j);
-				nuStyleAttrib check = set.Get( truth.GetCategory() );
+				xoStyleAttrib truth = AttribAtPos(j);
+				xoStyleAttrib check = set.Get( truth.GetCategory() );
 				TTASSERT( EQUALS(truth, check) );
 			}
 		}

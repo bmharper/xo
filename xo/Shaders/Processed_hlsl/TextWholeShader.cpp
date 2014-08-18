@@ -1,19 +1,19 @@
 #include "pch.h"
-#if NU_BUILD_DIRECTX
+#if XO_BUILD_DIRECTX
 #include "TextWholeShader.h"
 
-nuDXProg_TextWhole::nuDXProg_TextWhole()
+xoDXProg_TextWhole::xoDXProg_TextWhole()
 {
 	Reset();
 }
 
-void nuDXProg_TextWhole::Reset()
+void xoDXProg_TextWhole::Reset()
 {
 	ResetBase();
 
 }
 
-const char* nuDXProg_TextWhole::VertSrc()
+const char* xoDXProg_TextWhole::VertSrc()
 {
 	return
 	"\n"
@@ -94,7 +94,7 @@ const char* nuDXProg_TextWhole::VertSrc()
 ;
 }
 
-const char* nuDXProg_TextWhole::FragSrc()
+const char* xoDXProg_TextWhole::FragSrc()
 {
 	return
 	"\n"
@@ -173,31 +173,31 @@ const char* nuDXProg_TextWhole::FragSrc()
 ;
 }
 
-const char* nuDXProg_TextWhole::Name()
+const char* xoDXProg_TextWhole::Name()
 {
 	return "TextWhole";
 }
 
 
-bool nuDXProg_TextWhole::LoadVariablePositions()
+bool xoDXProg_TextWhole::LoadVariablePositions()
 {
 	int nfail = 0;
 
 	if ( nfail != 0 )
-		NUTRACE( "Failed to bind %d variables of shader TextWhole\n", nfail );
+		XOTRACE( "Failed to bind %d variables of shader TextWhole\n", nfail );
 
 	return nfail == 0;
 }
 
-uint32 nuDXProg_TextWhole::PlatformMask()
+uint32 xoDXProg_TextWhole::PlatformMask()
 {
-	return nuPlatform_All;
+	return xoPlatform_All;
 }
 
-nuVertexType nuDXProg_TextWhole::VertexType()
+xoVertexType xoDXProg_TextWhole::VertexType()
 {
-	return nuVertexType_PTC;
+	return xoVertexType_PTC;
 }
 
-#endif // NU_BUILD_DIRECTX
+#endif // XO_BUILD_DIRECTX
 

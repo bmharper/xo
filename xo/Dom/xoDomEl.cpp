@@ -1,9 +1,9 @@
 #include "pch.h"
-#include "nuDoc.h"
-#include "nuDomEl.h"
-#include "nuCloneHelpers.h"
+#include "xoDoc.h"
+#include "xoDomEl.h"
+#include "xoCloneHelpers.h"
 
-nuDomEl::nuDomEl( nuDoc* doc, nuTag tag )
+xoDomEl::xoDomEl( xoDoc* doc, xoTag tag )
 {
 	Doc = doc;
 	Tag = tag;
@@ -11,31 +11,31 @@ nuDomEl::nuDomEl( nuDoc* doc, nuTag tag )
 	Version = 0;
 }
 
-nuDomEl::~nuDomEl()
+xoDomEl::~xoDomEl()
 {
 }
 
 // all memory allocations come from the pool. The also happens to be recursive.
 /*
-void nuDomEl::CloneFastInto( nuDomEl& c, nuPool* pool, uint cloneFlags ) const
+void xoDomEl::CloneFastInto( xoDomEl& c, xoPool* pool, uint cloneFlags ) const
 {
-	nuDoc* cDoc = c.GetDoc();
+	xoDoc* cDoc = c.GetDoc();
 	c.InternalID = InternalID;
 	c.Tag = Tag;
 	c.Version = Version;
 	Style.CloneFastInto( c.Style, pool );
 
-	NUASSERT(false); // Text?
+	XOASSERT(false); // Text?
 
 	// copy classes
-	nuClonePodvecWithMemCopy( c.Classes, Classes, pool );
+	xoClonePodvecWithMemCopy( c.Classes, Classes, pool );
 
 	// alloc list of pointers to children
-	nuClonePvectPrepare( c.Children, Children, pool );
+	xoClonePvectPrepare( c.Children, Children, pool );
 	
 	// alloc children
 	for ( int i = 0; i < Children.size(); i++ )
-		c.Children[i] = pool->AllocT<nuDomEl>( true );
+		c.Children[i] = pool->AllocT<xoDomEl>( true );
 	
 	// copy children
 	for ( int i = 0; i < Children.size(); i++ )
@@ -44,21 +44,21 @@ void nuDomEl::CloneFastInto( nuDomEl& c, nuPool* pool, uint cloneFlags ) const
 		Children[i]->CloneFastInto( *c.Children[i], pool, cloneFlags );
 	}
 
-	if ( !!(cloneFlags & nuCloneFlagEvents) )
-		NUPANIC("clone events is TODO");
+	if ( !!(cloneFlags & xoCloneFlagEvents) )
+		XOPANIC("clone events is TODO");
 
 	cDoc->ChildAddedFromDocumentClone( &c );
 }
 */
 
-void nuDomEl::IncVersion()
+void xoDomEl::IncVersion()
 {
 	Version++;
 	Doc->SetChildModified( InternalID );
 }
 
 // memory allocations come from the regular heap. This also happens to not be recursive.
-void nuDomEl::CloneSlowIntoBase( nuDomEl& c, uint cloneFlags ) const
+void xoDomEl::CloneSlowIntoBase( xoDomEl& c, uint cloneFlags ) const
 {
 	c.InternalID = InternalID;
 	c.Tag = Tag;

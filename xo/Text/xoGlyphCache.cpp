@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "nuGlyphCache.h"
-#include "nuFontStore.h"
-#include "Render/nuTextureAtlas.h"
+#include "xoGlyphCache.h"
+#include "xoFontStore.h"
+#include "Render/xoTextureAtlas.h"
 
 // Remember that our horizontal expansion is not only there to clobber the horizontal
 // hinting. It also serves to give us more accurate glyph metrics, in particular MetricLeftx256,
@@ -9,22 +9,22 @@
 // An alternative would be to separately load just the glyph metrics without performing glyph
 // rendering. That would give us perfect metrics. This only affects the horizontal spacing of
 // glyphs, and I think it's unlikely that one would be able to tell the difference there.
-static const uint32 nuSubPixelHintKillShift = 0;
-static const uint32 nuSubPixelHintKillMultiplier = (1 << nuSubPixelHintKillShift);
+static const uint32 xoSubPixelHintKillShift = 0;
+static const uint32 xoSubPixelHintKillMultiplier = (1 << xoSubPixelHintKillShift);
 
 // GCC 4.6 for Android forces us to set the value of this constant in the .cpp file, not in the .h file.
-const uint nuGlyphCache::NullGlyphIndex = 0;	// Our first element in 'Glyphs' is always the null glyph
+const uint xoGlyphCache::NullGlyphIndex = 0;	// Our first element in 'Glyphs' is always the null glyph
 
-nuGlyphCache::nuGlyphCache()
+xoGlyphCache::xoGlyphCache()
 {
 	Initialize();
 }
 
-nuGlyphCache::~nuGlyphCache()
+xoGlyphCache::~xoGlyphCache()
 {
 }
 
-void nuGlyphCache::Clear()
+void xoGlyphCache::Clear()
 {
 	for ( intp i = 0; i < Atlasses.size(); i++ )
 		Atlasses[i]->Free();
@@ -34,22 +34,22 @@ void nuGlyphCache::Clear()
 	Initialize();
 }
 
-void nuGlyphCache::Initialize()
+void xoGlyphCache::Initialize()
 {
 	NullGlyph.SetNull();
-	Glyphs += nuGlyph();
+	Glyphs += xoGlyph();
 	Glyphs.back().SetNull();
 }
 
 /*
-bool nuGlyphCache::GetGlyphFromChar( const nuString& facename, int ch, uint8 size, uint8 flags, nuGlyph& glyph )
+bool xoGlyphCache::GetGlyphFromChar( const xoString& facename, int ch, uint8 size, uint8 flags, xoGlyph& glyph )
 {
-	nuFontID fontID = nuFontIDNull;
-	const nuFont* font = nuGlobal()->FontStore->GetByFacename( facename );
+	xoFontID fontID = xoFontIDNull;
+	const xoFont* font = xoGlobal()->FontStore->GetByFacename( facename );
 	if ( font == NULL )
 	{
-		fontID = nuGlobal()->FontStore->InsertByFacename( facename );
-		NUASSERT( fontID != nuFontIDNull );
+		fontID = xoGlobal()->FontStore->InsertByFacename( facename );
+		XOASSERT( fontID != xoFontIDNull );
 	}
 	else
 		fontID = font->ID;
@@ -57,16 +57,16 @@ bool nuGlyphCache::GetGlyphFromChar( const nuString& facename, int ch, uint8 siz
 	return GetGlyphFromChar( fontID, ch, size, flags, glyph );
 }
 
-bool nuGlyphCache::GetGlyphFromChar( nuFontID fontID, int ch, uint8 size, uint8 flags, nuGlyph& glyph )
+bool xoGlyphCache::GetGlyphFromChar( xoFontID fontID, int ch, uint8 size, uint8 flags, xoGlyph& glyph )
 {
 	// TODO: This needs a better threading model. Perhaps you render with fonts in read-only mode,
 	// and then collect all cache misses, then before next render you fill in all cache misses.
 
-	nuGlyphCacheKey key( fontID, ch, size, flags );
+	xoGlyphCacheKey key( fontID, ch, size, flags );
 	uint pos;
 	if ( !Table.get( key, pos ) )
 	{
-		const nuFont* font = nuGlobal()->FontStore->GetByFontID( fontID );
+		const xoFont* font = xoGlobal()->FontStore->GetByFontID( fontID );
 		pos = RenderGlyph( key );
 		if ( pos == -1 )
 			return false;
@@ -77,7 +77,7 @@ bool nuGlyphCache::GetGlyphFromChar( nuFontID fontID, int ch, uint8 size, uint8 
 }
 */
 
-const nuGlyph* nuGlyphCache::GetGlyph( const nuGlyphCacheKey& key ) const
+const xoGlyph* xoGlyphCache::GetGlyph( const xoGlyphCacheKey& key ) const
 {
 	uint pos;
 	if ( Table.get( key, pos ) )
@@ -86,26 +86,26 @@ const nuGlyph* nuGlyphCache::GetGlyph( const nuGlyphCacheKey& key ) const
 		return NULL;
 }
 
-uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
+uint xoGlyphCache::RenderGlyph( const xoGlyphCacheKey& key )
 {
-	NUASSERT( key.Size != 0 );
-	const nuFont* font = nuGlobal()->FontStore->GetByFontID( key.FontID );
+	XOASSERT( key.Size != 0 );
+	const xoFont* font = xoGlobal()->FontStore->GetByFontID( key.FontID );
 
 	FT_UInt iFTGlyph = FT_Get_Char_Index( font->FTFace, key.Char );
 
-	bool isSubPixel = nuGlyphFlag_IsSubPixel(key.Flags);
-	bool useFTSubpixel = isSubPixel && nuGlobal()->SnapSubpixelHorzText;
+	bool isSubPixel = xoGlyphFlag_IsSubPixel(key.Flags);
+	bool useFTSubpixel = isSubPixel && xoGlobal()->SnapSubpixelHorzText;
 
 	uint32 pixSize = key.Size;
 	int32 combinedHorzMultiplier = 1;
 	if ( isSubPixel )
-		combinedHorzMultiplier = nuSubPixelHintKillMultiplier * (useFTSubpixel ? 1 : 3);
+		combinedHorzMultiplier = xoSubPixelHintKillMultiplier * (useFTSubpixel ? 1 : 3);
 
 	FT_Error e = FT_Set_Pixel_Sizes( font->FTFace, combinedHorzMultiplier * pixSize, pixSize );
-	NUASSERT( e == 0 );
+	XOASSERT( e == 0 );
 
 	uint ftflags = FT_LOAD_RENDER | FT_LOAD_LINEAR_DESIGN;
-	// See nuFontStore::LoadFontTweaks for details of why we have this "MaxAutoHinterSize"
+	// See xoFontStore::LoadFontTweaks for details of why we have this "MaxAutoHinterSize"
 	//if ( isSubPixel && pixSize <= font->MaxAutoHinterSize )
 	//	ftflags |= FT_LOAD_FORCE_AUTOHINT;
 	
@@ -115,7 +115,7 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	e = FT_Load_Glyph( font->FTFace, iFTGlyph, ftflags );
 	if ( e != 0 )
 	{
-		NUTRACE( "Failed to load glyph for character %d (%d)\n", key.Char, iFTGlyph );
+		XOTRACE( "Failed to load glyph for character %d (%d)\n", key.Char, iFTGlyph );
 		Table.insert( key, NullGlyphIndex );
 		return NullGlyphIndex;
 	}
@@ -127,12 +127,12 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	bool isEmpty = (width | height) == 0;
 	if ( isSubPixel && !isEmpty )
 	{
-		// Note that Freetype's rasterized width is not necessarily divisible by nuSubPixelHintKillMultiplier.
-		// We need to round our resulting width up so that is is divisible by nuSubPixelHintKillMultiplier,
+		// Note that Freetype's rasterized width is not necessarily divisible by xoSubPixelHintKillMultiplier.
+		// We need to round our resulting width up so that is is divisible by xoSubPixelHintKillMultiplier,
 		// otherwise we miss the last sub-samples. Note that we don't care if our eventual size is not
 		// divisible by 3. Our fragment shader clamps all filter taps, so we would just read zero off the
 		// right edge, where our sub-pixel samples are undefined.
-		naturalWidth = (width + nuSubPixelHintKillMultiplier - 1) / nuSubPixelHintKillMultiplier;
+		naturalWidth = (width + xoSubPixelHintKillMultiplier - 1) / xoSubPixelHintKillMultiplier;
 		// We need to pad our texture on either side with black lines. Our fragment shader will clamp its UV
 		// coordinates to the absolute texel bounds of our glyph. The fragment shader will read over the edges
 		// of our absolute texel bounds, and when it does so, it must read pure black.
@@ -140,7 +140,7 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	}
 	uint16 atlasX = 0;
 	uint16 atlasY = 0;
-	nuTextureAtlas* atlas = NULL;
+	xoTextureAtlas* atlas = NULL;
 
 	// Sub-pixel shader does its own clamping, but the whole pixel shader is naive, and 
 	// each glyph needs 3 pixels of padding around it.
@@ -150,13 +150,13 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	{
 		if ( Atlasses.size() == 0 || pass != 0 )
 		{
-			nuTextureAtlas* newAtlas = new nuTextureAtlas();
-			newAtlas->Initialize( nuGlyphAtlasSize, nuGlyphAtlasSize, nuTexFormatGrey8, glyphPadding );
+			xoTextureAtlas* newAtlas = new xoTextureAtlas();
+			newAtlas->Initialize( xoGlyphAtlasSize, xoGlyphAtlasSize, xoTexFormatGrey8, glyphPadding );
 			newAtlas->Zero();
 			Atlasses += newAtlas;
 		}
 		atlas = Atlasses.back();
-		NUASSERT( naturalWidth + horzPad * 2 <= nuGlyphAtlasSize );
+		XOASSERT( naturalWidth + horzPad * 2 <= xoGlyphAtlasSize );
 		if ( atlas->Alloc( naturalWidth + horzPad * 2, height, atlasX, atlasY ) )
 			break;
 	}
@@ -169,7 +169,7 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	if ( key.Char == '1' )
 		int abc = 123;
 
-	nuGlyph g;
+	xoGlyph g;
 	g.FTGlyphIndex = iFTGlyph;
 	g.Width = isEmpty ? 0 : naturalWidth + horzPad * 2;
 	g.Height = height;
@@ -186,12 +186,12 @@ uint nuGlyphCache::RenderGlyph( const nuGlyphCacheKey& key )
 	return (uint) (Glyphs.size() - 1);
 }
 
-void nuGlyphCache::FilterAndCopyBitmap( const nuFont* font, void* target, int target_stride )
+void xoGlyphCache::FilterAndCopyBitmap( const xoFont* font, void* target, int target_stride )
 {
 	uint32 width = font->FTFace->glyph->bitmap.width;
 	uint32 height = font->FTFace->glyph->bitmap.rows;
 
-	float gamma = nuGlobal()->SubPixelTextGamma;
+	float gamma = xoGlobal()->SubPixelTextGamma;
 
 	for ( int py = 0; py < (int) height; py++ )
 	{
@@ -201,21 +201,21 @@ void nuGlyphCache::FilterAndCopyBitmap( const nuFont* font, void* target, int ta
 		*dst++ = 0;
 		// first N - 1 texels
 		uint32 px = 0;
-		for ( ; px < width - nuSubPixelHintKillMultiplier; px += nuSubPixelHintKillMultiplier ) 
+		for ( ; px < width - xoSubPixelHintKillMultiplier; px += xoSubPixelHintKillMultiplier ) 
 		{
 			uint32 accum = 0;
-			for ( int i = 0; i < nuSubPixelHintKillMultiplier; i++, src++ )
+			for ( int i = 0; i < xoSubPixelHintKillMultiplier; i++, src++ )
 				accum += *src;
-			accum = accum >> nuSubPixelHintKillShift;
+			accum = accum >> xoSubPixelHintKillShift;
 			if ( gamma != 1 )
 				accum = (uint32) (pow(accum / 255.0f, gamma) * 255.0f);
 			*dst++ = accum;
 		}
-		// last texel, which may not have the full 'nuSubPixelHintKillMultiplier' number of samples
+		// last texel, which may not have the full 'xoSubPixelHintKillMultiplier' number of samples
 		uint32 accum = 0;
 		for ( ; px < width; px++, src++ )
 			accum += *src;
-		accum = accum >> nuSubPixelHintKillShift;
+		accum = accum >> xoSubPixelHintKillShift;
 		if ( gamma != 1 )
 			accum = (uint32) (pow(accum / 255.0f, gamma) * 255.0f);
 		*dst++ = accum;
@@ -224,12 +224,12 @@ void nuGlyphCache::FilterAndCopyBitmap( const nuFont* font, void* target, int ta
 	}
 }
 
-void nuGlyphCache::CopyBitmap( const nuFont* font, void* target, int target_stride )
+void xoGlyphCache::CopyBitmap( const xoFont* font, void* target, int target_stride )
 {
 	uint32 width = font->FTFace->glyph->bitmap.width;
 	uint32 height = font->FTFace->glyph->bitmap.rows;
 
-	float gamma = nuGlobal()->WholePixelTextGamma;
+	float gamma = xoGlobal()->WholePixelTextGamma;
 
 	for ( int py = 0; py < (int) height; py++ )
 	{

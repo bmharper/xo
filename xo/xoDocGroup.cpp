@@ -1,26 +1,26 @@
 #include "pch.h"
-#include "nuDoc.h"
-#include "nuDocGroup.h"
-#include "Layout/nuLayout.h"
-#include "Layout/nuLayout2.h"
-#include "nuSysWnd.h"
-#include "Render/nuRenderer.h"
-#include "Render/nuRenderDoc.h"
-#include "Render/nuRenderDomEl.h"
-#include "Render/nuRenderBase.h"
-#include "Render/nuRenderGL.h"
+#include "xoDoc.h"
+#include "xoDocGroup.h"
+#include "Layout/xoLayout.h"
+#include "Layout/xoLayout2.h"
+#include "xoSysWnd.h"
+#include "Render/xoRenderer.h"
+#include "Render/xoRenderDoc.h"
+#include "Render/xoRenderDomEl.h"
+#include "Render/xoRenderBase.h"
+#include "Render/xoRenderGL.h"
 
-nuDocGroup::nuDocGroup()
+xoDocGroup::xoDocGroup()
 {
 	AbcCriticalSectionInitialize( DocLock );
 	DestroyDocWithGroup = false;
 	Doc = NULL;
 	Wnd = NULL;
-	RenderDoc = new nuRenderDoc();
+	RenderDoc = new xoRenderDoc();
 	RenderStats.Reset();
 }
 
-nuDocGroup::~nuDocGroup()
+xoDocGroup::~xoDocGroup()
 {
 	delete RenderDoc;
 	if ( DestroyDocWithGroup )
@@ -28,23 +28,23 @@ nuDocGroup::~nuDocGroup()
 	AbcCriticalSectionDestroy( DocLock );
 }
 
-nuRenderResult nuDocGroup::Render()
+xoRenderResult xoDocGroup::Render()
 {
 	return RenderInternal( NULL );
 }
 
-nuRenderResult nuDocGroup::RenderToImage( nuImage& image )
+xoRenderResult xoDocGroup::RenderToImage( xoImage& image )
 {
 	// The 10 here is an arbitrary thumbsuck. We'll see if we ever need a controllable limit.
 	const int maxAttempts = 10;
-	nuRenderResult res = nuRenderResultNeedMore;
-	for ( int attempt = 0; res == nuRenderResultNeedMore && attempt < maxAttempts; attempt++ )
+	xoRenderResult res = xoRenderResultNeedMore;
+	for ( int attempt = 0; res == xoRenderResultNeedMore && attempt < maxAttempts; attempt++ )
 		res = RenderInternal( &image );
 	return res;
 }
 
 // This is always called from the Render thread
-nuRenderResult nuDocGroup::RenderInternal( nuImage* targetImage )
+xoRenderResult xoDocGroup::RenderInternal( xoImage* targetImage )
 {
 	bool haveLock = false;
 	// I'm not quite sure how we should handle this. The idea is that you don't want to go without a UI update
@@ -66,7 +66,7 @@ nuRenderResult nuDocGroup::RenderInternal( nuImage* targetImage )
 	if ( !haveLock )
 	{
 		NUTIME( "Render: Failed to acquire DocLock\n" );
-		return nuRenderResultNeedMore;
+		return xoRenderResultNeedMore;
 	}
 
 	// TODO: If AnyAnimationsRunning(), then we are not idle
@@ -75,18 +75,18 @@ nuRenderResult nuDocGroup::RenderInternal( nuImage* targetImage )
 	
 	if ( docModified && docValid )
 	{
-		//NUTRACE( "Render Version %u\n", Doc->GetVersion() );
+		//XOTRACE( "Render Version %u\n", Doc->GetVersion() );
 		RenderDoc->CopyFromCanonical( *Doc, RenderStats );
 		
 		// Assume we are the only renderer of 'Doc'. If this assumption were not true, then you would need to update
 		// all renderers simultaneously, so that you can guarantee that UsableIDs all go to FreeIDs atomically.
-		//NUTRACE( "MakeFreeIDsUsable\n" );
+		//XOTRACE( "MakeFreeIDsUsable\n" );
 		Doc->MakeFreeIDsUsable();
 		Doc->ResetModifiedBitmap();			// AbcBitMap has an absolutely awful implementation of this (byte-filled vs SSE or at least pointer-word-size-filled)
 	}
 	AbcCriticalSectionLeave( DocLock );
 
-	nuRenderResult rendResult = nuRenderResultIdle;
+	xoRenderResult rendResult = xoRenderResultIdle;
 
 	if ( (docModified || targetImage != NULL) && docValid && Wnd != NULL )
 	{
@@ -94,7 +94,7 @@ nuRenderResult nuDocGroup::RenderInternal( nuImage* targetImage )
 		if ( !Wnd->BeginRender() )
 		{
 			NUTIME( "BeginRender failed\n" );
-			return nuRenderResultNeedMore;
+			return xoRenderResultNeedMore;
 		}
 
 		//NUTIME( "Render DO\n" );
@@ -111,15 +111,15 @@ nuRenderResult nuDocGroup::RenderInternal( nuImage* targetImage )
 }
 
 // This is always called from the UI thread
-void nuDocGroup::ProcessEvent( nuEvent& ev )
+void xoDocGroup::ProcessEvent( xoEvent& ev )
 {
 	TakeCriticalSection lock( DocLock );
 	uint32 initialVersion = Doc->GetVersion();
-	if ( ev.Type != nuEventTimer )
-		NUTRACE_LATENCY("ProcessEvent (not a timer)\n");
+	if ( ev.Type != xoEventTimer )
+		XOTRACE_LATENCY("ProcessEvent (not a timer)\n");
 	switch ( ev.Type )
 	{
-	case nuEventWindowSize:
+	case xoEventWindowSize:
 		RenderDoc->WindowWidth = (uint32) ev.Points[0].x;
 		RenderDoc->WindowHeight = (uint32) ev.Points[0].y;
 		Doc->IncVersion();
@@ -131,7 +131,7 @@ void nuDocGroup::ProcessEvent( nuEvent& ev )
 }
 
 // Returns true if the event was handled
-bool nuDocGroup::BubbleEvent( nuEvent& ev )
+bool xoDocGroup::BubbleEvent( xoEvent& ev )
 {
 	// TODO. My plan is to go with upward bubbling only. The inner-most
 	// control gets the event first, then outward.
@@ -142,22 +142,22 @@ bool nuDocGroup::BubbleEvent( nuEvent& ev )
 	// IE does not support capturing though, so nobody really use it.
 	// We simply ignore the question of how to do shortcut keys for now.
 
-	NUTRACE_EVENTS( "BubbleEvent type=%d\n", (int) ev.Type );
+	XOTRACE_EVENTS( "BubbleEvent type=%d\n", (int) ev.Type );
 
-	nuDomNode* el = &Doc->Root;
+	xoDomNode* el = &Doc->Root;
 	bool stop = false;
 	bool handled = false;
 
 	if ( el->HandlesEvent(ev.Type) )
 	{
-		const podvec<nuEventHandler>& h = el->GetHandlers();
-		NUTRACE_EVENTS( "BubbleEvent found %d event handlers\n", (int) h.size() );
+		const podvec<xoEventHandler>& h = el->GetHandlers();
+		XOTRACE_EVENTS( "BubbleEvent found %d event handlers\n", (int) h.size() );
 		for ( intp i = 0; i < h.size() && !stop; i++ )
 		{
 			if ( h[i].Handles( ev.Type ) )
 			{
 				handled = true;
-				nuEvent c = ev;
+				xoEvent c = ev;
 				c.Context = h[i].Context;
 				c.Target = el;
 				if ( !h[i].Func( c ) )
@@ -172,12 +172,12 @@ bool nuDocGroup::BubbleEvent( nuEvent& ev )
 }
 
 /*
-void nuDocGroup::FindTarget( const nuVec2f& p, pvect<nuRenderDomEl*>& chain )
+void xoDocGroup::FindTarget( const xoVec2f& p, pvect<xoRenderDomEl*>& chain )
 {
 	chain += &RenderDoc->RenderRoot;
 	while ( true )
 	{
-		nuRenderDomEl* top = chain.back();
+		xoRenderDomEl* top = chain.back();
 		for ( intp i = 0; i < top->Children.size(); i++ )
 		{
 			//if ( top->Children[i]->Pos )
@@ -186,7 +186,7 @@ void nuDocGroup::FindTarget( const nuVec2f& p, pvect<nuRenderDomEl*>& chain )
 }
 */
 
-bool nuDocGroup::IsDocVersionDifferentToRenderer() const
+bool xoDocGroup::IsDocVersionDifferentToRenderer() const
 {
 	return Doc->GetVersion() != RenderDoc->Doc.GetVersion();
 }

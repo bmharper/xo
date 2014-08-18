@@ -1,38 +1,38 @@
 #pragma once
 
-#include "../nuDoc.h"
-#include "nuRenderDomEl.h"
+#include "../xoDoc.h"
+#include "xoRenderDomEl.h"
 
 
 /* Document used by renderer.
 The 'Doc' member is a complete clone of the original document.
 */
-class NUAPI nuRenderDoc
+class XOAPI xoRenderDoc
 {
 public:
 	// Defining state
-	nuDoc						Doc;
+	xoDoc						Doc;
 	uint32						WindowWidth, WindowHeight;		// Device pixels
 
 	// Rendered state
-	nuRenderDomNode				RenderRoot;
-	nuPool						RenderPool;
-	//podvec<nuInternalID>		ModifiedNodeIDs;
+	xoRenderDomNode				RenderRoot;
+	xoPool						RenderPool;
+	//podvec<xoInternalID>		ModifiedNodeIDs;
 
-			nuRenderDoc();
-			~nuRenderDoc();
+			xoRenderDoc();
+			~xoRenderDoc();
 
-	nuRenderResult	Render( nuRenderBase* driver );
-	void			CopyFromCanonical( const nuDoc& canonical, nuRenderStats& stats );
-	//nuInternalID	FindElement( nuPoint pos );
+	xoRenderResult	Render( xoRenderBase* driver );
+	void			CopyFromCanonical( const xoDoc& canonical, xoRenderStats& stats );
+	//xoInternalID	FindElement( xoPoint pos );
 
 protected:
 	// Cloned data. temp hack for webcam demo
-	//nuStringTable	ClonedStrings;
-	nuImageStore	ClonedImages;
+	//xoStringTable	ClonedStrings;
+	xoImageStore	ClonedImages;
 
 	void			ResetRenderData();
-	//nuInternalID	FindElement( const nuRenderDomEl& el, nuPoint pos );
-	//static void		FindAlteredNodes( const nuDoc* original, const nuDoc* modified, podvec<nuInternalID>& alteredNodeIDs );
+	//xoInternalID	FindElement( const xoRenderDomEl& el, xoPoint pos );
+	//static void		FindAlteredNodes( const xoDoc* original, const xoDoc* modified, podvec<xoInternalID>& alteredNodeIDs );
 
 };
