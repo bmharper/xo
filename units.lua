@@ -193,75 +193,75 @@ local hlslang = Program {
 }
 --]]
 
-local nudom = SharedLibrary {
-	Name = "nudom",
+local xo = SharedLibrary {
+	Name = "xo",
 	Libs = { 
 		{ "opengl32.lib", "user32.lib", "gdi32.lib", "winmm.lib" ; Config = "win*" },
 		{ "X11", "GL", "GLU", "stdc++"; Config = "linux-*" },
 	},
 	SourceDir = ".",
 	Includes = {
-		"nudom",
+		"xo",
 		"dependencies/freetype/include"
 	},
 	Depends = { crt, freetype, directx, },
 	PrecompiledHeader = {
-		Source = "nudom/pch.cpp",
+		Source = "xo/pch.cpp",
 		Header = "pch.h",
 		Pass = "PchGen",
 	},
 	Sources = {
-		Glob { Extensions = { ".h" }, Dir = "nudom", },
+		Glob { Extensions = { ".h" }, Dir = "xo", },
 		Glob { Extensions = { ".h" }, Dir = "dependencies", Recursive = false },
 		Glob { Extensions = { ".h" }, Dir = "dependencies/Panacea", },
-		"nudom/nuDefs.cpp",
-		"nudom/nuDoc.cpp",
-		"nudom/nuDocGroup.cpp",
-		{ "nudom/nuDocGroup_Windows.cpp"; Config = "win*" },
-		"nudom/nuEvent.cpp",
-		"nudom/nuMem.cpp",
-		"nudom/nuMsgLoop.cpp",
-		"nudom/nuPlatform.cpp",
-		"nudom/nuString.cpp",
-		"nudom/nuStringTable.cpp",
-		"nudom/nuStyle.cpp",
-		"nudom/nuSysWnd.cpp",
-		"nudom/nuTags.cpp",
-		"nudom/Dom/nuDomEl.cpp",
-		"nudom/Dom/nuDomNode.cpp",
-		"nudom/Dom/nuDomText.cpp",
-		"nudom/Image/nuImage.cpp",
-		"nudom/Image/nuImageStore.cpp",
-		"nudom/Layout/nuLayout.cpp",
-		"nudom/Layout/nuLayout2.cpp",
-		"nudom/Layout/nuTextLayout.cpp",
-		"nudom/Parse/nuDocParser.cpp",
-		"nudom/Render/nuRenderBase.cpp",
-		"nudom/Render/nuRenderDX.cpp",
-		"nudom/Render/nuRenderDX_Defs.cpp",
-		"nudom/Render/nuRenderer.cpp",
-		"nudom/Render/nuRenderGL.cpp",
-		"nudom/Render/nuRenderGL_Defs.cpp",
-		"nudom/Render/nuRenderDoc.cpp",
-		"nudom/Render/nuRenderDomEl.cpp",
-		"nudom/Render/nuRenderStack.cpp",
-		"nudom/Render/nuStyleResolve.cpp",
-		"nudom/Render/nuTextureAtlas.cpp",
-		"nudom/Render/nuVertexTypes.cpp",
-		"nudom/Text/nuFontStore.cpp",
-		"nudom/Text/nuGlyphCache.cpp",
-		"nudom/Text/nuTextDefs.cpp",
-		--"nudom/Shaders/Processed_glsl/CurveShader.cpp",
-		"nudom/Shaders/Processed_glsl/FillShader.cpp",
-		"nudom/Shaders/Processed_glsl/FillTexShader.cpp",
-		"nudom/Shaders/Processed_glsl/RectShader.cpp",
-		"nudom/Shaders/Processed_glsl/TextRGBShader.cpp",
-		"nudom/Shaders/Processed_glsl/TextWholeShader.cpp",
-		"nudom/Shaders/Processed_hlsl/FillShader.cpp",
-		"nudom/Shaders/Processed_hlsl/RectShader.cpp",
-		"nudom/Shaders/Processed_hlsl/TextRGBShader.cpp",
-		"nudom/Shaders/Processed_hlsl/TextWholeShader.cpp",
-		--"nudom/Shaders/Helpers/nuPreprocessor.cpp",
+		"xo/xoDefs.cpp",
+		"xo/xoDoc.cpp",
+		"xo/xoDocGroup.cpp",
+		{ "xo/xoDocGroup_Windows.cpp"; Config = "win*" },
+		"xo/xoEvent.cpp",
+		"xo/xoMem.cpp",
+		"xo/xoMsgLoop.cpp",
+		"xo/xoPlatform.cpp",
+		"xo/xoString.cpp",
+		"xo/xoStringTable.cpp",
+		"xo/xoStyle.cpp",
+		"xo/xoSysWnd.cpp",
+		"xo/xoTags.cpp",
+		"xo/Dom/xoDomEl.cpp",
+		"xo/Dom/xoDomNode.cpp",
+		"xo/Dom/xoDomText.cpp",
+		"xo/Image/xoImage.cpp",
+		"xo/Image/xoImageStore.cpp",
+		"xo/Layout/xoLayout.cpp",
+		"xo/Layout/xoLayout2.cpp",
+		"xo/Layout/xoTextLayout.cpp",
+		"xo/Parse/xoDocParser.cpp",
+		"xo/Render/xoRenderBase.cpp",
+		"xo/Render/xoRenderDX.cpp",
+		"xo/Render/xoRenderDX_Defs.cpp",
+		"xo/Render/xoRenderer.cpp",
+		"xo/Render/xoRenderGL.cpp",
+		"xo/Render/xoRenderGL_Defs.cpp",
+		"xo/Render/xoRenderDoc.cpp",
+		"xo/Render/xoRenderDomEl.cpp",
+		"xo/Render/xoRenderStack.cpp",
+		"xo/Render/xoStyleResolve.cpp",
+		"xo/Render/xoTextureAtlas.cpp",
+		"xo/Render/xoVertexTypes.cpp",
+		"xo/Text/xoFontStore.cpp",
+		"xo/Text/xoGlyphCache.cpp",
+		"xo/Text/xoTextDefs.cpp",
+		--"xo/Shaders/Processed_glsl/CurveShader.cpp",
+		"xo/Shaders/Processed_glsl/FillShader.cpp",
+		"xo/Shaders/Processed_glsl/FillTexShader.cpp",
+		"xo/Shaders/Processed_glsl/RectShader.cpp",
+		"xo/Shaders/Processed_glsl/TextRGBShader.cpp",
+		"xo/Shaders/Processed_glsl/TextWholeShader.cpp",
+		"xo/Shaders/Processed_hlsl/FillShader.cpp",
+		"xo/Shaders/Processed_hlsl/RectShader.cpp",
+		"xo/Shaders/Processed_hlsl/TextRGBShader.cpp",
+		"xo/Shaders/Processed_hlsl/TextWholeShader.cpp",
+		--"xo/Shaders/Helpers/xoPreprocessor.cpp",
 		"dependencies/hash/xxhash.cpp",
 		"dependencies/Panacea/Containers/queue.cpp",
 		"dependencies/Panacea/Platform/cpu.cpp",
@@ -273,24 +273,24 @@ local nudom = SharedLibrary {
 		"dependencies/Panacea/Platform/thread.cpp",
 		"dependencies/Panacea/Strings/ConvertUTF.cpp",
 		"dependencies/Panacea/Strings/fmt.cpp",
-		"dependencies/GL/gl_nudom.cpp",
-		{ "dependencies/GL/wgl_nudom.cpp"; Config = "win*" },
-		{ "dependencies/GL/glx_nudom.cpp"; Config = "linux-gcc-debug-default" },
+		"dependencies/GL/gl_xo.cpp",
+		{ "dependencies/GL/wgl_xo.cpp"; Config = "win*" },
+		{ "dependencies/GL/glx_xo.cpp"; Config = "linux-gcc-debug-default" },
 		"dependencies/stb_image.cpp",
 	},
 }
 
 local HelloWorld = Program {
 	Name = "HelloWorld",
-	Includes = { "nudom" },
+	Includes = { "xo" },
 	--Libs = { "X11", "GL", "GLU", "stdc++", "pthread", "rt"; Config = "linux-*" },
 	Libs = { "stdc++"; Config = "linux-*" },
 	Depends = {
 		crt,
-		nudom
+		xo
 	},
 	Sources = {
-		"templates/nuWinMain.cpp",
+		"templates/xoWinMain.cpp",
 		"samples/HelloWorld/HelloWorld.cpp",
 	}
 }
@@ -298,13 +298,13 @@ local HelloWorld = Program {
 --[[
 local HelloAmalgamation = Program {
 	Name = "HelloAmalgamation",
-	Includes = { "nudom" },
+	Includes = { "xo" },
 	Depends = {
 		crt,
 	},
 	Sources = {
-		"amalgamation/nuDom-amalgamation.cpp",
-		"templates/nuWinMain.cpp",
+		"amalgamation/xoDom-amalgamation.cpp",
+		"templates/xoWinMain.cpp",
 		"samples/HelloAmalgamation/HelloAmalgamation.cpp",
 	}
 }
@@ -312,27 +312,27 @@ local HelloAmalgamation = Program {
 
 local KitchenSink = Program {
 	Name = "KitchenSink",
-	Includes = { "nudom" },
+	Includes = { "xo" },
 	Libs = { "stdc++"; Config = "linux-*" },
 	Depends = {
 		crt,
-		nudom
+		xo
 	},
 	Sources = {
-		"templates/nuWinMain.cpp",
+		"templates/xoWinMain.cpp",
 		"samples/KitchenSink/KitchenSink.cpp",
 	}
 }
 
 local Bench = Program {
 	Name = "Bench",
-	Includes = { "nudom" },
+	Includes = { "xo" },
 	Depends = {
 		crt,
-		nudom
+		xo
 	},
 	Sources = {
-		"templates/nuWinMain.cpp",
+		"templates/xoWinMain.cpp",
 		"samples/Bench/Bench.cpp",
 	}
 }
@@ -370,9 +370,9 @@ local tinytest_app = Program {
 local Test = Program {
 	Name = "Test",
 	SourceDir = ".",
-	--Includes = { "nudom" },
+	--Includes = { "xo" },
 	Depends = {
-		nudom,
+		xo,
 		crt,
 		tinytest,
 	},
@@ -392,11 +392,11 @@ local Test = Program {
 		"tests/test_Stats.cpp",
 		"tests/test_String.cpp",
 		"tests/test_Styles.cpp",
-		"tests/nuImageTester.cpp",
+		"tests/xoImageTester.cpp",
 	}
 }
 
-Default(nudom)
+Default(xo)
 Default(HelloWorld)
 Default(Bench)
 Default(Test)

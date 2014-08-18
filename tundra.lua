@@ -142,7 +142,7 @@ Build {
 		},
 		-- Override solutions to generate and what units to put where.
 		MsvcSolutions = {
-			['nudom.sln'] = {}, -- receives all the units due to empty set
+			['xo.sln'] = {}, -- receives all the units due to empty set
 		},
 		BuildAllByDefault = true,
 	},

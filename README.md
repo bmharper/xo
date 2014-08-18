@@ -1,17 +1,14 @@
-nudom
-=====
+xo
+==
 
-A new DOM.
-
-The idea behind nudom is to take the good parts of HTML/CSS, and use those to build a
+The idea behind xo is to take the good parts of HTML/CSS, and use those to build a
 cross-platform GUI framework that is usable from a compiled language, and statically
 linkable to build native applications for a wide range of platforms.
 
 Build instructions
 ------------------
 The only platform that I'm actively working on right now is Windows Desktop. 
-Every few weeks I make sure that Android still runs. I have had it running under Linux too,
-but haven't bothered to document that yet.
+Every few weeks I make sure that Android still runs. It should run under Linux (X11) also.
 
 Build requirements:
 
@@ -48,7 +45,7 @@ Design goals
 * Depend upon the GPU (OpenGL ES 2.0, or DirectX 11).
 * Parallelize layout and rendering (the pre-GPU phases).
 * Strive to keep latency low.
-* Make it easy for games to integrate nudom.
+* Make it easy for games to integrate xo.
 * Separate the *DOM manipulation* and *render* threads. This allows animations to run on the render thread
 at 60 hz, while you're free to take significantly more time than 16ms to perform your computation and update the DOM.
 While a moot point for games, this has material benefits for non-realtime applications.
@@ -63,12 +60,12 @@ Target platforms
 * iOS
 * OSX
 
-nudom is written in C++, but it should be usable from other languages.
+xo is written in C++, but it should be usable from other languages.
 
 Sample
 ------
 
-	nuDomEl* btn = root->AddNode( nuTagDiv );
+	xoDomEl* btn = root->AddNode( nuTagDiv );
 	btn->AddClass( "button" );
 	btn->SetText( "Click Me" );
 	btn->OnClick( [](const nuEvent& ev) -> bool { /* do something */ } );
@@ -103,7 +100,7 @@ being solved by some browsers (PNaCL, asm.js, websockets, etc), however browsers
 not "there yet" for a lot of applications. There is also the browser fragmentation problem: Only Chrome
 supports PNaCL, only Firefox does asm.js, only IE does ActiveX!
 * __libRocket__ This is painful to ignore, because we're obviously in dubious "Not Invented Here" territory.
-libRocket is almost what we want. I am writing nudom mostly to scratch an itch, and much of the joy here is
+libRocket is almost what we want. I am writing xo mostly to scratch an itch, and much of the joy here is
 in the journey. I wanted to start with a clean slate.
 Also, I believe that the layout principles that have evolved inside HTML/CSS could benefit from a clean start.
 * __QT__ Like I said, I'm scratching an itch.
