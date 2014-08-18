@@ -65,10 +65,10 @@ xo is written in C++, but it should be usable from other languages.
 Sample
 ------
 
-	xoDomEl* btn = root->AddNode( nuTagDiv );
+	xoDomEl* btn = root->AddNode( xoTagDiv );
 	btn->AddClass( "button" );
 	btn->SetText( "Click Me" );
-	btn->OnClick( [](const nuEvent& ev) -> bool { /* do something */ } );
+	btn->OnClick( [](const xoEvent& ev) -> bool { /* do something */ } );
 
 Status
 ------
