@@ -16,8 +16,8 @@ void nuMain( nuMainEvent ev )
 		{
 			nuGlobal()->FontStore->AddFontDirectory( "C:\\temp\\fonts" );
 			MainWnd = nuSysWnd::CreateWithDoc();
-			//MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
-			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 800, 60 + 400), nuSysWnd::SetPosition_Move | nuSysWnd::SetPosition_Size );
+			MainWnd->SetPosition( nuBox(2100, 60, 2100 + 1300, 60 + 800), /*nuSysWnd::SetPosition_Move |*/ nuSysWnd::SetPosition_Size );
+			//MainWnd->SetPosition( nuBox(2100, 60, 2100 + 800, 60 + 400), nuSysWnd::SetPosition_Move | nuSysWnd::SetPosition_Size );
 			nuDoc* doc = MainWnd->Doc();
 			InitDOM( doc );
 			MainWnd->Show();

@@ -44,11 +44,14 @@ protected:
 
 	struct LayoutOutput
 	{
-		BindingSet	Binds;
-		nuPos		NodeWidth;
-		nuPos		NodeHeight;
-		nuPos		NodeBaseline;
-		nuBreakType	Break: 2;		// Keep in mind that you need to mask this off against 3 (ie if (x.Break & 3 == nuBreakAfter)), because of sign extension. ie enums are signed.
+		BindingSet		Binds;
+		nuPos			NodeWidth;
+		nuPos			NodeHeight;
+		nuPos			NodeBaseline;
+		nuBreakType		Break: 2;		// Keep in mind that you need to mask this off against 3 (ie if (x.Break & 3 == nuBreakAfter)), because of sign extension. ie enums are signed.
+		//nuPositionType	Position: 3;
+		nuBreakType		GetBreak() const		{ return nuBreakType(Break & 3); }
+		//nuPositionType	GetPosition() const		{ return nuPositionType(Position & 7); }
 	};
 
 	// Every time we start a new line, another one of these is created
@@ -128,6 +131,7 @@ protected:
 	static void				FlowNewline( FlowState& flow );
 	static bool				FlowBreakBefore( const LayoutOutput& cout, FlowState& flow );
 	static nuPoint			FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, nuRenderDomEl* rendEl );
+	static nuPoint			ApplyPosition( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, nuRenderDomEl* rendEl );
 
 	static bool				IsDefined( nuPos p )	{ return p != nuPosNULL; }
 	static bool				IsNull( nuPos p )		{ return p == nuPosNULL; }

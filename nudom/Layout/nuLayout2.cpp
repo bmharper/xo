@@ -123,22 +123,17 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 		if ( IsDefined(contentHeight) )	contentHeight = nuPosRoundUp( contentHeight );
 	}
 
-	nuPoint borderToContent( border.Left + padding.Left, border.Top + padding.Top );
-
 	nuPos autoWidth = 0;
 	nuPos autoHeight = 0;
 	nuPos outerBaseline = IsDefined(in.OuterBaseline) ? in.OuterBaseline - toContent.Top : nuPosNULL;
-	//nuPos innerBaseline = nuPosNULL;
-	//int innerBaselineDefinedBy = -1;
 
 	// If we don't know our width and height yet then we need to delay bindings until our first pass is done
 	// The buffer size of 16 here is thumbsuck. One can't make it too big, because this is a recursive function.
 	// -- I first tried to have an optimized case for binding during first pass, but I have given up on that.
 	// -- One could revisit it once the design is nailed down.
-	//StackBufferT<LayoutOutput, 16> outs;
-	//outs.Init( (int) node.ChildCount() );
 	nuLifoVector<LayoutOutput> outs( ChildOutStack );
 	outs.AddN( node.ChildCount() );
+
 	nuLifoVector<LineBox> lineBoxes( LineBoxStack );
 	lineBoxes.Push( LineBox::Make( nuPosNULL, -1, INT32MAX ) );
 
@@ -233,6 +228,7 @@ void nuLayout2::RunNode( const nuDomNode& node, const LayoutInput& in, LayoutOut
 	out.NodeHeight = contentHeight + border.Top + border.Bottom + margin.Top + margin.Bottom + padding.Top + padding.Bottom;
 	out.Binds = ComputeBinds();
 	out.Break = Stack.Get( nuCatBreak ).GetBreakType();
+	//out.Position = Stack.Get( nuCatPosition ).GetPositionType();
 
 	Stack.StackPop();
 }
@@ -595,8 +591,7 @@ void nuLayout2::FlowNewline( FlowState& flow )
 
 bool nuLayout2::FlowBreakBefore( const LayoutOutput& cout, FlowState& flow )
 {
-	nuBreakType breakType = nuBreakType(cout.Break & 3);	// need to mask off because of enum sign extension
-	if ( breakType == nuBreakBefore )
+	if ( cout.GetBreak() == nuBreakBefore )
 	{
 		FlowNewline( flow );
 		return true;
@@ -606,8 +601,6 @@ bool nuLayout2::FlowBreakBefore( const LayoutOutput& cout, FlowState& flow )
 
 nuPoint nuLayout2::FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, nuRenderDomEl* rendEl )
 {
-	nuBreakType breakType = nuBreakType(cout.Break & 3);	// need to mask off because of enum sign extension
-
 	if ( IsDefined(cin.ParentWidth) )
 	{
 		bool over = flow.PosMinor + cout.NodeWidth > cin.ParentWidth;
@@ -620,7 +613,7 @@ nuPoint nuLayout2::FlowRun( const LayoutInput& cin, const LayoutOutput& cout, Fl
 	flow.PosMinor += cout.NodeWidth;
 	flow.MajorMax = nuMax( flow.MajorMax, flow.PosMajor + cout.NodeHeight );
 
-	if ( breakType == nuBreakAfter )
+	if ( cout.GetBreak() == nuBreakAfter )
 		FlowNewline( flow );
 
 	return offset;
