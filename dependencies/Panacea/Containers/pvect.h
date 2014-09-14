@@ -433,7 +433,7 @@ template <typename T> void sort( pvect<T*>& target, void* context, int (*compare
 {
 	// double-trouble!
 	pvect_double_context cxA;
-	cxA.Compare = compare;
+	cxA.Compare = (void*) compare;
 	cxA.Context = context;
 	vect_sort_cx<T*>( &target[0], 0, target.size() - 1, &cxA, pvect_double_marshal_context_is_compare<T*> );
 }

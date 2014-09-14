@@ -5,7 +5,7 @@
 #include "Render/xoRenderGL.h"
 #include "Render/xoRenderDX.h"
 
-static const char*		WClass = "xo";
+static const TCHAR*		WClass = _T("xo");
 
 #if XO_PLATFORM_ANDROID
 xoSysWnd*				SingleMainWnd = NULL;
@@ -100,7 +100,7 @@ xoSysWnd* xoSysWnd::Create()
 	bool ok = false;
 	xoSysWnd* w = new xoSysWnd();
 	XOTRACE("DocGroup = %p\n", w->DocGroup);
-	w->SysWnd = CreateWindow( WClass, "xo", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup );
+	w->SysWnd = CreateWindow( WClass, _T("xo"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup );
 	if ( w->SysWnd )
 	{
 		if ( w->InitializeRenderer() )

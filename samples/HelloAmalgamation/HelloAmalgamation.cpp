@@ -1,4 +1,4 @@
-#include "../../amalgamation/xoDom-amalgamation.h"
+#include "../../amalgamation/xo-amalgamation.h"
 
 static xoSysWnd* MainWnd;
 

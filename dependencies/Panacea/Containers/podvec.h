@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string.h>					// memset()
+#include <initializer_list>
 #include "../Platform/stdint.h"
 #include "../Platform/err.h"
 #include "cont_utils.h"
@@ -72,6 +73,21 @@ struct podvec
 	{
 		construct();
 		*this = b;
+	}
+	podvec( std::initializer_list<T> list )
+	{
+		construct();
+		if ( ispod() )
+		{
+			resize_uninitialized( list.size() );
+			memcpy( data, list.begin(), sizeof(T) * list.size() );
+		}
+		else
+		{
+			resize( list.size() );
+			for ( size_t i = 0; i < list.size(); i++ )
+				data[i] = list.begin()[i];
+		}
 	}
 
 	~podvec()

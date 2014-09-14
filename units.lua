@@ -295,20 +295,26 @@ local HelloWorld = Program {
 	}
 }
 
---[[
 local HelloAmalgamation = Program {
 	Name = "HelloAmalgamation",
-	Includes = { "xo" },
+	Libs = { 
+		{ "opengl32.lib", "user32.lib", "gdi32.lib", "winmm.lib" ; Config = "win*" },
+		{ "X11", "GL", "GLU", "stdc++"; Config = "linux-*" },
+	},
+	Defines = {
+		"XO_AMALGAMATION"
+	},
 	Depends = {
 		crt,
+		directx,
 	},
 	Sources = {
-		"amalgamation/xoDom-amalgamation.cpp",
+		"amalgamation/xo-amalgamation.cpp",
+		"amalgamation/xo-amalgamation-freetype.c",
 		"templates/xoWinMain.cpp",
 		"samples/HelloAmalgamation/HelloAmalgamation.cpp",
 	}
 }
---]]
 
 local KitchenSink = Program {
 	Name = "KitchenSink",

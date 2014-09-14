@@ -1,5 +1,9 @@
+#ifdef XO_AMALGAMATION
+#include "../amalgamation/xo-amalgamation.h"
+#else
 #include "xo.h"
 #include "xoDocGroup.h"
+#endif
 
 // This file should be compiled and linked into your exe
 
@@ -12,7 +16,7 @@ static int __cdecl CrtAllocHook( int allocType, void *pvData, size_t size, int b
 
 #pragma warning(disable: 28251) // Inconsistent annotation for 'WinMain': this instance has no annotations. See c:\program files (x86)\windows kits\8.0\include\um\winbase.h(2188). 
 
-int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow )
+int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
 	//XOTRACE("sizeof(xoDomEl) = %d\n", (int) sizeof(xoDomEl));
 	_CrtSetAllocHook( CrtAllocHook );

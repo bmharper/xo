@@ -1,0 +1,5 @@
+
+The amalgamation lives here:
+	https://github.com/benharper123/xo-amalgamation
+
+You can build it using build\create-amalgamation.rb

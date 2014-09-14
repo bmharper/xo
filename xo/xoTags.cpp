@@ -8,3 +8,6 @@ const char* xoTagNames[xoTagEND + 1] =
 {
 	XO_TAGS_DEFINE
 };
+
+#undef XX
+#undef XY

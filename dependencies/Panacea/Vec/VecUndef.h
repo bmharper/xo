@@ -22,10 +22,6 @@
 #undef UL_U
 #undef UL_N
 
-#undef RX
-#undef RY
-#undef RZ
-
 #undef X
 #undef Y
 #undef Z

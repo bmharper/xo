@@ -5,18 +5,24 @@ The idea behind xo is to take the good parts of HTML/CSS, and use those to build
 cross-platform GUI framework that is usable from a compiled language, and statically
 linkable to build native applications for a wide range of platforms.
 
-Build instructions
-------------------
+### Using xo
+
 The only platform that I'm actively working on right now is Windows Desktop. 
-Every few weeks I make sure that Android still runs. It should run under Linux (X11) also.
+Every few weeks I make sure that Android and Linux (X11) still runs.
 
-Build requirements:
+The easiest way to use xo is to build with the "amalgamation". The amalgamation is a set of 3 files:
 
-* The build system is [tundra2](https://github.com/deplinenoise/tundra)
+* xo-amalgamation.h
+* xo-amalgamation.cpp
+* xo-amalgamation-freetype.c
 
-### Building on Windows
+Simply add `xo-amalgamation.cpp` and `xo-amalgamation-freetype.c` into your project. If you are building a cross-platform application, and you want xo to handle the event loop for you, then you will need to include at least one other file (xoWinMain.cpp). On Android, there is a bit more stuff to add, such as JNI bindings.
 
-* Install Visual Studio 2013.
+The amalgamation is hosted [here](https://github.com/benharper123/xo-amalgamation)
+
+### Building from full source
+
+* Install Visual Studio 2013, or GCC on Linux.
 * Install tundra2.
 	* Install the [latest binary release](https://github.com/deplinenoise/tundra/releases)
 	* Clone the latest tundra `master` branch onto your machine and compile a release build using the provided Visual Studio solution.
@@ -75,14 +81,11 @@ Status
 *GARAGE EXPERIMENT*
 
 I have three colored, rounded rectangles on the screen, that you can control with a finger or mouse move.  
-Running on Android, Windows, and Linux (X-Windows).
+Running on Android, Windows, and Linux (X11).
 
 There is an OpenGL and a DirectX 11 backend.
 
-* Purely horizontal text is rendered well on Windows, where you typically have low resolution (< 100 dpi) monitors.
-	Text through the low DPI path is vertically snapped to whole pixels, and horizontally snapped to 1/3 of a pixel,
-	which effectively allows resolution-independent horizontal text layout. The lack of vertical independence is still
-	a problem for achieving resolution-independent layout, but I believe this is the right tradeoff.
+* Purely horizontal text is rendered well on Windows, where you typically have low resolution (< 100 dpi) monitors. The Freetype version built into xo is version 2.4.12 with the "infinality" patches. These patches produce excellent results for classic Windows fonts such as Verdana and Microsoft Sans Serif. However, they do cause Freetype to break when one upgrades to version 2.5.0, which is the version that includes Adobe's CFF engine. I don't know what the best way forward is here.
 
 Why?
 ----

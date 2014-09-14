@@ -61,9 +61,9 @@ void xoRenderer::RenderNode( xoPoint base, xoRenderDomNode* node )
 
 	float width = right - left;
 	float height = bottom - top;
-	float mindim = min(width, height);
-	mindim = max(mindim, 0.0f);
-	radius = min(radius, mindim / 2);
+	float mindim = xoMin(width, height);
+	mindim = xoMax(mindim, 0.0f);
+	radius = xoMin(radius, mindim / 2);
 
 	if ( mindim <= 0 )
 		return;

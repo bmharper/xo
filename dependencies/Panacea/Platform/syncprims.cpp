@@ -374,3 +374,9 @@ bool AbcSyncEvent::Wait( DWORD waitMS )
 	return false;
 #endif
 }
+
+#ifdef _WIN32
+#undef open
+#undef close
+#undef lseek
+#endif

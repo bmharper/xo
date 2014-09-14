@@ -48,6 +48,7 @@ typedef unsigned short uint16_t;
 #ifdef _MSC_VER
 typedef __int64 i64;				// preferred (i64) -- see also intr/intp below
 typedef __int64 int64;
+typedef __int64 int64_t;
 typedef __int64 INT64;
 typedef unsigned __int64 u64;		// preferred (u64) -- see also intr/intp below
 typedef unsigned __int64 uint64;

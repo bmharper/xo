@@ -13,12 +13,6 @@
 #define UL_U (Y)
 #define UL_N (Z)
 
-// in local coordinates, which is on the plane (RX,RY) and which is up (RZ)
-// makes the local 2D calculations easier
-#define RX (X)
-#define RY (Z)
-#define RZ (Y)
-
 #define XX row[0].x
 #define XY row[0].y
 #define XZ row[0].z

@@ -9,6 +9,7 @@
 	#include <windowsx.h>
 	#include <mmsystem.h>
 	#include <Shlobj.h>
+	#include <tchar.h>
 #else
 	#define XO_BUILD_OPENGL 1
 	#ifdef ANDROID

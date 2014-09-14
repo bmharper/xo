@@ -73,7 +73,7 @@ bool AbcQueue::PeekTail( void* item )
 
 void AbcQueue::Grow()
 {
-	u32 newsize = max(RingSize * 2, (u32) 2);
+	u32 newsize = std::max(RingSize * 2, (u32) 2);
 	void* nb = realloc( Buffer, (size_t) ItemSize * newsize );
 	AbcAssert(nb != NULL);
 	Buffer = nb;
