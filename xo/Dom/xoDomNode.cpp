@@ -3,7 +3,7 @@
 #include "xoDomNode.h"
 #include "../Parse/xoDocParser.h"
 
-xoDomNode::xoDomNode( xoDoc* doc, xoTag tag ) : xoDomEl(doc, tag)
+xoDomNode::xoDomNode( xoDoc* doc, xoTag tag, xoInternalID parentID ) : xoDomEl(doc, tag, parentID)
 {
 	AllEventMask = 0;
 }
@@ -64,7 +64,7 @@ void xoDomNode::ForgetChildren()
 xoDomEl* xoDomNode::AddChild( xoTag tag )
 {
 	IncVersion();
-	xoDomEl* c = Doc->AllocChild( tag );
+	xoDomEl* c = Doc->AllocChild( tag, InternalID );
 	Children += c;
 	Doc->ChildAdded( c );
 	return c;
@@ -182,7 +182,7 @@ void xoDomNode::HackSetStyle( const xoStyle& style )
 void xoDomNode::AddClass( const char* klass )
 {
 	IncVersion();
-	xoStyleID id = Doc->ClassStyles.GetStyleID( klass );
+	xoStyleClassID id = Doc->ClassStyles.GetClassID( klass );
 	if ( Classes.find( id ) == -1 )
 		Classes += id;
 }
@@ -190,7 +190,7 @@ void xoDomNode::AddClass( const char* klass )
 void xoDomNode::RemoveClass( const char* klass )
 {
 	IncVersion();
-	xoStyleID id = Doc->ClassStyles.GetStyleID( klass );
+	xoStyleClassID id = Doc->ClassStyles.GetClassID( klass );
 	intp index = Classes.find( id );
 	if ( index != -1 )
 		Classes.erase( index );

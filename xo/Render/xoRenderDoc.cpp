@@ -6,36 +6,76 @@
 #include "xoRenderDX.h"
 #include "xoRenderGL.h"
 
+xoLayoutResult::xoLayoutResult( const xoDoc& doc )
+{
+	IsLocked = false;
+	Root.SetPool( &Pool );
+	Root.InternalID = doc.Root.GetInternalID();
+}
+
+xoLayoutResult::~xoLayoutResult()
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 xoRenderDoc::xoRenderDoc()
 {
-	WindowWidth = 0;
-	WindowHeight = 0;
-	RenderRoot.SetPool( &RenderPool );
+	AbcCriticalSectionInitialize( LayoutLock );
 }
 
 xoRenderDoc::~xoRenderDoc()
 {
+	for ( u32 iter = 0; true; iter++ )
+	{
+		TakeCriticalSection lock( LayoutLock );
+		if ( LatestLayout != nullptr && !LatestLayout->IsLocked )
+		{
+			delete LatestLayout;
+			LatestLayout = nullptr;
+		}
+		PurgeOldLayouts();
+		if ( LatestLayout == nullptr && OldLayouts.size() == 0 )
+			break;
+		if ( iter % 500 == 0 )
+			XOTRACE( "xoRenderDoc waiting for layouts to be released\n" );
+		AbcSleep( 1 );
+	}
+	AbcCriticalSectionDestroy( LayoutLock );
 }
 
-void xoRenderDoc::ResetRenderData()
-{
-	RenderRoot.Discard();
-	RenderPool.FreeAll();
-	RenderRoot.InternalID = Doc.Root.GetInternalID();
-}
+//void xoRenderDoc::ResetRenderData()
+//{
+//	RenderRoot.Discard();
+//	RenderPool.FreeAll();
+//	RenderRoot.InternalID = Doc.Root.GetInternalID();
+//}
 
 xoRenderResult xoRenderDoc::Render( xoRenderBase* driver )
 {
-	XOTRACE_RENDER( "RenderDoc: Reset\n" );
-	ResetRenderData();
+	//XOTRACE_RENDER( "RenderDoc: Reset\n" );
+	//ResetRenderData();
+
+	xoLayoutResult* layout = new xoLayoutResult( Doc );
 	
 	XOTRACE_RENDER( "RenderDoc: Layout\n" );
 	xoLayout2 lay;
-	lay.Layout( Doc, WindowWidth, WindowHeight, RenderRoot, &RenderPool );
+	lay.Layout( Doc, layout->Root, &layout->Pool );
 
 	XOTRACE_RENDER( "RenderDoc: Render\n" );
 	xoRenderer rend;
-	xoRenderResult res = rend.Render( &ClonedImages, &Doc.Strings, driver, &RenderRoot, WindowWidth, WindowHeight );
+	xoRenderResult res = rend.Render( &ClonedImages, &Doc.Strings, driver, &layout->Root );
+
+	// Atomically publish the new layout
+	{
+		TakeCriticalSection lock( LayoutLock );
+		PurgeOldLayouts();
+		if ( LatestLayout != nullptr && LatestLayout->IsLocked )
+			OldLayouts += LatestLayout;
+		LatestLayout = layout;
+	}
 
 	return res;
 }
@@ -51,6 +91,42 @@ void xoRenderDoc::CopyFromCanonical( const xoDoc& canonical, xoRenderStats& stat
 	// TODO: Don't do this dumb copying.
 	//ClonedStrings.CloneFrom( canonical.Strings );
 	ClonedImages.CloneFrom( canonical.Images );
+}
+
+xoLayoutResult*	xoRenderDoc::AcquireLatestLayout()
+{
+	TakeCriticalSection lock( LayoutLock );
+
+	if ( LatestLayout == nullptr )
+		return nullptr;
+
+	XOASSERT( !LatestLayout->IsLocked );
+	LatestLayout->IsLocked = true;
+
+	return LatestLayout;
+}
+
+void xoRenderDoc::ReleaseLayout( xoLayoutResult* layout )
+{
+	if ( layout == nullptr )
+		return;
+	TakeCriticalSection lock( LayoutLock );
+	XOASSERT( LatestLayout->IsLocked );
+	layout->IsLocked = false;
+	PurgeOldLayouts();
+}
+
+// Warning: This assumes LayoutLock is already held
+void xoRenderDoc::PurgeOldLayouts()
+{
+	for ( intp i = OldLayouts.size() - 1; i >= 0; i-- )
+	{
+		if ( !OldLayouts[i]->IsLocked )
+		{
+			delete OldLayouts[i];
+			OldLayouts.erase( i );
+		}
+	}
 }
 
 /*

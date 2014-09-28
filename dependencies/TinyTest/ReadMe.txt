@@ -1,6 +1,10 @@
+This is a small C++ testing framework.
 
-
-
-This is a tiny testing framework that I have written for all my applications. The intention is that you build your tests
-into various testing applications (or the main applications themselves), by including TinyTest.h, and using the
-interfaces thus provided. The idea is that the testing framework.
+Features:
+	* Include just two .h files
+	* Concurrent (but controllable) execution of tests
+	* Output formats: Text, JUnit, HTML
+	* Assertions can be written in DLLs that are not part of the test suite
+	* Clean up sub-processes launched by test application
+	
+For usage instructions, see TinyTest.h

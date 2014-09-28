@@ -1,18 +1,42 @@
 #include "pch.h"
 #include "xoDoc.h"
 #include "xoDomEl.h"
+#include "xoDomNode.h"
+#include "xoDomText.h"
 #include "xoCloneHelpers.h"
 
-xoDomEl::xoDomEl( xoDoc* doc, xoTag tag )
+xoDomEl::xoDomEl( xoDoc* doc, xoTag tag, xoInternalID parentID )
+	: Doc(doc), Tag(tag), ParentID(parentID)
 {
-	Doc = doc;
-	Tag = tag;
-	InternalID = 0;
-	Version = 0;
 }
 
 xoDomEl::~xoDomEl()
 {
+}
+
+const xoDomNode* xoDomEl::GetParent() const
+{
+	return Doc->GetNodeByInternalID( ParentID );
+}
+
+xoDomNode* xoDomEl::ToNode()
+{
+	return IsNode() ? static_cast<xoDomNode*>(this) : nullptr;
+}
+
+xoDomText* xoDomEl::ToText()
+{
+	return IsText() ? static_cast<xoDomText*>(this) : nullptr;
+}
+
+const xoDomNode* xoDomEl::ToNode() const
+{
+	return IsNode() ? static_cast<const xoDomNode*>(this) : nullptr;
+}
+
+const xoDomText* xoDomEl::ToText() const
+{
+	return IsText() ? static_cast<const xoDomText*>(this) : nullptr;
 }
 
 // all memory allocations come from the pool. The also happens to be recursive.

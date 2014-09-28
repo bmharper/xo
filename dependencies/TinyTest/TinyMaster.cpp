@@ -1,22 +1,54 @@
-#include "pch.h"
+/*
+This file has the logic for running tests from the command line.
+This launches more instances of itself. Each of those instances runs
+a single unit test. We launch as many instances as we can in parallel,
+while obeying the flags that the tests specify.
+*/
 
-#include "TinyTest.h"
+#include <algorithm>
 
-#ifdef _MSC_VER
-#define DIR_SEP '\\'
+#ifdef _WIN32
+	#include <direct.h>
+	#define DIR_SEP '\\'
+	#define DIR_SEP_STR "\\"
+	#define TT_TEST_DIR "c:\\temp\\tinytest\\"
+	#define TT_TEST_GLOBAL_LOCK_FILE TT_TEST_DIR "global_machine_lock"
+	typedef HANDLE TT_PROCESS_HANDLE;
+	#define popen _popen
+	#define pclose _pclose
 #else
-#define DIR_SEP '/'
+	#include <sys/stat.h>
+	#define DIR_SEP '/'
+	#define DIR_SEP_STR "/"
+	#define TT_TEST_DIR "/tmp/tinytest/"
+	#define TT_TEST_GLOBAL_LOCK_FILE TT_TEST_DIR "global_machine_lock"
+	typedef uint TT_PROCESS_HANDLE;
+	#define _In_z_
+	#define _Printf_format_string_
 #endif
 
-//#define DEBUG_THREADS_CX(fmt, ...)	if (cx->DebugThreads) printf(fmt, __VA_ARGS__)
-//#define DEBUG_THREADS(fmt, ...)		if (DebugThreads) printf(fmt, __VA_ARGS__)
+static const int TTGlobalLockTimeoutSeconds = 15 * 60;
+
+// Uncomment the following two macros when debugging threading issues
+//#define DEBUG_THREADS_CX(fmt, ...)	printf(fmt, __VA_ARGS__)
+//#define DEBUG_THREADS(fmt, ...)		printf(fmt, __VA_ARGS__)
 #define DEBUG_THREADS_CX(fmt, ...)	(void) 0
 #define DEBUG_THREADS(fmt, ...)		(void) 0
 
-#if defined(__X86_64__) || defined(_M_X64)
-typedef long long intp;
+#ifdef _MSC_VER
+#	if _M_X64
+#		define ARCH_64 1
+		typedef long long intp;
+#	else
+		typedef int intp;
+#	endif
 #else
-typedef int intp;
+#	if __SIZEOF_POINTER__ == 8
+#		define ARCH_64 1
+		typedef long intp;
+#	else
+		typedef int intp;
+#	endif
 #endif
 
 struct Test;
@@ -30,19 +62,34 @@ extern const char* HtmlHeadTxt;
 extern const char* HtmlTailTxt;
 extern const char* JUnitTailTxt;
 
-string			EscapeHtml( const string& s );
-string			EscapeXml( const string& s );
-podvec<string>	DiscardEmpties( const podvec<string>& s );
-podvec<string>	Split( const string& s, char delim );
-string			Trim( const string& s );
-string			FilenameOnly( const string& s );
-bool			MatchWildcardNocase( const string& s, const string& p );
-bool			MatchWildcardNocase( const char* s, const char* p );
-bool			WriteWholeFile( const string& filename, const string& s );
-string			IntToStr( int64 i );
-double			TimeSeconds();
-BOOL			CloseHandleAndZero( HANDLE& h );
-TTParallel		ParseParallel( const char* s );
+template<typename T> T TTMin(const T& a, const T& b) { return a < b ? a : b; }
+template<typename T> T TTMax(const T& a, const T& b) { return a < b ? b : a; }
+
+void					TTShowHelp();
+int						TTRunAsMaster( int argc, char* argv[] );
+
+static string			EscapeHtml( const string& s );
+static string			EscapeXml( const string& s );
+static podvec<string>	DiscardEmpties( const podvec<string>& s );
+static podvec<string>	Split( const string& s, char delim );
+static string			Trim( const string& s );
+static string			Directory( const string& s );
+static string			FilenameOnly( const string& s );
+static string			SPrintf( const char* format, ... );
+static bool				MatchWildcardNocase( const string& s, const string& p );
+static bool				MatchWildcardNocase( const char* s, const char* p );
+static bool				WriteWholeFile( const string& filename, const string& s );
+static string			IntToStr( int64 i );
+static double			TimeSeconds();
+static TTParallel		ParseParallel( const char* s );
+static bool				MyCreateDirectory( const string& path );
+static bool				DeleteDirectoryRecursive( const string& path );
+static bool				DirectoryExists( const string& s );
+static int				OpenLockFile( const string& path );		// Return <= 0 on failure
+static void				CloseLockFile( int file );
+#ifdef _WIN32
+static BOOL				CloseHandleAndZero( HANDLE& h );
+#endif
 
 struct Test
 {
@@ -69,7 +116,7 @@ struct Test
 	void Construct() { Context = NULL; Pass = false; Ignored = false; Time = 0; }
 	double TimeoutSeconds() const
 	{
-		return Size == TTSizeSmall ? 5 * 60 : 15 * 60;
+		return Size == TTSizeSmall ? 5 * 60 : 20 * 60;	// Keep this in sync with TinyTest.h (TTSizeSmall, TTSizeLarge)
 	}
 	static int ParallelSort( TTParallel p )
 	{
@@ -104,7 +151,6 @@ struct OutputDev
 // This is our global state. A single instance of these exists for a single run of the application.
 struct TestContext
 {
-	string					ExePath;
 	string					Name;
 	string					Ident;
 	string					Options;
@@ -113,7 +159,6 @@ struct TestContext
 	OutputDev*				Out;
 	bool					OutputBare;
 	bool					RunLargeTests;
-	bool					DebugThreads;
 	int						NumThreads;
 	podvec<Test>			Tests;
 	podvec<string>			Include;
@@ -122,7 +167,7 @@ struct TestContext
 				TestContext();
 				~TestContext();
 
-	int			EnumAndRun( string exepath, int argc, char** argv );
+	int			EnumAndRun( int argc, char** argv );
 
 	int			CountPass()	const		{ int c = 0; for ( intp i = 0; i < Tests.size(); i++ ) c += Tests[i].Pass ? 1 : 0; return c; }
 	int			CountIgnored() const	{ int c = 0; for ( intp i = 0; i < Tests.size(); i++ ) c += Tests[i].Ignored ? 1 : 0; return c; }
@@ -149,6 +194,9 @@ protected:
 	int			Run();
 	bool		EnumTests();
 	bool		TestMatchesFilter( const Test& t ) const;
+	Test*		NextFilteredTest( int threadNum );
+	void		RunTestOuter( int threadNum, Test* t );
+	void		RunTestExec( string tempDir, Test* t );
 	void		FlushOutput();
 	void		WriteOutputToFile();
 };
@@ -166,8 +214,8 @@ struct Process
 	string			ExecuteAndWait( string exec, double timeoutSeconds, string& childStdOut, int& processExitCode );
 
 private:
-	unsigned int		ProcessID;			// Process ID of currently executing process
-	podvec<HANDLE>		SubProcesses;		// Sub processes launched by the currently executing test
+	unsigned int				ProcessID;			// Process ID of currently executing process
+	podvec<TT_PROCESS_HANDLE>	SubProcesses;		// Sub processes launched by the currently executing test
 
 	void			ReadIPC( uint waitMS );
 	void			CloseZombieProcesses();
@@ -177,13 +225,13 @@ private:
 struct OutputDevText : public OutputDev
 {
 	virtual bool		ImmediateOut()					{ return true; }
-	virtual string		HeadPre( TestContext& c )		{ return fmt("%s %s\n", c.Name, c.Ident); }
-	virtual string		HeadPost( TestContext& c )		{ return fmt("%d/%d passed\n", c.CountPass(), c.CountRun()); }
+	virtual string		HeadPre( TestContext& c )		{ return SPrintf("%s %s\n", c.Name.c_str(), c.Ident.c_str()); }
+	virtual string		HeadPost( TestContext& c )		{ return SPrintf("%d/%d passed\n", (int) c.CountPass(), (int) c.CountRun()); }
 	virtual string		Tail()							{ return ""; }
-	virtual string		ItemPre( const Test& t )		{ return fmt( "%-35s", t.Name ); }
+	virtual string		ItemPre( const Test& t )		{ return SPrintf( "%-35s", t.Name.c_str() ); }
 	virtual string		ItemPost( const Test& t )
 	{
-		string r = fmt( "%s", t.Pass ? "PASS" : "FAIL" );
+		string r = SPrintf( "%s", t.Pass ? "PASS" : "FAIL" );
 		if ( !t.Pass )
 			r += "\n" + t.TrimmedOutput;
 		r += "\n";
@@ -198,8 +246,8 @@ struct OutputDevHtml : public OutputDev
 	virtual string		Tail()							{ return HtmlTailTxt; }
 	virtual string		ItemPost( const Test& t )
 	{
-		if ( t.Pass )	return fmt( "<div class='test pass'>%s</div>\n", EscapeHtml(t.Name) );
-		else			return fmt( "<div class='test fail'>%s<pre class='detail'>%s</pre></div>\n", EscapeHtml(t.Name), EscapeHtml(t.TrimmedOutput) );
+		if ( t.Pass )	return SPrintf( "<div class='test pass'>%s</div>\n", EscapeHtml(t.Name).c_str() );
+		else			return SPrintf( "<div class='test fail'>%s<pre class='detail'>", EscapeHtml(t.Name).c_str() ) + EscapeHtml(t.TrimmedOutput) + "</pre></div>\n";
 	}
 };
 
@@ -208,32 +256,27 @@ struct OutputDevJUnit : public OutputDev
 	virtual string		OutputFilename( string base ) { return base + ".xml"; }
 	virtual string		HeadPost( TestContext& c )
 	{
-		//return fmt( "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-		//			"<testrun name=\"%v\" project=\"%v\" tests=\"%d\" started=\"%d\" failures=\"%d\" errors=\"%d\" ignored=\"%d\">\n"
-		//			"\t<testsuite name=\"%v\" time=\"%f\">\n",
-		//			c.Name, c.Ident, c.Tests.size(), c.Tests.size() - c.CountIgnored(), c.CountFail(), 0, c.CountIgnored(), "anon", c.TotalTime() );
-		return fmt( "<testsuite name=\"%v\" time=\"%f\">\n",
-					c.FullName(), c.TotalTime() );
+		return SPrintf( "<testsuite name=\"%s\" time=\"%f\">\n", c.FullName().c_str(), (double) c.TotalTime() );
 	}
 	virtual string		Tail()		{ return JUnitTailTxt; }
 	virtual string		ItemPost( const Test& t )
 	{
-		if ( t.Pass )	return fmt( "\t\t<testcase name=\"%v\" classname=\"%v\" time=\"%f\"/>\n", EscapeHtml(t.Name), t.Context->FullName(), t.Time );
-		else			return fmt( "\t\t<testcase name=\"%v\" classname=\"%v\" time=\"%f\">\n"
-									"\t\t\t<failure>%s</failure>\n"
-									"\t\t</testcase>\n",
-									EscapeHtml(t.Name), t.Context->FullName(), t.Time, EscapeXml(t.TrimmedOutput) );
+		if ( t.Pass )	return SPrintf( "\t\t<testcase name=\"%s\" classname=\"%s\" time=\"%f\"/>\n", EscapeHtml(t.Name).c_str(), t.Context->FullName().c_str(), (double) t.Time );
+		else			return SPrintf( "\t\t<testcase name=\"%s\" classname=\"%s\" time=\"%f\">\n"
+										"\t\t\t<failure>%s</failure>\n"
+										"\t\t</testcase>\n",
+										EscapeHtml(t.Name).c_str(), t.Context->FullName().c_str(), (double) t.Time, EscapeXml(t.TrimmedOutput).c_str() );
 	}
 };
 
-void ShowHelp()
+void TTShowHelp()
 {
-	const char* msg = 
-		"tinytest_app run test_program_path " TT_TOKEN_INVOKE " testname1 testname2... [options]\n"
-		"  run                 This is the only supported command\n"
-		"  test_program_path   Full path to the executable that runs the tests\n"
+	std::string msg = 
+		" " TT_TOKEN_INVOKE " [options] testname1 testname2...\n"
 		"  " TT_TOKEN_INVOKE "                This parameter must be here\n"
-		"  testname(s)         Wildcards of the tests that you want to run, or '" TT_TOKEN_ALL_TESTS "' to run all\n"
+		"  testname(s)         Wildcards of the tests that you want to run, or '" TT_TOKEN_ALL_TESTS "' to run all.\n"
+		"                      If you specify no tests, then all tests are listed.\n"
+		"\n"
 		"  -xEXCLUDE           Exclude any tests that match the wildcard EXCLUDE. Excludes override includes.\n"
 		"  -tt-small           Run only small tests\n"
 		"  -tt-html            Output as HTML\n"
@@ -242,42 +285,26 @@ void ShowHelp()
 		"  -tt-head            For HTML, output only header\n"
 		"  -tt-tail            For HTML, output only tail\n"
 		"  -tt-out DIR         For JUnit, write xml files to this directory\n"
-		"  -tt-ident IDENT     Give this test suite a name, such as 'win32-release'. This forms part of the xml file\n"
-		"  NOTE                This program is intended to be run indirectly, from a test implementation program\n"
-		"\n";
-	puts( msg );
+		"  -tt-ident IDENT     Give this test suite a name, such as 'win32-release'. This forms part of the JUnit xml file\n";
+	msg = FilenameOnly( TTGetProcessPath() ) + msg;
+	fputs( msg.c_str(), stdout );
 }
 
-int main(int argc, char* argv[])
+int TTRunAsMaster( int argc, char* argv[] )
 {
+	//printf("I am master\n");
 	bool showhelp = true;
-	//for ( int i = 0; i < argc; i++ ) printf( "arg[%d] = '%s'\n", i, argv[i] );
 
 	TestContext cx;
 	cx.SetOutText();
 	cx.OutputBare = false;
 
-	if ( strstr(argv[0], "tinytest_app") != NULL )
-	{
-		// strip our own path
-		argc--;
-		argv++;
-	}
-
-	if ( argc >= 3 && strcmp(argv[0], "run") == 0 )
-	{
-		string exepath = argv[1];
-		std::replace( exepath.begin(), exepath.end(), '/', DIR_SEP );
-		std::replace( exepath.begin(), exepath.end(), '\\', DIR_SEP );
-		string throwaway = argv[2];		// "test"
-		argc -= 3;
-		argv += 3;
-		return cx.EnumAndRun( exepath, argc, argv );
-	}
+	if ( argc >= 3 && strcmp(argv[1], TT_TOKEN_INVOKE_MASTER) == 0 )
+		return cx.EnumAndRun( argc, argv );
 
 	if ( showhelp )
 	{
-		ShowHelp();
+		TTShowHelp();
 		return 1;
 	}
 	return 0;
@@ -287,11 +314,12 @@ TestContext::TestContext()
 {
 	Out = NULL;
 	RunLargeTests = true;
-	DebugThreads = true;
 	NumThreads = 0;
+#ifdef _WIN32
 	char buf[256];
 	if ( GetEnvironmentVariableA( "TT_NUMTHREADS", buf, arraysize(buf) ) < 10 )
 		NumThreads = atoi(buf);
+#endif
 	AbcCriticalSectionInitialize( QueueLock );
 }
 
@@ -304,15 +332,15 @@ TestContext::~TestContext()
 bool TestContext::EnumTests()
 {
 	//printf( "EnumTests\n" );
-	FILE* pipe = _popen( (ExePath + " " + TT_TOKEN_INVOKE).c_str(), "rb" );
-	if ( !pipe ) { fprintf( stderr, "Failed to popen(%s)\n", ExePath.c_str() ); return false; }
+	FILE* pipe = popen( (TTGetProcessPath() + " " + TT_TOKEN_INVOKE).c_str(), "rb" );
+	if ( !pipe ) { fprintf( stderr, "Failed to popen(%s)\n", TTGetProcessPath().c_str() ); return false; }
 
 	size_t read = 0;
 	char buf[1024];
 	podvec<char> all;
 	while ( read = fread( buf, 1, sizeof(buf), pipe ) )
 		all.addn( buf, read );
-	fclose( pipe );
+	pclose( pipe );
 	all += 0;
 
 	podvec<string> lines = Split( string(&all[0]), '\n' );
@@ -326,7 +354,7 @@ bool TestContext::EnumTests()
 			podvec<string> parts = DiscardEmpties( Split( trim, ' ' ) );
 			if ( parts.size() != 3
 				|| (parts[1] != TT_SIZE_SMALL_NAME && parts[1] != TT_SIZE_LARGE_NAME)
-				|| (ParseParallel(parts[2].c_str()) == TTParallel_Invalid_) )
+				|| (ParseParallel(parts[2].c_str()) == TTParallel_Invalid) )
 			{
 				fmtoutf( stderr, "Expected 'testname small|large " TT_PARALLEL_DONTCARE "|" TT_PARALLEL_WHOLECORE "|" TT_PARALLEL_SOLO "' from test enumeration line. Instead '%s'\n", trim.c_str() );
 				return false;
@@ -344,10 +372,9 @@ bool TestContext::EnumTests()
 	return true;
 }
 
-int TestContext::EnumAndRun( string exepath, int argc, char** argv )
+int TestContext::EnumAndRun( int argc, char** argv )
 {
-	ExePath = exepath;
-	Name = FilenameOnly( exepath );
+	Name = FilenameOnly( TTGetProcessPath() );
 	for ( int i = 0; i < argc; i++ )
 	{
 		string opt = argv[i];
@@ -406,6 +433,154 @@ bool TestContext::TestMatchesFilter( const Test& t ) const
 			pass = false;
 	}
 	return pass;
+}
+
+Test* TestContext::NextFilteredTest( int threadNum )
+{
+	// Find the next test that matches the filter
+	TakeCriticalSection lock(QueueLock);
+	while ( TestPos < Tests.size() )
+	{
+		Test* t = &Tests[TestPos];
+		if ( !TestMatchesFilter(*t) )
+		{
+			t->Ignored = true;
+			TestPos++;
+			continue;
+		}
+		if ( t->Parallel == TTParallelSolo && threadNum != 0 )
+		{
+			// Tests are sorted so that Solo tests are at the end of the list, and since we
+			// are not thread 0, we don't run those. Therefore, we are finished.
+			return NULL;
+		}
+		DEBUG_THREADS( "Thread %d executing test %s (acquire)\n", threadNum, t->Name.c_str() );
+		TestPos++;
+		return t;
+	}
+	// all tests are finished
+	return NULL;
+}
+
+void TestContext::RunTestOuter( int threadNum, Test* t )
+{
+	// If there are 4 physical CPU cores, and 8 threads, then the blessed threads
+	// are the first 4. Whenever a 'whole core' job is running, then all non-blessed threads
+	// go to sleep.
+	bool isBlessedThread = threadNum < (int) SysNumCores;
+	
+	const int sleepMS = 20;
+
+	string outText;
+	auto flushOutput = [&]()
+	{
+		if ( Out->ImmediateOut() )
+		{
+			fputs( outText.c_str(), stdout );
+			outText = "";
+		}
+	};
+
+	// Hold off if our computational device is being requested
+	for ( int iwait = 0; ExecWholeCore != 0 && !isBlessedThread; iwait++ )
+	{
+		if ( iwait == 0 )
+			DEBUG_THREADS( "Thread %d pausing because not blessed and ExecWholeCore = %d\n", threadNum, ExecWholeCore );
+		AbcSleep( sleepMS );
+	}
+		
+	for ( int iwait = 0; t->Parallel == TTParallelSolo && ExecTotal != 0; iwait++ )
+	{
+		if ( iwait == 0 )
+			DEBUG_THREADS( "Thread %d pausing, waiting for all other threads to go quiet before executing solo job\n", threadNum );
+		AbcSleep( sleepMS );
+	}
+
+	outText += Out->ItemPre( *t );
+
+	// Form a temporary directory that is unique for this test
+	// We use our own process ID combined with the full name of the test
+	string tempDir = string(TT_TEST_DIR) + IntToStr(TTGetProcessID()) + "_" + Ident + "_" + Name + "_" + t->Name;
+
+	DeleteDirectoryRecursive( tempDir );
+
+	if ( MyCreateDirectory( tempDir ) )
+	{
+		int lockfile = -1;
+		if ( t->Parallel == TTParallelSolo )
+		{
+			double start = TimeSeconds();
+			while ( lockfile == -1 && TimeSeconds() - start < TTGlobalLockTimeoutSeconds )
+			{
+				lockfile = OpenLockFile( TT_TEST_GLOBAL_LOCK_FILE );
+				if ( lockfile == -1 )
+					AbcSleep( 1000 );
+			}
+			if ( lockfile == -1 )
+			{
+				t->Pass = false;
+				t->Output += "Timed out waiting for global lock (test is marked as 'exclusive' across the whole machine)";
+			}
+		}
+
+		if ( t->Parallel != TTParallelSolo || lockfile != -1 )
+		{
+			DEBUG_THREADS( "Thread %d executing test %s (begin)\n", threadNum, t->Name.c_str() );
+			RunTestExec( tempDir, t );
+		}
+
+		CloseLockFile( lockfile );
+		DeleteDirectoryRecursive( tempDir );
+	}
+	else
+	{
+		t->Pass = false;
+		t->Output += "Failed to create test directory '" + tempDir + "'";
+	}
+
+	t->TrimmedOutput = t->Output;
+	if ( t->TrimmedOutput.length() > 1000 )
+		t->TrimmedOutput = "..." + t->TrimmedOutput.substr( t->TrimmedOutput.length() - 1000 );
+
+	outText += Out->ItemPost( *t );
+	flushOutput();
+	DEBUG_THREADS( "Thread %d executing test %s (retire)\n", threadNum, t->Name.c_str() );
+
+	{
+		TakeCriticalSection lock(QueueLock);
+		OutText += outText;
+	}
+}
+
+void TestContext::RunTestExec( string tempDir, Test* t )
+{
+	string tempDirSlash = tempDir + DIR_SEP_STR;
+	string exec = TTGetProcessPath() + " " + TT_PREFIX_RUNNER_PID + IntToStr(TTGetProcessID()) + " " + TT_TOKEN_INVOKE + " =" + t->Name + " " + Options + " \"" + TT_PREFIX_TESTDIR + tempDirSlash + "\"";
+	
+	if ( t->Parallel == TTParallelWholeCore )
+		AbcInterlockedIncrement( &ExecWholeCore );
+
+	AbcInterlockedIncrement( &ExecTotal );
+
+	string pstdOut;
+	int pstatus = 0;
+	double tstart = TimeSeconds();
+	Process proc( this );
+	string execError = proc.ExecuteAndWait( exec, t->TimeoutSeconds(), pstdOut, pstatus );
+	if ( execError != "" )
+	{
+		pstatus = 1;
+		pstdOut = "TinyTest ExecProcess Error: " + execError;
+	}
+	
+	AbcInterlockedDecrement( &ExecTotal );
+	
+	if ( t->Parallel == TTParallelWholeCore )
+		AbcInterlockedDecrement( &ExecWholeCore );
+	
+	t->Time = TimeSeconds() - tstart;
+	t->Output = pstdOut;
+	t->Pass = pstatus == 0;
 }
 
 void TestContext::FlushOutput()
@@ -484,115 +659,14 @@ AbcThreadReturnType AbcKernelCallbackDecl TestContext::ExecuteThread( void* cont
 
 	DEBUG_THREADS_CX( "Thread %d start\n", threadNum );
 
-	string outText;
-
-	// If there are 4 physical CPU cores, and 8 threads, then the blessed threads
-	// are the first 4. Whenever a 'whole core' job is running, then all non-blessed threads
-	// go to sleep.
-	bool isBlessedThread = threadNum < (int) cx->SysNumCores;
-	
-	const int sleepMS = 20;
-
-	auto flushOutput = [cx, &outText]()
-	{
-		if ( cx->Out->ImmediateOut() )
-		{
-			fputs( outText.c_str(), stdout );
-			outText = "";
-		}
-	};
-
 	while ( true )
 	{
-		Test* t = NULL;
-		{
-			// Find the next test that matches the filter
-			TakeCriticalSection lock(cx->QueueLock);
-			bool found = false;
-			while ( cx->TestPos < cx->Tests.size() )
-			{
-				t = &cx->Tests[cx->TestPos];
-				if ( !cx->TestMatchesFilter(*t) )
-				{
-					t->Ignored = true;
-					cx->TestPos++;
-					continue;
-				}
-				if ( t->Parallel == TTParallelSolo && threadNum != 0 )
-				{
-					// Tests are sorted so that Solo tests are at the end of the list, and since we
-					// are not thread 0, we don't run those. Therefore, we are finished.
-					break;
-				}
-				DEBUG_THREADS_CX( "Thread %d executing test %s (acquire)\n", threadNum, t->Name.c_str() );
-				found = true;
-				cx->TestPos++;
-				break;
-			}
-			// all tests are finished
-			if ( !found )
-				break;
-		}
-
-		// Hold off if our computational device is being requested
-		for ( int iwait = 0; cx->ExecWholeCore != 0 && !isBlessedThread; iwait++ )
-		{
-			if ( iwait == 0 )
-				DEBUG_THREADS_CX( "Thread %d pausing because not blessed and ExecWholeCore = %d\n", threadNum, cx->ExecWholeCore );
-			AbcSleep( sleepMS );
-		}
-		
-		for ( int iwait = 0; t->Parallel == TTParallelSolo && cx->ExecTotal != 0; iwait++ )
-		{
-			if ( iwait == 0 )
-				DEBUG_THREADS_CX( "Thread %d pausing, waiting for all other threads to go quiet before executing solo job\n", threadNum );
-			AbcSleep( sleepMS );
-		}
-
-		if ( t->Parallel == TTParallelWholeCore )
-			AbcInterlockedIncrement( &cx->ExecWholeCore );
-
-		AbcInterlockedIncrement( &cx->ExecTotal );
-
-		outText += cx->Out->ItemPre( *t );
-
-		string exec = cx->ExePath + " " + TT_PREFIX_RUNNER_PID + IntToStr(TTGetProcessID()) + " " + TT_TOKEN_INVOKE + " =" + t->Name + " " + cx->Options;
-
-		DEBUG_THREADS_CX( "Thread %d executing test %s (begin)\n", threadNum, t->Name.c_str() );
-
-		string pstdOut;
-		int pstatus = 0;
-		double tstart = TimeSeconds();
-		Process proc( cx );
-		string execError = proc.ExecuteAndWait( exec, t->TimeoutSeconds(), pstdOut, pstatus );
-		if ( execError != "" )
-		{
-			pstatus = 1;
-			pstdOut = "TinyTest ExecProcess Error: " + execError;
-		}
-
-		AbcInterlockedDecrement( &cx->ExecTotal );
-
-		if ( t->Parallel == TTParallelWholeCore )
-			AbcInterlockedDecrement( &cx->ExecWholeCore );
-
-		t->Time = TimeSeconds() - tstart;
-		t->Output = pstdOut;
-		t->TrimmedOutput = pstdOut;
-		if ( t->TrimmedOutput.length() > 1000 )
-			t->TrimmedOutput = "..." + t->TrimmedOutput.substr( t->TrimmedOutput.length() - 1000 );
-		t->Pass = pstatus == 0;
-
-		outText += cx->Out->ItemPost( *t );
-		flushOutput();
-		DEBUG_THREADS_CX( "Thread %d executing test %s (retire)\n", threadNum, t->Name.c_str() );
+		Test* t = cx->NextFilteredTest( threadNum );
+		if ( t == NULL )
+			break;
+		cx->RunTestOuter( threadNum, t );
 	}
 
-	{
-		TakeCriticalSection lock(cx->QueueLock);
-		cx->OutText += outText;
-	}
-	
 	DEBUG_THREADS_CX( "Thread %d exit\n", threadNum );
 
 	return 0;
@@ -659,12 +733,13 @@ string Process::ExecuteAndWait( string exec, double timeoutSeconds, string& chil
 	for ( int attempt = 0; attempt < 5; attempt++ )
 	{
 		res = ExecuteAndWaitOnce( exec, timeoutSeconds, childStdOut, processExitCode );
-		if ( processExitCode != 0xC0000142 )
+		if ( processExitCode != 0xC0000142 && processExitCode != 0xC0000005 )
 			break;
 	}
 	return res;
 }
 
+#ifdef _WIN32
 string Process::ExecuteAndWaitOnce( string exec, double timeoutSeconds, string& childStdOut, int& processExitCode )
 {
 	TestContext* cx = Context;
@@ -727,7 +802,7 @@ string Process::ExecuteAndWaitOnce( string exec, double timeoutSeconds, string& 
 	{
 		//fprintf( stderr, "Failed to popen(%s): %d\n", (const char*) exec, (int) GetLastError() );
 		processExitCode = 1;
-		return fmt( "Failed to popen(%s): %d\n", exec.c_str(), (int) GetLastError() );
+		return SPrintf( "Failed to popen(%s): %d\n", exec.c_str(), (int) GetLastError() );
 	}
 
 	ProcessID = pi.dwProcessId;
@@ -752,21 +827,36 @@ string Process::ExecuteAndWaitOnce( string exec, double timeoutSeconds, string& 
 	char buf[1024];
 	DWORD nread = 0;
 	int64 nIdle = 0;
+	bool processWasDead = false;
 	double start = TimeSeconds();
 	for ( int64 tick = 0; true; tick++ )
 	{
 		if ( tick % 500 == 0 )
 			DEBUG_THREADS_CX( "Waiting for %s to finish\n", exec.c_str() );
 
+		// Reset nIdle when process dies
+		bool processDead = WaitForSingleObject( pi.hProcess, 0 ) == WAIT_OBJECT_0;
+		if ( processDead && !processWasDead )
+		{
+			nIdle = 0;
+			processWasDead = true;
+		}
+
 		// Try waiting extra long if we have no output yet from child
 		int64 nIdleThreshold = childStdOut.length() == 0 ? 10 : 5;
-		if ( nIdle > nIdleThreshold && WaitForSingleObject( pi.hProcess, 0 ) == WAIT_OBJECT_0 )
+		if ( nIdle > nIdleThreshold && processDead )
+		{
+			DEBUG_THREADS_CX( "nIdle > nIdleThreshold\n" );
 			break;
+		}
 
 		DWORD avail = 0;
 		BOOL peekOK = PeekNamedPipe( hChildStd_OUT_Rd, NULL, 0, NULL, &avail, NULL );
 		if ( !peekOK )
+		{
+			DEBUG_THREADS_CX( "PeekOK = false, breaking out\n" );
 			break;
+		}
 		if ( avail == 0 )
 		{
 			nIdle++;
@@ -778,9 +868,10 @@ string Process::ExecuteAndWaitOnce( string exec, double timeoutSeconds, string& 
 
 		if ( !ReadFile( hChildStd_OUT_Rd, buf, sizeof(buf), &nread, NULL ) )
 		{
+			DEBUG_THREADS_CX( "ReadFile failed, breaking out\n" );
 			if ( GetLastError() == ERROR_BROKEN_PIPE ) {} // normal
 			else
-				childStdOut += fmt( "TinyTest: Unexpected ReadFile error on child process pipe: %d \n", (int) GetLastError() );
+				childStdOut += SPrintf( "TinyTest: Unexpected ReadFile error on child process pipe: %d \n", (int) GetLastError() );
 			break;
 		}
 		childStdOut.append( buf, nread );
@@ -789,7 +880,7 @@ string Process::ExecuteAndWaitOnce( string exec, double timeoutSeconds, string& 
 	DEBUG_THREADS_CX( "%s took %f seconds\n", exec.c_str(), TimeSeconds() - start );
 
 	double timeRemaining = timeoutSeconds - (TimeSeconds() - start);
-	timeRemaining = std::max(timeRemaining, 0.0);
+	timeRemaining = TTMax(timeRemaining, 0.0);
 	bool timeout = WaitForSingleObject( pi.hProcess, DWORD(timeRemaining * 1000) ) != WAIT_OBJECT_0;
 
 	if ( timeout )
@@ -805,9 +896,9 @@ string Process::ExecuteAndWaitOnce( string exec, double timeoutSeconds, string& 
 	processExitCode = exitcode;
 
 	if ( timeout )
-		childStdOut += fmt( "\nTest timed out (max time %v seconds)", timeoutSeconds );
+		childStdOut += SPrintf( "\nTest timed out (max time %f seconds)", timeoutSeconds );
 	else if ( exitcode != 0 && Trim(childStdOut).length() == 0 )
-		childStdOut += fmt( "\nExit code %08X, but test produced no output", exitcode );
+		childStdOut += SPrintf( "\nExit code %08X, but test produced no output", exitcode );
   
 	CloseHandleAndZero( pi.hProcess );
 	CloseHandleAndZero( pi.hThread );
@@ -819,6 +910,12 @@ string Process::ExecuteAndWaitOnce( string exec, double timeoutSeconds, string& 
 
 	return "";
 }
+#else
+string Process::ExecuteAndWaitOnce( string exec, double timeoutSeconds, string& childStdOut, int& processExitCode )
+{
+	return "not implemented on unix";
+}
+#endif
 
 void Process::ReadIPC( uint waitMS )
 {
@@ -834,13 +931,17 @@ void Process::ReadIPC( uint waitMS )
 		raw[TT_IPC_MEM_SIZE - 1] = 0;
 		char cmd[200];
 		uint u_p0 = 0;
-		if ( sscanf( raw, "%200s %u", &cmd, &u_p0 ) == 2 )
+		if ( sscanf( raw, "%200s %u", cmd, &u_p0 ) == 2 )
 		{
 			// This has potential to fail, if the process has already terminated by the time we get here.
 			// I'm assuming that if we can't open the process, then it has already died, and all is well.
+#ifdef _WIN32
 			HANDLE proc = OpenProcess( PROCESS_TERMINATE | SYNCHRONIZE, false, u_p0 );
 			if ( proc != NULL )
 				SubProcesses += proc;
+#else
+			SubProcesses += u_p0;
+#endif
 		}
 		else
 		{
@@ -857,6 +958,11 @@ void Process::CloseZombieProcesses()
 		if ( WaitForSingleObject(SubProcesses[i], 0) != WAIT_OBJECT_0 )
 			TerminateProcess( SubProcesses[i], 1 );
 		CloseHandle( SubProcesses[i] );
+	}
+#else
+	for ( intp i = 0; i < SubProcesses.size(); i++ )
+	{
+		kill( SubProcesses[i], SIGKILL );
 	}
 #endif
 	SubProcesses.clear();
@@ -933,6 +1039,16 @@ string Trim( const string& s )
 		return "";
 }
 
+string Directory( const string& s )
+{
+	size_t len = s.length();
+	size_t lastSlash = s.rfind( DIR_SEP );
+	if ( lastSlash == len - 1 )
+		lastSlash = s.rfind( '/', len - 2 );
+
+	return s.substr( 0, lastSlash );
+}
+
 string FilenameOnly( const string& s )
 {
 	size_t dot = s.length();
@@ -945,6 +1061,22 @@ string FilenameOnly( const string& s )
 			break;
 	}
 	return s.substr( i + 1, dot - i - 1 );
+}
+
+string SPrintf( _In_z_ _Printf_format_string_ const char* format, ... )
+{
+	string result;
+	va_list va;
+	va_start( va, format );
+#ifdef _MSC_VER
+	result.resize( _vscprintf( format, va ) );
+	vsprintf( &result[0], format, va );
+#else
+	result.resize( vsnprintf( nullptr, 0, format, va ) );
+	vsprintf( &result[0], format, va );
+#endif
+	va_end( va ); 
+	return result;
 }
 
 bool MatchWildcardNocase( const string& s, const string& p )
@@ -984,7 +1116,7 @@ bool WriteWholeFile( const string& filename, const string& s )
 string IntToStr( int64 i )
 {
 	char buf[100];
-	sprintf( buf, "%lld", i );
+	sprintf( buf, "%lld", (long long) i );
 	return buf;
 }
 
@@ -1005,19 +1137,84 @@ double TimeSeconds()
 }
 #endif
 
+#ifdef _WIN32
 BOOL CloseHandleAndZero( HANDLE& h )
 {
 	BOOL c = CloseHandle(h);
 	h = NULL;
 	return c;
 }
+#endif
 
 TTParallel ParseParallel( const char* s )
 {
 	if ( 0 == strcmp(s, TT_PARALLEL_DONTCARE) ) return TTParallelDontCare;
 	if ( 0 == strcmp(s, TT_PARALLEL_WHOLECORE) ) return TTParallelWholeCore;
 	if ( 0 == strcmp(s, TT_PARALLEL_SOLO) ) return TTParallelSolo;
-	return TTParallel_Invalid_;
+	return TTParallel_Invalid;
+}
+
+bool MyCreateDirectory( const string& path )
+{
+	// count the nesting level
+	int iparent = 0;
+	string findRoot = path;
+	for ( ; iparent < 20; iparent++ )
+	{
+		string parent = Directory( findRoot );
+		if ( parent == findRoot )
+			break;
+		findRoot = parent;
+	}
+
+	// create all parent directories, from the top down
+	for ( ; iparent != 0; iparent-- )
+	{
+		string parent = path;
+		for ( int i = 1; i < iparent; i++ )
+			parent = Directory( parent );
+#ifdef _WIN32
+		int res = _mkdir( parent.c_str() );
+#else
+		int res = mkdir( parent.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH );
+#endif
+		if ( res != 0 && errno != EEXIST )
+			return false;
+	}
+	return true;
+}
+
+bool DeleteDirectoryRecursive( const string& path )
+{
+	// Check first, to avoid shell messages on the console
+	if ( !DirectoryExists( path ) )
+		return true;
+#ifdef _WIN32
+	return 0 == system( ("rmdir /s /q \"" + path + "\"").c_str() );
+#else
+	return 0 == system( ("rm /rf \"" + path + "\"").c_str() );
+#endif
+}
+
+bool DirectoryExists( const string& s )
+{
+#ifdef _WIN32
+	return GetFileAttributesA( s.c_str() ) != INVALID_FILE_ATTRIBUTES;
+#else
+	stat st;
+	return _stat( s.c_str(), &st ) == 0;
+#endif
+}
+
+// Return <= 0 on failure
+int OpenLockFile( const string& path )
+{
+	return AbcLockFileLock( path.c_str() );
+}
+
+void CloseLockFile( int file )
+{
+	AbcLockFileRelease( file );
 }
 
 #define S(x) #x
@@ -1047,20 +1244,8 @@ const char* HtmlTailTxt = S((
 const char* JUnitTailTxt = S((
 </testsuite>\n
 \0)) + 1;
-//</testrun>\n
 
 
-		/*
-		FILE* pipe = _popen( exec, "rb" );
-		if ( !pipe ) { fprintf( stderr, "Failed to popen(%s)\n", (const char*) ExePath ); return 1; }
-
-		size_t read = 0;
-		char buf[1024];
-		string oput;
-		while ( !feof(pipe) )
-		{
-			read = fread( buf, 1, sizeof(buf), pipe );
-			oput.AppendExact( buf, read );
-		}
-		int pstatus = _pclose( pipe );
-		*/
+#undef DEBUG_THREADS_CX
+#undef DEBUG_THREADS
+#undef ARCH_64

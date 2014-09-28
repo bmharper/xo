@@ -7,7 +7,7 @@
 #include "Text/xoGlyphCache.h"
 #include "../Image/xoImage.h"
 
-xoRenderResult xoRenderer::Render( xoImageStore* images, xoStringTable* strings, xoRenderBase* driver, xoRenderDomNode* root, int width, int height )
+xoRenderResult xoRenderer::Render( xoImageStore* images, xoStringTable* strings, xoRenderBase* driver, const xoRenderDomNode* root )
 {
 	Driver = driver;
 	Images = images;
@@ -27,13 +27,13 @@ xoRenderResult xoRenderer::Render( xoImageStore* images, xoStringTable* strings,
 	return needGlyphs ? xoRenderResultNeedMore : xoRenderResultIdle;
 }
 
-void xoRenderer::RenderEl( xoPoint base, xoRenderDomEl* el )
+void xoRenderer::RenderEl( xoPoint base, const xoRenderDomEl* el )
 {
 	if ( el->Tag == xoTagText )
-		RenderText( base, static_cast<xoRenderDomText*>(el) );
+		RenderText( base, static_cast<const xoRenderDomText*>(el) );
 	else
 	{
-		xoRenderDomNode* node = static_cast<xoRenderDomNode*>(el);
+		const xoRenderDomNode* node = static_cast<const xoRenderDomNode*>(el);
 		RenderNode( base, node );
 		xoPoint newBase = base + xoPoint( node->Pos.Left, node->Pos.Top );
 		for ( intp i = 0; i < node->Children.size(); i++ )
@@ -41,12 +41,12 @@ void xoRenderer::RenderEl( xoPoint base, xoRenderDomEl* el )
 	}
 }
 
-void xoRenderer::RenderNode( xoPoint base, xoRenderDomNode* node )
+void xoRenderer::RenderNode( xoPoint base, const xoRenderDomNode* node )
 {
 	// always shade rectangles well
 	const bool alwaysGoodRects = true;
 
-	xoStyleRender* style = &node->Style;
+	const xoStyleRender* style = &node->Style;
 	xoBox pos = node->Pos;
 	pos.Offset( base );
 	xoBoxF border = style->BorderSize.ToRealBox();
@@ -126,7 +126,7 @@ void xoRenderer::RenderNode( xoPoint base, xoRenderDomNode* node )
 	}
 }
 
-void xoRenderer::RenderText( xoPoint base, xoRenderDomText* node )
+void xoRenderer::RenderText( xoPoint base, const xoRenderDomText* node )
 {
 	bool subPixelGlyphs = node->Flags & xoRenderDomText::FlagSubPixelGlyphs;
 	for ( intp i = 0; i < node->Text.size(); i++ )
@@ -138,7 +138,7 @@ void xoRenderer::RenderText( xoPoint base, xoRenderDomText* node )
 	}
 }
 
-void xoRenderer::RenderTextChar_SubPixel( xoPoint base, xoRenderDomText* node, const xoRenderCharEl& txtEl )
+void xoRenderer::RenderTextChar_SubPixel( xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl )
 {
 	xoGlyphCacheKey glyphKey( node->FontID, txtEl.Char, node->FontSizePx, xoGlyphFlag_SubPixel_RGB );
 	const xoGlyph* glyph = xoGlobal()->GlyphCache->GetGlyph( glyphKey );
@@ -223,7 +223,7 @@ void xoRenderer::RenderTextChar_SubPixel( xoPoint base, xoRenderDomText* node, c
 	Driver->DrawQuad( corners );
 }
 
-void xoRenderer::RenderTextChar_WholePixel( xoPoint base, xoRenderDomText* node, const xoRenderCharEl& txtEl )
+void xoRenderer::RenderTextChar_WholePixel( xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl )
 {
 	xoGlyphCacheKey glyphKey( node->FontID, txtEl.Char, node->FontSizePx, 0 );
 	const xoGlyph* glyph = xoGlobal()->GlyphCache->GetGlyph( glyphKey );

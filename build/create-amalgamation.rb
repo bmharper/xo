@@ -61,6 +61,7 @@ xo/Dom/xoDomNode.h
 xo/Dom/xoDomText.h
 xo/Image/xoImage.h
 xo/Image/xoImageStore.h
+xo/xoDocUI.h
 xo/xoDoc.h
 xo/xoDocGroup.h
 xo/Text/xoTextDefs.h
@@ -129,6 +130,7 @@ xo/Render/xoVertexTypes.cpp
 xo/Text/xoFontStore.cpp
 xo/Text/xoGlyphCache.cpp
 xo/Text/xoTextDefs.cpp
+xo/xoDocUI.cpp
 xo/xoDoc.cpp
 xo/Shaders/Processed_glsl/CurveShader.cpp
 xo/Shaders/Processed_glsl/FillShader.cpp
@@ -188,6 +190,7 @@ xo/Dom/xoDomText.h
 xo/xoStringTable.h
 xo/Image/xoImage.h
 xo/Image/xoImageStore.h
+xo/xoDocUI.h
 xo/xoDoc.h
 xo/xoDocGroup.h
 xo/xo.h

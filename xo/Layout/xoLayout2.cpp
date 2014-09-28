@@ -17,11 +17,9 @@ Missing glyphs are a once-off cost (ie once per application instance),
 so it's not worth trying to use a mutable glyph cache.
 
 */
-void xoLayout2::Layout( const xoDoc& doc, u32 docWidth, u32 docHeight, xoRenderDomNode& root, xoPool* pool )
+void xoLayout2::Layout( const xoDoc& doc, xoRenderDomNode& root, xoPool* pool )
 {
 	Doc = &doc;
-	DocWidth = docWidth;
-	DocHeight = docHeight;
 	Pool = pool;
 	Stack.Initialize( Doc, Pool );
 	ChildOutStack.Init( 1024 * 1024 );
@@ -68,8 +66,8 @@ void xoLayout2::LayoutInternal( xoRenderDomNode& root )
 	XOTRACE_LAYOUT_VERBOSE( "Layout 2\n" );
 
 	LayoutInput in;
-	in.ParentWidth = xoIntToPos( DocWidth );
-	in.ParentHeight = xoIntToPos( DocHeight );
+	in.ParentWidth = xoIntToPos( Doc->UI.GetViewportWidth() );
+	in.ParentHeight = xoIntToPos( Doc->UI.GetViewportHeight() );
 	in.OuterBaseline = xoPosNULL;
 
 	LayoutOutput out;
@@ -222,6 +220,8 @@ void xoLayout2::RunNode( const xoDomNode& node, const LayoutInput& in, LayoutOut
 	rnode->Style.BorderSize = border;
 	rnode->Style.Padding = padding;
 	rnode->Style.BorderColor = Stack.Get( xoCatBorderColor_Left ).GetColor();
+	rnode->Style.HasHoverStyle = Stack.HasHoverStyle();
+	rnode->Style.HasFocusStyle = Stack.HasFocusStyle();
 
 	out.NodeBaseline = IsDefined(lineBoxes[0].InnerBaseline) ? lineBoxes[0].InnerBaseline + toContent.Top : xoPosNULL;
 	out.NodeWidth = contentWidth + border.Left + border.Right + margin.Left + margin.Right + padding.Left + padding.Right;

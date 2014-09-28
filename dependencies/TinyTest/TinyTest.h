@@ -2,59 +2,79 @@
 
 /*
 
-Usage
------
+Instructions
+------------
 
-1. #define TT_MODULE_NAME as the name of your application, for example "#define TT_MODULE_NAME imqstool".
-2. #include <TinyTest/TinyTest.h> in your project.
-3. Inside one of your cpp files, write TT_TEST_HOME();
-4. Inside int main( int argc, char** argv ), write:
+1. Create an application (not a dynamic library) that will host your tests.
+2. #define TT_MODULE_NAME as the name of your application, and include <TinyTest.h> into all files
+	that will define tests in them. For example:
+	
+	#define TT_MODULE_NAME imqstool
+	#include <TinyTest/TinyTest.h>
+
+3. Inside one of your cpp files, #include <TinyTest/TinyTestBuild.h>. This particular .cpp file may not
+	define any tests of its own. This is a linker issue that I have not bothered to solve yet.
+
+4. Inside int main(int argc, char** argv), write:
 
 	int testretval = 0;
-	if ( TTRun( argc, argv, &testretval ) ) // This function can only be called once, becaue it frees the test list before returning
+	if (TTRun(argc, argv, &testretval)) // This function can only be called once, because it frees the test list before returning
 		return testretval;
 
-5. In other cpp files, write TT_TEST_FUNC( initfunc, teardown, size, testname, parallel ) to define test functions, for example
+5. In other cpp files, write TT_TEST_FUNC(initfunc, teardown, size, testname, parallel) to define test functions, for example
 	
 	void InitSandbox() {...}
-	TT_TEST_FUNC( &InitSandbox, NULL, TTSizeSmall, hello, TT_PARALLEL_DONTCARE )
+	TT_TEST_FUNC(&InitSandbox, NULL, TTSizeSmall, hello, TTParallelDontCare)
 	{
-		TTASSERT( 1 + 1 == 2 );
+		TTASSERT(1 + 1 == 2);
 	}
 
 	Typically, you'll define a high level macro that wraps TT_TEST_FUNC, for example:
-	#define TESTFUNC(x) TT_TEST_FUNC(MySetup, MyTearDown, TTSizeSmall, x, TT_PARRALLEL_DONTCARE)
+	#define TESTFUNC(x) TT_TEST_FUNC(MySetup, MyTearDown, TTSizeSmall, x, TTParallelDontCare)
+
+Including tests in dynamic libraries
+------------------------------------
+It is possible to include calls to TTASSERT and TTIsRunningUnderMaster() from dynamic libraries
+that are linked into your test application. In order to do this, you must define
+TT_EXTERNAL_MODULE before including "TinyTest.h", from your dynamic library.
+For example:
+
+	#define TT_MODULE_NAME MyDynLibrary
+	#define TT_EXTERNAL_MODULE
+	#include <TinyTest/TinyTest.h>
+
+	void SomeLibraryFunction()
+	{
+		TTASSERT(...); // Include testing code inside your application logic.
+	}
 	
 */
 
-enum TTModes
-{
-	TTModeBlank,
-	TTModeAutomatedTest
-};
+#include <string>
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Test size classification.
 enum TTSizes
 {
 	TTSizeSmall,	// Runs for less than 5 minutes
-	TTSizeLarge		// Runs for less than 15 minutes
+	TTSizeLarge		// Runs for less than 20 minutes
 };
 #define TT_SIZE_SMALL_NAME		"small"
 #define TT_SIZE_LARGE_NAME		"large"
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Test parallelization
-
 enum TTParallel
 {
 	// Null value used as error code
-	TTParallel_Invalid_,
+	TTParallel_Invalid,
 
 	// This test is independent of any other test, and doesn't need dedicated hardware resources
 	TTParallelDontCare,
 
-	// This test is independent of any other test, but do not run it on the same core as another test
+	// This test is independent of any other test, but do not run it on the same core as another test.
 	// Single-threaded performance tests should use this, so that they don't suffer from sharing
 	// execution resources with another hyperthread.
 	TTParallelWholeCore,
@@ -66,31 +86,6 @@ enum TTParallel
 #define TT_PARALLEL_DONTCARE	"any"
 #define TT_PARALLEL_WHOLECORE	"core"
 #define TT_PARALLEL_SOLO		"solo"
-
-/*
-Aside from these predefined values, you can specify any string as a group.
-No two tests from the same group will ever be run.
-A test can belong to multiple groups - separate them with whitespace
-
-For example, a test might be
-  
-  "http ctempdb"
-
-This hypothetical test is one that serves content on port 80 (hence the http), and it uses
-an sqlite DB on C:\temp\db.sqlite.
-
-If you had another port labeled as
-
-  "http"
-
-then these two tests would never be run simultaneously.
-
-Do not use an exclamation mark (!) in your group names - because such names are reserved
-for use by tinytest as special test groups.
-
-*/
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct TT_Test;
@@ -106,27 +101,32 @@ struct TTException;
 // Define these exactly, so that the test host app (tinytest_app) can suck the test names out of the test executor exe
 // We define 'all' as a keyword, to avoid shell expansion of wildcards on unix. Not sure whether this is actually necessary.
 #define TT_TOKEN_INVOKE			"test"
+#define TT_TOKEN_INVOKE_MASTER	"testmaster"
 #define TT_TOKEN_ALL_TESTS		"all"
 #define TT_PREFIX_RUNNER_PID	"ttpid="
 #define TT_IPC_CMD_SUBP_RUN		"subprocess-launch"
+#define TT_PREFIX_TESTDIR		"test-dir="
 #define TT_LIST_LINE_1			"Tests:"
 #define TT_LIST_LINE_2			"  " TT_TOKEN_ALL_TESTS " (run all tests)"
 #define TT_LIST_LINE_END		TT_LIST_LINE_2
 
 static const int TT_IPC_MEM_SIZE = 1024;
 static const int TT_MAX_CMDLINE_ARGS = 10;	// Maximum number of command-line arguments that TTArgs() will return
+static const int TT_TEMP_DIR_SIZE = 2048;	// The maximum number of characters in path name.
 
 TT_NORETURN void TTAssertFailed( const char* expression, const char* filename, int line_number, bool die );
 
+bool			TTIsRunningUnderMaster();				// Return true if this process was launched by a master test process (implies command line of test =TheTestName)
 void			TTLog( const char* msg, ... );
-bool			TTIsDead();								// Returns true if a TT assertion has failed, and exit(1) has been called
-TTModes			TTMode();								// Returns TTModeAutomatedTest if this is an automated test run by a build bot or something like that
 void			TTSetProcessIdle();						// Sets the process' priority to IDLE. This is just convenient if you're running tests while working on your dev machine.
 void			TTNotifySubProcess( unsigned int pid );	// Notify the test runner that you have launched a sub-process
 void			TTListTests( const TT_TestList& tests );
 unsigned int	TTGetProcessID();						// Get Process ID of this process
+std::string		TTGetProcessPath();
 void			TTSleep( unsigned int milliseconds );
 char**			TTArgs();								// Retrieve the command-line parameters that were passed in to this test specifically. Terminates with a NULL.
+void			TTSetTempDir( const char* tmp );		// Set the global test directory parameter.
+std::string		TTGetTempDir();							// Get the global test temporary directory
 
 // Generate the filename used for IPC between the executor and the tested app
 // up: If true, then this is the channel from tested app to test harness app (aka the executor)
@@ -139,6 +139,7 @@ void		TT_IPC_Write_Raw( char (&filename)[256], const char* msg );
 // Read an IPC message. Returns true if a full message was found and consumed.
 bool		TT_IPC_Read_Raw( unsigned int waitMS, char (&filename)[256], char (&msg)[TT_IPC_MEM_SIZE] );
 
+
 // Returns true if TT handled this call. In this case, call exit( *retval ). If false returned, continue as usual.
 // Use the TTRun macro to call this
 // Before returning, these functions wipe all tests from the 'tests' parameter. This frees memory, causing zero memory leaks.
@@ -150,8 +151,11 @@ bool		TTRun_WrapperW( TT_TestList& tests, int argc, wchar_t** argv, int* retval 
 #define TTRun( argc, argv, retval ) TTRun_Wrapper( TT_TESTS_ALL, argc, argv, retval )
 #define TTRunW( argc, argv, retval ) TTRun_WrapperW( TT_TESTS_ALL, argc, argv, retval )
 
-// Generally I use this so that I don't have to uncomment the full suite of tests when I'm fooling around with one small component, and want to run only its tests from the IDE.
-inline bool TTIsAutomatedTest() { return TTMode() == TTModeAutomatedTest; }
+#ifdef _WIN32
+#define TTRunX TTRunW
+#else
+#define TTRunX TTRun
+#endif
 
 struct TTException
 {
@@ -161,9 +165,9 @@ struct TTException
 	char	File[MsgLen];
 	int		Line;
 
-			TTException( const char* msg = NULL, const char* file = NULL, int line = 0 );
+			TTException( const char* msg = nullptr, const char* file = nullptr, int line = 0 );
 	void	CopyStr( size_t n, char* dst, const char* src );
-	void	Set( const char* msg = NULL, const char* file = NULL, int line = 0 );
+	void	Set( const char* msg = nullptr, const char* file = nullptr, int line = 0 );
 };
 
 // Test function
@@ -222,13 +226,14 @@ struct TT_TestList
 // One of these per link unit (exe/dll)
 extern TT_TestList TT_TESTS_ALL;
 
-// You define this is ONE of your cpp files.
-// The file that has this defined, may not define any tests of its own. This is a linker issue that I haven't solved (nor put any effort into solving).
-#define TT_TEST_HOME() TT_TestList TT_TESTS_ALL
-
-#define TT_LIST_TESTS() TTListTests( TT_TESTS_ALL );
-
 #define TTLOG(msg)			TTLog(msg)
 #define TTASSERT(exp)		(void)( (!!(exp)) || (TTAssertFailed(#exp, __FILE__, __LINE__, true), 0) )
 #define TTASSERTEX(exp)		(void)( (!!(exp)) || (throw TTException(#exp, __FILE__, __LINE__), 0) )
 #define TTASSEQ(a, b)		{ if (!((a) == (b)))  { TTAssertFailed( fmt("'%v' == '%v' (%v == %v)", (a), (b), #a, #b), __FILE__, __LINE__, true ); } }
+
+// "External Module" is typically a DLL that needs to know a little bit about its testing environment,
+// or wants to call TTASSERT.
+#ifdef TT_EXTERNAL_MODULE
+	#define TT_UNIVERSAL_FUNC inline
+	#include "TinyAssert.cpp"
+#endif

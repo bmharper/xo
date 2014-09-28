@@ -39,6 +39,20 @@ public:
 
 protected:
 	static void		Set( xoRenderStack& stack, const xoDomEl* node, intp n, const xoStyleAttrib* vals );
+	static void		Set( xoRenderStack& stack, const xoDomEl* node, const xoStyleClass& klass );
 	static void		Set( xoRenderStack& stack, const xoDomEl* node, const xoStyle& style );
 	static void		SetInherited( xoRenderStack& stack, const xoDomEl* node, xoStyleCategories cat );
+};
+
+// This is intended for resolving the style of an element, once-off
+class XOAPI xoStyleResolveOnceOff
+{
+public:
+	xoRenderStack*	RS;
+
+	xoStyleResolveOnceOff( const xoDomNode* node );
+	~xoStyleResolveOnceOff();
+
+protected:
+	xoPool*			Pool;
 };

@@ -298,6 +298,24 @@ static void ParseString( const char* s, intp len, xoStyleCategories cat, xoDoc* 
 	style.Set( attrib );
 }
 
+static bool ParseBool( const char* s, intp len, xoStyleCategories cat, xoStyle& style )
+{
+	bool val;
+	if ( len == 4 && s[0] == 't' )
+		val = true;
+	else if ( len == 5 && s[0] == 'f' )
+		val = false;
+	else
+	{
+		xoParseFail( "Parse failed, illegal boolean value: '%.*s'. Valid values are 'true' and 'false'.\n", (int) len, s );
+		return false;
+	}
+	xoStyleAttrib attrib;
+	attrib.SetBool( cat, val );
+	style.Set( attrib );
+	return true;
+}
+
 template<typename T>
 static bool ParseCompound( const char* s, intp len, bool (*parseFunc)(const char* s, intp len, T& t), xoStyleCategories cat, xoStyle& style )
 {
@@ -409,6 +427,7 @@ bool xoStyle::Parse( const char* t, intp maxLen, xoDoc* doc )
 			//else if ( MATCH(t, startk, eq, "top") )							{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatTop, *this ); }
 			//else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatBottom, *this ); }
 			else if ( MATCH(t, startk, eq, "break") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseBreakType, xoCatBreak, *this ); }
+			else if ( MATCH(t, startk, eq, "canfocus") )					{ ok = ParseBool( TSTART, TLEN, xoCatCanFocus, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-axis") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowAxis, xoCatFlow_Axis, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-direction-horizontal") )	{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowDirection, xoCatFlow_Direction_Horizontal, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowDirection, xoCatFlow_Direction_Vertical, *this ); }
@@ -805,50 +824,50 @@ void xoStyleTable::AddDummyStyleZero()
 
 void xoStyleTable::Discard()
 {
-	Styles.hack( 0, 0, NULL );
+	Classes.hack( 0, 0, NULL );
 	Names.hack( 0, 0, NULL );
 }
 
-const xoStyle* xoStyleTable::GetByID( xoStyleID id ) const
+const xoStyleClass* xoStyleTable::GetByID( xoStyleClassID id ) const
 {
-	return &Styles[id];
+	return &Classes[id];
 }
 
-xoStyle* xoStyleTable::GetOrCreate( const char* name )
+xoStyleClass* xoStyleTable::GetOrCreate( const char* name )
 {
 	xoTempString n(name);
 	// find existing
 	int* pindex = NameToIndex.getp( n );
-	if ( pindex ) return &Styles[*pindex];
+	if ( pindex ) return &Classes[*pindex];
 	
 	// create new
-	int index = (int) Styles.size();
-	Styles.add();
+	int index = (int) Classes.size();
+	Classes.add();
 	Names.add();
-	xoStyle* s = &Styles[index];
+	xoStyleClass* s = &Classes[index];
 	NameToIndex.insert( n, index );
 	Names[index] = xoString( name );
 	return s;
 }
 
-xoStyleID xoStyleTable::GetStyleID( const char* name )
+xoStyleClassID xoStyleTable::GetClassID( const char* name )
 {
 	xoTempString n(name);
 	int* pindex = NameToIndex.getp( n );
-	if ( pindex )	return xoStyleID( *pindex );
-	else			return xoStyleID(0);
+	if ( pindex )	return xoStyleClassID( *pindex );
+	else			return xoStyleClassID(0);
 }
 
 void xoStyleTable::CloneSlowInto( xoStyleTable& c ) const
 {
 	// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
-	c.Styles = Styles;
+	c.Classes = Classes;
 }
 
 void xoStyleTable::CloneFastInto( xoStyleTable& c, xoPool* pool ) const
 {
 	// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
-	xoClonePodvecWithMemCopy( c.Styles, Styles, pool );
+	xoClonePodvecWithMemCopy( c.Classes, Classes, pool );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

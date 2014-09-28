@@ -1,10 +1,12 @@
 #pragma once
 #include "xoDefs.h"
+#include "xoEvent.h"
 
 // The umbrella class that houses a DOM tree.
 // This processes UI input.
 // It schedules rendering.
 // It coordinates between DOM and Render threads.
+// TODO: Pull the platform-specific stuff (ie WndProc, StaticWndProc, IsMouseTracking) out of this class.
 class XOAPI xoDocGroup
 {
 	DISALLOW_COPY_AND_ASSIGN(xoDocGroup);
@@ -34,7 +36,9 @@ public:
 protected:
 	AbcCriticalSection	DocLock;		// Mutation of 'Doc', or cloning of 'Doc' for the renderer
 
+#if XO_PLATFORM_WIN_DESKTOP
+	bool				IsMouseTracking = false;	// True if we called TrackMouseEvent when we first saw a WM_MOUSEMOVE message, and are waiting for a WM_MOUSELEAVE event.
+#endif
+
 	xoRenderResult	RenderInternal( xoImage* targetImage );
-	//void			FindTarget( const xoVec2f& p, pvect<xoRenderDomEl*>& chain );
-	bool			BubbleEvent( xoEvent& ev );
 };

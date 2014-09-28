@@ -49,8 +49,9 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 	XOASSERT( Doc != NULL );
 	PAINTSTRUCT ps;
 	HDC dc;
-	xoEvent ev;
+	xoOriginalEvent ev;
 	ev.DocGroup = this;
+	ev.Event.Doc = Doc;
 	LRESULT result = 0;
 	auto cursor = XOVEC2( (float) GET_X_LPARAM(lParam), (float) GET_Y_LPARAM(lParam) );
 
@@ -70,7 +71,7 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		break;
 
 	case WM_SIZE:
-		ev.MakeWindowSize( int(lParam & 0xffff), int((lParam >> 16) & 0xffff) );
+		ev.Event.MakeWindowSize( int(lParam & 0xffff), int((lParam >> 16) & 0xffff) );
 		xoGlobal()->EventQueue.Add( ev );
 		break;
 
@@ -79,7 +80,7 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 			Render();
 		else if ( wParam == TimerGenericEvent )
 		{
-			ev.Type = xoEventTimer;
+			ev.Event.Type = xoEventTimer;
 			xoGlobal()->EventQueue.Add( ev );
 		}
 		break;
@@ -96,19 +97,41 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		break;
 
 	case WM_MOUSEMOVE:
-		ev.Type = xoEventMouseMove;
-		ev.PointCount = 1;
-		ev.Points[0] = cursor;
+		if ( !IsMouseTracking )
+		{
+			TRACKMOUSEEVENT tme = {0};
+			tme.cbSize = sizeof(tme);
+			tme.dwFlags = TME_LEAVE;
+			tme.hwndTrack = hWnd;
+			TrackMouseEvent( &tme );
+			IsMouseTracking = true;
+			//xoEvent evEnter;
+			//evEnter.Type = xoEventMouseEnter;
+			//evEnter.PointCount = 1;
+			//evEnter.Points[0] = cursor;
+			//xoGlobal()->EventQueue.Add( evEnter );
+		}
+		ev.Event.Type = xoEventMouseMove;
+		ev.Event.PointCount = 1;
+		ev.Event.Points[0] = cursor;
 		XOTRACE_LATENCY("MouseMove\n");
+		xoGlobal()->EventQueue.Add( ev );
+		break;
+
+	case WM_MOUSELEAVE:
+		IsMouseTracking = false;
+		ev.Event.Type = xoEventMouseLeave;
+		ev.Event.PointCount = 1;
+		ev.Event.Points[0] = cursor;
 		xoGlobal()->EventQueue.Add( ev );
 		break;
 
 	case WM_LBUTTONUP:
 		// Click event needs refinement (ie on down, capture, etc)
-		ev.Type = xoEventClick;
-		ev.PointCount = 1;
+		ev.Event.Type = xoEventClick;
+		ev.Event.PointCount = 1;
 		XOTRACE_LATENCY("LButtonUp\n");
-		ev.Points[0] = cursor;
+		ev.Event.Points[0] = cursor;
 		xoGlobal()->EventQueue.Add( ev );
 		break;
 

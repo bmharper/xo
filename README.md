@@ -18,7 +18,7 @@ The easiest way to use xo is to build with the "amalgamation". The amalgamation 
 
 Simply add `xo-amalgamation.cpp` and `xo-amalgamation-freetype.c` into your project. If you are building a cross-platform application, and you want xo to handle the event loop for you, then you will need to include at least one other file (xoWinMain.cpp). On Android, there is a bit more stuff to add, such as JNI bindings.
 
-The amalgamation is hosted [here](https://github.com/benharper123/xo-amalgamation)
+The amalgamation is hosted [here](https://github.com/benharper123/xo-amalgamation), but you can also build it yourself by running `build\create-amalgamation.rb`.
 
 ### Building from full source
 

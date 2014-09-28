@@ -134,7 +134,7 @@ XY(BackgroundImage) \
 XY(Text_Align_Vertical) \
 \
 XY(Break) \
-XY(Dummy3_UseMe) \
+XY(CanFocus) \
 \
 XY(Margin_Left) \
 XY(Margin_Top) \
@@ -234,6 +234,7 @@ public:
 	void SetFont( xoFontID val )									{ SetU32( xoCatFontFamily, val ); }
 	void SetBackgroundImage( const char* image, xoDoc* doc )		{ SetString( xoCatBackgroundImage, image, doc ); }
 	void SetBreak( xoBreakType type )								{ SetU32( xoCatBreak, type); }
+	void SetCanFocus( bool canFocus )								{ SetU32( xoCatCanFocus, canFocus ); }
 	void SetFlowAxis( xoFlowAxis axis )								{ SetU32( xoCatFlow_Axis, axis ); }
 	void SetFlowDirectionHorizonal( xoFlowDirection dir )			{ SetU32( xoCatFlow_Direction_Horizontal, dir ); }
 	void SetFlowDirectionVertical( xoFlowDirection dir )			{ SetU32( xoCatFlow_Direction_Vertical, dir ); }
@@ -262,6 +263,8 @@ public:
 	void Set( xoStyleCategories cat, xoFontID val )					{ SetFont( val ); }
 	void Set( xoStyleCategories cat, const char* val, xoDoc* doc )	{ SetString( cat, val, doc ); }
 
+	void SetBool( xoStyleCategories cat, bool val )					{ SetU32( cat, val ); }
+
 	bool					IsNull() const							{ return Category == xoCatNULL; }
 	bool					IsInherit() const						{ return Flags == FlagInherit; }
 
@@ -271,6 +274,7 @@ public:
 	xoDisplayType			GetDisplayType() const					{ return (xoDisplayType) ValU32; }
 	xoPositionType			GetPositionType() const					{ return (xoPositionType) ValU32; }
 	xoBreakType				GetBreakType() const					{ return (xoBreakType) ValU32; }
+	bool					GetCanFocus() const						{ return ValU32 != 0; }
 	int						GetStringID() const						{ return (int) ValU32; }
 	xoFlowAxis				GetFlowAxis() const						{ return (xoFlowAxis) ValU32; }
 	xoFlowDirection			GetFlowDirectionMajor() const			{ return (xoFlowDirection) ValU32; }
@@ -314,6 +318,8 @@ public:
 	void					Discard();
 	void					CloneSlowInto( xoStyle& c ) const;
 	void					CloneFastInto( xoStyle& c, xoPool* pool ) const;
+
+	bool					IsEmpty() const { return Attribs.size() == 0; }
 
 // Setter functions with 2 parameters
 #define NUSTYLE_SETTERS_2P \
@@ -415,6 +421,15 @@ protected:
 
 };
 
+// This is a style class, such as ".button"
+class XOAPI xoStyleClass
+{
+public:
+	xoStyle		Default;	// Default styles
+	xoStyle		Hover;		// Styles present when cursor is over node
+	xoStyle		Focus;		// Styles present when object has focus
+};
+
 // The set of style information that is used by the renderer
 // This is baked in by the Layout engine.
 // This struct is present in every single xoRenderDomNode, so it pays to keep it tight.
@@ -427,6 +442,8 @@ public:
 	xoColor BorderColor;
 	int		BackgroundImageID;
 	float	BorderRadius;
+	bool	HasHoverStyle : 1;	// Element's appearance depends upon whether the cursor is over it it.
+	bool	HasFocusStyle : 1;	// Element's appearance depends upon whether it has the focus
 
 	xoStyleRender() { memset(this, 0, sizeof(*this)); }
 };
@@ -437,20 +454,20 @@ This allows us to reference styles by a 32-bit integer ID instead of by name.
 class XOAPI xoStyleTable
 {
 public:
-					xoStyleTable();
-					~xoStyleTable();
+						xoStyleTable();
+						~xoStyleTable();
 
-	void			AddDummyStyleZero();
-	void			Discard();
-	xoStyle*		GetOrCreate( const char* name );
-	const xoStyle*	GetByID( xoStyleID id ) const;
-	xoStyleID		GetStyleID( const char* name );
-	void			CloneSlowInto( xoStyleTable& c ) const;					// Does not clone NameToIndex
-	void			CloneFastInto( xoStyleTable& c, xoPool* pool ) const;	// Does not clone NameToIndex
+	void				AddDummyStyleZero();
+	void				Discard();
+	xoStyleClass*		GetOrCreate( const char* name );
+	const xoStyleClass*	GetByID( xoStyleClassID id ) const;
+	xoStyleClassID		GetClassID( const char* name );
+	void				CloneSlowInto( xoStyleTable& c ) const;					// Does not clone NameToIndex
+	void				CloneFastInto( xoStyleTable& c, xoPool* pool ) const;	// Does not clone NameToIndex
 
 protected:
-	podvec<xoString>			Names;		// Names and Styles are parallels
-	podvec<xoStyle>				Styles;
+	podvec<xoString>			Names;		// Names and Classes are parallel
+	podvec<xoStyleClass>		Classes;
 	podvec<int>					UnusedSlots;
 	fhashmap<xoString, int>		NameToIndex;
 };

@@ -13,11 +13,14 @@ class xoDomEl;
 class xoDomNode;
 class xoDomText;
 class xoDoc;
+class xoDocUI;
 class xoEvent;
+class xoOriginalEvent;
 class xoImage;
 class xoImageStore;
 class xoLayout;
 class xoLayout2;
+class xoLayoutResult;
 class xoPool;
 class xoDocGroup;
 class xoRenderDoc;
@@ -175,6 +178,7 @@ public:
 	xoPos	Height() const							{ return Bottom - Top; }
 	xoPos	WidthOrNull() const						{ return (Left == xoPosNULL || Right == xoPosNULL) ? xoPosNULL : Right - Left; }
 	xoPos	HeightOrNull() const					{ return (Top == xoPosNULL || Bottom == xoPosNULL) ? xoPosNULL : Bottom - Top; }
+	xoPoint	TopLeft() const							{ return xoPoint( Left, Top ); }
 	void	Offset( int32 x, int32 y )				{ Left += x; Right += x; Top += y; Bottom += y; }
 	void	Offset( xoPoint p )						{ Offset( p.X, p.Y ); }
 	xoBox	OffsetBy( int32 x, int32 y )			{ return xoBox(Left + x, Top + y, Right + x, Bottom + y); }
@@ -265,14 +269,14 @@ struct XOAPI xoColor
 XOAPI float	xoSRGB2Linear( uint8 srgb );
 XOAPI uint8	xoLinear2SRGB( float linear );
 
-struct xoStyleID
+struct xoStyleClassID
 {
-	uint32		StyleID;
+	uint32		StyleClassID;
 
-				xoStyleID()				: StyleID(0)	{}
-	explicit	xoStyleID( uint32 id )	: StyleID(id)	{}
+				xoStyleClassID()			: StyleClassID(0)	{}
+	explicit	xoStyleClassID( uint32 id )	: StyleClassID(id)	{}
 
-	operator	uint32 () const { return StyleID; }
+	operator	uint32 () const { return StyleClassID; }
 };
 
 struct xoJob
@@ -375,7 +379,7 @@ struct xoGlobalStruct
 	pvect<xoDocGroup*>			Docs;				// Only Main thread is allowed to touch this.
 	TAbcQueue<xoDocGroup*>		DocAddQueue;		// Documents requesting addition
 	TAbcQueue<xoDocGroup*>		DocRemoveQueue;		// Documents requesting removal
-	TAbcQueue<xoEvent>			EventQueue;			// Global event queue, consumed by the one-and-only UI thread
+	TAbcQueue<xoOriginalEvent>	EventQueue;			// Global event queue, consumed by the one-and-only UI thread
 	TAbcQueue<xoJob>			JobQueue;			// Global job queue, consumed by the worker thread pool
 	xoFontStore*				FontStore;			// All fonts known to the system.
 	xoGlyphCache*				GlyphCache;			// This might have to move into a less global domain.
@@ -398,8 +402,9 @@ XOAPI void				xoRunXMessageLoop();
 //#define XOTRACE_RENDER_ENABLE
 #define XOTRACE_LAYOUT_WARNINGS_ENABLE
 //#define XOTRACE_LAYOUT_VERBOSE_ENABLE
-//#define XOTRACE_EVENTS_ENABLE
+#define XOTRACE_EVENTS_ENABLE
 //#define XOTRACE_LATENCY_ENABLE
+#define XOTRACE_WARNING_ENABLE
 
 #ifdef XOTRACE_RENDER_ENABLE
 	#define XOTRACE_RENDER(msg, ...) NUTIME(msg, ##__VA_ARGS__)
@@ -429,4 +434,10 @@ XOAPI void				xoRunXMessageLoop();
 	#define XOTRACE_LATENCY(msg, ...) NUTIME(msg, ##__VA_ARGS__)
 #else
 	#define XOTRACE_LATENCY(msg, ...) ((void)0)
+#endif
+
+#ifdef XOTRACE_WARNING_ENABLE
+	#define XOTRACE_WARNING(msg, ...) NUTIME(msg, ##__VA_ARGS__)
+#else
+	#define XOTRACE_WARNING(msg, ...) ((void)0)
 #endif

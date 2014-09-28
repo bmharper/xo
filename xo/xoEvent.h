@@ -7,9 +7,13 @@ enum xoEvents
 {
 	xoEventTouch		= BIT(0),
 	xoEventMouseMove	= BIT(1),
-	xoEventWindowSize	= BIT(2),
-	xoEventTimer		= BIT(3),
-	xoEventClick		= BIT(4),
+	xoEventMouseEnter	= BIT(2),
+	xoEventMouseLeave	= BIT(3),
+	xoEventWindowSize	= BIT(4),
+	xoEventTimer		= BIT(5),
+	xoEventClick		= BIT(6),
+	xoEventGetFocus		= BIT(7),
+	xoEventLoseFocus	= BIT(8),
 };
 
 /* User interface event (keyboard, mouse, touch, etc).
@@ -17,17 +21,24 @@ enum xoEvents
 class XOAPI xoEvent
 {
 public:
-	xoDocGroup*		DocGroup;
-	void*			Context;
-	xoDomEl*		Target;
-	xoEvents		Type;
-	int				PointCount;					// Mouse = 1	Touch >= 1
+	xoDoc*			Doc			= nullptr;
+	void*			Context		= nullptr;
+	xoDomEl*		Target		= nullptr;
+	xoEvents		Type		= xoEventMouseMove;
+	int				PointCount	= 0;					// Mouse = 1	Touch >= 1
 	xoVec2f			Points[XO_MAX_TOUCHES];
 
-	xoEvent();
-	~xoEvent();
+			xoEvent();
+			~xoEvent();
 
-	void MakeWindowSize( int w, int h );
+	void	MakeWindowSize( int w, int h );
+};
+
+class XOAPI xoOriginalEvent
+{
+public:
+	xoDocGroup*		DocGroup;
+	xoEvent			Event;
 };
 
 typedef std::function<bool(const xoEvent& ev)> xoEventHandlerLambda;

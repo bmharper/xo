@@ -1,29 +1,38 @@
-#include "pch.h"
-#include "TinyTest.h"
+/*
+This file contains the utility functions that are used by testing code.
+*/
 #ifdef _WIN32
 #include <direct.h>
+#include <VersionHelpers.h>
+#include <tchar.h>
 #include "StackWalker.h"
 #else
 #include <unistd.h>
+#define _T(x) x
 #endif
 
 //typedef long long int64;
 //typedef unsigned int uint;
 
 #ifdef _WIN32
-#define DIRSEP			'\\'
-#define EXE_EXTENSION	".exe"
+#define DIRSEP				'\\'
+#define EXE_EXTENSION		".exe"
+#define DEFAULT_TEMP_DIR	"c:\\temp"
 #else
-#define DIRSEP			'/'
-#define EXE_EXTENSION	""
-#define MAX_PATH		255
+#define DIRSEP				'/'
+#define EXE_EXTENSION		""
+#define MAX_PATH			255
+#define DEFAULT_TEMP_DIR	"/tmp"
 #endif
 
-const wchar_t* EvMarkerDead = L"TinyTest_Marker_Dead";
-
 static bool			IsExecutingUnderGuidance = false;
-static int			ExecutorPID = 0;
+static int			MasterPID = 0;
 static char*		TestCmdLineArgs[TT_MAX_CMDLINE_ARGS + 1]; // +1 for the null terminator
+static char			TestTempDir[TT_TEMP_DIR_SIZE + 1];
+
+// These are defined inside TinyMaster.cpp
+void	TTShowHelp();
+int		TTRunAsMaster( int argc, char* argv[] );
 
 void TTException::CopyStr( size_t n, char* dst, const char* src )
 {
@@ -91,47 +100,25 @@ void TT_TestList::Clear()
 	Capacity = 0;
 }
 
-void TTSetDead()
-{
-#ifdef _WIN32
-	// We make no attempt to close this event properly, relying instead on the OS
-	CreateEvent( NULL, true, true, EvMarkerDead );
-#endif
-}
-
-bool TTIsDead()
-{
-#ifdef _WIN32
-	HANDLE h = OpenEvent( EVENT_ALL_ACCESS, false, EvMarkerDead );
-	if ( h ) CloseHandle(h);
-	return h != NULL;
-#else
-	return false;
-#endif
-}
-
-#ifdef _WIN32
-#pragma warning(push)
-#pragma warning(disable: 4996) // GetVersionEx is deprecated. Seriously!
-#endif
-
 void TTSetProcessIdle()
 {
 #ifdef _WIN32
-	OSVERSIONINFO inf;
-	inf.dwOSVersionInfoSize = sizeof(inf);
-	GetVersionEx( &inf );
+	bool isVista = false;
+	#ifdef NTDDI_WINBLUE
+		isVista = IsWindowsVistaOrGreater();
+	#else
+		OSVERSIONINFO inf;
+		inf.dwOSVersionInfoSize = sizeof(inf);
+		GetVersionEx( &inf );
+		isVista = inf.dwMajorVersion >= 6;
+	#endif
 	SetPriorityClass( GetCurrentProcess(), IDLE_PRIORITY_CLASS );
-	if ( inf.dwMajorVersion >= 6 )
+	if ( isVista )
 		SetPriorityClass( GetCurrentProcess(), PROCESS_MODE_BACKGROUND_BEGIN ); // Lowers IO priorities too
 #else
 	fprintf( stderr, "TTSetProcessIdle not implemented\n" );
 #endif
 }
-
-#ifdef _WIN32
-#pragma warning(pop)
-#endif
 
 bool TTFileExists( const char* f )
 {
@@ -144,14 +131,9 @@ bool TTFileExists( const char* f )
 
 void TTWriteWholeFile( const char* filename, const char* str )
 {
-	FILE* h = fopen( filename, "w" );
+	FILE* h = fopen( filename, "wb" );
 	fwrite( str, strlen(str), 1, h );
 	fclose(h);
-}
-
-TTModes TTMode()
-{
-	return IsExecutingUnderGuidance ? TTModeAutomatedTest : TTModeBlank;
 }
 
 void TTLog( const char* msg, ... )
@@ -162,8 +144,6 @@ void TTLog( const char* msg, ... )
 	vsprintf( buff, msg, va );
 	va_end( va ); 
 
-	//FILE* f = fopen( TT_File_Log, "a" );
-	//if ( f )
 	{
 		char tz[128];
 		time_t t;
@@ -214,6 +194,18 @@ unsigned int TTGetProcessID()
 #endif
 }
 
+std::string TTGetProcessPath()
+{
+	char buf[1024];
+#ifdef _WIN32
+	GetModuleFileNameA( NULL, buf, 1024 );
+#else
+    buf[readlink( "/proc/self/exe", buf, 1024 - 1 )] = 0;	// untested
+#endif
+	buf[1023] = 0;
+	return buf;
+}
+
 void TTSleep( unsigned int milliseconds )
 {
 #ifdef _WIN32
@@ -232,15 +224,34 @@ char** TTArgs()
 	return TestCmdLineArgs;
 }
 
-static void GetProcessPath( char* path )
+void TTSetTempDir( const char* tmp )
 {
-	char buf[MAX_PATH];
-#ifdef _WIN32
-	GetModuleFileNameA( NULL, buf, MAX_PATH );
-#else
-    buf[readlink( "/proc/self/exe", buf, MAX_PATH - 1 )] = 0;	// untested
-#endif
-	strcpy( path, buf );
+	strncpy( TestTempDir, tmp + strlen(TT_PREFIX_TESTDIR), TT_TEMP_DIR_SIZE );
+	TestTempDir[TT_TEMP_DIR_SIZE] = 0;
+	size_t len = strlen(TestTempDir);
+	if ( len != 0 )
+	{
+		// Fight the shell's interpretation of:
+		// test.exe "two=c:\my\dir\"
+		// The Windows shell (or perhaps command line argument parser) will treat
+		// that last backslash as an escape, and end up including the quote character in the command line parameter.
+		// So here we chop off the last character, if it happens to be a quote.
+		if ( TestTempDir[len - 1] == '"' )
+			TestTempDir[len - 1] = 0;
+	}
+	
+	// ensure our temp dir path ends with a dir separator
+	len = strlen(TestTempDir);
+	if ( len != 0 && TestTempDir[len - 1] != DIRSEP )
+	{
+		TestTempDir[len] = DIRSEP;
+		TestTempDir[len + 1] = 0;
+	}
+}
+
+std::string TTGetTempDir()
+{
+	return TestTempDir;
 }
 
 const int MAXARGS = 30;
@@ -279,43 +290,52 @@ bool TTRun_Wrapper( TT_TestList& tests, int argc, char** argv, int* retval )
 }
 
 /*
-TTRun has three modes. Let's assume that your test program is called "mytest.exe".
+TTRun has four modes. Let's assume that your test program is called "mytest.exe".
 
-	Mode 1	You run "mytest.exe [options] test all" to run all tests. This ends up calling "tinytest_app.exe path\to\mytest.exe test all".
-			tinytest_app is going to end up calling mytest.exe again, and this time it will end up in mode 2.
+	Mode 1	You run "mytest.exe [options] test all" to run all tests. This ends up calling "mytest.exe testmaster all".
+			That second mytest.exe (which is the master) is going to end up launching mytest.exe again repeatedly,
+			once for each test. Those final invocations will end up in mode 2.
 
-	Mode 2	tinytest_app is calling mytest.exe. In this case, it calls it like so: "mytest.exe [options] test =testname". In this case,
+	Mode 2	We are being invoked by a master. In this case, it calls us like so: "mytest.exe [options] test =testname". In this case,
 			mytest.exe will actually run the test named "testname". The testname will never be "all". That "all" is enumerated by the
-			tinytest_app, and each test is called one by one.
+			master process, and each test is launched one by one.
 			In this mode, IsExecutingUnderGuidance = true.
 
 	Mode 3	You launch mytest.exe from the debugger. You do it like so: "mytext.exe test :testname". This causes slightly different
 			behaviour that makes it easier to debug tests.
 			In this mode, IsExecutingUnderGuidance = false.
 
+	Mode 4	You launch "mytest.exe testmaster all". This is a master, and will launch more instances of mytest.exe,
+			one for each test.
+
 	NOTE: Options must start with a hyphen
 	
 */
 bool TTRun_Internal( const TT_TestList& tests, int argc, char** argv, int* retval )
 {
+	//printf( "Alive %d %s %s\n", argc, argv[0], argv[1] );
 	*retval = 1;
-	char mypath[300];
-	GetProcessPath( mypath );
 
 	int noptions = 0;
 	const char* options[MAXARGS];
 	
 	int nTestArgs = 0;
 	bool dotest = false;
-	bool ismode2 = false;
+	bool ismaster = false;
+	bool showhelp = false;
 	const char* testname = NULL;
 
-	for ( int i = 0; i < argc; i++ )
+	for ( int i = 1; i < argc; i++ )
 	{
-		if ( strcmp(argv[i], TT_TOKEN_INVOKE) == 0 )					{ dotest = true; }
+		std::string arg = argv[i];
+		if ( arg == TT_TOKEN_INVOKE )									{ dotest = true; }
+		else if ( arg == TT_TOKEN_INVOKE_MASTER )						{ ismaster = true; }
+		else if ( arg == "-?" || arg == "?" ||
+				  arg == "-help" || arg == "help" )						{ showhelp = true; }
 		else if ( argv[i][0] == '-' )									{ options[noptions++] = argv[i]; }
 		else if ( dotest && testname == NULL )							{ testname = argv[i]; }						// only accept test name after 'test' has appeared
-		else if ( strstr(argv[i], TT_PREFIX_RUNNER_PID) == argv[i])		{ ExecutorPID = atoi( argv[i] + strlen(TT_PREFIX_RUNNER_PID) ); }
+		else if ( strstr(argv[i], TT_PREFIX_RUNNER_PID) == argv[i])		{ MasterPID = atoi( argv[i] + strlen(TT_PREFIX_RUNNER_PID) ); }
+		else if ( strstr(argv[i], TT_PREFIX_TESTDIR) == argv[i])		{ TTSetTempDir( argv[i] ); }
 		else if ( testname != NULL )									{ TestCmdLineArgs[nTestArgs++] = argv[i]; }	// only accepted after test name has appeared
 
 		if ( noptions >= MAXARGS - 1 )
@@ -330,8 +350,25 @@ bool TTRun_Internal( const TT_TestList& tests, int argc, char** argv, int* retva
 		}
 	}
 
+	if ( ismaster )
+	{
+		// Mode 4. master
+		*retval = TTRunAsMaster( argc, argv );
+		return true;
+	}
+
+	if ( showhelp )
+	{
+		TTShowHelp();
+		return false;
+	}
+
 	if ( !dotest )
 		return false;
+
+	// This is useful when running under the IDE
+	if ( TTGetTempDir().length() == 0 )
+		TTSetTempDir( TT_PREFIX_TESTDIR DEFAULT_TEMP_DIR );
 
 	options[noptions++] = NULL;
 	TestCmdLineArgs[nTestArgs++] = NULL;
@@ -343,8 +380,8 @@ bool TTRun_Internal( const TT_TestList& tests, int argc, char** argv, int* retva
 	}
 	else if ( testname && testname[0] == '=' )
 	{
-		// Mode 2. ie.. we are being called by tinytest_app. We must actually run the test.
-		// Since we are executing under the guidance of tinytest_app, don't popup message boxes, etc.
+		// Mode 2. ie.. we are being called by a master. We must actually run the test.
+		// Since we are executing under the guidance of a master, don't popup message boxes, etc.
 		// Rather send our failure message to stdout if we die, or exit(0) upon success.
 		IsExecutingUnderGuidance = true;
 		*retval = TTRun_Internal_Mode2_Execute( tests, testname + 1 );
@@ -356,7 +393,7 @@ bool TTRun_Internal( const TT_TestList& tests, int argc, char** argv, int* retva
 	}
 	else
 	{
-		// Mode 1. Get tinytest_app to run us
+		// Mode 1. Launch a master
 		*retval = TTRun_Internal_Mode1_Escape( options, testname );
 	}
 
@@ -370,35 +407,33 @@ bool TTRun_Internal( const TT_TestList& tests, int argc, char** argv, int* retva
 
 static int TTRun_Internal_Mode1_Escape( const char* const* options, const char* testname )
 {
-	// Mode 1. Get tinytest_app to run us. tinytest_app knows when we die, etc.
-	//printf( "Escape %s %s\n", testcmdname, testname );
-	char mypath[MAX_PATH], host[MAX_PATH];
-	GetProcessPath( mypath );
-	strcpy( host, mypath );
-	int i;
-	for ( i = (int) strlen(host); host[i] != DIRSEP; i-- ) {}
-	host[i + 1] = 0;
-	strcat( host, "tinytest_app" );
-	strcat( host, EXE_EXTENSION );
+	// Mode 1. Launch a master process.
+	std::string mypath = TTGetProcessPath();
 
 	const char* args[MAXARGS];
 	int narg = 0;
-	args[narg++] = "run";
-	args[narg++] = mypath;
-	args[narg++] = TT_TOKEN_INVOKE;
+	args[narg++] = mypath.c_str();
+	args[narg++] = TT_TOKEN_INVOKE_MASTER;
 	args[narg++] = testname;
 	for ( int j = 0; options[j]; j++ )
 		args[narg++] = options[j];
-	args[narg++] = NULL;
+	args[narg] = NULL;
 
 #ifdef _WIN32
-	return _spawnv( _P_WAIT, host, args ) == 0 ? 0 : 1;
+	return _spawnv( _P_WAIT, mypath.c_str(), args ) == 0 ? 0 : 1;
 #else
-	printf( "TODO: Implement spawn on linux\n" );
+	//printf( "spawn: %s\n", host );
+	//printf( "TODO: Implement spawn on linux\n" );
 	//execv( host, (char *const*) args );
+	char cmdline[MAX_PATH * 4] = "";
+	strcat( cmdline, mypath.c_str() );
+	for ( int j = 0; j < narg; j++ )
+	{
+		strcat( cmdline, " " );
+		strcat( cmdline, args[j] );
+	}
+	return system( cmdline ) == 0 ? 0 : 1;
 #endif
-
-	return 0;
 }
 
 #ifdef _MSC_VER
@@ -493,16 +528,25 @@ static void TTSignalHandler(int signal)
 	Die();
 }
 
-void TT_IPC_Filename( bool up, unsigned int executorPID, unsigned int testedPID, char (&filename)[256] )
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 6031) // return value ignored for mkdir
+#endif
+
+void TT_IPC_Filename( bool up, unsigned int masterPID, unsigned int testedPID, char (&filename)[256] )
 {
 #ifdef _WIN32
 	// We prefer c:\temp over obscure stuff inside the "proper" temp directory, because that tends to fill up with stuff you never see.
 	_mkdir( "c:\\temp" );
-	sprintf( filename, "c:\\temp\\tiny_test_ipc_%s_%u_%u", up ? "up" : "down", executorPID, testedPID );
+	sprintf( filename, "c:\\temp\\tiny_test_ipc_%s_%u_%u", up ? "up" : "down", masterPID, testedPID );
 #else
-	sprintf( filename, "/tmp/tiny_test_ipc_%s_%u_%u", up ? "up" : "down", executorPID, testedPID );
+	sprintf( filename, "/tmp/tiny_test_ipc_%s_%u_%u", up ? "up" : "down", masterPID, testedPID );
 #endif
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 bool TT_IPC_Read_Raw( unsigned int waitMS, char (&filename)[256], char (&msg)[TT_IPC_MEM_SIZE] )
 {
@@ -517,7 +561,12 @@ bool TT_IPC_Read_Raw( unsigned int waitMS, char (&filename)[256], char (&msg)[TT
 	uint length = 0;
 	bool good = false;
 	if ( fread( &length, sizeof(length), 1, file ) == 1 )
-		good = fread( &msg, length, 1, file ) == 1;
+	{
+		if ( length > TT_IPC_MEM_SIZE )
+			printf( "Error: TT_IPC_Read_Raw encountered a block larger than TT_IPC_MEM_SIZE\n" );
+		else
+			good = fread( &msg, length, 1, file ) == 1;
+	}
 
 	fclose( file );
 	// We acknowledge receipt by deleting the file
@@ -539,12 +588,13 @@ void TT_IPC_Write_Raw( char (&filename)[256], const char* msg )
 	fwrite( &length, sizeof(length), 1, file );
 	fwrite( msg, length, 1, file );
 	fclose( file );
+	file = NULL;
 	// The other side acknowledges this transmission by deleting the file
 	uint sleepMS = 30;
 	for ( uint nwait = 0; nwait < 5 * 1000 / sleepMS; nwait++ )
 	{
 		TTSleep( sleepMS );
-		FILE* file = fopen( filename, "rb" );
+		file = fopen( filename, "rb" );
 		if ( file == NULL )
 			return;
 		fclose(file);
@@ -555,19 +605,14 @@ void TT_IPC_Write_Raw( char (&filename)[256], const char* msg )
 
 static void TT_IPC( const char* msg, ... )
 {
-	// This is one-way communication, from the tested app to the test harness app
+	// This is one-way communication, from the tested process to the master process
 
 	// Disable IPC if we're not being run as an automated test.
-	// Typical use case is to run a single test from a debugger.
-	// Erg... this is a hack, because I haven't yet figured out a clean way to differentiate auto vs manual invoke.
-	//if ( IsDebuggerPresent() )
-	//	return;
-	// Damn stupid that previous statement! This is a trivial way to detect if we're being run under administration:
-	if ( ExecutorPID == 0 )
+	if ( MasterPID == 0 )
 		return;
 
 	char filename[256];
-	TT_IPC_Filename( true, ExecutorPID, TTGetProcessID(), filename );
+	TT_IPC_Filename( true, MasterPID, TTGetProcessID(), filename );
 
 	char buf[8192];
 	va_list va;
@@ -621,33 +666,4 @@ static int TTRun_Internal_Mode2_Execute( const TT_TestList& tests, const char* t
 
 	fprintf( stderr, "Test '%s' not found\n", testname );
 	return 1;
-}
-
-void TTAssertFailed( const char* exp, const char* filename, int line_number, bool die )
-{
-	char txt[4096];
-	sprintf( txt, "Test Failed:\nExpression: %s\nFile: %s\nLine: %d", exp, filename, line_number );
-	printf( "%s", txt );
-	fflush( stdout );
-	fflush( stderr );
-
-	if ( IsExecutingUnderGuidance )
-	{
-#ifdef _WIN32
-		// Use TerminateProcess instead of exit(), because we don't want any C++ cleanup, or CRT cleanup code to run.
-		// Such "at-exit" functions are prone to popping up message boxes about resources that haven't been cleaned up, but
-		// at this stage, that is merely noise.
-		TerminateProcess( GetCurrentProcess(), 1 );
-#else
-		_exit(1);
-#endif
-	}
-	else
-	{
-#ifdef _WIN32
-		__debugbreak();
-#else
-		_exit(1);
-#endif
-	}
 }

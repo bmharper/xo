@@ -5,7 +5,7 @@ class XOAPI xoDomText : public xoDomEl
 {
 	DISALLOW_COPY_AND_ASSIGN(xoDomText);
 public:
-					xoDomText( xoDoc* doc, xoTag tag );
+					xoDomText( xoDoc* doc, xoTag tag, xoInternalID parentID );
 					virtual ~xoDomText();
 
 	virtual void			SetText( const char* txt ) override;

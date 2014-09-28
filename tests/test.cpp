@@ -1,6 +1,8 @@
 #include "pch.h"
 
-TT_TEST_HOME();
+// In order to debug tests, launch the process as "test.exe test :TheTestName"
+
+#include "../dependencies/TinyTest/TinyTestBuild.h"
 
 static int __cdecl hook( int allocType, void *pvData, size_t size, int blockUse, long request, const unsigned char *filename, int fileLine )
 {

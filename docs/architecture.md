@@ -101,6 +101,15 @@ Locks
 The UI document has a single giant lock. Before UI code runs, it obtains that lock.
 The lock is kept for the duration of the UI processing code.
 
+Event handling
+--------------
+
+Whenever client code handles an event (such as mousedown), the client can do
+absolutely anything to the DOM. This is quite a hazard - it means that every
+time we call out to client code we need to be careful not to hang onto pointers
+to DOM elements. The general technique in the code to achieve this independence
+is to use InternalIDs instead of pointers.
+
 Box Model
 ---------
 

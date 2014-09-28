@@ -22,7 +22,7 @@ that is thread safe.
 class XOAPI xoLayout2
 {
 public:
-	void Layout( const xoDoc& doc, u32 docWidth, u32 docHeight, xoRenderDomNode& root, xoPool* pool );
+	void Layout( const xoDoc& doc, xoRenderDomNode& root, xoPool* pool );
 
 protected:
 
@@ -94,7 +94,6 @@ protected:
 	};
 
 	const xoDoc*				Doc;
-	u32							DocWidth, DocHeight;
 	xoPool*						Pool;
 	xoRenderStack				Stack;
 	xoLifoBuf					ChildOutStack;

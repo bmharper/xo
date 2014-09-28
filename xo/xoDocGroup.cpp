@@ -9,6 +9,7 @@
 #include "Render/xoRenderDomEl.h"
 #include "Render/xoRenderBase.h"
 #include "Render/xoRenderGL.h"
+#include "Render/xoStyleResolve.h"
 
 xoDocGroup::xoDocGroup()
 {
@@ -70,7 +71,7 @@ xoRenderResult xoDocGroup::RenderInternal( xoImage* targetImage )
 	}
 
 	// TODO: If AnyAnimationsRunning(), then we are not idle
-	bool docValid = RenderDoc->WindowWidth != 0 && RenderDoc->WindowHeight != 0;
+	bool docValid = Doc->UI.GetViewportWidth() != 0 && Doc->UI.GetViewportHeight() != 0;
 	bool docModified = Doc->GetVersion() != RenderDoc->Doc.GetVersion();
 	
 	if ( docModified && docValid )
@@ -110,83 +111,22 @@ xoRenderResult xoDocGroup::RenderInternal( xoImage* targetImage )
 	return rendResult;
 }
 
-// This is always called from the UI thread
 void xoDocGroup::ProcessEvent( xoEvent& ev )
 {
 	TakeCriticalSection lock( DocLock );
-	uint32 initialVersion = Doc->GetVersion();
+
 	if ( ev.Type != xoEventTimer )
 		XOTRACE_LATENCY("ProcessEvent (not a timer)\n");
-	switch ( ev.Type )
-	{
-	case xoEventWindowSize:
-		RenderDoc->WindowWidth = (uint32) ev.Points[0].x;
-		RenderDoc->WindowHeight = (uint32) ev.Points[0].y;
-		Doc->IncVersion();
-		//NUTIME( "Processed WindowSize event. Document at version %d\n", Doc->GetVersion() );
-		break;
-	}
-	if ( BubbleEvent( ev ) )
-		Doc->IncVersion();
+
+	xoLayoutResult* layout = RenderDoc->AcquireLatestLayout();
+	
+	Doc->UI.InternalProcessEvent( ev, layout );
+	
+	RenderDoc->ReleaseLayout( layout );
 }
-
-// Returns true if the event was handled
-bool xoDocGroup::BubbleEvent( xoEvent& ev )
-{
-	// TODO. My plan is to go with upward bubbling only. The inner-most
-	// control gets the event first, then outward.
-	// A return value of false means "cancel the bubble".
-	// But ah.... downward bubbling is necessary for things like shortcut
-	// keys. I'm not sure how one does that with HTML.
-	// Right.. so "capturing" is the method where the event propagates inwards.
-	// IE does not support capturing though, so nobody really use it.
-	// We simply ignore the question of how to do shortcut keys for now.
-
-	XOTRACE_EVENTS( "BubbleEvent type=%d\n", (int) ev.Type );
-
-	xoDomNode* el = &Doc->Root;
-	bool stop = false;
-	bool handled = false;
-
-	if ( el->HandlesEvent(ev.Type) )
-	{
-		const podvec<xoEventHandler>& h = el->GetHandlers();
-		XOTRACE_EVENTS( "BubbleEvent found %d event handlers\n", (int) h.size() );
-		for ( intp i = 0; i < h.size() && !stop; i++ )
-		{
-			if ( h[i].Handles( ev.Type ) )
-			{
-				handled = true;
-				xoEvent c = ev;
-				c.Context = h[i].Context;
-				c.Target = el;
-				if ( !h[i].Func( c ) )
-				{
-					stop = true;
-				}
-			}
-		}
-	}
-
-	return handled;
-}
-
-/*
-void xoDocGroup::FindTarget( const xoVec2f& p, pvect<xoRenderDomEl*>& chain )
-{
-	chain += &RenderDoc->RenderRoot;
-	while ( true )
-	{
-		xoRenderDomEl* top = chain.back();
-		for ( intp i = 0; i < top->Children.size(); i++ )
-		{
-			//if ( top->Children[i]->Pos )
-		}
-	}
-}
-*/
 
 bool xoDocGroup::IsDocVersionDifferentToRenderer() const
 {
 	return Doc->GetVersion() != RenderDoc->Doc.GetVersion();
 }
+

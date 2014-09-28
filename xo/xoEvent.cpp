@@ -9,11 +9,6 @@ XOAPI bool xoEventHandler_LambdaStaticFunc(const xoEvent& ev)
 
 xoEvent::xoEvent()
 {
-	DocGroup = NULL;
-	Context = NULL;
-	Target = NULL;
-	Type = xoEventMouseMove;
-	PointCount = 0;
 	memset( Points, 0, sizeof(Points) );
 }
 

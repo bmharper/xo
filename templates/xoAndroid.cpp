@@ -49,9 +49,9 @@ static void ProcessAllEvents()
 		xoProcessDocQueue();
 		if ( !AbcSemaphoreWait( xoGlobal()->EventQueue.SemaphoreObj(), 0 ) )
 			break;
-		xoEvent ev;
+		xoOriginalEvent ev;
 		XOVERIFY( xoGlobal()->EventQueue.PopTail( ev ) );
-		ev.DocGroup->ProcessEvent( ev );
+		ev.DocGroup->ProcessEvent( ev.Event );
 	}
 }
 

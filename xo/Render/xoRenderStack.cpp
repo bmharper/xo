@@ -1,10 +1,13 @@
 #include "pch.h"
 #include "xoRenderStack.h"
+#include "xoRenderDoc.h"
 
 void xoRenderStackEl::Reset()
 {
 	Styles.Reset();
 	Pool = NULL;
+	HasHoverStyle = false;
+	HasFocusStyle = false;
 }
 
 xoRenderStackEl& xoRenderStackEl::operator=( const xoRenderStackEl& b )
@@ -97,6 +100,16 @@ void xoRenderStack::GetBox( xoStyleCategories cat, xoStyleBox& box ) const
 	box.Top = Get( (xoStyleCategories) (base + 1) ).GetSize();
 	box.Right = Get( (xoStyleCategories) (base + 2) ).GetSize();
 	box.Bottom = Get( (xoStyleCategories) (base + 3) ).GetSize();
+}
+
+bool xoRenderStack::HasHoverStyle() const
+{
+	return Stack.back().HasHoverStyle;
+}
+
+bool xoRenderStack::HasFocusStyle() const
+{
+	return Stack.back().HasFocusStyle;
 }
 
 void xoRenderStack::StackPop()

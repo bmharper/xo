@@ -4,9 +4,9 @@ TESTFUNC(Stats)
 {
 	TTASSERT( sizeof(xoStyleAttrib) <= 8 );
 	// Of course its OK if some of these structures rise in size, but try hard to keep them small
-	TTASSERT( sizeof(xoDomEl) <= 32 );
-	TTASSERT( sizeof(xoDomNode) <= 128 );
-	TTASSERT( sizeof(xoDomText) <= 40 );
+	TTASSERT( sizeof(xoDomEl) <= 40 );
+	TTASSERT( sizeof(xoDomNode) <= 136 );
+	TTASSERT( sizeof(xoDomText) <= 48 );
 	printf( "sizeof(xoStyleAttrib) = %d\n", sizeof(xoStyleAttrib) );
 	printf( "sizeof(xoStyle) = %d\n", sizeof(xoStyle) );
 	printf( "sizeof(xoDomEl) = %d\n", sizeof(xoDomEl) );

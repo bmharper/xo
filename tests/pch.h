@@ -7,6 +7,7 @@
 	#endif
 	#include <stdlib.h>
 	#include <crtdbg.h>
+	#include <WinSock2.h>
 	#include <windows.h>
 #endif
 

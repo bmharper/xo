@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "xoDomText.h"
 
-xoDomText::xoDomText( xoDoc* doc, xoTag tag ) : xoDomEl(doc, tag)
+xoDomText::xoDomText( xoDoc* doc, xoTag tag, xoInternalID parentID ) : xoDomEl(doc, tag, parentID)
 {
 }
 

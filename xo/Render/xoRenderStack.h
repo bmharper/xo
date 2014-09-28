@@ -7,8 +7,10 @@
 class XOAPI xoRenderStackEl
 {
 public:
-	xoStyleSet	Styles;
 	xoPool*		Pool;		// This *could* be stored only inside xoRenderStack.Stack_Pools, but it is convenient to duplicate it here.
+	xoStyleSet	Styles;
+	bool		HasHoverStyle : 1;
+	bool		HasFocusStyle : 1;
 
 	void Reset();
 
@@ -45,9 +47,12 @@ public:
 	void				Reset();
 	xoStyleAttrib		Get( xoStyleCategories cat ) const;
 	void				GetBox( xoStyleCategories cat, xoStyleBox& box ) const;
-	
+
 	xoStyleBox			GetBox( xoStyleCategories cat ) const { xoStyleBox b; GetBox(cat, b); return b; }
 	
+	bool				HasHoverStyle() const;
+	bool				HasFocusStyle() const;
+
 	void				StackPop();
 	xoRenderStackEl&	StackPush();
 	xoRenderStackEl&	StackBack()			{ return Stack.back(); }

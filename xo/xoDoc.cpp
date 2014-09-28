@@ -8,7 +8,8 @@
 #include "xoCloneHelpers.h"
 #include "xoStyle.h"
 
-xoDoc::xoDoc() : Root( this, xoTagDiv )
+xoDoc::xoDoc()
+	: Root( this, xoTagDiv, xoInternalIDNull ), UI( this )
 {
 	IsReadOnly = false;
 	Version = 0;
@@ -84,9 +85,7 @@ void xoDoc::CloneSlowInto( xoDoc& c, uint cloneFlags, xoRenderStats& stats ) con
 			if ( src && !dst )
 			{
 				// create in destination
-				xoDomEl* newChild = c.AllocChild( src->GetTag() );
-				newChild->SetDoc( &c );
-				c.ChildByInternalID[i] = newChild;
+				c.ChildByInternalID[i] = c.AllocChild( src->GetTag(), src->GetParentID() );
 			}
 			else if ( !src && dst )
 			{
@@ -116,24 +115,43 @@ void xoDoc::CloneSlowInto( xoDoc& c, uint cloneFlags, xoRenderStats& stats ) con
 	c.Strings.CloneFrom_Incremental( Strings );
 
 	c.Version = Version;
+
+	UI.CloneSlowInto( c.UI );
 }
 
 bool xoDoc::ClassParse( const char* klass, const char* style )
 {
-	xoStyle* s = ClassStyles.GetOrCreate( klass );
-	s->Attribs.clear();
-	return s->Parse( style, this );
+	const char* colon = strchr( klass, ':' );
+	xoString tmpKlass;
+	xoString pseudo;
+	if ( colon != nullptr )
+	{
+		tmpKlass = klass;
+		tmpKlass.Z[colon - klass] = 0;
+		pseudo = colon + 1;
+		klass = tmpKlass.Z;
+	}
+	xoStyleClass* s = ClassStyles.GetOrCreate( klass );
+	xoStyle* subset = nullptr;
+	if ( pseudo.Length() == 0 )		{ subset = &s->Default; }
+	else if ( pseudo == "hover" )	{ subset = &s->Hover; }
+	else if ( pseudo == "focus" )	{ subset = &s->Focus; }
+	else
+	{
+		return false;
+	}
+	return subset->Parse( style, this );
 }
 
-xoDomEl* xoDoc::AllocChild( xoTag tag )
+xoDomEl* xoDoc::AllocChild( xoTag tag, xoInternalID parentID )
 {
 	XOASSERT(tag != xoTagNULL);
 
 	// we may want to use a more specialized heap in future, so we keep this allocation path strict
 	if ( tag == xoTagText )
-		return new xoDomText( this, tag );
+		return new xoDomText( this, tag, parentID );
 	else
-		return new xoDomNode( this, tag );
+		return new xoDomNode( this, tag, parentID );
 }
 
 void xoDoc::FreeChild( const xoDomEl* el )
@@ -212,7 +230,7 @@ void xoDoc::ResetInternalIDs()
 	FreeIDs.clear();
 	UsableIDs.clear();
 	ChildByInternalID.clear();
-	ChildByInternalID += NULL;	// zero is NULL
+	ChildByInternalID += nullptr;	// zero is NULL
 	ChildAdded( &Root );
 	XOASSERT( Root.GetInternalID() == xoInternalIDRoot );
 }

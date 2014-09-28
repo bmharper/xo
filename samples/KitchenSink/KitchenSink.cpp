@@ -254,13 +254,16 @@ void DoBackupSettings( xoDoc* doc )
 	xoDomNode* root = &doc->Root;
 	root->StyleParse( "font-family: Segoe UI; font-size: 12px;" );
 	//root->StyleParse( "font-family: Audiowide; font-size: 12px;" );
-	doc->ClassParse( "pad-light", "background: #f8f8f8; width: 140ep; height: 10ep;" );
-	doc->ClassParse( "pad-dark",  "background: #efefef; width: 470ep; height: 10ep;" );
-	doc->ClassParse( "bg-light",  "color: #000; background: #f8f8f8; width: 140ep; height: 36ep; padding: 8ep;" );
-	doc->ClassParse( "bg-dark",   "color: #000; background: #efefef; width: 470ep; height: 36ep; padding: 8ep" );
-	doc->ClassParse( "textbox",   "color: #000; background: #fff; padding: 3ep 3ep 3ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd" );
-	doc->ClassParse( "button",    "color: #000; background: #ececec; margin: 6ep 0ep 6ep 0ep; padding: 14ep 3ep 14ep 3ep; border: 1px #bdbdbd" );
-	doc->ClassParse( "baseline", "baseline:baseline" );
+	doc->ClassParse( "pad-light",		"background: #f8f8f8; width: 140ep; height: 10ep;" );
+	doc->ClassParse( "pad-dark",		"background: #efefef; width: 470ep; height: 10ep;" );
+	doc->ClassParse( "bg-light",		"color: #000; background: #f8f8f8; width: 140ep; height: 36ep; padding: 8ep;" );
+	doc->ClassParse( "bg-dark",			"color: #000; background: #efefef; width: 470ep; height: 36ep; padding: 8ep" );
+	doc->ClassParse( "textbox",			"color: #000; background: #fff; padding: 3ep 3ep 3ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd; canfocus: true" );
+	doc->ClassParse( "textbox:focus",   "border: 1px #8888ee" );
+	doc->ClassParse( "button",			"color: #000; background: #ececec; margin: 6ep 0ep 6ep 0ep; padding: 14ep 3ep 14ep 3ep; border: 1px #bdbdbd; canfocus: true" );
+	doc->ClassParse( "button:focus",	"border: 1px #8888ee" );
+	doc->ClassParse( "button:hover",	"background: #ddd" );
+	doc->ClassParse( "baseline",		"baseline:baseline" );
 
 	auto horzPadder =
 		"<div style='break:after'>"
@@ -316,11 +319,11 @@ void InitDOM( xoDoc* doc )
 	//DoBorder( doc );
 	//DoBaselineAlignment( doc );
 	//DoBaselineAlignment_rev2( doc );
-	DoBaselineAlignment_Multiline( doc );
+	//DoBaselineAlignment_Multiline( doc );
 	//DoTwoTextRects( doc );
 	//DoBlockMargins( doc );
 	//DoLongText( doc );
-	//DoBackupSettings( doc );
+	DoBackupSettings( doc );
 	//DoPadding( doc );
 	//DoTextQuality( doc );
 

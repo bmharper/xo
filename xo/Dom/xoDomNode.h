@@ -9,7 +9,7 @@ class XOAPI xoDomNode : public xoDomEl
 {
 	DISALLOW_COPY_AND_ASSIGN(xoDomNode);
 public:
-					xoDomNode( xoDoc* doc, xoTag tag );
+					xoDomNode( xoDoc* doc, xoTag tag, xoInternalID parentID );
 					virtual ~xoDomNode();
 
 	virtual void			SetText( const char* txt ) override;
@@ -18,10 +18,11 @@ public:
 	virtual void			ForgetChildren() override;
 
 	const pvect<xoDomEl*>&			GetChildren() const			{ return Children; }
-	podvec<xoStyleID>&				GetClassesMutable()			{ IncVersion(); return Classes; }
-	const podvec<xoStyleID>&		GetClasses() const			{ return Classes; }
-	const podvec<xoEventHandler>&	GetHandlers() const			{ return Handlers; }
+	podvec<xoStyleClassID>&			GetClassesMutable()			{ IncVersion(); return Classes; }
+	const podvec<xoStyleClassID>&	GetClasses() const			{ return Classes; }
 	const xoStyle&					GetStyle() const			{ return Style; }
+	const podvec<xoEventHandler>&	GetHandlers() const			{ return Handlers; }
+	void							GetHandlers( const xoEventHandler*& handlers, intp& count ) const { handlers = &Handlers[0]; count = Handlers.size(); }
 
 	xoDomEl*		AddChild( xoTag tag );
 	xoDomNode*		AddNode( xoTag tag );
@@ -67,7 +68,7 @@ protected:
 	xoStyle					Style;			// Styles that override those referenced by the Tag and the Classes.
 	podvec<xoEventHandler>	Handlers;
 	pvect<xoDomEl*>			Children;
-	podvec<xoStyleID>		Classes;		// Classes of styles
+	podvec<xoStyleClassID>	Classes;		// Classes of styles
 
 	void			RecalcAllEventMask();
 	void			AddHandler( xoEvents ev, xoEventHandlerF func, bool isLambda, void* context );

@@ -210,9 +210,9 @@ AbcThreadReturnType AbcKernelCallbackDecl xoUIThread( void* threadContext )
 		AbcSemaphoreWait( xoGlobal()->EventQueue.SemaphoreObj(), INFINITE );
 		if ( ExitSignalled )
 			break;
-		xoEvent ev;
+		xoOriginalEvent ev;
 		XOVERIFY( xoGlobal()->EventQueue.PopTail( ev ) );
-		ev.DocGroup->ProcessEvent( ev );
+		ev.DocGroup->ProcessEvent( ev.Event );
 	}
 	return 0;
 }
@@ -226,7 +226,7 @@ static void xoShutdown_Win32()
 {
 	if ( UIThread != NULL )
 	{
-		xoGlobal()->EventQueue.Add( xoEvent() );
+		xoGlobal()->EventQueue.Add( xoOriginalEvent() );
 		for ( uint waitNum = 0; true; waitNum++ )
 		{
 			if ( WaitForSingleObject( UIThread, waitNum ) == WAIT_OBJECT_0 )

@@ -216,6 +216,7 @@ local xo = SharedLibrary {
 		Glob { Extensions = { ".h" }, Dir = "dependencies/Panacea", },
 		"xo/xoDefs.cpp",
 		"xo/xoDoc.cpp",
+		"xo/xoDocUI.cpp",
 		"xo/xoDocGroup.cpp",
 		{ "xo/xoDocGroup_Windows.cpp"; Config = "win*" },
 		"xo/xoEvent.cpp",
@@ -343,36 +344,6 @@ local Bench = Program {
 	}
 }
 
-local tinytest = StaticLibrary {
-	Name = "tinytest",
-	SourceDir = "dependencies/TinyTest",
-	Includes = { "dependencies", "dependencies/TinyTest" },
-	Depends = {
-		crt,
-		unicode,
-	},
-	Sources = {
-		"Tiny.cpp",
-		{ "StackWalker.cpp"; Config ="win*" },
-	}
-}
-
-local tinytest_app = Program {
-	Name = "tinytest_app",
-	SourceDir = "dependencies/TinyTest",
-	Includes = { "dependencies", "dependencies/TinyTest" },
-	Depends = {
-		crt,
-		unicode,
-	},
-	Sources = {
-		"Tiny.cpp",
-		"TinyTest.cpp",
-		"dependencies.cpp",
-		{ "StackWalker.cpp"; Config ="win*" },
-	}
-}
-
 local Test = Program {
 	Name = "Test",
 	SourceDir = ".",
@@ -380,7 +351,6 @@ local Test = Program {
 	Depends = {
 		xo,
 		crt,
-		tinytest,
 	},
 	PrecompiledHeader = {
 		Source = "tests/pch.cpp",
@@ -406,4 +376,3 @@ Default(xo)
 Default(HelloWorld)
 Default(Bench)
 Default(Test)
-Default(tinytest_app)

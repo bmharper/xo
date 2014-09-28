@@ -82,6 +82,7 @@
 #include <stdlib.h>
 #pragma comment(lib, "version.lib")  // for "VerQueryValue"
 #pragma warning(disable:4826)
+#pragma warning(disable:4996)
 
 #include "StackWalker.h"
 
@@ -1314,9 +1315,6 @@ void StackWalker::OnDbgHelpErr(LPCSTR szFuncName, DWORD gle, DWORD64 addr)
   OnOutput(false, buffer);
 }
 
-#pragma warning(push)
-#pragma warning(disable: 4996) // GetVersionEx is deprecated
-
 void StackWalker::OnSymInit(LPCSTR szSearchPath, DWORD symOptions, LPCSTR szUserName)
 {
   CHAR buffer[STACKWALK_MAX_NAMELEN];
@@ -1347,8 +1345,6 @@ void StackWalker::OnSymInit(LPCSTR szSearchPath, DWORD symOptions, LPCSTR szUser
   }
 #endif
 }
-
-#pragma warning(pop)
 
 void StackWalker::OnOutput(bool isCallStackProper, LPCSTR buffer)
 {
