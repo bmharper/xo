@@ -8,6 +8,7 @@ XY(Body) \
 XY(Div) \
 XY(Text) \
 XY(Lab) \
+XY(Canvas) \
 XY(END) \
 
 #define XX(a,b) xoTag##a = b,

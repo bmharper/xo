@@ -264,5 +264,5 @@ void xoDoc::InitializeDefaultTagStyles()
 	//TagStyles[xoTagText].Parse( "width: 70px; height: 30px;", this );
 	//TagStyles[xoTagLab]...
 
-	static_assert(xoTagLab == xoTagEND - 1, "add default style for new tag");
+	static_assert(xoTagCanvas == xoTagEND - 1, "add default style for new tag");
 }

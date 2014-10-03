@@ -202,7 +202,8 @@ local xo = SharedLibrary {
 	SourceDir = ".",
 	Includes = {
 		"xo",
-		"dependencies/freetype/include"
+		"dependencies/freetype/include",
+		"dependencies/agg/include",
 	},
 	Depends = { crt, freetype, directx, },
 	PrecompiledHeader = {
@@ -228,6 +229,7 @@ local xo = SharedLibrary {
 		"xo/xoStyle.cpp",
 		"xo/xoSysWnd.cpp",
 		"xo/xoTags.cpp",
+		"xo/Canvas/xoCanvas.cpp",
 		"xo/Dom/xoDomEl.cpp",
 		"xo/Dom/xoDomNode.cpp",
 		"xo/Dom/xoDomText.cpp",
@@ -263,6 +265,9 @@ local xo = SharedLibrary {
 		"xo/Shaders/Processed_hlsl/TextRGBShader.cpp",
 		"xo/Shaders/Processed_hlsl/TextWholeShader.cpp",
 		--"xo/Shaders/Helpers/xoPreprocessor.cpp",
+		"dependencies/agg/src/agg_vcgen_stroke.cpp",
+		"dependencies/agg/src/agg_vpgen_clip_polygon.cpp",
+		"dependencies/agg/src/agg_vpgen_clip_polyline.cpp",
 		"dependencies/hash/xxhash.cpp",
 		"dependencies/Panacea/Containers/queue.cpp",
 		"dependencies/Panacea/Platform/cpu.cpp",
