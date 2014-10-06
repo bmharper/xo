@@ -34,7 +34,7 @@ const char* xoGLProg_TextRGB::VertSrc()
 	"	gl_Position = mvproj * vpos;\n"
 	"	texuv0 = vtexuv0;\n"
 	"	texClamp = vtexClamp;\n"
-	"	color = vec4(pow(vcolor.rgb, vec3(2.2, 2.2, 2.2)), vcolor.a);\n"
+	"	color = fromSRGB(vcolor);\n"
 	"}\n"
 ;
 }

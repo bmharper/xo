@@ -30,7 +30,7 @@ const char* xoGLProg_TextWhole::VertSrc()
 	"{\n"
 	"	gl_Position = mvproj * vpos;\n"
 	"	texuv0 = vtexuv0;\n"
-	"	color = vec4(pow(vcolor.rgb, vec3(2.2, 2.2, 2.2)), vcolor.a);\n"
+	"	color = fromSRGB(vcolor);\n"
 	"}\n"
 ;
 }

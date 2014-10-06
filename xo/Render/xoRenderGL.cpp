@@ -374,8 +374,8 @@ void xoRenderGL::ActivateShader( xoShaders shader )
 	}
 	else
 	{
-		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );	// this is for non-premultiplied
-		//glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );			// this is premultiplied
+		//glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );	// this is for non-premultiplied
+		glBlendFunc( GL_ONE, GL_ONE_MINUS_SRC_ALPHA );			// this is premultiplied
 	}
 	Check();
 }

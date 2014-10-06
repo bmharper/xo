@@ -129,6 +129,9 @@ void xoRenderer::RenderNode( xoPoint base, const xoRenderDomNode* node )
 
 	if ( node->IsCanvas() )
 	{
+		for ( int i = 0; i < 4; i++ )
+			corners[i].Color = 0xffffffff; // could be used to tint the canvas
+
 		const xoDomCanvas* canvas = static_cast<const xoDomCanvas*>(Doc->GetChildByInternalID( node->InternalID ));
 		xoImage* canvasImage = Images->Get( canvas->GetCanvasImageName() );
 		if ( canvasImage != nullptr )

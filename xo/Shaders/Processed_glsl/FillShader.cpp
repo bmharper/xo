@@ -25,7 +25,7 @@ const char* xoGLProg_Fill::VertSrc()
 	"void main()\n"
 	"{\n"
 	"	gl_Position = mvproj * vpos;\n"
-	"	color = vec4(pow(vcolor.rgb, vec3(2.2, 2.2, 2.2)), vcolor.a);\n"
+	"	color = fromSRGB(vcolor);\n"
 	"}\n"
 ;
 }

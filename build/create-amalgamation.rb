@@ -3,6 +3,37 @@
 NewLine = "\r\n"
 
 local_includes = %w(
+dependencies/agg/include/agg_basics.h
+dependencies/agg/include/agg_math.h
+dependencies/agg/include/agg_array.h
+dependencies/agg/include/agg_curves.h
+dependencies/agg/include/agg_gamma_functions.h
+dependencies/agg/include/agg_gamma_lut.h
+dependencies/agg/include/agg_color_rgba.h
+dependencies/agg/include/agg_vertex_sequence.h
+dependencies/agg/include/agg_math_stroke.h
+dependencies/agg/include/agg_vcgen_stroke.h
+dependencies/agg/include/agg_conv_adaptor_vpgen.h
+dependencies/agg/include/agg_conv_adaptor_vcgen.h
+dependencies/agg/include/agg_conv_stroke.h
+dependencies/agg/include/agg_conv_curve.h
+dependencies/agg/include/agg_vpgen_clip_polyline.h
+dependencies/agg/include/agg_vpgen_clip_polygon.h
+dependencies/agg/include/agg_conv_clip_polyline.h
+dependencies/agg/include/agg_conv_clip_polygon.h
+dependencies/agg/include/agg_bezier_arc.h
+dependencies/agg/include/agg_path_storage.h
+dependencies/agg/include/agg_rendering_buffer.h
+dependencies/agg/include/agg_pixfmt_base.h
+dependencies/agg/include/agg_pixfmt_rgba.h
+dependencies/agg/include/agg_clip_liang_barsky.h
+dependencies/agg/include/agg_rasterizer_cells_aa.h
+dependencies/agg/include/agg_rasterizer_sl_clip.h
+dependencies/agg/include/agg_rasterizer_scanline_aa_nogamma.h
+dependencies/agg/include/agg_rasterizer_scanline_aa.h
+dependencies/agg/include/agg_renderer_base.h
+dependencies/agg/include/agg_renderer_scanline.h
+dependencies/agg/include/agg_scanline_u.h
 dependencies/Panacea/Platform/coredefs.h
 dependencies/Panacea/Platform/compiler.h
 dependencies/Panacea/Platform/stdint.h
@@ -59,8 +90,10 @@ xo/warnings.h
 xo/Dom/xoDomEl.h
 xo/Dom/xoDomNode.h
 xo/Dom/xoDomText.h
+xo/Dom/xoDomCanvas.h
 xo/Image/xoImage.h
 xo/Image/xoImageStore.h
+xo/Canvas/xoCanvas2D.h
 xo/xoDocUI.h
 xo/xoDoc.h
 xo/xoDocGroup.h
@@ -77,6 +110,7 @@ xo/Shaders/Processed_glsl/RectShader.h
 xo/Shaders/Processed_glsl/TextRGBShader.h
 xo/Shaders/Processed_glsl/TextWholeShader.h
 xo/Shaders/Processed_hlsl/FillShader.h
+xo/Shaders/Processed_hlsl/FillTexShader.h
 xo/Shaders/Processed_hlsl/RectShader.h
 xo/Shaders/Processed_hlsl/TextRGBShader.h
 xo/Shaders/Processed_hlsl/TextWholeShader.h
@@ -109,8 +143,10 @@ xo/xoDocGroup_Windows.cpp
 xo/Dom/xoDomEl.cpp
 xo/Dom/xoDomNode.cpp
 xo/Dom/xoDomText.cpp
+xo/Dom/xoDomCanvas.cpp
 xo/Image/xoImage.cpp
 xo/Image/xoImageStore.cpp
+xo/Canvas/xoCanvas2D.cpp
 xo/Layout/xoLayout.cpp
 xo/Layout/xoLayout2.cpp
 xo/Layout/xoTextLayout.cpp
@@ -155,6 +191,9 @@ dependencies/Panacea/Strings/fmt.cpp
 dependencies/stb_image.c
 dependencies/hash/xxhash.cpp
 dependencies/GL/gl_xo.cpp
+dependencies/agg/src/agg_vcgen_stroke.cpp
+dependencies/agg/src/agg_vpgen_clip_polygon.cpp
+dependencies/agg/src/agg_vpgen_clip_polyline.cpp
 )
 
 # Omit the first section from the platform-specific GL files. This first section is a bunch of static
