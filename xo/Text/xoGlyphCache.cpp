@@ -153,6 +153,16 @@ uint xoGlyphCache::RenderGlyph( const xoGlyphCacheKey& key )
 			xoTextureAtlas* newAtlas = new xoTextureAtlas();
 			newAtlas->Initialize( xoGlyphAtlasSize, xoGlyphAtlasSize, xoTexFormatGrey8, glyphPadding );
 			newAtlas->Zero();
+			if ( isSubPixel )
+			{
+				newAtlas->TexFilterMin = xoTexFilterNearest;
+				newAtlas->TexFilterMax = xoTexFilterNearest;
+			}
+			else if ( !xoGlobal()->SnapSubpixelHorzText || !xoGlobal()->RoundLineHeights )
+			{
+				newAtlas->TexFilterMin = xoTexFilterLinear;
+				newAtlas->TexFilterMax = xoTexFilterLinear;
+			}
 			Atlasses += newAtlas;
 		}
 		atlas = Atlasses.back();

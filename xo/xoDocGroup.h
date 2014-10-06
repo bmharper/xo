@@ -41,4 +41,5 @@ protected:
 #endif
 
 	xoRenderResult	RenderInternal( xoImage* targetImage );
+	void			UploadImagesToGPU( bool& beganRender );
 };

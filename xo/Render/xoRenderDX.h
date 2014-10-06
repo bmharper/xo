@@ -99,6 +99,8 @@ private:
 	xoTextureID			RegisterTextureDX( Texture2D* tex )			{ return RegisterTexture(tex); }
 	Texture2D*			GetTextureDX( xoTextureID texID ) const		{ return (Texture2D*) GetTextureDeviceHandle(texID); }
 
+	static int			TexFilterToDX( xoTexFilter f );
+
 };
 
 #else

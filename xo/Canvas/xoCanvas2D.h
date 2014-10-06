@@ -2,32 +2,33 @@
 
 #include "../xoDefs.h"
 
-// Simple canvas that uses AGG for rendering.
-// Pixel format is RGBA 8 bits/sample, premultiplied alpha, sRGB.
-// Blending is done in gamma space (ie not good).
-// This is a temporary structure, much like HTML's Context2D. When you
-// create an xoCanvas2D, you must bind it to an existing image. The drawing
-// commands are then executed against that image.
+/*
+	Simple canvas that uses AGG for rendering.
+	Pixel format is RGBA 8 bits/sample, premultiplied alpha, sRGB.
+	Blending is done in gamma space (ie not good).
+	NOTE: If you modify the contents of the buffer without using the supplied
+	functions, then you must call Invalidate() to let the system know what
+	parts of the image have changed. When uploading textures to the GPU, we
+	only send the modified region.
+*/
 class XOAPI xoCanvas2D
 {
 public:
 				xoCanvas2D( xoImage* backingImage );
 				~xoCanvas2D();
 
-	// Management
-	//bool		Resize( uint32 width, uint32 height );		// Returns false if malloc() fails. Memory after allocation is uninitialized.
-	//bool		CloneInto( xoCanvas2D& clone );				// Returns false if malloc() fails.
-	//void		Reset();									// Frees memory, resets all state
-
-	// Buffer/State access
-	void*		Buffer()					{ return RenderBuff.buf(); }
-	const void*	Buffer() const				{ return RenderBuff.buf(); }
-	void*		RowPtr( int line )			{ return RenderBuff.row_ptr(line); }
-	const void*	RowPtr( int line ) const	{ return RenderBuff.row_ptr(line); }
-	int32		Stride() const				{ return RenderBuff.stride(); }
-	uint32		StrideAbs() const			{ return RenderBuff.stride_abs(); }
-	uint32		Width() const				{ return RenderBuff.width(); }
-	uint32		Height() const				{ return RenderBuff.height(); }
+	// Buffer/State access (use Invalidate if you modify contents directly)
+	void*		Buffer()						{ return RenderBuff.buf(); }
+	const void*	Buffer() const					{ return RenderBuff.buf(); }
+	void*		RowPtr( int line )				{ return RenderBuff.row_ptr(line); }
+	const void*	RowPtr( int line ) const		{ return RenderBuff.row_ptr(line); }
+	int32		Stride() const					{ return RenderBuff.stride(); }
+	uint32		StrideAbs() const				{ return RenderBuff.stride_abs(); }
+	uint32		Width() const					{ return RenderBuff.width(); }
+	uint32		Height() const					{ return RenderBuff.height(); }
+	xoBox		GetInvalidRect() const			{ return InvalidRect; }						// Retrieve the bounding rectangle of all pixels that have been modified
+	void		Invalidate( xoBox box )			{ InvalidRect.ExpandToFit(box); }			// Call this if you modify the buffer by directly accessing its memory
+	xoImage*	GetImage()						{ return Image; }
 
 	// Drawing functions
 	void		Fill( xoColor color );
@@ -48,10 +49,10 @@ protected:
 	TRendererAA_RGBA_Pre	RenderAA_RGBA_Pre;
 	agg::pixfmt_rgba32_pre	PixFormatRGBA_Pre;
 	xoImage*				Image;
+	xoBox					InvalidRect;
 	bool					IsAlive;			// We have a valid Image, and non-zero width and height
 
 	agg::rgba	ColorToAgg( xoColor c );
 	agg::rgba8	ColorToAgg8( xoColor c );
-	
-	//bool		IsAlive() const { return Buffer() != nullptr; }
+	void		RenderScanlines();
 };

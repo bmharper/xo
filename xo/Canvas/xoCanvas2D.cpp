@@ -12,6 +12,7 @@ xoCanvas2D::xoCanvas2D( xoImage* backingImage )
 		RenderBaseRGBA_Pre.attach( PixFormatRGBA_Pre );
 		RenderAA_RGBA_Pre.attach( RenderBaseRGBA_Pre );
 		IsAlive = Image->GetData() != nullptr && Image->GetWidth() != 0 && Image->GetHeight() != 0;
+		InvalidRect.SetInverted();
 	}
 	else
 	{
@@ -21,54 +22,7 @@ xoCanvas2D::xoCanvas2D( xoImage* backingImage )
 
 xoCanvas2D::~xoCanvas2D()
 {
-	//Reset();
-	//delete Image;
 }
-
-/*
-bool xoCanvas2D::Resize( uint32 width, uint32 height )
-{
-	if ( width == Width() && height == Height() )
-		return true;
-
-	Reset();
-
-	if ( Image == nullptr )
-		Image = new xoImage();
-
-	if ( !Image->Alloc( xoTexFormatRGBA8, width, height ) )
-		return false;
-
-	RenderBuff.attach( (uint8*) Image->GetData(), width, height, Image->TexStride );
-	PixFormatBGRA_Pre.attach( RenderBuff );
-	RenderBaseBGRA_Pre.attach( PixFormatBGRA_Pre );
-	RenderAA_BGRA_Pre.attach( RenderBaseBGRA_Pre );
-
-	return true;
-}
-
-bool xoCanvas2D::CloneInto( xoCanvas2D& clone )
-{
-	if ( clone.Width() != Width() || clone.Height() != Height() )
-	{
-		clone.Reset();
-		if ( !clone.Resize( Width(), Height() ) )
-			return false;
-	}
-
-	for ( uint i = 0; i < Height(); i++ )
-		memcpy( clone.RowPtr(i), RowPtr(i), StrideAbs() );
-
-	return true;
-}
-
-void xoCanvas2D::Reset()
-{
-	if ( Image != nullptr )
-		Image->Free();
-	RenderBuff.attach( nullptr, 0, 0, 0 );
-}
-*/
 
 void xoCanvas2D::Fill( xoColor color )
 {
@@ -134,7 +88,7 @@ void xoCanvas2D::StrokeLine( bool closed, int nvx, const float* vx, int vx_strid
 
 	RenderAA_RGBA_Pre.color( ColorToAgg8(color) );
 
-	agg::render_scanlines( RasAA, Scanline, RenderAA_RGBA_Pre );
+	RenderScanlines();
 }
 
 agg::rgba xoCanvas2D::ColorToAgg( xoColor c )
@@ -145,4 +99,10 @@ agg::rgba xoCanvas2D::ColorToAgg( xoColor c )
 agg::rgba8 xoCanvas2D::ColorToAgg8( xoColor c )
 {	
 	return agg::rgba8(c.r, c.g, c.b, c.a);
+}
+
+void xoCanvas2D::RenderScanlines()
+{
+	agg::render_scanlines( RasAA, Scanline, RenderAA_RGBA_Pre );
+	InvalidRect.ExpandToFit( xoBox(RasAA.min_x(), RasAA.min_y(), RasAA.max_x(), RasAA.max_y()) );
 }

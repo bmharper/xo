@@ -81,5 +81,6 @@ protected:
 	template<typename TProg>
 	bool			SetMVProj( xoShaders shader, TProg& prog, const Mat4f& mvprojTransposed );
 
+	static GLint	TexFilterToGL( xoTexFilter f );
 };
 

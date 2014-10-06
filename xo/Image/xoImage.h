@@ -9,6 +9,7 @@ public:
 					~xoImage();		// Destructor calls Free()
 	
 	xoImage*		Clone() const;
+	xoImage*		CloneMetadata() const;
 	void			Free();
 	bool			Set( xoTexFormat format, u32 width, u32 height, const void* bytes );	// Returns false if memory allocation fails
 	bool			Alloc( xoTexFormat format, u32 width, u32 height );						// Returns false if memory allocation fails

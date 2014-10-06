@@ -95,6 +95,17 @@ void xoImageStore::Delete( const char* name )
 	}
 }
 
+pvect<xoImage*> xoImageStore::InvalidList() const
+{
+	pvect<xoImage*> invalid;
+	for ( intp i = 0; i < ImageList.size(); i++ )
+	{
+		if ( ImageList[i] != nullptr && ImageList[i]->TexInvalidRect.IsAreaPositive() )
+			invalid += ImageList[i];
+	}
+	return invalid;
+}
+
 const xoImage* xoImageStore::GetNull() const
 {
 	return ImageList[NullImageIndex];
@@ -102,15 +113,27 @@ const xoImage* xoImageStore::GetNull() const
 
 void xoImageStore::CloneFrom( const xoImageStore& src )
 {
+	// TODO: Stop needless thrashing here, by blowing away the entire image store and recreating it.
+	// A very simple optimization would be to simply detect if the two ImageStores are parallel. If so,
+	// one can avoid recreating all of them.
+
 	delete_all( ImageList );
 	NameToIndex.clear();
 	FreeIndices.clear();
+
+	auto cloneImage = []( const xoImage* img ) -> xoImage*
+	{
+		// we don't want the renderer to try and upload this empty shell of a texture, so we mark it "valid"
+		xoImage* clone = img->CloneMetadata();
+		clone->TexClearInvalidRect();
+		return clone;
+	};
 	
-	Set( NullImageName, src.Get( NullImageName )->Clone() );
+	Set( NullImageName, cloneImage(src.Get( NullImageName )) );
 
 	for ( auto it = src.NameToIndex.begin(); it != src.NameToIndex.end(); it++ )
 	{
 		if ( it.val() != NullImageIndex )
-			Set( it.key().Z, src.ImageList[it.val()]->Clone() );
+			Set( it.key().Z, cloneImage(src.ImageList[it.val()]) );
 	}
 }

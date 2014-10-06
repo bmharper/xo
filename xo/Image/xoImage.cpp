@@ -17,6 +17,15 @@ xoImage* xoImage::Clone() const
 	return c;
 }
 
+xoImage* xoImage::CloneMetadata() const
+{
+	xoImage* c = new xoImage();
+	*c = *this;
+	c->TexData = nullptr;
+	c->TexStride = 0;
+	return c;
+}
+
 void xoImage::Free()
 {
 	if ( TexData )

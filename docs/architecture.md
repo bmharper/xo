@@ -110,6 +110,39 @@ time we call out to client code we need to be careful not to hang onto pointers
 to DOM elements. The general technique in the code to achieve this independence
 is to use InternalIDs instead of pointers.
 
+Texture uploads to GPU
+----------------------
+
+Textures (which includes Canvas images) are stored client-side in xoDoc.Images.
+A client can manipulate these images as much as he likes from the UI thread. When
+finished making changes, the document is cloned to another xoDoc that is owned
+by the render thread. Most of the xoDoc is cloned, but there is one exception:
+the images. We don't clone the images because that would then mean 3x storage:
+Once in the UI xoDoc, once in the Render xoDoc, and once in the GPU. In order to
+avoid this redundancy, part of the job of synchronizing the UI xoDoc to Render
+xoDoc is to upload the modified textures to the GPU. There are other potential
+solutions, such as waiting for the moment when the renderer is about to draw,
+and then locking the UI xoDoc and read it's textures out. This approach is
+worse though, because it leaves us victim to the possibility that the client
+holds the lock on the UI xoDoc for a very long time, thus stalling the Render
+thread.
+By running our synchronization at the moment when the client relinquishes
+control of the UI xoDoc, we are free to make that sync point as short as
+possible, and guarantee low variability.
+There is, however, a wrinkle in this scheme. Ideally we would like textures
+to be uploaded to the GPU on demand, only when they are actually going to be
+used by a render. By forcing all texture uploads to occur during xoDoc
+synchronization, we cause all textures to be uploaded, regardless of whether
+they are used.
+The only solution I can think of here is to add a feedback loop where the
+renderer tolerates a missing texture, and simply proceeds without it, but
+adds that texture to a queue. As long as the texture queue has items waiting,
+the render thread tries continually to gain a lock on the UI's xoDoc so that
+it can upload those textures. You'd have two options here - either display
+a semi-baked screen, or simply refuse to update the front buffer until
+you had a fully defined scene.
+I think I'm first just going to go with "upload all textures to the GPU".
+
 Box Model
 ---------
 

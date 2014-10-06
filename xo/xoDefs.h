@@ -159,7 +159,10 @@ Likewise for HeightOrNull.
 class XOAPI xoBox
 {
 public:
-	xoPos	Left, Right, Top, Bottom;
+	xoPos	Left;		// X1
+	xoPos	Top;		// Y1
+	xoPos	Right;		// X2
+	xoPos	Bottom;		// Y2
 
 	xoBox() : Left(0), Right(0), Top(0), Bottom(0) {}
 	xoBox( const xoBox& b ) : Left(b.Left), Right(b.Right), Top(b.Top), Bottom(b.Bottom) {}
@@ -170,12 +173,16 @@ public:
 	operator RECT() const { RECT r = {Left, Top, Right, Bottom}; return r; }
 #endif
 
+	static xoBox Inverted() { return xoBox(INT32MAX, INT32MAX, INT32MIN, INT32MIN); }
+
 	void	SetInt( int32 left, int32 top, int32 right, int32 bottom );
 	void	ExpandToFit( const xoBox& expando );
 	void	ClampTo( const xoBox& clamp );
 	xoBox	ShrunkBy( const xoBox& margins );
 	xoBoxF	ToRealBox() const;
 
+	void	SetInverted()							{ *this = Inverted(); }
+	bool	IsAreaPositive() const					{ return Right > Left && Bottom > Top; }
 	xoPos	Width() const							{ return Right - Left; }
 	xoPos	Height() const							{ return Bottom - Top; }
 	xoPos	WidthOrNull() const						{ return (Left == xoPosNULL || Right == xoPosNULL) ? xoPosNULL : Right - Left; }
@@ -309,23 +316,31 @@ inline int xoTexFormatChannelCount( xoTexFormat f )			{ return f & 7; }
 inline int xoTexFormatBytesPerChannel( xoTexFormat f )		{ return 1; }
 inline int xoTexFormatBytesPerPixel( xoTexFormat f )		{ return xoTexFormatBytesPerChannel(f) * xoTexFormatChannelCount(f); }
 
+enum xoTexFilter
+{
+	xoTexFilterNearest,
+	xoTexFilterLinear,
+};
+
 /* Base of all textures
 This structure must remain zero-initializable
-Once a texture has been uploaded, you may not change width, height, or channel count.
+Once a texture has been uploaded, you may not change width, height, channel count, filter.
 */
 class XOAPI xoTexture
 {
 public:
 	uint32		TexWidth		= 0;
 	uint32		TexHeight		= 0;
-	xoBox		TexInvalidRect	= {0,0,0,0};			// Invalid rectangle, in integer texel coordinates.
+	xoBox		TexInvalidRect	= xoBox::Inverted();	// Invalid rectangle, in integer texel coordinates.
 	xoTextureID	TexID			= xoInternalIDNull;		// ID of texture in renderer.
 	xoTexFormat	TexFormat		= xoTexFormatInvalid;
 	void*		TexData			= nullptr;
 	int			TexStride		= 0;
+	xoTexFilter	TexFilterMin	= xoTexFilterLinear;
+	xoTexFilter	TexFilterMax	= xoTexFilterLinear;
 
 	void	TexInvalidateWholeSurface()	{ TexInvalidRect = xoBox(0, 0, TexWidth, TexHeight); }
-	void	TexClearInvalidRect()		{ TexInvalidRect = xoBox(0, 0, 0, 0); }
+	void	TexClearInvalidRect()		{ TexInvalidRect.SetInverted(); }
 	void*	TexDataAt( int x, int y )	{ return ((char*) TexData) + y * TexStride + x * xoTexFormatBytesPerPixel(TexFormat); }
 	void*	TexDataAtLine( int y )		{ return ((char*) TexData) + y * TexStride; }
 	size_t	TexBytesPerPixel() const	{ return xoTexFormatBytesPerPixel(TexFormat); }

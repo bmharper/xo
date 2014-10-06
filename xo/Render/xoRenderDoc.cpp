@@ -72,8 +72,13 @@ xoRenderResult xoRenderDoc::Render( xoRenderBase* driver )
 	{
 		TakeCriticalSection lock( LayoutLock );
 		PurgeOldLayouts();
-		if ( LatestLayout != nullptr && LatestLayout->IsLocked )
-			OldLayouts += LatestLayout;
+		if ( LatestLayout != nullptr )
+		{
+			if ( LatestLayout->IsLocked )
+				OldLayouts += LatestLayout;
+			else
+				delete LatestLayout;
+		}
 		LatestLayout = layout;
 	}
 

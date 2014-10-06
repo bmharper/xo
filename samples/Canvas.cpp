@@ -24,6 +24,7 @@ void xoMain( xoMainEvent ev )
 			};
 			c2d->Fill( xoColor::RGBA(0,0,0,0) );
 			c2d->StrokeLine( true, arraysize(vx), &vx[0].x, sizeof(vx[0]), xoColor::RGBA(200, 0, 0, 255), 5.0f );
+			delete c2d;
 			MainWnd->Show();
 		}
 		break;

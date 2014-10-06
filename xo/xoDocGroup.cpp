@@ -10,6 +10,7 @@
 #include "Render/xoRenderBase.h"
 #include "Render/xoRenderGL.h"
 #include "Render/xoStyleResolve.h"
+#include "Image/xoImage.h"
 
 xoDocGroup::xoDocGroup()
 {
@@ -73,9 +74,12 @@ xoRenderResult xoDocGroup::RenderInternal( xoImage* targetImage )
 	// TODO: If AnyAnimationsRunning(), then we are not idle
 	bool docValid = Doc->UI.GetViewportWidth() != 0 && Doc->UI.GetViewportHeight() != 0;
 	bool docModified = Doc->GetVersion() != RenderDoc->Doc.GetVersion();
+	bool beganRender = false;
 	
 	if ( docModified && docValid )
 	{
+		UploadImagesToGPU( beganRender );
+
 		//XOTRACE( "Render Version %u\n", Doc->GetVersion() );
 		RenderDoc->CopyFromCanonical( *Doc, RenderStats );
 		
@@ -92,23 +96,54 @@ xoRenderResult xoDocGroup::RenderInternal( xoImage* targetImage )
 	if ( (docModified || targetImage != NULL) && docValid && Wnd != NULL )
 	{
 		//NUTIME( "Render start\n" );
-		if ( !Wnd->BeginRender() )
+		if ( !beganRender && !Wnd->BeginRender() )
 		{
 			NUTIME( "BeginRender failed\n" );
 			return xoRenderResultNeedMore;
 		}
+		beganRender = true;
 
 		//NUTIME( "Render DO\n" );
 		rendResult = RenderDoc->Render( Wnd->Renderer );
 
 		if ( targetImage != NULL )
 			Wnd->Renderer->ReadBackbuffer( *targetImage );
+	}
 
+	if ( beganRender )
+	{
+		// TODO: Don't SwapBuffers unless we called RenderDoc->Render.
+		// This will happen when the only action we've taken on the GPU is uploading textures.
 		//NUTIME( "Render Finish\n" );
 		Wnd->EndRender();
 	}
 
 	return rendResult;
+}
+
+void xoDocGroup::UploadImagesToGPU( bool& beganRender )
+{
+	beganRender = false;
+	pvect<xoImage*> invalidImages = Doc->Images.InvalidList();
+	if ( invalidImages.size() != 0 )
+	{
+		if ( !Wnd->BeginRender() )
+			return;
+
+		beganRender = true;
+
+		for ( intp i = 0; i < invalidImages.size(); i++ )
+		{
+			if ( Wnd->Renderer->LoadTexture( invalidImages[i], 0 ) )
+			{
+				invalidImages[i]->TexClearInvalidRect();
+			}
+			else
+			{
+				XOTRACE_WARNING( "Failed to upload image to GPU\n" );
+			}
+		}
+	}
 }
 
 void xoDocGroup::ProcessEvent( xoEvent& ev )

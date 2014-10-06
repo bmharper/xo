@@ -51,18 +51,18 @@ void xoBox::SetInt( int32 left, int32 top, int32 right, int32 bottom )
 
 void xoBox::ExpandToFit( const xoBox& expando )
 {
-	Left = std::min(Left, expando.Left);
-	Top = std::min(Top, expando.Top);
-	Right = std::max(Right, expando.Right);
-	Bottom = std::max(Bottom, expando.Bottom);
+	Left = xoMin(Left, expando.Left);
+	Top = xoMin(Top, expando.Top);
+	Right = xoMax(Right, expando.Right);
+	Bottom = xoMax(Bottom, expando.Bottom);
 }
 
 void xoBox::ClampTo( const xoBox& clamp )
 {
-	Left = std::max(Left, clamp.Left);
-	Top = std::max(Top, clamp.Top);
-	Right = std::min(Right, clamp.Right);
-	Bottom = std::min(Bottom, clamp.Bottom);
+	Left = xoMax(Left, clamp.Left);
+	Top = xoMax(Top, clamp.Top);
+	Right = xoMin(Right, clamp.Right);
+	Bottom = xoMin(Bottom, clamp.Bottom);
 }
 
 xoBox xoBox::ShrunkBy( const xoBox& margins )
@@ -176,7 +176,7 @@ AbcThreadReturnType AbcKernelCallbackDecl xoUIThread( void* threadContext )
 {
 	while ( true )
 	{
-		AbcSemaphoreWait( xoGlobal()->EventQueue.SemaphoreObj(), INFINITE );
+		AbcSemaphoreWait( xoGlobal()->EventQueue.SemaphoreObj(), AbcINFINITE );
 		if ( ExitSignalled )
 			break;
 		xoOriginalEvent ev;

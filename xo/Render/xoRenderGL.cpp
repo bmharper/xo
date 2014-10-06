@@ -537,6 +537,17 @@ bool xoRenderGL::SetMVProj( xoShaders shader, TProg& prog, const Mat4f& mvprojTr
 	}
 }
 
+GLint xoRenderGL::TexFilterToGL( xoTexFilter f )
+{
+	switch (f)
+	{
+	case xoTexFilterNearest:	return GL_NEAREST;
+	case xoTexFilterLinear:		return GL_LINEAR;
+	default: XOTODO;
+	}
+	return GL_NEAREST;
+}
+
 void xoRenderGL::PostRenderCleanup()
 {
 	glUseProgram( 0 );
@@ -652,11 +663,15 @@ bool xoRenderGL::LoadTexture( xoTexture* tex, int texUnit )
 		BoundTextures[texUnit] = glTexID;
 	}
 
+	// This happens when a texture fails to upload to the GPU during synchronization from UI doc to render doc.
+	if ( tex->TexData == nullptr )
+		return true;
+
 	// If the texture has not been updated, then we are done
 	xoBox invRect = tex->TexInvalidRect;
 	xoBox fullRect = xoBox(0, 0, tex->TexWidth, tex->TexHeight);
 	invRect.ClampTo( fullRect );
-	if ( invRect.IsAreaZero() )
+	if ( !invRect.IsAreaPositive() )
 		return true;
 
 	int format = 0;
@@ -678,9 +693,8 @@ bool xoRenderGL::LoadTexture( xoTexture* tex, int texUnit )
 	{
 		glTexImage2D( GL_TEXTURE_2D, 0, iformat, tex->TexWidth, tex->TexHeight, 0, format, GL_UNSIGNED_BYTE, tex->TexData );
 
-		// all assuming this is for a glyph atlas
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilterToGL(tex->TexFilterMin) );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilterToGL(tex->TexFilterMax) );
 		// Clamping should have no effect for RGB text, since we clamp inside our fragment shader.
 		// Also, when rendering 'whole pixel' glyphs, we shouldn't need clamping either, because
 		// our UV coordinates are exact, and we always have a 1:1 texel:pixel ratio.

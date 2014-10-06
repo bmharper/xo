@@ -136,7 +136,7 @@ bool xoRenderDX::InitializeDXDevice( xoSysWnd& wnd )
 
 	D3D11_SAMPLER_DESC sampler;
 	memset( &sampler, 0, sizeof(sampler) );
-	sampler.Filter = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+	sampler.Filter = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;	// this will pop between MIP levels. D3D11_FILTER_MIN_MAG_MIP_LINEAR is full trilinear.
 	sampler.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
 	sampler.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
 	sampler.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -504,11 +504,15 @@ bool xoRenderDX::CreateTexture2D( xoTexture* tex )
 
 void xoRenderDX::UpdateTexture2D( ID3D11Texture2D* dxTex, xoTexture* tex )
 {
+	// This happens when a texture fails to upload to the GPU during synchronization from UI doc to render doc.
+	if ( tex->TexData == nullptr )
+		return;
+
 	xoBox invRect = tex->TexInvalidRect;
 	xoBox fullRect = xoBox(0, 0, tex->TexWidth, tex->TexHeight);
 	invRect.ClampTo( fullRect );
 
-	if ( invRect.IsAreaZero() )
+	if ( !invRect.IsAreaPositive() )
 		return;
 	D3D11_BOX box;
 	box.left = invRect.Left;
@@ -670,5 +674,9 @@ bool xoRenderDX::ReadBackbuffer( xoImage& image )
 	return ok;
 }
 
+int xoRenderDX::TexFilterToDX( xoTexFilter f )
+{
+	return 0;
+}
 
 #endif
