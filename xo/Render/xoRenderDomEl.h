@@ -22,8 +22,9 @@ public:
 	xoBox							Pos;				// For rectangles, this is the ContentBox. See log entry from 2014-08-02
 	xoTag							Tag;
 
-	bool IsNode() const { return Tag != xoTagText; }
-	bool IsText() const { return Tag == xoTagText; }
+	bool IsNode() const		{ return Tag != xoTagText; }
+	bool IsText() const		{ return Tag == xoTagText; }
+	bool IsCanvas() const	{ return Tag == xoTagCanvas; }
 };
 
 class XOAPI xoRenderDomNode : public xoRenderDomEl

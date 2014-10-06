@@ -66,7 +66,7 @@ xoRenderResult xoRenderDoc::Render( xoRenderBase* driver )
 
 	XOTRACE_RENDER( "RenderDoc: Render\n" );
 	xoRenderer rend;
-	xoRenderResult res = rend.Render( &ClonedImages, &Doc.Strings, driver, &layout->Root );
+	xoRenderResult res = rend.Render( &Doc, &ClonedImages, &Doc.Strings, driver, &layout->Root );
 
 	// Atomically publish the new layout
 	{

@@ -47,7 +47,7 @@ public:
 	xoString			Parse( const char* src ); // Set the entire document from a single xml-like string. Returns empty string on success, or error message.
 
 	void				ChildAdded( xoDomEl* el );
-	void				ChildAddedFromDocumentClone( xoDomEl* el );
+	//void				ChildAddedFromDocumentClone( xoDomEl* el );
 	void				ChildRemoved( xoDomEl* el );
 	void				SetChildModified( xoInternalID id );
 	intp				ChildByInternalIDListSize() const				{ return ChildByInternalID.size(); }

@@ -12,10 +12,11 @@ xoRenderDX::xoRenderDX()
 	memset( &D3D, 0, sizeof(D3D) );
 	FBWidth = FBHeight = 0;
 	AllProgs[0] = &PFill;
-	AllProgs[1] = &PRect;
-	AllProgs[2] = &PTextRGB;
-	AllProgs[3] = &PTextWhole;
-	static_assert(NumProgs == 4, "Add new shader here");
+	AllProgs[1] = &PFillTex;
+	AllProgs[2] = &PRect;
+	AllProgs[3] = &PTextRGB;
+	AllProgs[4] = &PTextWhole;
+	static_assert(NumProgs == 5, "Add new shader here");
 }
 
 xoRenderDX::~xoRenderDX()
@@ -100,12 +101,18 @@ bool xoRenderDX::InitializeDXDevice( xoSysWnd& wnd )
 	blend.AlphaToCoverageEnable = FALSE;
 	blend.IndependentBlendEnable = FALSE;
 	blend.RenderTarget[0].BlendEnable    = true;
-	blend.RenderTarget[0].SrcBlend       = D3D11_BLEND_SRC_ALPHA;
+	blend.RenderTarget[0].SrcBlend       = D3D11_BLEND_SRC_ALPHA;				// non-premul
 	blend.RenderTarget[0].DestBlend      = D3D11_BLEND_INV_SRC_ALPHA;
 	blend.RenderTarget[0].BlendOp        = D3D11_BLEND_OP_ADD;
 	blend.RenderTarget[0].SrcBlendAlpha  = D3D11_BLEND_SRC_ALPHA;
 	blend.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
 	blend.RenderTarget[0].BlendOpAlpha   = D3D11_BLEND_OP_ADD;
+	//blend.RenderTarget[0].SrcBlend       = D3D11_BLEND_ONE;						// premul
+	//blend.RenderTarget[0].DestBlend      = D3D11_BLEND_INV_SRC_ALPHA;
+	//blend.RenderTarget[0].BlendOp        = D3D11_BLEND_OP_ADD;
+	//blend.RenderTarget[0].SrcBlendAlpha  = D3D11_BLEND_SRC_ALPHA;
+	//blend.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+	//blend.RenderTarget[0].BlendOpAlpha   = D3D11_BLEND_OP_ADD;
 	blend.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 	HRESULT eBlendNormal = D3D.Device->CreateBlendState( &blend, &D3D.BlendNormal );
 	CHECK_HR(eBlendNormal, "CreateBlendNormal");
@@ -488,7 +495,7 @@ bool xoRenderDX::CreateTexture2D( xoTexture* tex )
 		return false;
 	}
 	tex->TexID = RegisterTextureDX( t );
-	tex->TexInvalidate();
+	tex->TexInvalidateWholeSurface();
 	return true;
 }
 
@@ -519,7 +526,7 @@ xoProgBase* xoRenderDX::GetShader( xoShaders shader )
 	switch ( shader )
 	{
 	case xoShaderFill:		return &PFill;
-	//case xoShaderFillTex:	return &PFillTex;
+	case xoShaderFillTex:	return &PFillTex;
 	case xoShaderRect:		return &PRect;
 	case xoShaderTextRGB:	return &PTextRGB;
 	case xoShaderTextWhole:	return &PTextWhole;
@@ -641,11 +648,17 @@ bool xoRenderDX::ReadBackbuffer( xoImage& image )
 		D3D11_MAPPED_SUBRESOURCE map;
 		if ( SUCCEEDED(D3D.Context->Map( tempTex, 0, D3D11_MAP_READ, 0, &map )) )
 		{
-			image.Alloc( xoTexFormatRGBA8, FBWidth, FBHeight );
-			for ( int i = 0; i < FBHeight; i++ )
-				memcpy( image.TexDataAtLine(i), (char*) map.pData + map.RowPitch * (uint) i, image.TexStride );
-			D3D.Context->Unmap( tempTex, 0 );
-			ok = true;
+			if ( image.Alloc( xoTexFormatRGBA8, FBWidth, FBHeight ) )
+			{
+				for ( int i = 0; i < FBHeight; i++ )
+					memcpy( image.TexDataAtLine(i), (char*) map.pData + map.RowPitch * (uint) i, image.TexStride );
+				D3D.Context->Unmap( tempTex, 0 );
+				ok = true;
+			}
+			else
+			{
+				XOTRACE( "Failed to allocate target memory for back buffer read" );
+			}
 		}
 	}
 

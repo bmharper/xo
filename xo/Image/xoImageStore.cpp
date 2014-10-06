@@ -2,7 +2,7 @@
 #include "xoImageStore.h"
 #include "xoImage.h"
 
-const char* xoImageStore::NullImageName = "NULL";
+const char* xoImageStore::NullImageName		= "NULL";
 
 xoImageStore::xoImageStore()
 {
@@ -14,11 +14,13 @@ xoImageStore::xoImageStore()
 	nimg->Set( xoTexFormatRGBA8, 2, 2, ndata );
 	XOASSERT( NullImageIndex == ImageList.size() );
 	Set( NullImageName, nimg );
+	NextAnon = 1;
 }
 
 xoImageStore::~xoImageStore()
 {
 	delete_all( ImageList );
+	NameToIndex.clear();
 }
 
 void xoImageStore::Set( const char* name, xoImage* img )
@@ -33,9 +35,35 @@ void xoImageStore::Set( const char* name, xoImage* img )
 	}
 	else
 	{
-		NameToIndex.insert( sname, (int) ImageList.size() );
-		ImageList += img;
+		if ( FreeIndices.size() != 0 )
+		{
+			index = FreeIndices.rpop();
+			ImageList[index] = img;
+		}
+		else
+		{
+			index = (int) ImageList.size();
+			ImageList += img;
+		}
+
+		NameToIndex.insert( sname, index );
 	}
+}
+
+xoString xoImageStore::SetAnonymous( xoImage* img )
+{
+	char buf[64] = "!~";
+	while ( true )
+	{
+		xoItoa( NextAnon++, buf + 2, 36 );
+		if ( !NameToIndex.contains(xoTempString(buf)) )
+		{
+			Set( buf, img );
+			return buf;
+		}
+	}
+	XOPANIC("xoImageStore failed to generate anonymous name");
+	return "";
 }
 
 xoImage* xoImageStore::Get( const char* name ) const
@@ -55,6 +83,18 @@ xoImage* xoImageStore::GetOrNull( const char* name ) const
 	return ImageList[NullImageIndex];
 }
 
+void xoImageStore::Delete( const char* name )
+{
+	int index = -1;
+	if ( NameToIndex.get( xoTempString(name), index ) )
+	{
+		NameToIndex.erase( xoTempString(name) );
+		delete ImageList[index];
+		ImageList[index] = nullptr;
+		FreeIndices += index;
+	}
+}
+
 const xoImage* xoImageStore::GetNull() const
 {
 	return ImageList[NullImageIndex];
@@ -64,6 +104,7 @@ void xoImageStore::CloneFrom( const xoImageStore& src )
 {
 	delete_all( ImageList );
 	NameToIndex.clear();
+	FreeIndices.clear();
 	
 	Set( NullImageName, src.Get( NullImageName )->Clone() );
 

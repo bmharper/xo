@@ -6,6 +6,7 @@
 #if XO_BUILD_DIRECTX
 
 #include "../Shaders/Processed_hlsl/FillShader.h"
+#include "../Shaders/Processed_hlsl/FillTexShader.h"
 #include "../Shaders/Processed_hlsl/RectShader.h"
 #include "../Shaders/Processed_hlsl/TextWholeShader.h"
 #include "../Shaders/Processed_hlsl/TextRGBShader.h"
@@ -74,10 +75,11 @@ private:
 	int						FBWidth, FBHeight;
 
 	xoDXProg_Fill			PFill;
+	xoDXProg_FillTex		PFillTex;
 	xoDXProg_Rect			PRect;
 	xoDXProg_TextRGB		PTextRGB;
 	xoDXProg_TextWhole		PTextWhole;
-	static const int		NumProgs = 4;
+	static const int		NumProgs = 5;
 	xoDXProg*				AllProgs[NumProgs];
 
 	bool				InitializeDXDevice( xoSysWnd& wnd );

@@ -10,7 +10,7 @@ public:
 	xoLayoutResult( const xoDoc& doc );
 	~xoLayoutResult();
 
-	bool				IsLocked;	// True if we are being used by the UI thread
+	bool				IsLocked;	// True if we are being used by the UI thread to do things like hit-testing
 	xoRenderDomNode		Root;
 	xoPool				Pool;
 };
@@ -46,9 +46,9 @@ protected:
 	xoImageStore			ClonedImages;
 
 	// Rendered state
-	AbcCriticalSection		LayoutLock;			// This guards LayoutResult and OldLayouts
-	xoLayoutResult*			LatestLayout = nullptr;
-	pvect<xoLayoutResult*>	OldLayouts;
+	AbcCriticalSection		LayoutLock;				// This guards the pointers LayoutResult and OldLayouts (but not necessarily the content that is pointed to)
+	xoLayoutResult*			LatestLayout = nullptr;	// Most recent layout performed
+	pvect<xoLayoutResult*>	OldLayouts;				// Layouts there were busy being used by the UI thread while the rendering thread progressed onto doing another layout
 
 	void			PurgeOldLayouts();
 	//void			ResetRenderData();

@@ -10,10 +10,12 @@ class xoBox;
 class xoBox16;
 class xoBoxF;
 class xoDomEl;
+class xoDomCanvas;
 class xoDomNode;
 class xoDomText;
 class xoDoc;
 class xoDocUI;
+class xoCanvas2D;
 class xoEvent;
 class xoOriginalEvent;
 class xoImage;
@@ -292,16 +294,20 @@ struct XOAPI xoRenderStats
 	void Reset();
 };
 
+#define XO_MAKE_TEX_FORMAT(premultiplied, nchannels)  ( ((premultiplied) << 3) | (nchannels) )
+
 enum xoTexFormat
 {
-	xoTexFormatInvalid = 0,
-	xoTexFormatRGBA8 = 1,
-	xoTexFormatGrey8 = 2
+	xoTexFormatInvalid		= XO_MAKE_TEX_FORMAT(0,0),
+	xoTexFormatRGBA8		= XO_MAKE_TEX_FORMAT(1,4),
+	xoTexFormatGrey8		= XO_MAKE_TEX_FORMAT(0,1),
 };
 
-XOAPI size_t xoTexFormatChannelCount( xoTexFormat f );
-XOAPI size_t xoTexFormatBytesPerChannel( xoTexFormat f );
-XOAPI size_t xoTexFormatBytesPerPixel( xoTexFormat f );
+#undef XO_MAKE_TEX_FORMAT
+
+inline int xoTexFormatChannelCount( xoTexFormat f )			{ return f & 7; }
+inline int xoTexFormatBytesPerChannel( xoTexFormat f )		{ return 1; }
+inline int xoTexFormatBytesPerPixel( xoTexFormat f )		{ return xoTexFormatBytesPerChannel(f) * xoTexFormatChannelCount(f); }
 
 /* Base of all textures
 This structure must remain zero-initializable
@@ -310,17 +316,16 @@ Once a texture has been uploaded, you may not change width, height, or channel c
 class XOAPI xoTexture
 {
 public:
-	uint32		TexWidth;
-	uint32		TexHeight;
-	xoBox		TexInvalidRect;		// Invalid rectangle, in integer texel coordinates.
-	xoTextureID	TexID;				// ID of texture in renderer.
-	xoTexFormat	TexFormat;
-	void*		TexData;
-	int			TexStride;
+	uint32		TexWidth		= 0;
+	uint32		TexHeight		= 0;
+	xoBox		TexInvalidRect	= {0,0,0,0};			// Invalid rectangle, in integer texel coordinates.
+	xoTextureID	TexID			= xoInternalIDNull;		// ID of texture in renderer.
+	xoTexFormat	TexFormat		= xoTexFormatInvalid;
+	void*		TexData			= nullptr;
+	int			TexStride		= 0;
 
-			xoTexture()					{ TexWidth = TexHeight = 0; TexInvalidRect = xoBox(0,0,0,0); TexFormat = xoTexFormatInvalid; TexID = xoTextureIDNull; TexData = NULL; TexStride = 0; }
-	void	TexInvalidate()				{ TexInvalidRect = xoBox(0, 0, TexWidth, TexHeight); }
-	void	TexValidate()				{ TexInvalidRect = xoBox(0, 0, 0, 0); }
+	void	TexInvalidateWholeSurface()	{ TexInvalidRect = xoBox(0, 0, TexWidth, TexHeight); }
+	void	TexClearInvalidRect()		{ TexInvalidRect = xoBox(0, 0, 0, 0); }
 	void*	TexDataAt( int x, int y )	{ return ((char*) TexData) + y * TexStride + x * xoTexFormatBytesPerPixel(TexFormat); }
 	void*	TexDataAtLine( int y )		{ return ((char*) TexData) + y * TexStride; }
 	size_t	TexBytesPerPixel() const	{ return xoTexFormatBytesPerPixel(TexFormat); }
@@ -402,7 +407,7 @@ XOAPI void				xoRunXMessageLoop();
 //#define XOTRACE_RENDER_ENABLE
 #define XOTRACE_LAYOUT_WARNINGS_ENABLE
 //#define XOTRACE_LAYOUT_VERBOSE_ENABLE
-#define XOTRACE_EVENTS_ENABLE
+//#define XOTRACE_EVENTS_ENABLE
 //#define XOTRACE_LATENCY_ENABLE
 #define XOTRACE_WARNING_ENABLE
 

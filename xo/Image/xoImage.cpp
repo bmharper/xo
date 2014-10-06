@@ -27,15 +27,17 @@ void xoImage::Free()
 	TexID = xoTextureIDNull;
 }
 
-void xoImage::Set( xoTexFormat format, u32 width, u32 height, const void* bytes )
+bool xoImage::Set( xoTexFormat format, u32 width, u32 height, const void* bytes )
 {
-	Alloc( format, width, height );
+	if ( !Alloc( format, width, height ) )
+		return false;
 	size_t size = TexWidth * TexHeight * xoTexFormatBytesPerPixel(format);
 	if ( size != 0 )
 		memcpy( TexData, bytes, size );
+	return true;
 }
 
-void xoImage::Alloc( xoTexFormat format, u32 width, u32 height )
+bool xoImage::Alloc( xoTexFormat format, u32 width, u32 height )
 {
 	size_t existingFormatBPP = xoTexFormatBytesPerPixel(TexFormat);
 	size_t requiredFormatBPP = xoTexFormatBytesPerPixel(format);
@@ -44,7 +46,7 @@ void xoImage::Alloc( xoTexFormat format, u32 width, u32 height )
 	{
 		if ( TexFormat != format )
 			TexFormat = format;
-		return;
+		return true;
 	}
 
 	if ( TexWidth != width || TexWidth != height )
@@ -54,10 +56,14 @@ void xoImage::Alloc( xoTexFormat format, u32 width, u32 height )
 	TexFormat = format;
 	if ( TexWidth != 0 && TexHeight != 0 )
 	{
-		TexInvalidate();
+		TexInvalidateWholeSurface();
 		TexStride = TexWidth * (uint32) TexBytesPerPixel();
 		size_t size = TexHeight * TexStride;
 		TexData = AbcAlignedMalloc( size, 16 );
-		AbcCheckAlloc( TexData );
+		return TexData != nullptr;
+	}
+	else
+	{
+		return true;
 	}
 }

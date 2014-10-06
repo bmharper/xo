@@ -74,6 +74,8 @@ public:
 	~xoTempString();
 };
 
+void XOAPI xoItoa( int64 value, char* buf, int base );
+
 #ifdef _WIN32
 #pragma warning( pop )
 #endif

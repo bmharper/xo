@@ -7,15 +7,14 @@
 #include "Text/xoFontStore.h"
 #include "xoCloneHelpers.h"
 #include "xoStyle.h"
+#include "Dom/xoDomCanvas.h"
 
 xoDoc::xoDoc()
-	: Root( this, xoTagDiv, xoInternalIDNull ), UI( this )
+	: Root( this, xoTagBody, xoInternalIDNull ), UI( this )
 {
 	IsReadOnly = false;
 	Version = 0;
 	ClassStyles.AddDummyStyleZero();
-	Root.SetDoc( this );
-	Root.SetDocRoot();
 	ResetInternalIDs();
 	InitializeDefaultTagStyles();
 }
@@ -147,16 +146,23 @@ xoDomEl* xoDoc::AllocChild( xoTag tag, xoInternalID parentID )
 {
 	XOASSERT(tag != xoTagNULL);
 
-	// we may want to use a more specialized heap in future, so we keep this allocation path strict
-	if ( tag == xoTagText )
+	// we may want to use a more specialized heap for DOM elements in future,
+	// so we keep this allocation path strict.
+	// In other words, xoDoc is the only thing that may create a new DOM element.
+	switch ( tag )
+	{
+	case xoTagText:
 		return new xoDomText( this, tag, parentID );
-	else
+	case xoTagCanvas:
+		return new xoDomCanvas( this, parentID );
+	default:
 		return new xoDomNode( this, tag, parentID );
+	}
 }
 
 void xoDoc::FreeChild( const xoDomEl* el )
 {
-	// we may want to use a more specialized heap in future, so we keep this allocation path strict
+	// Same as AllocChild, all DOM elements must be deleted here
 	delete el;
 }
 
@@ -182,6 +188,7 @@ void xoDoc::ChildAdded( xoDomEl* el )
 	SetChildModified( el->GetInternalID() );
 }
 
+/*
 void xoDoc::ChildAddedFromDocumentClone( xoDomEl* el )
 {
 	xoInternalID elID = el->GetInternalID();
@@ -189,6 +196,7 @@ void xoDoc::ChildAddedFromDocumentClone( xoDomEl* el )
 	XOASSERTDEBUG(elID < ChildByInternalID.size());		// The clone should have resized ChildByInternalID before copying the DOM elements
 	ChildByInternalID[elID] = el;
 }
+*/
 
 void xoDoc::ChildRemoved( xoDomEl* el )
 {

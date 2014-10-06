@@ -224,6 +224,9 @@ public:
 
 	xoStyleAttrib();
 
+	static xoStyleAttrib MakeWidth( xoSize val )					{ xoStyleAttrib a; a.SetSize( xoCatWidth, val ); return a; }
+	static xoStyleAttrib MakeHeight( xoSize val )					{ xoStyleAttrib a; a.SetSize( xoCatHeight, val ); return a; }
+
 	void SetInherit( xoStyleCategories cat );
 
 	void SetColor( xoStyleCategories cat, xoColor val )				{ SetU32( cat, val.u ); }

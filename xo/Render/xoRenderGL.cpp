@@ -641,7 +641,7 @@ bool xoRenderGL::LoadTexture( xoTexture* tex, int texUnit )
 		GLuint t;
 		glGenTextures( 1, &t );
 		tex->TexID = RegisterTextureInt( t );
-		tex->TexInvalidate();
+		tex->TexInvalidateWholeSurface();
 	}
 
 	GLuint glTexID = GetTextureDeviceHandleInt( tex->TexID );
@@ -672,7 +672,7 @@ bool xoRenderGL::LoadTexture( xoTexture* tex, int texUnit )
 	int iformat = format;
 
 	if ( Have_Unpack_RowLength )
-		glPixelStorei( GL_UNPACK_ROW_LENGTH, tex->TexStride );
+		glPixelStorei( GL_UNPACK_ROW_LENGTH, tex->TexStride / (int) tex->TexBytesPerPixel() );
 
 	if ( !Have_Unpack_RowLength || invRect == fullRect )
 	{

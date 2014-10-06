@@ -20,37 +20,6 @@ static AbcThreadHandle				UIThread = NULL;
 // Single globally accessible data
 static xoGlobalStruct*				xoGlobals = NULL;
 
-XOAPI size_t xoTexFormatChannelCount( xoTexFormat f )
-{
-	switch ( f )
-	{
-	case xoTexFormatInvalid:	return 0;
-	case xoTexFormatRGBA8:		return 4;
-	case xoTexFormatGrey8:		return 1;
-	default:
-		XOTODO;
-		return 0;
-	}
-}
-
-XOAPI size_t xoTexFormatBytesPerChannel( xoTexFormat f )
-{
-	switch ( f )
-	{
-	case xoTexFormatInvalid:	return 0;
-	case xoTexFormatRGBA8:		return 1;
-	case xoTexFormatGrey8:		return 1;
-	default:
-		XOTODO;
-		return 0;
-	}
-}
-
-XOAPI size_t xoTexFormatBytesPerPixel( xoTexFormat f )
-{
-	return xoTexFormatBytesPerChannel( f ) * xoTexFormatChannelCount( f );
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void xoTexture::FlipVertical()

@@ -9,9 +9,15 @@ Any state that is persisted between renderings is stored in xoRenderGL.
 class XOAPI xoRenderer
 {
 public:
-	xoRenderResult	Render( xoImageStore* images, xoStringTable* strings, xoRenderBase* driver, const xoRenderDomNode* root );
+	// I initially tried to not pass xoDoc in here, but I eventually needed it to lookup canvas objects
+	xoRenderResult	Render( const xoDoc* doc, xoImageStore* images, xoStringTable* strings, xoRenderBase* driver, const xoRenderDomNode* root );
 
 protected:
+	enum TexUnits
+	{
+		TexUnit0 = 0,
+	};
+	const xoDoc*				Doc;
 	xoRenderBase*				Driver;
 	xoImageStore*				Images;
 	xoStringTable*				Strings;
@@ -24,6 +30,6 @@ protected:
 	void			RenderTextChar_SubPixel( xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl );
 	void			RenderGlyphsNeeded();
 
-	bool			LoadTexture( xoTexture* tex, int texUnit );		// Load a texture and reset invalid rectangle
+	bool			LoadTexture( xoTexture* tex, TexUnits texUnit );		// Load a texture and reset invalid rectangle
 
 };

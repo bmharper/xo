@@ -6,9 +6,11 @@
 #include "xoTextureAtlas.h"
 #include "Text/xoGlyphCache.h"
 #include "../Image/xoImage.h"
+#include "../Dom/xoDomCanvas.h"
 
-xoRenderResult xoRenderer::Render( xoImageStore* images, xoStringTable* strings, xoRenderBase* driver, const xoRenderDomNode* root )
+xoRenderResult xoRenderer::Render( const xoDoc* doc, xoImageStore* images, xoStringTable* strings, xoRenderBase* driver, const xoRenderDomNode* root )
 {
+	Doc = doc;
 	Driver = driver;
 	Images = images;
 	Strings = strings;
@@ -113,7 +115,7 @@ void xoRenderer::RenderNode( xoPoint base, const xoRenderDomNode* node )
 			if ( bgImage[0] != 0 )
 			{
 				Driver->ActivateShader( xoShaderFillTex );
-				if ( !LoadTexture( Images->GetOrNull( bgImage ), 0 ) )
+				if ( !LoadTexture( Images->GetOrNull( bgImage ), TexUnit0 ) )
 					return;
 				Driver->DrawQuad( corners );
 			}
@@ -122,6 +124,18 @@ void xoRenderer::RenderNode( xoPoint base, const xoRenderDomNode* node )
 				Driver->ActivateShader( xoShaderFill );
 				Driver->DrawQuad( corners );
 			}
+		}
+	}
+
+	if ( node->IsCanvas() )
+	{
+		const xoDomCanvas* canvas = static_cast<const xoDomCanvas*>(Doc->GetChildByInternalID( node->InternalID ));
+		xoImage* canvasImage = Images->Get( canvas->GetCanvasImageName() );
+		if ( canvasImage != nullptr )
+		{
+			Driver->ActivateShader( xoShaderFillTex );
+			if ( LoadTexture( canvasImage, TexUnit0 ) )
+				Driver->DrawQuad( corners );
 		}
 	}
 }
@@ -218,7 +232,7 @@ void xoRenderer::RenderTextChar_SubPixel( xoPoint base, const xoRenderDomText* n
 	}
 
 	Driver->ActivateShader( xoShaderTextRGB );
-	if ( !LoadTexture( atlas, 0 ) )
+	if ( !LoadTexture( atlas, TexUnit0 ) )
 		return;
 	Driver->DrawQuad( corners );
 }
@@ -287,7 +301,7 @@ void xoRenderer::RenderTextChar_WholePixel( xoPoint base, const xoRenderDomText*
 		corners[i].Color = color;
 
 	Driver->ActivateShader( xoShaderTextWhole );
-	if ( !LoadTexture( atlas, 0 ) )
+	if ( !LoadTexture( atlas, TexUnit0 ) )
 		return;
 	Driver->DrawQuad( corners );
 }
@@ -299,11 +313,11 @@ void xoRenderer::RenderGlyphsNeeded()
 	GlyphsNeeded.clear();
 }
 
-bool xoRenderer::LoadTexture( xoTexture* tex, int texUnit )
+bool xoRenderer::LoadTexture( xoTexture* tex, TexUnits texUnit )
 {
 	if ( !Driver->LoadTexture(tex, texUnit) )
 		return false;
 
-	tex->TexValidate();
+	tex->TexClearInvalidRect();
 	return true;
 }

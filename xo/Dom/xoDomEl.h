@@ -31,9 +31,8 @@ public:
 
 	//void					CloneFastInto( xoDomEl& c, xoPool* pool, uint cloneFlags ) const;
 
-	void					SetInternalID( xoInternalID id )			{ InternalID = id; }	// Used by xoDoc at element creation time.
-	void					SetDoc( xoDoc* doc )						{ Doc = doc; }			// Used by xoDoc at element creation and destruction time.
-	void					SetDocRoot()								{ Tag = xoTagBody; }	// Used by xoDoc at initialization time.
+	void					SetInternalID( xoInternalID id )			{ InternalID = id; }	// Used by xoDoc during element creation.
+	void					SetDoc( xoDoc* doc )						{ Doc = doc; }			// Used by xoDoc during element creation and destruction.
 	bool					IsNode() const								{ return Tag != xoTagText; }
 	bool					IsText() const								{ return Tag == xoTagText; }
 

@@ -229,8 +229,9 @@ local xo = SharedLibrary {
 		"xo/xoStyle.cpp",
 		"xo/xoSysWnd.cpp",
 		"xo/xoTags.cpp",
-		"xo/Canvas/xoCanvas.cpp",
+		"xo/Canvas/xoCanvas2D.cpp",
 		"xo/Dom/xoDomEl.cpp",
+		"xo/Dom/xoDomCanvas.cpp",
 		"xo/Dom/xoDomNode.cpp",
 		"xo/Dom/xoDomText.cpp",
 		"xo/Image/xoImage.cpp",
@@ -261,6 +262,7 @@ local xo = SharedLibrary {
 		"xo/Shaders/Processed_glsl/TextRGBShader.cpp",
 		"xo/Shaders/Processed_glsl/TextWholeShader.cpp",
 		"xo/Shaders/Processed_hlsl/FillShader.cpp",
+		"xo/Shaders/Processed_hlsl/FillTexShader.cpp",
 		"xo/Shaders/Processed_hlsl/RectShader.cpp",
 		"xo/Shaders/Processed_hlsl/TextRGBShader.cpp",
 		"xo/Shaders/Processed_hlsl/TextWholeShader.cpp",
@@ -289,7 +291,6 @@ local xo = SharedLibrary {
 local HelloWorld = Program {
 	Name = "HelloWorld",
 	Includes = { "xo" },
-	--Libs = { "X11", "GL", "GLU", "stdc++", "pthread", "rt"; Config = "linux-*" },
 	Libs = { "stdc++"; Config = "linux-*" },
 	Depends = {
 		crt,
@@ -336,6 +337,20 @@ local KitchenSink = Program {
 	}
 }
 
+local Canvas = Program {
+	Name = "Canvas",
+	Includes = { "xo" },
+	Libs = { "stdc++"; Config = "linux-*" },
+	Depends = {
+		crt,
+		xo
+	},
+	Sources = {
+		"templates/xoWinMain.cpp",
+		"samples/Canvas.cpp",
+	}
+}
+
 local Bench = Program {
 	Name = "Bench",
 	Includes = { "xo" },
@@ -379,5 +394,7 @@ local Test = Program {
 
 Default(xo)
 Default(HelloWorld)
+Default(KitchenSink)
+Default(Canvas)
 Default(Bench)
 Default(Test)

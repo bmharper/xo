@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "xoDoc.h"
 #include "xoDomNode.h"
+#include "xoDomCanvas.h"
 #include "../Parse/xoDocParser.h"
 
 xoDomNode::xoDomNode( xoDoc* doc, xoTag tag, xoInternalID parentID ) : xoDomEl(doc, tag, parentID)
@@ -74,6 +75,11 @@ xoDomNode* xoDomNode::AddNode( xoTag tag )
 {
 	AbcAssert( tag != xoTagText );
 	return static_cast<xoDomNode*>(AddChild(tag));
+}
+
+xoDomCanvas* xoDomNode::AddCanvas()
+{
+	return static_cast<xoDomCanvas*>(AddChild(xoTagCanvas));
 }
 
 xoDomText* xoDomNode::AddText( const char* txt )
@@ -177,6 +183,12 @@ void xoDomNode::HackSetStyle( const xoStyle& style )
 {
 	IncVersion();
 	Style = style;
+}
+
+void xoDomNode::HackSetStyle( xoStyleAttrib attrib )
+{
+	IncVersion();
+	Style.Set( attrib );
 }
 
 void xoDomNode::AddClass( const char* klass )

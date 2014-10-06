@@ -3,14 +3,14 @@
 
 /* DOM node that is not text
 It is vital that this data structure does not grow much bigger than this.
-Right now it's 128 bytes on Windows x64.
+Right now it's 136 bytes on Windows x64.
 */
 class XOAPI xoDomNode : public xoDomEl
 {
 	DISALLOW_COPY_AND_ASSIGN(xoDomNode);
 public:
-					xoDomNode( xoDoc* doc, xoTag tag, xoInternalID parentID );
-					virtual ~xoDomNode();
+							xoDomNode( xoDoc* doc, xoTag tag, xoInternalID parentID );
+	virtual					~xoDomNode();
 
 	virtual void			SetText( const char* txt ) override;
 	virtual const char*		GetText() const override;
@@ -26,6 +26,7 @@ public:
 
 	xoDomEl*		AddChild( xoTag tag );
 	xoDomNode*		AddNode( xoTag tag );
+	xoDomCanvas*	AddCanvas();
 	xoDomText*		AddText( const char* txt = nullptr );
 	void			RemoveChild( xoDomEl* c );
 	void			RemoveAllChildren();
@@ -41,8 +42,9 @@ public:
 
 	bool			StyleParse( const char* t, intp maxLen = INT32MAX );
 	bool			StyleParsef( const char* t, ... );
-	// This is here for experiments. Future work needs a better performing method for setting just one attribute of the style.
+	// TODO: This is here for experiments. Future work needs a better performing method for setting just one attribute of the style.
 	void			HackSetStyle( const xoStyle& style );
+	void			HackSetStyle( xoStyleAttrib attrib ); // TODO: This is also "Hack" because it doesn't work for attribute such as background-image
 
 	// Classes
 	void			AddClass( const char* klass );

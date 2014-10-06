@@ -17,6 +17,8 @@
 #include "xoDefs.h"
 #include "xoDoc.h"
 #include "xoDocGroup.h"
+#include "Dom/xoDomCanvas.h"
+#include "Canvas/xoCanvas2D.h"
 #include "Layout/xoLayout.h"
 #include "Layout/xoLayout2.h"
 #include "Render/xoRenderer.h"
