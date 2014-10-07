@@ -290,8 +290,8 @@ void xoRenderer::RenderTextChar_WholePixel( xoPoint base, const xoRenderDomText*
 
 	float u0 = (glyph->X - pad) * atlasScaleX;
 	float v0 = (glyph->Y - pad) * atlasScaleY;
-	float u1 = (glyph->X + glyph->Width + pad * 2) * atlasScaleX;
-	float v1 = (glyph->Y + glyph->Height + pad * 2) * atlasScaleY;
+	float u1 = (glyph->X + glyph->Width + pad) * atlasScaleX;
+	float v1 = (glyph->Y + glyph->Height + pad) * atlasScaleY;
 
 	corners[0].UV = XOVEC2(u0, v0);
 	corners[1].UV = XOVEC2(u0, v1);
