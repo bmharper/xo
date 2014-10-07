@@ -267,8 +267,6 @@ void xoLayout2::RunText( const xoDomText& node, const LayoutInput& in, LayoutOut
 	TempText.RNode = rnode;
 	TempText.Words.clear_noalloc();
 	TempText.GlyphCount = 0;
-	//TempText.FontWidthScale = 1.08f;	// Verdana looks a lot better with an extra 8%
-	//TempText.FontWidthScale = 1.05f;
 	TempText.FontWidthScale = 1.0f;
 	GenerateTextWords( TempText );
 	if ( !TempText.GlyphsNeeded )
@@ -327,8 +325,6 @@ void xoLayout2::GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, Te
 	// First text in the line defines the baseline
 	//if ( s.PosBaselineY == xoPosNULL )
 	//	s.PosBaselineY = baseline;
-	if ( strcmp(txt, "world") == 0 )
-		int abc = 123;
 
 	xoPos posX = 0;
 	xoPos posMaxX = 0;

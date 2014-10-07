@@ -7,6 +7,6 @@ varying vec2		texuv0;
 void main()
 {
 	vec4 texCol = texture2D(tex0, texuv0.st);
-	gl_FragColor = color * vec4(1,1,1, texCol.r);
+	gl_FragColor = premultiply(color) * texCol.r;
 }
  

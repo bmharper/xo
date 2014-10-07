@@ -52,6 +52,11 @@ float4 fromSRGB(float4 c)
 	return linear_c;
 }
 
+float4 premultiply(float4 c)
+{
+	return float4(c.r * c.a, c.g * c.a, c.b * c.a, c.a);
+}
+
 // SV_Position is in screen space, but in GLSL it is in normalized device space
 float2 frag_to_screen(float2 unit_pt)
 {

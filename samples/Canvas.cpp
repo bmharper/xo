@@ -14,7 +14,7 @@ void xoMain( xoMainEvent ev )
 			canvasEl->SetSize( 400, 300 );
 			canvasEl->SetText( "Hello blank canvas" );
 			canvasEl->StyleParse( "font-size: 14px" );
-			canvasEl->StyleParse( "color: #090" );
+			canvasEl->StyleParse( "color: #080" );
 			//canvasEl->StyleParse( "background: #f00" );
 			xoCanvas2D* c2d = canvasEl->GetCanvas2D();
 			Vec2f vx[] = {

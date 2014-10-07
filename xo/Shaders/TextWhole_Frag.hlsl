@@ -9,6 +9,6 @@ struct VSOutput
 float4 main(VSOutput input) : SV_Target
 {
 	float4 col;
-	col = input.color * float4(1,1,1, shader_texture.Sample(sample_type, input.texuv0).r);
+	col = premultiply(input.color) * shader_texture.Sample(sample_type, input.texuv0).r;
     return col;
 }

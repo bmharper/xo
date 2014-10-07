@@ -72,8 +72,8 @@ public:
 	virtual void		DestroyDevice( xoSysWnd& wnd ) = 0;		// Destroy this device and all associated textures, etc
 	virtual void		SurfaceLost() = 0;
 	
-	virtual bool		BeginRender( xoSysWnd& wnd ) = 0;		// Start of a frame
-	virtual void		EndRender( xoSysWnd& wnd ) = 0;			// Frame is finished. Present it.
+	virtual bool		BeginRender( xoSysWnd& wnd ) = 0;						// Start of a frame
+	virtual void		EndRender( xoSysWnd& wnd, uint endRenderFlags ) = 0;	// Frame is finished. Present it (or possibly not, depending on flags).
 
 	virtual void		PreRender() = 0;
 	virtual void		PostRenderCleanup() = 0;
@@ -105,7 +105,7 @@ public:
 	virtual void		SurfaceLost();
 	
 	virtual bool		BeginRender( xoSysWnd& wnd );
-	virtual void		EndRender( xoSysWnd& wnd );
+	virtual void		EndRender( xoSysWnd& wnd, uint endRenderFlags );
 
 	virtual void		PreRender();
 	virtual void		PostRenderCleanup();

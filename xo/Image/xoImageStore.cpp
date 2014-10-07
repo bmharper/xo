@@ -111,7 +111,7 @@ const xoImage* xoImageStore::GetNull() const
 	return ImageList[NullImageIndex];
 }
 
-void xoImageStore::CloneFrom( const xoImageStore& src )
+void xoImageStore::CloneMetadataFrom( const xoImageStore& src )
 {
 	// TODO: Stop needless thrashing here, by blowing away the entire image store and recreating it.
 	// A very simple optimization would be to simply detect if the two ImageStores are parallel. If so,

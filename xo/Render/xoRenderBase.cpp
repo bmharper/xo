@@ -98,7 +98,7 @@ bool xoRenderDummy::BeginRender( xoSysWnd& wnd )
 {
 	return false;
 }
-void xoRenderDummy::EndRender( xoSysWnd& wnd )
+void xoRenderDummy::EndRender( xoSysWnd& wnd, uint endRenderFlags )
 {
 }
 	 

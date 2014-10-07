@@ -108,6 +108,11 @@ enum xoRenderResult
 	xoRenderResultIdle
 };
 
+enum xoEndRenderFlags
+{
+	xoEndRenderNoSwap = 1,		// Do not call SwapBuffers() or SwapChain->Present(). This frame is going to be discarded.
+};
+
 //struct xoVec2
 //{
 //	float x,y;
@@ -405,8 +410,14 @@ struct xoGlobalStruct
 	xoGlyphCache*				GlyphCache;			// This might have to move into a less global domain.
 };
 
+// Optional initialization parameters
+struct xoInitParams
+{
+	float	EpToPixel = 0;	// Override Eye Pixels to Device Pixels (ends up in xoGlobalStruct.EpToPixel)
+};
+
 XOAPI xoGlobalStruct*	xoGlobal();
-XOAPI void				xoInitialize();
+XOAPI void				xoInitialize( xoInitParams* init = nullptr );
 XOAPI void				xoShutdown();
 XOAPI void				xoProcessDocQueue();
 XOAPI void				xoParseFail( const char* msg, ... );

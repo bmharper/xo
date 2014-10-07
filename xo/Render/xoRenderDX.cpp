@@ -381,11 +381,14 @@ bool xoRenderDX::BeginRender( xoSysWnd& wnd )
 	return true;
 }
 
-void xoRenderDX::EndRender( xoSysWnd& wnd )
+void xoRenderDX::EndRender( xoSysWnd& wnd, uint endRenderFlags )
 {
-	HRESULT hr = D3D.SwapChain->Present( 0, 0 );
-	if (!SUCCEEDED(hr))
-		XOTRACE( "DirectX Present failed: 0x%08x", hr );
+	if ( !(endRenderFlags & xoEndRenderNoSwap) )
+	{
+		HRESULT hr = D3D.SwapChain->Present( 0, 0 );
+		if (!SUCCEEDED(hr))
+			XOTRACE( "DirectX Present failed: 0x%08x", hr );
+	}
 
 	D3D.ActiveProgram = nullptr;
 

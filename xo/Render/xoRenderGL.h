@@ -42,8 +42,8 @@ public:
 	virtual void		DestroyDevice( xoSysWnd& wnd );
 	virtual void		SurfaceLost();
 
-	virtual bool		BeginRender( xoSysWnd& wnd );		// Gets DC and does a MakeCurrent
-	virtual void		EndRender( xoSysWnd& wnd );			// Releases DC and does a SwapBuffers
+	virtual bool		BeginRender( xoSysWnd& wnd );							// Gets DC and does a MakeCurrent
+	virtual void		EndRender( xoSysWnd& wnd, uint endRenderFlags );		// Releases DC and does a SwapBuffers (unless flags inhibit Swap)
 
 	virtual void		PreRender();
 	virtual void		PostRenderCleanup();

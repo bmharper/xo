@@ -93,9 +93,8 @@ void xoRenderDoc::CopyFromCanonical( const xoDoc& canonical, xoRenderStats& stat
 
 	canonical.CloneSlowInto( Doc, 0, stats );
 
-	// TODO: Don't do this dumb copying.
-	//ClonedStrings.CloneFrom( canonical.Strings );
-	ClonedImages.CloneFrom( canonical.Images );
+	// This must happen after textures are uploaded to the GPU. xoDocGroup ensures that.
+	ClonedImages.CloneMetadataFrom( canonical.Images );
 }
 
 xoLayoutResult*	xoRenderDoc::AcquireLatestLayout()

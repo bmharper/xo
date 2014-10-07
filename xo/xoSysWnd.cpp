@@ -183,10 +183,14 @@ bool xoSysWnd::BeginRender()
 		return false;
 }
 
-void xoSysWnd::EndRender()
+void xoSysWnd::EndRender( uint endRenderFlags )
 {
 	if ( Renderer )
-		Renderer->EndRender( *this );
+	{
+		XOTRACE_LATENCY( "EndRender (begin) %s\n", !!(endRenderFlags & xoEndRenderNoSwap) ? "noswap" : "swap" );
+		Renderer->EndRender( *this, endRenderFlags );
+		XOTRACE_LATENCY( "EndRender (end)\n" );
+	}
 }
 
 void xoSysWnd::SurfaceLost()

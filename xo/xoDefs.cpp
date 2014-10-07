@@ -231,7 +231,7 @@ static float ComputeEpToPixel()
 	}
 	return scale;
 #elif XO_PLATFORM_ANDROID
-	// xoGlobals->EpToPixel is injected by Java_com_android_xo_NuLib_init after it calls xoInitialize()
+	// xoGlobals->EpToPixel is sent by Java_com_android_xo_XoLib_init when it calls xoInitialize()
 	return 1;
 #elif XO_PLATFORM_LINUX_DESKTOP
 	// TODO
@@ -252,7 +252,7 @@ static void InitializePlatform()
 #endif
 }
 
-XOAPI void xoInitialize()
+XOAPI void xoInitialize( xoInitParams* init )
 {
 	InitializeCount++;
 	if ( InitializeCount != 1 )
@@ -264,10 +264,14 @@ XOAPI void xoInitialize()
 	AbcMachineInformationGet( minf );
 
 	xoGlobals = new xoGlobalStruct();
+	if ( init != nullptr && init->EpToPixel != 0 )
+		xoGlobals->EpToPixel = init->EpToPixel;
+	else
+		xoGlobals->EpToPixel = ComputeEpToPixel();
 	xoGlobals->TargetFPS = 60;
 	xoGlobals->NumWorkerThreads = std::min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
 	xoGlobals->MaxSubpixelGlyphSize = 60;
-	xoGlobals->PreferOpenGL = false;
+	xoGlobals->PreferOpenGL = true;
 	xoGlobals->EnableVSync = false;
 	// Freetype's output is linear coverage percentage, so if we treat our freetype texture as GL_LUMINANCE
 	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get perfect results without
@@ -278,6 +282,8 @@ XOAPI void xoInitialize()
 	// a reasonable blend between the "correct weight" and "prior art".
 	// CORRECTION. A gamma of anything other than 1.0 looks bad at small font sizes (like 12 or 13 pixels)
 	// We might want to have a "gamma curve" of pixel size vs gamma.
+	// FURTHER CORRECTION. The "infinality" patches to Freetype, as well as fixing up our incorrect glyph
+	// UV coordinates has made this all redundant.
 	xoGlobals->SubPixelTextGamma = 1.0f;
 	xoGlobals->WholePixelTextGamma = 1.0f;
 #if XO_PLATFORM_WIN_DESKTOP || XO_PLATFORM_LINUX_DESKTOP
@@ -290,10 +296,11 @@ XOAPI void xoInitialize()
 	//xoGlobals->EmulateGammaBlending = false;
 #endif
 	xoGlobals->EnableKerning = true;
-	xoGlobals->RoundLineHeights = xoGlobals->EnableSubpixelText;	// happens to be correlated with sub-pixel text, because with sub-pixel, we snap to vertical pixels (but not horz)
+	// Do we round text line heights to whole pixels?
+	// We only render sub-pixel text on low resolution monitors that do not change orientation (ie desktop).
+	xoGlobals->RoundLineHeights = xoGlobals->EnableSubpixelText || xoGlobals->EpToPixel < 2.0f;
 	xoGlobals->SnapBoxes = true;
 	xoGlobals->SnapSubpixelHorzText = true;
-	xoGlobals->EpToPixel = ComputeEpToPixel();
 	//xoGlobals->DebugZeroClonedChildList = true;
 	xoGlobals->MaxTextureID = ~((xoTextureID) 0);
     //xoGlobals->ClearColor.Set( 200, 0, 200, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node

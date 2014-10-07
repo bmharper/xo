@@ -48,6 +48,11 @@ vec4 fromSRGB(vec4 c)
 	linear_c.a = c.a;
 	return linear_c;
 }
+
+vec4 premultiply(vec4 c)
+{
+	return vec4(c.r * c.a, c.g * c.a, c.b * c.a, c.a);
+}
 )";
 
 xoRenderGL::xoRenderGL()
@@ -430,21 +435,19 @@ bool xoRenderGL::BeginRender( xoSysWnd& wnd )
 #endif
 }
 
-void xoRenderGL::EndRender( xoSysWnd& wnd )
+void xoRenderGL::EndRender( xoSysWnd& wnd, uint endRenderFlags )
 {
 #if XO_PLATFORM_WIN_DESKTOP
-	XOTRACE_LATENCY( "SwapBuffers (begin)\n" );
-	SwapBuffers( DC );
+	if ( !(endRenderFlags & xoEndRenderNoSwap) )
+		SwapBuffers( DC );
 	wglMakeCurrent( NULL, NULL );
 	ReleaseDC( wnd.SysWnd, DC );
 	DC = NULL;
-	XOTRACE_LATENCY( "SwapBuffers (done)\n" );
 #elif XO_PLATFORM_ANDROID
 #elif XO_PLATFORM_LINUX_DESKTOP
-	XOTRACE_LATENCY( "SwapBuffers (begin)\n" );
-	glXSwapBuffers( wnd.XDisplay, wnd.XWindow );
+	if ( !(endRenderFlags & xoEndRenderNoSwap) )
+		glXSwapBuffers( wnd.XDisplay, wnd.XWindow );
 	glXMakeCurrent( wnd.XDisplay, None, NULL );
-	XOTRACE_LATENCY( "SwapBuffers (done)\n" );
 #endif
 }
 

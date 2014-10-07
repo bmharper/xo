@@ -92,6 +92,7 @@ xoRenderResult xoDocGroup::RenderInternal( xoImage* targetImage )
 	AbcCriticalSectionLeave( DocLock );
 
 	xoRenderResult rendResult = xoRenderResultIdle;
+	bool presentFrame = false;
 
 	if ( (docModified || targetImage != NULL) && docValid && Wnd != NULL )
 	{
@@ -106,16 +107,17 @@ xoRenderResult xoDocGroup::RenderInternal( xoImage* targetImage )
 		//NUTIME( "Render DO\n" );
 		rendResult = RenderDoc->Render( Wnd->Renderer );
 
+		presentFrame = true;
+
 		if ( targetImage != NULL )
 			Wnd->Renderer->ReadBackbuffer( *targetImage );
 	}
 
 	if ( beganRender )
 	{
-		// TODO: Don't SwapBuffers unless we called RenderDoc->Render.
-		// This will happen when the only action we've taken on the GPU is uploading textures.
+		// presentFrame will be false when the only action we've taken on the GPU is uploading textures.
 		//NUTIME( "Render Finish\n" );
-		Wnd->EndRender();
+		Wnd->EndRender( presentFrame ? 0 : xoEndRenderNoSwap );
 	}
 
 	return rendResult;

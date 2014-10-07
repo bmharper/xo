@@ -51,7 +51,7 @@ public:
 	virtual void		SurfaceLost();
 
 	virtual bool		BeginRender( xoSysWnd& wnd );
-	virtual void		EndRender( xoSysWnd& wnd );
+	virtual void		EndRender( xoSysWnd& wnd, uint endRenderFlags );
 
 	virtual void		PreRender();
 	virtual void		PostRenderCleanup();

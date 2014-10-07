@@ -2,8 +2,8 @@
 
 class xoImage;
 
-// TODO: Add some kind of locking mechanism, so that an imagestore can be shared by a mutating UI thread
-// and a rendering thread.
+// Store a set of named images.
+// TODO: Improve performance of CloneMetadataFrom(). It always blows away the entire table and recreates it from scratch.
 class XOAPI xoImageStore
 {
 public:
@@ -20,11 +20,7 @@ public:
 	void				Delete( const char* name );
 	pvect<xoImage*>		InvalidList() const;
 
-	// temp hack. shouldn't be here. We should be doing some kind of copy-on-write functionality.
-	// Probably the UI thread does the "copy" when it wants to mutate an image that has been locked
-	// by the renderer. Alternatively, the renderer locks the image briefly before it uploads it
-	// to the GPU.
-	void				CloneFrom( const xoImageStore& src ); 
+	void				CloneMetadataFrom( const xoImageStore& src ); 
 
 protected:
 	static const int	NullImageIndex = 0;
