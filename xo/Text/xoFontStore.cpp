@@ -157,6 +157,7 @@ xoFontTableImmutable xoFontStore::GetImmutableTable()
 
 void xoFontStore::AddFontDirectory( const char* dir )
 {
+	TakeCriticalSection lock(Lock);
 	Directories += dir;
 	IsFontTableLoaded = false;
 }

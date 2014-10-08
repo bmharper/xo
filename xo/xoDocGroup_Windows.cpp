@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "xoDoc.h"
 #include "xoDocGroup.h"
+#include "xoSysWnd.h"
 
 LRESULT CALLBACK xoDocGroup::StaticWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
@@ -93,7 +94,8 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		return result;
 
 	case WM_DESTROY:
-		PostQuitMessage(0);
+		if ( Wnd->QuitAppWhenWindowDestroyed )
+			PostQuitMessage(0);
 		break;
 
 	case WM_MOUSEMOVE:

@@ -1,8 +1,10 @@
+*.sdf
+*.suo
 .tundra2.*
 .metadata
 Thumbs.db
 t2-output
-samples/Android/bin/*
-samples/Android/libs/*
-samples/Android/obj/*
-samples/Android/gen/*
+examples/Android/bin/*
+examples/Android/libs/*
+examples/Android/obj/*
+examples/Android/gen/*

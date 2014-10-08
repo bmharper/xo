@@ -55,5 +55,5 @@ float4 main(VSOutput input) : SV_Target
 	float4 output;
 	output.rgb = mycolor.rgb;
 	output.a = mycolor.a * clamp(radius_out - dist_out, 0.0f, 1.0f);
-	return output;
+	return premultiply(output);
 }

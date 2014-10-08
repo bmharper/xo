@@ -55,6 +55,7 @@ void main()
 		outcolor = mix(outcolor, border_color, borderMix);
 
 	outcolor.a *= clamp(radius_out - dist_out, 0.0, 1.0);
+	outcolor = premultiply(outcolor);
 
 #ifdef XO_SRGB_FRAMEBUFFER
 	gl_FragColor = outcolor;

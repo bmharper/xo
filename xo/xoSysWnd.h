@@ -14,8 +14,9 @@ public:
 	};
 #if XO_PLATFORM_WIN_DESKTOP
 	HWND					SysWnd;
+	bool					QuitAppWhenWindowDestroyed;		// This is here for multi-window applications. Close the first window, and the app exits.
 #elif XO_PLATFORM_ANDROID
-	xoBox					RelativeClientRect;		// Set by NuLib_init
+	xoBox					RelativeClientRect;		// Set by XoLib_init
 #elif XO_PLATFORM_LINUX_DESKTOP
 	Display*				XDisplay;
 	Window					XWindowRoot;

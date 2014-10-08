@@ -416,9 +416,14 @@ struct xoInitParams
 	float	EpToPixel = 0;	// Override Eye Pixels to Device Pixels (ends up in xoGlobalStruct.EpToPixel)
 };
 
+typedef std::function<void(xoMainEvent ev)>		xoMainCallbackLowLevel;
+typedef std::function<void(xoSysWnd* wnd)>		xoMainCallback;
+
 XOAPI xoGlobalStruct*	xoGlobal();
 XOAPI void				xoInitialize( xoInitParams* init = nullptr );
 XOAPI void				xoShutdown();
+XOAPI void				xoRunAppLowLevel( xoMainCallbackLowLevel mainCallback );
+XOAPI void				xoRunApp( xoMainCallback mainCallback );
 XOAPI void				xoProcessDocQueue();
 XOAPI void				xoParseFail( const char* msg, ... );
 XOAPI void				XOTRACE( const char* msg, ... );

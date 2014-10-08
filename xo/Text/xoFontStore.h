@@ -40,6 +40,10 @@ Although the public API of this class is thread safe, the xoFont* objects return
 most definitely not thread safe. Freetype stores a lot of glyph rendering state inside
 the FT_Face object, so only one thread can use a Freetype face at a time.
 
+TODO: Change the font cache file so that the filename includes the hash. At present,
+if multiple xo applications run on the same machine, with different sets of font
+directories, then they will thrash the font cache file.
+
 */
 class XOAPI xoFontStore
 {

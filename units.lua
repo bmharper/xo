@@ -288,20 +288,6 @@ local xo = SharedLibrary {
 	},
 }
 
-local HelloWorld = Program {
-	Name = "HelloWorld",
-	Includes = { "xo" },
-	Libs = { "stdc++"; Config = "linux-*" },
-	Depends = {
-		crt,
-		xo
-	},
-	Sources = {
-		"templates/xoWinMain.cpp",
-		"samples/HelloWorld/HelloWorld.cpp",
-	}
-}
-
 local HelloAmalgamation = Program {
 	Name = "HelloAmalgamation",
 	Libs = { 
@@ -312,57 +298,39 @@ local HelloAmalgamation = Program {
 		"XO_AMALGAMATION"
 	},
 	Depends = {
-		crt,
+		crtStatic,
 		directx,
 	},
 	Sources = {
 		"amalgamation/xo-amalgamation.cpp",
 		"amalgamation/xo-amalgamation-freetype.c",
 		"templates/xoWinMain.cpp",
-		"samples/HelloAmalgamation/HelloAmalgamation.cpp",
+		"examples/HelloAmalgamation/HelloAmalgamation.cpp",
 	}
 }
 
-local KitchenSink = Program {
-	Name = "KitchenSink",
-	Includes = { "xo" },
-	Libs = { "stdc++"; Config = "linux-*" },
-	Depends = {
-		crt,
-		xo
-	},
-	Sources = {
-		"templates/xoWinMain.cpp",
-		"samples/KitchenSink/KitchenSink.cpp",
+local function XoExampleApp(template, example)
+	return Program {
+		Name = example,
+		Includes = { "xo" },
+		Libs = { "stdc++"; Config = "linux-*" },
+		Depends = {
+			crt,
+			xo
+		},
+		Sources = {
+			"templates/" .. template,
+			"examples/" .. example .. ".cpp",
+		}
 	}
-}
+end
 
-local Canvas = Program {
-	Name = "Canvas",
-	Includes = { "xo" },
-	Libs = { "stdc++"; Config = "linux-*" },
-	Depends = {
-		crt,
-		xo
-	},
-	Sources = {
-		"templates/xoWinMain.cpp",
-		"samples/Canvas.cpp",
-	}
-}
-
-local Bench = Program {
-	Name = "Bench",
-	Includes = { "xo" },
-	Depends = {
-		crt,
-		xo
-	},
-	Sources = {
-		"templates/xoWinMain.cpp",
-		"samples/Bench/Bench.cpp",
-	}
-}
+local ExampleBench       = XoExampleApp("xoWinMain.cpp", "Bench")
+local ExampleCanvas      = XoExampleApp("xoWinMain.cpp", "Canvas")
+local ExampleEvents      = XoExampleApp("xoWinMain.cpp", "Events")
+local ExampleHelloWorld  = XoExampleApp("xoWinMain.cpp", "HelloWorld")
+local ExampleKitchenSink = XoExampleApp("xoWinMain.cpp", "KitchenSink")
+local ExampleLowLevel    = XoExampleApp("xoWinMainLowLevel.cpp", "RunAppLowLevel")
 
 local Test = Program {
 	Name = "Test",
@@ -393,8 +361,11 @@ local Test = Program {
 }
 
 Default(xo)
-Default(HelloWorld)
-Default(KitchenSink)
-Default(Canvas)
-Default(Bench)
 Default(Test)
+Default(ExampleBench)
+Default(ExampleCanvas)
+Default(ExampleEvents)
+Default(ExampleHelloWorld)
+Default(ExampleKitchenSink)
+Default(ExampleLowLevel)
+

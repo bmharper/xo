@@ -221,7 +221,7 @@ const char* xoDXProg_Rect::FragSrc()
 	"	float4 output;\n"
 	"	output.rgb = mycolor.rgb;\n"
 	"	output.a = mycolor.a * clamp(radius_out - dist_out, 0.0f, 1.0f);\n"
-	"	return output;\n"
+	"	return premultiply(output);\n"
 	"}\n"
 ;
 }

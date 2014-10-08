@@ -11,6 +11,7 @@ dependencies/agg/include/agg_gamma_functions.h
 dependencies/agg/include/agg_gamma_lut.h
 dependencies/agg/include/agg_color_rgba.h
 dependencies/agg/include/agg_vertex_sequence.h
+dependencies/agg/include/agg_shorten_path.h
 dependencies/agg/include/agg_math_stroke.h
 dependencies/agg/include/agg_vcgen_stroke.h
 dependencies/agg/include/agg_conv_adaptor_vpgen.h
@@ -175,6 +176,7 @@ xo/Shaders/Processed_glsl/RectShader.cpp
 xo/Shaders/Processed_glsl/TextRGBShader.cpp
 xo/Shaders/Processed_glsl/TextWholeShader.cpp
 xo/Shaders/Processed_hlsl/FillShader.cpp
+xo/Shaders/Processed_hlsl/FillTexShader.cpp
 xo/Shaders/Processed_hlsl/RectShader.cpp
 xo/Shaders/Processed_hlsl/TextRGBShader.cpp
 xo/Shaders/Processed_hlsl/TextWholeShader.cpp

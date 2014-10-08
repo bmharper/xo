@@ -14,6 +14,8 @@ xoSysWnd*				SingleMainWnd = NULL;
 xoSysWnd*				SingleMainWnd = NULL;
 #endif
 
+static int64			NumWindowsCreated = 0;
+
 void xoSysWnd::PlatformInitialize()
 {
 #if XO_PLATFORM_WIN_DESKTOP
@@ -45,6 +47,7 @@ xoSysWnd::xoSysWnd()
 {
 #if XO_PLATFORM_WIN_DESKTOP
 	SysWnd = NULL;
+	QuitAppWhenWindowDestroyed = NumWindowsCreated == 0;
 #elif XO_PLATFORM_ANDROID
 	SingleMainWnd = this;
 	RelativeClientRect = xoBox(0,0,0,0);
@@ -61,6 +64,7 @@ xoSysWnd::xoSysWnd()
 #else
 	XOTODO_STATIC
 #endif
+	NumWindowsCreated++;
 	DocGroup = new xoDocGroup();
 	DocGroup->Wnd = this;
 	Renderer = NULL;

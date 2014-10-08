@@ -213,6 +213,7 @@ static void xoShutdown_Win32()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Retrieve the one-and-only xo "globals" data
 XOAPI xoGlobalStruct* xoGlobal()
 {
 	return xoGlobals;
@@ -252,6 +253,7 @@ static void InitializePlatform()
 #endif
 }
 
+// This must be called once at application startup. It is automatically called by xoRunApp and xoRunAppLowLevel.
 XOAPI void xoInitialize( xoInitParams* init )
 {
 	InitializeCount++;
@@ -271,7 +273,7 @@ XOAPI void xoInitialize( xoInitParams* init )
 	xoGlobals->TargetFPS = 60;
 	xoGlobals->NumWorkerThreads = std::min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
 	xoGlobals->MaxSubpixelGlyphSize = 60;
-	xoGlobals->PreferOpenGL = true;
+	xoGlobals->PreferOpenGL = false;
 	xoGlobals->EnableVSync = false;
 	// Freetype's output is linear coverage percentage, so if we treat our freetype texture as GL_LUMINANCE
 	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get perfect results without
@@ -328,6 +330,7 @@ XOAPI void xoSurfaceLost()
 
 }
 
+// This is the companion to xoInitialize.
 XOAPI void xoShutdown()
 {
 	XOASSERT(InitializeCount > 0);
@@ -365,6 +368,76 @@ XOAPI void xoShutdown()
 	xoGlobals->FontStore = NULL;
 
 	delete xoGlobals;
+}
+
+/* Use this to launch your application using an API that provides more control than xoRunApp()
+Example:
+	// Link to xoWinMainLowLevel.cpp, or copy the stub code out of that file into your own application.
+	#include "../xo/xo.h"
+
+	static xoSysWnd* MainWnd;
+
+	void xoMain( xoMainEvent ev )
+	{
+		switch ( ev )
+		{
+		case xoMainEventInit:
+			{
+				MainWnd = xoSysWnd::CreateWithDoc();
+				...
+				MainWnd->Show();
+			}
+			break;
+		case xoMainEventShutdown:
+			delete MainWnd;
+			MainWnd = NULL;
+			break;
+		}
+	}
+*/
+XOAPI void xoRunAppLowLevel( xoMainCallbackLowLevel mainCallback )
+{
+	xoInitialize();
+	mainCallback( xoMainEventInit );
+#if XO_PLATFORM_WIN_DESKTOP
+	xoRunWin32MessageLoop();
+#elif XO_PLATFORM_LINUX_DESKTOP
+	xoRunXMessageLoop();
+#else
+	XOPANIC( "xoRunApp is not supported on this platform" );
+#endif
+	mainCallback( xoMainEventShutdown );
+	xoShutdown();
+}
+
+/* Use this to create a simple application that doesn't need system events.
+Example:
+	// Link to xoWinMain.cpp, or copy the stub code out of that file into your own application.
+	#include "../xo/xo.h"
+
+	void xoMain( xoSysWnd* wnd )
+	{
+		wnd->Doc()->Root.AddNode(...
+	}
+*/
+XOAPI void xoRunApp( xoMainCallback mainCallback )
+{
+	xoSysWnd* mainWnd = nullptr;
+	auto mainCallbackEv = [mainCallback, &mainWnd](xoMainEvent ev) {
+		switch (ev)
+		{
+		case xoMainEventInit:
+			mainWnd = xoSysWnd::CreateWithDoc();
+			mainWnd->Show();
+			mainCallback( mainWnd );
+			break;
+		case xoMainEventShutdown:
+			delete mainWnd;
+			mainWnd = nullptr;
+			break;
+		}
+	};
+	xoRunAppLowLevel( mainCallbackEv );
 }
 
 XOAPI xoStyle** xoDefaultTagStyles()

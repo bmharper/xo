@@ -1,33 +1,16 @@
-#include "../../xo/xo.h"
+#include "../xo/xo.h"
 
 /*
 This sample was created when developing the layout concepts
 */
 
-static xoSysWnd* MainWnd;
-
 void InitDOM( xoDoc* doc );
 
-void xoMain( xoMainEvent ev )
+void xoMain( xoSysWnd* wnd )
 {
-	switch ( ev )
-	{
-	case xoMainEventInit:
-		{
-			xoGlobal()->FontStore->AddFontDirectory( "C:\\temp\\fonts" );
-			MainWnd = xoSysWnd::CreateWithDoc();
-			MainWnd->SetPosition( xoBox(2100, 60, 2100 + 1300, 60 + 800), /*xoSysWnd::SetPosition_Move |*/ xoSysWnd::SetPosition_Size );
-			//MainWnd->SetPosition( xoBox(2100, 60, 2100 + 800, 60 + 400), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size );
-			xoDoc* doc = MainWnd->Doc();
-			InitDOM( doc );
-			MainWnd->Show();
-		}
-		break;
-	case xoMainEventShutdown:
-		delete MainWnd;
-		MainWnd = NULL;
-		break;
-	}
+	xoGlobal()->FontStore->AddFontDirectory( "C:\\temp\\fonts" );
+	wnd->SetPosition( xoBox(2100, 60, 2100 + 1300, 60 + 800), /*xoSysWnd::SetPosition_Move |*/ xoSysWnd::SetPosition_Size );
+	InitDOM( wnd->Doc() );
 }
 
 void DoBorder( xoDoc* doc )

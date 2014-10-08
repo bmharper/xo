@@ -97,6 +97,7 @@ const char* xoGLProg_Rect::FragSrc()
 	"		outcolor = mix(outcolor, border_color, borderMix);\n"
 	"\n"
 	"	outcolor.a *= clamp(radius_out - dist_out, 0.0, 1.0);\n"
+	"	outcolor = premultiply(outcolor);\n"
 	"\n"
 	"#ifdef XO_SRGB_FRAMEBUFFER\n"
 	"	gl_FragColor = outcolor;\n"
