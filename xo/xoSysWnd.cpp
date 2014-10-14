@@ -23,7 +23,7 @@ void xoSysWnd::PlatformInitialize()
 
 	wcex.cbSize = sizeof(WNDCLASSEX);
 
-	wcex.style			= 0;//CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+	wcex.style			= CS_DBLCLKS; //CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wcex.lpfnWndProc	= xoDocGroup::StaticWndProc;
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;

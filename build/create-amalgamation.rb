@@ -228,9 +228,11 @@ xo/xoStyle.h
 xo/Dom/xoDomEl.h
 xo/Dom/xoDomNode.h
 xo/Dom/xoDomText.h
+xo/Dom/xoDomCanvas.h
 xo/xoStringTable.h
 xo/Image/xoImage.h
 xo/Image/xoImageStore.h
+xo/Canvas/xoCanvas2D.h
 xo/xoDocUI.h
 xo/xoDoc.h
 xo/xoDocGroup.h
@@ -303,6 +305,15 @@ prelude_cpp = <<END
 //#include "xo-amalgamation-freetype.h"
 END
 
+prelude_h = <<END
+#ifndef XO_AMALGAMATION_H_INCLUDED
+#define XO_AMALGAMATION_H_INCLUDED
+END
+
+epilogue_h = <<END
+#endif // XO_AMALGAMATION_H_INCLUDED
+END
+
 ##################################################################################################
 # Functions
 ##################################################################################################
@@ -339,7 +350,7 @@ def process_string(text, keep_includes)
 	text.each_line { |line|
 		next if !keep_includes && line =~ /#include/
 		next if line =~ /#pragma once/
-		line.strip!
+		line.rstrip!
 		line.chop! if line[-1] == "\x1A"
 		result += line + NewLine
 	}
@@ -397,7 +408,7 @@ prelude_cpp += NewLine + read_file("amalgamation/xo-amalgamation-freetype.h") + 
 File::delete("amalgamation/xo-amalgamation-freetype.h")
 
 amal_cpp = prelude_cpp + prelude_common + concat(parts_cpp_1, true) + concat(parts_cpp_2, false) + concat_gl_platform(parts_gl_platform_cpp) + epilogue_common
-amal_h = prelude_common + concat(parts_h_1, true) + concat(parts_h_2, false) + epilogue_common
+amal_h = prelude_h + prelude_common + concat(parts_h_1, true) + concat(parts_h_2, false) + epilogue_common + epilogue_h
 amal_cpp = fixlines(amal_cpp)
 amal_h = fixlines(amal_h)
 Dir.mkdir("amalgamation") if !Dir.exist?("amalgamation")

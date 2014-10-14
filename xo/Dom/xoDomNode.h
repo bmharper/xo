@@ -55,15 +55,36 @@ public:
 	void			AddHandler( xoEvents ev, xoEventHandlerLambda lambda );
 	bool			HandlesEvent( xoEvents ev ) const { return !!(AllEventMask & ev); }
 
-	void			OnTouch( xoEventHandlerF func, void* context )				{ AddHandler( xoEventTouch, func, context ); }
-	void			OnMouseMove( xoEventHandlerF func, void* context )			{ AddHandler( xoEventMouseMove, func, context ); }
-	void			OnClick( xoEventHandlerF func, void* context )				{ AddHandler( xoEventClick, func, context ); }
-	void			OnTimer( xoEventHandlerF func, void* context )				{ AddHandler( xoEventTimer, func, context ); }
+	// It is tempting to use macros to generate these event handler functions,
+	// but the intellisense experience is so much worse that I avoid it.
+	// These functions exist purely for discoverability, because one can already achieve
+	// the same action by using the generic AddHandler().
 
-	void			OnTouch( xoEventHandlerLambda lambda )						{ AddHandler( xoEventTouch, lambda ); }
-	void			OnMouseMove( xoEventHandlerLambda lambda )					{ AddHandler( xoEventMouseMove, lambda ); }
-	void			OnClick( xoEventHandlerLambda lambda )						{ AddHandler( xoEventClick, lambda ); }
+	void			OnWindowSize( xoEventHandlerF func, void* context )			{ AddHandler( xoEventWindowSize, func, context ); }
+	void			OnTimer( xoEventHandlerF func, void* context )				{ AddHandler( xoEventTimer, func, context ); }
+	void			OnGetFocus( xoEventHandlerF func, void* context )			{ AddHandler( xoEventGetFocus, func, context ); }
+	void			OnLoseFocus( xoEventHandlerF func, void* context )			{ AddHandler( xoEventLoseFocus, func, context ); }
+	void			OnTouch( xoEventHandlerF func, void* context )				{ AddHandler( xoEventTouch, func, context ); }
+	void			OnClick( xoEventHandlerF func, void* context )				{ AddHandler( xoEventClick, func, context ); }
+	void			OnDblClick( xoEventHandlerF func, void* context )			{ AddHandler( xoEventDblClick, func, context ); }
+	void			OnMouseMove( xoEventHandlerF func, void* context )			{ AddHandler( xoEventMouseMove, func, context ); }
+	void			OnMouseEnter( xoEventHandlerF func, void* context )			{ AddHandler( xoEventMouseEnter, func, context ); }
+	void			OnMouseLeave( xoEventHandlerF func, void* context )			{ AddHandler( xoEventMouseLeave, func, context ); }
+	void			OnMouseDown( xoEventHandlerF func, void* context )			{ AddHandler( xoEventMouseDown, func, context ); }
+	void			OnMouseUp( xoEventHandlerF func, void* context )			{ AddHandler( xoEventMouseUp, func, context ); }
+
+	void			OnWindowSize( xoEventHandlerLambda lambda )					{ AddHandler( xoEventWindowSize, lambda ); }
 	void			OnTimer( xoEventHandlerLambda lambda )						{ AddHandler( xoEventTimer, lambda ); }
+	void			OnGetFocus( xoEventHandlerLambda lambda )					{ AddHandler( xoEventGetFocus, lambda ); }
+	void			OnLoseFocus( xoEventHandlerLambda lambda )					{ AddHandler( xoEventLoseFocus, lambda ); }
+	void			OnTouch( xoEventHandlerLambda lambda )						{ AddHandler( xoEventTouch, lambda ); }
+	void			OnClick( xoEventHandlerLambda lambda )						{ AddHandler( xoEventClick, lambda ); }
+	void			OnDblClick( xoEventHandlerLambda lambda )					{ AddHandler( xoEventDblClick, lambda ); }
+	void			OnMouseMove( xoEventHandlerLambda lambda )					{ AddHandler( xoEventMouseMove, lambda ); }
+	void			OnMouseEnter( xoEventHandlerLambda lambda )					{ AddHandler( xoEventMouseEnter, lambda ); }
+	void			OnMouseLeave( xoEventHandlerLambda lambda )					{ AddHandler( xoEventMouseLeave, lambda ); }
+	void			OnMouseDown( xoEventHandlerLambda lambda )					{ AddHandler( xoEventMouseDown, lambda ); }
+	void			OnMouseUp( xoEventHandlerLambda lambda )					{ AddHandler( xoEventMouseUp, lambda ); }
 
 protected:
 	uint32					AllEventMask;

@@ -38,7 +38,8 @@ public:
 protected:
 	typedef agg::renderer_base< agg::pixfmt_rgba32_pre >			TRenderBaseRGBA_Pre;
 	typedef agg::renderer_scanline_aa_solid< TRenderBaseRGBA_Pre >	TRendererAA_RGBA_Pre;
-	typedef agg::rasterizer_scanline_aa<>							TRasterScanlineAA;
+	//typedef agg::rasterizer_scanline_aa<>							TRasterScanlineAA;
+	typedef agg::rasterizer_scanline_aa_nogamma<>					TRasterScanlineAA;
 	typedef agg::conv_clip_polyline< agg::path_storage >			TLineClipper;
 	typedef agg::conv_clip_polygon< agg::path_storage >				TFillClipper;
 

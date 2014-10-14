@@ -5,15 +5,30 @@
 // It will be good if we can keep these inside 32 bits, for easy masking of handlers. If not, just use as many 32-bit words as necessary.
 enum xoEvents
 {
-	xoEventTouch		= BIT(0),
-	xoEventMouseMove	= BIT(1),
-	xoEventMouseEnter	= BIT(2),
-	xoEventMouseLeave	= BIT(3),
-	xoEventWindowSize	= BIT(4),
-	xoEventTimer		= BIT(5),
-	xoEventClick		= BIT(6),
-	xoEventGetFocus		= BIT(7),
-	xoEventLoseFocus	= BIT(8),
+	xoEventWindowSize	= BIT(0),
+	xoEventTimer		= BIT(1),
+	xoEventGetFocus		= BIT(2),
+	xoEventLoseFocus	= BIT(3),
+	xoEventTouch		= BIT(4),
+	xoEventClick		= BIT(5),
+	xoEventDblClick		= BIT(6),
+	xoEventMouseMove	= BIT(7),
+	xoEventMouseEnter	= BIT(8),
+	xoEventMouseLeave	= BIT(9),
+	xoEventMouseDown	= BIT(10),
+	xoEventMouseUp		= BIT(11),
+};
+
+enum xoMouseButton
+{
+	xoMouseButtonNull = 0,
+	xoMouseButtonLeft = 1,
+	xoMouseButtonMiddle = 2,
+	xoMouseButtonRight = 3,
+	xoMouseButtonX1 = 4,		// Windows X button 1 (back)
+	xoMouseButtonX2 = 5,		// Windows X button 2 (forward)
+	xoMouseButtonX3 = 6,		// Windows X button 3 (not sure if this ever exists)
+	xoMouseButtonX4 = 7,		// Windows X button 4 (not sure if this ever exists)
 };
 
 /* User interface event (keyboard, mouse, touch, etc).
@@ -25,6 +40,7 @@ public:
 	void*			Context		= nullptr;
 	xoDomEl*		Target		= nullptr;
 	xoEvents		Type		= xoEventMouseMove;
+	xoMouseButton	Button		= xoMouseButtonNull;
 	int				PointCount	= 0;					// Mouse = 1	Touch >= 1
 	xoVec2f			Points[XO_MAX_TOUCHES];
 

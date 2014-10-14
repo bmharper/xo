@@ -29,7 +29,7 @@ void xoCanvas2D::Fill( xoColor color )
 	if ( !IsAlive )
 		return;
 
-	RenderBaseRGBA_Pre.copy_bar( 0, 0, Width(), Height(), ColorToAgg8(color) );
+	FillRect( xoBox(0, 0, Width(), Height()), color );
 }
 
 void xoCanvas2D::FillRect( xoBox box, xoColor color )
@@ -38,6 +38,7 @@ void xoCanvas2D::FillRect( xoBox box, xoColor color )
 		return;
 
 	RenderBaseRGBA_Pre.copy_bar( box.Left, box.Top, box.Right, box.Bottom, ColorToAgg8(color) );
+	InvalidRect.ExpandToFit( box );
 }
 
 void xoCanvas2D::StrokeLine( bool closed, int nvx, const float* vx, int vx_stride_bytes, xoColor color, float linewidth )
@@ -46,7 +47,7 @@ void xoCanvas2D::StrokeLine( bool closed, int nvx, const float* vx, int vx_strid
 		return;
 
 	RasAA.reset();
-	RasAA.filling_rule( agg::fill_even_odd );
+	RasAA.filling_rule( agg::fill_non_zero );
 
 	agg::path_storage path;
 

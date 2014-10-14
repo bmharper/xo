@@ -1,5 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Keep this file in sync with xoWinMainLowLevel.cpp
+// This file should be compiled and linked into your exe. Alternatively, just #include "xoWinMain.cpp"
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef XO_AMALGAMATION
 #include "../amalgamation/xo-amalgamation.h"
@@ -7,8 +8,6 @@
 #include "xo.h"
 #include "xoDocGroup.h"
 #endif
-
-// This file should be compiled and linked into your exe
 
 // This is your "main" function, which you define in your own code
 void xoMain( xoSysWnd* wnd );

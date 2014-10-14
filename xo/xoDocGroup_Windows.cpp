@@ -45,6 +45,32 @@ enum Timers
 	TimerGenericEvent				= 2,
 };
 
+static xoMouseButton WM_ButtonToXo( UINT message, WPARAM wParam )
+{
+	switch ( message )
+	{
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_LBUTTONDBLCLK:
+		return xoMouseButtonLeft;
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_RBUTTONDBLCLK:
+		return xoMouseButtonRight;
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+	case WM_MBUTTONDBLCLK:
+		return xoMouseButtonMiddle;
+	case WM_XBUTTONDOWN:
+	case WM_XBUTTONUP:
+	case WM_XBUTTONDBLCLK:
+		// If this assertion fails, then raise the enums above xoMouseButtonX4
+		XOASSERTDEBUG(GET_XBUTTON_WPARAM(wParam) < 4);
+		return (xoMouseButton) (xoMouseButtonX1 + (GET_XBUTTON_WPARAM(wParam) - XBUTTON1));
+	}
+	return xoMouseButtonNull;
+}
+
 LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
 	XOASSERT( Doc != NULL );
@@ -107,6 +133,8 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 			tme.hwndTrack = hWnd;
 			TrackMouseEvent( &tme );
 			IsMouseTracking = true;
+			// We don't send xoEventMouseEnter from here. It is the DocUI's job to synthesize that message
+			// on a per-DOM-node basis. It determines this when it receives mousemove messages.
 			//xoEvent evEnter;
 			//evEnter.Type = xoEventMouseEnter;
 			//evEnter.PointCount = 1;
@@ -128,11 +156,41 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		xoGlobal()->EventQueue.Add( ev );
 		break;
 
+	case WM_LBUTTONDOWN:
+	case WM_MBUTTONDOWN:
+	case WM_RBUTTONDOWN:
+	case WM_XBUTTONDOWN:
+		XOTRACE_LATENCY("ButtonDown\n");
+		ev.Event.Type = xoEventMouseDown;
+		ev.Event.Button = WM_ButtonToXo( message, wParam );
+		ev.Event.PointCount = 1;
+		ev.Event.Points[0] = cursor;
+		xoGlobal()->EventQueue.Add( ev );
+		break;
+
 	case WM_LBUTTONUP:
+	case WM_MBUTTONUP:
+	case WM_RBUTTONUP:
+	case WM_XBUTTONUP:
+		XOTRACE_LATENCY("ButtonUp\n");
+		ev.Event.Type = xoEventMouseUp;
+		ev.Event.Button = WM_ButtonToXo( message, wParam );
+		ev.Event.PointCount = 1;
+		ev.Event.Points[0] = cursor;
+		xoGlobal()->EventQueue.Add( ev );
 		// Click event needs refinement (ie on down, capture, etc)
 		ev.Event.Type = xoEventClick;
+		xoGlobal()->EventQueue.Add( ev );
+		break;
+
+	case WM_LBUTTONDBLCLK:
+	case WM_MBUTTONDBLCLK:
+	case WM_RBUTTONDBLCLK:
+	case WM_XBUTTONDBLCLK:
+		XOTRACE_LATENCY("ButtonDblClick\n");
+		ev.Event.Type = xoEventDblClick;
+		ev.Event.Button = WM_ButtonToXo( message, wParam );
 		ev.Event.PointCount = 1;
-		XOTRACE_LATENCY("LButtonUp\n");
 		ev.Event.Points[0] = cursor;
 		xoGlobal()->EventQueue.Add( ev );
 		break;
