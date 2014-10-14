@@ -115,7 +115,7 @@ void xoRenderDoc::ReleaseLayout( xoLayoutResult* layout )
 	if ( layout == nullptr )
 		return;
 	TakeCriticalSection lock( LayoutLock );
-	XOASSERT( LatestLayout->IsLocked );
+	XOASSERT( layout->IsLocked );
 	layout->IsLocked = false;
 	PurgeOldLayouts();
 }
