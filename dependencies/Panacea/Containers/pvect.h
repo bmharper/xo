@@ -1,5 +1,8 @@
-#ifndef ABCORE_INCLUDED_PVECT_H
-#define ABCORE_INCLUDED_PVECT_H
+#pragma once
+#ifndef ABC_PVECT_H_INCLUDED
+#define ABC_PVECT_H_INCLUDED
+
+#include <initializer_list>
 
 // Pointer to <> classes, without necessary compiler support for template specialization
 // Note that all functions take "intp" values, but internally we store 32-bit integers.
@@ -243,16 +246,7 @@ public:
 	// does not realloc unless size is larger than existing capacity
 	void resize( intp newsize ) 
 	{
-		if ( newsize > capacity )
-		{
-			void** nd = new void*[newsize];
-			if (count > 0) 
-				memcpy( nd, data, sizeof(void*) * count );
-			delete []data;
-			data = nd;
-			capacity = (PVINT) newsize;
-		}
-		count = (PVINT) newsize;
+		resize_internal( newsize, true );
 	}
 
 protected:
@@ -260,6 +254,20 @@ protected:
 	{
 		for ( PVINT i = 0; i < a.count; i++ )
 			push_back( a[i] );
+	}
+
+	void resize_internal( intp newsize, bool zerofill ) 
+	{
+		if ( newsize > capacity )
+		{
+			void** nd = zerofill ? new void*[newsize]() : new void*[newsize];
+			if (count > 0) 
+				memcpy( nd, data, sizeof(void*) * count );
+			delete []data;
+			data = nd;
+			capacity = (PVINT) newsize;
+		}
+		count = (PVINT) newsize;
 	}
 
 	template<typename TYPE> TYPE _MAX_( TYPE a, TYPE b ) { return a < b ? b : a; }
@@ -277,6 +285,13 @@ public:
 	explicit pvect(intp reserve) : Base(reserve) {}
 
 	pvect(const pvect& b) : Base(b) {}
+
+	pvect( std::initializer_list<T> list ) : Base()
+	{
+		resize_internal( list.size(), false );
+		for ( size_t i = 0; i < list.size(); i++ )
+			data[i] = list.begin()[i];
+	}
 
 	pvect& operator=(const pvect &b) { return (pvect&) Base::operator=(b); }
 
@@ -537,4 +552,4 @@ template<typename TData> void remove_duplicates( pvect<TData>& target )	{ return
 //#include "pvect_sort.h"
 
 #undef PVINT
-#endif
+#endif // ABC_PVECT_H_INCLUDED

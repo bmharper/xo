@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ABC_ALIGNED_MALLOC_H_INCLUDED
+#define ABC_ALIGNED_MALLOC_H_INCLUDED
 
 #include <malloc.h>
 #include <stdlib.h>
@@ -96,3 +98,5 @@ O_INLINE void AbcAlignedFree( void* block )
 
 #undef O_INLINE
 #endif
+
+#endif // ABC_ALIGNED_MALLOC_H_INCLUDED

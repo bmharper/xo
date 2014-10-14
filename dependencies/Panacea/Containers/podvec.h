@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ABC_PODVEC_H_INCLUDED
+#define ABC_PODVEC_H_INCLUDED
 
 #include <string.h>					// memset()
 #include <initializer_list>
@@ -267,6 +269,38 @@ struct podvec
 
 	void grow() { growfor( count + 1 ); }
 
+	class iterator
+	{
+	private:
+		podvec*		vec;
+		intp		pos;
+	public:
+					iterator( podvec* _vec, intp _pos ) : vec(_vec), pos(_pos)		{}
+		bool		operator!=( const iterator& b ) const							{ return pos != b.pos; }
+		T&			operator*() const												{ return vec->data[pos]; }
+		iterator&	operator++()													{ pos++; return *this; }
+	};
+	friend class iterator;
+
+	class const_iterator
+	{
+	private:
+		const podvec*	vec;
+		intp			pos;
+	public:
+						const_iterator( const podvec* _vec, intp _pos ) : vec(_vec), pos(_pos)		{}
+		bool			operator!=( const const_iterator& b ) const									{ return pos != b.pos; }
+		const T&		operator*() const															{ return vec->data[pos]; }
+		const_iterator&	operator++()																{ pos++; return *this; }
+	};
+	friend class const_iterator;
+
+	iterator begin()				{ return iterator(this, 0); }
+	iterator end()					{ return iterator(this, count); }
+
+	const_iterator begin() const	{ return const_iterator(this, 0); }
+	const_iterator end() const		{ return const_iterator(this, count); }
+
 protected:
 	void construct()
 	{
@@ -428,3 +462,4 @@ INSTANTIATE_VECTOR_FUNCTIONS(podvec)
 #pragma warning(pop)
 #endif
 
+#endif // ABC_PODVEC_H_INCLUDED

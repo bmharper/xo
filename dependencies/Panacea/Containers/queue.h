@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ABC_QUEUE_H_INCLUDED
+#define ABC_QUEUE_H_INCLUDED
 
 #include "../Platform/syncprims.h"
 
@@ -70,3 +72,5 @@ public:
 private:
 	AbcQueue Q;
 };
+
+#endif // ABC_QUEUE_H_INCLUDED

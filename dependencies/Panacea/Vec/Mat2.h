@@ -1,9 +1,8 @@
 #pragma once
-
-#include "Vec2.h"
-
 #ifndef DEFINED_Mat2
 #define DEFINED_Mat2
+
+#include "Vec2.h"
 #include "VecDef.h"
 
 template <class FT>

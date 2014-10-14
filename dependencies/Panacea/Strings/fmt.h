@@ -1,4 +1,6 @@
 #pragma once
+#ifndef FMT_H_INCLUDED
+#define FMT_H_INCLUDED
 
 // If you don't want to use XStringA, then you must define FMT_STRING to be some kind of string class
 // that can construct itself from const char*.
@@ -174,3 +176,5 @@ PAPI int fmt_snprintf( char* destination, size_t count, const char* format_str, 
 
 // Identical in all respects to fmt_snprintf, except that we deal with wide character strings
 PAPI int fmt_swprintf( wchar_t* destination, size_t count, const wchar_t* format_str, ... );
+
+#endif // FMT_H_INCLUDED

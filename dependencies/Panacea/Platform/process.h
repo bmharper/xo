@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ABC_PROCESS_H_INCLUDED
+#define ABC_PROCESS_H_INCLUDED
 
 #include "../Containers/podvec.h"
 
@@ -33,3 +35,4 @@ PAPI uint64				AbcProcessWorkingSetBytes();							// wrapper around AbcProcessGe
 PAPI uint64				AbcProcessMaxWorkingSetBytes();							// wrapper around AbcProcessGetStatistics
 PAPI uint64				AbcProcessVirtualCommittedBytes();						// wrapper around AbcProcessGetStatistics. Only supported on Win32. Returns 0 on any other OS.
 
+#endif // ABC_PROCESS_H_INCLUDED

@@ -1,4 +1,6 @@
 #pragma once
+#ifndef VECPRIM_H_INCLUDED
+#define VECPRIM_H_INCLUDED
 
 // These types must always be resolvable by the linker as simply what you see here. No templates, and no constructors.
 // Basically the only important thing here is the memory layout.
@@ -36,3 +38,5 @@ struct vec4f
 template<typename T>	bool vec_IsNaN( T v )			{ return v != v; }
 inline					bool vec_IsFinite( float v )	{ return v <= FLT_MAX && v >= -FLT_MAX; }
 inline					bool vec_IsFinite( double v )	{ return v <= DBL_MAX && v >= -DBL_MAX; }
+
+#endif

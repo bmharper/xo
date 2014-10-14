@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ABC_CPU_H_INCLUDED
+#define ABC_CPU_H_INCLUDED
 
 struct AbcMachineInformation
 {
@@ -9,3 +11,5 @@ struct AbcMachineInformation
 
 PAPI void				AbcMachineInformationGet( AbcMachineInformation& info );
 PAPI uint64				AbcPhysicalMemory(); // Wrapper around AbcMachineInformationGet()
+
+#endif // ABC_CPU_H_INCLUDED

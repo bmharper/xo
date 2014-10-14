@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ABC_TIMEPRIMS_H_INCLUDED
+#define ABC_TIMEPRIMS_H_INCLUDED
 
 #include "stdint.h"
 #include "winheaders.h"
@@ -20,3 +22,4 @@ inline double AbcFileTimeToUnixSeconds( const FILETIME& ft )
 
 PAPI double AbcTimeAccurateRTSeconds();
 
+#endif ABC_TIMEPRIMS_H_INCLUDED

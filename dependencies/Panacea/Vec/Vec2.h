@@ -1,4 +1,6 @@
 #pragma once
+#ifndef DEFINED_Vec2
+#define DEFINED_Vec2
 
 /*
 Why do we have VecBase2T and Vec2T ?
@@ -10,8 +12,6 @@ down.
 
 #include "VecPrim.h"
 
-#ifndef DEFINED_Vec2
-#define DEFINED_Vec2
 #include "VecDef.h"
 
 template <typename vreal>
@@ -219,7 +219,11 @@ public:
 	/// Returns the result of sprintf
 	int ToStringABare( char* buff, size_t buffChars ) const
 	{
+#ifdef _WIN32
 		return sprintf_s( buff, buffChars, Vec2Traits<vreal>::StringAFormatBare(), x, y );
+#else
+		return snprintf( buff, buffChars, Vec2Traits<vreal>::StringAFormatBare(), x, y );
+#endif
 	}
 
 	#ifndef NO_XSTRING

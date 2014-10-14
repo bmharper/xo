@@ -1,10 +1,10 @@
 #pragma once
-
-#include "Vec2.h"
-
-// See Vec2.h for a readme of what we are doing here
 #ifndef DEFINED_Vec3
 #define DEFINED_Vec3
+
+// See Vec2.h for a readme of what we are doing here
+
+#include "Vec2.h"
 #include "VecDef.h"
 
 template <typename vreal>
@@ -283,7 +283,11 @@ public:
 
 	int ToStringABare( char* buff, size_t buffChars ) const
 	{
+#ifdef _WIN32
 		return sprintf_s( buff, buffChars, Vec3Traits<vreal>::StringAFormatBare(), x, y, z );
+#else
+		return snprintf( buff, buffChars, Vec3Traits<vreal>::StringAFormatBare(), x, y, z );
+#endif
 	}
 
 	#ifndef NO_XSTRING

@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ABC_WINHEADERS_H_INCLUDED
+#define ABC_WINHEADERS_H_INCLUDED
 
 #ifndef _WIN32
 
@@ -59,3 +61,5 @@ public:
 	int Height() const { return bottom - top; }
 };
 #endif
+
+#endif // ABC_WINHEADERS_H_INCLUDED

@@ -3,6 +3,7 @@
 
 // for std::swap, which is a very sensible function
 #include <algorithm>
+#include <functional>
 
 // ---------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------
@@ -276,6 +277,23 @@ void vect_sort( TData* target, int i, int j )
 	vect_sort_cx( &target[0], 0, j, NULL, &compare_default_contexual<TData> );
 }
 
+// context is an std::function* that returns an int (-1,0,1)
+template<typename T>
+int compare_lambda( void* context, const T& a, const T& b )
+{
+	typedef std::function<int(const T& a, const T& b)> TFunc;
+	TFunc* f = (TFunc*) context;
+	return (*f)( a, b );
+}
+
+// To avoid ambiguity with std::sort, I leave this function with the name vect_sort, although it has nothing
+// to do with a vector. All of this stuff should maybe go into its own namespace (or just use the STL!)
+template<typename T>
+void vect_sort( T* target, intp count, std::function<int(const T& a, const T& b)> compare )
+{
+	vect_sort_cx<T>( target, 0, count - 1, &compare, compare_lambda );
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // Do not sort original data - sort a table that points into the original data
@@ -322,8 +340,9 @@ template<typename TData, typename TCompare>	void sort( VECT<TData>& target )				
 template<typename TData>					void sort( VECT<TData>& target )					{ vect_sort_cx( target.data, 0, target.size() - 1, NULL, &compare_default_contexual<TData> ); }\
 template<typename TData>					void sort( VECT<TData>& target, intp i, intp j )	{ vect_sort_cx( target.data, i, j, NULL, &compare_default_contexual<TData> ); }\
 template<typename TData, typename TCompare>	void sort( VECT<TData>& target, intp i, intp j )	{ vect_sort_cx( target.data, i, j, NULL, &less_than_t_2_compare<TData, TCompare> ); }\
-template<typename TData>					void sort( VECT<TData>& target, int (*compare) (const TData& a, const TData& b) )							{ vect_sort_cx( target.data, 0, target.size() - 1, compare, marshal_context_is_compare<TData> ); }\
-template<typename TData>					void sort( VECT<TData>& target, void* context, int (*compare) (void* cx, const TData& a, const TData& b) ) { vect_sort_cx( target.data, 0, target.size() - 1, context, compare ); } \
+template<typename TData>					void sort( VECT<TData>& target, int (*compare) (const TData& a, const TData& b) )							{ vect_sort_cx( target.data, 0, target.size() - 1, (void*) compare, marshal_context_is_compare<TData> ); }\
+template<typename TData>					void sort( VECT<TData>& target, void* context, int (*compare) (void* cx, const TData& a, const TData& b) )	{ vect_sort_cx( target.data, 0, target.size() - 1, context, compare ); } \
+template<typename TData>					void sort( VECT<TData>& target, std::function<int(const TData& a, const TData& b)> compare )				{ vect_sort_cx<TData>( &target[0], 0, target.size() - 1, (void*) &compare, compare_lambda<TData> ); } \
 template<typename TData, typename TOrder>	void sort_indirect( VECT<TData>& target, TOrder* ordering, void* context, int (*compare) (void* cx, const TData& a, const TData& b) ) { vect_sort_indirect( target.data, ordering, target.size(), context, compare ); }
 
 

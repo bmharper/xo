@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ABC_COMPILER_H_INCLUDED
+#define ABC_COMPILER_H_INCLUDED
 
 // This file contains macros for compiler-specific things such as specifying struct alignment
 
@@ -31,5 +33,4 @@
 # define GCC_DIAG_ON(x)
 #endif
 
-
-
+#endif // ABC_COMPILER_H_INCLUDED

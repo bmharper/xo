@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ABC_ERR_H_INCLUDED
+#define ABC_ERR_H_INCLUDED
 
 #include <assert.h>
 
@@ -29,3 +31,5 @@ PAPI void* AbcReallocOrDie( void* p, size_t bytes );
 // This means no user32.dll - no messagebox, etc.
 PAPI bool AbcAllowGUI();
 PAPI void AbcSetAllowGUI( bool allowGUI );
+
+#endif // ABC_ERR_H_INCLUDED

@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ABC_STDINT_H_INCLUDED
+#define ABC_STDINT_H_INCLUDED
 
 // Necessary on some linux stdint.h, to get INT32_MAX etc.
 #ifndef __STDC_LIMIT_MACROS
@@ -168,3 +170,5 @@ typedef UINT32 DWORD;
 	#define UINT32MAX	UINT32_MAX
 	#define UINT64MAX	UINT64_MAX
 #endif
+
+#endif // ABC_STDINT_H_INCLUDED

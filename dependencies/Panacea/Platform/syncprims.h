@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ABC_SYNCPRIMS_H_INCLUDED
+#define ABC_SYNCPRIMS_H_INCLUDED
 
 #ifndef _WIN32
 #include <semaphore.h>
@@ -221,3 +223,4 @@ struct PAPI AbcSyncEvent
 	bool Wait( DWORD waitMS );
 };
 
+#endif // ABC_SYNCPRIMS_H_INCLUDED

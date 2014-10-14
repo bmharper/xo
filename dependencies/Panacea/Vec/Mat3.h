@@ -1,10 +1,9 @@
 #pragma once
+#ifndef DEFINED_Mat3
+#define DEFINED_Mat3
 
 #include "Vec3.h"
 #include "Vec4.h"
-
-#ifndef DEFINED_Mat3
-#define DEFINED_Mat3
 #include "VecDef.h"
 
 template <class FT>

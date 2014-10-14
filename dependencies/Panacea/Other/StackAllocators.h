@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ABC_STACK_ALLOCATORS_H_INCLUDED
+#define ABC_STACK_ALLOCATORS_H_INCLUDED
 
 #include "../Platform/compiler.h"
 #include "../Platform/err.h"
@@ -267,3 +269,4 @@ public:
 	operator VT*()					{ return Data; }
 };
 
+#endif // ABC_STACK_ALLOCATORS_H_INCLUDED

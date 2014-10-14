@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ABC_BITMAP_H_INCLUDED
+#define ABC_BITMAP_H_INCLUDED
 
 #include "../Other/aligned_malloc.h"
 
@@ -630,3 +632,5 @@ typedef FreeList64 FreeList;
 #else
 typedef FreeList32 FreeList;
 #endif
+
+#endif // ABC_BITMAP_H_INCLUDED

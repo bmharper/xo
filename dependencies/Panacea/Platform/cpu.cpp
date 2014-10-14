@@ -1,8 +1,5 @@
 #include "pch.h"
 #include "cpu.h"
-#ifndef _WIN32
-//#include <sys/sysconf.h>
-#endif
 
 #ifdef _WIN32
 PAPI void			AbcMachineInformationGet( AbcMachineInformation& info )

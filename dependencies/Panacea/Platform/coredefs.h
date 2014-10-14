@@ -1,3 +1,6 @@
+#pragma once
+#ifndef ABC_COREDEFS_H_INCLUDED
+#define ABC_COREDEFS_H_INCLUDED
 
 // Definitions fit for inclusion into any C++ project, for any architecture
 
@@ -34,3 +37,5 @@ char (&ArraySizeHelper(T (&array)[N]))[N];
 #		define ARCH_64 1
 #	endif
 #endif
+
+#endif // ABC_COREDEFS_H_INCLUDED

@@ -1,4 +1,6 @@
 #pragma once
+#ifndef ABC_THREAD_H_INCLUDED
+#define ABC_THREAD_H_INCLUDED
 
 /*
 Declare a thread function as follows:
@@ -40,3 +42,4 @@ PAPI bool				AbcThreadIDEqual( AbcThreadID a, AbcThreadID b );
 // This is currently a no-op on linux
 PAPI void				AbcThreadSetPriority( AbcThreadHandle handle, AbcThreadPriority priority );
 
+#endif // ABC_THREAD_H_INCLUDED
