@@ -287,7 +287,13 @@ void xoFontStore::BuildAndSaveFontTable()
 		AbcFilesystemFindFiles( Directories[i].Z, cb );
 	}
 
-	FILE* manifest = fopen( (xoCacheDir() + ABC_DIR_SEP_STR + "fonts").Z, "wb" );
+	xoString cacheFile = xoGlobal()->CacheDir + ABC_DIR_SEP_STR + "fonts";
+	FILE* manifest = fopen( cacheFile.Z, "wb" );
+	if ( manifest == nullptr )
+	{
+		XOTRACE( "Failed to open font cache file %s. Aborting.\n", cacheFile.Z );
+		XOPANIC( "Failed to open font cache file" );
+	}
 	fprintf( manifest, "%d\n", ManifestVersion );
 	fprintf( manifest, "%llu\n", (long long unsigned) ComputeFontDirHash() );
 
@@ -317,7 +323,7 @@ void xoFontStore::BuildAndSaveFontTable()
 bool xoFontStore::LoadFontTable()
 {
 	FacenameToFilename.clear();
-	FILE* manifest = fopen( (xoCacheDir() + ABC_DIR_SEP_STR + "fonts").Z, "rb" );
+	FILE* manifest = fopen( (xoGlobal()->CacheDir + ABC_DIR_SEP_STR + "fonts").Z, "rb" );
 	if ( manifest == nullptr )
 		return false;
 

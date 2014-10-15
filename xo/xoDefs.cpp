@@ -254,7 +254,7 @@ static void InitializePlatform()
 }
 
 // This must be called once at application startup. It is automatically called by xoRunApp and xoRunAppLowLevel.
-XOAPI void xoInitialize( xoInitParams* init )
+XOAPI void xoInitialize( const xoInitParams* init )
 {
 	InitializeCount++;
 	if ( InitializeCount != 1 )
@@ -266,10 +266,17 @@ XOAPI void xoInitialize( xoInitParams* init )
 	AbcMachineInformationGet( minf );
 
 	xoGlobals = new xoGlobalStruct();
-	if ( init != nullptr && init->EpToPixel != 0 )
+
+	if ( init && init->EpToPixel != 0 )
 		xoGlobals->EpToPixel = init->EpToPixel;
 	else
 		xoGlobals->EpToPixel = ComputeEpToPixel();
+	
+	if ( init && init->CacheDir != "" )
+		xoGlobals->CacheDir = init->CacheDir;
+	else
+		xoGlobals->CacheDir = xoDefaultCacheDir();
+
 	xoGlobals->TargetFPS = 60;
 	xoGlobals->NumWorkerThreads = std::min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
 	xoGlobals->MaxSubpixelGlyphSize = 60;

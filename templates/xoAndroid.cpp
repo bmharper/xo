@@ -13,13 +13,9 @@
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
-//static float		RED = 0;
-//static float		GREEN = 0;
-//static float		BLUE = 0;
 static bool			Initialized = false;
-//static xoRenderGL*	RGL = NULL;
-//static xoDocGroup*	Proc = NULL;
 extern xoSysWnd*	SingleMainWnd;
+
 void xoMain( xoMainEvent ev );
 
 #define CLAMP(a,mmin,mmax) (((a) < (mmin) ? (mmin) : ((a) > (mmax) ? (mmax) : (a))))
@@ -35,9 +31,9 @@ extern "C" {
 // Right now our Android applications can have only one window, 
 // but we might have more windows if we were doing things such as
 // notifications or widgets.
-static xoEvent MakeEvent()
+static xoOriginalEvent MakeEvent()
 {
-	xoEvent e;
+	xoOriginalEvent e;
 	e.DocGroup = SingleMainWnd->DocGroup;
 	return e;
 }
@@ -60,39 +56,69 @@ static void ProcessAllEvents()
 // queue is effectively short-circuited. We always post an event, and then immediately consume it.
 // It is good to keep it in this style, because it means that in future we can switch
 // to a purely native application, where we DO control the message loop, and we want
-// to process UI on a dedicated thread, the same as we do for Win32.
-static void PostEvent( const xoEvent& ev )
+// to process UI on a dedicated thread, the same as we do for Win32 and X11.
+static void PostEvent( const xoOriginalEvent& ev )
 {
 	xoGlobal()->EventQueue.Add( ev );
 	ProcessAllEvents();
 }
 
-JNIEXPORT void JNICALL Java_com_android_xo_XoLib_init(JNIEnv * env, jobject obj, jint width, jint height, jfloat scaledDensity)
+static xoString GetString( JNIEnv* env, jstring jstr )
 {
-    LOGI("XoLib_init 1 (%d, %d)", width, height);
+	const char* buf = env->GetStringUTFChars( jstr, nullptr );
+	xoString copy;
+	if ( buf != nullptr )
+	{
+		copy = buf;
+		env->ReleaseStringUTFChars( jstr, buf );
+	}
+	return copy;
+}
+
+JNIEXPORT void JNICALL Java_com_android_xo_XoLib_initXo(JNIEnv * env, jobject obj, jstring cacheDir, jfloat scaledDensity)
+{
+    LOGI("XoLib_initXo 1");
 	if ( !Initialized )
 	{
 		Initialized = true;
 	    
-		LOGI("XoLib_init 2");
-		xoInitialize();
-
 		LOGI("XoLib_init scaledDensity = %f", scaledDensity);
-		xoGlobal()->EpToPixel = scaledDensity;
+
+		xoInitParams ip;
+		ip.EpToPixel = scaledDensity;
+		ip.CacheDir = GetString( env, cacheDir );
+
+		LOGI("XoLib_init 2");
+		xoInitialize( &ip );
 
 		LOGI("XoLib_init 3");
 		xoMain( xoMainEventInit );
 	    
 		LOGI("XoLib_init 4");
 	}
+}
+
+JNIEXPORT void JNICALL Java_com_android_xo_XoLib_initSurface(JNIEnv * env, jobject obj, jint width, jint height, jfloat scaledDensity)
+{
+    LOGI("XoLib_initSurface 1 (%d, %d, %f)", width, height, scaledDensity);
+
+	if ( !Initialized )
+	{
+		LOGE("XoLib_initSurface called, but initXo has not yet been called (or we have been shutdown)");
+		return;
+	}
 	
 	if ( SingleMainWnd )
 	{
 		SingleMainWnd->RelativeClientRect = xoBox( 0, 0, width, height );
-		xoEvent ev = MakeEvent();
-		ev.MakeWindowSize( width, height );
+		xoOriginalEvent ev = MakeEvent();
+		ev.Event.MakeWindowSize( width, height );
 		PostEvent( ev );
 		LOGI("XoLib_init 5");
+	}
+	else
+	{
+		LOGE("XoLib_initSurface: SingleMainWnd is null");
 	}
 }
 
@@ -149,13 +175,13 @@ JNIEXPORT void JNICALL Java_com_android_xo_XoLib_input(JNIEnv * env, jobject obj
 	{
 	    //LOGI("dispatching touch input %d", type);
 
-		xoEvent ev = MakeEvent();
-		ev.Type = xoEventTouch;
-		ev.PointCount = n;
+		xoOriginalEvent ev = MakeEvent();
+		ev.Event.Type = xoEventTouch;
+		ev.Event.PointCount = n;
 		for ( int i = 0; i < n; i++ )
 		{
-			ev.Points[i].x = xe[i];
-			ev.Points[i].y = ye[i];
+			ev.Event.Points[i].x = xe[i];
+			ev.Event.Points[i].y = ye[i];
 		}
 		PostEvent( ev );
 	}

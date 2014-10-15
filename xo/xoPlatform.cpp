@@ -15,7 +15,7 @@ void* xoReallocOrDie( void* buf, size_t bytes )
 	return b;
 }
 
-xoString xoCacheDir()
+xoString xoDefaultCacheDir()
 {
 #if XO_PLATFORM_WIN_DESKTOP
 	wchar_t* wpath;
@@ -38,7 +38,7 @@ xoString xoCacheDir()
 		mkdir(path.Z, 0700);
 	return path;
 #elif XO_PLATFORM_ANDROID
-	XOTODO_STATIC
+	return ""; // The cache dir on Android is fed in to us via JNI, through xoInitParams
 #else
 	XOTODO_STATIC
 #endif

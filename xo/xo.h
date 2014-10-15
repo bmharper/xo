@@ -1,5 +1,6 @@
 #pragma once
 
+#include "xoPlatformDefine.h"
 #include "xoApiDecl.h"
 #include "xoBase_SystemIncludes.h"
 #include "xoBase.h"

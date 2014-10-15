@@ -3,10 +3,7 @@ package com.android.xo;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.*;
-
-import java.io.File;
 
 
 public class XoActivity extends Activity {
@@ -15,9 +12,11 @@ public class XoActivity extends Activity {
 
     @Override protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-    	
+        
         DisplayMetrics metrics = new DisplayMetrics();
     	getWindowManager().getDefaultDisplay().getMetrics(metrics);
+    	
+        XoLib.initXo(getCacheDir().getAbsolutePath(), metrics.scaledDensity);
     	
         mView = new XoView(getApplication(), metrics.scaledDensity);
         setContentView(mView);
@@ -35,7 +34,7 @@ public class XoActivity extends Activity {
 
     @Override protected void onDestroy() {
         super.onDestroy();
-        XoLib.destroy( isFinishing() ? 0 : 1 );
+        XoLib.destroy();
     }
     
     @Override public boolean onTouchEvent( MotionEvent event ) {

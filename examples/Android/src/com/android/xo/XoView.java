@@ -1,5 +1,7 @@
 package com.android.xo;
 
+import java.io.File;
+
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
@@ -298,7 +300,7 @@ class XoView extends GLSurfaceView {
     	}
     	
         public void onSurfaceChanged(GL10 gl, int width, int height) {
-            XoLib.init(width, height, myView.scaledDensity);
+            XoLib.initSurface(width, height, myView.scaledDensity);
         }
 
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
@@ -307,8 +309,8 @@ class XoView extends GLSurfaceView {
         }
         
         public void onDrawFrame(GL10 gl) {
-        	int res = XoLib.step();
-        	if ( res == XoView.RENDER_RESULT_IDLE ) {
+        	int res = XoLib.render();
+        	if (res == XoView.RENDER_RESULT_IDLE) {
         		//Log.i("nu", "idle");
         		myView.setRenderMode(RENDERMODE_WHEN_DIRTY);
         	}

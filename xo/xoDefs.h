@@ -397,6 +397,7 @@ struct xoGlobalStruct
 	float						EpToPixel;				// Eye Pixel to Pixel.
 	xoTextureID					MaxTextureID;			// Used to test texture ID wrap-around. Were it not for testing, this could be 2^32 - 1
 	xoColor						ClearColor;				// glClearColor
+	xoString					CacheDir;				// Root directory where we store font caches, etc. Overridable with xoInitParams
 
 	// Debugging flags. Enabling these should make debugging easier.
 	// Some of them may turn out to have a small enough performance hit that you can
@@ -416,14 +417,15 @@ struct xoGlobalStruct
 // Optional initialization parameters
 struct xoInitParams
 {
-	float	EpToPixel = 0;	// Override Eye Pixels to Device Pixels (ends up in xoGlobalStruct.EpToPixel)
+	float		EpToPixel = 0;		// Override Eye Pixels to Device Pixels (ends up in xoGlobalStruct.EpToPixel)
+	xoString	CacheDir;			// Override cache directory used for font caches etc.
 };
 
 typedef std::function<void(xoMainEvent ev)>		xoMainCallbackLowLevel;
 typedef std::function<void(xoSysWnd* wnd)>		xoMainCallback;
 
 XOAPI xoGlobalStruct*	xoGlobal();
-XOAPI void				xoInitialize( xoInitParams* init = nullptr );
+XOAPI void				xoInitialize( const xoInitParams* init = nullptr );
 XOAPI void				xoShutdown();
 XOAPI void				xoRunAppLowLevel( xoMainCallbackLowLevel mainCallback );
 XOAPI void				xoRunApp( xoMainCallback mainCallback );

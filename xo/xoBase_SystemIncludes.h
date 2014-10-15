@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef _WIN32
+#if XO_PLATFORM_WIN_DESKTOP
 	#ifdef _DEBUG
 		#include <stdlib.h>
 		#include <crtdbg.h>
@@ -11,10 +11,7 @@
 	#include <Shlobj.h>
 	#include <tchar.h>
 #else
-	#define XO_BUILD_OPENGL 1
-	#ifdef ANDROID
-		// Android
-		#define XO_BUILD_OPENGL_ES 1
+	#if XO_PLATFORM_ANDROID
 		#include <jni.h>
 		#include <android/log.h>
 		#include <sys/atomics.h>
@@ -23,14 +20,6 @@
 		#include <sys/stat.h>
 		#include <unistd.h>
 		#include <pwd.h>
-	#endif
-	#ifdef XO_BUILD_OPENGL_ES
-		#include <GLES2/gl2.h>
-		#include <GLES2/gl2ext.h>
-	#else
-		#include <GL/gl.h>
-		#include <GL/glx.h>
-		#include <GL/glu.h>
 	#endif
 	#include <pthread.h>
 	#include <semaphore.h>

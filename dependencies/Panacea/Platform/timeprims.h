@@ -22,4 +22,4 @@ inline double AbcFileTimeToUnixSeconds( const FILETIME& ft )
 
 PAPI double AbcTimeAccurateRTSeconds();
 
-#endif ABC_TIMEPRIMS_H_INCLUDED
+#endif // ABC_TIMEPRIMS_H_INCLUDED

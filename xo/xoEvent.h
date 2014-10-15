@@ -50,6 +50,8 @@ public:
 	void	MakeWindowSize( int w, int h );
 };
 
+// This is the event that the Windowing system will post onto the single event queue.
+// Because there is only one event queue, it needs to know the destination DocGroup.
 class XOAPI xoOriginalEvent
 {
 public:
