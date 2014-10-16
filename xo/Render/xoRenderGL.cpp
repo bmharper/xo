@@ -27,6 +27,14 @@ static bool GLIsBooted = false;
 #define GL_ONE_MINUS_SRC1_ALPHA             0x88FB
 #endif
 
+// GL_XO_RED_OR_LUMINANCE is used to define a single-channel texture
+// GL_RED is not defined in ES2
+#ifdef GL_RED
+#define GL_XO_RED_OR_LUMINANCE GL_RED
+#else
+#define GL_XO_RED_OR_LUMINANCE GL_LUMINANCE
+#endif
+
 static const char* nu_GLSLPrefix = R"(
 float fromSRGB_Component(float srgb)
 {
@@ -427,7 +435,7 @@ bool xoRenderGL::BeginRender( xoSysWnd& wnd )
 	}
 	return false;
 #elif XO_PLATFORM_ANDROID
-	return true
+	return true;
 #elif XO_PLATFORM_LINUX_DESKTOP
 	glXMakeCurrent( wnd.XDisplay, wnd.XWindow, wnd.GLContext );
 #else
@@ -680,7 +688,7 @@ bool xoRenderGL::LoadTexture( xoTexture* tex, int texUnit )
 	int format = 0;
 	switch ( tex->TexFormat )
 	{
-	case xoTexFormatGrey8: format = GL_RED; break;	// was luminance
+	case xoTexFormatGrey8: format = GL_XO_RED_OR_LUMINANCE; break;
 	//case : format = GL_RG;
 	//case : format = GL_RGB;
 	case xoTexFormatRGBA8: format = GL_RGBA; break;
@@ -808,8 +816,12 @@ bool xoRenderGL::LoadProgram( GLuint& vshade, GLuint& fshade, GLuint& prog, cons
 	{
 		// NOTE: The following DOES WORK. It is unnecessary however, on the NVidia hardware that I have tested on.
 		// BUT: It is necessary on Linux, Haswell Intel drivers
+#ifdef glBindFragDataLocationIndexed
 		glBindFragDataLocationIndexed( prog, 0, 0, "outputColor0" );
 		glBindFragDataLocationIndexed( prog, 0, 1, "outputColor1" );
+#else
+		XOPANIC("glBindFragDataLocationIndexed not defined. Necessary for subpixel RGB text");
+#endif
 	}
 	glLinkProgram( prog );
 

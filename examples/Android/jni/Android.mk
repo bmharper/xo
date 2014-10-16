@@ -81,24 +81,25 @@ XO_SRC = \
 ../../../xo/Shaders/Processed_glsl/RectShader.cpp \
 ../../../xo/Shaders/Processed_glsl/TextRGBShader.cpp \
 ../../../xo/Shaders/Processed_glsl/TextWholeShader.cpp \
-		"dependencies/agg/src/agg_vcgen_stroke.cpp",
-		"dependencies/agg/src/agg_vpgen_clip_polygon.cpp",
-		"dependencies/agg/src/agg_vpgen_clip_polyline.cpp",
-		"dependencies/hash/xxhash.cpp",
+../../../dependencies/agg/src/agg_vcgen_stroke.cpp \
+../../../dependencies/agg/src/agg_vpgen_clip_polygon.cpp \
+../../../dependencies/agg/src/agg_vpgen_clip_polyline.cpp \
+../../../dependencies/hash/xxhash.cpp \
 ../../../dependencies/Panacea/Containers/queue.cpp \
 ../../../dependencies/Panacea/Platform/cpu.cpp \
 ../../../dependencies/Panacea/Platform/err.cpp \
-		"dependencies/Panacea/Platform/filesystem.cpp",
-		"dependencies/Panacea/Platform/process.cpp",
+../../../dependencies/Panacea/Platform/filesystem.cpp \
+../../../dependencies/Panacea/Platform/process.cpp \
 ../../../dependencies/Panacea/Platform/syncprims.cpp \
-		"dependencies/Panacea/Platform/timeprims.cpp",
+../../../dependencies/Panacea/Platform/timeprims.cpp \
 ../../../dependencies/Panacea/Platform/thread.cpp \
-		"dependencies/Panacea/Strings/ConvertUTF.cpp",
+../../../dependencies/Panacea/Strings/ConvertUTF.cpp \
 ../../../dependencies/Panacea/Strings/fmt.cpp \
+../../../dependencies/stb_image.cpp
 
 MY_SRC = ../../HelloWorld/HelloWorld.cpp
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../xo $(LOCAL_PATH)/../../../dependencies/freetype/include
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../xo $(LOCAL_PATH)/../../../dependencies/freetype/include $(LOCAL_PATH)/../../../dependencies/agg/include
 LOCAL_MODULE     := libxo
 LOCAL_CFLAGS     := -Werror -DFT2_BUILD_LIBRARY
 LOCAL_CPPFLAGS   := -Werror -std=c++11
