@@ -14,17 +14,34 @@
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
 static bool			Initialized = false;
-extern xoSysWnd*	SingleMainWnd;
+extern xoSysWnd*	SingleMainWnd;			// This is defined inside xoSysWnd.cpp
 
-void xoMain( xoMainEvent ev );
+// This is defined inside one of your app-specific .cpp files. It is your only entry point.
+void xoMain( xoSysWnd* wnd );
+
+void xoMain( xoMainEvent ev )
+{
+	switch (ev)
+	{
+	case xoMainEventInit:
+		//SingleMainWnd = xoSysWnd::CreateWithDoc();
+		//xoMain( SingleMainWnd );
+		break;
+	case xoMainEventShutdown:
+		//delete SingleMainWnd;
+		break;
+	}
+}
 
 #define CLAMP(a,mmin,mmax) (((a) < (mmin) ? (mmin) : ((a) > (mmax) ? (mmax) : (a))))
 
 extern "C" {
-    JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_init(JNIEnv * env, jobject obj,  jint width, jint height, jfloat scaledDensity);
+	JNIEXPORT jint	JNICALL	JNI_OnLoad(JavaVM* vm, void* reserved);
+    JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_initXo(JNIEnv * env, jobject obj, jstring cacheDir, jfloat scaledDensity);
+	JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_initSurface(JNIEnv * env, jobject obj, jint width, jint height, jfloat scaledDensity);
 	JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_surfacelost(JNIEnv * env, jobject obj);
-    JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_destroy(JNIEnv * env, jint iskilling);
-    JNIEXPORT int	JNICALL Java_com_android_xo_XoLib_step(JNIEnv * env, jobject obj);
+    JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_destroy(JNIEnv * env, jobject obj, jint iskilling);
+    JNIEXPORT int	JNICALL Java_com_android_xo_XoLib_render(JNIEnv * env, jobject obj);
     JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_input(JNIEnv * env, jobject obj, jint type, jfloatArray x, jfloatArray y);
 };
 
@@ -47,6 +64,7 @@ static void ProcessAllEvents()
 			break;
 		xoOriginalEvent ev;
 		XOVERIFY( xoGlobal()->EventQueue.PopTail( ev ) );
+		XOTRACE( "ProcessEvent %p", ev.DocGroup );
 		ev.DocGroup->ProcessEvent( ev.Event );
 	}
 }
@@ -75,6 +93,20 @@ static xoString GetString( JNIEnv* env, jstring jstr )
 	return copy;
 }
 
+JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
+{
+    JNIEnv* env;
+    if ( vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK )
+        return -1;
+
+    LOGI("JNI_OnLoad");
+
+    // Get jclass with env->FindClass.
+    // Register methods with env->RegisterNatives.
+
+    return JNI_VERSION_1_6;
+}
+
 JNIEXPORT void JNICALL Java_com_android_xo_XoLib_initXo(JNIEnv * env, jobject obj, jstring cacheDir, jfloat scaledDensity)
 {
     LOGI("XoLib_initXo 1");
@@ -92,7 +124,7 @@ JNIEXPORT void JNICALL Java_com_android_xo_XoLib_initXo(JNIEnv * env, jobject ob
 		xoInitialize( &ip );
 
 		LOGI("XoLib_init 3");
-		xoMain( xoMainEventInit );
+		xoMain( xoMainEventInit );	// this is no-op
 	    
 		LOGI("XoLib_init 4");
 	}
@@ -108,13 +140,19 @@ JNIEXPORT void JNICALL Java_com_android_xo_XoLib_initSurface(JNIEnv * env, jobje
 		return;
 	}
 	
-	if ( SingleMainWnd )
+	if ( SingleMainWnd == nullptr )
+		SingleMainWnd = xoSysWnd::CreateWithDoc();
+
+	if ( SingleMainWnd != nullptr )
 	{
 		SingleMainWnd->RelativeClientRect = xoBox( 0, 0, width, height );
 		xoOriginalEvent ev = MakeEvent();
 		ev.Event.MakeWindowSize( width, height );
+		LOGI("XoLib_initSurface 4");
 		PostEvent( ev );
-		LOGI("XoLib_init 5");
+		LOGI("XoLib_initSurface 5");
+		xoMain( SingleMainWnd );
+		LOGI("XoLib_initSurface 6");
 	}
 	else
 	{
@@ -122,13 +160,13 @@ JNIEXPORT void JNICALL Java_com_android_xo_XoLib_initSurface(JNIEnv * env, jobje
 	}
 }
 
-JNIEXPORT void JNICALL Java_com_android_xo_XoLib_destroy(JNIEnv * env, jint iskilling)
+JNIEXPORT void JNICALL Java_com_android_xo_XoLib_destroy(JNIEnv * env, jobject obj, jint iskilling)
 {
 	if ( Initialized )
 	{
 		Initialized = false;
 	    LOGI("destroy");
-		xoMain( xoMainEventShutdown );
+		xoMain( xoMainEventShutdown );	// this is a no-op
 		xoShutdown();
 	}
 }
@@ -140,7 +178,7 @@ JNIEXPORT void JNICALL Java_com_android_xo_XoLib_surfacelost(JNIEnv * env, jobje
 		SingleMainWnd->SurfaceLost();
 }
 
-JNIEXPORT int JNICALL Java_com_android_xo_XoLib_step(JNIEnv * env, jobject obj)
+JNIEXPORT int JNICALL Java_com_android_xo_XoLib_render(JNIEnv * env, jobject obj)
 {
 	if ( SingleMainWnd )
 	{
@@ -150,9 +188,8 @@ JNIEXPORT int JNICALL Java_com_android_xo_XoLib_step(JNIEnv * env, jobject obj)
 		//LOGI("render 2");
 		//SingleMainWnd->DocGroup->RenderDoc->Render( SingleMainWnd->RGL );
 
-		//LOGI("render 3");
-		int r = SingleMainWnd->DocGroup->Render();
-		//LOGI("render done");
+		//LOGI("XoLib.render");
+		xoRenderResult r = SingleMainWnd->DocGroup->Render();
 		return r;
 	}
 	return xoRenderResultNeedMore;

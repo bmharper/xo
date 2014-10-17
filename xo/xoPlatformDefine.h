@@ -20,6 +20,7 @@ enum xoPlatform
 	#define XO_PLATFORM_LINUX_DESKTOP	0
 	#define XO_PLATFORM					xoPlatform_Android
 	#define XOTRACE_WRITE(msg)			__android_log_write(ANDROID_LOG_INFO, "xo", msg)
+	#define XOASSERT(x)					(void) ((x) || (__android_log_print(ANDROID_LOG_ERROR, "xo", "assertion failed %s:%d %s", __FILE__, __LINE__, #x), AbcPanicHere(), 0))
 #elif defined(__linux__)
 	#define XO_PLATFORM_ANDROID			0
 	#define XO_PLATFORM_WIN_DESKTOP		0
@@ -46,8 +47,10 @@ typedef unsigned short	uint16;
 	#define BIT(x) (1 << (x))
 #endif
 
-// This executes in ALL BUILDS (not just debug).
-#define XOASSERT(x)			AbcAssert(x)
+// XOASSERT executes in ALL BUILDS (not just debug).
+#ifndef XOASSERT
+	#define XOASSERT(x)			AbcAssert(x)
+#endif
 
 #ifdef _DEBUG
 	#define XOVERIFY(x)			XOASSERT(x)

@@ -297,7 +297,7 @@ void DoTextQuality( xoDoc* doc )
 void InitDOM( xoDoc* doc )
 {
 	xoDomNode* body = &doc->Root;
-	body->StyleParse( "font-family: Segoe UI, Droid Sans" );
+	body->StyleParse( "font-family: Segoe UI, Roboto" );
 
 	//DoBorder( doc );
 	//DoBaselineAlignment( doc );

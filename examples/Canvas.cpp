@@ -6,7 +6,7 @@ void xoMain( xoSysWnd* wnd )
 	xoDomCanvas* canvasEl = doc->Root.AddCanvas();
 	canvasEl->SetSize( 400, 300 );
 	canvasEl->SetText( "Hello blank canvas" );
-	canvasEl->StyleParse( "font-size: 14px" );
+	canvasEl->StyleParse( "font-size: 14ep" );
 	canvasEl->StyleParse( "color: #080" );
 	//canvasEl->StyleParse( "background: #f00" );
 	xoCanvas2D* c2d = canvasEl->GetCanvas2D();

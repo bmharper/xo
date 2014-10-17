@@ -273,6 +273,7 @@ bool xoSysWnd::InitializeRenderer_Any( xoRenderBase*& renderer )
 	}
 	else
 	{
+		XOTRACE( "Failed to initialize %s renderer\n", renderer->RendererName() );
 		delete renderer;
 		renderer = NULL;
 		return false;

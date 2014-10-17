@@ -2,10 +2,6 @@
 #XO_PLATFORM_LINUX_DESKTOP
 #version 130
 
-#ifdef XO_PLATFORM_ANDROID
-precision mediump float;
-#endif
-
 // This looks absolutely terrible without sRGB blending, so we simply don't even try subpixel text
 // on those platforms. As it turns out, there is great correlation between low res screen (Windows)
 // and a GPU capable of sRGB blending.

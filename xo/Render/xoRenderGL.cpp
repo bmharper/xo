@@ -35,7 +35,7 @@ static bool GLIsBooted = false;
 #define GL_XO_RED_OR_LUMINANCE GL_LUMINANCE
 #endif
 
-static const char* nu_GLSLPrefix = R"(
+static const char* xo_GLSLPrefix = R"(
 float fromSRGB_Component(float srgb)
 {
 	float sRGB_Low	= 0.0031308;
@@ -764,7 +764,7 @@ void xoRenderGL::PreparePreprocessor()
 	if ( xoGlobal()->EnableSRGBFramebuffer && Have_sRGB_Framebuffer )
 		BaseShader.append( "#define XO_SRGB_FRAMEBUFFER\n" );
 
-	BaseShader += nu_GLSLPrefix;
+	BaseShader += xo_GLSLPrefix;
 
 	/*
 	if ( Preprocessor.MacroCount() != 0 )
@@ -859,6 +859,11 @@ bool xoRenderGL::LoadShader( GLenum shaderType, GLuint& shader, const char* name
 		raw_prefix = raw_other.substr( 0, firstLine + 1 );
 		raw_other = raw_other.substr( firstLine + 1 );
 	}
+
+#if XO_PLATFORM_ANDROID
+	if ( shaderType == GL_FRAGMENT_SHADER )
+		raw_prefix += "precision mediump float;\n";
+#endif
 
 	PreparePreprocessor();
 	std::string processed = raw_prefix + BaseShader + raw_other;

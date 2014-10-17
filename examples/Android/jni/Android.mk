@@ -38,7 +38,7 @@ FREETYPE_SRC = \
 ../../../dependencies/freetype/src/winfonts/winfnt.c \
 
 XO_SRC = \
-../../../templates/xoAndroid.cpp \
+../../../xo/Android/xoLibJni.cpp \
 ../../../xo/xoDefs.cpp \
 ../../../xo/xoDoc.cpp \
 ../../../xo/xoDocUI.cpp \
@@ -97,7 +97,7 @@ XO_SRC = \
 ../../../dependencies/Panacea/Strings/fmt.cpp \
 ../../../dependencies/stb_image.cpp
 
-MY_SRC = ../../HelloWorld/HelloWorld.cpp
+MY_SRC = ../../HelloWorld.cpp
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../xo $(LOCAL_PATH)/../../../dependencies/freetype/include $(LOCAL_PATH)/../../../dependencies/agg/include
 LOCAL_MODULE     := libxo

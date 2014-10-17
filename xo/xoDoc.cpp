@@ -255,7 +255,7 @@ void xoDoc::InitializeDefaultTagStyles()
 	const char* font = "Segoe UI";
 	//const char* font = "Arial";
 #elif XO_PLATFORM_ANDROID
-	const char* font = "Droid Sans";
+	const char* font = "Roboto";
 #else
 	const char* font = "Helvetica";
 #endif

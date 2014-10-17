@@ -219,7 +219,11 @@ PAPI int			AbcLockFileLock( const char* path )
 #ifdef _WIN32
 	int lock = _locking( f, _LK_NBLCK, 1 );
 #else
+#	ifdef ANDROID
+	int lock = flock( f, LOCK_EX );
+#	else
 	int lock = lockf( f, F_TLOCK, 1 );
+#	endif
 #endif
 	if ( lock == -1 )
 	{
@@ -239,7 +243,11 @@ PAPI void			AbcLockFileRelease( int f )
 #ifdef _WIN32
 	_locking( f, _LK_UNLCK, 1 );
 #else
+#	ifdef ANDROID
+	flock( f, LOCK_UN );
+#	else
 	lockf( f, F_ULOCK, 1 );
+#	endif
 #endif
 	close( f );
 }

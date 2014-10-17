@@ -1,6 +1,3 @@
-#ifdef XO_PLATFORM_ANDROID
-precision mediump float;
-#endif
 varying vec4	color;
 void main()
 {

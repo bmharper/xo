@@ -69,7 +69,7 @@ void xoRenderStack::Initialize( const xoDoc* doc, xoPool* pool )
 	//Defaults[xoCatLeft]
 	//Defaults[xoCatRight]
 	//Defaults[xoCatBottom]
-	Defaults[xoCatFontSize].SetSize( xoCatFontSize, xoSize::Pixels(12) );
+	Defaults[xoCatFontSize].SetSize( xoCatFontSize, xoSize::EyePixels(12) );
 	// Font should inherit from body. xoDoc initializes the default font for xoTagBody
 	//Defaults[xoCatFontFamily].SetFont( doc->TagStyles[xoTagBody].Get().GetFont( doc ).Z, doc );
 	Defaults[xoCatBorderRadius].SetSize( xoCatBorderRadius, xoSize::Zero() );

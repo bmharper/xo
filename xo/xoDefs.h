@@ -432,7 +432,7 @@ XOAPI void				xoRunApp( xoMainCallback mainCallback );
 XOAPI void				xoProcessDocQueue();
 XOAPI void				xoParseFail( const char* msg, ... );
 XOAPI void				XOTRACE( const char* msg, ... );
-XOAPI void				NUTIME( const char* msg, ... );
+XOAPI void				XOTIME( const char* msg, ... );
 #if XO_PLATFORM_WIN_DESKTOP
 XOAPI void				xoRunWin32MessageLoop();
 #elif XO_PLATFORM_LINUX_DESKTOP
@@ -441,44 +441,52 @@ XOAPI void				xoRunXMessageLoop();
 
 // Various tracing options. Uncomment these to enable tracing of that class of events.
 //#define XOTRACE_RENDER_ENABLE
-#define XOTRACE_LAYOUT_WARNINGS_ENABLE
 //#define XOTRACE_LAYOUT_VERBOSE_ENABLE
 //#define XOTRACE_EVENTS_ENABLE
 //#define XOTRACE_LATENCY_ENABLE
+//#define XOTRACE_FONTS_ENABLE
+
 #define XOTRACE_WARNING_ENABLE
+#define XOTRACE_LAYOUT_WARNINGS_ENABLE
 
 #ifdef XOTRACE_RENDER_ENABLE
-	#define XOTRACE_RENDER(msg, ...) NUTIME(msg, ##__VA_ARGS__)
+	#define XOTRACE_RENDER(msg, ...) XOTIME(msg, ##__VA_ARGS__)
 #else
 	#define XOTRACE_RENDER(msg, ...) ((void)0)
 #endif
 
 #ifdef XOTRACE_LAYOUT_WARNINGS_ENABLE
-	#define XOTRACE_LAYOUT_WARNING(msg, ...) NUTIME(msg, ##__VA_ARGS__)
+	#define XOTRACE_LAYOUT_WARNING(msg, ...) XOTIME(msg, ##__VA_ARGS__)
 #else
 	#define XOTRACE_LAYOUT_WARNING(msg, ...) ((void)0)
 #endif
 
 #ifdef XOTRACE_LAYOUT_VERBOSE_ENABLE
-	#define XOTRACE_LAYOUT_VERBOSE(msg, ...) NUTIME(msg, ##__VA_ARGS__)
+	#define XOTRACE_LAYOUT_VERBOSE(msg, ...) XOTIME(msg, ##__VA_ARGS__)
 #else
 	#define XOTRACE_LAYOUT_VERBOSE(msg, ...) ((void)0)
 #endif
 
 #ifdef XOTRACE_EVENTS_ENABLE
-	#define XOTRACE_EVENTS(msg, ...) NUTIME(msg, ##__VA_ARGS__)
+	#define XOTRACE_EVENTS(msg, ...) XOTIME(msg, ##__VA_ARGS__)
 #else
 	#define XOTRACE_EVENTS(msg, ...) ((void)0)
 #endif
 
 #ifdef XOTRACE_LATENCY_ENABLE
-	#define XOTRACE_LATENCY(msg, ...) NUTIME(msg, ##__VA_ARGS__)
+	#define XOTRACE_LATENCY(msg, ...) XOTIME(msg, ##__VA_ARGS__)
 #else
 	#define XOTRACE_LATENCY(msg, ...) ((void)0)
 #endif
 
+#ifdef XOTRACE_FONTS_ENABLE
+	#define XOTRACE_FONTS(msg, ...) XOTIME(msg, ##__VA_ARGS__)
+#else
+	#define XOTRACE_FONTS(msg, ...) ((void)0)
+#endif
+
 #ifdef XOTRACE_WARNING_ENABLE
-	#define XOTRACE_WARNING(msg, ...) NUTIME(msg, ##__VA_ARGS__)
+	#define XOTRACE_WARNING(msg, ...) XOTIME(msg, ##__VA_ARGS__)
 #else
 	#define XOTRACE_WARNING(msg, ...) ((void)0)
 #endif

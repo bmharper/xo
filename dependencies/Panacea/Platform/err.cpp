@@ -21,6 +21,9 @@ PAPI int AbcPanicMsg(const char* file, int line, const char* msg)
 	}
 	else
 	{
+#ifdef ANDROID
+		__android_log_write( ANDROID_LOG_ERROR, "AbcPanicMsg", buf );
+#endif
 		fputs( "AbcPanicMsg: ", stdout );
 		fputs( buf, stdout );
 		fflush( stdout );

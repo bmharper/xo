@@ -280,7 +280,7 @@ XOAPI void xoInitialize( const xoInitParams* init )
 	xoGlobals->TargetFPS = 60;
 	xoGlobals->NumWorkerThreads = std::min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
 	xoGlobals->MaxSubpixelGlyphSize = 60;
-	xoGlobals->PreferOpenGL = false;
+	xoGlobals->PreferOpenGL = true;
 	xoGlobals->EnableVSync = false;
 	// Freetype's output is linear coverage percentage, so if we treat our freetype texture as GL_LUMINANCE
 	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get perfect results without
@@ -474,7 +474,7 @@ XOAPI void XOTRACE( const char* msg, ... )
 		XOTRACE_WRITE(buff);
 }
 
-XOAPI void NUTIME( const char* msg, ... )
+XOAPI void XOTIME( const char* msg, ... )
 {
 	const int timeChars = 16;
 	char buff[4096] = "";

@@ -304,11 +304,12 @@ class XoView extends GLSurfaceView {
         }
 
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        	// This is a 'surface lost' message.
+        	// This is called after a surface has been lost. So for us it's equivalent to a surfaceLost message.
         	XoLib.surfacelost();
         }
         
         public void onDrawFrame(GL10 gl) {
+    		Log.i("xo", "onDrawFrame");
         	int res = XoLib.render();
         	if (res == XoView.RENDER_RESULT_IDLE) {
         		//Log.i("nu", "idle");

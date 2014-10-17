@@ -137,7 +137,7 @@ xoFontID xoFontStore::GetFallbackFontID()
 #if XO_PLATFORM_WIN_DESKTOP
 	fid = InsertByFacename( "Arial" );
 #elif XO_PLATFORM_ANDROID
-	fid = InsertByFacename( "Droid Sans" );
+	fid = InsertByFacename( "Roboto" );
 #elif XO_PLATFORM_LINUX_DESKTOP
 	fid = InsertByFacename( "Arial" );
 #else
@@ -274,6 +274,8 @@ const char* xoFontStore::GetFilenameFromFacename( const char* facename )
 
 void xoFontStore::BuildAndSaveFontTable()
 {
+	XOTRACE( "Building font table on %d directories\n", (int) Directories.size() );
+
 	podvec<xoString> files;
 	for ( intp i = 0; i < Directories.size(); i++ )
 	{
@@ -322,10 +324,14 @@ void xoFontStore::BuildAndSaveFontTable()
 
 bool xoFontStore::LoadFontTable()
 {
+	XOTRACE_FONTS( "LoadFontTable enter\n" );
+
 	FacenameToFilename.clear();
 	FILE* manifest = fopen( (xoGlobal()->CacheDir + ABC_DIR_SEP_STR + "fonts").Z, "rb" );
 	if ( manifest == nullptr )
 		return false;
+
+	XOTRACE_FONTS( "LoadFontTable file loaded\n" );
 
 	int version = 0;
 	uint64 hash = 0;
@@ -337,6 +343,8 @@ bool xoFontStore::LoadFontTable()
 		fclose( manifest );
 		return false;
 	}
+
+	XOTRACE_FONTS( "LoadFontTable version & hash good\n" );
 
 	// Read the rest of the file into one buffer
 	podvec<char> remain;
@@ -363,6 +371,7 @@ bool xoFontStore::LoadFontTable()
 				path.Set( buf + lineStart, term1 - lineStart );
 				facename.Set( buf + term1 + 1, i - term1 - 1 );
 				FacenameToFilename.insert( facename, path );
+				XOTRACE_FONTS( "Font %s -> %s\n", facename.Z, path.Z );
 			}
 			lineStart = i + 1;
 			term1 = lineStart;
@@ -374,6 +383,8 @@ bool xoFontStore::LoadFontTable()
 	}
 
 	IsFontTableLoaded = true;
+
+	XOTRACE_FONTS( "LoadFontTable success (%d fonts)\n", FacenameToFilename.size() );
 
 	return true;
 }

@@ -41,7 +41,7 @@ XOAPI void xoRunWin32MessageLoop()
 		bool haveMsg = true;
 		if ( renderIdle && !AnyDocsDirty() && AbcTimeAccurateRTSeconds() - lastHeatAt > HEAT_TIME )
 		{
-			NUTIME("Render cold\n");
+			XOTIME("Render cold\n");
 			MSGTRACE( "Render cold\n" );
 			if ( !GetMessage( &msg, NULL, 0, 0 ) )
 				break;
@@ -49,7 +49,7 @@ XOAPI void xoRunWin32MessageLoop()
 		}
 		else
 		{
-			//NUTIME("Render hot\n");
+			//XOTIME("Render hot\n");
 			MSGTRACE( "Render hot\n" );
 			haveMsg = !!PeekMessage( &msg, NULL, 0, 0, PM_REMOVE );
 		}

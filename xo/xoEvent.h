@@ -55,7 +55,7 @@ public:
 class XOAPI xoOriginalEvent
 {
 public:
-	xoDocGroup*		DocGroup;
+	xoDocGroup*		DocGroup = nullptr;
 	xoEvent			Event;
 };
 

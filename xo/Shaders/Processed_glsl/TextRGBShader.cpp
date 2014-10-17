@@ -44,10 +44,6 @@ const char* xoGLProg_TextRGB::FragSrc()
 	return
 	"#version 130\n"
 	"\n"
-	"#ifdef XO_PLATFORM_ANDROID\n"
-	"precision mediump float;\n"
-	"#endif\n"
-	"\n"
 	"// This looks absolutely terrible without sRGB blending, so we simply don't even try subpixel text\n"
 	"// on those platforms. As it turns out, there is great correlation between low res screen (Windows)\n"
 	"// and a GPU capable of sRGB blending.\n"

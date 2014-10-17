@@ -40,9 +40,6 @@ const char* xoGLProg_Rect::VertSrc()
 const char* xoGLProg_Rect::FragSrc()
 {
 	return
-	"#ifdef XO_PLATFORM_ANDROID\n"
-	"precision mediump float;\n"
-	"#endif\n"
 	"varying vec4	pos;\n"
 	"varying vec4	color;\n"
 	"uniform float	radius;\n"

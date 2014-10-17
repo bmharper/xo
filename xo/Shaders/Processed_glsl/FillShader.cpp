@@ -33,9 +33,6 @@ const char* xoGLProg_Fill::VertSrc()
 const char* xoGLProg_Fill::FragSrc()
 {
 	return
-	"#ifdef XO_PLATFORM_ANDROID\n"
-	"precision mediump float;\n"
-	"#endif\n"
 	"varying vec4	color;\n"
 	"void main()\n"
 	"{\n"

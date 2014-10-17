@@ -5,6 +5,19 @@
 
 #ifndef _WIN32
 #include <dirent.h>
+#include <sys/stat.h>	// Added for Android
+#endif
+
+#ifndef _WIN32
+	#ifdef ANDROID
+		// unsigned long       st_mtime;
+		// unsigned long       st_mtime_nsec;
+		// #define STAT_TIME(st, x) (st.st_ ## x ## time_nsec) * (1.0 / 1000000000)
+		#define STAT_TIME(st, x) (st.st_ ## x ## time) + ((st.st_ ## x ## time_nsec) * (1.0 / 1000000000))
+	#else
+		// struct timespec st_mtim;  /* time of last modification */
+		#define STAT_TIME(st, x) (st.st_ ## x ## time.tv_sec) + ((st.st_ ## x ## time.tv_nsec) * (1.0 / 1000000000))
+	#endif
 #endif
 
 bool AbcFilesystemFindFiles( const char* _dir, std::function<bool(const AbcFilesystemItem& item)> callback )
@@ -71,7 +84,7 @@ bool AbcFilesystemFindFiles( const char* _dir, std::function<bool(const AbcFiles
 			struct stat st;
 			if ( stat( (fixed + "/" + iter->d_name).c_str(), &st ) != 0 )
 				continue;
-			item.TimeModify = st.st_mtim.tv_sec + st.st_mtim.tv_nsec * (1.0 / 1000000000);
+			item.TimeModify = STAT_TIME(st, m); // st.st_mtim.tv_sec + st.st_mtim.tv_nsec * (1.0 / 1000000000);
 			bool res = callback( item );
 			if ( item.IsDir )
 			{
@@ -88,3 +101,7 @@ bool AbcFilesystemFindFiles( const char* _dir, std::function<bool(const AbcFiles
 	}
 #endif
 }
+
+#ifndef _WIN32
+#undef STAT_TIME
+#endif

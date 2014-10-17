@@ -72,7 +72,7 @@ void xoLayout2::LayoutInternal( xoRenderDomNode& root )
 
 	LayoutOutput out;
 
-	XOTRACE_LAYOUT_VERBOSE( "Layout 3 DocBox = %d,%d,%d,%d\n", s.ParentContentBox.Left, s.ParentContentBox.Top, s.ParentContentBox.Right, s.ParentContentBox.Bottom );
+	XOTRACE_LAYOUT_VERBOSE( "Layout 3 DocBox = %d,%d\n", in.ParentWidth, in.ParentHeight );
 
 	RunNode( Doc->Root, in, out, &root );
 }

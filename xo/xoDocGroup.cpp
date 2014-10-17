@@ -67,7 +67,7 @@ xoRenderResult xoDocGroup::RenderInternal( xoImage* targetImage )
 
 	if ( !haveLock )
 	{
-		NUTIME( "Render: Failed to acquire DocLock\n" );
+		XOTIME( "Render: Failed to acquire DocLock\n" );
 		return xoRenderResultNeedMore;
 	}
 
@@ -96,15 +96,15 @@ xoRenderResult xoDocGroup::RenderInternal( xoImage* targetImage )
 
 	if ( (docModified || targetImage != NULL) && docValid && Wnd != NULL )
 	{
-		//NUTIME( "Render start\n" );
+		//XOTIME( "Render start\n" );
 		if ( !beganRender && !Wnd->BeginRender() )
 		{
-			NUTIME( "BeginRender failed\n" );
+			XOTIME( "BeginRender failed\n" );
 			return xoRenderResultNeedMore;
 		}
 		beganRender = true;
 
-		//NUTIME( "Render DO\n" );
+		//XOTIME( "Render DO\n" );
 		rendResult = RenderDoc->Render( Wnd->Renderer );
 
 		presentFrame = true;
@@ -116,7 +116,7 @@ xoRenderResult xoDocGroup::RenderInternal( xoImage* targetImage )
 	if ( beganRender )
 	{
 		// presentFrame will be false when the only action we've taken on the GPU is uploading textures.
-		//NUTIME( "Render Finish\n" );
+		//XOTIME( "Render Finish\n" );
 		Wnd->EndRender( presentFrame ? 0 : xoEndRenderNoSwap );
 	}
 

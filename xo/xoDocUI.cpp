@@ -27,7 +27,7 @@ void xoDocUI::InternalProcessEvent( xoEvent& ev, const xoLayoutResult* layout )
 		ViewportWidth = (uint32) ev.Points[0].x;
 		ViewportHeight = (uint32) ev.Points[0].y;
 		Doc->IncVersion();
-		//NUTIME( "Processed WindowSize event. Document at version %d\n", Doc->GetVersion() );
+		//XOTIME( "Processed WindowSize event. Document at version %d\n", Doc->GetVersion() );
 		break;
 	}
 

@@ -88,6 +88,8 @@ const xoGlyph* xoGlyphCache::GetGlyph( const xoGlyphCacheKey& key ) const
 
 uint xoGlyphCache::RenderGlyph( const xoGlyphCacheKey& key )
 {
+	XOTRACE_FONTS( "RenderGlyph %d\n", (int) key.Char );
+
 	XOASSERT( key.Size != 0 );
 	const xoFont* font = xoGlobal()->FontStore->GetByFontID( key.FontID );
 
