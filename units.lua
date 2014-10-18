@@ -313,7 +313,7 @@ local function XoExampleApp(template, example)
 	return Program {
 		Name = example,
 		Includes = { "xo" },
-		Libs = { "stdc++"; Config = "linux-*" },
+		Libs = { "stdc++", "m"; Config = "linux-*" },
 		Depends = {
 			crt,
 			xo

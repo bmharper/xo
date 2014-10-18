@@ -20,6 +20,9 @@
 		#include <sys/stat.h>
 		#include <unistd.h>
 		#include <pwd.h>
+		#include <X11/Xlib.h>		// X11 definitions are needed by xoSysWnd.h
+		#include <X11/Xutil.h>
+		#include <GL/glx.h>
 	#endif
 	#include <pthread.h>
 	#include <semaphore.h>

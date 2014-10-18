@@ -16,7 +16,7 @@
 		#define STAT_TIME(st, x) (st.st_ ## x ## time) + ((st.st_ ## x ## time_nsec) * (1.0 / 1000000000))
 	#else
 		// struct timespec st_mtim;  /* time of last modification */
-		#define STAT_TIME(st, x) (st.st_ ## x ## time.tv_sec) + ((st.st_ ## x ## time.tv_nsec) * (1.0 / 1000000000))
+		#define STAT_TIME(st, x) (st.st_ ## x ## tim.tv_sec) + ((st.st_ ## x ## tim.tv_nsec) * (1.0 / 1000000000))
 	#endif
 #endif
 

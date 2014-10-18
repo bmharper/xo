@@ -257,7 +257,7 @@ void xoDoc::InitializeDefaultTagStyles()
 #elif XO_PLATFORM_ANDROID
 	const char* font = "Roboto";
 #else
-	const char* font = "Helvetica";
+	const char* font = "Droid Sans";
 #endif
 	xoStyleAttrib afont;
 	afont.SetFont( xoGlobal()->FontStore->InsertByFacename(font) );
