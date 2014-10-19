@@ -2,8 +2,10 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.android.xo">
+    <uses-feature android:glEsVersion="0x00020000"/>
+    <uses-sdk android:minSdkVersion="8"/>
     <application
-            android:label="@string/gl2jni_activity"
+            android:label="@string/AppName"
             >
             <!--  android:debuggable="true" -->
         <!-- android:theme="@android:style/Theme.NoTitleBar.Fullscreen" -->     
@@ -17,6 +19,4 @@
             </intent-filter>
         </activity>
     </application>
-    <uses-feature android:glEsVersion="0x00020000"/>
-    <uses-sdk android:minSdkVersion="8"/>
 </manifest>

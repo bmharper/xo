@@ -1,105 +1,118 @@
-LOCAL_PATH:= $(call my-dir)
+LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
+# XO_ROOT_SRC is relative to the 'jni' directory
+# XO_ROOT_INCUDES is relative to the root of the project
+
+# These definitions use the xo source code in it's natural form inside its own repository.
+# XO_ROOT_SRC := ../../..
+# XO_ROOT_INCLUDES := ../..
+
+# These definitions refer to a copy of the xo source code inside the 'jni' directory.
+# Run copy-src-to-jni.bat to copy the sources in there.
+XO_ROOT_SRC := xo
+XO_ROOT_INCLUDES := jni/xo
+
+# Your C++ code
+MY_SRC = $(XO_ROOT_SRC)/examples/HelloWorld.cpp
+
 FREETYPE_SRC = \
-../../../dependencies/freetype/src/autofit/autofit.c \
-../../../dependencies/freetype/src/base/ftbase.c \
-../../../dependencies/freetype/src/base/ftbitmap.c \
-../../../dependencies/freetype/src/bdf/bdf.c \
-../../../dependencies/freetype/src/cff/cff.c \
-../../../dependencies/freetype/src/cache/ftcache.c \
-../../../dependencies/freetype/src/base/ftgasp.c \
-../../../dependencies/freetype/src/base/ftglyph.c \
-../../../dependencies/freetype/src/gzip/ftgzip.c \
-../../../dependencies/freetype/src/base/ftinit.c \
-../../../dependencies/freetype/src/base/ftlcdfil.c \
-../../../dependencies/freetype/src/lzw/ftlzw.c \
-../../../dependencies/freetype/src/base/ftstroke.c \
-../../../dependencies/freetype/src/base/ftsystem.c \
-../../../dependencies/freetype/src/smooth/smooth.c \
-../../../dependencies/freetype/src/base/ftbbox.c \
-../../../dependencies/freetype/src/base/ftmm.c \
-../../../dependencies/freetype/src/base/ftpfr.c \
-../../../dependencies/freetype/src/base/ftsynth.c \
-../../../dependencies/freetype/src/base/fttype1.c \
-../../../dependencies/freetype/src/base/ftwinfnt.c \
-../../../dependencies/freetype/src/pcf/pcf.c \
-../../../dependencies/freetype/src/pfr/pfr.c \
-../../../dependencies/freetype/src/psaux/psaux.c \
-../../../dependencies/freetype/src/pshinter/pshinter.c \
-../../../dependencies/freetype/src/psnames/psmodule.c \
-../../../dependencies/freetype/src/raster/raster.c \
-../../../dependencies/freetype/src/sfnt/sfnt.c \
-../../../dependencies/freetype/src/truetype/truetype.c \
-../../../dependencies/freetype/src/type1/type1.c \
-../../../dependencies/freetype/src/cid/type1cid.c \
-../../../dependencies/freetype/src/type42/type42.c \
-../../../dependencies/freetype/src/winfonts/winfnt.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/autofit/autofit.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/base/ftbase.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/base/ftbitmap.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/bdf/bdf.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/cff/cff.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/cache/ftcache.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/base/ftgasp.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/base/ftglyph.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/gzip/ftgzip.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/base/ftinit.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/base/ftlcdfil.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/lzw/ftlzw.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/base/ftstroke.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/base/ftsystem.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/smooth/smooth.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/base/ftbbox.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/base/ftmm.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/base/ftpfr.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/base/ftsynth.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/base/fttype1.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/base/ftwinfnt.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/pcf/pcf.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/pfr/pfr.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/psaux/psaux.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/pshinter/pshinter.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/psnames/psmodule.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/raster/raster.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/sfnt/sfnt.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/truetype/truetype.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/type1/type1.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/cid/type1cid.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/type42/type42.c \
+$(XO_ROOT_SRC)/dependencies/freetype/src/winfonts/winfnt.c \
 
 XO_SRC = \
-../../../xo/Android/xoLibJni.cpp \
-../../../xo/xoDefs.cpp \
-../../../xo/xoDoc.cpp \
-../../../xo/xoDocUI.cpp \
-../../../xo/xoDocGroup.cpp \
-../../../xo/xoEvent.cpp \
-../../../xo/xoMem.cpp \
-../../../xo/xoMsgLoop.cpp \
-../../../xo/xoPlatform.cpp \
-../../../xo/xoString.cpp \
-../../../xo/xoStringTable.cpp \
-../../../xo/xoStyle.cpp \
-../../../xo/xoSysWnd.cpp \
-../../../xo/xoTags.cpp \
-../../../xo/Canvas/xoCanvas2D.cpp \
-../../../xo/Dom/xoDomEl.cpp \
-../../../xo/Dom/xoDomCanvas.cpp \
-../../../xo/Dom/xoDomNode.cpp \
-../../../xo/Dom/xoDomText.cpp \
-../../../xo/Image/xoImage.cpp \
-../../../xo/Image/xoImageStore.cpp \
-../../../xo/Layout/xoLayout.cpp \
-../../../xo/Layout/xoLayout2.cpp \
-../../../xo/Layout/xoTextLayout.cpp \
-../../../xo/Parse/xoDocParser.cpp \
-../../../xo/Render/xoRenderBase.cpp \
-../../../xo/Render/xoRenderer.cpp \
-../../../xo/Render/xoRenderGL.cpp \
-../../../xo/Render/xoRenderGL_Defs.cpp \
-../../../xo/Render/xoRenderDoc.cpp \
-../../../xo/Render/xoRenderDomEl.cpp \
-../../../xo/Render/xoRenderStack.cpp \
-../../../xo/Render/xoStyleResolve.cpp \
-../../../xo/Render/xoTextureAtlas.cpp \
-../../../xo/Render/xoVertexTypes.cpp \
-../../../xo/Text/xoFontStore.cpp \
-../../../xo/Text/xoGlyphCache.cpp \
-../../../xo/Text/xoTextDefs.cpp \
-../../../xo/Shaders/Processed_glsl/FillShader.cpp \
-../../../xo/Shaders/Processed_glsl/FillTexShader.cpp \
-../../../xo/Shaders/Processed_glsl/RectShader.cpp \
-../../../xo/Shaders/Processed_glsl/TextRGBShader.cpp \
-../../../xo/Shaders/Processed_glsl/TextWholeShader.cpp \
-../../../dependencies/agg/src/agg_vcgen_stroke.cpp \
-../../../dependencies/agg/src/agg_vpgen_clip_polygon.cpp \
-../../../dependencies/agg/src/agg_vpgen_clip_polyline.cpp \
-../../../dependencies/hash/xxhash.cpp \
-../../../dependencies/Panacea/Containers/queue.cpp \
-../../../dependencies/Panacea/Platform/cpu.cpp \
-../../../dependencies/Panacea/Platform/err.cpp \
-../../../dependencies/Panacea/Platform/filesystem.cpp \
-../../../dependencies/Panacea/Platform/process.cpp \
-../../../dependencies/Panacea/Platform/syncprims.cpp \
-../../../dependencies/Panacea/Platform/timeprims.cpp \
-../../../dependencies/Panacea/Platform/thread.cpp \
-../../../dependencies/Panacea/Strings/ConvertUTF.cpp \
-../../../dependencies/Panacea/Strings/fmt.cpp \
-../../../dependencies/stb_image.cpp
+$(XO_ROOT_SRC)/xo/Android/xoLibJni.cpp \
+$(XO_ROOT_SRC)/xo/xoDefs.cpp \
+$(XO_ROOT_SRC)/xo/xoDoc.cpp \
+$(XO_ROOT_SRC)/xo/xoDocUI.cpp \
+$(XO_ROOT_SRC)/xo/xoDocGroup.cpp \
+$(XO_ROOT_SRC)/xo/xoEvent.cpp \
+$(XO_ROOT_SRC)/xo/xoMem.cpp \
+$(XO_ROOT_SRC)/xo/xoMsgLoop.cpp \
+$(XO_ROOT_SRC)/xo/xoPlatform.cpp \
+$(XO_ROOT_SRC)/xo/xoString.cpp \
+$(XO_ROOT_SRC)/xo/xoStringTable.cpp \
+$(XO_ROOT_SRC)/xo/xoStyle.cpp \
+$(XO_ROOT_SRC)/xo/xoSysWnd.cpp \
+$(XO_ROOT_SRC)/xo/xoTags.cpp \
+$(XO_ROOT_SRC)/xo/Canvas/xoCanvas2D.cpp \
+$(XO_ROOT_SRC)/xo/Dom/xoDomEl.cpp \
+$(XO_ROOT_SRC)/xo/Dom/xoDomCanvas.cpp \
+$(XO_ROOT_SRC)/xo/Dom/xoDomNode.cpp \
+$(XO_ROOT_SRC)/xo/Dom/xoDomText.cpp \
+$(XO_ROOT_SRC)/xo/Image/xoImage.cpp \
+$(XO_ROOT_SRC)/xo/Image/xoImageStore.cpp \
+$(XO_ROOT_SRC)/xo/Layout/xoLayout.cpp \
+$(XO_ROOT_SRC)/xo/Layout/xoLayout2.cpp \
+$(XO_ROOT_SRC)/xo/Layout/xoTextLayout.cpp \
+$(XO_ROOT_SRC)/xo/Parse/xoDocParser.cpp \
+$(XO_ROOT_SRC)/xo/Render/xoRenderBase.cpp \
+$(XO_ROOT_SRC)/xo/Render/xoRenderer.cpp \
+$(XO_ROOT_SRC)/xo/Render/xoRenderGL.cpp \
+$(XO_ROOT_SRC)/xo/Render/xoRenderGL_Defs.cpp \
+$(XO_ROOT_SRC)/xo/Render/xoRenderDoc.cpp \
+$(XO_ROOT_SRC)/xo/Render/xoRenderDomEl.cpp \
+$(XO_ROOT_SRC)/xo/Render/xoRenderStack.cpp \
+$(XO_ROOT_SRC)/xo/Render/xoStyleResolve.cpp \
+$(XO_ROOT_SRC)/xo/Render/xoTextureAtlas.cpp \
+$(XO_ROOT_SRC)/xo/Render/xoVertexTypes.cpp \
+$(XO_ROOT_SRC)/xo/Text/xoFontStore.cpp \
+$(XO_ROOT_SRC)/xo/Text/xoGlyphCache.cpp \
+$(XO_ROOT_SRC)/xo/Text/xoTextDefs.cpp \
+$(XO_ROOT_SRC)/xo/Shaders/Processed_glsl/FillShader.cpp \
+$(XO_ROOT_SRC)/xo/Shaders/Processed_glsl/FillTexShader.cpp \
+$(XO_ROOT_SRC)/xo/Shaders/Processed_glsl/RectShader.cpp \
+$(XO_ROOT_SRC)/xo/Shaders/Processed_glsl/TextRGBShader.cpp \
+$(XO_ROOT_SRC)/xo/Shaders/Processed_glsl/TextWholeShader.cpp \
+$(XO_ROOT_SRC)/dependencies/agg/src/agg_vcgen_stroke.cpp \
+$(XO_ROOT_SRC)/dependencies/agg/src/agg_vpgen_clip_polygon.cpp \
+$(XO_ROOT_SRC)/dependencies/agg/src/agg_vpgen_clip_polyline.cpp \
+$(XO_ROOT_SRC)/dependencies/hash/xxhash.cpp \
+$(XO_ROOT_SRC)/dependencies/Panacea/Containers/queue.cpp \
+$(XO_ROOT_SRC)/dependencies/Panacea/Platform/cpu.cpp \
+$(XO_ROOT_SRC)/dependencies/Panacea/Platform/err.cpp \
+$(XO_ROOT_SRC)/dependencies/Panacea/Platform/filesystem.cpp \
+$(XO_ROOT_SRC)/dependencies/Panacea/Platform/process.cpp \
+$(XO_ROOT_SRC)/dependencies/Panacea/Platform/syncprims.cpp \
+$(XO_ROOT_SRC)/dependencies/Panacea/Platform/timeprims.cpp \
+$(XO_ROOT_SRC)/dependencies/Panacea/Platform/thread.cpp \
+$(XO_ROOT_SRC)/dependencies/Panacea/Strings/ConvertUTF.cpp \
+$(XO_ROOT_SRC)/dependencies/Panacea/Strings/fmt.cpp \
+$(XO_ROOT_SRC)/dependencies/stb_image.cpp
 
-MY_SRC = ../../HelloWorld.cpp
-
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../xo $(LOCAL_PATH)/../../../dependencies/freetype/include $(LOCAL_PATH)/../../../dependencies/agg/include
+LOCAL_C_INCLUDES := $(XO_ROOT_INCLUDES)/xo $(XO_ROOT_INCLUDES)/dependencies/freetype/include $(XO_ROOT_INCLUDES)/dependencies/agg/include
 LOCAL_MODULE     := libxo
 LOCAL_CFLAGS     := -Werror -DFT2_BUILD_LIBRARY
 LOCAL_CPPFLAGS   := -Werror -std=c++11

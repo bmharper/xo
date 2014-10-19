@@ -1,5 +1,12 @@
+Building the native code from the command line
+----------------------------------------------
+You must run copy-src-to-jni.bat to copy the xo sources into the Android project's
+jni directory. If the C++ sources are rooted outside the Android project's root
+directory, then one cannot use Eclipse to debug native code. This is why we need to
+copy the code in there. It also serves as a useful demonstration of how real-world projects
+will actually include xo.
 
-This was last tested with the NDK version r9
+This was last tested with the NDK version r10b.
 
 Simply make your current directory samples/Android (the same directory that contains this BUILD-HOWTO file),
 and run 'ndk-build'.
@@ -9,3 +16,20 @@ You can bring build times down by using 'ndk-build -j8' (or however many logical
 That ought to give you libs/<platform>/libxo.so
 
 You should now be able to load the project in eclipse, and deploy to a device.
+
+You can build the complete project on the command line by installing ant, and then doing
+ant -Dndk.dir=C:\dev\android-ndk-r10b debug
+
+Using Eclipse to debug C++ code
+-------------------------------
+One can use Eclipse to debug native code.
+
+1. Download the latest Eclipse + ADT bundle from Google. Run Eclipe, and install all of the latest ADT components,
+most notably "Android Native Development Tools". 
+2. You should be able to Debug the project as "Android Native Application".
+
+If you are trying to get native debugging setup on a new project, you will need to jump through
+a few more (simple) hoops. Just search on google for "eclipse debug native android" or similar
+and you should find documentation on the process.
+
+Eclipse will moan about not finding cygwin, but I'm not sure why. I can debug just fine without it.

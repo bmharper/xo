@@ -1,15 +1,9 @@
 package com.android.xo;
 
-import java.io.File;
-
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
-import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -309,7 +303,6 @@ class XoView extends GLSurfaceView {
         }
         
         public void onDrawFrame(GL10 gl) {
-    		Log.i("xo", "onDrawFrame");
         	int res = XoLib.render();
         	if (res == XoView.RENDER_RESULT_IDLE) {
         		//Log.i("nu", "idle");

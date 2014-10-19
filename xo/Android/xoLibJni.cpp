@@ -19,6 +19,8 @@ extern xoSysWnd*	SingleMainWnd;			// This is defined inside xoSysWnd.cpp
 // This is defined inside one of your app-specific .cpp files. It is your only entry point.
 void xoMain( xoSysWnd* wnd );
 
+// I am keeping this structure here merely to remind myself that we might want to support
+// a more complex application lifecycle than "one window"
 void xoMain( xoMainEvent ev )
 {
 	switch (ev)
@@ -64,7 +66,6 @@ static void ProcessAllEvents()
 			break;
 		xoOriginalEvent ev;
 		XOVERIFY( xoGlobal()->EventQueue.PopTail( ev ) );
-		XOTRACE( "ProcessEvent %p", ev.DocGroup );
 		ev.DocGroup->ProcessEvent( ev.Event );
 	}
 }
@@ -100,9 +101,6 @@ JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
         return -1;
 
     LOGI("JNI_OnLoad");
-
-    // Get jclass with env->FindClass.
-    // Register methods with env->RegisterNatives.
 
     return JNI_VERSION_1_6;
 }
@@ -140,7 +138,9 @@ JNIEXPORT void JNICALL Java_com_android_xo_XoLib_initSurface(JNIEnv * env, jobje
 		return;
 	}
 	
-	if ( SingleMainWnd == nullptr )
+	bool firstTime = SingleMainWnd == nullptr;
+
+	if ( firstTime )
 		SingleMainWnd = xoSysWnd::CreateWithDoc();
 
 	if ( SingleMainWnd != nullptr )
@@ -148,11 +148,14 @@ JNIEXPORT void JNICALL Java_com_android_xo_XoLib_initSurface(JNIEnv * env, jobje
 		SingleMainWnd->RelativeClientRect = xoBox( 0, 0, width, height );
 		xoOriginalEvent ev = MakeEvent();
 		ev.Event.MakeWindowSize( width, height );
-		LOGI("XoLib_initSurface 4");
+		LOGI("XoLib_initSurface posting window size event");
 		PostEvent( ev );
-		LOGI("XoLib_initSurface 5");
-		xoMain( SingleMainWnd );
-		LOGI("XoLib_initSurface 6");
+		if ( firstTime )
+		{
+			LOGI("XoLib_initSurface xoMain()");
+			xoMain( SingleMainWnd );
+		}
+		LOGI("XoLib_initSurface done");
 	}
 	else
 	{
