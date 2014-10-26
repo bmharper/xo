@@ -3,6 +3,13 @@
 // erg.... intellisense on VS 2012 is broken without this bogus include here
 //#include "../xo/xoDoc.h"
 
+static void SetDocDims( xoDoc* doc, int width, int height )
+{
+	xoEvent ev;
+	ev.MakeWindowSize( width, height );
+	doc->UI.InternalProcessEvent( ev, nullptr );
+}
+
 static AbcThreadReturnType AbcKernelCallbackDecl ui_thread( void* tp )
 {
 	int niter = 10000;
@@ -54,8 +61,7 @@ TESTFUNC(DocumentClone)
 	g.Doc = new xoDoc();
 	g.DestroyDocWithGroup = true;
 	g.Render();
-	g.RenderDoc->WindowWidth = 16;
-	g.RenderDoc->WindowHeight = 16;
+	SetDocDims( g.Doc, 16, 16 );
 	TTASSERT( g.RenderStats.Clone_NumEls == 0 );
 	xoDoc* d = g.Doc;
 
