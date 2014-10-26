@@ -1,0 +1,3 @@
+[submodule "testdata"]
+	path = testdata
+	url = git@github.com:benharper123/xo-testdata.git

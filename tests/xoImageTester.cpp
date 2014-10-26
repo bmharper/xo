@@ -25,6 +25,12 @@ xoImageTester::~xoImageTester()
 	xoProcessDocQueue();
 }
 
+void xoImageTester::DoTruthImage( const char* filename, std::function<void(xoDomNode& root)> setup )
+{
+	xoImageTester t;
+	t.TruthImage( filename, setup );
+}
+
 void xoImageTester::SetSize( u32 width, u32 height )
 {
 	// This sets the non-client rectangle, but we want our client size to be width,height
@@ -41,7 +47,9 @@ void xoImageTester::TruthImage( const char* filename, std::function<void(xoDomNo
 {
 	// The plan is to have an interactive GUI here someday where you get presented
 	// with the failing image pair, and you can choose whether to mark the new one as "correct".
-	bool overwrite_DO_NOT_COMMIT_THIS_CHANGE = false;
+	// Until that happens, just temporarily change the value of this constant 
+	// in order to write a new truth image.
+	bool overwrite_DO_NOT_COMMIT_THIS_CHANGE = false; // << FALSE << THIS MUST ALWAYS BE FALSE WHEN YOU COMMIT
 	CreateOrVerifyTruthImage( overwrite_DO_NOT_COMMIT_THIS_CHANGE, filename, setup );
 }
 

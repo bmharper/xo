@@ -1,8 +1,5 @@
 #include "pch.h"
 
-// erg.... intellisense on VS 2012 is broken without this bogus include here
-//#include "../xo/xoDoc.h"
-
 static void SetDocDims( xoDoc* doc, int width, int height )
 {
 	xoEvent ev;
@@ -51,6 +48,7 @@ TESTFUNC(DocumentClone_Junk)
 	AbcThreadCloseHandle( t_ui );
 	AbcThreadCloseHandle( t_render );
 
+	// ... needs work ...
 	//xoDoc d2;
 	//d1.CloneFastInto( d2, 0 );
 }

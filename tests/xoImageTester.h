@@ -7,6 +7,8 @@ public:
 				xoImageTester();
 				~xoImageTester();
 
+	static void DoTruthImage( const char* filename, std::function<void(xoDomNode& root)> setup );
+
 	void		SetSize( u32 width, u32 height );
 
 	void		VerifyWithImage( const char* filename, std::function<void(xoDomNode& root)> setup );
