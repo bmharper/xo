@@ -1,0 +1,67 @@
+<!DOCTYPE HTML>
+<head>
+<style>
+	body {
+		margin: 30px;
+		font-family: arial, helvetica, sans-serif;
+		background-color: #EDE7E1;
+		color: #333;
+	}
+	p {
+		max-width: 35em;
+		font-size: 13px;
+	}
+	li {
+		font-size: 13px;
+	}
+	h1 {
+		font-size: 21px;
+	}
+	h2 {
+		font-size: 17px;
+	}
+	h3 {
+		font-size: 15px;
+	}
+	.index-item {
+	}
+</style>
+</head>
+<body>
+<h1 id="shaders">Shaders</h1>
+
+<h2 id="adding-a-new-shader">Adding a new shader</h2>
+<ol>
+  <li>Create a new pair of .glsl files inside xo/Shaders (it must be a pair unfortunately - no support in 'build/shaders.rb' for mixing and matching vert/frag)</li>
+  <li>From the root, run <code>build/shaders.rb</code></li>
+  <li>You will have a .cpp and .h file inside xo/Shaders/Processed. Add that .cpp file to units.lua.</li>
+  <li>Add your shader to the xoRenderGL class. This should be straightforward. Just follow the example of the other shaders.</li>
+  <li>You will probably want to setup the uniform variables (such as mvproj) for your shader in the same place where all the other shaders do their initialization.</li>
+</ol>
+
+<h2 id="writing-shaders">Writing Shaders</h2>
+<p>At the top of your script, you can use these lines
+#XO_PLATFORM_WIN_DESKTOP
+#XO_PLATFORM_ANDROID
+to specify that the shader is only used on those platforms. If you omit any such
+declaration, then the shader is used on all platforms.
+This approach won't work forever, especially if we start to support the new
+OpenGL ES 3+ devices out there.</p>
+
+<p>Before compiling shaders, they are prefixed with a bunch of #defines.
+You can use those tokens inside your shaders.</p>
+
+<p>The following constants are defined:</p>
+
+<pre><code>XO_PLATFORM_WIN_DESKTOP     Defined when target is Windows Desktop
+XO_PLATFORM_ANDROID         Defined when target is Android
+XO_GLYPH_ATLAS_SIZE         The size of glyph texture atlasses.
+XO_SRGB_FRAMEBUFFER         glEnable(GL_FRAMEBUFFER_SRGB) has been called, and is available
+                            on this platform (set via xoGlobal()-&gt;EnableSRGBFramebuffer).
+
+&lt;DELETED - This is going to be too tricky&gt;
+XO_EMULATE_GAMMA_BLENDING    You should raise your alpha to 2.2 (set via xoGlobal()-&gt;EmulateGammaBlending).
+&lt;DELETED&gt;
+</code></pre>
+
+</body>

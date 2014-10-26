@@ -39,7 +39,6 @@
 	#endif
 #endif
 
-#include "xoApiDecl.h"
 #include "warnings.h"
 #include "xoBase_SystemIncludes.h"
 #include "xoBase.h"

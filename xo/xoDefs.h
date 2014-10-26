@@ -113,6 +113,14 @@ enum xoEndRenderFlags
 	xoEndRenderNoSwap = 1,		// Do not call SwapBuffers() or SwapChain->Present(). This frame is going to be discarded.
 };
 
+enum xoCursors
+{
+	xoCursorArrow,
+	xoCursorHand,
+	xoCursorText,
+	xoCursorWait,
+};
+
 //struct xoVec2
 //{
 //	float x,y;

@@ -31,18 +31,20 @@ Windows peculiarities
 ---------------------
 
 WM_NCLBUTTONDOWN:
-If you receive a WM_NCLBUTTONDOWN, and call DefWindowProc, it will enter a modal loop. So your application-level message loop will not
-get called until the user finishes sizing the window.
-Since we run our renderer from the application's main message pump, we cease to render while the window is being resized.
-Our solution: Whenever we receive WM_NCLBUTTONDOWN, start a timer. Stop that timer when DefWindowProc returns.
-Since rendering happens on the main window message thread, we're not violating any thread model principle here.
+If you receive a WM_NCLBUTTONDOWN, and call DefWindowProc, it will enter a modal loop while allowing
+the user to resize your window. Your application-level message loop will not get called until
+the user finishes sizing the window.
+Since we run our renderer from the application's main message pump, we cease to render while the window
+is being resized. Our solution: Whenever we receive WM_NCLBUTTONDOWN, start a timer. Stop that timer
+when DefWindowProc returns. Since rendering anyway happens on the main window message thread, we're not
+violating any thread model principle here.
 
 */
 
-enum Timers
+enum XoWindowsTimers
 {
-	TimerRenderOutsideMainMsgPump	= 1,
-	TimerGenericEvent				= 2,
+	XoWindowsTimerRenderOutsideMainMsgPump	= 1,		// Used to force repaint events when window is being sized
+	XoWindowsTimerGenericEvent				= 2,		// A user event, such as when you call xoDomNode.OnTimer. Don't think this is used yet.
 };
 
 static xoMouseButton WM_ButtonToXo( UINT message, WPARAM wParam )
@@ -103,9 +105,9 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		break;
 
 	case WM_TIMER:
-		if ( wParam == TimerRenderOutsideMainMsgPump )
+		if ( wParam == XoWindowsTimerRenderOutsideMainMsgPump )
 			Render();
-		else if ( wParam == TimerGenericEvent )
+		else if ( wParam == XoWindowsTimerGenericEvent )
 		{
 			ev.Event.Type = xoEventTimer;
 			xoGlobal()->EventQueue.Add( ev );
@@ -114,14 +116,22 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
 	case WM_NCLBUTTONDOWN:
 		// Explanation above titled 'WM_NCLBUTTONDOWN'
-		SetTimer( hWnd, TimerRenderOutsideMainMsgPump, 1000 / xoGlobal()->TargetFPS, NULL );
+		SetTimer( hWnd, XoWindowsTimerRenderOutsideMainMsgPump, (uint) (1000.0 / xoGlobal()->TargetFPS), NULL );
 		result = DefWindowProc(hWnd, message, wParam, lParam);
-		KillTimer( hWnd, TimerRenderOutsideMainMsgPump );
+		KillTimer( hWnd, XoWindowsTimerRenderOutsideMainMsgPump );
 		return result;
 
 	case WM_DESTROY:
 		if ( Wnd->QuitAppWhenWindowDestroyed )
 			PostQuitMessage(0);
+		break;
+
+	case WM_SETCURSOR:
+		// Note that this is always at least one mouse move message behind, because we only
+		// update the Doc->UI.Cursor on WM_MOUSEMOVE, when is sent after WM_SETCURSOR. We
+		// need a way to asynchronously update the cursor here, but I haven't figured out
+		// a neat way to do that yet.
+		xoSysWnd::SetSystemCursor( Doc->UI.GetCursor() );
 		break;
 
 	case WM_MOUSEMOVE:

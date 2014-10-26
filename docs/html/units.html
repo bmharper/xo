@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+<head>
+<style>
+	body {
+		margin: 30px;
+		font-family: arial, helvetica, sans-serif;
+		background-color: #EDE7E1;
+		color: #333;
+	}
+	p {
+		max-width: 35em;
+		font-size: 13px;
+	}
+	li {
+		font-size: 13px;
+	}
+	h1 {
+		font-size: 21px;
+	}
+	h2 {
+		font-size: 17px;
+	}
+	h3 {
+		font-size: 15px;
+	}
+	.index-item {
+	}
+</style>
+</head>
+<body>
+<h1 id="measurement-units">Measurement Units</h1>
+
+<ul>
+  <li>
+    <p>Pixels (px) - physical device pixels. These are physical pixels, at least
+to the extent that such a thing exists. Screens with "PenTile" configurations
+share subpixel elements with neighbouring pixels, so you don't actually
+have the exact resolution that the device claims. Nevertheless, it is not
+worth fussing at that level, because these devices typically have high
+enough pixel density that it doesn't matter.</p>
+  </li>
+  <li>
+    <p>Eye Pixels (ep) - pixel-inspired unit that is calibrated to the typical
+viewing conditions of the device. This takes into account both the screen
+resolution as well as the typical viewing distance. For example, a phone
+and a 23" monitor may have the same screen resolution of 1920 x 1080.
+The phone's screen is maybe 6" large, so its resolution is about 4 times
+that of the desktop monitor. However, the phone is held much closer to the
+eye than the monitor, so visual objects can be physicaller smaller and still
+be readable. The eye pixel is a fudged unit, that is roughly 1:1 to
+physical pixels of a 23" 1920x1080 desktop monitor.<br />
+On Android, we use <a href="http://developer.android.com/reference/android/util/DisplayMetrics.html#scaledDensity">scaledDensity</a><br />
+On Windows, we use <code>GetDeviceCaps(LOGPIXELSX)</code> / 96.0</p>
+  </li>
+  <li>Percent (%) - percentage of parent content box.</li>
+  <li>Points - TODO - considering leaving this out. Don't know how it adds value.</li>
+  <li>EM - TODO</li>
+  <li>Zero - this is represented as 0 pixels ("0px" or just "0").</li>
+</ul>
+
+</body>

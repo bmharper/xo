@@ -98,6 +98,30 @@ xoSysWnd::~xoSysWnd()
 	DocGroup = NULL;
 }
 
+// This is called the moment xoDocUI detects a change in cursor. Because that xoDocUI processing
+// happens in a different thread to the one that responds to Windows messages, it effectively
+// delays the updating of the system cursor by at least one mouse-move message. This shortcut
+// is here to remove that delay.
+void xoSysWnd::SetSystemCursor( xoCursors cursor )
+{
+#if XO_PLATFORM_WIN_DESKTOP
+	LPTSTR wc = IDC_ARROW;
+	switch ( cursor )
+	{
+	case xoCursorArrow:	wc = IDC_ARROW; break;
+	case xoCursorHand:	wc = IDC_HAND; break;
+	case xoCursorText:	wc = IDC_IBEAM; break;
+	case xoCursorWait:	wc = IDC_WAIT; break;
+	}
+	static_assert( xoCursorWait == 3, "Implement new cursor" );
+	SetCursor( LoadCursor( NULL, wc ) );
+#elif XO_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_ANDROID
+#else
+	XOTODO_STATIC
+#endif
+}
+
 xoSysWnd* xoSysWnd::Create()
 {
 #if XO_PLATFORM_WIN_DESKTOP

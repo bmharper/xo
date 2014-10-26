@@ -135,6 +135,11 @@ XY(Text_Align_Vertical) \
 \
 XY(Break) \
 XY(CanFocus) \
+XY(Cursor) \
+\
+XY(Padding_Use_Me_1) \
+XY(Padding_Use_Me_2) \
+XY(Padding_Use_Me_3) \
 \
 XY(Margin_Left) \
 XY(Margin_Top) \
@@ -194,7 +199,7 @@ inline xoStyleCategories xoCatMakeBaseBox( xoStyleCategories c ) { return (xoSty
 // Styles that are inherited by default
 // Generally it is text styles that are inherited
 // Inheritance means that child nodes inherit the styles of their parents
-const int						xoNumInheritedStyleCategories = 4;
+const int						xoNumInheritedStyleCategories = 5;
 extern const xoStyleCategories	xoInheritedStyleCategories[xoNumInheritedStyleCategories];
 
 /* Single style attribute (such as Margin-Left, Width, FontSize, etc).
@@ -209,7 +214,7 @@ public:
 	{
 		// This means that the attribute takes its value from its closest ancestor in the DOM tree.
 		// Some styles are inherited by default (the list specified inside xoInheritedStyleCategories).
-		FlagInherit = 1		
+		FlagInherit = 1,
 	};
 
 	uint8				Category;		// type xoStyleCategories
@@ -238,6 +243,7 @@ public:
 	void SetBackgroundImage( const char* image, xoDoc* doc )		{ SetString( xoCatBackgroundImage, image, doc ); }
 	void SetBreak( xoBreakType type )								{ SetU32( xoCatBreak, type); }
 	void SetCanFocus( bool canFocus )								{ SetU32( xoCatCanFocus, canFocus ); }
+	void SetCursor( xoCursors cursor )								{ SetU32( xoCatCursor, cursor ); }
 	void SetFlowAxis( xoFlowAxis axis )								{ SetU32( xoCatFlow_Axis, axis ); }
 	void SetFlowDirectionHorizonal( xoFlowDirection dir )			{ SetU32( xoCatFlow_Direction_Horizontal, dir ); }
 	void SetFlowDirectionVertical( xoFlowDirection dir )			{ SetU32( xoCatFlow_Direction_Vertical, dir ); }
@@ -257,6 +263,7 @@ public:
 	void Set( xoStyleCategories cat, xoDisplayType val )			{ SetDisplay( val ); }
 	void Set( xoStyleCategories cat, xoPositionType val )			{ SetPosition( val ); }
 	void Set( xoStyleCategories cat, xoBreakType val )				{ SetBreak( val ); }
+	void Set( xoStyleCategories cat, xoCursors val )				{ SetCursor( val ); }
 	void Set( xoStyleCategories cat, xoFlowAxis val )				{ SetFlowAxis( val ); }
 	void Set( xoStyleCategories cat, xoFlowDirection val )			{ SetU32( cat, val ); }
 	void Set( xoStyleCategories cat, xoBoxSizeType val )			{ SetBoxSizing( val ); }
@@ -278,6 +285,7 @@ public:
 	xoPositionType			GetPositionType() const					{ return (xoPositionType) ValU32; }
 	xoBreakType				GetBreakType() const					{ return (xoBreakType) ValU32; }
 	bool					GetCanFocus() const						{ return ValU32 != 0; }
+	xoCursors				GetCursor() const						{ return (xoCursors) ValU32; }
 	int						GetStringID() const						{ return (int) ValU32; }
 	xoFlowAxis				GetFlowAxis() const						{ return (xoFlowAxis) ValU32; }
 	xoFlowDirection			GetFlowDirectionMajor() const			{ return (xoFlowDirection) ValU32; }
@@ -479,6 +487,7 @@ protected:
 XOAPI bool xoParseDisplayType( const char* s, intp len, xoDisplayType& t );
 XOAPI bool xoParsePositionType( const char* s, intp len, xoPositionType& t );
 XOAPI bool xoParseBreakType( const char* s, intp len, xoBreakType& t );
+XOAPI bool xoParseCursor( const char* s, intp len, xoCursors& t );
 XOAPI bool xoParseFlowAxis( const char* s, intp len, xoFlowAxis& t );
 XOAPI bool xoParseFlowDirection( const char* s, intp len, xoFlowDirection& t );
 XOAPI bool xoParseBoxSize( const char* s, intp len, xoBoxSizeType& t );

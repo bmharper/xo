@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "process.h"
 #include "timeprims.h"
-#include "../Strings/ConvertUTF.h"
+#include "ConvertUTF.h"
 
 #ifdef _WIN32
 #include <Psapi.h>
@@ -75,7 +75,7 @@ PAPI XString		AbcProcessGetPath()
 	return p;
 }
 #endif
-PAPI void			AbcProcessesEnum( podvec<AbcProcessID>& pids )
+PAPI void			AbcProcessesEnum( std::vector<AbcProcessID>& pids )
 {
 	DWORD id_static[1024];
 	DWORD* id = id_static;
@@ -98,7 +98,7 @@ PAPI void			AbcProcessesEnum( podvec<AbcProcessID>& pids )
 			break;
 		}
 	}
-	pids.resize_uninitialized( id_used / sizeof(DWORD) );
+	pids.resize( id_used / sizeof(DWORD) );
 	memcpy( &pids[0], id, id_used );
 	if ( id != id_static )
 		free(id);
@@ -167,7 +167,7 @@ PAPI XString		AbcProcessGetPath()
 	return XString::FromUtf8(p);
 }
 #endif
-PAPI void			AbcProcessesEnum( podvec<AbcProcessID>& pids )
+PAPI void			AbcProcessesEnum( std::vector<AbcProcessID>& pids )
 {
 	AbcAssert(false);
 }

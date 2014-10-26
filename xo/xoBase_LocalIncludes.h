@@ -36,7 +36,7 @@
 #include "../dependencies/Panacea/Other/StackAllocators.h"
 #include "../dependencies/Panacea/Bits/BitMap.h"
 #include "../dependencies/Panacea/fhash/fhashtable.h"
-#include "../dependencies/Panacea/Strings/ConvertUTF.h"
+#include "../dependencies/Panacea/Platform/ConvertUTF.h"
 #include "../dependencies/Panacea/Vec/Vec2.h"
 #include "../dependencies/Panacea/Vec/Vec3.h"
 #include "../dependencies/Panacea/Vec/Vec4.h"

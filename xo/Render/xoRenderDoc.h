@@ -41,8 +41,7 @@ public:
 	void			ReleaseLayout( xoLayoutResult* layout );
 
 protected:
-	// Cloned data. temp hack for webcam demo
-	//xoStringTable	ClonedStrings;
+	// Cloned image metadata
 	xoImageStore			ClonedImages;
 
 	// Rendered state

@@ -279,7 +279,7 @@ local xo = SharedLibrary {
 		"dependencies/Panacea/Platform/syncprims.cpp",
 		"dependencies/Panacea/Platform/timeprims.cpp",
 		"dependencies/Panacea/Platform/thread.cpp",
-		"dependencies/Panacea/Strings/ConvertUTF.cpp",
+		"dependencies/Panacea/Platform/ConvertUTF.cpp",
 		"dependencies/Panacea/Strings/fmt.cpp",
 		"dependencies/GL/gl_xo.cpp",
 		{ "dependencies/GL/wgl_xo.cpp"; Config = "win*" },

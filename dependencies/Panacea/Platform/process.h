@@ -2,7 +2,7 @@
 #ifndef ABC_PROCESS_H_INCLUDED
 #define ABC_PROCESS_H_INCLUDED
 
-#include "../Containers/podvec.h"
+#include <vector>
 
 #ifdef _WIN32
 typedef DWORD					AbcProcessID;
@@ -29,7 +29,7 @@ PAPI void				AbcProcessGetPath( char* path, size_t maxPath );		// Return full pa
 #ifdef XSTRING_DEFINED
 PAPI XString			AbcProcessGetPath();									// Return full path of executing process, for example "c:\programs\notepad.exe"
 #endif
-PAPI void				AbcProcessesEnum( podvec<AbcProcessID>& pids );
+PAPI void				AbcProcessesEnum( std::vector<AbcProcessID>& pids );
 PAPI void				AbcProcessGetStatistics( AbcProcessStatistics& stats );
 PAPI uint64				AbcProcessWorkingSetBytes();							// wrapper around AbcProcessGetStatistics. On linux, this is the same as AbcProcessMaxWorkingSetBytes().
 PAPI uint64				AbcProcessMaxWorkingSetBytes();							// wrapper around AbcProcessGetStatistics

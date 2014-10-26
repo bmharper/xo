@@ -12,6 +12,7 @@ const xoStyleCategories xoInheritedStyleCategories[xoNumInheritedStyleCategories
 	xoCatFontSize,
 	xoCatColor,
 	xoCatText_Align_Vertical,
+	xoCatCursor,
 };
 
 inline bool IsNumeric( char c )
@@ -428,6 +429,7 @@ bool xoStyle::Parse( const char* t, intp maxLen, xoDoc* doc )
 			//else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatBottom, *this ); }
 			else if ( MATCH(t, startk, eq, "break") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseBreakType, xoCatBreak, *this ); }
 			else if ( MATCH(t, startk, eq, "canfocus") )					{ ok = ParseBool( TSTART, TLEN, xoCatCanFocus, *this ); }
+			else if ( MATCH(t, startk, eq, "cursor") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseCursor, xoCatCursor, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-axis") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowAxis, xoCatFlow_Axis, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-direction-horizontal") )	{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowDirection, xoCatFlow_Direction_Horizontal, *this ); }
 			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowDirection, xoCatFlow_Direction_Vertical, *this ); }
@@ -893,6 +895,15 @@ XOAPI bool xoParseBreakType( const char* s, intp len, xoBreakType& t )
 	if ( MATCH(s, 0, len, "none") )		{ t = xoBreakNULL; return true; }
 	if ( MATCH(s, 0, len, "before") )	{ t = xoBreakBefore; return true; }
 	if ( MATCH(s, 0, len, "after") )	{ t = xoBreakAfter; return true; }
+	return false;
+}
+
+XOAPI bool xoParseCursor( const char* s, intp len, xoCursors& t )
+{
+	if ( MATCH(s, 0, len, "arrow") )	{ t = xoCursorArrow; return true; }
+	if ( MATCH(s, 0, len, "hand") )		{ t = xoCursorHand; return true; }
+	if ( MATCH(s, 0, len, "text") )		{ t = xoCursorText; return true; }
+	if ( MATCH(s, 0, len, "wait") )		{ t = xoCursorWait; return true; }
 	return false;
 }
 

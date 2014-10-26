@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<head>
+<style>
+	body {
+		margin: 30px;
+		font-family: arial, helvetica, sans-serif;
+		background-color: #EDE7E1;
+		color: #333;
+	}
+	p {
+		max-width: 35em;
+		font-size: 13px;
+	}
+	li {
+		font-size: 13px;
+	}
+	h1 {
+		font-size: 21px;
+	}
+	h2 {
+		font-size: 17px;
+	}
+	h3 {
+		font-size: 15px;
+	}
+	.index-item {
+	}
+</style>
+</head>
+<body>
+
+<p>Laconic code for generating HTML DOM from javascript:</p>
+
+<pre><code>$.el.table(
+  $.el.tr(
+    $.el.th('first name'),
+    $.el.th('last name')),
+  $.el.tr(
+    $.el.td('Joe'),
+    $.el.td('Stelmach'))
+).appendTo(document.body);
+</code></pre>
+
+<p>I quite like that - it might be nice to do something similar inside C++ with xo, probably with a C++ DSL.</p>
+
+</body>

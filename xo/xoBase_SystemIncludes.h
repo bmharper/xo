@@ -45,3 +45,4 @@
 #include <algorithm>
 #include <limits>
 #include <functional>
+#include <vector>

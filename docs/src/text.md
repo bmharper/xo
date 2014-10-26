@@ -12,4 +12,4 @@ Given the rise of ALU/bandwidth ratio, this is likely the right choice.
 
 Sub-pixel rendering
 -------------------
-See this link for Dual Source Blending, which is what we use: "http://www.opengl.org/wiki/Blending#Dual_Source_Blending"
+See this link for Dual Source Blending, which is what we use: [Dual Source Blending](http://www.opengl.org/wiki/Blending#Dual_Source_Blending)

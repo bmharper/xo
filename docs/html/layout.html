@@ -1,0 +1,120 @@
+<!DOCTYPE HTML>
+<head>
+<style>
+	body {
+		margin: 30px;
+		font-family: arial, helvetica, sans-serif;
+		background-color: #EDE7E1;
+		color: #333;
+	}
+	p {
+		max-width: 35em;
+		font-size: 13px;
+	}
+	li {
+		font-size: 13px;
+	}
+	h1 {
+		font-size: 21px;
+	}
+	h2 {
+		font-size: 17px;
+	}
+	h3 {
+		font-size: 15px;
+	}
+	.index-item {
+	}
+</style>
+</head>
+<body>
+<h1 id="layout-concepts">Layout Concepts</h1>
+
+<h2 id="horizontal-vs-vertical">Horizontal vs Vertical</h2>
+<p>When performing layout, a box can specify whether it uses
+vertical or horizontal layout. Vertical is the regular thing
+you expect, where new lines are underneath each other, and text
+flows horizontally. In this case we say that the major axis
+is vertical and the minor axis is horizontal.</p>
+
+<p>A box can also specify that an axis direction is reversed.
+The normal direction for vertical is top to bottom.
+The normal direction for horizontal is left to right.
+xoFlowDirection is the enum used to control this.</p>
+
+<p>To set horizontal to reversed, use the following style:</p>
+
+<pre><code>flow-direction-horizontal: reverse
+</code></pre>
+
+<p>To set horizontal to normal, use the following style:</p>
+
+<pre><code>flow-direction-horizontal: normal
+</code></pre>
+
+<h2 id="size-units">Size units</h2>
+<p>See <a href="units.html">Measurement Units</a></p>
+
+<h2 id="display-types">"Display" types</h2>
+<ul>
+  <li><strong>Block</strong> Block implies a line break before and after the element.</li>
+  <li><strong>Inline</strong> Inline has no implicit line break, before or after.</li>
+</ul>
+
+<p>Hang on - maybe we can get away without defining "block" or "inline",
+and rather implement those concepts with style classes.</p>
+
+<h2 id="text-tags">Text tags</h2>
+<p>Text must live inside 'text' tags. Text tags must be leaves - ie they
+may not have any children.</p>
+
+<h2 id="layout-algorithm">Layout Algorithm</h2>
+
+<p>I'm still struggling to formulate this, so here are a bunch of principles:</p>
+
+<ul>
+  <li>
+    <p>Containing Box is the Content Box of the parent. Starting at the top,
+the Containing Box of the &lt;body&gt; element is the viewport dimensions.</p>
+  </li>
+  <li>
+    <p>Width and Height are treated equally. The only thing that makes them
+seem different is that the default flow mode is vertical.</p>
+  </li>
+  <li>
+    <p>Instead of 'block' and 'inline' modes, we instead have a style
+attribute called "break-after", which, if true, causes the flow to move
+in the major flow direction. For convenience there is also a <br /> element,
+which by default has the "break-after" attribute set.</p>
+  </li>
+  <li>
+    <p>A new line (which is \n only) in text elements causes a line break.</p>
+  </li>
+  <li>
+    <p>If the width/height of an element is unspecified, then it grows forever,
+regardless of the size of its parent content box. For example, if you had
+text inside an element with no width (and assuming vertical flow), then
+the only thing that would cause the text to wrap onto the next line would
+be the presence of a <br /> element inside the text.
+On the contrary, if the width/height of an element is specified, then
+its children wrap around inside it.</p>
+  </li>
+  <li>
+    <p>We perform centering by introducing style attributes called "center-horizontal"
+and "center-vertical". By setting "center-horizontal: 50%", you can center
+horizontally. The "left" and "right" attributes will clobber the center
+attributes.</p>
+  </li>
+  <li>
+    <p>Our default box-sizing is "border". This just makes sense for UI layout.</p>
+  </li>
+  <li>
+    <p>Width or Height specified as a percentage is a percentage of the size of
+the Content Box of its parent.</p>
+  </li>
+  <li>
+    <p>We do not collapse margins at all.</p>
+  </li>
+</ul>
+
+</body>

@@ -108,7 +108,7 @@ $(XO_ROOT_SRC)/dependencies/Panacea/Platform/process.cpp \
 $(XO_ROOT_SRC)/dependencies/Panacea/Platform/syncprims.cpp \
 $(XO_ROOT_SRC)/dependencies/Panacea/Platform/timeprims.cpp \
 $(XO_ROOT_SRC)/dependencies/Panacea/Platform/thread.cpp \
-$(XO_ROOT_SRC)/dependencies/Panacea/Strings/ConvertUTF.cpp \
+$(XO_ROOT_SRC)/dependencies/Panacea/Platform/ConvertUTF.cpp \
 $(XO_ROOT_SRC)/dependencies/Panacea/Strings/fmt.cpp \
 $(XO_ROOT_SRC)/dependencies/stb_image.cpp
 

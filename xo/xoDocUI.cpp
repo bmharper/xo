@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "xoDocGroup.h"
 #include "xoDocUI.h"
+#include "xoSysWnd.h"		// Imported only for SetSystemCursor. SetSystemCursor belongs in a different namespace
 #include "Render/xoRenderDoc.h"
 #include "Render/xoRenderDomEl.h"
 #include "Render/xoRenderStack.h"
@@ -11,6 +12,7 @@ xoDocUI::xoDocUI( xoDoc* doc )
 	Doc = doc;
 	ViewportWidth = 0;
 	ViewportHeight = 0;
+	Cursor = xoCursorArrow;
 }
 
 xoDocUI::~xoDocUI()
@@ -18,7 +20,7 @@ xoDocUI::~xoDocUI()
 }
 
 // This is always called from the UI thread
-// By the time this si called, the DocGroup->DocLock must already be held.
+// By the time this is called, the DocGroup->DocLock must already be held.
 void xoDocUI::InternalProcessEvent( xoEvent& ev, const xoLayoutResult* layout )
 {
 	switch ( ev.Type )
@@ -46,12 +48,16 @@ void xoDocUI::CloneSlowInto( xoDocUI& c ) const
 	c.HoverSet = HoverSet;
 	c.ViewportWidth = ViewportWidth;
 	c.ViewportHeight = ViewportHeight;
+	c.Cursor = Cursor;
 }
 
 // Returns true if the event was handled
 bool xoDocUI::BubbleEvent( xoEvent& ev, const xoLayoutResult* layout )
 {
-	XOASSERTDEBUG( ev.Type != xoEventMouseEnter ); // Just send MouseMove
+	// The platform must just send MouseMove. It is our job here to synthesize MouseEnter for DOM nodes.
+	// The platform must, however, send xoEventMouseLeave.
+	XOASSERTDEBUG( ev.Type != xoEventMouseEnter );
+
 	// TODO. My plan is to go with upward bubbling only. The inner-most
 	// control gets the event first, then outward.
 	// A return value of false means "cancel the bubble".
@@ -113,6 +119,12 @@ bool xoDocUI::BubbleEvent( xoEvent& ev, const xoLayoutResult* layout )
 	return handled;
 }
 
+/* Given a point, return the chain of DOM elements (starting at the root) that leads down
+to the inner-most DOM element beneath the cursor.
+
+This code does not make provision for elements that are positioned outside of their parent,
+such as relative-positioned or absolute-positioned.
+*/
 void xoDocUI::FindTarget( xoVec2f p, pvect<const xoRenderDomNode*>& nodeChain, const xoLayoutResult* layout )
 {
 	xoPoint pos = { xoRealToPos(p.x), xoRealToPos(p.y) };
@@ -148,6 +160,8 @@ void xoDocUI::FindTarget( xoVec2f p, pvect<const xoRenderDomNode*>& nodeChain, c
 
 void xoDocUI::UpdateCursorLocation( const pvect<const xoRenderDomNode*>& nodeChain )
 {
+	// Update Hover states, send mouse leave and mouse enter events.
+	bool anyHoverChanges = false;
 	fhashset<xoInternalID> oldNodeIDs, newNodeIDs;
 
 	for ( intp i = 0; i < HoverNodes.size(); i++ )
@@ -161,6 +175,7 @@ void xoDocUI::UpdateCursorLocation( const pvect<const xoRenderDomNode*>& nodeCha
 	{
 		if ( !newNodeIDs.contains(HoverNodes[i].InternalID) )
 		{
+			anyHoverChanges = true;
 			if ( HoverNodes[i].HasHoverStyle )
 				InvalidateRenderForPseudoClass();
 
@@ -177,6 +192,7 @@ void xoDocUI::UpdateCursorLocation( const pvect<const xoRenderDomNode*>& nodeCha
 	{
 		if ( !oldNodeIDs.contains(nodeChain[i]->InternalID) )
 		{
+			anyHoverChanges = true;
 			if ( nodeChain[i]->Style.HasHoverStyle )
 				InvalidateRenderForPseudoClass();
 
@@ -193,6 +209,30 @@ void xoDocUI::UpdateCursorLocation( const pvect<const xoRenderDomNode*>& nodeCha
 	HoverSet.clear();
 	for ( intp i = 0; i < HoverNodes.size(); i++ )
 		HoverSet.insert( HoverNodes[i].InternalID );
+
+	// Update mouse cursor
+	if ( anyHoverChanges )
+	{
+		xoCursors oldCursor = Cursor;
+		if ( nodeChain.size() == 0 )
+			Cursor = xoCursorArrow;
+		else
+		{
+			const xoDomNode* node = Doc->GetNodeByInternalID( nodeChain.back()->InternalID );
+			if ( node != nullptr )
+			{
+				xoStyleResolveOnceOff style( node );
+				Cursor = style.RS->Get( xoCatCursor ).GetCursor();
+			}
+		}
+
+		// This does not work, because we are running on a different thread to the 
+		// thread that owns the Window's message queue. We need a more sophisticated mechanism
+		// of asynchronously updating the Windows cursor. I haven't figured out yet how
+		// that should look.
+		//if ( Cursor != oldCursor )
+		//	xoSysWnd::SetSystemCursor( Cursor );
+	}
 }
 
 void xoDocUI::UpdateFocusWindow( const pvect<const xoRenderDomNode*>& nodeChain )

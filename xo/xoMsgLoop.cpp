@@ -98,6 +98,10 @@ XOAPI void xoRunWin32MessageLoop()
 
 extern xoSysWnd* SingleMainWnd;
 
+// This implementation is a super-quick get-something-on-the-screen kinda thing.
+// To be consistent with Windows Desktop we should process events on a different
+// thread to the render thread. Also, we blindly send events to all docs, which
+// is absurd.
 XOAPI void xoRunXMessageLoop()
 {
 	xoProcessDocQueue();

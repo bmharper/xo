@@ -40,6 +40,7 @@ void xoRenderStack::Initialize( const xoDoc* doc, xoPool* pool )
 	Defaults[xoCatDisplay].SetDisplay( xoDisplayInline );
 	Defaults[xoCatBackground].SetColor( xoCatBackground, xoColor::RGBA(0,0,0,0) );
 	//Defaults[xoCatBackgroundImage]
+	Defaults[xoCatCursor].SetCursor( xoCursorArrow );
 	Defaults[xoCatText_Align_Vertical].SetTextAlignVertical( xoTextAlignVerticalBaseline );
 	//Defaults[xoCatDummy2_UseMe]
 	//Defaults[xoCatDummy3_UseMe]

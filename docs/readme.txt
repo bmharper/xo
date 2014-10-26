@@ -1,0 +1,1 @@
+Run gen.rb to generate the docs inside 'html', from the content inside 'src'.

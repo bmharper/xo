@@ -72,3 +72,13 @@ typedef unsigned short	uint16;
 	#define __STDC_LIMIT_MACROS
 	#endif
 #endif
+
+#if XO_PLATFORM_WIN_DESKTOP
+	#ifndef XOAPI
+		#define XOAPI __declspec(dllexport)
+	#else
+		#define XOAPI __declspec(dllimport)
+	#endif
+#else
+	#define XOAPI
+#endif

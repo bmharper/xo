@@ -44,7 +44,11 @@ protected:
 	static void		SetInherited( xoRenderStack& stack, const xoDomEl* node, xoStyleCategories cat );
 };
 
-// This is intended for resolving the style of an element, once-off
+/* This is intended for resolving the style of an element, once-off.
+In order to use it, simply construct it, passing in the node that you want
+to inspect. Then, use RS->Get() and other such functions to retrieve
+the resolved properties for this element.
+*/
 class XOAPI xoStyleResolveOnceOff
 {
 public:

@@ -48,7 +48,7 @@ dependencies/Panacea/Platform/thread.h
 dependencies/Panacea/Platform/syncprims.h
 dependencies/Panacea/Platform/timeprims.h
 dependencies/Panacea/Platform/filesystem.h
-dependencies/Panacea/Strings/ConvertUTF.h
+dependencies/Panacea/Platform/ConvertUTF.h
 dependencies/Panacea/Containers/queue.h
 dependencies/Panacea/Other/aligned_malloc.h
 dependencies/Panacea/Other/StackAllocators.h
@@ -65,7 +65,7 @@ dependencies/hash/xxhash.h
 )
 
 parts_cpp_1 = %w(
-xo/xoApiDecl.h
+xo/xoPlatformDefine.h
 xo/xoBase_SystemIncludes.h
 dependencies/GL/gl_xo.h
 dependencies/GL/wgl_xo.h
@@ -188,7 +188,7 @@ dependencies/Panacea/Platform/filesystem.cpp
 dependencies/Panacea/Platform/syncprims.cpp
 dependencies/Panacea/Platform/timeprims.cpp
 dependencies/Panacea/Platform/thread.cpp
-dependencies/Panacea/Strings/ConvertUTF.cpp
+dependencies/Panacea/Platform/ConvertUTF.cpp
 dependencies/Panacea/Strings/fmt.cpp
 dependencies/stb_image.c
 dependencies/hash/xxhash.cpp
@@ -207,7 +207,7 @@ parts_gl_platform_cpp = [
 ]
 
 parts_h_1 = %w(
-xo/xoApiDecl.h
+xo/xoPlatformDefine.h
 xo/xoBase_SystemIncludes.h
 )
 
@@ -260,14 +260,19 @@ prelude_common = <<END
 	#endif
 #endif
 
-#ifdef _WIN32
+// Keep this in sync with xo/pch.h
+#define PROJECT_XO 1
+
+// This must be valid before xoPlatformDefine.h is included, so we can't use XO_PLATFORM_WIN_DESKTOP
+#if defined(_WIN32) && !defined(XO_EXCLUDE_DIRECTX)
 	#define XO_BUILD_DIRECTX 1
 #else
 	#define XO_BUILD_DIRECTX 0
 #endif
 
-#define XO_BUILD_OPENGL 1
-#define PROJECT_XO 1
+#if !defined(XO_EXCLUDE_OPENGL)
+	#define XO_BUILD_OPENGL 1
+#endif
 END
 
 epilogue_common = <<END
@@ -300,6 +305,7 @@ prelude_cpp = <<END
 #endif
 
 #include <algorithm>	// std::min/max
+#include <vector>
 #include <sys/stat.h>
 
 //#include "xo-amalgamation-freetype.h"

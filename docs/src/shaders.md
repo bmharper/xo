@@ -25,12 +25,12 @@ You can use those tokens inside your shaders.
 
 The following constants are defined:
 
-	XO_PLATFORM_WIN_DESKTOP		Defined when target is Windows Desktop
-	XO_PLATFORM_ANDROID			Defined when target is Android
-	XO_GLYPH_ATLAS_SIZE			The size of glyph texture atlasses.
-	XO_SRGB_FRAMEBUFFER			glEnable(GL_FRAMEBUFFER_SRGB) has been called, and is available
-								on this platform (set via xoGlobal()->EnableSRGBFramebuffer).
+	XO_PLATFORM_WIN_DESKTOP     Defined when target is Windows Desktop
+	XO_PLATFORM_ANDROID         Defined when target is Android
+	XO_GLYPH_ATLAS_SIZE         The size of glyph texture atlasses.
+	XO_SRGB_FRAMEBUFFER         glEnable(GL_FRAMEBUFFER_SRGB) has been called, and is available
+	                            on this platform (set via xoGlobal()->EnableSRGBFramebuffer).
 	
 	<DELETED - This is going to be too tricky>
-	XO_EMULATE_GAMMA_BLENDING	You should raise your alpha to 2.2 (set via xoGlobal()->EmulateGammaBlending).
+	XO_EMULATE_GAMMA_BLENDING    You should raise your alpha to 2.2 (set via xoGlobal()->EmulateGammaBlending).
 	<DELETED>

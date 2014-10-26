@@ -1,0 +1,45 @@
+<!DOCTYPE HTML>
+<head>
+<style>
+	body {
+		margin: 30px;
+		font-family: arial, helvetica, sans-serif;
+		background-color: #EDE7E1;
+		color: #333;
+	}
+	p {
+		max-width: 35em;
+		font-size: 13px;
+	}
+	li {
+		font-size: 13px;
+	}
+	h1 {
+		font-size: 21px;
+	}
+	h2 {
+		font-size: 17px;
+	}
+	h3 {
+		font-size: 15px;
+	}
+	.index-item {
+	}
+</style>
+</head>
+<body>
+<p>Below about 24 pixel text, the lack of sub-pixel rendering is very noticeable.
+On a big 1920 x 1080 Windows screen, even 24px text is ugly without subpixel.
+However, on my S3, 24 is about the number where text becomes decent.</p>
+
+<p>Doing sub-pixel text on a mobile device would be absolutely insane.</p>
+
+<h2 id="possible-performance-enhancement-on-high-res-devices">Possible performance enhancement on high res devices</h2>
+<p>Instead of padding every glyph on high res devices with 3 texel on either side,
+use clamping in the pixel shader, the same way we do it for sub-pixel rendering.
+Given the rise of ALU/bandwidth ratio, this is likely the right choice.</p>
+
+<h2 id="sub-pixel-rendering">Sub-pixel rendering</h2>
+<p>See this link for Dual Source Blending, which is what we use: <a href="http://www.opengl.org/wiki/Blending#Dual_Source_Blending">Dual Source Blending</a></p>
+
+</body>

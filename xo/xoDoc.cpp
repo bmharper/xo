@@ -263,14 +263,19 @@ void xoDoc::InitializeDefaultTagStyles()
 	afont.SetFont( xoGlobal()->FontStore->InsertByFacename(font) );
 
 	// Other defaults are set inside xoRenderStack::Initialize()
+	// It would be good to establish consistency on where the defaults are set: here or there.
+	// The defaults inside xoRenderStack are like a fallback. These are definitely at a "higher" level
+	// of abstraction.
 
-	TagStyles[xoTagBody].Parse( "background: #fff; width: 100%; height: 100%; box-sizing: margin;", this );
+	TagStyles[xoTagBody].Parse( "background: #fff; width: 100%; height: 100%; box-sizing: margin; cursor: arrow", this );
 	TagStyles[xoTagBody].Set( afont );
 	//TagStyles[xoTagBody].Parse( "background: #000; width: 100%; height: 100%;", this );
 	//TagStyles[xoTagDiv].Parse( "display: block;", this );
 	// Hack to give text some size
 	//TagStyles[xoTagText].Parse( "width: 70px; height: 30px;", this );
-	//TagStyles[xoTagLab]...
+	
+	// This is amusing, and it is the default in HTML, but not the right default for general-purpose UI.
+	//TagStyles[xoTagLab].Parse( "cursor: text", this );
 
 	static_assert(xoTagCanvas == xoTagEND - 1, "add default style for new tag");
 }
