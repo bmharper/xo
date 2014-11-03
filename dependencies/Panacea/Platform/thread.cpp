@@ -50,7 +50,7 @@ PAPI bool			AbcThreadCreate( AbcThreadFunc threadfunc, void* context, AbcThreadH
 	pthread_attr_t attr;
 	handle = 0;
 	AbcVerify( 0 == pthread_attr_init( &attr ) );
-	bool ok = pthread_create( &handle, &attr, threadfunc, context );
+	bool ok = 0 == pthread_create( &handle, &attr, threadfunc, context );
 	AbcVerify( 0 == pthread_attr_destroy( &attr ) );
 	return ok;
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xoDefs.h"
+#include "../xoDefs.h"
 
 #ifndef FT_FREETYPE_H
 typedef void* FT_Face;

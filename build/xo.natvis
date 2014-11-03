@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
-    <Type Name="nuBox">
+    <Type Name="xoBox">
         <DisplayString>{Left},{Top},{Right},{Bottom}</DisplayString>
 		<Expand> 
 		    <Item Name="Left">Left</Item> 
@@ -17,7 +17,7 @@
 		    <Item Name="(px:Height)">(Bottom-Top)/256</Item> 
   		</Expand>         
     </Type>
-    <Type Name="nuStringRaw">
+    <Type Name="xoStringRaw">
         <DisplayString>{Z}</DisplayString>
 	    <StringView>Z,s</StringView>
     </Type>

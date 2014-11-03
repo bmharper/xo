@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xoDefs.h"
+#include "../xoDefs.h"
 #include "xoTextDefs.h"
 
 // This is used during layout to get an immutable set of fonts that we can access

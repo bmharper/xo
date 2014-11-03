@@ -1,2 +1,17 @@
-ssh ben@192.168.4.175 "./build-xo xo"
-"c:\dev\tools\tundra2\bin\tundra2.exe" -C "C:\dev\individual\xo" win64-msvc2013-debug-default xo
+Example MSVC nmake build command:
+
+	ssh ben@192.168.1.4 "cd dev/xo && build/linux-msvc-build-script.sh"
+
+The sed script referenced by linux-msvc-build-script.sh converts a line like this:
+
+	/home/ben/dev/xo/tests/../dependencies/TinyTest/TinyMaster.cpp:1203:2: error: ‘blah’ was not declared in this scope
+
+into this:
+
+	c:\dev\individual\xo\dependencies\tinytest\TinyMaster.cpp(1203): error C2065: 'blah' : undeclared identifier
+
+which is necessary for MSVC IDE consumption (ie to show error/warning list that you can click on to get to the source line).
+
+Then, to run tests on linux, do
+	export LD_LIBRARY_PATH=$(pwd)/t2-output/linux-gcc-debug-default
+	t2-output/linux-gcc-debug-default/test test all

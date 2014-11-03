@@ -1,10 +1,10 @@
 #pragma once
 
-#include "xoDefs.h"
-#include "xoStyle.h"
-#include "Render/xoRenderStack.h"
-#include "Text/xoGlyphCache.h"
-#include "Text/xoFontStore.h"
+#include "../xoDefs.h"
+#include "../xoStyle.h"
+#include "../Render/xoRenderStack.h"
+#include "../Text/xoGlyphCache.h"
+#include "../Text/xoFontStore.h"
 
 /* A box that has been laid out.
 */

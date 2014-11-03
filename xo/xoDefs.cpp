@@ -325,7 +325,7 @@ XOAPI void xoInitialize( const xoInitParams* init )
 #if XO_PLATFORM_WIN_DESKTOP
 	xoInitialize_Win32();
 #endif
-	XOTRACE( "Using %d/%d processors.\n", (int) xoGlobals->NumWorkerThreads, (int) minf.LogicalCoreCount );
+	XOTRACE( "xo using %d/%d processors.\n", (int) xoGlobals->NumWorkerThreads, (int) minf.LogicalCoreCount );
 	for ( int i = 0; i < xoGlobals->NumWorkerThreads; i++ )
 	{
 		XOVERIFY( AbcThreadCreate( xoWorkerThreadFunc, NULL, WorkerThreads[i] ) );

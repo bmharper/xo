@@ -238,6 +238,7 @@ local xo = SharedLibrary {
 		"xo/Image/xoImageStore.cpp",
 		"xo/Layout/xoLayout.cpp",
 		"xo/Layout/xoLayout2.cpp",
+		"xo/Layout/xoLayout3.cpp",
 		"xo/Layout/xoTextLayout.cpp",
 		"xo/Parse/xoDocParser.cpp",
 		"xo/Render/xoRenderBase.cpp",
@@ -335,10 +336,12 @@ local ExampleLowLevel    = XoExampleApp("xoWinMainLowLevel.cpp", "RunAppLowLevel
 local Test = Program {
 	Name = "Test",
 	SourceDir = ".",
-	--Includes = { "xo" },
 	Depends = {
 		xo,
 		crt,
+	},
+	Libs = { 
+		{ "m", "stdc++"; Config = "linux-*" },
 	},
 	PrecompiledHeader = {
 		Source = "tests/pch.cpp",
@@ -347,7 +350,10 @@ local Test = Program {
 	},
 	Sources = {
 		Glob { Extensions = { ".h" }, Dir = "tests", },
-		"dependencies/stb_image.cpp",
+		-- The following platform mismatch is purely because of the mismatch of
+		-- precompiled header behaviour on linux vs windows
+		{ "dependencies/stb_image.cpp"; Config = "win*" },
+		{ "dependencies/stb_image.c"; Config = "linux-*" },
 		"dependencies/stb_image_write.h",
 		"tests/test.cpp",
 		"tests/test_DocumentClone.cpp",

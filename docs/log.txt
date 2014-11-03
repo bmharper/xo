@@ -1,3 +1,5 @@
+NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
+
 2014-06-26	Layout
 	You must specify either the width or the height of an element. If the element contains only text, then its height
 	is known. But... what if that element spans multiple lines, then its height is not known.
@@ -185,5 +187,68 @@
 
 2014-08-18	Rename project to "xo"
 
+2014-10-26	Universal layout
+	I have been struggling to come up with a simple solution that unifies text and
+	non-text nodes. HTML solves this by splitting objects into Block and Inline,
+	and Inline-Block, which as far as I can tell is just Inline with a fixed width.
+	At present, my solution is this:
+	Every DOM node can either define its own flow context, or it can inherit the
+	flow context of its parent. Take this example:
 
+	Body                                          
+	+--------------------------------------------+
+	|                                            |
+	| +---------------------+ +------------+     |
+	| |                     | |            |     |
+	| | The quick brown fox | | jumps over |     |
+	| |                     | |            |     |
+	| +---------------------+ +------------+     |
+	|                                            |
+	| +----------+ +-----+                       |
+	| |          | |     |                       |
+	| | the lazy | | dog |                       |
+	| |          | |     |                       |
+	| +----------+ +-----+                       |
+	|                                            |
+	+--------------------------------------------+
 
+	and its definition:
+
+	<body>
+		The quick brown fox
+			<span style='background-color: red'>
+				jumps over the lazy
+			</span>
+		dog
+	</body>
+
+	In this example, the root node (ie body) gets its own flow context. The first rectangle
+	inside it is the text element "The quick brown fox". Let's ignore exactly how that
+	element is layed out, and proceed onto the <span> element, which is more interesting,
+	because it is broken across a line. It is clear from this example that it is enticing
+	to treat words as first-class rectangles, the same way we treat a <div> object, or 
+	any other DOM node. However, we have this problem that we want things such as <span>
+	objects to be splittable, but other object we want indivisible. The solution, I believe,
+	is not to declare objects "splittable", but rather to declare that an object does not
+	define its own flow context, but rather it injects itself into the flow context of its
+	parent. In this example, a <span> object is such an object. Also, all text nodes
+	share this property. The inner objects of a text node, however, do not. They are words
+	of text, and they are rectangle objects.
+	I am struggling to find a name for these two distinctions. It is tempting to say "block"
+	and "inline", but I fear confusion with HTML here. How about a property of an object,
+	which is either flow-context: parent, or flow-context: self.
+	A text object must always have flow-context: parent.
+
+2014-10-27	Layout3
+	It looks like I have failed a second time to write layout code that is clean. What I am
+	going to do next is to write the layout algorithm such that there is an interface
+	barrier between itself and the DOM data structure.
+
+2014-10-28	Alternate things
+	In an experimental project like this I find it's easy to lose hope that it will ever
+	get anywhere, particularly because the project needs great code infrastructure, as well
+	as unique features. If you spend all your time doing features, then	you'll neglect the
+	infrastructure, and vice versa. By infastructure I mean things like making all heap
+	allocations controllable, or an easy build process. Perhaps a reasonable thing to
+	do is alternate working on features and infrastructure.
+	

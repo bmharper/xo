@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xoDefs.h"
+#include "../xoDefs.h"
 
 class xoTextureAtlas;
 class xoFont;

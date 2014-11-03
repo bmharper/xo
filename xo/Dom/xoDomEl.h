@@ -1,8 +1,8 @@
 #pragma once
 
-#include "xoStyle.h"
-#include "xoMem.h"
-#include "xoEvent.h"
+#include "../xoStyle.h"
+#include "../xoMem.h"
+#include "../xoEvent.h"
 
 /* DOM node in the tree.
 */

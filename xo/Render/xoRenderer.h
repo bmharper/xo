@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xoDefs.h"
+#include "../xoDefs.h"
 #include "../Text/xoGlyphCache.h"
 
 /* An instance of this is created for each render.

@@ -1,3 +1,4 @@
+#ifdef _WIN32
 /**********************************************************************
  * 
  * StackWalker.cpp
@@ -81,8 +82,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #pragma comment(lib, "version.lib")  // for "VerQueryValue"
+#pragma warning(push)
 #pragma warning(disable:4826)
 #pragma warning(disable:4996)
+#pragma warning(disable:6388)
+#pragma warning(disable:6102)
+#pragma warning(disable:28159)
 
 #include "StackWalker.h"
 
@@ -1350,3 +1355,5 @@ void StackWalker::OnOutput(bool isCallStackProper, LPCSTR buffer)
 {
   OutputDebugStringA(buffer);
 }
+#pragma warning(pop)
+#endif // _WIN32

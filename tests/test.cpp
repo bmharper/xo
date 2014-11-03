@@ -4,14 +4,18 @@
 
 #include "../dependencies/TinyTest/TinyTestBuild.h"
 
-static int __cdecl hook( int allocType, void *pvData, size_t size, int blockUse, long request, const unsigned char *filename, int fileLine )
+#ifdef _WIN32
+static int __cdecl CrtAllocHook( int allocType, void *pvData, size_t size, int blockUse, long request, const unsigned char *filename, int fileLine )
 {
 	return TRUE;
 }
+#endif
 
 int main( int argc, char** argv )
 {
-	_CrtSetAllocHook( hook );
+#ifdef _WIN32
+	_CrtSetAllocHook( CrtAllocHook );
+#endif
 
 	xoInitialize();
 

@@ -18,6 +18,8 @@ while obeying the flags that the tests specify.
 	#define pclose _pclose
 #else
 	#include <sys/stat.h>
+	#include <sys/wait.h>
+	#include <fcntl.h>
 	#define DIR_SEP '/'
 	#define DIR_SEP_STR "/"
 	#define TT_TEST_DIR "/tmp/tinytest/"
@@ -30,8 +32,8 @@ while obeying the flags that the tests specify.
 static const int TTGlobalLockTimeoutSeconds = 15 * 60;
 
 // Uncomment the following two macros when debugging threading issues
-//#define DEBUG_THREADS_CX(fmt, ...)	printf(fmt, __VA_ARGS__)
-//#define DEBUG_THREADS(fmt, ...)		printf(fmt, __VA_ARGS__)
+//#define DEBUG_THREADS_CX(fmt, ...)	printf(fmt, ## __VA_ARGS__)
+//#define DEBUG_THREADS(fmt, ...)		printf(fmt, ## __VA_ARGS__)
 #define DEBUG_THREADS_CX(fmt, ...)	(void) 0
 #define DEBUG_THREADS(fmt, ...)		(void) 0
 
@@ -75,7 +77,7 @@ static podvec<string>	Split( const string& s, char delim );
 static string			Trim( const string& s );
 static string			Directory( const string& s );
 static string			FilenameOnly( const string& s );
-static string			SPrintf( const char* format, ... );
+static string			SPrintf( _In_z_ _Printf_format_string_ const char* format, ... );
 static bool				MatchWildcardNocase( const string& s, const string& p );
 static bool				MatchWildcardNocase( const char* s, const char* p );
 static bool				WriteWholeFile( const string& filename, const string& s );
@@ -87,6 +89,7 @@ static bool				DeleteDirectoryRecursive( const string& path );
 static bool				DirectoryExists( const string& s );
 static int				OpenLockFile( const string& path );		// Return <= 0 on failure
 static void				CloseLockFile( int file );
+static bool				POpenReadAll( string exec, double timeoutSeconds, string& rStdOut, int& pExit );
 #ifdef _WIN32
 static BOOL				CloseHandleAndZero( HANDLE& h );
 #endif
@@ -292,7 +295,7 @@ void TTShowHelp()
 
 int TTRunAsMaster( int argc, char* argv[] )
 {
-	//printf("I am master\n");
+	//printf("I am master. argc = %d\n0 %s\n1 %s\n2 %s\n3 %s\n", argc, argv[0], argv[1], argv[2], argv[3]);
 	bool showhelp = true;
 
 	TestContext cx;
@@ -317,7 +320,8 @@ TestContext::TestContext()
 	NumThreads = 0;
 #ifdef _WIN32
 	char buf[256];
-	if ( GetEnvironmentVariableA( "TT_NUMTHREADS", buf, arraysize(buf) ) < 10 )
+	DWORD size = GetEnvironmentVariableA( "TT_NUMTHREADS", buf, arraysize(buf) );
+	if ( size > 0 && size < 10 )
 		NumThreads = atoi(buf);
 #endif
 	AbcCriticalSectionInitialize( QueueLock );
@@ -332,18 +336,15 @@ TestContext::~TestContext()
 bool TestContext::EnumTests()
 {
 	//printf( "EnumTests\n" );
-	FILE* pipe = popen( (TTGetProcessPath() + " " + TT_TOKEN_INVOKE).c_str(), "rb" );
-	if ( !pipe ) { fprintf( stderr, "Failed to popen(%s)\n", TTGetProcessPath().c_str() ); return false; }
+	string all;
+	int pexit = 0;
+	if ( !POpenReadAll( TTGetProcessPath() + " " + TT_TOKEN_INVOKE, -1, all, pexit ) )
+	{
+		fprintf( stderr, "Failed to popen(%s)\n", TTGetProcessPath().c_str() );
+		return false;
+	}
 
-	size_t read = 0;
-	char buf[1024];
-	podvec<char> all;
-	while ( read = fread( buf, 1, sizeof(buf), pipe ) )
-		all.addn( buf, read );
-	pclose( pipe );
-	all += 0;
-
-	podvec<string> lines = Split( string(&all[0]), '\n' );
+	podvec<string> lines = Split( all, '\n' );
 	bool eat = false;
 	for ( intp i = 0; i < lines.size(); i++ )
 	{
@@ -697,6 +698,7 @@ int TestContext::Run()
 		DEBUG_THREADS( "Waiting for all %d threads to join\n", (int) Threads.size() );
 		for ( intp i = 0; i < Threads.size(); i++ )
 			AbcThreadJoinAndCloseHandle( Threads[i] );
+		DEBUG_THREADS( "Threads joined\n" );
 		Threads.clear();
 	}
 
@@ -800,9 +802,8 @@ string Process::ExecuteAndWaitOnce( string exec, double timeoutSeconds, string& 
 
 	if ( !CreateProcessA( NULL, execPath, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi ) )
 	{
-		//fprintf( stderr, "Failed to popen(%s): %d\n", (const char*) exec, (int) GetLastError() );
 		processExitCode = 1;
-		return SPrintf( "Failed to popen(%s): %d\n", exec.c_str(), (int) GetLastError() );
+		return SPrintf( "CreateProcess(%s) failed: %d\n", exec.c_str(), (int) GetLastError() );
 	}
 
 	ProcessID = pi.dwProcessId;
@@ -913,7 +914,11 @@ string Process::ExecuteAndWaitOnce( string exec, double timeoutSeconds, string& 
 #else
 string Process::ExecuteAndWaitOnce( string exec, double timeoutSeconds, string& childStdOut, int& processExitCode )
 {
-	return "not implemented on unix";
+	if ( !POpenReadAll( exec, timeoutSeconds, childStdOut, processExitCode ) )
+		return "Error executing test sub-process";
+	return "";
+	//DEBUG_THREADS_CX( "<<%s>> %f\n", exec.c_str(), timeoutSeconds );
+	//return "not implemented on unix";
 }
 #endif
 
@@ -931,6 +936,7 @@ void Process::ReadIPC( uint waitMS )
 		raw[TT_IPC_MEM_SIZE - 1] = 0;
 		char cmd[200];
 		uint u_p0 = 0;
+		// Currently the only command is "subprocess-launch", so we don't even bother to check the value of 'cmd'
 		if ( sscanf( raw, "%200s %u", cmd, &u_p0 ) == 2 )
 		{
 			// This has potential to fail, if the process has already terminated by the time we get here.
@@ -1068,14 +1074,21 @@ string SPrintf( _In_z_ _Printf_format_string_ const char* format, ... )
 	string result;
 	va_list va;
 	va_start( va, format );
+	int size = 0;
 #ifdef _MSC_VER
-	result.resize( _vscprintf( format, va ) );
-	vsprintf( &result[0], format, va );
+	size = _vscprintf( format, va );
 #else
-	result.resize( vsnprintf( nullptr, 0, format, va ) );
-	vsprintf( &result[0], format, va );
+	size = (int) vsnprintf( nullptr, 0, format, va );
 #endif
 	va_end( va ); 
+	
+	va_start( va, format );
+	char* tmp = (char*) malloc( size + 1 );
+	vsprintf( tmp, format, va );
+	va_end( va ); 
+
+	result = tmp;
+	free( tmp );
 	return result;
 }
 
@@ -1192,7 +1205,7 @@ bool DeleteDirectoryRecursive( const string& path )
 #ifdef _WIN32
 	return 0 == system( ("rmdir /s /q \"" + path + "\"").c_str() );
 #else
-	return 0 == system( ("rm /rf \"" + path + "\"").c_str() );
+	return 0 == system( ("rm -rf \"" + path + "\"").c_str() );
 #endif
 }
 
@@ -1201,8 +1214,8 @@ bool DirectoryExists( const string& s )
 #ifdef _WIN32
 	return GetFileAttributesA( s.c_str() ) != INVALID_FILE_ATTRIBUTES;
 #else
-	stat st;
-	return _stat( s.c_str(), &st ) == 0;
+	struct stat st;
+	return stat( s.c_str(), &st ) != 0;
 #endif
 }
 
@@ -1216,6 +1229,218 @@ void CloseLockFile( int file )
 {
 	AbcLockFileRelease( file );
 }
+
+#ifdef _WIN32
+bool POpenReadAll( string exec, double timeoutSeconds, string& rStdOut, int& pExit )
+{
+	if ( timeoutSeconds != -1 )
+	{
+		printf( "On Windows, POpenReadAll does not support timeout\n" );
+		return false;
+	}
+	FILE* pipe = popen( exec.c_str(), "r" );
+	if ( pipe == nullptr )
+		return false;
+
+	double start = TimeSeconds();
+	size_t read = 0;
+	char buf[1024];
+	podvec<char> all;
+	while ( 0 != (read = fread( buf, 1, sizeof(buf), pipe )) )
+		all.addn( buf, read );
+	pExit = pclose( pipe );
+	all += 0;
+	rStdOut = &all[0];
+	return true;
+}
+#else
+static void SetNonBlocking( int fd )
+{
+	int flags = fcntl(fd, F_GETFL) | O_NONBLOCK;
+	if ( -1 == fcntl(fd, F_SETFL, flags) )
+		fprintf( stderr, "couldn't unblock fd %d\n", fd );
+}
+
+static bool ReadFromFile( int fd, podvec<char>& out )
+{
+	while ( true )
+	{
+		char buf[4096];
+		auto nbytes = read( fd, buf, sizeof(buf) );
+		if ( nbytes <= 0 )
+		{
+			if ( errno == EAGAIN )
+				return true;
+			else
+				return false;
+		}
+		out.addn( buf, nbytes );
+	}
+	// practically unreachable
+	return false;
+}
+
+// NOTE: We discard stderr, although we go through all the motions to save it.
+// Should you need it at some point, add it as a parameter to this function
+bool POpenReadAll( string exec, double timeoutSeconds, string& rStdOut, int& pExit )
+{
+	const int pipe_read = 0;
+	const int pipe_write = 1;
+
+	int pipe_stdout[2];
+	int pipe_stderr[2];
+
+	if ( pipe(pipe_stdout) != 0 || pipe(pipe_stderr) != 0 )
+		return false;
+
+	podvec<char> rStdOutBuf;
+	podvec<char> rStdErrBuf;
+
+	pid_t pid = fork();
+	if ( pid == 0 )
+	{
+		// child
+		const char *args[] = { "/bin/sh", "-c", exec.c_str(), nullptr };
+
+		//sigset_t sigs;
+		//sigfillset(&sigs);
+		//if ( 0 != sigprocmask(SIG_UNBLOCK, &sigs, 0) )
+		//	printf( "sigprocmask failed\n" );
+
+		close( pipe_stdout[pipe_read] );
+		close( pipe_stderr[pipe_read] );
+
+		if ( -1 == dup2(pipe_stdout[pipe_write], STDOUT_FILENO) || -1 == dup2(pipe_stderr[pipe_write], STDERR_FILENO))
+		{
+			printf( "dup2 failed\n" );
+			exit(1);
+		}
+
+		close( pipe_stdout[pipe_write] );
+		close( pipe_stderr[pipe_write] );
+
+		if ( -1 == execv("/bin/sh", (char **) args) )
+		{
+			printf( "execv failed in forked child\n" );
+			exit(1);
+		}
+		// we never get here
+		abort();
+	}
+	else if ( pid > 0 )
+	{
+		// parent, success
+		int n_fds = 2;
+		int fds[2];
+		fd_set read_fds;
+		fds[0] = pipe_stdout[pipe_read];
+		fds[1] = pipe_stderr[pipe_read];
+
+		SetNonBlocking(fds[0]);
+		SetNonBlocking(fds[1]);
+
+		close( pipe_stdout[pipe_write] );
+		close( pipe_stderr[pipe_write] );
+
+		double tstart = TimeSeconds();
+		int exitCount = 0;
+
+		// after the process has exited, try at least once to read stdout.
+		// According to the tundra code, this produces a deadlock on OSX. I don't understand how though.
+		while ( exitCount < 2 )
+		{
+			FD_ZERO( &read_fds );
+			int max_fd = 0;
+			for ( int i = 0; i < n_fds; i++ )
+			{
+				if ( fds[i] > max_fd )
+					max_fd = fds[i];
+				FD_SET( fds[i], &read_fds );
+			}
+
+			struct timeval timeout;
+			timeout.tv_sec = 5;
+			timeout.tv_usec = 500000;
+
+			if ( n_fds != 0 )
+			{
+				int count = select( max_fd + 1, &read_fds, nullptr, nullptr, &timeout );
+				if ( count == -1 )  // according to tundra code, this happens in gdb due to syscall interruption
+					continue;
+
+				for ( int i = 0; i < n_fds; i++ )
+				{
+					podvec<char>* buf = fds[i] == pipe_stdout[pipe_read] ? &rStdOutBuf : &rStdErrBuf;
+					if ( FD_ISSET( fds[i], &read_fds ) )
+					{
+						if ( !ReadFromFile( fds[i], *buf ) )
+						{
+							// pipe is closed
+							n_fds--;
+							if ( i == 0 )
+								fds[0] = fds[1];
+						}
+					}
+				}
+			}
+
+			if ( exitCount != 0 )
+			{
+				exitCount++;
+				continue;
+			}
+
+			pid_t pwait = waitpid( pid, &pExit, WNOHANG );
+			if ( pwait == 0 )
+			{
+				// child still running
+				if ( timeoutSeconds > 0 && TimeSeconds() - tstart > timeoutSeconds )
+				{
+					pExit = 1;
+					string msg = SPrintf( "\nTest timed out (max time %f seconds)\n", timeoutSeconds );
+					rStdOutBuf.addn( msg.c_str(), msg.length() );
+					break;
+				}
+
+				if ( n_fds == 0 )
+					usleep( 500000 );
+			}
+			else if ( pwait != pid )
+			{
+				// waitpid failed
+				printf( "waitpid failed (%d)\n", (int) pwait );
+				pExit = 1;
+				break;
+			}
+			else
+			{
+				// child has exited
+				//printf( "forked parent: child has exited (%d). %s\n", pExit, n_fds == 0 ? "and pipes are closed" : "waiting for pipes to close" );
+				exitCount = 1;
+				if ( n_fds == 0 )
+					break;
+			}
+		}
+
+		rStdOut.append( &rStdOutBuf[0], rStdOutBuf.size() );
+		// NOTE: we discard rStdErrBuf
+
+		close( pipe_stdout[pipe_read] );
+		close( pipe_stderr[pipe_read] );
+		return true;
+	}
+	else
+	{
+		// parent, error
+		printf( "fork failed\n" );
+		close( pipe_stdout[pipe_read] );
+		close( pipe_stdout[pipe_write] );
+		close( pipe_stderr[pipe_read] );
+		close( pipe_stderr[pipe_write] );
+		return false;
+	}
+}
+#endif
 
 #define S(x) #x
 

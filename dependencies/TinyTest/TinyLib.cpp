@@ -5,6 +5,9 @@ This file contains the utility functions that are used by testing code.
 #include <direct.h>
 #include <VersionHelpers.h>
 #include <tchar.h>
+#pragma warning(push)
+#pragma warning(disable: 6387)
+#pragma warning(disable: 28204)
 #include "StackWalker.h"
 #else
 #include <unistd.h>
@@ -21,8 +24,11 @@ This file contains the utility functions that are used by testing code.
 #else
 #define DIRSEP				'/'
 #define EXE_EXTENSION		""
-#define MAX_PATH			255
 #define DEFAULT_TEMP_DIR	"/tmp"
+#endif
+
+#ifndef MAX_PATH
+#define MAX_PATH			255
 #endif
 
 static bool			IsExecutingUnderGuidance = false;
@@ -159,6 +165,7 @@ void TTLog( const char* msg, ... )
 		fputs( tz, stdout );
 
 		//fwrite( buff, strlen(buff), 1, f );
+		buff[sizeof(buff) - 1] = 0;
 		fputs( buff, stdout );
 		//fclose(f);
 	}
@@ -313,7 +320,7 @@ TTRun has four modes. Let's assume that your test program is called "mytest.exe"
 */
 bool TTRun_Internal( const TT_TestList& tests, int argc, char** argv, int* retval )
 {
-	//printf( "Alive %d %s %s\n", argc, argv[0], argv[1] );
+	//printf( "Alive %d %s %s %s\n", argc, argv[0], argv[1], argv[2] );
 	*retval = 1;
 
 	int noptions = 0;
@@ -407,6 +414,7 @@ bool TTRun_Internal( const TT_TestList& tests, int argc, char** argv, int* retva
 
 static int TTRun_Internal_Mode1_Escape( const char* const* options, const char* testname )
 {
+	//printf("launching master\n");
 	// Mode 1. Launch a master process.
 	std::string mypath = TTGetProcessPath();
 
@@ -426,7 +434,7 @@ static int TTRun_Internal_Mode1_Escape( const char* const* options, const char* 
 	//printf( "TODO: Implement spawn on linux\n" );
 	//execv( host, (char *const*) args );
 	char cmdline[MAX_PATH * 4] = "";
-	strcat( cmdline, mypath.c_str() );
+	//strcat( cmdline, mypath.c_str() );
 	for ( int j = 0; j < narg; j++ )
 	{
 		strcat( cmdline, " " );
@@ -667,3 +675,7 @@ static int TTRun_Internal_Mode2_Execute( const TT_TestList& tests, const char* t
 	fprintf( stderr, "Test '%s' not found\n", testname );
 	return 1;
 }
+
+#ifdef _WIN32
+#pragma warning(pop)
+#endif

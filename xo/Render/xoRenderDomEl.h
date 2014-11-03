@@ -1,7 +1,7 @@
 #pragma once
 
-#include "xoStyle.h"
-#include "xoMem.h"
+#include "../xoStyle.h"
+#include "../xoMem.h"
 
 class xoRenderStack;
 

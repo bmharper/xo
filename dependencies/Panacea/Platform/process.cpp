@@ -148,14 +148,17 @@ PAPI AbcProcessID	AbcProcessGetPID()
 }
 PAPI void			AbcProcessGetPath( char* path, size_t maxPath )
 {
-	AbcAssert(false); // untested code
 	if ( maxPath == 0 )
 		return;
 	path[0] = 0;
     size_t r = readlink( "/proc/self/exe", path, maxPath - 1 );
 	if ( r == -1 )
 		return;
-	path[r] = 0;
+
+	if ( r < maxPath )
+		path[r] = 0;
+	else
+		path[maxPath - 1] = 0;
 }
 #if XSTRING_DEFINED
 PAPI XString		AbcProcessGetPath()

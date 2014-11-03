@@ -55,32 +55,36 @@ TESTFUNC(DocumentClone_Junk)
 
 TESTFUNC(DocumentClone)
 {
-	xoDocGroup g;
-	g.Doc = new xoDoc();
-	g.DestroyDocWithGroup = true;
-	g.Render();
-	SetDocDims( g.Doc, 16, 16 );
-	TTASSERT( g.RenderStats.Clone_NumEls == 0 );
-	xoDoc* d = g.Doc;
+	// I need to add a null renderer for these kind of tests
+	xoSysWnd* wnd = xoSysWnd::CreateWithDoc();
+	xoProcessDocQueue();
+	xoDocGroup* g = wnd->DocGroup;
+	g->Render();
+	SetDocDims( g->Doc, 16, 16 );
+	TTASSERT( g->RenderStats.Clone_NumEls == 0 );
+	xoDoc* d = g->Doc;
 
 	xoDomNode* div1 = d->Root.AddNode( xoTagDiv );
 	for ( int i = 0; i < 5; i++ )
 	{
-		g.Render();
-		TTASSERT( g.RenderStats.Clone_NumEls == 2 ); // root and div1
+		g->Render();
+		TTASSERT( g->RenderStats.Clone_NumEls == 2 ); // root and div1
 	}
 
 	div1->StyleParsef( "left: 10px;" );
 	for ( int i = 0; i < 5; i++ )
 	{
-		g.Render();
-		TTASSERT( g.RenderStats.Clone_NumEls == 3 ); // div1
+		g->Render();
+		TTASSERT( g->RenderStats.Clone_NumEls == 3 ); // div1
 	}
 
 	d->Root.RemoveChild( div1 );
 	for ( int i = 0; i < 5; i++ )
 	{
-		g.Render();
-		TTASSERT( g.RenderStats.Clone_NumEls == 5 ); // root and div1
+		g->Render();
+		TTASSERT( g->RenderStats.Clone_NumEls == 5 ); // root and div1
 	}
+
+	delete wnd;
+	xoProcessDocQueue();
 }

@@ -7,11 +7,11 @@ TESTFUNC(Stats)
 	TTASSERT( sizeof(xoDomEl) <= 40 );
 	TTASSERT( sizeof(xoDomNode) <= 136 );
 	TTASSERT( sizeof(xoDomText) <= 48 );
-	printf( "sizeof(xoStyleAttrib) = %d\n", sizeof(xoStyleAttrib) );
-	printf( "sizeof(xoStyle) = %d\n", sizeof(xoStyle) );
-	printf( "sizeof(xoDomEl) = %d\n", sizeof(xoDomEl) );
-	printf( "sizeof(xoDomNode) = %d\n", sizeof(xoDomNode) );
-	printf( "sizeof(xoDomText) = %d\n", sizeof(xoDomText) );
+	printf( "sizeof(xoStyleAttrib) = %d\n", (int) sizeof(xoStyleAttrib) );
+	printf( "sizeof(xoStyle) = %d\n", (int) sizeof(xoStyle) );
+	printf( "sizeof(xoDomEl) = %d\n", (int) sizeof(xoDomEl) );
+	printf( "sizeof(xoDomNode) = %d\n", (int) sizeof(xoDomNode) );
+	printf( "sizeof(xoDomText) = %d\n", (int) sizeof(xoDomText) );
 
 	TTASSERT( xoPosRound(0) == 0 );
 	TTASSERT( xoPosRound(127) == 0 );
