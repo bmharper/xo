@@ -120,7 +120,6 @@ bool			TTIsRunningUnderMaster();				// Return true if this process was launched 
 void			TTLog( const char* msg, ... );
 void			TTSetProcessIdle();						// Sets the process' priority to IDLE. This is just convenient if you're running tests while working on your dev machine.
 void			TTNotifySubProcess( unsigned int pid );	// Notify the test runner that you have launched a sub-process
-void			TTListTests( const TT_TestList& tests );
 unsigned int	TTGetProcessID();						// Get Process ID of this process
 std::string		TTGetProcessPath();
 void			TTSleep( unsigned int milliseconds );
@@ -139,17 +138,16 @@ void		TT_IPC_Write_Raw( char (&filename)[256], const char* msg );
 // Read an IPC message. Returns true if a full message was found and consumed.
 bool		TT_IPC_Read_Raw( unsigned int waitMS, char (&filename)[256], char (&msg)[TT_IPC_MEM_SIZE] );
 
-
-// Returns true if TT handled this call. In this case, call exit( *retval ). If false returned, continue as usual.
-// Use the TTRun macro to call this
+// Returns a process exit code (0 when all tests pass)
 // Before returning, these functions wipe all tests from the 'tests' parameter. This frees memory, causing zero memory leaks.
-// This means you can only run these functions once
-bool		TTRun_Wrapper( TT_TestList& tests, int argc, char** argv, int* retval );
-bool		TTRun_WrapperW( TT_TestList& tests, int argc, wchar_t** argv, int* retval );
+// This means you can only run these functions once.
+// Use the TTRun macro to call one of these functions.
+int			TTRun_Wrapper( TT_TestList& tests, int argc, char** argv );
+int			TTRun_WrapperW( TT_TestList& tests, int argc, wchar_t** argv );
 
 // You can only run this function once.
-#define TTRun( argc, argv, retval ) TTRun_Wrapper( TT_TESTS_ALL, argc, argv, retval )
-#define TTRunW( argc, argv, retval ) TTRun_WrapperW( TT_TESTS_ALL, argc, argv, retval )
+#define TTRun( argc, argv ) TTRun_Wrapper( TT_TESTS_ALL, argc, argv )
+#define TTRunW( argc, argv ) TTRun_WrapperW( TT_TESTS_ALL, argc, argv )
 
 #ifdef _WIN32
 #define TTRunX TTRunW

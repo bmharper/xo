@@ -5,7 +5,7 @@ This file contains the utility functions that are used by testing code.
 #include <direct.h>
 #include <VersionHelpers.h>
 #include <tchar.h>
-#pragma warning(push)
+#pragma warning(push)				// TinyLib-TOP
 #pragma warning(disable: 6387)
 #pragma warning(disable: 28204)
 #include "StackWalker.h"
@@ -37,8 +37,7 @@ static char*		TestCmdLineArgs[TT_MAX_CMDLINE_ARGS + 1]; // +1 for the null termi
 static char			TestTempDir[TT_TEMP_DIR_SIZE + 1];
 
 // These are defined inside TinyMaster.cpp
-void	TTShowHelp();
-int		TTRunAsMaster( int argc, char* argv[] );
+int		TTRun_Internal( const TT_TestList& tests, int argc, char** argv );
 
 void TTException::CopyStr( size_t n, char* dst, const char* src )
 {
@@ -182,16 +181,6 @@ static const char* ParallelName( TTParallel p )
 	return NULL;
 }
 
-void TTListTests( const TT_TestList& tests )
-{
-	qsort( (void*) &tests[0], tests.size(), sizeof(TT_Test), (int(*)(const void*, const void*)) &TT_Test::CompareName );
-
-	printf( "%s\n", TT_LIST_LINE_1 );
-	printf( "%s\n", TT_LIST_LINE_2 );
-	for ( int i = 0; i < tests.size(); i++ )
-		printf( "  %-40s %-20s %-20s\n", tests[i].Name, tests[i].Size == TTSizeSmall ? TT_SIZE_SMALL_NAME : TT_SIZE_LARGE_NAME, ParallelName(tests[i].Parallel) );
-}
-
 unsigned int TTGetProcessID()
 {
 #ifdef _WIN32
@@ -263,12 +252,12 @@ std::string TTGetTempDir()
 
 const int MAXARGS = 30;
 
-bool TTRun_WrapperW( TT_TestList& tests, int argc, wchar_t** argv, int* retval )
+int TTRun_WrapperW( TT_TestList& tests, int argc, wchar_t** argv )
 {
 	const int ARGSIZE = 400;
 	char* argva[MAXARGS];
 
-	if ( argc >= MAXARGS - 1 ) { printf( "TTRun_InternalW: Too many arguments\n" ); return false; }
+	if ( argc >= MAXARGS - 1 ) { printf( "TTRun_InternalW: Too many arguments\n" ); return 1; }
 	for ( int i = 0; i < argc; i++ )
 	{
 		argva[i] = (char*) malloc( ARGSIZE );
@@ -276,177 +265,21 @@ bool TTRun_WrapperW( TT_TestList& tests, int argc, wchar_t** argv, int* retval )
 	}
 	argva[argc] = NULL;
 
-	bool rv = TTRun_Wrapper( tests, argc, argva, retval );
+	int res = TTRun_Wrapper( tests, argc, argva );
 
 	for ( int i = 0; i < argc; i++ )
 		free(argva[i]);
 
-	return rv;
+	return res;
 }
 
-static int	TTRun_Internal_Mode1_Escape( const char* const* options, const char* testname );
-static int	TTRun_Internal_Mode2_Execute( const TT_TestList& tests, const char* testname );
-static bool	TTRun_Internal( const TT_TestList& tests, int argc, char** argv, int* retval );
-
-bool TTRun_Wrapper( TT_TestList& tests, int argc, char** argv, int* retval )
+int TTRun_Wrapper( TT_TestList& tests, int argc, char** argv )
 {
-	bool res = TTRun_Internal( tests, argc, argv, retval );
+	int res = TTRun_Internal( tests, argc, argv );
 	// ensure that there are no memory leaks by the time we return
 	tests.Clear();
 	return res;
 }
-
-/*
-TTRun has four modes. Let's assume that your test program is called "mytest.exe".
-
-	Mode 1	You run "mytest.exe [options] test all" to run all tests. This ends up calling "mytest.exe testmaster all".
-			That second mytest.exe (which is the master) is going to end up launching mytest.exe again repeatedly,
-			once for each test. Those final invocations will end up in mode 2.
-
-	Mode 2	We are being invoked by a master. In this case, it calls us like so: "mytest.exe [options] test =testname". In this case,
-			mytest.exe will actually run the test named "testname". The testname will never be "all". That "all" is enumerated by the
-			master process, and each test is launched one by one.
-			In this mode, IsExecutingUnderGuidance = true.
-
-	Mode 3	You launch mytest.exe from the debugger. You do it like so: "mytext.exe test :testname". This causes slightly different
-			behaviour that makes it easier to debug tests.
-			In this mode, IsExecutingUnderGuidance = false.
-
-	Mode 4	You launch "mytest.exe testmaster all". This is a master, and will launch more instances of mytest.exe,
-			one for each test.
-
-	NOTE: Options must start with a hyphen
-	
-*/
-bool TTRun_Internal( const TT_TestList& tests, int argc, char** argv, int* retval )
-{
-	//printf( "Alive %d %s %s %s\n", argc, argv[0], argv[1], argv[2] );
-	*retval = 1;
-
-	int noptions = 0;
-	const char* options[MAXARGS];
-	
-	int nTestArgs = 0;
-	bool dotest = false;
-	bool ismaster = false;
-	bool showhelp = false;
-	const char* testname = NULL;
-
-	for ( int i = 1; i < argc; i++ )
-	{
-		std::string arg = argv[i];
-		if ( arg == TT_TOKEN_INVOKE )									{ dotest = true; }
-		else if ( arg == TT_TOKEN_INVOKE_MASTER )						{ ismaster = true; }
-		else if ( arg == "-?" || arg == "?" ||
-				  arg == "-help" || arg == "help" )						{ showhelp = true; }
-		else if ( argv[i][0] == '-' )									{ options[noptions++] = argv[i]; }
-		else if ( dotest && testname == NULL )							{ testname = argv[i]; }						// only accept test name after 'test' has appeared
-		else if ( strstr(argv[i], TT_PREFIX_RUNNER_PID) == argv[i])		{ MasterPID = atoi( argv[i] + strlen(TT_PREFIX_RUNNER_PID) ); }
-		else if ( strstr(argv[i], TT_PREFIX_TESTDIR) == argv[i])		{ TTSetTempDir( argv[i] ); }
-		else if ( testname != NULL )									{ TestCmdLineArgs[nTestArgs++] = argv[i]; }	// only accepted after test name has appeared
-
-		if ( noptions >= MAXARGS - 1 )
-		{
-			printf( "TTRun: Too many arguments\n" );
-			return false;
-		}
-		if ( nTestArgs >= TT_MAX_CMDLINE_ARGS - 1 )
-		{
-			printf( "TTRun: Too many test-specific arguments (ie after the test name)\n" );
-			return false;
-		}
-	}
-
-	if ( ismaster )
-	{
-		// Mode 4. master
-		*retval = TTRunAsMaster( argc, argv );
-		return true;
-	}
-
-	if ( showhelp )
-	{
-		TTShowHelp();
-		return false;
-	}
-
-	if ( !dotest )
-		return false;
-
-	// This is useful when running under the IDE
-	if ( TTGetTempDir().length() == 0 )
-		TTSetTempDir( TT_PREFIX_TESTDIR DEFAULT_TEMP_DIR );
-
-	options[noptions++] = NULL;
-	TestCmdLineArgs[nTestArgs++] = NULL;
-
-	if ( testname == NULL || testname[0] == 0 )
-	{
-		TTListTests( tests );
-		*retval = 0;
-	}
-	else if ( testname && testname[0] == '=' )
-	{
-		// Mode 2. ie.. we are being called by a master. We must actually run the test.
-		// Since we are executing under the guidance of a master, don't popup message boxes, etc.
-		// Rather send our failure message to stdout if we die, or exit(0) upon success.
-		IsExecutingUnderGuidance = true;
-		*retval = TTRun_Internal_Mode2_Execute( tests, testname + 1 );
-	}
-	else if ( testname && testname[0] == ':' )
-	{
-		// Mode 3. ie.. we are being called invoked from an IDE, likely under a debugger.
-		*retval = TTRun_Internal_Mode2_Execute( tests, testname + 1 );
-	}
-	else
-	{
-		// Mode 1. Launch a master
-		*retval = TTRun_Internal_Mode1_Escape( options, testname );
-	}
-
-	return true;
-}
-
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable: 6054 ) // for 'args' to _execv below
-#endif
-
-static int TTRun_Internal_Mode1_Escape( const char* const* options, const char* testname )
-{
-	//printf("launching master\n");
-	// Mode 1. Launch a master process.
-	std::string mypath = TTGetProcessPath();
-
-	const char* args[MAXARGS];
-	int narg = 0;
-	args[narg++] = mypath.c_str();
-	args[narg++] = TT_TOKEN_INVOKE_MASTER;
-	args[narg++] = testname;
-	for ( int j = 0; options[j]; j++ )
-		args[narg++] = options[j];
-	args[narg] = NULL;
-
-#ifdef _WIN32
-	return _spawnv( _P_WAIT, mypath.c_str(), args ) == 0 ? 0 : 1;
-#else
-	//printf( "spawn: %s\n", host );
-	//printf( "TODO: Implement spawn on linux\n" );
-	//execv( host, (char *const*) args );
-	char cmdline[MAX_PATH * 4] = "";
-	//strcat( cmdline, mypath.c_str() );
-	for ( int j = 0; j < narg; j++ )
-	{
-		strcat( cmdline, " " );
-		strcat( cmdline, args[j] );
-	}
-	return system( cmdline ) == 0 ? 0 : 1;
-#endif
-}
-
-#ifdef _MSC_VER
-#pragma warning( pop )
-#endif
 
 #ifndef _WIN32
 // Dummy
@@ -636,46 +469,7 @@ void TTNotifySubProcess( unsigned int pid )
 	TT_IPC( "%s %u", TT_IPC_CMD_SUBP_RUN, pid );
 }
 
-static void TTRun_PrepareExecutionEnvironment()
-{
-#ifdef _WIN32
-	SetUnhandledExceptionFilter( TTExceptionHandler );
-#endif
-	setvbuf( stdout, NULL, _IONBF, 0 );									// Disable all buffering on stdout, so that the last words of a dying process are recorded.
-	setvbuf( stderr, NULL, _IONBF, 0 );									// Same for stderr.
-#ifdef _WIN32
-	_set_error_mode( _OUT_TO_STDERR );									// prevent CRT dialog box popups. This doesn't work for debug builds.
-	_set_purecall_handler( TTPurecallHandler );							// pure virtual function
-	_set_invalid_parameter_handler( TTInvalidParameterHandler );		// CRT function with invalid parameters
-#endif
-	signal( SIGABRT, TTSignalHandler );									// handle calls to abort()
-}
 
-static int TTRun_Internal_Mode2_Execute( const TT_TestList& tests, const char* testname )
-{
-	if ( IsExecutingUnderGuidance )
-		TTRun_PrepareExecutionEnvironment();
-
-	for ( int i = 0; i < tests.size(); i++ )
-	{
-		if ( strcmp(tests[i].Name, testname) == 0 )
-		{
-			if ( tests[i].Init )
-				tests[i].Init();
-			
-			tests[i].Blank();
-
-			if ( tests[i].Teardown )
-				tests[i].Teardown();
-
-			return 0;
-		}
-	}
-
-	fprintf( stderr, "Test '%s' not found\n", testname );
-	return 1;
-}
-
-#ifdef _WIN32
-#pragma warning(pop)
+#ifdef _MSC_VER
+#pragma warning( pop )	// TinyLib-TOP
 #endif

@@ -16,8 +16,6 @@ TT_TEST_FUNC(NULL, NULL, TTSizeSmall, Fail, TTParallelDontCare)
 
 int main(int argc, char** argv)
 {
-	int ret = 0;
-	TTRun(argc, argv, &ret);
-	return ret;
+	return TTRun(argc, argv);
 }
 

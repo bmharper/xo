@@ -5,7 +5,7 @@ TT_UNIVERSAL_FUNC bool TTIsRunningUnderMaster()
 #ifdef _WIN32
 	#ifdef _UNICODE
 		OutputDebugString( GetCommandLine() );
-		printf( "IsRunningUnderMaster? %d\n", wcsstr( GetCommandLine(), L" test =" ) != nullptr );
+		//printf( "IsRunningUnderMaster? %d\n", wcsstr( GetCommandLine(), L" test =" ) != nullptr );
 		return wcsstr( GetCommandLine(), L" test =" ) != nullptr;
 	#else
 		return strstr( GetCommandLine(), " test =" ) != nullptr;

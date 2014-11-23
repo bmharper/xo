@@ -5,6 +5,9 @@ a single unit test. We launch as many instances as we can in parallel,
 while obeying the flags that the tests specify.
 */
 
+// Above this file is #included TinyLib.cpp, then TinyAssert.cpp.
+// You can see that from TinyTestBuild.h
+
 #include <algorithm>
 
 #ifdef _WIN32
@@ -67,8 +70,9 @@ extern const char* JUnitTailTxt;
 template<typename T> T TTMin(const T& a, const T& b) { return a < b ? a : b; }
 template<typename T> T TTMax(const T& a, const T& b) { return a < b ? b : a; }
 
-void					TTShowHelp();
-int						TTRunAsMaster( int argc, char* argv[] );
+static void				TTShowHelp();
+static int				TTRun_Internal( const TT_TestList& tests, int argc, char** argv );
+static void				TTRun_PrepareExecutionEnvironment();
 
 static string			EscapeHtml( const string& s );
 static string			EscapeXml( const string& s );
@@ -102,15 +106,21 @@ struct Test
 	string			TrimmedOutput;
 	TTSizes			Size;
 	TTParallel		Parallel;
+	TTFuncBlank		Init;			// Only used when running in single-process mode
+	TTFuncBlank		Teardown;		// Only used when running in single-process mode
+	TTFuncBlank		Blank;			// Only used when running in single-process mode
 	bool			Ignored;
 	bool			Pass;
 	double			Time;
 
-	explicit Test( TestContext* context, string name, TTSizes size, TTParallel parallel )
+	explicit Test( TestContext* context, string name, TTFuncBlank init, TTFuncBlank exec, TTFuncBlank teardown, TTSizes size, TTParallel parallel )
 	{
 		Construct();
 		Context = context;
 		Name = name;
+		Init = init;
+		Blank = exec;
+		Teardown = teardown;
 		Size = size;
 		Parallel = parallel;
 	}
@@ -136,6 +146,10 @@ struct Test
 		int pdiff = ParallelSort(a.Parallel) - ParallelSort(b.Parallel);
 		if ( pdiff != 0 )
 			return pdiff;
+		return strcmp( a.Name.c_str(), b.Name.c_str() );
+	}
+	static int CompareByName( const Test& a, const Test& b )
+	{
 		return strcmp( a.Name.c_str(), b.Name.c_str() );
 	}
 };
@@ -170,7 +184,7 @@ struct TestContext
 				TestContext();
 				~TestContext();
 
-	int			EnumAndRun( int argc, char** argv );
+	int			ParseAndRun( int argc, char** argv );		// return value is process exit code
 
 	int			CountPass()	const		{ int c = 0; for ( intp i = 0; i < Tests.size(); i++ ) c += Tests[i].Pass ? 1 : 0; return c; }
 	int			CountIgnored() const	{ int c = 0; for ( intp i = 0; i < Tests.size(); i++ ) c += Tests[i].Ignored ? 1 : 0; return c; }
@@ -194,8 +208,9 @@ protected:
 	intp						TestPos;		// Queue position in 'Tests'. Starts at zero and ends at Tests.size(). Guarded by QueueLock.
 
 	bool		CreateThreads();
-	int			Run();
-	bool		EnumTests();
+	int			RunMaster();
+	void		ListTests();
+	int			ExecuteTestHere( const char* testname );
 	bool		TestMatchesFilter( const Test& t ) const;
 	Test*		NextFilteredTest( int threadNum );
 	void		RunTestOuter( int threadNum, Test* t );
@@ -275,8 +290,9 @@ struct OutputDevJUnit : public OutputDev
 void TTShowHelp()
 {
 	std::string msg = 
-		" " TT_TOKEN_INVOKE " [options] testname1 testname2...\n"
-		"  " TT_TOKEN_INVOKE "                This parameter must be here\n"
+		//" " TT_TOKEN_INVOKE " [options] testname1 testname2...\n"
+		//"  " TT_TOKEN_INVOKE "                This parameter must be here\n"
+		" [options] testname1 testname2...\n"
 		"  testname(s)         Wildcards of the tests that you want to run, or '" TT_TOKEN_ALL_TESTS "' to run all.\n"
 		"                      If you specify no tests, then all tests are listed.\n"
 		"\n"
@@ -293,24 +309,37 @@ void TTShowHelp()
 	fputs( msg.c_str(), stdout );
 }
 
-int TTRunAsMaster( int argc, char* argv[] )
+static int TTRun_Internal( const TT_TestList& tests, int argc, char** argv )
 {
-	//printf("I am master. argc = %d\n0 %s\n1 %s\n2 %s\n3 %s\n", argc, argv[0], argv[1], argv[2], argv[3]);
-	bool showhelp = true;
-
 	TestContext cx;
 	cx.SetOutText();
 	cx.OutputBare = false;
 
-	if ( argc >= 3 && strcmp(argv[1], TT_TOKEN_INVOKE_MASTER) == 0 )
-		return cx.EnumAndRun( argc, argv );
-
-	if ( showhelp )
+	cx.Tests.resize( tests.size() );
+	for ( int i = 0; i < tests.size(); i++ )
 	{
-		TTShowHelp();
-		return 1;
+		cx.Tests[i] = Test( &cx, tests[i].Name, tests[i].Init, tests[i].Blank, tests[i].Teardown, tests[i].Size, tests[i].Parallel );
+		
+		if ( cx.Tests[i].Name == TT_TOKEN_ALL_TESTS )	{ fprintf( stderr, "You may not name a test 'all'. That word is reserved for running all tests.\n" ); return 1; }
+		if ( cx.Tests[i].Name == "help" )				{ fprintf( stderr, "You may not name a test 'help'. That word is reserved for show test system documentation.\n" ); return 1; }
 	}
-	return 0;
+
+	return cx.ParseAndRun( argc, argv );
+}
+
+static void TTRun_PrepareExecutionEnvironment()
+{
+#ifdef _WIN32
+	SetUnhandledExceptionFilter( TTExceptionHandler );
+#endif
+	setvbuf( stdout, NULL, _IONBF, 0 );									// Disable all buffering on stdout, so that the last words of a dying process are recorded.
+	setvbuf( stderr, NULL, _IONBF, 0 );									// Same for stderr.
+#ifdef _WIN32
+	_set_error_mode( _OUT_TO_STDERR );									// prevent CRT dialog box popups. This doesn't work for debug builds.
+	_set_purecall_handler( TTPurecallHandler );							// pure virtual function
+	_set_invalid_parameter_handler( TTInvalidParameterHandler );		// CRT function with invalid parameters
+#endif
+	signal( SIGABRT, TTSignalHandler );									// handle calls to abort()
 }
 
 TestContext::TestContext()
@@ -318,6 +347,7 @@ TestContext::TestContext()
 	Out = NULL;
 	RunLargeTests = true;
 	NumThreads = 0;
+	Name = FilenameOnly( TTGetProcessPath() );
 #ifdef _WIN32
 	char buf[256];
 	DWORD size = GetEnvironmentVariableA( "TT_NUMTHREADS", buf, arraysize(buf) );
@@ -333,86 +363,111 @@ TestContext::~TestContext()
 	delete Out;
 }
 
-bool TestContext::EnumTests()
+int TestContext::ParseAndRun( int argc, char** argv )
 {
-	//printf( "EnumTests\n" );
-	string all;
-	int pexit = 0;
-	if ( !POpenReadAll( TTGetProcessPath() + " " + TT_TOKEN_INVOKE, -1, all, pexit ) )
-	{
-		fprintf( stderr, "Failed to popen(%s)\n", TTGetProcessPath().c_str() );
-		return false;
-	}
+	string singleTestName;
+	int nTestCmdlineArgs = 0;
 
-	podvec<string> lines = Split( all, '\n' );
-	bool eat = false;
-	for ( intp i = 0; i < lines.size(); i++ )
+	// skip the first command-line argument, which is the program path
+	for ( int i = 1; i < argc; i++ )
 	{
-		string trim = Trim(lines[i]);
-		if ( trim == "" ) continue;
-		if ( eat )
-		{
-			podvec<string> parts = DiscardEmpties( Split( trim, ' ' ) );
-			if ( parts.size() != 3
-				|| (parts[1] != TT_SIZE_SMALL_NAME && parts[1] != TT_SIZE_LARGE_NAME)
-				|| (ParseParallel(parts[2].c_str()) == TTParallel_Invalid) )
-			{
-				fmtoutf( stderr, "Expected 'testname small|large " TT_PARALLEL_DONTCARE "|" TT_PARALLEL_WHOLECORE "|" TT_PARALLEL_SOLO "' from test enumeration line. Instead '%s'\n", trim.c_str() );
-				return false;
-			}
-			Tests += Test( this, parts[0], parts[1] == TT_SIZE_SMALL_NAME ? TTSizeSmall : TTSizeLarge, ParseParallel(parts[2].c_str()) );
-			//printf( "Discovered test '%s'\n", (const char*) tests.back() );
-		}
-		else if ( trim == Trim(TT_LIST_LINE_END) )
-		{
-			eat = true;
-			continue;
-		}
-	}
-
-	return true;
-}
-
-int TestContext::EnumAndRun( int argc, char** argv )
-{
-	Name = FilenameOnly( TTGetProcessPath() );
-	for ( int i = 0; i < argc; i++ )
-	{
+		const char* optc = argv[i];
 		string opt = argv[i];
+		
 		if ( opt[0] == '-' )
 		{
-			if ( opt == "-tt-html" )				{ SetOutHtml(); }
-			else if ( opt == "-tt-junit" )			{ SetOutJUnit(); }
-			else if ( opt == "-tt-small" )			{ RunLargeTests = false; }
-			else if ( opt == "-tt-bare" )			{ OutputBare = true; }
-			else if ( opt == "-tt-head" )			{ fputs( HtmlHeadTxt, stdout ); return 0; }
-			else if ( opt == "-tt-tail" )			{ fputs( HtmlTailTxt, stdout ); return 0; }
-			else if ( opt == "-tt-out" )			{ OutDir = argv[i + 1]; i++; }
-			else if ( opt == "-tt-ident" )			{ Ident = argv[i + 1]; i++; }
-			else if ( opt.substr(0, 2) == "-x" )	{ Exclude += opt.substr(2); }
-			else									{ Options += opt + " "; }
+			if ( opt == "-tt-html" )									{ SetOutHtml(); }
+			else if ( opt == "-tt-junit" )								{ SetOutJUnit(); }
+			else if ( opt == "-tt-small" )								{ RunLargeTests = false; }
+			else if ( opt == "-tt-bare" )								{ OutputBare = true; }
+			else if ( opt == "-tt-head" )								{ fputs( HtmlHeadTxt, stdout ); return 0; }
+			else if ( opt == "-tt-tail" )								{ fputs( HtmlTailTxt, stdout ); return 0; }
+			else if ( opt == "-tt-out" )								{ OutDir = argv[i + 1]; i++; }
+			else if ( opt == "-tt-ident" )								{ Ident = argv[i + 1]; i++; }
+			else if ( opt == "-?" || opt == "-help" || opt == "--help" ){ TTShowHelp(); return 1; }
+			else if ( opt.substr(0, 2) == "-x" )						{ Exclude += opt.substr(2); }
+			else														{ Options += opt + " "; }
+		}
+		else if ( strstr(optc, TT_PREFIX_RUNNER_PID) == optc )			{ MasterPID = atoi( argv[i] + strlen(TT_PREFIX_RUNNER_PID) ); }
+		else if ( strstr(optc, TT_PREFIX_TESTDIR) == optc )				{ TTSetTempDir( argv[i] ); }
+		else if ( opt == "?" || opt == "help" )							{ TTShowHelp(); return 1; }
+		else if ( opt == "test" )
+		{
+			// Whenever the master invokes a test, it does it like so: "testapp.exe test =testname"
+			// The 'test' there is a courtesy for the test application, so that it can also serve other functions
+			// via its command line interface. This fact is also used by the function TTIsRunningUnderMaster().
+			continue;
+		}
+		else if ( opt[0] == ':' || opt[0] == '=' )
+		{
+			IsExecutingUnderGuidance = opt[0] == '=';
+			singleTestName = opt.substr(1);
 		}
 		else
 		{
-			Include += opt;
+			// Once a test name has been specified, the remaining arguments are for the test itself
+			if ( singleTestName != "" )
+				TestCmdLineArgs[nTestCmdlineArgs++] = argv[i];
+			else
+				Include += opt;
 		}
 	}
 	if ( Options.size() != 0 )
 		Options.pop_back();
 
-	if ( !EnumTests() )
-		return 1;
+	// This is useful when running under the IDE
+	if ( TTGetTempDir().length() == 0 )
+		TTSetTempDir( TT_PREFIX_TESTDIR DEFAULT_TEMP_DIR );
 
-	if ( Include.size() == 0 && Exclude.size() == 0 )
+	TestCmdLineArgs[nTestCmdlineArgs++] = nullptr;
+
+	if ( singleTestName != "" )
 	{
-		for ( int i = 0; i < Tests.size(); i++ )
-			printf("  %s\n", Tests[i].Name.c_str() );
+		return ExecuteTestHere( singleTestName.c_str() );
+	}
+	else if ( Include.size() == 0 && Exclude.size() == 0 )
+	{
+		ListTests();
 		return 0;
 	}
 	else
 	{
-		return Run();
+		return RunMaster();
 	}
+}
+
+void TestContext::ListTests()
+{
+	sort( Tests, Test::CompareByName );
+	printf( "%s\n", TT_LIST_LINE_1 );
+	printf( "%s\n", TT_LIST_LINE_2 );
+	for ( int i = 0; i < Tests.size(); i++ )
+		printf( "  %-40s %-20s %-20s\n", Tests[i].Name.c_str(), Tests[i].Size == TTSizeSmall ? TT_SIZE_SMALL_NAME : TT_SIZE_LARGE_NAME, ParallelName(Tests[i].Parallel) );
+}
+
+int TestContext::ExecuteTestHere( const char* testname )
+{
+	if ( IsExecutingUnderGuidance )
+		TTRun_PrepareExecutionEnvironment();
+
+	for ( int i = 0; i < Tests.size(); i++ )
+	{
+		if ( Tests[i].Name == testname )
+		{
+			if ( Tests[i].Init )
+				Tests[i].Init();
+			
+			Tests[i].Blank();
+
+			if ( Tests[i].Teardown )
+				Tests[i].Teardown();
+
+			return 0;
+		}
+	}
+
+	fprintf( stderr, "Test '%s' not found\n", testname );
+	return 1;
 }
 
 bool TestContext::TestMatchesFilter( const Test& t ) const
@@ -555,8 +610,9 @@ void TestContext::RunTestOuter( int threadNum, Test* t )
 
 void TestContext::RunTestExec( string tempDir, Test* t )
 {
-	string tempDirSlash = tempDir + DIR_SEP_STR;
-	string exec = TTGetProcessPath() + " " + TT_PREFIX_RUNNER_PID + IntToStr(TTGetProcessID()) + " " + TT_TOKEN_INVOKE + " =" + t->Name + " " + Options + " \"" + TT_PREFIX_TESTDIR + tempDirSlash + "\"";
+	// Warning: Take care when changing this command line. The function TTIsRunningUnderMaster() uses it's layout quite specifically.
+	string tempDirSlash = tempDir; // + DIR_SEP_STR;  --- never end a quoted string with a backslash. The backslash before the quote causes the quote to be escaped.
+	string exec = TTGetProcessPath() + " " + TT_TOKEN_INVOKE + " =" + t->Name + " " + TT_PREFIX_RUNNER_PID + IntToStr(TTGetProcessID()) + " \"" + TT_PREFIX_TESTDIR + tempDirSlash + "\"" + " " + Options;
 	
 	if ( t->Parallel == TTParallelWholeCore )
 		AbcInterlockedIncrement( &ExecWholeCore );
@@ -673,7 +729,7 @@ AbcThreadReturnType AbcKernelCallbackDecl TestContext::ExecuteThread( void* cont
 	return 0;
 }
 
-int TestContext::Run()
+int TestContext::RunMaster()
 {
 	if ( !OutputBare ) OutText += Out->HeadPre( *this );
 	FlushOutput();
