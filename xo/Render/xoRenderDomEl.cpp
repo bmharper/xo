@@ -52,7 +52,6 @@ xoRenderDomText::xoRenderDomText( xoInternalID id, xoPool* pool ) : xoRenderDomE
 {
 	Text.Pool = pool;
 	FontID = xoFontIDNull;
-	Char = 0;
 	FontSizePx = 0;
 	Flags = 0;
 }

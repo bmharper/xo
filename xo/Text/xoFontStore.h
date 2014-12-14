@@ -5,7 +5,7 @@
 
 // This is used during layout to get an immutable set of fonts that we can access
 // without having to take any locks. Once a xoFont object has been created, it is
-// never mutated. the Freetype internals are most definitely mutated as we generate
+// never mutated. The Freetype internals are most definitely mutated as we generate
 // more glyphs, but the info directly stored inside xoFont is immutable.
 // Of particular importance is LinearHoriAdvance_Space_x256, which is used a lot
 // during layout.

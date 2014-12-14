@@ -22,6 +22,7 @@ class xoImage;
 class xoImageStore;
 class xoLayout;
 class xoLayout2;
+class xoLayout3;
 class xoLayoutResult;
 class xoPool;
 class xoDocGroup;
@@ -53,7 +54,7 @@ static const u32 xoPosMask = (1 << xoPosShift) - 1;	// 255
 
 // An ID that is internal to xo - i.e. it is not controllable by external code.
 // This ID is an integer that you can use to reference a DOM element. These IDs are recycled.
-typedef int32 xoInternalID;		
+typedef int32 xoInternalID;
 static const xoInternalID xoInternalIDNull = 0;		// Zero is always an invalid DOM element ID
 static const xoInternalID xoInternalIDRoot = 1;		// The root of the DOM tree always has ID = 1
 

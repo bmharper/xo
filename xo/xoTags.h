@@ -8,6 +8,7 @@ XY(Body) \
 XY(Div) \
 XY(Text) \
 XY(Lab) \
+XY(Span) \
 XY(Canvas) \
 XY(END) \
 

@@ -253,7 +253,7 @@ xoString xoDocParser::Parse( const char* src, xoDomNode* target )
 	if ( stack.size() != 1 )
 		return err( "Unclosed tags" );
 
-	return "";
+	return newText();
 }
 
 bool xoDocParser::IsWhite( int c )

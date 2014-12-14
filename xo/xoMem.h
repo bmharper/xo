@@ -39,8 +39,8 @@ public:
 
 	xoPoolArray()
 	{
-		Pool = NULL;
-		Data = NULL;
+		Pool = nullptr;
+		Data = nullptr;
 		Count = 0;
 		Capacity = 0;
 	}
@@ -77,7 +77,7 @@ public:
 		Count--;
 	}
 
-	T& add( const T* v = NULL )
+	T& add( const T* v = nullptr )
 	{
 		if ( Count == Capacity )
 			grow();
@@ -113,7 +113,7 @@ public:
 
 	void clear()
 	{
-		Data = NULL;
+		Data = nullptr;
 		Count = 0;
 		Capacity = 0;
 	}
@@ -135,6 +135,62 @@ protected:
 		Data = ndata;
 	}
 };
+
+/*
+// A vector that allocates its storage from a xoPool object
+// This has less storage requirements than an xoPoolArray (16 bytes vs 32 bytes on 64-bit platforms)
+template<typename T>
+class xoPoolArrayLite
+{
+public:
+	T*			Data;
+	uint		Count;
+	uint		Capacity;
+
+	xoPoolArrayLite()
+	{
+		Data = nullptr;
+		Count = 0;
+		Capacity = 0;
+	}
+
+	T& operator[]( intp _i )
+	{
+		return Data[_i];
+	}
+
+	const T& operator[]( intp _i ) const
+	{
+		return Data[_i];
+	}
+
+	void add( const T& item, xoPool* pool )
+	{
+		if ( Count == Capacity )
+			grow( pool );
+		Data[Count++] = item;
+	}
+
+	intp size() const { return Count; }
+
+protected:
+	void grow( xoPool* pool )
+	{
+		uint ncap = std::max(Capacity * 2, (uint) 2);
+		growto( ncap );
+	}
+
+	void growto( uint ncap, xoPool* pool )
+	{
+		T* ndata = (T*) pool->Alloc( sizeof(T) * ncap, false );
+		XOCHECKALLOC(ndata);
+		memcpy( ndata, Data, sizeof(T) * Capacity );
+		memset( ndata + Capacity, 0, sizeof(T) * (ncap - Capacity) );
+		Capacity = ncap;
+		Data = ndata;
+	}
+};
+*/
 
 // Last-in-first-out buffer. This is used instead of stack storage.
 // There is a hard limit here - the buffer size you request is
@@ -179,7 +235,9 @@ private:
 };
 
 // Vector that uses xoLifoBuf for storage. This is made for PODs - it does not do
-// object construction or destruction.
+// object construction or destruction. It also does not zero, unless you use
+// AddZeroed().
+// meh.. this thing is all kinds of screwed up.. mix of ideas
 template<typename T>
 class xoLifoVector
 {
@@ -190,13 +248,28 @@ public:
 	}
 	~xoLifoVector()
 	{
-		Lifo->Free( Data );
+		Lifo->Free( Items );
+	}
+
+	intp Size() const { return Count; }
+
+	T& Add()
+	{
+		AddN( 1 );
+		return Back();
+	}
+
+	T& AddZeroed()
+	{
+		T& t = Add();
+		memset( &t, 0, sizeof(t) );
+		return Back();
 	}
 
 	void AddN( intp numElementsToAdd )
 	{
-		if ( Data == nullptr )
-			Data = (T*) Lifo->Alloc( numElementsToAdd * sizeof(T) );
+		if ( Items == nullptr )
+			Items = (T*) Lifo->Alloc( numElementsToAdd * sizeof(T) );
 		else
 			Lifo->GrowLast( numElementsToAdd * sizeof(T) );
 		Count += numElementsToAdd;
@@ -206,12 +279,18 @@ public:
 	{
 		intp c = Count;
 		AddN( 1 );
-		Data[c] = t;
+		Items[c] = t;
+	}
+
+	void Pop()
+	{
+		XOASSERT(Count > 0);
+		Count--;
 	}
 
 	T& Back()
 	{
-		return Data[Count - 1];
+		return Items[Count - 1];
 	}
 
 	xoLifoVector& operator+=( const T& t )
@@ -220,10 +299,70 @@ public:
 		return *this;
 	}
 
-	T& operator[]( intp i ) { return Data[i]; }
+	T& operator[]( intp i ) { return Items[i]; }
 
 private:
 	xoLifoBuf*	Lifo;
-	T*			Data = nullptr;
+	T*			Items = nullptr;
 	intp		Count = 0;
+};
+
+/* This is a special kind of stack that only initializes objects
+the first time they are used. Thereafter, objects are recycled.
+When the stack is deleted, it only calls the destructor on the
+objects that were actually initialized and used.
+You will probably need to add your own "Reset" function to your
+objects, and call it on the object immediately after Add(). This
+Reset function should reset the object to a clean slate, but
+leave any heap-allocated memory intact. For example, podvec's
+clear_noalloc() function.
+*/
+template<typename T>
+class xoStack
+{
+public:
+	T*			Items = nullptr;
+	intp		Count = 0;
+	intp		Capacity = 0;
+	intp		HighwaterMark = 0;		// The maximum that Count has ever been
+
+	~xoStack()
+	{
+		for ( intp i = 0; i < HighwaterMark; i++ )
+			Items[i].~T();
+		free( Items );
+	}
+
+	void Init( intp capacity )
+	{
+		XOASSERT(Items == nullptr);
+		Capacity = capacity;
+		Items = (T*) malloc(sizeof(T) * capacity);
+		XOCHECKALLOC(Items);
+	}
+
+	T& Add()
+	{
+		XOASSERT(Count < Capacity);
+		if ( Count == HighwaterMark )
+		{
+			new (Items + Count) T();
+			HighwaterMark++;
+		}
+		Count++;
+		return Back();
+	}
+
+	void Pop()
+	{
+		XOASSERT(Count > 0);
+		Count--;
+	}
+
+	T& Back()
+	{
+		return Items[Count - 1];
+	}
+
+	T& operator[]( intp i ) { return Items[i]; }
 };

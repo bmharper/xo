@@ -32,7 +32,10 @@ xoRenderResult xoRenderer::Render( const xoDoc* doc, xoImageStore* images, xoStr
 void xoRenderer::RenderEl( xoPoint base, const xoRenderDomEl* el )
 {
 	if ( el->Tag == xoTagText )
-		RenderText( base, static_cast<const xoRenderDomText*>(el) );
+	{
+		xoPoint newBase = base + xoPoint( el->Pos.Left, el->Pos.Top );
+		RenderText( newBase, static_cast<const xoRenderDomText*>(el) );
+	}
 	else
 	{
 		const xoRenderDomNode* node = static_cast<const xoRenderDomNode*>(el);

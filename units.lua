@@ -236,6 +236,7 @@ local xo = SharedLibrary {
 		"xo/Dom/xoDomText.cpp",
 		"xo/Image/xoImage.cpp",
 		"xo/Image/xoImageStore.cpp",
+		"xo/Layout/xoBoxLayout3.cpp",
 		"xo/Layout/xoLayout.cpp",
 		"xo/Layout/xoLayout2.cpp",
 		"xo/Layout/xoLayout3.cpp",

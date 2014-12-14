@@ -21,6 +21,7 @@
 #include "Canvas/xoCanvas2D.h"
 #include "Layout/xoLayout.h"
 #include "Layout/xoLayout2.h"
+#include "Layout/xoLayout3.h"
 #include "Render/xoRenderer.h"
 #include "Render/xoRenderDoc.h"
 #include "Image/xoImageStore.h"

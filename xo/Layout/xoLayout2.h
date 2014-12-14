@@ -136,7 +136,3 @@ protected:
 	static bool				IsNull( xoPos p )		{ return p == xoPosNULL; }
 
 };
-
-
-
-

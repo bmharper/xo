@@ -1,2 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# Not sure this is necessary. Never tested it.
+*.sh -crlf

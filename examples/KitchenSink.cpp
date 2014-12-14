@@ -9,7 +9,8 @@ void InitDOM( xoDoc* doc );
 void xoMain( xoSysWnd* wnd )
 {
 	xoGlobal()->FontStore->AddFontDirectory( "C:\\temp\\fonts" );
-	wnd->SetPosition( xoBox(2100, 60, 2100 + 1300, 60 + 800), /*xoSysWnd::SetPosition_Move |*/ xoSysWnd::SetPosition_Size );
+	//wnd->SetPosition( xoBox(2100, 60, 2100 + 1300, 60 + 800), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size ); // DO NOT COMMIT ME
+	wnd->SetPosition( xoBox(-500, 60, -500 + 120, 60 + 140), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size ); // DO NOT COMMIT ME
 	InitDOM( wnd->Doc() );
 }
 
@@ -231,6 +232,13 @@ void DoLongText( xoDoc* doc )
 		);
 }
 
+// This was used when developing Layout3
+void DoInlineFlow( xoDoc* doc )
+{
+	doc->Root.ParseAppend( R"(The quick <span style='color: #a00'>brown fox jumps</span> over)");
+	//doc->Root.ParseAppend( R"(The quick)");
+}
+
 void DoBackupSettings( xoDoc* doc )
 {
 	// The goal here is to replicate part of bvckup2's UI
@@ -306,7 +314,8 @@ void InitDOM( xoDoc* doc )
 	//DoTwoTextRects( doc );
 	//DoBlockMargins( doc );
 	//DoLongText( doc );
-	DoBackupSettings( doc );
+	DoInlineFlow( doc );
+	//DoBackupSettings( doc );
 	//DoPadding( doc );
 	//DoTextQuality( doc );
 

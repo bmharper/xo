@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "xoDoc.h"
 #include "xoDocGroup.h"
-#include "Layout/xoLayout.h"
-#include "Layout/xoLayout2.h"
 #include "Render/xoRenderer.h"
 #include "Text/xoFontStore.h"
 #include "xoCloneHelpers.h"
@@ -275,7 +273,10 @@ void xoDoc::InitializeDefaultTagStyles()
 	//TagStyles[xoTagText].Parse( "width: 70px; height: 30px;", this );
 	
 	// This is amusing, and it is the default in HTML, but not the right default for general-purpose UI.
+	// If this were true here also, then it would imply that all text on a page is selectable.
 	//TagStyles[xoTagLab].Parse( "cursor: text", this );
+
+	TagStyles[xoTagSpan].Parse( "flow-context: inject", this );
 
 	static_assert(xoTagCanvas == xoTagEND - 1, "add default style for new tag");
 }

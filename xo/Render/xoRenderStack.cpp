@@ -75,6 +75,7 @@ void xoRenderStack::Initialize( const xoDoc* doc, xoPool* pool )
 	//Defaults[xoCatFontFamily].SetFont( doc->TagStyles[xoTagBody].Get().GetFont( doc ).Z, doc );
 	Defaults[xoCatBorderRadius].SetSize( xoCatBorderRadius, xoSize::Zero() );
 	Defaults[xoCatPosition].SetPosition( xoPositionStatic );
+	Defaults[xoCatFlowContext].SetFlowContext( xoFlowContextNew );
 	Defaults[xoCatBoxSizing].SetBoxSizing( xoBoxSizeBorder );	// HTML default is Content
 	//XY(END)
 }

@@ -430,9 +430,10 @@ bool xoStyle::Parse( const char* t, intp maxLen, xoDoc* doc )
 			else if ( MATCH(t, startk, eq, "break") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseBreakType, xoCatBreak, *this ); }
 			else if ( MATCH(t, startk, eq, "canfocus") )					{ ok = ParseBool( TSTART, TLEN, xoCatCanFocus, *this ); }
 			else if ( MATCH(t, startk, eq, "cursor") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseCursor, xoCatCursor, *this ); }
-			else if ( MATCH(t, startk, eq, "flow-axis") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowAxis, xoCatFlow_Axis, *this ); }
-			else if ( MATCH(t, startk, eq, "flow-direction-horizontal") )	{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowDirection, xoCatFlow_Direction_Horizontal, *this ); }
-			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowDirection, xoCatFlow_Direction_Vertical, *this ); }
+			else if ( MATCH(t, startk, eq, "flow-context") )				{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowContext, xoCatFlowContext, *this ); }
+			else if ( MATCH(t, startk, eq, "flow-axis") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowAxis, xoCatFlowAxis, *this ); }
+			else if ( MATCH(t, startk, eq, "flow-direction-horizontal") )	{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowDirection, xoCatFlowDirection_Horizontal, *this ); }
+			else if ( MATCH(t, startk, eq, "flow-direction-vertical") )		{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseFlowDirection, xoCatFlowDirection_Vertical, *this ); }
 			else if ( MATCH(t, startk, eq, "box-sizing") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &xoParseBoxSize, xoCatBoxSizing, *this ); }
 			else if ( MATCH(t, startk, eq, "font-size") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatFontSize, *this ); }
 			else if ( MATCH(t, startk, eq, "font-family") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &ParseFontFamily, xoCatFontFamily, *this ); }
@@ -904,6 +905,13 @@ XOAPI bool xoParseCursor( const char* s, intp len, xoCursors& t )
 	if ( MATCH(s, 0, len, "hand") )		{ t = xoCursorHand; return true; }
 	if ( MATCH(s, 0, len, "text") )		{ t = xoCursorText; return true; }
 	if ( MATCH(s, 0, len, "wait") )		{ t = xoCursorWait; return true; }
+	return false;
+}
+
+XOAPI bool xoParseFlowContext( const char* s, intp len, xoFlowContext& t )
+{
+	if ( MATCH(s, 0, len, "new") )		{ t = xoFlowContextNew; return true; }
+	if ( MATCH(s, 0, len, "inject") )	{ t = xoFlowContextInject; return true; }
 	return false;
 }
 

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../Layout/xoLayout.h"
 #include "../Layout/xoLayout2.h"
+#include "../Layout/xoLayout3.h"
 #include "xoRenderDoc.h"
 #include "xoRenderer.h"
 #include "xoRenderDX.h"
@@ -61,7 +62,7 @@ xoRenderResult xoRenderDoc::Render( xoRenderBase* driver )
 	xoLayoutResult* layout = new xoLayoutResult( Doc );
 	
 	XOTRACE_RENDER( "RenderDoc: Layout\n" );
-	xoLayout2 lay;
+	xoLayout3 lay;
 	lay.Layout( Doc, layout->Root, &layout->Pool );
 
 	XOTRACE_RENDER( "RenderDoc: Render\n" );

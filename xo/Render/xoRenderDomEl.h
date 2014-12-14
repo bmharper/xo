@@ -18,7 +18,7 @@ class XOAPI xoRenderDomEl
 public:
 				xoRenderDomEl( xoInternalID id, xoTag tag );
 
-	xoInternalID					InternalID;			// Reference to our original xoDomEl
+	xoInternalID					InternalID;			// Reference to our original xoDomEl. There can be many xoRenderDomEl per xoDomEl (text is an example)
 	xoBox							Pos;				// For rectangles, this is the ContentBox. See log entry from 2014-08-02
 	xoTag							Tag;
 
@@ -52,13 +52,12 @@ public:
 	};
 				xoRenderDomText( xoInternalID id, xoPool* pool );
 
-	void		SetStyle( xoRenderStack& stack );
+	void		SetStyle( xoRenderStack& stack ); // get rid of me. Instead just set color manually, the way it's done from xoLayout3
 	
 	bool		IsSubPixel() const { return !!(Flags & FlagSubPixelGlyphs); }
 
 	xoFontID						FontID;
 	xoPoolArray<xoRenderCharEl>		Text;
-	int								Char;
 	xoColor							Color;
 	uint8							FontSizePx;
 	uint8							Flags;

@@ -110,6 +110,12 @@ enum xoBreakType
 	xoBreakAfter			// Break flow after element
 };
 
+enum xoFlowContext
+{
+	xoFlowContextNew,		// This object defines a new flow context, and it's children flow inside that.
+	xoFlowContextInject,	// This object does not flow; it's children are promoted into it's parent's flow context.
+};
+
 // The following attributes are "bind sources". You bind a position of your own to a position on your parent node.
 // The "bind targets" that you can bind to on your parent node are the same properties that can be used as bind sources.
 // So if you bind left:right, then you are binding your left edge to your parent content box's right edge.
@@ -177,9 +183,10 @@ XY(FontFamily) \
 \
 XY(BorderRadius) \
 XY(Position) \
-XY(Flow_Axis) \
-XY(Flow_Direction_Horizontal) \
-XY(Flow_Direction_Vertical) \
+XY(FlowContext) \
+XY(FlowAxis) \
+XY(FlowDirection_Horizontal) \
+XY(FlowDirection_Vertical) \
 XY(BoxSizing) \
 XY(END)
 
@@ -244,9 +251,10 @@ public:
 	void SetBreak( xoBreakType type )								{ SetU32( xoCatBreak, type); }
 	void SetCanFocus( bool canFocus )								{ SetU32( xoCatCanFocus, canFocus ); }
 	void SetCursor( xoCursors cursor )								{ SetU32( xoCatCursor, cursor ); }
-	void SetFlowAxis( xoFlowAxis axis )								{ SetU32( xoCatFlow_Axis, axis ); }
-	void SetFlowDirectionHorizonal( xoFlowDirection dir )			{ SetU32( xoCatFlow_Direction_Horizontal, dir ); }
-	void SetFlowDirectionVertical( xoFlowDirection dir )			{ SetU32( xoCatFlow_Direction_Vertical, dir ); }
+	void SetFlowContext( xoFlowContext flowcx )						{ SetU32( xoCatFlowContext, flowcx ); }
+	void SetFlowAxis( xoFlowAxis axis )								{ SetU32( xoCatFlowAxis, axis ); }
+	void SetFlowDirectionHorizonal( xoFlowDirection dir )			{ SetU32( xoCatFlowDirection_Horizontal, dir ); }
+	void SetFlowDirectionVertical( xoFlowDirection dir )			{ SetU32( xoCatFlowDirection_Vertical, dir ); }
 	void SetBoxSizing( xoBoxSizeType type )							{ SetU32( xoCatBoxSizing, type ); }
 	void SetTextAlignVertical( xoTextAlignVertical align )			{ SetU32( xoCatText_Align_Vertical, align ); }
 	void SetLeft( xoHorizontalBindings bind )						{ SetU32( xoCatLeft, bind ); }
@@ -264,6 +272,7 @@ public:
 	void Set( xoStyleCategories cat, xoPositionType val )			{ SetPosition( val ); }
 	void Set( xoStyleCategories cat, xoBreakType val )				{ SetBreak( val ); }
 	void Set( xoStyleCategories cat, xoCursors val )				{ SetCursor( val ); }
+	void Set( xoStyleCategories cat, xoFlowContext val )			{ SetFlowContext( val ); }
 	void Set( xoStyleCategories cat, xoFlowAxis val )				{ SetFlowAxis( val ); }
 	void Set( xoStyleCategories cat, xoFlowDirection val )			{ SetU32( cat, val ); }
 	void Set( xoStyleCategories cat, xoBoxSizeType val )			{ SetBoxSizing( val ); }
@@ -287,6 +296,7 @@ public:
 	bool					GetCanFocus() const						{ return ValU32 != 0; }
 	xoCursors				GetCursor() const						{ return (xoCursors) ValU32; }
 	int						GetStringID() const						{ return (int) ValU32; }
+	xoFlowContext			GetFlowContext() const					{ return (xoFlowContext) ValU32; }
 	xoFlowAxis				GetFlowAxis() const						{ return (xoFlowAxis) ValU32; }
 	xoFlowDirection			GetFlowDirectionMajor() const			{ return (xoFlowDirection) ValU32; }
 	xoFlowDirection			GetFlowDirectionMinor() const			{ return (xoFlowDirection) ValU32; }
@@ -488,6 +498,7 @@ XOAPI bool xoParseDisplayType( const char* s, intp len, xoDisplayType& t );
 XOAPI bool xoParsePositionType( const char* s, intp len, xoPositionType& t );
 XOAPI bool xoParseBreakType( const char* s, intp len, xoBreakType& t );
 XOAPI bool xoParseCursor( const char* s, intp len, xoCursors& t );
+XOAPI bool xoParseFlowContext( const char* s, intp len, xoFlowContext& t );
 XOAPI bool xoParseFlowAxis( const char* s, intp len, xoFlowAxis& t );
 XOAPI bool xoParseFlowDirection( const char* s, intp len, xoFlowDirection& t );
 XOAPI bool xoParseBoxSize( const char* s, intp len, xoBoxSizeType& t );

@@ -25,8 +25,7 @@ int main( int argc, char** argv )
 	// Make clear color a predictable pink, no matter what the default is
 	xoGlobal()->ClearColor.Set( 255, 30, 240, 255 );
 
-	int retval = 0;
-	TTRun( argc, argv, &retval );
+	int retval = TTRun( argc, argv );
 
 	xoShutdown();
 

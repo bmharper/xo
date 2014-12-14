@@ -11,16 +11,16 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	a maximum width. Text in turn, has a minimum width, which I guess is the width of an "m".
 
 2014-06-28	Layout - vertical alignment
-	It doesn't make sense for anything other than nuDomText elements to have valign:baseline, so
-	this should be illegal for nuDomNode elements. Although.. what about images? It might be useful
+	It doesn't make sense for anything other than xoDomText elements to have valign:baseline, so
+	this should be illegal for xoDomNode elements. Although.. what about images? It might be useful
 	to align images onto the baseline. So perhaps instead of "valign", we have binding points, which
 	are expressed as child-bind-point:parent-bind-point. To align a text item to its parent's
 	baseline, you write baseline:baseline. Then, if you want to align the bottom of an image to
 	the baseline of its parent, you write bottom:baseline.
-	There is also this problem that nuDomText elements are leaves, and they may not specify any
+	There is also this problem that xoDomText elements are leaves, and they may not specify any
 	style of their own. Whatever style they have needs to be inherited. I guess that's not really a
 	problem, except for the small issue that you'd need to set an alignment of baseline:basline on
-	a node that is not a nuDomText node, simply so that its child text leaves could inherit that
+	a node that is not a xoDomText node, simply so that its child text leaves could inherit that
 	style. The question then remains: what is the binding of the non-text node that houses the text?
 	The answer is very simple: The baseline is defined as the baseline of your first child node with
 	a non-null baseline. So almost all nodes will end up having a baseline defined.
@@ -41,7 +41,7 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	observation here is that you don't want to start out thinking "inside the box", because
 	it limits the way you think.
 	
-	I am starting on nuLayout2, which will be more free, less box oriented.
+	I am starting on xoLayout2, which will be more free, less box oriented.
 
 	How about this:
 	Every node starts with its own local coordinate system, origin 0,0.
@@ -49,7 +49,7 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	may be null.
 	It's only outputs are NodeWidth, NodeHeight, NodeBaseline. NodeBaseline
 	is the baseline of the first child that returned a non-null baseline. The only
-	nodes that are original producers of a non-null baseline are nuDomText objects
+	nodes that are original producers of a non-null baseline are xoDomText objects
 	(ie leaf text objects). BUT - what if you want a baseline defined by an object
 	that is going to have text, but has no text yet. Yeah, so that doesn't work.
 	The baseline needs to be defined by the deepest object that CAN have text.
@@ -170,8 +170,8 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	kind of fixup late in the layout process. But that is getting quite hackish.
 
 2014-08-02	Render node reference frame
-	Right now the frame of reference for nuRenderDomEl.Pos is the parent node's content
-	box. This forces us to store Padding inside nuStyleRender. I'm pretty sure this
+	Right now the frame of reference for xoRenderDomEl.Pos is the parent node's content
+	box. This forces us to store Padding inside xoStyleRender. I'm pretty sure this
 	is a waste of space. It would be more efficient to make the frame of reference
 	the border-box of the parent node. I fear I'm going to get confused by doing that,
 	so for now I'm sticking with this. It should be a fairly trivial optimization to
@@ -215,11 +215,7 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	and its definition:
 
 	<body>
-		The quick brown fox
-			<span style='background-color: red'>
-				jumps over the lazy
-			</span>
-		dog
+		The quick brown fox <span style='background-color: red'>jumps over the lazy</span> dog
 	</body>
 
 	In this example, the root node (ie body) gets its own flow context. The first rectangle
@@ -251,4 +247,28 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	infrastructure, and vice versa. By infastructure I mean things like making all heap
 	allocations controllable, or an easy build process. Perhaps a reasonable thing to
 	do is alternate working on features and infrastructure.
+
+2014-12-10	Splitting a <span> across lines
+	I was battling for a while on how to split a <span> across multiple lines. One particular
+	behaviour that I am looking for is that if a <span> element has a non-zero border-radius,
+	then it's borders should be round on all of the lines where it exists. In other words,
+	all of the distinct blocks of the <span> should have nice round borders, instead of
+	just nice borders at the start and end, with abrupt hard edges on the line edges where
+	the <span> is broken.
+	My thinking here is that in your output representation, you simply need to repeat the
+	<span> object multiple times. This is obvious in hindsight, but at first it confused me,
+	because I was thinking of making every word a <span>, but it's simpler than that.
+
+	If we have this example: <span>quick brown fox</span>
+	And let's say that there is a line break after the "quick", and then "brown fox" fit
+	on the same line. Our render representation then looks like this:
+	<span>quick</span>
+	<span>brown fox</span>
+
+	This is simple enough. However, where it starts to get confusing is when we think
+	about the fact that the text objects are not just word boxes, but word boxes inside
+	text objects. So from <span> down to words, we are actually looking at three levels
+	(span, text, word). Where did the text object disappear then? We split the <span>
+	according to how the words flowed, but we just kind of forgot about the text object.
+
 	
