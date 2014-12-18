@@ -46,8 +46,6 @@ public:
 	};
 	struct WordInput
 	{
-		const char*		Txt;
-		int				TxtLen;
 		xoPos			Width;
 		xoPos			Height;
 	};
@@ -62,7 +60,10 @@ public:
 
 	void				BeginNode( const NodeInput& in );
 	void				EndNode();
+
 	xoRenderDomText*	AddWord( const WordInput& in );
+	void				AddSpace( xoPos width );
+	void				AddLinebreak();
 
 protected:
 	// Every time we start a new line, another one of these is created
@@ -103,6 +104,7 @@ protected:
 	xoStack<NodeState>		NodeStates;
 	//podvec<OutBox>			Result;
 
-	void	Flow( const NodeState& ns, FlowState& flow, xoBox& marginBox );
+	bool	Flow( const NodeState& ns, FlowState& flow, xoBox& marginBox );
+	void	NewLine( FlowState& flow );
 
 };

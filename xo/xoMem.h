@@ -1,4 +1,4 @@
-#pragma once
+   #pragma once
 
 // A memory pool
 class XOAPI xoPool
@@ -198,6 +198,7 @@ protected:
 // This was created to lessen the burden on the actual thread stack during
 // layout.
 // You must free objects in the reverse order that you allocated them.
+// GET RID OF THIS ALONG WITH xoLayout2
 class XOAPI xoLifoBuf
 {
 public:
@@ -238,6 +239,7 @@ private:
 // object construction or destruction. It also does not zero, unless you use
 // AddZeroed().
 // meh.. this thing is all kinds of screwed up.. mix of ideas
+// GET RID OF THIS ALONG WITH xoLayout2
 template<typename T>
 class xoLifoVector
 {
@@ -365,4 +367,78 @@ public:
 	}
 
 	T& operator[]( intp i ) { return Items[i]; }
+};
+
+// Circular buffer
+// This is only built for PODs, and it does not zero-initialize.
+// Automatically grows size. Size must be a power of 2.
+// There is a debug-only check for popping an empty queue.
+template<typename T>
+class xoRingBuf
+{
+public:
+	// Arbitrarily chosen constant. Reasoning is that you wouldn't use a
+	// ring buffer for less than 32 items. This was originally built
+	// to hold glyphs during layout.
+	static const uint32 DefaultInitialSize = 32;
+
+	xoRingBuf()
+	{
+	}
+	
+	~xoRingBuf()
+	{
+		free(Ring);
+	}
+
+	T& PushHead()
+	{
+		if ( (Head + 1) & Mask == Tail )
+			Grow();
+		T& item = Ring[Head];
+		Head = (Head + 1) & Mask;
+		return item;
+	}
+
+	const T& PopTail()
+	{
+		XOASSERTDEBUG( Head != Tail );
+		const T& item = Ring[Tail];
+		Tail = (Tail + 1) & Mask;
+		return item;
+	}
+
+	intp Size() const { return (intp) ((Head - Tail) & Mask); }
+
+private:
+	T*			Ring = nullptr;
+	uint32		Mask = 0;
+	uint32		Head = 0;
+	uint32		Tail = 0;
+
+	uint32 RingSize() const { return Mask + 1; }
+
+	void Grow()
+	{
+		if ( Ring == nullptr )
+		{
+			Ring = (T*) xoMallocOrDie( DefaultInitialSize * sizeof(T) );
+			Mask = DefaultInitialSize - 1;
+		}
+		else
+		{
+			uint32 orgSize = RingSize();
+			Ring = (T*) xoReallocOrDie( Ring, orgSize * 2 * sizeof(T) );
+			if ( Head < Tail )
+			{
+				// Handle the scenario where the head is behind the tail (numerically)
+				// [  H T  ]   =>  [    T     H    ]
+				// [c - a b]   =>  [- - a b c - - -]
+				for ( uint32 i = 0; i < Head; i++ )
+					Ring[orgSize + i] = Ring[i];
+				Head += orgSize;
+			}
+			Mask = (orgSize * 2) - 1;
+		}
+	}
 };

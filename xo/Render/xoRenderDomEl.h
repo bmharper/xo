@@ -43,6 +43,14 @@ public:
 	xoPoolArray<xoRenderDomEl*>		Children;
 };
 
+// This is confusing - it should perhaps be named xoRenderDomWords, because it
+// is at a lower level than an xoDomText object. This represents a bunch of words that
+// fit on a single line. An xoDomText object is actually represented by an xoRenderDomNode.
+// On the other hand, for efficiency sake, one might want to have another level of
+// object beneath this, called xoRenderDomWords, so that we don't redundantly store
+// [font, color, fontsize, flags] for every line of text. Probably needless worry though,
+// considering that the number of characters in an average line of text will far outweigh
+// the storage for the items mentioned above.
 class XOAPI xoRenderDomText : public xoRenderDomEl
 {
 public:

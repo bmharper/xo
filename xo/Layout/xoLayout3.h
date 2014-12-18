@@ -80,19 +80,20 @@ protected:
 
 	struct TextRunState
 	{
-		const xoDomText*		Node;
-		xoRenderDomText*		RNode;
-		podvec<Word>			Words;			// no longer necessary, now that we output text in a single pass
-		int						GlyphCount;		// Number of non-empty glyphs
-		bool					GlyphsNeeded;
-		float					FontWidthScale;
+		const xoDomText*			Node;
+		xoRenderDomText*			RNode;
+		podvec<Word>				Words;			// no longer necessary, now that we output text in a single pass
+		int							GlyphCount;		// Number of non-empty glyphs
+		bool						GlyphsNeeded;
+		float						FontWidthScale;
 
 		// New state created for xoLayout3, because we don't have an xoRenderDomText at this stage
-		int						FontSizePx;
-		bool					IsSubPixel;
-		xoFontID				FontID;
-		xoColor					Color;
-		podvec<xoRenderCharEl>	Chars;
+		int							FontSizePx;
+		bool						IsSubPixel;
+		xoFontID					FontID;
+		xoColor						Color;
+		//podvec<xoRenderCharEl>		Chars;
+		xoRingBuf<xoRenderCharEl>	Chars;
 	};
 
 	struct FlowState
@@ -124,13 +125,11 @@ protected:
 	void		RenderGlyphsNeeded();
 	void		LayoutInternal( xoRenderDomNode& root );
 	void		RunNode3( const xoDomNode* node, const LayoutInput3& in );
-	void		RunNode( const xoDomNode& node, const LayoutInput& in, LayoutOutput& out, xoRenderDomNode* rnode );
 	void		RunText3( const xoDomText* node, const LayoutInput3& in );
-	void		RunText( const xoDomText& node, const LayoutInput& in, LayoutOutput& out, xoRenderDomText* rnode );
 	void		GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, TextRunState& ts );
 	xoPoint		PositionChildFromBindings( const LayoutInput& cin, const LayoutOutput& cout, xoRenderDomEl* rchild );
 	void		GenerateTextWords( TextRunState& ts );
-	void		AddWordCharacters( const TextRunState& ts, xoRenderDomText* rnode );
+	void		FinishTextRNode( TextRunState& ts, xoRenderDomText* rnode, intp numChars );
 
 	xoPos		ComputeDimension( xoPos container, xoStyleCategories cat );
 	xoPos		ComputeDimension( xoPos container, xoSize size );

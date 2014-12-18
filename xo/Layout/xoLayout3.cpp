@@ -70,21 +70,9 @@ void xoLayout3::LayoutInternal( xoRenderDomNode& root )
 	in.ParentWidth = xoIntToPos( Doc->UI.GetViewportWidth() );
 	in.ParentHeight = xoIntToPos( Doc->UI.GetViewportHeight() );
 
-	//Boxer.BeginDocument( Doc->UI.GetViewportWidth(), Doc->UI.GetViewportHeight(), &root );
 	Boxer.BeginDocument( &root );
 	RunNode3( &Doc->Root, in );
 	Boxer.EndDocument();
-
-	//LayoutInput in;
-	//in.ParentWidth = xoIntToPos( Doc->UI.GetViewportWidth() );
-	//in.ParentHeight = xoIntToPos( Doc->UI.GetViewportHeight() );
-	//in.OuterBaseline = xoPosNULL;
-	//
-	//LayoutOutput out;
-	//
-	//XOTRACE_LAYOUT_VERBOSE( "Layout 3 DocBox = %d,%d\n", in.ParentWidth, in.ParentHeight );
-	//
-	//RunNode( Doc->Root, in, out, &root );
 }
 
 void xoLayout3::RunNode3( const xoDomNode* node, const LayoutInput3& in )
@@ -122,162 +110,6 @@ void xoLayout3::RunNode3( const xoDomNode* node, const LayoutInput3& in )
 		}
 	}
 	Boxer.EndNode();
-}
-
-void xoLayout3::RunNode( const xoDomNode& node, const LayoutInput& in, LayoutOutput& out, xoRenderDomNode* rnode )
-{
-	XOTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 1\n", node.GetInternalID() );
-	xoStyleResolver::ResolveAndPush( Stack, &node );
-	rnode->SetStyle( Stack );
-
-	XOTRACE_LAYOUT_VERBOSE( "Layout (%d) Run 2\n", node.GetInternalID() );
-	rnode->InternalID = node.GetInternalID();
-
-	xoBoxSizeType boxSizing = Stack.Get( xoCatBoxSizing ).GetBoxSizing();
-	xoPos borderRadius = ComputeDimension( 0, xoCatBorderRadius );
-	xoPos contentWidth = ComputeDimension( in.ParentWidth, xoCatWidth );
-	xoPos contentHeight = ComputeDimension( in.ParentHeight, xoCatHeight );
-	xoBox margin = ComputeBox( in.ParentWidth, in.ParentHeight, xoCatMargin_Left );		// it may be wise to disallow percentage sizing here
-	xoBox padding = ComputeBox( in.ParentWidth, in.ParentHeight, xoCatPadding_Left );	// same here
-	xoBox border = ComputeBox( in.ParentWidth, in.ParentHeight, xoCatBorder_Left );		// and here
-	
-	// It might make for less arithmetic if we work with marginBoxWidth and marginBoxHeight instead of contentBoxWidth and contentBoxHeight. We'll see.
-
-	// This box holds the offsets from the 4 sides of our origin, to our content box. (Our origin is our parent's content box, but since it's relative here, it starts at 0,0)
-	xoBox toContent;
-	toContent.Left = margin.Left + border.Left + padding.Left;
-	toContent.Right = margin.Right + border.Right + padding.Right;
-	toContent.Top = margin.Top + border.Top + padding.Top;
-	toContent.Bottom = margin.Bottom + border.Bottom + padding.Bottom;
-
-	if ( boxSizing == xoBoxSizeContent ) {}
-	else if ( boxSizing == xoBoxSizeBorder )
-	{
-		if ( IsDefined(contentWidth) )	contentWidth -= border.Left + border.Right + padding.Left + padding.Right;
-		if ( IsDefined(contentHeight) )	contentHeight -= border.Top + border.Bottom + padding.Top + padding.Bottom;
-	}
-	else if ( boxSizing == xoBoxSizeMargin )
-	{
-		if ( IsDefined(contentWidth) )	contentWidth -= margin.Left + margin.Right + border.Left + border.Right + padding.Left + padding.Right;
-		if ( IsDefined(contentHeight) )	contentHeight -= margin.Top + margin.Bottom + border.Top + border.Bottom + padding.Top + padding.Bottom;
-	}
-
-	if ( SnapBoxes )
-	{
-		if ( IsDefined(contentWidth) )	contentWidth = xoPosRoundUp( contentWidth );
-		if ( IsDefined(contentHeight) )	contentHeight = xoPosRoundUp( contentHeight );
-	}
-
-	xoPos autoWidth = 0;
-	xoPos autoHeight = 0;
-	xoPos outerBaseline = IsDefined(in.OuterBaseline) ? in.OuterBaseline - toContent.Top : xoPosNULL;
-
-	// If we don't know our width and height yet then we need to delay bindings until our first pass is done
-	// The buffer size of 16 here is thumbsuck. One can't make it too big, because this is a recursive function.
-	// -- I first tried to have an optimized case for binding during first pass, but I have given up on that.
-	// -- One could revisit it once the design is nailed down.
-	xoLifoVector<LayoutOutput> outs( ChildOutStack );
-	outs.AddN( node.ChildCount() );
-
-	xoLifoVector<LineBox> lineBoxes( LineBoxStack );
-	lineBoxes.Push( LineBox::Make( xoPosNULL, -1, INT32MAX ) );
-
-	FlowState flow;
-	flow.PosMajor = 0;
-	flow.PosMinor = 0;
-	flow.MajorMax = 0;
-	flow.NumLines = 0;
-
-	for ( intp i = 0; i < node.ChildCount(); i++ )
-	{
-		const xoDomEl* c = node.ChildByIndex( i );
-		LayoutInput cin;
-		LayoutOutput cout;
-		cin.OuterBaseline = IsDefined(outerBaseline) ? outerBaseline : lineBoxes.Back().InnerBaseline;
-		cin.ParentWidth = contentWidth;
-		cin.ParentHeight = contentHeight;
-		xoPoint offset(0,0);
-		int nlines = flow.NumLines;
-		bool breakBefore = false;
-		if ( c->GetTag() == xoTagText )
-		{
-			xoRenderDomText* rchildTxt = new (Pool->AllocT<xoRenderDomText>(false)) xoRenderDomText( c->GetInternalID(), Pool );
-			rnode->Children += rchildTxt;
-			RunText( *static_cast<const xoDomText*>(c), cin, cout, rchildTxt );
-			breakBefore = FlowBreakBefore( cout, flow );
-			offset += FlowRun( cin, cout, flow, rchildTxt );
-			// Text elements cannot choose their layout. They are forced to start in the top-left of their parent, and perform text layout inside that space.
-		}
-		else
-		{
-			xoRenderDomNode* rchildNode = new (Pool->AllocT<xoRenderDomNode>(false)) xoRenderDomNode( c->GetInternalID(), c->GetTag(), Pool );
-			rnode->Children += rchildNode;
-			RunNode( *static_cast<const xoDomNode*>(c), cin, cout, rchildNode );
-			breakBefore = FlowBreakBefore( cout, flow );
-			offset += FlowRun( cin, cout, flow, rchildNode );
-		}
-		outs[i] = cout;
-		if ( flow.NumLines != nlines && breakBefore )
-		{
-			// Create a new linebox BEFORE adding this child's state
-			lineBoxes.Back().LastChild = int(i - 1);
-			lineBoxes += LineBox::Make( xoPosNULL, -1, INT32MAX );
-		}
-		if ( IsNull(lineBoxes.Back().InnerBaseline) && IsDefined(cout.NodeBaseline) )
-		{
-			lineBoxes.Back().InnerBaseline = cout.NodeBaseline + offset.Y;
-			lineBoxes.Back().InnerBaselineDefinedBy = (int) i;
-		}
-		if ( flow.NumLines != nlines && !breakBefore )
-		{
-			// Create a new linebox AFTER adding this child's state
-			lineBoxes.Back().LastChild = (int) i;
-			lineBoxes += LineBox::Make( xoPosNULL, -1, INT32MAX );
-		}
-		autoWidth = xoMax( autoWidth, flow.PosMinor );
-		autoHeight = xoMax( autoHeight, flow.MajorMax );
-	}
-
-	if ( IsNull(contentWidth) ) contentWidth = SnapBoxes ? xoPosRoundUp(autoWidth) : autoWidth;
-	if ( IsNull(contentHeight) ) contentHeight = SnapBoxes ?  xoPosRoundUp(autoHeight) : autoHeight;
-
-	// Apply bindings
-	{
-		int iLineBox = 0;
-		LayoutInput cin;
-		cin.OuterBaseline = IsDefined(outerBaseline) ? outerBaseline : lineBoxes[iLineBox].InnerBaseline;
-		cin.ParentWidth = contentWidth;
-		cin.ParentHeight = contentHeight;
-		for ( intp i = 0; i < node.ChildCount(); i++ )
-		{
-			const xoDomEl* c = node.ChildByIndex( i );
-			xoPoint offset(0,0);
-			if ( c->GetTag() != xoTagText )
-				offset = PositionChildFromBindings( cin, outs[i], rnode->Children[i] );
-			if ( i == lineBoxes[iLineBox].InnerBaselineDefinedBy )
-				lineBoxes[iLineBox].InnerBaseline += offset.Y;
-			if ( lineBoxes[iLineBox].LastChild == i )
-				iLineBox++;
-		}
-	}
-
-	rnode->Pos = xoBox( 0, 0, contentWidth, contentHeight ).OffsetBy( toContent.Left, toContent.Top );
-	rnode->Style.BackgroundColor = Stack.Get( xoCatBackground ).GetColor();
-	rnode->Style.BorderRadius = xoPosToReal( borderRadius );
-	rnode->Style.BorderSize = border;
-	rnode->Style.Padding = padding;
-	rnode->Style.BorderColor = Stack.Get( xoCatBorderColor_Left ).GetColor();
-	rnode->Style.HasHoverStyle = Stack.HasHoverStyle();
-	rnode->Style.HasFocusStyle = Stack.HasFocusStyle();
-
-	out.NodeBaseline = IsDefined(lineBoxes[0].InnerBaseline) ? lineBoxes[0].InnerBaseline + toContent.Top : xoPosNULL;
-	out.NodeWidth = contentWidth + border.Left + border.Right + margin.Left + margin.Right + padding.Left + padding.Right;
-	out.NodeHeight = contentHeight + border.Top + border.Bottom + margin.Top + margin.Bottom + padding.Top + padding.Bottom;
-	out.Binds = ComputeBinds();
-	out.Break = Stack.Get( xoCatBreak ).GetBreakType();
-	//out.Position = Stack.Get( xoCatPosition ).GetPositionType();
-
-	Stack.StackPop();
 }
 
 void xoLayout3::RunText3( const xoDomText* node, const LayoutInput3& in )
@@ -335,10 +167,6 @@ void xoLayout3::RunText3( const xoDomText* node, const LayoutInput3& in )
 	GenerateTextWords( TempText );
 
 	//Boxer.EndNode();
-}
-
-void xoLayout3::RunText( const xoDomText& node, const LayoutInput& in, LayoutOutput& out, xoRenderDomText* rnode )
-{
 }
 
 /*
@@ -457,6 +285,17 @@ void xoLayout3::GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, Te
 	out.NodeHeight = posMaxY;
 }
 
+/* 
+Calling FinishTextRNode:
+The order of events here can be a little bit confusing. We need to
+do it this way to ensure that we only write out the characters into
+the xoRenderDomText element once. The simpler approach would be to
+append characters to xoRenderDomText after every word, but that
+appending involves growing a vector, so plenty of memory reallocs.
+Instead, we queue up a string of characters and write them all
+out at once, when we either detect a new line, or when we are done
+with the entire text object.
+*/
 void xoLayout3::GenerateTextWords( TextRunState& ts )
 {
 	const char* txt = ts.Node->GetText();
@@ -473,31 +312,35 @@ void xoLayout3::GenerateTextWords( TextRunState& ts )
 		lineHeight = xoPosRoundUp( lineHeight );
 
 	ts.GlyphsNeeded = false;
-	bool onSpace = false;
 	intp wordStart = 0;
+	intp rtxt_start = 0;
 	xoPos posX = 0;
 	xoPos baseline = fontAscender;
 	const xoGlyph* prevGlyph = nullptr;
+	xoRenderDomText* rtxt = nullptr;
 	for ( intp i = 0; true; i++ )
 	{
 		bool isSpace = IsSpace(txt[i]) || IsLinebreak(txt[i]);
-		if ( isSpace || onSpace || txt[i] == 0 ) 
+		if ( isSpace || txt[i] == 0 )
 		{
+			xoRenderDomText* rtxt_new = nullptr;
 			if ( i != wordStart && !ts.GlyphsNeeded )
 			{
 				xoBoxLayout3::WordInput wordin;
 				wordin.Width = posX;
 				wordin.Height = lineHeight; // unsure
-				xoRenderDomText* rtxt = Boxer.AddWord( wordin );
-				AddWordCharacters( ts, rtxt );
-				ts.Chars.clear_noalloc();
+				rtxt_new = Boxer.AddWord( wordin );
+			}
+			if ( rtxt != nullptr && rtxt_new != rtxt )
+			{
+				FinishTextRNode( ts, rtxt, i - rtxt_start );
 			}
 			wordStart = (int32) i;
 			posX = 0;
-			onSpace = isSpace;
+
+			if ( txt[i] == 0 )
+				break;
 		}
-		if ( txt[i] == 0 )
-			break;
 		key.Char = txt[i];
 		const xoGlyph* glyph = glyphCache->GetGlyph( key );
 		if ( !glyph )
@@ -511,7 +354,7 @@ void xoLayout3::GenerateTextWords( TextRunState& ts )
 			// TODO: Handle missing glyph by drawing a rectangle or something
 			continue;
 		}
-		if ( xoGlobal()->EnableKerning && prevGlyph )
+		if ( xoGlobal()->EnableKerning && prevGlyph && !isSpace )
 		{
 			// Multithreading hazard here. I'm not sure whether FT_Get_Kerning is thread safe.
 			// Also, I have stepped inside there and I see it does a binary search. We would probably
@@ -522,7 +365,7 @@ void xoLayout3::GenerateTextWords( TextRunState& ts )
 			posX += kerning;
 		}
 
-		xoRenderCharEl& rtxt = ts.Chars.add();
+		xoRenderCharEl& rtxt = ts.Chars.PushHead();
 		rtxt.Char = key.Char;
 		rtxt.X = posX + xoRealx256ToPos( glyph->MetricLeftx256 );
 		rtxt.Y = baseline - xoRealToPos( glyph->MetricTop );			// rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
@@ -533,17 +376,25 @@ void xoLayout3::GenerateTextWords( TextRunState& ts )
 	}
 }
 
-void xoLayout3::AddWordCharacters( const TextRunState& ts, xoRenderDomText* rnode )
+void xoLayout3::FinishTextRNode( TextRunState& ts, xoRenderDomText* rnode, intp numChars )
 {
 	rnode->FontID = ts.FontID;
 	rnode->Color = ts.Color;
 	rnode->FontSizePx = ts.FontSizePx;
 	if ( ts.IsSubPixel )
 		rnode->Flags |= xoRenderDomText::FlagSubPixelGlyphs;
+	
+	XOASSERT( ts.Chars.Size() >= numChars );
 
-	rnode->Text.resize( ts.Chars.size() );
-	for ( intp i = 0; i < ts.Chars.size(); i++ )
-		rnode->Text[i] = ts.Chars[i];
+	rnode->Text.resize( numChars );
+	for ( intp i = 0; i < numChars; i++ )
+		rnode->Text[i] = ts.Chars.PopTail();
+
+	// We cannot do an rnode->Text.resize() here, because this text item
+	// may be reused for many subsequent words.
+	// rnode->Text.resize( ts.Chars.size() );
+	//for ( intp i = 0; i < ts.Chars.size(); i++ )
+	//	rnode->Text[i] = ts.Chars[i];
 }
 
 xoPoint xoLayout3::PositionChildFromBindings( const LayoutInput& cin, const LayoutOutput& cout, xoRenderDomEl* rchild )

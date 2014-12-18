@@ -10,7 +10,7 @@ void xoMain( xoSysWnd* wnd )
 {
 	xoGlobal()->FontStore->AddFontDirectory( "C:\\temp\\fonts" );
 	//wnd->SetPosition( xoBox(2100, 60, 2100 + 1300, 60 + 800), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size ); // DO NOT COMMIT ME
-	wnd->SetPosition( xoBox(-500, 60, -500 + 120, 60 + 140), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size ); // DO NOT COMMIT ME
+	wnd->SetPosition( xoBox(50, 60, 50 + 120, 60 + 140), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size ); // DO NOT COMMIT ME
 	InitDOM( wnd->Doc() );
 }
 
@@ -235,7 +235,7 @@ void DoLongText( xoDoc* doc )
 // This was used when developing Layout3
 void DoInlineFlow( xoDoc* doc )
 {
-	doc->Root.ParseAppend( R"(The quick <span style='color: #a00'>brown fox jumps</span> over)");
+	doc->Root.ParseAppend( R"(The quick <span style='color: #a00; background: #fff'>brown fox jumps</span> over)");
 	//doc->Root.ParseAppend( R"(The quick)");
 }
 
