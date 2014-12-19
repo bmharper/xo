@@ -78,11 +78,26 @@ protected:
 		int32	Length() const { return End - Start; }
 	};
 
+	enum ChunkType
+	{
+		ChunkSpace,
+		ChunkLineBreak,
+		ChunkWord
+	};
+
+	struct Chunk
+	{
+		int32		Start;
+		int32		End;
+		ChunkType	Type;
+	};
+
 	struct TextRunState
 	{
 		const xoDomText*			Node;
 		xoRenderDomText*			RNode;
-		podvec<Word>				Words;			// no longer necessary, now that we output text in a single pass
+		// Alternates between runs of non-whitespace and whitespace. Non-whitespace is not divisible across lines.
+		podvec<Word>				Words;
 		int							GlyphCount;		// Number of non-empty glyphs
 		bool						GlyphsNeeded;
 		float						FontWidthScale;
@@ -130,6 +145,8 @@ protected:
 	xoPoint		PositionChildFromBindings( const LayoutInput& cin, const LayoutOutput& cout, xoRenderDomEl* rchild );
 	void		GenerateTextWords( TextRunState& ts );
 	void		FinishTextRNode( TextRunState& ts, xoRenderDomText* rnode, intp numChars );
+	void		OffsetTextHorz( TextRunState& ts, xoPos offsetHorz, intp numChars );
+	void		MeasureWord( TextRunState& ts, Chunk chunk, xoPos& posX );
 
 	xoPos		ComputeDimension( xoPos container, xoStyleCategories cat );
 	xoPos		ComputeDimension( xoPos container, xoSize size );
@@ -154,4 +171,20 @@ protected:
 	static bool				IsDefined( xoPos p )	{ return p != xoPosNULL; }
 	static bool				IsNull( xoPos p )		{ return p == xoPosNULL; }
 
+	// Break a string up into chunks, where each chunk is either a word, or
+	// a series of one or more identical whitespace characters. A linebreak
+	// such as \r\n is emitted as a single chunk.
+	// When I get around to it, this will probably do UTF8 interpretation too
+	class Chunker
+	{
+	public:
+		Chunker( const char* txt );
+		
+		// Returns false when there are no more chunks
+		bool Next( Chunk& c );
+
+	private:
+		const char* Txt;
+		int32		Pos;
+	};
 };

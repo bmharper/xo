@@ -408,6 +408,16 @@ public:
 		return item;
 	}
 
+	// Access an element with a position that is relative to the head
+	// A value of 0 returns the head element.
+	// A value of 1 returns the head element - 1.
+	// etc
+	T& FromHead( int relative )
+	{
+		uint32 p = (Head - relative - 1) & Mask;
+		return Ring[p];
+	}
+
 	intp Size() const { return (intp) ((Head - Tail) & Mask); }
 
 private:
