@@ -295,6 +295,13 @@ appending involves growing a vector, so plenty of memory reallocs.
 Instead, we queue up a string of characters and write them all
 out at once, when we either detect a new line, or when we are done
 with the entire text object.
+Having this tight coupling between xoLayout3 and xoBoxLayout is
+unfortunate. Perhaps if all the dust has settled, then it might
+be worth it to break that coupling, to the degree that xoLayout3
+doesn't know where its word boxes are going - it just dumps them
+to xoBoxLayout and forgets about them.
+This would mean that xoBoxLayout is responsible for adjusting
+the positions of the glyphs inside an xoRenderDomText object.
 */
 void xoLayout3::GenerateTextWords( TextRunState& ts )
 {
@@ -305,6 +312,7 @@ void xoLayout3::GenerateTextWords( TextRunState& ts )
 
 	xoPos fontHeightRounded = xoRealToPos( (float) ts.FontSizePx );
 	xoPos fontAscender = xoRealx256ToPos( font->Ascender_x256 * ts.FontSizePx );
+	xoPos charWidth_32 = xoRealx256ToPos( font->LinearHoriAdvance_Space_x256 ) * ts.FontSizePx;
 	
 	// if we add a "line-height" style then we'll want to multiply that by this
 	xoPos lineHeight = xoRealx256ToPos( ts.FontSizePx * font->LineHeight_x256 ); 
@@ -312,109 +320,64 @@ void xoLayout3::GenerateTextWords( TextRunState& ts )
 		lineHeight = xoPosRoundUp( lineHeight );
 
 	ts.GlyphsNeeded = false;
-	int32 word_first_char = 0;
-	int32 line_first_char = 0;
-	int32 line_end_char = 0;
-	xoPos posX = 0;
 	xoPos baseline = fontAscender;
 	const xoGlyph* prevGlyph = nullptr;
 	xoRenderDomText* rtxt = nullptr;
+	int numCharsInQueue = 0;			// Number of characters in TextRunState::Chars that are waiting to be flushed to rtxt
 	Chunk chunk;
 	Chunker chunker( txt );
 	while ( chunker.Next(chunk) )
 	{
-		if ( chunk.Type == ChunkWord )
+		switch ( chunk.Type )
 		{
-			// Measure the length of the word, then send it to the boxer.
-			// While measuring the length of the word, we are also recording its character placements.
-			// All characters go into a queue, which gets flushed whenever we flow onto a new line.
-			for ( int32 i = chunk.Start; i < chunk.End; i++ )
+		case ChunkWord:
 			{
-				key.Char = txt[i];
-				const xoGlyph* glyph = glyphCache->GetGlyph( key );
-				if ( !glyph )
-				{
-					ts.GlyphsNeeded = true;
-					GlyphsNeeded.insert( key );
-					continue;
-				}
-				if ( glyph->IsNull() )
-				{
-					// TODO: Handle missing glyph by drawing a rectangle or something
-					continue;
-				}
-				if ( xoGlobal()->EnableKerning && prevGlyph )
-				{
-					// Multithreading hazard here. I'm not sure whether FT_Get_Kerning is thread safe.
-					// Also, I have stepped inside there and I see it does a binary search. We would probably
-					// be better off caching the kerning for frequent pairs of glyphs in a hash table.
-					FT_Vector kern;
-					FT_Get_Kerning( font->FTFace, prevGlyph->FTGlyphIndex, glyph->FTGlyphIndex, FT_KERNING_UNSCALED, &kern );
-					xoPos kerning = ((kern.x * ts.FontSizePx) << xoPosShift) / font->FTFace->units_per_EM;
-					posX += kerning;
-				}
+				int32 chunkLen = chunk.End - chunk.Start;
+				xoPos wordWidth = MeasureWord( txt, font, fontAscender, chunk, ts );
 
-				xoRenderCharEl& rtxt = ts.Chars.PushHead();
-				rtxt.Char = key.Char;
-				rtxt.X = posX + xoRealx256ToPos( glyph->MetricLeftx256 );
-				rtxt.Y = baseline - xoRealToPos( glyph->MetricTop );			// rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
-				// For determining the word width, one might want to not use the horizontal advance for the very last glyph, but instead
-				// use the glyph's exact width. The difference would be tiny, and it may even be annoying, because you would end up with
-				// no padding on the right side of a word.
-				posX += HoriAdvance( glyph, ts );
-			}
-		}
+				if ( ts.GlyphsNeeded )
+					continue;
 
-			xoRenderDomText* rtxt_new = nullptr;
-			if ( i != word_first_char && !ts.GlyphsNeeded )
-			{
 				// output word
+				xoRenderDomText* rtxt_new = nullptr;
 				xoBoxLayout3::WordInput wordin;
-				wordin.Width = posX;
+				wordin.Width = wordWidth;
 				wordin.Height = lineHeight; // unsure
-				rtxt_new = Boxer.AddWord( wordin );
-			}
+				xoPos posX = 0;
+				Boxer.AddWord( wordin, rtxt_new, posX );
 
-			if ( rtxt_new != nullptr && rtxt == nullptr )
-			{
-				// first word on first line
-				line_end_char = i;
-				rtxt = rtxt_new;
+				if ( rtxt_new != nullptr && rtxt == nullptr )
+				{
+					// first output
+					rtxt = rtxt_new;
+					numCharsInQueue = chunkLen;
+				}
+				else if ( rtxt_new != rtxt && rtxt != nullptr )
+				{
+					// first word on new line. retire the old line, and start a new one.
+					FinishTextRNode( ts, rtxt, numCharsInQueue );
+					rtxt = rtxt_new;
+					numCharsInQueue = chunkLen;
+				}
+				else if ( rtxt_new != nullptr && rtxt != nullptr && rtxt_new == rtxt )
+				{
+					// another word on existing line
+					numCharsInQueue += chunkLen;
+				}
+				OffsetTextHorz( ts, posX, chunkLen );
 			}
-			else if ( rtxt_new != rtxt && rtxt != nullptr )
-			{
-				// first word on new line. retire the old line, and start a new one.
-				FinishTextRNode( ts, rtxt, line_end_char - line_first_char );
-				rtxt = rtxt_new;
-				line_first_char = word_first_char;
-				line_end_char = i;
-				OffsetTextHorz( ts, 0, i - line_first_char );
-			}
-			else if ( rtxt_new != nullptr && rtxt != nullptr && rtxt_new != rtxt )
-			{
-				// another word on existing line
-				line_end_char = i;
-			}
-
-			// We are finished processing the previous word. Now deal with the
-			// whitespace, or the newline, or the end.
-			if ( IsSpace(txt[i]) )
-			{
-				
-			}
-			else if ( IsLinebreak(txt[i]) )
-			{
-
-			}
-			else if ( txt[i] == 0 )
-			{
-				// the end
-				if ( rtxt_new != nullptr )
-					FinishTextRNode( ts, rtxt_new, i - line_first_char );
-				break;
-			}
+			break;
+		case ChunkSpace:
+			Boxer.AddSpace( charWidth_32 );
+			break;
+		case ChunkLineBreak:
+			Boxer.AddLinebreak();
+			break;
 		}
 	}
+	// the end
+	if ( rtxt != nullptr )
+		FinishTextRNode( ts, rtxt, numCharsInQueue );
 }
 
 void xoLayout3::FinishTextRNode( TextRunState& ts, xoRenderDomText* rnode, intp numChars )
@@ -430,12 +393,6 @@ void xoLayout3::FinishTextRNode( TextRunState& ts, xoRenderDomText* rnode, intp 
 	rnode->Text.resize( numChars );
 	for ( intp i = 0; i < numChars; i++ )
 		rnode->Text[i] = ts.Chars.PopTail();
-
-	// We cannot do an rnode->Text.resize() here, because this text item
-	// may be reused for many subsequent words.
-	// rnode->Text.resize( ts.Chars.size() );
-	//for ( intp i = 0; i < ts.Chars.size(); i++ )
-	//	rnode->Text[i] = ts.Chars[i];
 }
 
 void xoLayout3::OffsetTextHorz( TextRunState& ts, xoPos offsetHorz, intp numChars )
@@ -444,9 +401,54 @@ void xoLayout3::OffsetTextHorz( TextRunState& ts, xoPos offsetHorz, intp numChar
 		ts.Chars.FromHead(i).X += offsetHorz;
 }
 
-void xoLayout3::MeasureWord( TextRunState& ts, Chunk chunk, xoPos& posX )
+// While measuring the length of the word, we are also recording its character placements.
+// All characters go into a queue, which gets flushed whenever we flow onto a new line.
+// Returns the width of the word
+xoPos xoLayout3::MeasureWord( const char* txt, const xoFont* font, xoPos fontAscender, Chunk chunk, TextRunState& ts )
 {
+	// I find it easier to understand when referring to this value as "baseline" instead of "ascender"
+	xoPos baseline = fontAscender;
 
+	xoPos posX = 0;
+	xoGlyphCacheKey key = MakeGlyphCacheKey( ts );
+	const xoGlyph* prevGlyph = nullptr;
+
+	for ( int32 i = chunk.Start; i < chunk.End; i++ )
+	{
+		key.Char = txt[i];
+		const xoGlyph* glyph = xoGlobal()->GlyphCache->GetGlyph( key );
+		if ( !glyph )
+		{
+			ts.GlyphsNeeded = true;
+			GlyphsNeeded.insert( key );
+			continue;
+		}
+		if ( glyph->IsNull() )
+		{
+			// TODO: Handle missing glyph by drawing a rectangle or something
+			continue;
+		}
+		if ( xoGlobal()->EnableKerning && prevGlyph )
+		{
+			// Multithreading hazard here. I'm not sure whether FT_Get_Kerning is thread safe.
+			// Also, I have stepped inside there and I see it does a binary search. We might
+			// be better off caching the kerning for frequent pairs of glyphs in a hash table.
+			FT_Vector kern;
+			FT_Get_Kerning( font->FTFace, prevGlyph->FTGlyphIndex, glyph->FTGlyphIndex, FT_KERNING_UNSCALED, &kern );
+			xoPos kerning = ((kern.x * ts.FontSizePx) << xoPosShift) / font->FTFace->units_per_EM;
+			posX += kerning;
+		}
+
+		xoRenderCharEl& rtxt = ts.Chars.PushHead();
+		rtxt.Char = key.Char;
+		rtxt.X = posX + xoRealx256ToPos( glyph->MetricLeftx256 );
+		rtxt.Y = baseline - xoRealToPos( glyph->MetricTop );			// rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
+		// For determining the word width, one might want to not use the horizontal advance for the very last glyph, but instead
+		// use the glyph's exact width. The difference would be tiny, and it may even be annoying, because you would end up with
+		// no padding on the right side of a word.
+		posX += HoriAdvance( glyph, ts );
+	}
+	return posX;
 }
 
 xoPoint xoLayout3::PositionChildFromBindings( const LayoutInput& cin, const LayoutOutput& cout, xoRenderDomEl* rchild )

@@ -146,7 +146,7 @@ protected:
 	void		GenerateTextWords( TextRunState& ts );
 	void		FinishTextRNode( TextRunState& ts, xoRenderDomText* rnode, intp numChars );
 	void		OffsetTextHorz( TextRunState& ts, xoPos offsetHorz, intp numChars );
-	void		MeasureWord( TextRunState& ts, Chunk chunk, xoPos& posX );
+	xoPos		MeasureWord( const char* txt, const xoFont* font, xoPos fontAscender, Chunk chunk, TextRunState& ts );
 
 	xoPos		ComputeDimension( xoPos container, xoStyleCategories cat );
 	xoPos		ComputeDimension( xoPos container, xoSize size );

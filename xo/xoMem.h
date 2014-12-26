@@ -393,7 +393,7 @@ public:
 
 	T& PushHead()
 	{
-		if ( (Head + 1) & Mask == Tail )
+		if ( ((Head + 1) & Mask) == Tail )
 			Grow();
 		T& item = Ring[Head];
 		Head = (Head + 1) & Mask;

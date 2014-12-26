@@ -88,7 +88,15 @@ void xoBoxLayout3::EndNode()
 	NodeStates.Pop();
 }
 
-xoRenderDomText* xoBoxLayout3::AddWord( const WordInput& in )
+/* One of two things can happen when you add a word:
+1. The word fits on the current line.
+	* The returned rtxt is an existing value.
+	* The returned posX is the offset inside rtxt where this word starts.
+2. The word needs to go onto a new line.
+	* The returned rtxt is a new value.
+	* The returned posX is zero (which is consistent with the definition of the above case #1).
+*/
+void xoBoxLayout3::AddWord( const WordInput& in, xoRenderDomText*& rtxt, xoPos& posX )
 {
 	NodeState ns;
 	ns.Input.ContentWidth = in.Width;
@@ -96,6 +104,7 @@ xoRenderDomText* xoBoxLayout3::AddWord( const WordInput& in )
 	ns.Input.Margin = xoBox(0,0,0,0);
 	ns.Input.Padding = xoBox(0,0,0,0);
 	xoBox marginBox;
+	xoPos posMinorBeforeFlow = FlowStates.Back().PosMinor;
 	bool isNewLine = Flow( ns, FlowStates.Back(), marginBox );
 
 	NodeState& parentNode = NodeStates.Back();
@@ -109,13 +118,15 @@ xoRenderDomText* xoBoxLayout3::AddWord( const WordInput& in )
 		xoRenderDomText* rchild = new (Pool->AllocT<xoRenderDomText>(false)) xoRenderDomText(parentNode.Input.InternalID, Pool);
 		parentNode.RNode->Children += rchild;
 		rchild->Pos = marginBox;
-		return rchild;
+		rtxt = rchild;
+		posX = 0;
 	}
 	else
 	{
 		// Reuse the existing text object
 		lastChild->Pos.Right = marginBox.Right;
-		return lastChild;
+		rtxt = lastChild;
+		posX = posMinorBeforeFlow;
 	}
 }
 
@@ -148,13 +159,14 @@ bool xoBoxLayout3::Flow( const NodeState& ns, FlowState& flow, xoBox& marginBox 
 	marginBox.Bottom = flow.PosMajor + marginBoxHeight;
 
 	flow.PosMinor = marginBox.Right;
+	flow.HighMajor = xoMax(flow.HighMajor, marginBox.Bottom);
 	return isNewLine;
 }
 
 void xoBoxLayout3::NewLine( FlowState& flow )
 {
 	flow.Lines += LineBox::Make( 0, 0, 0 );
-	flow.PosMajor = flow.MaxMajor;
+	flow.PosMajor = flow.HighMajor;
 	flow.PosMinor = 0;
 }
 
@@ -162,6 +174,7 @@ void xoBoxLayout3::FlowState::Reset()
 {
 	PosMinor = 0;
 	PosMajor = 0;
+	HighMajor = 0;
 	MaxMajor = xoPosNULL;
 	MaxMinor = xoPosNULL;
 	Lines.clear_noalloc();

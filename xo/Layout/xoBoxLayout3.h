@@ -61,7 +61,7 @@ public:
 	void				BeginNode( const NodeInput& in );
 	void				EndNode();
 
-	xoRenderDomText*	AddWord( const WordInput& in );
+	void				AddWord( const WordInput& in, xoRenderDomText*& rtxt, xoPos& posX );
 	void				AddSpace( xoPos width );
 	void				AddLinebreak();
 
@@ -80,7 +80,8 @@ protected:
 		xoPos				PosMinor;		// In default flow, this is the horizontal (X) position
 		xoPos				PosMajor;		// In default flow, this is the vertical (Y) position
 		xoPos				MaxMinor;		// In default flow, this is the horizontal (X) position at which we wrap around. xoPosNULL means no limit.
-		xoPos				MaxMajor;		// In default flow, this is the bottom of the current line
+		xoPos				MaxMajor;		// In default flow, this is the vertical (Y) position at which we need scroll bars. xoPosNULL means no limit.
+		xoPos				HighMajor;		// In default flow, this is the greatest vertical (Y) coordinate seen so far.
 		// Meh -- implement these when the need arises
 		// bool	IsVertical;		// default true, normal flow
 		// bool	ReverseMajor;	// Major goes from high to low numbers (right to left, or bottom to top)
