@@ -59,7 +59,7 @@ public:
 	void				EndDocument();
 
 	void				BeginNode( const NodeInput& in );
-	void				EndNode();
+	void				EndNode( xoRenderDomNode*& rnode, xoBox& marginBox );
 
 	void				AddWord( const WordInput& in, xoRenderDomText*& rtxt, xoPos& posX );
 	void				AddSpace( xoPos width );

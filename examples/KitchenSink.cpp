@@ -235,8 +235,9 @@ void DoLongText( xoDoc* doc )
 // This was used when developing Layout3
 void DoInlineFlow( xoDoc* doc )
 {
-	doc->Root.ParseAppend( R"(The quick brown fox jumps over the lazy dogggggggggggggggggggg moon star)");
+	//doc->Root.ParseAppend( R"(The quick brown fox jumps over the lazy dogggggggggggggggggggg moon star)");
 	//doc->Root.ParseAppend( R"(The quick <span style='color: #a00; background: #fff'>brown fox jumps</span> over)");
+	doc->Root.ParseAppend( R"(The <span style='color: #a00; background: #fff'>brown</span>)");
 	//doc->Root.ParseAppend( R"(The quick)");
 }
 
@@ -320,8 +321,9 @@ void InitDOM( xoDoc* doc )
 	//DoPadding( doc );
 	//DoTextQuality( doc );
 
-	body->OnClick( [](const xoEvent& ev) -> bool {
+	body->OnClick( [doc](const xoEvent& ev) -> bool {
 		xoGlobal()->EnableKerning = !xoGlobal()->EnableKerning;
+		doc->IncVersion();
 		return true;
 	});
 }

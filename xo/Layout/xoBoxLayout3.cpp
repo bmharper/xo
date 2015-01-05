@@ -25,8 +25,9 @@ xoBoxLayout3::~xoBoxLayout3()
 void xoBoxLayout3::BeginDocument( xoRenderDomNode* root )
 {
 	// Add a dummy root node. This root node has no limits. This does not house the
-	// top-level <body> tag. This is really just a dummy so that <body> can
-	// go through the same code paths as all of its children.
+	// top-level <body> tag; it is the parent of the <body> tag.
+	// This is really just a dummy so that <body> can go through the same code paths as all of its children,
+	// and so that we never have an empty NodeStates stack.
 	NodeState& s = NodeStates.Add();
 	s.Input.NewFlowContext = false;
 	s.RNode = root;
@@ -73,19 +74,23 @@ void xoBoxLayout3::BeginNode( const NodeInput& in )
 	}
 }
 
-void xoBoxLayout3::EndNode()
+void xoBoxLayout3::EndNode( xoRenderDomNode*& rnode, xoBox& marginBox )
 {
-	NodeState& ns = NodeStates.Back();
-	if ( ns.Input.NewFlowContext )
+	NodeState* ns = &NodeStates.Back();
+	if ( ns->Input.NewFlowContext )
 	{
 		FlowStates.Pop();
-		Flow( ns, FlowStates.Back(), ns.MarginBox );
+		Flow( *ns, FlowStates.Back(), ns->MarginBox );
 	}
 	else
 	{
 
 	}
-	NodeStates.Pop();
+
+	rnode = ns->RNode;
+	marginBox = ns->MarginBox;
+
+	NodeStates.Pop(); // ns is invalid after Pop()
 }
 
 /* One of two things can happen when you add a word:

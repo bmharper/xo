@@ -95,7 +95,7 @@ bool xoDocUI::BubbleEvent( xoEvent& ev, const xoLayoutResult* layout )
 	//XOTRACE_EVENTS( "FindTarget chainlen = %d\n", (int) nodeChain.size() );
 
 	// start at the inner-most node first
-	for ( intp inode = nodeChain.size() - 1; inode > 0; inode-- )
+	for ( intp inode = nodeChain.size() - 1; inode >= 0; inode-- )
 	{
 		const xoRenderDomNode* rnode = nodeChain[inode];
 		const xoDomNode* node = Doc->GetNodeByInternalID( rnode->InternalID );
@@ -128,12 +128,13 @@ such as relative-positioned or absolute-positioned.
 void xoDocUI::FindTarget( xoVec2f p, pvect<const xoRenderDomNode*>& nodeChain, const xoLayoutResult* layout )
 {
 	xoPoint pos = { xoRealToPos(p.x), xoRealToPos(p.y) };
-	if ( !layout->Root.BorderBox().IsInsideMe(pos) )
+	const xoRenderDomNode* body = layout->Body();
+	if ( !body->BorderBox().IsInsideMe(pos) )
 		return;
 	podvec<xoPoint> posChain;
 	intp stackPos = 0;
-	nodeChain += &layout->Root;
-	posChain += pos - layout->Root.Pos.TopLeft();
+	nodeChain += body;
+	posChain += pos - body->Pos.TopLeft();
 	while ( stackPos < nodeChain.size() )
 	{
 		const xoRenderDomNode* top = nodeChain[stackPos];

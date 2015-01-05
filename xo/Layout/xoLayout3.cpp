@@ -109,7 +109,16 @@ void xoLayout3::RunNode3( const xoDomNode* node, const LayoutInput3& in )
 			RunText3( static_cast<const xoDomText*>(c), childIn );
 		}
 	}
-	Boxer.EndNode();
+	xoRenderDomNode* rnode;
+	xoBox marginBox;
+	Boxer.EndNode( rnode, marginBox );
+	// Boxer doesn't know what our element's padding or margins are. The only thing it
+	// emits is the margin-box for our element. We need to subtract the margin and
+	// the padding in order to compute the content-box, which is what xoRenderDomNode needs.
+	xoBox margin = ComputeBox( in.ParentWidth, in.ParentHeight, xoCatMargin_Left );
+	xoBox padding = ComputeBox( in.ParentWidth, in.ParentHeight, xoCatPadding_Left );
+	rnode->Pos = marginBox.ShrunkBy( margin ).ShrunkBy( padding );
+	rnode->SetStyle( Stack );
 }
 
 void xoLayout3::RunText3( const xoDomText* node, const LayoutInput3& in )
@@ -427,6 +436,7 @@ xoPos xoLayout3::MeasureWord( const char* txt, const xoFont* font, xoPos fontAsc
 		{
 			// TODO: Handle missing glyph by drawing a rectangle or something
 			continue;
+			prevGlyph = nullptr;
 		}
 		if ( xoGlobal()->EnableKerning && prevGlyph )
 		{
@@ -447,6 +457,7 @@ xoPos xoLayout3::MeasureWord( const char* txt, const xoFont* font, xoPos fontAsc
 		// use the glyph's exact width. The difference would be tiny, and it may even be annoying, because you would end up with
 		// no padding on the right side of a word.
 		posX += HoriAdvance( glyph, ts );
+		prevGlyph = glyph;
 	}
 	return posX;
 }

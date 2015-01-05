@@ -10,9 +10,11 @@ public:
 	xoLayoutResult( const xoDoc& doc );
 	~xoLayoutResult();
 
-	bool				IsLocked;	// True if we are being used by the UI thread to do things like hit-testing
-	xoRenderDomNode		Root;
-	xoPool				Pool;
+	bool					IsLocked;		// True if we are being used by the UI thread to do things like hit-testing
+	xoRenderDomNode			Root;			// This is a dummy node that is above Body. Use Body() to get the true root of the tree.
+	xoPool					Pool;
+
+	const xoRenderDomNode*	Body() const;	// This is the effective root of the DOM
 };
 
 /* Document used by renderer.

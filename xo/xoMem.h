@@ -372,6 +372,7 @@ public:
 // Circular buffer
 // This is only built for PODs, and it does not zero-initialize.
 // Automatically grows size. Size must be a power of 2.
+// Maximum number of items in the buffer is size - 1.
 // There is a debug-only check for popping an empty queue.
 template<typename T>
 class xoRingBuf

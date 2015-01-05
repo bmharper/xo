@@ -23,13 +23,9 @@ The amalgamation is hosted [here](https://github.com/benharper123/xo-amalgamatio
 ### Building from full source
 
 * Install Visual Studio 2013, or GCC on Linux.
-* Install tundra2.
-	* Install the [latest binary release](https://github.com/deplinenoise/tundra/releases)
-	* Clone the latest tundra `master` branch onto your machine and compile a release build using the provided Visual Studio solution.
-	* Overwrite the appropriate pieces of the official release with the exe's that you just compiled.
-	* Overwrite the `scripts` directory with the latest scripts from `master`.
+* Install [tundra2](https://github.com/deplinenoise/tundra/releases).
 
-Once you have the latest tundra, you can do this:
+You should now be able to build and run:
 	
 	tundra2 HelloWorld
 	t2-output\win64-msvc2013-debug-default\HelloWorld.exe
