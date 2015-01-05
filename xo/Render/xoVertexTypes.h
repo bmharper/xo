@@ -27,4 +27,4 @@ enum xoVertexType
 	xoVertexType_END,
 };
 
-XOAPI size_t xoVertexSize( xoVertexType t );
+XOAPI size_t xoVertexSize(xoVertexType t);

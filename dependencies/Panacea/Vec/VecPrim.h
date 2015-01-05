@@ -35,8 +35,8 @@ struct vec4f
 	float x, y, z, w;
 };
 
-template<typename T>	bool vec_IsNaN( T v )			{ return v != v; }
-inline					bool vec_IsFinite( float v )	{ return v <= FLT_MAX && v >= -FLT_MAX; }
-inline					bool vec_IsFinite( double v )	{ return v <= DBL_MAX && v >= -DBL_MAX; }
+template<typename T>	bool vec_IsNaN(T v)			{ return v != v; }
+inline					bool vec_IsFinite(float v)	{ return v <= FLT_MAX && v >= -FLT_MAX; }
+inline					bool vec_IsFinite(double v)	{ return v <= DBL_MAX && v >= -DBL_MAX; }
 
 #endif

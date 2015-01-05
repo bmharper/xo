@@ -1,14 +1,14 @@
-#include "pch.h" 
+#include "pch.h"
 #include "fmt.h"
 #include "../Other/StackAllocators.h"
 #include <stdarg.h>
 
-static inline void fmt_settype( char argbuf[128], intp pos, const char* width, char type )
+static inline void fmt_settype(char argbuf[128], intp pos, const char* width, char type)
 {
-	if ( width != NULL )
+	if (width != NULL)
 	{
 		// set the type and the width specifier
-		switch ( argbuf[pos - 1] )
+		switch (argbuf[pos - 1])
 		{
 		case 'l':
 		case 'h':
@@ -17,7 +17,7 @@ static inline void fmt_settype( char argbuf[128], intp pos, const char* width, c
 			break;
 		}
 
-		for ( ; *width; width++, pos++ )
+		for (; *width; width++, pos++)
 			argbuf[pos] = *width;
 
 		argbuf[pos++] = type;
@@ -31,7 +31,7 @@ static inline void fmt_settype( char argbuf[128], intp pos, const char* width, c
 	}
 }
 
-static inline int fmt_output_with_snprintf( char* outbuf, char fmt_type, char argbuf[128], intp argbufsize, intp outputSize, const fmtarg* arg )
+static inline int fmt_output_with_snprintf(char* outbuf, char fmt_type, char argbuf[128], intp argbufsize, intp outputSize, const fmtarg* arg)
 {
 #define				SETTYPE1(type)			fmt_settype( argbuf, argbufsize, NULL, type )
 #define				SETTYPE2(width, type)	fmt_settype( argbuf, argbufsize, width, type )
@@ -49,7 +49,7 @@ static inline int fmt_output_with_snprintf( char* outbuf, char fmt_type, char ar
 	bool tokenint = false;
 	bool tokenreal = false;
 
-	switch ( fmt_type )
+	switch (fmt_type)
 	{
 	case 'd':
 	case 'i':
@@ -60,7 +60,7 @@ static inline int fmt_output_with_snprintf( char* outbuf, char fmt_type, char ar
 		tokenint = true;
 	}
 
-	switch ( fmt_type )
+	switch (fmt_type)
 	{
 	case 'e':
 	case 'E':
@@ -72,34 +72,34 @@ static inline int fmt_output_with_snprintf( char* outbuf, char fmt_type, char ar
 		tokenreal = true;
 	}
 
-	switch ( arg->Type )
+	switch (arg->Type)
 	{
 	case fmtarg::TCStr:
 		SETTYPE2("", 's');
-		return fmt_snprintf( outbuf, outputSize, argbuf, arg->CStr );
+		return fmt_snprintf(outbuf, outputSize, argbuf, arg->CStr);
 	case fmtarg::TWStr:
 		SETTYPE2(wcharPrefix, wcharType);
-		return fmt_snprintf( outbuf, outputSize, argbuf, arg->WStr );
+		return fmt_snprintf(outbuf, outputSize, argbuf, arg->WStr);
 	case fmtarg::TI32:
 		if (tokenint)	{ SETTYPE2("", fmt_type); }
 		else			{ SETTYPE2("", 'd'); }
-		return fmt_snprintf( outbuf, outputSize, argbuf, arg->I32 );
+		return fmt_snprintf(outbuf, outputSize, argbuf, arg->I32);
 	case fmtarg::TU32:
 		if (tokenint)	{ SETTYPE2("", fmt_type); }
 		else			{ SETTYPE2("", 'u'); }
-		return fmt_snprintf( outbuf, outputSize, argbuf, arg->UI32 );
+		return fmt_snprintf(outbuf, outputSize, argbuf, arg->UI32);
 	case fmtarg::TI64:
 		if (tokenint)	{ SETTYPE2(i64Prefix, fmt_type); }
 		else			{ SETTYPE2(i64Prefix, 'd'); }
-		return fmt_snprintf( outbuf, outputSize, argbuf, arg->I64 );
+		return fmt_snprintf(outbuf, outputSize, argbuf, arg->I64);
 	case fmtarg::TU64:
 		if (tokenint)	{ SETTYPE2(i64Prefix, fmt_type); }
 		else			{ SETTYPE2(i64Prefix, 'u'); }
-		return fmt_snprintf( outbuf, outputSize, argbuf, arg->UI64 );
+		return fmt_snprintf(outbuf, outputSize, argbuf, arg->UI64);
 	case fmtarg::TDbl:
 		if (tokenreal)	{ SETTYPE1(fmt_type); }
 		else			{ SETTYPE1('g'); }
-		return fmt_snprintf( outbuf, outputSize, argbuf, arg->Dbl );
+		return fmt_snprintf(outbuf, outputSize, argbuf, arg->Dbl);
 		break;
 	}
 
@@ -109,7 +109,7 @@ static inline int fmt_output_with_snprintf( char* outbuf, char fmt_type, char ar
 	return 0;
 }
 
-PAPI FMT_STRING fmt_core( const fmt_context& context, const char* fmt, intp nargs, const fmtarg** args )
+PAPI FMT_STRING fmt_core(const fmt_context& context, const char* fmt, intp nargs, const fmtarg** args)
 {
 	intp tokenstart = -1;	// true if we have passed a %, and are looking for the end of the token
 	intp iarg = 0;
@@ -119,21 +119,21 @@ PAPI FMT_STRING fmt_core( const fmt_context& context, const char* fmt, intp narg
 	const intp MaxOutputSize = 1 * 1024 * 1024;
 
 	char staticbuf[8192];
-	AbCore::StackBuffer output( staticbuf );
+	AbCore::StackBuffer output(staticbuf);
 
 	char argbuf[128];
 
 	// we can always safely look one ahead, because 'fmt' is by definition zero terminated
-	for ( intp i = 0; fmt[i]; i++ )
+	for (intp i = 0; fmt[i]; i++)
 	{
-		if ( tokenstart != -1 )
+		if (tokenstart != -1)
 		{
 			bool tokenint = false;
 			bool tokenreal = false;
 			bool is_q = fmt[i] == 'q';
 			bool is_Q = fmt[i] == 'Q';
 
-			switch ( fmt[i] )
+			switch (fmt[i])
 			{
 			case 'a':
 			case 'A':
@@ -161,25 +161,25 @@ PAPI FMT_STRING fmt_core( const fmt_context& context, const char* fmt, intp narg
 				no_args_remaining	= iarg >= nargs;								// more tokens than arguments
 				spec_too_long		= i - tokenstart >= arraysize(argbuf) - 1;		// %_____too much data____v
 				disallowed			= fmt[i] == 'n';
-				
-				if ( is_q && context.Escape_q == NULL )
+
+				if (is_q && context.Escape_q == NULL)
 					disallowed = true;
 
-				if ( is_Q && context.Escape_Q == NULL )
+				if (is_Q && context.Escape_Q == NULL)
 					disallowed = true;
 
-				if ( no_args_remaining || spec_too_long || disallowed )
+				if (no_args_remaining || spec_too_long || disallowed)
 				{
-					for ( intp j = tokenstart; j <= i; j++ )
-						output.AddItem( fmt[j] );
+					for (intp j = tokenstart; j <= i; j++)
+						output.AddItem(fmt[j]);
 				}
 				else
 				{
 					// prepare the single formatting token that we will send to snprintf
 					intp argbufsize = 0;
-					for ( intp j = tokenstart; j < i; j++ )
+					for (intp j = tokenstart; j < i; j++)
 					{
-						if ( fmt[j] == '*' ) continue;	// ignore
+						if (fmt[j] == '*') continue;	// ignore
 						argbuf[argbufsize++] = fmt[j];
 					}
 
@@ -187,34 +187,34 @@ PAPI FMT_STRING fmt_core( const fmt_context& context, const char* fmt, intp narg
 					const fmtarg* arg = args[iarg];
 					iarg++;
 					intp outputSize = 1024;
-					while ( true )
+					while (true)
 					{
-						char* outbuf = (char*) output.Add( outputSize );
+						char* outbuf = (char*) output.Add(outputSize);
 						bool done = false;
 						intp written = 0;
-						if ( is_q )			written = context.Escape_q( outbuf, outputSize, *arg );
-						else if ( is_Q )	written = context.Escape_Q( outbuf, outputSize, *arg );
-						else				written = fmt_output_with_snprintf( outbuf, fmt[i], argbuf, argbufsize, outputSize, arg );
+						if (is_q)			written = context.Escape_q(outbuf, outputSize, *arg);
+						else if (is_Q)	written = context.Escape_Q(outbuf, outputSize, *arg);
+						else				written = fmt_output_with_snprintf(outbuf, fmt[i], argbuf, argbufsize, outputSize, arg);
 
-						if ( written >= 0 && written < outputSize )
+						if (written >= 0 && written < outputSize)
 						{
-							output.MoveCurrentPos( written - outputSize );
+							output.MoveCurrentPos(written - outputSize);
 							break;
 						}
-						else if ( outputSize >= MaxOutputSize )
+						else if (outputSize >= MaxOutputSize)
 						{
 							// give up. I first saw this on the Microsoft CRT when trying to write the "mu" symbol to an ascii string.
 							break;
 						}
 						// discard and try again with a larger buffer
-						output.MoveCurrentPos( -outputSize );
+						output.MoveCurrentPos(-outputSize);
 						outputSize = outputSize * 2;
 					}
 				}
 				tokenstart = -1;
 				break;
 			case '%':
-				output.AddItem( '%' );
+				output.AddItem('%');
 				tokenstart = -1;
 				break;
 			default:
@@ -223,19 +223,19 @@ PAPI FMT_STRING fmt_core( const fmt_context& context, const char* fmt, intp narg
 		}
 		else
 		{
-			switch ( fmt[i] )
+			switch (fmt[i])
 			{
 			case '%':
 				tokenstart = i;
 				break;
 			default:
-				output.AddItem( fmt[i] );
+				output.AddItem(fmt[i]);
 				break;
 			}
 		}
 	}
-	output.AddItem( '\0' );
-	return FMT_STRING( (const char*) output.Buffer );
+	output.AddItem('\0');
+	return FMT_STRING((const char*) output.Buffer);
 }
 
 /*
@@ -266,137 +266,137 @@ PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const f
 }
 */
 
-PAPI FMT_STRING fmt( const char* fs )
+PAPI FMT_STRING fmt(const char* fs)
 {
 	fmt_context cx;
-	return fmt_core( cx, fs, 0, NULL );
+	return fmt_core(cx, fs, 0, NULL);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1)
 {
 	fmt_context cx;
 	const fmtarg* args[1] = {&a1};
-	return fmt_core( cx, fs, 1, args );
+	return fmt_core(cx, fs, 1, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2)
 {
 	fmt_context cx;
 	const fmtarg* args[2] = {&a1, &a2};
-	return fmt_core( cx, fs, 2, args );
+	return fmt_core(cx, fs, 2, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3)
 {
 	fmt_context cx;
 	const fmtarg* args[3] = {&a1, &a2, &a3};
-	return fmt_core( cx, fs, 3, args );
+	return fmt_core(cx, fs, 3, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4)
 {
 	fmt_context cx;
 	const fmtarg* args[4] = {&a1, &a2, &a3, &a4};
-	return fmt_core( cx, fs, 4, args );
+	return fmt_core(cx, fs, 4, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5)
 {
 	fmt_context cx;
 	const fmtarg* args[5] = {&a1, &a2, &a3, &a4, &a5};
-	return fmt_core( cx, fs, 5, args );
+	return fmt_core(cx, fs, 5, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6)
 {
 	fmt_context cx;
 	const fmtarg* args[6] = {&a1, &a2, &a3, &a4, &a5, &a6};
-	return fmt_core( cx, fs, 6, args );
+	return fmt_core(cx, fs, 6, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7)
 {
 	fmt_context cx;
 	const fmtarg* args[7] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
-	return fmt_core( cx, fs, 7, args );
+	return fmt_core(cx, fs, 7, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8)
 {
 	fmt_context cx;
 	const fmtarg* args[8] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7, &a8};
-	return fmt_core( cx, fs, 8, args );
+	return fmt_core(cx, fs, 8, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9)
 {
 	fmt_context cx;
 	const fmtarg* args[9] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7, &a8, &a9};
-	return fmt_core( cx, fs, 9, args );
+	return fmt_core(cx, fs, 9, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10)
 {
 	fmt_context cx;
 	const fmtarg* args[10] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7, &a8, &a9, &a10};
-	return fmt_core( cx, fs, 10, args );
+	return fmt_core(cx, fs, 10, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11)
 {
 	fmt_context cx;
 	const fmtarg* args[11] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7, &a8, &a9, &a10, &a11};
-	return fmt_core( cx, fs, 11, args );
+	return fmt_core(cx, fs, 11, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12)
 {
 	fmt_context cx;
 	const fmtarg* args[12] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7, &a8, &a9, &a10, &a11, &a12};
-	return fmt_core( cx, fs, 12, args );
+	return fmt_core(cx, fs, 12, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13)
 {
 	fmt_context cx;
 	const fmtarg* args[13] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7, &a8, &a9, &a10, &a11, &a12, &a13};
-	return fmt_core( cx, fs, 13, args );
+	return fmt_core(cx, fs, 13, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14)
 {
 	fmt_context cx;
 	const fmtarg* args[14] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7, &a8, &a9, &a10, &a11, &a12, &a13, &a14};
-	return fmt_core( cx, fs, 14, args );
+	return fmt_core(cx, fs, 14, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14, const fmtarg& a15 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14, const fmtarg& a15)
 {
 	fmt_context cx;
 	const fmtarg* args[15] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7, &a8, &a9, &a10, &a11, &a12, &a13, &a14, &a15};
-	return fmt_core( cx, fs, 15, args );
+	return fmt_core(cx, fs, 15, args);
 }
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14, const fmtarg& a15, const fmtarg& a16 )
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14, const fmtarg& a15, const fmtarg& a16)
 {
 	fmt_context cx;
 	const fmtarg* args[16] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7, &a8, &a9, &a10, &a11, &a12, &a13, &a14, &a15, &a16};
-	return fmt_core( cx, fs, 16, args );
+	return fmt_core(cx, fs, 16, args);
 }
 
-PAPI size_t fmt_write( FILE* file, const FMT_STRING& s )
+PAPI size_t fmt_write(FILE* file, const FMT_STRING& s)
 {
-	return fwrite( FMT_STRING_BUF(s), 1, FMT_STRING_LEN(s), file );
+	return fwrite(FMT_STRING_BUF(s), 1, FMT_STRING_LEN(s), file);
 }
 
-static inline int fmt_translate_snprintf_return_value( int r, size_t count )
+static inline int fmt_translate_snprintf_return_value(int r, size_t count)
 {
-	if ( r < 0 || (size_t) r >= count )
+	if (r < 0 || (size_t) r >= count)
 		return -1;
 	else
 		return r;
 }
 
-PAPI int fmt_snprintf( char* destination, size_t count, const char* format_str, ... )
+PAPI int fmt_snprintf(char* destination, size_t count, const char* format_str, ...)
 {
 	va_list va;
-	va_start( va, format_str );
-	int r = vsnprintf( destination, count, format_str, va );
-	va_end( va ); 
-	return fmt_translate_snprintf_return_value( r, count );
+	va_start(va, format_str);
+	int r = vsnprintf(destination, count, format_str, va);
+	va_end(va);
+	return fmt_translate_snprintf_return_value(r, count);
 }
 
-PAPI int fmt_swprintf( wchar_t* destination, size_t count, const wchar_t* format_str, ... )
+PAPI int fmt_swprintf(wchar_t* destination, size_t count, const wchar_t* format_str, ...)
 {
 	va_list va;
-	va_start( va, format_str );
-	int r = vswprintf( destination, count, format_str, va );
-	va_end( va ); 
-	return fmt_translate_snprintf_return_value( r, count );
+	va_start(va, format_str);
+	int r = vswprintf(destination, count, format_str, va);
+	va_end(va);
+	return fmt_translate_snprintf_return_value(r, count);
 }
 
 /*

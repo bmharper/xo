@@ -2,7 +2,7 @@
 #include "xoRenderDomEl.h"
 #include "xoRenderStack.h"
 
-xoRenderDomEl::xoRenderDomEl( xoInternalID id, xoTag tag ) : InternalID(id), Tag(tag)
+xoRenderDomEl::xoRenderDomEl(xoInternalID id, xoTag tag) : InternalID(id), Tag(tag)
 {
 }
 
@@ -10,9 +10,9 @@ xoRenderDomEl::xoRenderDomEl( xoInternalID id, xoTag tag ) : InternalID(id), Tag
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-xoRenderDomNode::xoRenderDomNode( xoInternalID id, xoTag tag, xoPool* pool ) : xoRenderDomEl(id, tag)
+xoRenderDomNode::xoRenderDomNode(xoInternalID id, xoTag tag, xoPool* pool) : xoRenderDomEl(id, tag)
 {
-	SetPool( pool );
+	SetPool(pool);
 }
 
 void xoRenderDomNode::Discard()
@@ -21,15 +21,15 @@ void xoRenderDomNode::Discard()
 	Children.clear();
 }
 
-void xoRenderDomNode::SetStyle( xoRenderStack& stack )
+void xoRenderDomNode::SetStyle(xoRenderStack& stack)
 {
-	auto bgColor = stack.Get( xoCatBackground );
-	auto bgImage = stack.Get( xoCatBackgroundImage );
-	if ( !bgColor.IsNull() ) Style.BackgroundColor = bgColor.GetColor();
-	if ( !bgImage.IsNull() ) Style.BackgroundImageID = bgImage.GetStringID();
+	auto bgColor = stack.Get(xoCatBackground);
+	auto bgImage = stack.Get(xoCatBackgroundImage);
+	if (!bgColor.IsNull()) Style.BackgroundColor = bgColor.GetColor();
+	if (!bgImage.IsNull()) Style.BackgroundImageID = bgImage.GetStringID();
 }
 
-void xoRenderDomNode::SetPool( xoPool* pool )
+void xoRenderDomNode::SetPool(xoPool* pool)
 {
 	Children.Pool = pool;
 }
@@ -48,7 +48,7 @@ xoBox xoRenderDomNode::BorderBox() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-xoRenderDomText::xoRenderDomText( xoInternalID id, xoPool* pool ) : xoRenderDomEl( id, xoTagText )
+xoRenderDomText::xoRenderDomText(xoInternalID id, xoPool* pool) : xoRenderDomEl(id, xoTagText)
 {
 	Text.Pool = pool;
 	FontID = xoFontIDNull;
@@ -56,7 +56,7 @@ xoRenderDomText::xoRenderDomText( xoInternalID id, xoPool* pool ) : xoRenderDomE
 	Flags = 0;
 }
 
-void xoRenderDomText::SetStyle( xoRenderStack& stack )
+void xoRenderDomText::SetStyle(xoRenderStack& stack)
 {
-	Color = stack.Get( xoCatColor ).GetColor();
+	Color = stack.Get(xoCatColor).GetColor();
 }

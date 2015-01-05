@@ -28,34 +28,34 @@ public:
 	xoImageStore				Images;							// All images. Some day we may want to be able to share these amongst different documents.
 	xoDocUI						UI;								// UI state (which element has the focus, over which elements is the cursor, etc)
 
-						xoDoc();
-						~xoDoc();
+	xoDoc();
+	~xoDoc();
 	void				Reset();
 	void				IncVersion();
 	uint32				GetVersion()		{ return Version; }									// Renderers use purposefully loose MT semantics on this.
 	void				ResetModifiedBitmap();													// Reset the 'ismodified' bitmap of all DOM elements.
 	void				MakeFreeIDsUsable();													// All of our dependent renderers have been updated, we can move FreeIDs over to UsableIDs.
-	void				CloneSlowInto( xoDoc& c, uint cloneFlags, xoRenderStats& stats ) const;	// Used to make a read-only clone for the renderer. Preserves existing.
+	void				CloneSlowInto(xoDoc& c, uint cloneFlags, xoRenderStats& stats) const;	// Used to make a read-only clone for the renderer. Preserves existing.
 	//void				CloneFastInto( xoDoc& c, uint cloneFlags, xoRenderStats& stats ) const;	// Used to make a read-only clone for the renderer. Starts from scratch.
 
 	// Style Classes
-	bool				ClassParse( const char* klass, const char* style );		// Set the class, overwriting any previously set style
+	bool				ClassParse(const char* klass, const char* style);		// Set the class, overwriting any previously set style
 
-	xoDomEl*			AllocChild( xoTag tag, xoInternalID parentID );
-	void				FreeChild( const xoDomEl* el );
+	xoDomEl*			AllocChild(xoTag tag, xoInternalID parentID);
+	void				FreeChild(const xoDomEl* el);
 
-	xoString			Parse( const char* src ); // Set the entire document from a single xml-like string. Returns empty string on success, or error message.
+	xoString			Parse(const char* src);   // Set the entire document from a single xml-like string. Returns empty string on success, or error message.
 
-	void				ChildAdded( xoDomEl* el );
+	void				ChildAdded(xoDomEl* el);
 	//void				ChildAddedFromDocumentClone( xoDomEl* el );
-	void				ChildRemoved( xoDomEl* el );
-	void				SetChildModified( xoInternalID id );
+	void				ChildRemoved(xoDomEl* el);
+	void				SetChildModified(xoInternalID id);
 	intp				ChildByInternalIDListSize() const				{ return ChildByInternalID.size(); }
 	const xoDomEl**		ChildByInternalIDList() const					{ return (const xoDomEl**) ChildByInternalID.data; }
-	const xoDomEl*		GetChildByInternalID( xoInternalID id ) const	{ return ChildByInternalID[id]; }						// A NULL result means this child has been deleted
-	const xoDomNode*	GetNodeByInternalID( xoInternalID id ) const	{ return ChildByInternalID[id] ? ChildByInternalID[id]->ToNode() : nullptr; }
-	xoDomEl*			GetChildByInternalIDMutable( xoInternalID id )	{ return ChildByInternalID[id]; }
-	xoDomNode*			GetNodeByInternalIDMutable( xoInternalID id )	{ return ChildByInternalID[id] ? ChildByInternalID[id]->ToNode() : nullptr; }
+	const xoDomEl*		GetChildByInternalID(xoInternalID id) const	{ return ChildByInternalID[id]; }						// A NULL result means this child has been deleted
+	const xoDomNode*	GetNodeByInternalID(xoInternalID id) const	{ return ChildByInternalID[id] ? ChildByInternalID[id]->ToNode() : nullptr; }
+	xoDomEl*			GetChildByInternalIDMutable(xoInternalID id)	{ return ChildByInternalID[id]; }
+	xoDomNode*			GetNodeByInternalIDMutable(xoInternalID id)	{ return ChildByInternalID[id] ? ChildByInternalID[id]->ToNode() : nullptr; }
 
 protected:
 	volatile uint32				Version;

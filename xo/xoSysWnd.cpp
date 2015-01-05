@@ -73,28 +73,28 @@ xoSysWnd::xoSysWnd()
 xoSysWnd::~xoSysWnd()
 {
 #if XO_PLATFORM_WIN_DESKTOP
-	if ( Renderer )
+	if (Renderer)
 	{
-		Renderer->DestroyDevice( *this );
+		Renderer->DestroyDevice(*this);
 		delete Renderer;
 		Renderer = NULL;
 	}
-	DestroyWindow( SysWnd );
+	DestroyWindow(SysWnd);
 #elif XO_PLATFORM_ANDROID
 	SingleMainWnd = NULL;
 #elif XO_PLATFORM_LINUX_DESKTOP
-	if ( XDisplay != nullptr )
+	if (XDisplay != nullptr)
 	{
-		glXMakeCurrent( XDisplay, None, NULL );
-		glXDestroyContext( XDisplay, GLContext );
-		XDestroyWindow( XDisplay, XWindow );
-		XCloseDisplay( XDisplay );
+		glXMakeCurrent(XDisplay, None, NULL);
+		glXDestroyContext(XDisplay, GLContext);
+		XDestroyWindow(XDisplay, XWindow);
+		XCloseDisplay(XDisplay);
 	}
 	SingleMainWnd = NULL;
 #else
 	XOTODO_STATIC
 #endif
-	xoGlobal()->DocRemoveQueue.Add( DocGroup );
+	xoGlobal()->DocRemoveQueue.Add(DocGroup);
 	DocGroup = NULL;
 }
 
@@ -102,19 +102,19 @@ xoSysWnd::~xoSysWnd()
 // happens in a different thread to the one that responds to Windows messages, it effectively
 // delays the updating of the system cursor by at least one mouse-move message. This shortcut
 // is here to remove that delay.
-void xoSysWnd::SetSystemCursor( xoCursors cursor )
+void xoSysWnd::SetSystemCursor(xoCursors cursor)
 {
 #if XO_PLATFORM_WIN_DESKTOP
 	LPTSTR wc = IDC_ARROW;
-	switch ( cursor )
+	switch (cursor)
 	{
 	case xoCursorArrow:	wc = IDC_ARROW; break;
 	case xoCursorHand:	wc = IDC_HAND; break;
 	case xoCursorText:	wc = IDC_IBEAM; break;
 	case xoCursorWait:	wc = IDC_WAIT; break;
 	}
-	static_assert( xoCursorWait == 3, "Implement new cursor" );
-	SetCursor( LoadCursor( NULL, wc ) );
+	static_assert(xoCursorWait == 3, "Implement new cursor");
+	SetCursor(LoadCursor(NULL, wc));
 #elif XO_PLATFORM_LINUX_DESKTOP
 #elif XO_PLATFORM_ANDROID
 #else
@@ -128,13 +128,13 @@ xoSysWnd* xoSysWnd::Create()
 	bool ok = false;
 	xoSysWnd* w = new xoSysWnd();
 	XOTRACE("DocGroup = %p\n", w->DocGroup);
-	w->SysWnd = CreateWindow( WClass, _T("xo"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup );
-	if ( w->SysWnd )
+	w->SysWnd = CreateWindow(WClass, _T("xo"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup);
+	if (w->SysWnd)
 	{
-		if ( w->InitializeRenderer() )
+		if (w->InitializeRenderer())
 			ok = true;
 	}
-	if ( !ok )
+	if (!ok)
 	{
 		delete w;
 		w = NULL;
@@ -147,23 +147,23 @@ xoSysWnd* xoSysWnd::Create()
 #elif XO_PLATFORM_LINUX_DESKTOP
 	GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None };
 	xoSysWnd* w = new xoSysWnd();
-	w->XDisplay = XOpenDisplay( NULL );
-	if ( w->XDisplay == NULL ) { XOTRACE("Cannot connect to X server\n" ); delete w; return nullptr; }
-	w->XWindowRoot = DefaultRootWindow( w->XDisplay );
-	w->VisualInfo = glXChooseVisual( w->XDisplay, 0, att );
-	if ( w->VisualInfo == NULL ) { XOTRACE("no appropriate visual found\n" ); delete w; return nullptr; }
-	XOTRACE( "visual %p selected\n", (void*) w->VisualInfo->visualid );
-	w->ColorMap = XCreateColormap( w->XDisplay, w->XWindowRoot, w->VisualInfo->visual, AllocNone );
+	w->XDisplay = XOpenDisplay(NULL);
+	if (w->XDisplay == NULL) { XOTRACE("Cannot connect to X server\n"); delete w; return nullptr; }
+	w->XWindowRoot = DefaultRootWindow(w->XDisplay);
+	w->VisualInfo = glXChooseVisual(w->XDisplay, 0, att);
+	if (w->VisualInfo == NULL) { XOTRACE("no appropriate visual found\n"); delete w; return nullptr; }
+	XOTRACE("visual %p selected\n", (void*) w->VisualInfo->visualid);
+	w->ColorMap = XCreateColormap(w->XDisplay, w->XWindowRoot, w->VisualInfo->visual, AllocNone);
 	XSetWindowAttributes swa;
 	swa.colormap = w->ColorMap;
 	swa.event_mask = ExposureMask | KeyPressMask | PointerMotionMask;
-	w->XWindow = XCreateWindow( w->XDisplay, w->XWindowRoot, 0, 0, 600, 600, 0, w->VisualInfo->depth, InputOutput, w->VisualInfo->visual, CWColormap | CWEventMask, &swa );
-	XMapWindow( w->XDisplay, w->XWindow );
-	XStoreName( w->XDisplay, w->XWindow, "xo" );
-	w->GLContext = glXCreateContext( w->XDisplay, w->VisualInfo, NULL, GL_TRUE );
-	glXMakeCurrent( w->XDisplay, w->XWindow, w->GLContext );
- 	w->InitializeRenderer();
-	glXMakeCurrent( w->XDisplay, None, NULL );
+	w->XWindow = XCreateWindow(w->XDisplay, w->XWindowRoot, 0, 0, 600, 600, 0, w->VisualInfo->depth, InputOutput, w->VisualInfo->visual, CWColormap | CWEventMask, &swa);
+	XMapWindow(w->XDisplay, w->XWindow);
+	XStoreName(w->XDisplay, w->XWindow, "xo");
+	w->GLContext = glXCreateContext(w->XDisplay, w->VisualInfo, NULL, GL_TRUE);
+	glXMakeCurrent(w->XDisplay, w->XWindow, w->GLContext);
+	w->InitializeRenderer();
+	glXMakeCurrent(w->XDisplay, None, NULL);
 	SingleMainWnd = w;
 	return w;
 #else
@@ -174,17 +174,17 @@ xoSysWnd* xoSysWnd::Create()
 xoSysWnd* xoSysWnd::CreateWithDoc()
 {
 	xoSysWnd* w = Create();
-	if ( !w )
+	if (!w)
 		return NULL;
-	w->Attach( new xoDoc(), true );
-	xoGlobal()->DocAddQueue.Add( w->DocGroup );
+	w->Attach(new xoDoc(), true);
+	xoGlobal()->DocAddQueue.Add(w->DocGroup);
 	return w;
 }
 
 void xoSysWnd::Show()
 {
 #if XO_PLATFORM_WIN_DESKTOP
-	ShowWindow( SysWnd, SW_SHOW );
+	ShowWindow(SysWnd, SW_SHOW);
 #elif XO_PLATFORM_ANDROID
 #elif XO_PLATFORM_LINUX_DESKTOP
 #else
@@ -197,7 +197,7 @@ xoDoc* xoSysWnd::Doc()
 	return DocGroup->Doc;
 }
 
-void xoSysWnd::Attach( xoDoc* doc, bool destroyDocWithGroup )
+void xoSysWnd::Attach(xoDoc* doc, bool destroyDocWithGroup)
 {
 	DocGroup->Doc = doc;
 	DocGroup->DestroyDocWithGroup = destroyDocWithGroup;
@@ -205,38 +205,38 @@ void xoSysWnd::Attach( xoDoc* doc, bool destroyDocWithGroup )
 
 bool xoSysWnd::BeginRender()
 {
-	if ( Renderer )
-		return Renderer->BeginRender( *this );
+	if (Renderer)
+		return Renderer->BeginRender(*this);
 	else
 		return false;
 }
 
-void xoSysWnd::EndRender( uint endRenderFlags )
+void xoSysWnd::EndRender(uint endRenderFlags)
 {
-	if ( Renderer )
+	if (Renderer)
 	{
-		XOTRACE_LATENCY( "EndRender (begin) %s\n", !!(endRenderFlags & xoEndRenderNoSwap) ? "noswap" : "swap" );
-		Renderer->EndRender( *this, endRenderFlags );
-		XOTRACE_LATENCY( "EndRender (end)\n" );
+		XOTRACE_LATENCY("EndRender (begin) %s\n", !!(endRenderFlags & xoEndRenderNoSwap) ? "noswap" : "swap");
+		Renderer->EndRender(*this, endRenderFlags);
+		XOTRACE_LATENCY("EndRender (end)\n");
 	}
 }
 
 void xoSysWnd::SurfaceLost()
 {
-	if ( Renderer )
+	if (Renderer)
 		Renderer->SurfaceLost();
 }
 
-void xoSysWnd::SetPosition( xoBox box, uint setPosFlags )
+void xoSysWnd::SetPosition(xoBox box, uint setPosFlags)
 {
 #if XO_PLATFORM_WIN_DESKTOP
 	uint wflags = SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE;
-	if ( !!(setPosFlags & SetPosition_Move) ) wflags = wflags & ~SWP_NOMOVE;
-	if ( !!(setPosFlags & SetPosition_Size) ) wflags = wflags & ~SWP_NOSIZE;
-	SetWindowPos( SysWnd, NULL, box.Left, box.Top, box.Width(), box.Height(), wflags );
+	if (!!(setPosFlags & SetPosition_Move)) wflags = wflags & ~SWP_NOMOVE;
+	if (!!(setPosFlags & SetPosition_Size)) wflags = wflags & ~SWP_NOSIZE;
+	SetWindowPos(SysWnd, NULL, box.Left, box.Top, box.Width(), box.Height(), wflags);
 #elif XO_PLATFORM_ANDROID
 #elif XO_PLATFORM_LINUX_DESKTOP
-	XOTRACE( "xoSysWnd.SetPosition is not implemented\n" );
+	XOTRACE("xoSysWnd.SetPosition is not implemented\n");
 #else
 	XOTODO_STATIC
 #endif
@@ -247,17 +247,17 @@ xoBox xoSysWnd::GetRelativeClientRect()
 #if XO_PLATFORM_WIN_DESKTOP
 	RECT r;
 	POINT p0 = {0,0};
-	ClientToScreen( SysWnd, &p0 );
-	GetClientRect( SysWnd, &r );
+	ClientToScreen(SysWnd, &p0);
+	GetClientRect(SysWnd, &r);
 	xoBox box = r;
-	box.Offset( p0.x, p0.y );
+	box.Offset(p0.x, p0.y);
 	return box;
 #elif XO_PLATFORM_ANDROID
 	return RelativeClientRect;
 #elif XO_PLATFORM_LINUX_DESKTOP
 	XWindowAttributes wa;
-	XGetWindowAttributes( XDisplay, XWindow, &wa );
-	return xoBox( wa.x, wa.y, wa.x + wa.width, wa.y + wa.height );
+	XGetWindowAttributes(XDisplay, XWindow, &wa);
+	return xoBox(wa.x, wa.y, wa.x + wa.width, wa.y + wa.height);
 #else
 	XOTODO_STATIC
 #endif
@@ -266,38 +266,38 @@ xoBox xoSysWnd::GetRelativeClientRect()
 bool xoSysWnd::InitializeRenderer()
 {
 #if XO_PLATFORM_WIN_DESKTOP
-	if ( xoGlobal()->PreferOpenGL )
+	if (xoGlobal()->PreferOpenGL)
 	{
-		if ( InitializeRenderer_Any<xoRenderGL>( Renderer ) )
+		if (InitializeRenderer_Any<xoRenderGL>(Renderer))
 			return true;
-		if ( InitializeRenderer_Any<xoRenderDX>( Renderer ) )
+		if (InitializeRenderer_Any<xoRenderDX>(Renderer))
 			return true;
 	}
 	else
 	{
-		if ( InitializeRenderer_Any<xoRenderDX>( Renderer ) )
+		if (InitializeRenderer_Any<xoRenderDX>(Renderer))
 			return true;
-		if ( InitializeRenderer_Any<xoRenderGL>( Renderer ) )
+		if (InitializeRenderer_Any<xoRenderGL>(Renderer))
 			return true;
 	}
 	return false;
 #else
-	InitializeRenderer_Any<xoRenderGL>( Renderer );
+	InitializeRenderer_Any<xoRenderGL>(Renderer);
 #endif
 }
 
 template<typename TRenderer>
-bool xoSysWnd::InitializeRenderer_Any( xoRenderBase*& renderer )
+bool xoSysWnd::InitializeRenderer_Any(xoRenderBase*& renderer)
 {
 	renderer = new TRenderer();
-	if ( renderer->InitializeDevice( *this ) )
+	if (renderer->InitializeDevice(*this))
 	{
-		XOTRACE( "Successfully initialized %s renderer\n", renderer->RendererName() );
+		XOTRACE("Successfully initialized %s renderer\n", renderer->RendererName());
 		return true;
 	}
 	else
 	{
-		XOTRACE( "Failed to initialize %s renderer\n", renderer->RendererName() );
+		XOTRACE("Failed to initialize %s renderer\n", renderer->RendererName());
 		delete renderer;
 		renderer = NULL;
 		return false;

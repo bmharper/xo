@@ -7,7 +7,7 @@
 
 // ---------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------
-// Container Utilities. 
+// Container Utilities.
 // Specific utilities for my own STL-like containers.
 // I don't like the STL much.
 // ---------------------------------------------------------------------------------------------------
@@ -18,66 +18,66 @@ This was created for keeping a small list of recently used items. It allows you 
 to keep a 'date' field around, and managing it's wrap-around.
 **/
 template< typename TVal >
-void shuffle_to_top( int n, TVal* items, int itop )
+void shuffle_to_top(int n, TVal* items, int itop)
 {
-	if ( n == 0 || itop == 0 ) return;
+	if (n == 0 || itop == 0) return;
 	TVal old_top = items[itop];
 
 	// bump down everything below itop
-	for ( int i = itop; i > 0; i-- ) items[i] = items[i - 1];
+	for (int i = itop; i > 0; i--) items[i] = items[i - 1];
 
 	// and insert new top
 	items[0] = old_top;
 }
 
 template< typename TVect >
-void shuffle_to_top_v( TVect& items, int itop )
+void shuffle_to_top_v(TVect& items, int itop)
 {
-	if ( items.size() > 0 ) shuffle_to_top( items.size(), &items[0], itop );
+	if (items.size() > 0) shuffle_to_top(items.size(), &items[0], itop);
 }
 
 /// Vector equality
 template < typename TVect >
-bool vect_equals( const TVect& a, const TVect& b )
+bool vect_equals(const TVect& a, const TVect& b)
 {
-	if ( a.size() != b.size() ) return false;
-	for ( size_t i = 0; i < (size_t) a.size(); i++ )
-		if ( a[i] != b[i] ) return false;
+	if (a.size() != b.size()) return false;
+	for (size_t i = 0; i < (size_t) a.size(); i++)
+		if (a[i] != b[i]) return false;
 	return true;
 }
 
 // Returns the index of the first item, or -1 if not found
 template <typename TVect, typename T>
-int vect_indexof( const TVect& list, const T& val )
+int vect_indexof(const TVect& list, const T& val)
 {
-	for ( intp i = 0; i < list.size(); i++ )
-		if ( list[i] == val )
+	for (intp i = 0; i < list.size(); i++)
+		if (list[i] == val)
 			return i;
 	return -1;
 }
 
 template<typename TVect, typename T>
-void vect_insert_if_not_exist( TVect& set, const T& val )
+void vect_insert_if_not_exist(TVect& set, const T& val)
 {
-	if ( vect_indexof(set, val) == -1 ) set.push_back( val );
+	if (vect_indexof(set, val) == -1) set.push_back(val);
 }
 
 template<typename TVect, typename T>
-void vect_erase_all_of( TVect& set, const T& val )
+void vect_erase_all_of(TVect& set, const T& val)
 {
-	for ( intp i = set.size() - 1; i >= 0; i-- )
-		if ( set[i] == val )
+	for (intp i = set.size() - 1; i >= 0; i--)
+		if (set[i] == val)
 			set.erase(i);
 }
 
 template <typename TVect>
-TVect vect_sum( const TVect& a, const TVect& b )
+TVect vect_sum(const TVect& a, const TVect& b)
 {
 	TVect res;
-	res.reserve( a.size() + b.size() );
+	res.reserve(a.size() + b.size());
 
-	for ( intp i = 0; i < a.size(); i++ )	res.push_back( a[i] );
-	for ( intp i = 0; i < b.size(); i++ )	res.push_back( b[i] );
+	for (intp i = 0; i < a.size(); i++)	res.push_back(a[i]);
+	for (intp i = 0; i < b.size(); i++)	res.push_back(b[i]);
 
 	return res;
 }
@@ -85,25 +85,25 @@ TVect vect_sum( const TVect& a, const TVect& b )
 /** Reverse for vector.
 **/
 template < typename TVect, typename TData >
-void vect_reverse( TVect& target )
+void vect_reverse(TVect& target)
 {
 	int lim = target.size() / 2;
-	for ( int i = 0; i < lim; i++ )
+	for (int i = 0; i < lim; i++)
 	{
 		int j = target.size() - i - 1;
-		std::swap( target[i], target[j] );
+		std::swap(target[i], target[j]);
 	}
 }
 
 // O(n^2)
 template<typename TVect>
-void vect_remove_duplicates( TVect& target )
+void vect_remove_duplicates(TVect& target)
 {
-	for ( intp i = 0; i < target.size(); i++ )
+	for (intp i = 0; i < target.size(); i++)
 	{
-		for ( intp j = i + 1; j < target.size(); j++ )
+		for (intp j = i + 1; j < target.size(); j++)
 		{
-			if ( target[i] == target[j] )
+			if (target[i] == target[j])
 			{
 				target.erase(j);
 				j--;
@@ -117,15 +117,15 @@ void vect_remove_duplicates( TVect& target )
 	If there are duplicates, it will be the first instance of the minimum.
 **/
 template< typename TVect, typename TData >
-int vect_least( const TVect& items )
+int vect_least(const TVect& items)
 {
-	if ( items.size() == 0 )
+	if (items.size() == 0)
 		return -1;
 	TData v = items[0];
 	int index = 0;
-	for ( intp i = 0; i < items.size(); i++ )
+	for (intp i = 0; i < items.size(); i++)
 	{
-		if ( items[i] < v )
+		if (items[i] < v)
 		{
 			v = items[i];
 			index = i;
@@ -139,15 +139,15 @@ int vect_least( const TVect& items )
 	If there are duplicates, it will be the first instance of the maximum.
 **/
 template< typename TVect, typename TData >
-int vect_greatest( const TVect& items )
+int vect_greatest(const TVect& items)
 {
-	if ( items.size() == 0 )
+	if (items.size() == 0)
 		return -1;
 	TData v = items[0];
 	int index = 0;
-	for ( intp i = 0; i < items.size(); i++ )
+	for (intp i = 0; i < items.size(); i++)
 	{
-		if ( v < items[i] )
+		if (v < items[i])
 		{
 			v = items[i];
 			index = i;
@@ -157,87 +157,87 @@ int vect_greatest( const TVect& items )
 }
 
 template< typename TVect >
-bool vect_is_sorted( const TVect& v )
+bool vect_is_sorted(const TVect& v)
 {
-	for ( intp i = 1; i < v.size(); i++ )
+	for (intp i = 1; i < v.size(); i++)
 	{
-		if ( v[i] < v[i - 1] ) return false;
+		if (v[i] < v[i - 1]) return false;
 	}
 	return true;
 }
 
 template< typename TData >
-bool array_is_sorted( intp _size, const TData* a )
+bool array_is_sorted(intp _size, const TData* a)
 {
 	uintp size = _size;
-	for ( uintp i = 1; i < size; i++ )
+	for (uintp i = 1; i < size; i++)
 	{
-		if ( a[i] < a[i - 1] ) return false;
+		if (a[i] < a[i - 1]) return false;
 	}
 	return true;
 }
 
 // SYNC-BMH-QSORT
 template < typename TData >
-void vect_sort_cx( TData* target, intp i, intp j, void* context, int (*compare) (void* context, const TData& a, const TData& b), int stackDepth = 0 )
+void vect_sort_cx(TData* target, intp i, intp j, void* context, int (*compare)(void* context, const TData& a, const TData& b), int stackDepth = 0)
 {
-	if ( j <= i ) return;
-	if ( j == i + 1 )
+	if (j <= i) return;
+	if (j == i + 1)
 	{
 		// pair
-		if ( compare( context, target[j], target[i] ) < 0 )
-			std::swap( target[i], target[j] );
+		if (compare(context, target[j], target[i]) < 0)
+			std::swap(target[i], target[j]);
 		return;
 	}
 
 	// choose alternate pivot if we detect that the list is inversely sorted.
 	// not doing so will produce a stack overflow with even a relatively small set.
 	TData* pivot = target + i + ((j - i) / 2);
-	if ( stackDepth > 40 ) 
+	if (stackDepth > 40)
 		pivot = target + i + (rand() % (1 + j - i));
 
 	intp inI = i;
 	intp inJ = j;
 	i--;
 	j++;
-	while ( i < j )
+	while (i < j)
 	{
 		j--;
-		while ( compare(context, *pivot, target[j]) < 0 && i < j ) 
+		while (compare(context, *pivot, target[j]) < 0 && i < j)
 			j--;
 
-		if ( i != j ) 
+		if (i != j)
 			i++;
-		while ( compare(context, target[i], *pivot) < 0 && i < j )
+		while (compare(context, target[i], *pivot) < 0 && i < j)
 			i++;
 
-		if ( i < j )
+		if (i < j)
 		{
-			if ( pivot == target + i )		pivot = target + j;
-			else if ( pivot == target + j ) pivot = target + i;
-			std::swap( target[i], target[j] );
+			if (pivot == target + i)		pivot = target + j;
+			else if (pivot == target + j) pivot = target + i;
+			std::swap(target[i], target[j]);
 		}
 	}
-	if ( inI < i )			vect_sort_cx<TData>( target, inI, i, context, compare, stackDepth + 1 );
-	if ( i + 1 < inJ )		vect_sort_cx<TData>( target, i + 1, inJ, context, compare, stackDepth + 1 );
+	if (inI < i)			vect_sort_cx<TData>(target, inI, i, context, compare, stackDepth + 1);
+	if (i + 1 < inJ)		vect_sort_cx<TData>(target, i + 1, inJ, context, compare, stackDepth + 1);
 }
 
 // Wrap static TData::less_than function for use as a contexual compare() function
 template< typename TData >
-int less_than_2_compare( void* context, const TData& a, const TData& b )
+int less_than_2_compare(void* context, const TData& a, const TData& b)
 {
-	return TData::less_than( a, b ) ? -1 : 0;
+	return TData::less_than(a, b) ? -1 : 0;
 };
 
 // Wrap a special TData::less_than providing class for use as a contexual compare() function
 template< typename TData, typename TCompare >
-int less_than_t_2_compare( void* context, const TData& a, const TData& b )
+int less_than_t_2_compare(void* context, const TData& a, const TData& b)
 {
-	return TCompare::less_than( a, b ) ? -1 : 0;
+	return TCompare::less_than(a, b) ? -1 : 0;
 };
 
 template< typename TData >
-int compare_default_contexual( void* context, const TData& a, const TData& b )
+int compare_default_contexual(void* context, const TData& a, const TData& b)
 {
 	return a < b ? -1 : 0;
 };
@@ -246,10 +246,10 @@ int compare_default_contexual( void* context, const TData& a, const TData& b )
 // sees is actually this function right here. This extra indirection is the price you pay for
 // always supporting a context in the comparator, and also supporting context-less comparison function pointers.
 template< typename TData >
-int marshal_context_is_compare( void* context, const TData& a, const TData& b )
+int marshal_context_is_compare(void* context, const TData& a, const TData& b)
 {
 	typedef int (*tcompare)(const TData& a, const TData& b);
-	return ((tcompare)context)( a, b );
+	return ((tcompare)context)(a, b);
 };
 
 /** Sort for vector.
@@ -257,41 +257,41 @@ TCompare is a struct/class that has a static function less_than, which
 takes two argument and looks like "bool less_than(const TData& a, const TData& b)".
 **/
 template < typename TVect, typename TData, typename TCompare >
-void vect_sort( TVect& target )
+void vect_sort(TVect& target)
 {
-	if ( target.size() == 0 ) return;
-	vect_sort_cx( &target[0], 0, target.size() - 1, NULL, &less_than_t_2_compare<TData, TCompare> );
+	if (target.size() == 0) return;
+	vect_sort_cx(&target[0], 0, target.size() - 1, NULL, &less_than_t_2_compare<TData, TCompare>);
 }
 
 template < typename TVect, typename TData >
-void vect_sort( TVect& target )
+void vect_sort(TVect& target)
 {
-	if ( target.size() == 0 ) return;
-	vect_sort_cx( &target[0], 0, target.size() - 1, NULL, &less_than_2_compare<TData> );
+	if (target.size() == 0) return;
+	vect_sort_cx(&target[0], 0, target.size() - 1, NULL, &less_than_2_compare<TData>);
 }
 
 
 template < typename TData >
-void vect_sort( TData* target, int i, int j )
+void vect_sort(TData* target, int i, int j)
 {
-	vect_sort_cx( &target[0], 0, j, NULL, &compare_default_contexual<TData> );
+	vect_sort_cx(&target[0], 0, j, NULL, &compare_default_contexual<TData>);
 }
 
 // context is an std::function* that returns an int (-1,0,1)
 template<typename T>
-int compare_lambda( void* context, const T& a, const T& b )
+int compare_lambda(void* context, const T& a, const T& b)
 {
 	typedef std::function<int(const T& a, const T& b)> TFunc;
 	TFunc* f = (TFunc*) context;
-	return (*f)( a, b );
+	return (*f)(a, b);
 }
 
 // To avoid ambiguity with std::sort, I leave this function with the name vect_sort, although it has nothing
 // to do with a vector. All of this stuff should maybe go into its own namespace (or just use the STL!)
 template<typename T>
-void vect_sort( T* target, intp count, std::function<int(const T& a, const T& b)> compare )
+void vect_sort(T* target, intp count, std::function<int(const T& a, const T& b)> compare)
 {
-	vect_sort_cx<T>( target, 0, count - 1, &compare, compare_lambda );
+	vect_sort_cx<T>(target, 0, count - 1, &compare, compare_lambda);
 }
 
 
@@ -303,26 +303,26 @@ struct indirect_sort_context
 {
 	const TData*	Data;
 	void*			OrgContext;
-	int				(*OrgCompare)(void* context, const TData& a, const TData& b);
+	int	(*OrgCompare)(void* context, const TData& a, const TData& b);
 };
 
 template<typename TData, typename TOrder>
-int indirect_compare( void* context, const TOrder& ia, const TOrder& ib )
+int indirect_compare(void* context, const TOrder& ia, const TOrder& ib)
 {
 	indirect_sort_context<TData>* cx = (indirect_sort_context<TData>*) context;
-	return cx->OrgCompare( cx->OrgContext, cx->Data[ia], cx->Data[ib] );
+	return cx->OrgCompare(cx->OrgContext, cx->Data[ia], cx->Data[ib]);
 }
 
 template <typename TData, typename TOrder>
-void vect_sort_indirect( const TData* target, TOrder* ordering, intp n, void* context, int (*compare) (void* context, const TData& a, const TData& b) )
+void vect_sort_indirect(const TData* target, TOrder* ordering, intp n, void* context, int (*compare)(void* context, const TData& a, const TData& b))
 {
 	indirect_sort_context<TData> wrappedcx;
 	wrappedcx.Data = target;
 	wrappedcx.OrgContext = context;
 	wrappedcx.OrgCompare = compare;
 
-	for ( TOrder k = 0; k < (TOrder) n; k++ ) ordering[k] = k;
-	vect_sort_cx( ordering, 0, n - 1, &wrappedcx, indirect_compare<TData,TOrder> );
+	for (TOrder k = 0; k < (TOrder) n; k++) ordering[k] = k;
+	vect_sort_cx(ordering, 0, n - 1, &wrappedcx, indirect_compare<TData,TOrder>);
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

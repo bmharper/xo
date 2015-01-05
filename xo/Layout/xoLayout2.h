@@ -22,7 +22,7 @@ that is thread safe.
 class XOAPI xoLayout2
 {
 public:
-	void Layout( const xoDoc& doc, xoRenderDomNode& root, xoPool* pool );
+	void Layout(const xoDoc& doc, xoRenderDomNode& root, xoPool* pool);
 
 protected:
 
@@ -60,7 +60,7 @@ protected:
 		xoPos		InnerBaseline;
 		int			InnerBaselineDefinedBy;
 		int			LastChild;
-		static LineBox Make( xoPos innerBaseline, int innerBaselineDefinedBy, int lastChild ) { return {innerBaseline, innerBaselineDefinedBy, lastChild}; }
+		static LineBox Make(xoPos innerBaseline, int innerBaselineDefinedBy, int lastChild) { return {innerBaseline, innerBaselineDefinedBy, lastChild}; }
 	};
 
 	struct Word
@@ -107,32 +107,32 @@ protected:
 	bool						SnapSubpixelHorzText;
 
 	void		RenderGlyphsNeeded();
-	void		LayoutInternal( xoRenderDomNode& root );
-	void		RunNode( const xoDomNode& node, const LayoutInput& in, LayoutOutput& out, xoRenderDomNode* rnode );
-	void		RunText( const xoDomText& node, const LayoutInput& in, LayoutOutput& out, xoRenderDomText* rnode );
-	void		GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, TextRunState& ts );
-	xoPoint		PositionChildFromBindings( const LayoutInput& cin, const LayoutOutput& cout, xoRenderDomEl* rchild );
-	void		GenerateTextWords( TextRunState& ts );
+	void		LayoutInternal(xoRenderDomNode& root);
+	void		RunNode(const xoDomNode& node, const LayoutInput& in, LayoutOutput& out, xoRenderDomNode* rnode);
+	void		RunText(const xoDomText& node, const LayoutInput& in, LayoutOutput& out, xoRenderDomText* rnode);
+	void		GenerateTextOutput(const LayoutInput& in, LayoutOutput& out, TextRunState& ts);
+	xoPoint		PositionChildFromBindings(const LayoutInput& cin, const LayoutOutput& cout, xoRenderDomEl* rchild);
+	void		GenerateTextWords(TextRunState& ts);
 
-	xoPos		ComputeDimension( xoPos container, xoStyleCategories cat );
-	xoPos		ComputeDimension( xoPos container, xoSize size );
-	xoBox		ComputeBox( xoPos containerWidth, xoPos containerHeight, xoStyleCategories cat );
-	xoBox		ComputeBox( xoPos containerWidth, xoPos containerHeight, xoStyleBox box );
+	xoPos		ComputeDimension(xoPos container, xoStyleCategories cat);
+	xoPos		ComputeDimension(xoPos container, xoSize size);
+	xoBox		ComputeBox(xoPos containerWidth, xoPos containerHeight, xoStyleCategories cat);
+	xoBox		ComputeBox(xoPos containerWidth, xoPos containerHeight, xoStyleBox box);
 	BindingSet	ComputeBinds();
 
-	xoPos		HoriAdvance( const xoGlyph* glyph, const TextRunState& ts );
+	xoPos		HoriAdvance(const xoGlyph* glyph, const TextRunState& ts);
 
-	static xoPos			HBindOffset( xoHorizontalBindings bind, xoPos width );
-	static xoPos			VBindOffset( xoVerticalBindings bind, xoPos baseline, xoPos height );
-	static bool				IsSpace( int ch );
-	static bool				IsLinebreak( int ch );
-	static xoGlyphCacheKey	MakeGlyphCacheKey( xoRenderDomText* rnode );
-	static void				FlowNewline( FlowState& flow );
-	static bool				FlowBreakBefore( const LayoutOutput& cout, FlowState& flow );
-	static xoPoint			FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl );
-	static xoPoint			ApplyPosition( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl );
+	static xoPos			HBindOffset(xoHorizontalBindings bind, xoPos width);
+	static xoPos			VBindOffset(xoVerticalBindings bind, xoPos baseline, xoPos height);
+	static bool				IsSpace(int ch);
+	static bool				IsLinebreak(int ch);
+	static xoGlyphCacheKey	MakeGlyphCacheKey(xoRenderDomText* rnode);
+	static void				FlowNewline(FlowState& flow);
+	static bool				FlowBreakBefore(const LayoutOutput& cout, FlowState& flow);
+	static xoPoint			FlowRun(const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl);
+	static xoPoint			ApplyPosition(const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl);
 
-	static bool				IsDefined( xoPos p )	{ return p != xoPosNULL; }
-	static bool				IsNull( xoPos p )		{ return p == xoPosNULL; }
+	static bool				IsDefined(xoPos p)	{ return p != xoPosNULL; }
+	static bool				IsNull(xoPos p)		{ return p == xoPosNULL; }
 
 };

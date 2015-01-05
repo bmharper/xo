@@ -31,4 +31,4 @@ The callback must respond in the following ways
 	Return false to stop iteration of this directory
 This function returns false if an error occurred other than "no files found"
 */
-bool AbcFilesystemFindFiles( const char* dir, std::function<bool(const AbcFilesystemItem& item)> callback );
+bool AbcFilesystemFindFiles(const char* dir, std::function<bool(const AbcFilesystemItem& item)> callback);

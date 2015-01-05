@@ -15,10 +15,10 @@ public:
 		struct
 		{
 			FT	xx, xy,
-				yx, yy;
+			 yx, yy;
 		};
 
-		struct 
+		struct
 		{
 			VecBase2T<FT> row[2];
 		};
@@ -31,7 +31,7 @@ public:
 		row[0] = Vec2(1,0);
 		row[1] = Vec2(0,1);
 	}
-	
+
 	bool IsIdentity() const
 	{
 		Mat2T m;
@@ -53,7 +53,7 @@ public:
 	bool Invert()
 	{
 		double r = Det();
-		if ( r == 0 ) return false;
+		if (r == 0) return false;
 		r = 1.0 / r;
 		Mat2T me;
 		me.xx = r * yy;
@@ -71,27 +71,27 @@ public:
 		return inv;
 	}
 
-	Mat2T& operator*=( double v )
+	Mat2T& operator*=(double v)
 	{
 		row[0].scale(v);
 		row[1].scale(v);
 		return *this;
 	}
 
-	bool operator==( const Mat2T& b ) const
+	bool operator==(const Mat2T& b) const
 	{
 		return memcmp(this, &b, sizeof(b)) == 0;
 	}
-	bool operator!=( const Mat2T& b ) const { return !(*this == b); }
+	bool operator!=(const Mat2T& b) const { return !(*this == b); }
 
 };
 
 template< typename FT >
-Vec2T<FT> operator*( const Mat2T<FT>& m, const Vec2T<FT>& v )
+Vec2T<FT> operator*(const Mat2T<FT>& m, const Vec2T<FT>& v)
 {
-	return Vec2T<FT>( m.row[0].dot(v), m.row[1].dot(v) );
+	return Vec2T<FT>(m.row[0].dot(v), m.row[1].dot(v));
 }
-		
+
 typedef Mat2T<double> Mat2;
 typedef Mat2T<double> Mat2d;
 typedef Mat2T<float> Mat2f;

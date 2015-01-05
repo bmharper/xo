@@ -16,7 +16,7 @@ struct XOAPI xoRenderCharEl
 class XOAPI xoRenderDomEl
 {
 public:
-				xoRenderDomEl( xoInternalID id, xoTag tag );
+	xoRenderDomEl(xoInternalID id, xoTag tag);
 
 	xoInternalID					InternalID;			// Reference to our original xoDomEl. There can be many xoRenderDomEl per xoDomEl (text is an example)
 	xoBox							Pos;				// For rectangles, this is the ContentBox. See log entry from 2014-08-02
@@ -30,11 +30,11 @@ public:
 class XOAPI xoRenderDomNode : public xoRenderDomEl
 {
 public:
-				xoRenderDomNode( xoInternalID id = xoInternalIDNull, xoTag tag = xoTagBody, xoPool* pool = NULL );
+	xoRenderDomNode(xoInternalID id = xoInternalIDNull, xoTag tag = xoTagBody, xoPool* pool = NULL);
 
 	void		Discard();
-	void		SetStyle( xoRenderStack& stack );
-	void		SetPool( xoPool* pool );
+	void		SetStyle(xoRenderStack& stack);
+	void		SetPool(xoPool* pool);
 	xoBox		BorderBox() const;
 	xoPos		BorderBoxRight() const		{ return Pos.Right + Style.BorderSize.Right; }
 	xoPos		BorderBoxBottom() const		{ return Pos.Bottom + Style.BorderSize.Bottom; }
@@ -58,10 +58,10 @@ public:
 	{
 		FlagSubPixelGlyphs = 1,
 	};
-				xoRenderDomText( xoInternalID id, xoPool* pool );
+	xoRenderDomText(xoInternalID id, xoPool* pool);
 
-	void		SetStyle( xoRenderStack& stack ); // get rid of me. Instead just set color manually, the way it's done from xoLayout3
-	
+	void		SetStyle(xoRenderStack& stack);   // get rid of me. Instead just set color manually, the way it's done from xoLayout3
+
 	bool		IsSubPixel() const { return !!(Flags & FlagSubPixelGlyphs); }
 
 	xoFontID						FontID;

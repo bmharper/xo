@@ -16,260 +16,260 @@ public:
 		struct
 		{
 			FT	xx, xy, xz,
-				yx, yy, yz,
-				zx, zy, zz;
+			 yx, yy, yz,
+			 zx, zy, zz;
 		};
 
-		struct 
+		struct
 		{
 			VecBase3T<FT> row[3];
 		};
 	};
 
-		//double invert(Mat3T& inv);
-		Mat3T transpose();
-		void clear() 
-		{
-				row[0].x=
-				row[0].y=
+	//double invert(Mat3T& inv);
+	Mat3T transpose();
+	void clear()
+	{
+		row[0].x=
+			row[0].y=
 				row[0].z=
-				
-				row[1].x=
-				row[1].y=
-				row[1].z=
-				
-				row[2].x=
-				row[2].y=
-				row[2].z=0;
-		}
+
+					row[1].x=
+						row[1].y=
+							row[1].z=
+
+								row[2].x=
+									row[2].y=
+										row[2].z=0;
+	}
 
 
-		INLINE Vec3T<FT> col(int i) const {return Vec3T<FT>(row[0][i],row[1][i],row[2][i]);}
+	INLINE Vec3T<FT> col(int i) const {return Vec3T<FT>(row[0][i],row[1][i],row[2][i]);}
 
 
-		// Constructors
-
-		
-		Mat3T() {}
-		Mat3T(const Vec3T<FT>& v0, const Vec3T<FT>& v1, const Vec3T<FT>& v2);
-		Mat3T(const FT m00, const FT m01, const FT m02,
-				const FT m10, const FT m11, const FT m12,
-				const FT m20, const FT m21, const FT m22);
-		Mat3T(const FT d);
-		Mat3T(const Mat3T& m);
-		
-		// Assignment operators
-		
-		Mat3T& operator  = ( const Mat3T& m );      // assignment of a Mat3T
-		Mat3T& operator += ( const Mat3T& m );      // this += m
-		Mat3T& operator -= ( const Mat3T& m );      // this -= m
-		Mat3T& operator *= ( const FT d );      // this *= d
-		Mat3T& operator /= ( const FT d );      // this /= d
-		
-		FT & operator ()  ( const int i, const int j){ return row[i][j]; }
-		FT operator ()  ( const int i, const int j) const { return row[i][j]; }
-
-		
-		Mat3T adjoint();
-
-		FT & m(int i, int j)  { return row[i][j]; }
-		FT m(int i, int j) const  { return row[i][j]; }
+	// Constructors
 
 
-		Vec3T<FT> GetViewUp();
-		Vec3T<FT> GetViewNormal();
-		Vec3T<FT> GetViewRight();
-		
-		// this = identity
-		void SetIdentity();
-		// this = identity
-		void Identity();
-		// this = transpose(this)
-		void Transpose();
-		// m = transpose(this)
-		void GetTranspose(Mat3T & m) const;
-		// this = transpose(m)
-		void SetTranspose(const Mat3T & m);
+	Mat3T() {}
+	Mat3T(const Vec3T<FT>& v0, const Vec3T<FT>& v1, const Vec3T<FT>& v2);
+	Mat3T(const FT m00, const FT m01, const FT m02,
+		  const FT m10, const FT m11, const FT m12,
+		  const FT m20, const FT m21, const FT m22);
+	Mat3T(const FT d);
+	Mat3T(const Mat3T& m);
 
-		/// Returns the diagonal
-		Vec3T<FT> Diagonal() const { return Vec3T<FT>( row[0].x, row[1].y, row[2].z ); }
+	// Assignment operators
 
-		// this = invert(this),
-		void Invert();
-		// this = invert(this) for arbitrary matrix
-		int InvertArbitrary();
+	Mat3T& operator  = (const Mat3T& m);        // assignment of a Mat3T
+	Mat3T& operator += (const Mat3T& m);        // this += m
+	Mat3T& operator -= (const Mat3T& m);        // this -= m
+	Mat3T& operator *= (const FT d);        // this *= d
+	Mat3T& operator /= (const FT d);        // this /= d
 
-		Mat3T Inverted() const 
-		{
-			Mat3T c = *this;
-			c.Invert();
-			return c;
-		}
-
-		void premult ( const Mat3T &M );
-		void postmult ( const Mat3T &M );
+	FT & operator()(const int i, const int j) { return row[i][j]; }
+	FT operator()(const int i, const int j) const { return row[i][j]; }
 
 
-		// m = inverse(this)
-		void GetInverse(Mat3T & m) const;
-		// m = invert(this) for arbitrary matrix
-		int GetInverseArbitrary(Mat3T & m) const;
-		// this = inverse(m)
-		void SetInverse(const Mat3T & m);
-		
-		// this = inverse(m)
-		int SetInverseArbitrary(const Mat3T & m);
-		
-		// this = 0
-		void SetToZero();           // make this zero
-		
-		// this = rotate_x
-		void SetRotateXDeg(FT degrees);
-		// this = rotate_x * this
-		void RotateXDeg(FT degrees, bool post = false);
-		
-		// this = rotate_z
-		void SetRotateYDeg(FT degrees);
-		// this = rotate_y * this
-		void RotateYDeg(FT degrees, bool post = false);
-		
-		
-		// this = rotate_z
-		void SetRotateZDeg(FT degrees);
-		// this = rotate_z * this
-		void RotateZDeg(FT degrees, bool post = false);
-		
-		
-		
-		/*friend Mat3T operator ~ (const Mat3T& m);         // ~m
-		friend Mat3T operator - (const Mat3T& m);         // -m
-		friend Mat3T operator + (const Mat3T& m1, const Mat3T& m2);      // m1 + m2
-		friend Mat3T operator - (const Mat3T& m1, const Mat3T& m2);      // m1 - m2
-		friend Mat3T operator * (Mat3T& m1, Mat3T& m2);        // m1 * m2
-		friend Mat3T operator * (const Mat3T& m, const FT d);      // m * d
-		friend Mat3T operator * (const FT d, const Mat3T& m);      // d * m
-		friend Mat3T operator / (const Mat3T& m, const FT d);      // m1 / d
-		friend int operator == (const Mat3T& m1, const Mat3T& m2);      // m1 == m2 ?
-		friend int operator != (const Mat3T& m1, const Mat3T& m2);      // m1 != m2 ?
-		//friend ostream& operator << (ostream& s, Mat3T& m);      // output to stream
-		//friend istream& operator >> (istream& s, Mat3T& m);      // input from strm.
-		
-		
-		friend Vec3T<FT> operator * (const Mat3T& m, const Vec3T<FT>& v);      // v = m * v */
+	Mat3T adjoint();
+
+	FT & m(int i, int j)  { return row[i][j]; }
+	FT m(int i, int j) const  { return row[i][j]; }
+
+
+	Vec3T<FT> GetViewUp();
+	Vec3T<FT> GetViewNormal();
+	Vec3T<FT> GetViewRight();
+
+	// this = identity
+	void SetIdentity();
+	// this = identity
+	void Identity();
+	// this = transpose(this)
+	void Transpose();
+	// m = transpose(this)
+	void GetTranspose(Mat3T & m) const;
+	// this = transpose(m)
+	void SetTranspose(const Mat3T & m);
+
+	/// Returns the diagonal
+	Vec3T<FT> Diagonal() const { return Vec3T<FT>(row[0].x, row[1].y, row[2].z); }
+
+	// this = invert(this),
+	void Invert();
+	// this = invert(this) for arbitrary matrix
+	int InvertArbitrary();
+
+	Mat3T Inverted() const
+	{
+		Mat3T c = *this;
+		c.Invert();
+		return c;
+	}
+
+	void premult(const Mat3T &M);
+	void postmult(const Mat3T &M);
+
+
+	// m = inverse(this)
+	void GetInverse(Mat3T & m) const;
+	// m = invert(this) for arbitrary matrix
+	int GetInverseArbitrary(Mat3T & m) const;
+	// this = inverse(m)
+	void SetInverse(const Mat3T & m);
+
+	// this = inverse(m)
+	int SetInverseArbitrary(const Mat3T & m);
+
+	// this = 0
+	void SetToZero();           // make this zero
+
+	// this = rotate_x
+	void SetRotateXDeg(FT degrees);
+	// this = rotate_x * this
+	void RotateXDeg(FT degrees, bool post = false);
+
+	// this = rotate_z
+	void SetRotateYDeg(FT degrees);
+	// this = rotate_y * this
+	void RotateYDeg(FT degrees, bool post = false);
+
+
+	// this = rotate_z
+	void SetRotateZDeg(FT degrees);
+	// this = rotate_z * this
+	void RotateZDeg(FT degrees, bool post = false);
+
+
+
+	/*friend Mat3T operator ~ (const Mat3T& m);         // ~m
+	friend Mat3T operator - (const Mat3T& m);         // -m
+	friend Mat3T operator + (const Mat3T& m1, const Mat3T& m2);      // m1 + m2
+	friend Mat3T operator - (const Mat3T& m1, const Mat3T& m2);      // m1 - m2
+	friend Mat3T operator * (Mat3T& m1, Mat3T& m2);        // m1 * m2
+	friend Mat3T operator * (const Mat3T& m, const FT d);      // m * d
+	friend Mat3T operator * (const FT d, const Mat3T& m);      // d * m
+	friend Mat3T operator / (const Mat3T& m, const FT d);      // m1 / d
+	friend int operator == (const Mat3T& m1, const Mat3T& m2);      // m1 == m2 ?
+	friend int operator != (const Mat3T& m1, const Mat3T& m2);      // m1 != m2 ?
+	//friend ostream& operator << (ostream& s, Mat3T& m);      // output to stream
+	//friend istream& operator >> (istream& s, Mat3T& m);      // input from strm.
+
+
+	friend Vec3T<FT> operator * (const Mat3T& m, const Vec3T<FT>& v);      // v = m * v */
 
 
 
 	/*
 	Up
-	|     Normal  
+	|     Normal
 	|      /
 	|    /
 	|  /
 	|/_________ Right
 
-	
-		
-			
-				
-				for three points, contruct a matrix so that vpn is p1 to p2 and p3 is on the 
+
+
+
+
+				for three points, contruct a matrix so that vpn is p1 to p2 and p3 is on the
 				Z, X plane. For Mat3T this is only the rotation part.
-					
-						
-							
+
+
+
 					Y          Z
-					|        p2  
+					|        p2
 					|      /
 					|    /
 					|  /
 					|/_________  X
 					p1
-								
+
 						p3 is on X, Z plane some where
-									
+
 		*/
-		
-		// given two vectors, calculate a rotation matrix
-		
-		int CalcRotationMatrixFromUR(Vec3T<FT> vup, Vec3T<FT> vr); // up right
-		int CalcRotationMatrixFromRN(Vec3T<FT> vr, Vec3T<FT> vpn); // right normal
-		int CalcRotationMatrixFromNU(Vec3T<FT> vpn, Vec3T<FT> vup); // normal up
-		
-		// given the threee vectorsm normal, up and right
-		// calc the rotation matrix
-		void CalcRotationMatrixFromAllVectors(const Vec3T<FT> & vpn, const Vec3T<FT> &vup, const Vec3T<FT> &vr);
-		// given three points in space, calc the rotation matrix
-		int CalcRotationMatrixFromPoints(const Vec3T<FT> & p1, const Vec3T<FT> & p2, const Vec3T<FT> & p3);
-		
-		FT det() const;
-		
-		void xform(const Vec3T<FT> &v, Vec3T<FT> &xv) const; // (this)(v) => xv; 
-		// v & xv must be distinct
-		void xform(Vec3T<FT> &v) const;                  // (this)(v) => v
-		
-		void invXform(const Vec3T<FT> &v, Vec3T<FT> &xv) const;
-		void invXform(Vec3T<FT> &v) const;
-		
-		
-		Mat3T(const Vec3T<FT> &diag, const Vec3T<FT> &sym) {set(diag, sym);}
-		// make a symmetric matrix, given the diagonal and symmetric
-		// (off-diagonal) elements in canonical order
-		
-		//void set(const Quat &q);
-		void set(const Mat3T& m);
-		void set(const Vec3T<FT> &diag, const Vec3T<FT> &sym);
-		
-		void xpose(const Mat3T &M);                   // M^T      
-		void xpose();                                // this^T
-		void symmetrize(const Mat3T &M);              // M + M^T
-		void symmetrize();                           // this + this^T
-		
-		//double  invert(const Mat3T &M);                  // M^-1      
-		//double  invert();                               // this^-1
-		
-		void negate(const Mat3T &M);                  // -M
-		void negate();                               // -this
-		void add(const Mat3T &M, const Mat3T &N);      // M + N
-		void add(const Mat3T &M);                     // this + M
-		void sub(const Mat3T &M, const Mat3T &N);      // M - N
-		void sub(const Mat3T &M);                     // this - M
-		void scale(const Mat3T &M, FT s);           // s * M
-		void scale(FT s);                          // s * this
-		void mult(const Mat3T &M, const Mat3T &N);     // M * N     
-		void mult(const Mat3T &M, bool  post = false);                 // M * this  
-		//void postmult(const Mat3T &M);                // this * M  
-		
-		// for reading a symmetric matrix
-		Vec3T<FT> diag() const {return Vec3T<FT>(XX, YY, ZZ);}
-		Vec3T<FT> sym()  const {return Vec3T<FT>(YZ, ZX, XY);}
-		
-		// set matrix to the skew symmetric matrix corresponding to 'v X'
-		void setSkew(const Vec3T<FT> &v);
-		
-		// for reading rows
-		const Vec3T<FT> &xrow() const {return *((Vec3T<FT> *) &XX);}
-		const Vec3T<FT> &yrow() const {return *((Vec3T<FT> *) &YX);}
-		const Vec3T<FT> &zrow() const {return *((Vec3T<FT> *) &ZX);}
-		// for writing to rows
-		Vec3T<FT> &xrow()  {return *((Vec3T<FT> *) &XX);}
-		Vec3T<FT> &yrow()  {return *((Vec3T<FT> *) &YX);}
-		Vec3T<FT> &zrow()  {return *((Vec3T<FT> *) &ZX);}
-		
-		// for reading columns
-		Vec3T<FT> xcol() const {return Vec3T<FT>(XX, YX, ZX);}
-		Vec3T<FT> ycol() const {return Vec3T<FT>(XY, YY, ZY);}
-		Vec3T<FT> zcol() const {return Vec3T<FT>(XZ, YZ, ZZ);}
-		// for writing to columns
-		void setXcol(const Vec3T<FT> &v);
-		void setYcol(const Vec3T<FT> &v);
-		void setZcol(const Vec3T<FT> &v);
+
+	// given two vectors, calculate a rotation matrix
+
+	int CalcRotationMatrixFromUR(Vec3T<FT> vup, Vec3T<FT> vr); // up right
+	int CalcRotationMatrixFromRN(Vec3T<FT> vr, Vec3T<FT> vpn); // right normal
+	int CalcRotationMatrixFromNU(Vec3T<FT> vpn, Vec3T<FT> vup); // normal up
+
+	// given the threee vectorsm normal, up and right
+	// calc the rotation matrix
+	void CalcRotationMatrixFromAllVectors(const Vec3T<FT> & vpn, const Vec3T<FT> &vup, const Vec3T<FT> &vr);
+	// given three points in space, calc the rotation matrix
+	int CalcRotationMatrixFromPoints(const Vec3T<FT> & p1, const Vec3T<FT> & p2, const Vec3T<FT> & p3);
+
+	FT det() const;
+
+	void xform(const Vec3T<FT> &v, Vec3T<FT> &xv) const; // (this)(v) => xv;
+	// v & xv must be distinct
+	void xform(Vec3T<FT> &v) const;                  // (this)(v) => v
+
+	void invXform(const Vec3T<FT> &v, Vec3T<FT> &xv) const;
+	void invXform(Vec3T<FT> &v) const;
 
 
-		// functions for homogenous 2d coords
-		void Translate( FT x, FT y, bool post = true );
-		void Scale( FT x, FT y, bool post = true );
-		void Rotate( FT angle, bool post = true );
+	Mat3T(const Vec3T<FT> &diag, const Vec3T<FT> &sym) {set(diag, sym);}
+	// make a symmetric matrix, given the diagonal and symmetric
+	// (off-diagonal) elements in canonical order
 
-		//ostream& print(ostream &os) const;
+	//void set(const Quat &q);
+	void set(const Mat3T& m);
+	void set(const Vec3T<FT> &diag, const Vec3T<FT> &sym);
+
+	void xpose(const Mat3T &M);                   // M^T
+	void xpose();                                // this^T
+	void symmetrize(const Mat3T &M);              // M + M^T
+	void symmetrize();                           // this + this^T
+
+	//double  invert(const Mat3T &M);                  // M^-1
+	//double  invert();                               // this^-1
+
+	void negate(const Mat3T &M);                  // -M
+	void negate();                               // -this
+	void add(const Mat3T &M, const Mat3T &N);      // M + N
+	void add(const Mat3T &M);                     // this + M
+	void sub(const Mat3T &M, const Mat3T &N);      // M - N
+	void sub(const Mat3T &M);                     // this - M
+	void scale(const Mat3T &M, FT s);           // s * M
+	void scale(FT s);                          // s * this
+	void mult(const Mat3T &M, const Mat3T &N);     // M * N
+	void mult(const Mat3T &M, bool  post = false);                 // M * this
+	//void postmult(const Mat3T &M);                // this * M
+
+	// for reading a symmetric matrix
+	Vec3T<FT> diag() const {return Vec3T<FT>(XX, YY, ZZ);}
+	Vec3T<FT> sym()  const {return Vec3T<FT>(YZ, ZX, XY);}
+
+	// set matrix to the skew symmetric matrix corresponding to 'v X'
+	void setSkew(const Vec3T<FT> &v);
+
+	// for reading rows
+	const Vec3T<FT> &xrow() const {return *((Vec3T<FT> *) &XX);}
+	const Vec3T<FT> &yrow() const {return *((Vec3T<FT> *) &YX);}
+	const Vec3T<FT> &zrow() const {return *((Vec3T<FT> *) &ZX);}
+	// for writing to rows
+	Vec3T<FT> &xrow()  {return *((Vec3T<FT> *) &XX);}
+	Vec3T<FT> &yrow()  {return *((Vec3T<FT> *) &YX);}
+	Vec3T<FT> &zrow()  {return *((Vec3T<FT> *) &ZX);}
+
+	// for reading columns
+	Vec3T<FT> xcol() const {return Vec3T<FT>(XX, YX, ZX);}
+	Vec3T<FT> ycol() const {return Vec3T<FT>(XY, YY, ZY);}
+	Vec3T<FT> zcol() const {return Vec3T<FT>(XZ, YZ, ZZ);}
+	// for writing to columns
+	void setXcol(const Vec3T<FT> &v);
+	void setYcol(const Vec3T<FT> &v);
+	void setZcol(const Vec3T<FT> &v);
+
+
+	// functions for homogenous 2d coords
+	void Translate(FT x, FT y, bool post = true);
+	void Scale(FT x, FT y, bool post = true);
+	void Rotate(FT angle, bool post = true);
+
+	//ostream& print(ostream &os) const;
 };
 
 
@@ -292,23 +292,23 @@ public:
 template <class FT> INLINE
 Vec3T<FT> operator * (const Mat3T<FT>& m, const Vec3T<FT>& v)
 {
-	return Vec3T<FT>(	m.row[0] & v,
-										m.row[1] & v,
-										m.row[2] & v  );
+	return Vec3T<FT>(m.row[0] & v,
+					 m.row[1] & v,
+					 m.row[2] & v);
 }
 
 
 template <class FT> INLINE
-void ulInvertMatrix(const Mat3T<FT> & a, Mat3T<FT> & b)  
+void ulInvertMatrix(const Mat3T<FT> & a, Mat3T<FT> & b)
 {
 	b(0, 0) = a(0, 0);
 	b(1, 0) = a(0, 1);
 	b(2, 0) = a(0, 2);
-									
+
 	b(0, 1) = a(1, 0);
 	b(1, 1) = a(1, 1);
 	b(2, 1) = a(1, 2);
-									
+
 	b(0, 2) = a(2, 0);
 	b(1, 2) = a(2, 1);
 	b(2, 2) = a(2, 2);
@@ -326,14 +326,14 @@ void ulInvertMatrix(Mat3T<FT> & a)
 
 
 template <class FT> INLINE
-int ulInvertMatrixArbitrary(const Mat3T<FT> &a, Mat3T<FT> & b)  
+int ulInvertMatrixArbitrary(const Mat3T<FT> &a, Mat3T<FT> & b)
 {
 	const FT EPS = (FT) 1e-12;
 
-	double fDetInv = a(0, 0) * ( a(1, 1) * a(2, 2) - a(1, 2) * a(2, 1) ) -
-		a(0, 1) * ( a(1, 0) * a(2, 2) - a(1, 2) * a(2, 0) ) +
-		a(0, 2) * ( a(1, 0) * a(2, 1) - a(1, 1) * a(2, 0) );
-	
+	double fDetInv = a(0, 0) * (a(1, 1) * a(2, 2) - a(1, 2) * a(2, 1)) -
+					 a(0, 1) * (a(1, 0) * a(2, 2) - a(1, 2) * a(2, 0)) +
+					 a(0, 2) * (a(1, 0) * a(2, 1) - a(1, 1) * a(2, 0));
+
 
 	if (fabs(fDetInv) < EPS)
 	{
@@ -341,18 +341,18 @@ int ulInvertMatrixArbitrary(const Mat3T<FT> &a, Mat3T<FT> & b)
 		return -1;
 	}
 	fDetInv = 1.0 /fDetInv;
-	b(0, 0) =  fDetInv * ( a(1, 1) * a(2, 2) - a(1, 2) * a(2, 1) );
-	b(0, 1) = -fDetInv * ( a(0, 1) * a(2, 2) - a(0, 2) * a(2, 1) );
-	b(0, 2) =  fDetInv * ( a(0, 1) * a(1, 2) - a(0, 2) * a(1, 1) );
-	
-	b(1, 0) = -fDetInv * ( a(1, 0) * a(2, 2) - a(1, 2) * a(2, 0) );
-	b(1, 1) =  fDetInv * ( a(0, 0) * a(2, 2) - a(0, 2) * a(2, 0) );
-	b(1, 2) = -fDetInv * ( a(0, 0) * a(1, 2) - a(0, 2) * a(1, 0) );
-	
-	b(2, 0) =  fDetInv * ( a(1, 0) * a(2, 1) - a(1, 1) * a(2, 0) );
-	b(2, 1) = -fDetInv * ( a(0, 0) * a(2, 1) - a(0, 1) * a(2, 0) );
-	b(2, 2) =  fDetInv * ( a(0, 0) * a(1, 1) - a(0, 1) * a(1, 0) );
-	
+	b(0, 0) =  fDetInv * (a(1, 1) * a(2, 2) - a(1, 2) * a(2, 1));
+	b(0, 1) = -fDetInv * (a(0, 1) * a(2, 2) - a(0, 2) * a(2, 1));
+	b(0, 2) =  fDetInv * (a(0, 1) * a(1, 2) - a(0, 2) * a(1, 1));
+
+	b(1, 0) = -fDetInv * (a(1, 0) * a(2, 2) - a(1, 2) * a(2, 0));
+	b(1, 1) =  fDetInv * (a(0, 0) * a(2, 2) - a(0, 2) * a(2, 0));
+	b(1, 2) = -fDetInv * (a(0, 0) * a(1, 2) - a(0, 2) * a(1, 0));
+
+	b(2, 0) =  fDetInv * (a(1, 0) * a(2, 1) - a(1, 1) * a(2, 0));
+	b(2, 1) = -fDetInv * (a(0, 0) * a(2, 1) - a(0, 1) * a(2, 0));
+	b(2, 2) =  fDetInv * (a(0, 0) * a(1, 1) - a(0, 1) * a(1, 0));
+
 	return 0;
 }
 
@@ -369,15 +369,15 @@ int ulInvertMatrixArbitrary(Mat3T<FT> & a)
 
 template <class FT> INLINE
 Mat3T<FT>::Mat3T(const Vec3T<FT>& v0, const Vec3T<FT>& v1, const Vec3T<FT>& v2)
-{ 
+{
 	m(0, 0) = v0(0);
 	m(0, 1) = v0(1);
 	m(0, 2) = v0(2);
-							
+
 	m(1, 0) = v1(0);
 	m(1, 1) = v1(1);
 	m(1, 2) = v1(2);
-							
+
 	m(2, 0) = v2(0);
 	m(2, 1) = v2(1);
 	m(2, 2) = v2(2);
@@ -386,15 +386,15 @@ Mat3T<FT>::Mat3T(const Vec3T<FT>& v0, const Vec3T<FT>& v1, const Vec3T<FT>& v2)
 
 template <class FT> INLINE
 Mat3T<FT>::Mat3T(const FT d)
-{ 
+{
 	m(0, 0) = d;
 	m(0, 1) = d;
 	m(0, 2) = d;
-		
+
 	m(1, 0) = d;
 	m(1, 1) = d;
 	m(1, 2) = d;
-		
+
 	m(2, 0) = d;
 	m(2, 1) = d;
 	m(2, 2) = d;
@@ -402,15 +402,15 @@ Mat3T<FT>::Mat3T(const FT d)
 
 template <class FT> INLINE
 Mat3T<FT>::Mat3T(const Mat3T<FT>& n)
-{ 
+{
 	m(0, 0) = n(0, 0);
 	m(0, 1) = n(0, 1);
 	m(0, 2) = n(0, 2);
-		
+
 	m(1, 0) = n(1, 0);
 	m(1, 1) = n(1, 1);
 	m(1, 2) = n(1, 2);
-		
+
 	m(2, 0) = n(2, 0);
 	m(2, 1) = n(2, 1);
 	m(2, 2) = n(2, 2);
@@ -420,18 +420,18 @@ Mat3T<FT>::Mat3T(const Mat3T<FT>& n)
 // ASSIGNMENT OPERATORS
 
 template <class FT> INLINE
-Mat3T<FT>::Mat3T( const FT m00,  const FT m01,  const FT m02,
-						const FT m10,  const FT m11,  const FT m12,
-						const FT m20,  const FT m21,  const FT m22)
-{                                            
+Mat3T<FT>::Mat3T(const FT m00,  const FT m01,  const FT m02,
+				 const FT m10,  const FT m11,  const FT m12,
+				 const FT m20,  const FT m21,  const FT m22)
+{
 	m(0, 0) = m00;
 	m(0, 1) = m01;
 	m(0, 2) = m02;
-		
+
 	m(1, 0) = m10;
 	m(1, 1) = m11;
 	m(1, 2) = m12;
-		
+
 	m(2, 0) = m20;
 	m(2, 1) = m21;
 	m(2, 2) = m22;
@@ -439,94 +439,94 @@ Mat3T<FT>::Mat3T( const FT m00,  const FT m01,  const FT m02,
 
 
 template <class FT> INLINE
-Mat3T<FT>& Mat3T<FT>::operator = ( const Mat3T<FT>& n )
+Mat3T<FT>& Mat3T<FT>::operator = (const Mat3T<FT>& n)
 {
 	m(0, 0) = n(0, 0);
 	m(0, 1) = n(0, 1);
 	m(0, 2) = n(0, 2);
-		
+
 	m(1, 0) = n(1, 0);
 	m(1, 1) = n(1, 1);
 	m(1, 2) = n(1, 2);
-		
+
 	m(2, 0) = n(2, 0);
 	m(2, 1) = n(2, 1);
 	m(2, 2) = n(2, 2);
 
-	
-	return *this; 
+
+	return *this;
 }
 
 template <class FT> INLINE
-Mat3T<FT>& Mat3T<FT>::operator += ( const Mat3T<FT>& n )
+Mat3T<FT>& Mat3T<FT>::operator += (const Mat3T<FT>& n)
 {
 	m(0, 0) += n(0, 0);
 	m(0, 1) += n(0, 1);
 	m(0, 2) += n(0, 2);
-		
+
 	m(1, 0) += n(1, 0);
 	m(1, 1) += n(1, 1);
 	m(1, 2) += n(1, 2);
-		
+
 	m(2, 0) += n(2, 0);
 	m(2, 1) += n(2, 1);
 	m(2, 2) += n(2, 2);
 
-	return *this; 
+	return *this;
 }
 
 template <class FT> INLINE
-Mat3T<FT>& Mat3T<FT>::operator -= ( const Mat3T<FT>& n )
-{ 
+Mat3T<FT>& Mat3T<FT>::operator -= (const Mat3T<FT>& n)
+{
 	m(0, 0) -= n(0, 0);
 	m(0, 1) -= n(0, 1);
 	m(0, 2) -= n(0, 2);
-		
+
 	m(1, 0) -= n(1, 0);
 	m(1, 1) -= n(1, 1);
 	m(1, 2) -= n(1, 2);
-		
+
 	m(2, 0) -= n(2, 0);
 	m(2, 1) -= n(2, 1);
 	m(2, 2) -= n(2, 2);
 
-	return *this; 
+	return *this;
 }
 
 template <class FT> INLINE
-Mat3T<FT>& Mat3T<FT>::operator *= ( const FT d )
+Mat3T<FT>& Mat3T<FT>::operator *= (const FT d)
 {
 	m(0, 0) *= d;
 	m(0, 1) *= d;
 	m(0, 2) *= d;
-		
+
 	m(1, 0) *= d;
 	m(1, 1) *= d;
 	m(1, 2) *= d;
-		
+
 	m(2, 0) *= d;
 	m(2, 1) *= d;
 	m(2, 2) *= d;
-	
-	return *this; 
+
+	return *this;
 }
 
 template <class FT> INLINE
-Mat3T<FT>& Mat3T<FT>::operator /= ( const FT d )
-{ 
+Mat3T<FT>& Mat3T<FT>::operator /= (const FT d)
+{
 	FT u = 1/d;
 	m(0, 0) *= u;
 	m(0, 1) *= u;
 	m(0, 2) *= u;
-		
+
 	m(1, 0) *= u;
 	m(1, 1) *= u;
 	m(1, 2) *= u;
-		
+
 	m(2, 0) *= u;
 	m(2, 1) *= u;
 	m(2, 2) *= u;
-	
+
 
 	return *this;
 }
@@ -536,7 +536,7 @@ Mat3T<FT>& Mat3T<FT>::operator /= ( const FT d )
 
 
 template <class FT> INLINE
-void Mat3T<FT>::Transpose() 
+void Mat3T<FT>::Transpose()
 {
 	FT tmp;
 
@@ -566,12 +566,12 @@ Mat3T<FT> operator - (const Mat3T<FT>& a)
 	b(0, 1) = -a(0, 1);
 	b(0, 2) = -a(0, 2);
 
-	
+
 	b(1, 0) = -a(1, 0);
 	b(1, 1) = -a(1, 1);
 	b(1, 2) = -a(1, 2);
 
-	
+
 	b(2, 0) = -a(2, 0);
 	b(2, 1) = -a(2, 1);
 	b(2, 2) = -a(2, 2);
@@ -581,17 +581,17 @@ Mat3T<FT> operator - (const Mat3T<FT>& a)
 
 template <class FT> INLINE
 Mat3T<FT> operator + (const Mat3T<FT>& a, const Mat3T<FT>& b)
-{ 
+{
 	Mat3T<FT> c;
 
 	c(0, 0) = a(0, 0) + b(0, 0);
 	c(0, 1) = a(0, 1) + b(0, 1);
 	c(0, 2) = a(0, 2) + b(0, 2);
-	
+
 	c(1, 0) = a(1, 0) + b(1, 0);
 	c(1, 1) = a(1, 1) + b(1, 1);
 	c(1, 2) = a(1, 2) + b(1, 2);
-	
+
 	c(2, 0) = a(2, 0) + b(2, 0);
 	c(2, 1) = a(2, 1) + b(2, 1);
 	c(2, 2) = a(2, 2) + b(2, 2);
@@ -601,17 +601,17 @@ Mat3T<FT> operator + (const Mat3T<FT>& a, const Mat3T<FT>& b)
 
 template <class FT> INLINE
 Mat3T<FT> operator - (const Mat3T<FT>& a, const Mat3T<FT>& b)
-{ 
+{
 	Mat3T<FT> c;
 
 	c(0, 0) = a(0, 0) - b(0, 0);
 	c(0, 1) = a(0, 1) - b(0, 1);
 	c(0, 2) = a(0, 2) - b(0, 2);
-	
+
 	c(1, 0) = a(1, 0) - b(1, 0);
 	c(1, 1) = a(1, 1) - b(1, 1);
 	c(1, 2) = a(1, 2) - b(1, 2);
-	
+
 	c(2, 0) = a(2, 0) - b(2, 0);
 	c(2, 1) = a(2, 1) - b(2, 1);
 	c(2, 2) = a(2, 2) - b(2, 2);
@@ -621,7 +621,7 @@ Mat3T<FT> operator - (const Mat3T<FT>& a, const Mat3T<FT>& b)
 
 template <class FT> INLINE
 Mat3T<FT> operator * (const Mat3T<FT>& a, const FT d)
-{ 
+{
 	Mat3T<FT> b;
 
 	b(0, 0) = a(0, 0) * d;
@@ -636,7 +636,7 @@ Mat3T<FT> operator * (const Mat3T<FT>& a, const FT d)
 	b(2, 1) = a(2, 1) * d;
 	b(2, 2) = a(2, 2) * d;
 
-	
+
 	return b;
 }
 
@@ -666,17 +666,17 @@ template <class FT> INLINE
 int operator == (const Mat3T<FT>& a, const Mat3T<FT>& b)
 {
 	return (
-		b(0, 0) == a(0, 0) &&
-		b(0, 1) == a(0, 1) &&
-		b(0, 2) == a(0, 2) &&
-		
-		b(1, 0) == a(1, 0) &&
-		b(1, 1) == a(1, 1) &&
-		b(1, 2) == a(1, 2) &&
-		
-		b(2, 0) == a(2, 0) &&
-		b(2, 1) == a(2, 1) &&
-		b(2, 2) == a(2, 2));
+			   b(0, 0) == a(0, 0) &&
+			   b(0, 1) == a(0, 1) &&
+			   b(0, 2) == a(0, 2) &&
+
+			   b(1, 0) == a(1, 0) &&
+			   b(1, 1) == a(1, 1) &&
+			   b(1, 2) == a(1, 2) &&
+
+			   b(2, 0) == a(2, 0) &&
+			   b(2, 1) == a(2, 1) &&
+			   b(2, 2) == a(2, 2));
 
 }
 
@@ -686,7 +686,7 @@ int operator != (const Mat3T<FT>& a, const Mat3T<FT>& b)
 
 /*template <class FT> INLINE
 ostream& operator << (ostream& s, Mat3T<FT>& a)
-{ 
+{
 	return s << a(0, 0) << " " << a(0, 1) << " " << a(0, 2) <<'\n' \
 		<< a(1, 0) << " " << a(1, 1) << " " << a(1, 2) <<'\n'
 		<< a(2, 0) << " " << a(2, 1) << " " << a(2, 2) <<'\n';
@@ -706,11 +706,11 @@ void Mat3T<FT>::SetIdentity()
 	m(0, 0) = 1;
 	m(0, 1) = 0;
 	m(0, 2) = 0;
-		
+
 	m(1, 0) = 0;
 	m(1, 1) = 1;
 	m(1, 2) = 0;
-		
+
 	m(2, 0) = 0;
 	m(2, 1) = 0;
 	m(2, 2) = 1;
@@ -742,7 +742,7 @@ template <class FT> INLINE
 void Mat3T<FT>::Invert()
 {
 	ulInvertMatrixArbitrary(*this);
-	
+
 }
 
 
@@ -773,27 +773,27 @@ int Mat3T<FT>::SetInverseArbitrary(const Mat3T<FT> & a)
 template <class FT> INLINE
 Mat3T<FT> operator ~(const Vec3T<FT>& a)
 {
-	return Mat3T<FT>(   0, -a.z,  a.y,  
-							a.z,    0, -a.x, 
-							-a.y,  a.x,    0); 
+	return Mat3T<FT>(0, -a.z,  a.y,
+					 a.z,    0, -a.x,
+					 -a.y,  a.x,    0);
 
 }
 
 
 
 template <class FT> INLINE
-Mat3T<FT> operator * (Mat3T<FT>& a, Mat3T<FT>& b) 
+Mat3T<FT> operator * (Mat3T<FT>& a, Mat3T<FT>& b)
 {
 	Mat3T<FT> c;
 	int i,j,k;
 
 	c.SetToZero();
 
-	for( i=0; i<3; i++ ) 
-		for( j=0; j<3; j++ ) 
-			for( k=0; k<3; k++ ) 
-				c(i, j) += a(k, j) * b(i, k); 
-			
+	for (i=0; i<3; i++)
+		for (j=0; j<3; j++)
+			for (k=0; k<3; k++)
+				c(i, j) += a(k, j) * b(i, k);
+
 	return c;
 }
 
@@ -801,15 +801,15 @@ Mat3T<FT> operator * (Mat3T<FT>& a, Mat3T<FT>& b)
 template <class FT> INLINE
 void Mat3T<FT>::SetRotateXDeg(FT angle)
 {
-		
+
 	FT sin_angle, cos_angle;
 
 	SetIdentity();
 
-	sin_angle = sinf (angle);
-	cos_angle = cosf (angle);
-	sin_angle = sinf (angle);
-	cos_angle = cosf (angle);
+	sin_angle = sinf(angle);
+	cos_angle = cosf(angle);
+	sin_angle = sinf(angle);
+	cos_angle = cosf(angle);
 
 	m(Y, Y) = cos_angle;
 	m(Y, Z) = sin_angle;
@@ -820,7 +820,7 @@ void Mat3T<FT>::SetRotateXDeg(FT angle)
 template <class FT> INLINE
 void Mat3T<FT>::RotateXDeg(FT angle, bool post)
 {
-		
+
 	Mat3T<FT> Rx;
 	Rx.SetRotateXDeg(angle);
 
@@ -837,8 +837,8 @@ void Mat3T<FT>::SetRotateYDeg(FT angle)
 	FT sin_angle, cos_angle;
 
 	SetIdentity();
-	sin_angle = sinf (angle);
-	cos_angle = cosf (angle);
+	sin_angle = sinf(angle);
+	cos_angle = cosf(angle);
 	m(X, X) = cos_angle;
 	m(X, Z) = -sin_angle;
 	m(Z, X) = sin_angle;
@@ -867,8 +867,8 @@ void Mat3T<FT>::SetRotateZDeg(FT angle)
 
 	SetIdentity();
 
-	sin_angle = sinf (angle);
-	cos_angle = cosf (angle);
+	sin_angle = sinf(angle);
+	cos_angle = cosf(angle);
 	m(X, X) = cos_angle;
 	m(X, Y) = sin_angle;
 	m(Y, X) = -sin_angle;
@@ -886,7 +886,7 @@ void Mat3T<FT>::RotateZDeg(FT angle, bool post)
 	if (post)
 		*this = *this * Rz;
 	else
-		*this = Rz * *this; 
+		*this = Rz * *this;
 }
 
 
@@ -895,38 +895,38 @@ void Mat3T<FT>::RotateZDeg(FT angle, bool post)
 
 
 template <class FT> INLINE
-void Mat3T<FT>::GetTranspose(Mat3T<FT> & a) const 
+void Mat3T<FT>::GetTranspose(Mat3T<FT> & a) const
 {
 
 	a(0, 0) = m(0, 0);
 	a(1, 0) = m(0, 1);
 	a(2, 0) = m(0, 2);
-								
+
 	a(0, 1) = m(1, 0);
 	a(1, 1) = m(1, 1);
 	a(2, 1) = m(1, 2);
-									
+
 	a(0, 2) = m(2, 0);
 	a(1, 2) = m(2, 1);
 	a(2, 2) = m(2, 2);
 }
 
 template <class FT> INLINE
-void Mat3T<FT>::SetTranspose(const Mat3T<FT> & a) 
+void Mat3T<FT>::SetTranspose(const Mat3T<FT> & a)
 {
 
 	m(0, 0) = a(0, 0);
 	m(1, 0) = a(0, 1);
 	m(2, 0) = a(0, 2);
-									
+
 	m(0, 1) = a(1, 0);
 	m(1, 1) = a(1, 1);
 	m(2, 1) = a(1, 2);
-									
+
 	m(0, 2) = a(2, 0);
 	m(1, 2) = a(2, 1);
 	m(2, 2) = a(2, 2);
-}                  
+}
 
 
 
@@ -1007,7 +1007,7 @@ int Mat3T<FT>::CalcRotationMatrixFromNU(Vec3T<FT> vpn, Vec3T<FT> vup)
 
 template <class FT> INLINE
 void Mat3T<FT>::CalcRotationMatrixFromAllVectors(const Vec3T<FT> & vpn, const Vec3T<FT> & vup,
-																						const Vec3T<FT> & vr)
+		const Vec3T<FT> & vr)
 {
 	m(X, UL_R) = vr[X];
 	m(Y, UL_R) = vr[Y];
@@ -1107,41 +1107,41 @@ void Mat3T<FT>::mult(const Mat3T<FT> &M, const Mat3T<FT> &N)
 template <class FT> INLINE
 void Mat3T<FT>::mult(const Mat3T<FT> &M, bool post)
 {
-		
-		FT oxy, oyz, ozx, oyx, ozy, oxz;
-		if (post == false)
-		{
-				oxy = XY; oyx = YX; oyz = YZ; ozy = ZY; ozx = ZX; oxz = XZ;
-				
-				XY = M.XX * oxy + M.XY * YY  + M.XZ * ozy;
-				XZ = M.XX * oxz + M.XY * oyz + M.XZ * ZZ;
-				YX = M.YX * XX  + M.YY * oyx + M.YZ * ozx;
-				YZ = M.YX * oxz + M.YY * oyz + M.YZ * ZZ;
-				ZX = M.ZX * XX  + M.ZY * oyx + M.ZZ * ozx;
-				ZY = M.ZX * oxy + M.ZY * YY  + M.ZZ * ozy;
-				
-				XX = M.XX * XX  + M.XY * oyx + M.XZ * ozx;
-				YY = M.YX * oxy + M.YY * YY  + M.YZ * ozy;
-				ZZ = M.ZX * oxz + M.ZY * oyz + M.ZZ * ZZ;
-		}
-		else
-		{
-				
-				//FT oxy, oyz, ozx, oyx, ozy, oxz;
-				
-				oxy = XY; oyx = YX; oyz = YZ; ozy = ZY; ozx = ZX; oxz = XZ;
-				
-				XY = XX *  M.XY + oxy * M.YY + oxz * M.ZY;
-				XZ = XX *  M.XZ + oxy * M.YZ + oxz * M.ZZ;
-				YX = oyx * M.XX + YY  * M.YX + oyz * M.ZX;
-				YZ = oyx * M.XZ + YY  * M.YZ + oyz * M.ZZ;
-				ZX = ozx * M.XX + ozy * M.YX + ZZ  * M.ZX;
-				ZY = ozx * M.XY + ozy * M.YY + ZZ  * M.ZY;
-				
-				XX = XX  * M.XX + oxy * M.YX + oxz * M.ZX;
-				YY = oyx * M.XY + YY  * M.YY + oyz * M.ZY;
-				ZZ = ozx * M.XZ + ozy * M.YZ + ZZ  * M.ZZ;
-		}
+
+	FT oxy, oyz, ozx, oyx, ozy, oxz;
+	if (post == false)
+	{
+		oxy = XY; oyx = YX; oyz = YZ; ozy = ZY; ozx = ZX; oxz = XZ;
+
+		XY = M.XX * oxy + M.XY * YY  + M.XZ * ozy;
+		XZ = M.XX * oxz + M.XY * oyz + M.XZ * ZZ;
+		YX = M.YX * XX  + M.YY * oyx + M.YZ * ozx;
+		YZ = M.YX * oxz + M.YY * oyz + M.YZ * ZZ;
+		ZX = M.ZX * XX  + M.ZY * oyx + M.ZZ * ozx;
+		ZY = M.ZX * oxy + M.ZY * YY  + M.ZZ * ozy;
+
+		XX = M.XX * XX  + M.XY * oyx + M.XZ * ozx;
+		YY = M.YX * oxy + M.YY * YY  + M.YZ * ozy;
+		ZZ = M.ZX * oxz + M.ZY * oyz + M.ZZ * ZZ;
+	}
+	else
+	{
+
+		//FT oxy, oyz, ozx, oyx, ozy, oxz;
+
+		oxy = XY; oyx = YX; oyz = YZ; ozy = ZY; ozx = ZX; oxz = XZ;
+
+		XY = XX *  M.XY + oxy * M.YY + oxz * M.ZY;
+		XZ = XX *  M.XZ + oxy * M.YZ + oxz * M.ZZ;
+		YX = oyx * M.XX + YY  * M.YX + oyz * M.ZX;
+		YZ = oyx * M.XZ + YY  * M.YZ + oyz * M.ZZ;
+		ZX = ozx * M.XX + ozy * M.YX + ZZ  * M.ZX;
+		ZY = ozx * M.XY + ozy * M.YY + ZZ  * M.ZY;
+
+		XX = XX  * M.XX + oxy * M.YX + oxz * M.ZX;
+		YY = oyx * M.XY + YY  * M.YY + oyz * M.ZY;
+		ZZ = ozx * M.XZ + ozy * M.YZ + ZZ  * M.ZZ;
+	}
 }
 
 
@@ -1239,8 +1239,8 @@ template <class FT> INLINE
 FT Mat3T<FT>::det() const
 {
 	return  XX * (YY * ZZ - YZ * ZY)
-				+ XY * (YZ * ZX - YX * ZZ)
-				+ XZ * (YX * ZY - YY * ZX);
+			+ XY * (YZ * ZX - YX * ZZ)
+			+ XZ * (YX * ZY - YY * ZX);
 }
 
 
@@ -1263,7 +1263,7 @@ ostream& Mat3T<FT>::print(ostream &os) const
 
 
 /*Mat3T<FT> operator * (const FT d, const Mat3T<FT>& a)
-{ 
+{
 } */
 
 
@@ -1288,15 +1288,15 @@ Vec3T<FT> Mat3T<FT>::GetViewRight()
 template <class FT> INLINE
 Mat3T<FT> Mat3T<FT>::adjoint()
 {
-		return Mat3T<FT>(row[1]^row[2],
-		row[2]^row[0],
-		row[0]^row[1]);
+	return Mat3T<FT>(row[1]^row[2],
+					 row[2]^row[0],
+					 row[0]^row[1]);
 }
 
 template <class FT> INLINE
 Mat3T<FT> Mat3T<FT>::transpose()
 {
-		return Mat3T<FT>(col(0), col(1), col(2));
+	return Mat3T<FT>(col(0), col(1), col(2));
 }
 
 /*template <class FT> INLINE
@@ -1319,20 +1319,20 @@ double Mat3T<FT>::invert()
 		Mat3T<FT> inv;
 		double d;
 		d = invert(inv);
-		
+
 		m(0, 0) = inv(0, 0);
 		m(0, 1) = inv(0, 1);
 		m(0, 2) = inv(0, 2);
-										
+
 		m(1, 0) = inv(1, 0);
 		m(1, 1) = inv(1, 1);
 		m(1, 2) = inv(1, 2);
-										
-										
+
+
 		m(2, 0) = inv(2, 0);
 		m(2, 1) = inv(2, 1);
 		m(2, 2) = inv(2, 2);
-		
+
 		return d;
 
 }*/
@@ -1364,11 +1364,11 @@ void Mat3T<FT>::premult(const Mat3T<FT> &M)
 {
 	FT oxy, oyz, ozx, oyx, ozy, oxz;
 
-	oxy = XY; 
-	oyx = YX; 
-	oyz = YZ; 
-	ozy = ZY; 
-	ozx = ZX; 
+	oxy = XY;
+	oyx = YX;
+	oyz = YZ;
+	ozy = ZY;
+	ozx = ZX;
 	oxz = XZ;
 
 	XY = M.XX * oxy + M.XY * YY  + M.XZ * ozy;
@@ -1386,7 +1386,7 @@ void Mat3T<FT>::premult(const Mat3T<FT> &M)
 
 // equivalent to a glTranslate
 template <class FT> INLINE
-void Mat3T<FT>::Translate(FT x, FT y, bool post) 
+void Mat3T<FT>::Translate(FT x, FT y, bool post)
 {
 	Mat3T<FT> tm;
 	tm.SetIdentity();
@@ -1398,8 +1398,8 @@ void Mat3T<FT>::Translate(FT x, FT y, bool post)
 }
 
 // equivalent to a glScale3d
-template <class FT> INLINE 
-void Mat3T<FT>::Scale(FT x, FT y, bool post) 
+template <class FT> INLINE
+void Mat3T<FT>::Scale(FT x, FT y, bool post)
 {
 	Mat3T<FT> sm;
 	sm.SetIdentity();
@@ -1411,8 +1411,8 @@ void Mat3T<FT>::Scale(FT x, FT y, bool post)
 }
 
 // angle in radians
-template <class FT> INLINE 
-void Mat3T<FT>::Rotate( FT angle, bool post )
+template <class FT> INLINE
+void Mat3T<FT>::Rotate(FT angle, bool post)
 {
 	Mat3T<FT> r;
 	r.SetIdentity();

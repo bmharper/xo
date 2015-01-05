@@ -130,13 +130,9 @@ end
 def escape_txt(txt)
 	cpp = ""
 	txt.each_line { |line|
-		cpp << "\t\"" + line.rstrip.gsub("\"", "\\\"") + "\\n\"\n"
+		cpp << "\t\t\"" + line.rstrip.gsub("\"", "\\\"") + "\\n\"\n"
 	}
 	return cpp
-end
-
-def escape_file(file)
-	return escape_txt( File.open(file) { |f| f.read } )
 end
 
 def extract_vertex_type(vert_src, name)
@@ -229,8 +225,8 @@ def gen_combined(common, ext, vert, frag, name, filename_base)
 				raise "Unrecognized variable type #{var.nature}"
 			end
 		}
-		load_func_body << "\tif ( nfail != 0 )\n"
-		load_func_body << "\t\tXOTRACE( \"Failed to bind %d variables of shader #{name}\\n\", nfail );\n"
+		load_func_body << "\tif (nfail != 0)\n"
+		load_func_body << "\t\tXOTRACE(\"Failed to bind %d variables of shader #{name}\\n\", nfail);\n"
 		reset.rstrip!
 		txt = replace.call(txt)
 		txt.gsub!("RESET", reset)

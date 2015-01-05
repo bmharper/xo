@@ -12,11 +12,11 @@
 class XOAPI xoFontTableImmutable
 {
 public:
-					xoFontTableImmutable();
-					~xoFontTableImmutable();
+	xoFontTableImmutable();
+	~xoFontTableImmutable();
 
-	void			Initialize( const pvect<xoFont*>& fonts );
-	const xoFont*	GetByFontID( xoFontID fontID ) const;
+	void			Initialize(const pvect<xoFont*>& fonts);
+	const xoFont*	GetByFontID(xoFontID fontID) const;
 
 protected:
 	pvect<xoFont*>	Fonts;
@@ -48,20 +48,20 @@ directories, then they will thrash the font cache file.
 class XOAPI xoFontStore
 {
 public:
-							xoFontStore();
-							~xoFontStore();
+	xoFontStore();
+	~xoFontStore();
 
 	void					Clear();
 	void					InitializeFreetype();
 	void					ShutdownFreetype();
-	const xoFont*			GetByFontID( xoFontID fontID );
-	const xoFont*			GetByFacename( const char* facename );
-	xoFontID				Insert( const xoFont& font );
-	xoFontID				InsertByFacename( const char* facename );		// This is safe to call if the font is already loaded
+	const xoFont*			GetByFontID(xoFontID fontID);
+	const xoFont*			GetByFacename(const char* facename);
+	xoFontID				Insert(const xoFont& font);
+	xoFontID				InsertByFacename(const char* facename);		// This is safe to call if the font is already loaded
 	xoFontID				GetFallbackFontID();							// This is a font that is always available on this platform. Panics if the font is not available.
 	xoFontTableImmutable	GetImmutableTable();
 
-	void					AddFontDirectory( const char* dir );
+	void					AddFontDirectory(const char* dir);
 
 private:
 	AbcCriticalSection				Lock;
@@ -72,15 +72,15 @@ private:
 	FT_Library						FTLibrary;
 	bool							IsFontTableLoaded;
 
-	const xoFont*	GetByFacename_Internal( const char* facename ) const;
-	xoFontID		Insert_Internal( const xoFont& font );
-	void			LoadFontConstants( xoFont& font );
-	void			LoadFontTweaks( xoFont& font );
-	const char*		GetFilenameFromFacename( const char* facename );
+	const xoFont*	GetByFacename_Internal(const char* facename) const;
+	xoFontID		Insert_Internal(const xoFont& font);
+	void			LoadFontConstants(xoFont& font);
+	void			LoadFontTweaks(xoFont& font);
+	const char*		GetFilenameFromFacename(const char* facename);
 	void			BuildAndSaveFontTable();
 	bool			LoadFontTable();
 	uint64			ComputeFontDirHash();
-	
-	static bool		IsFontFilename( const char* filename );
+
+	static bool		IsFontFilename(const char* filename);
 
 };

@@ -23,7 +23,7 @@ that is thread safe.
 class XOAPI xoLayout3
 {
 public:
-	void Layout( const xoDoc& doc, xoRenderDomNode& root, xoPool* pool );
+	void Layout(const xoDoc& doc, xoRenderDomNode& root, xoPool* pool);
 
 protected:
 
@@ -67,7 +67,7 @@ protected:
 		xoPos		InnerBaseline;
 		int			InnerBaselineDefinedBy;
 		int			LastChild;
-		static LineBox Make( xoPos innerBaseline, int innerBaselineDefinedBy, int lastChild ) { return {innerBaseline, innerBaselineDefinedBy, lastChild}; }
+		static LineBox Make(xoPos innerBaseline, int innerBaselineDefinedBy, int lastChild) { return {innerBaseline, innerBaselineDefinedBy, lastChild}; }
 	};
 
 	struct Word
@@ -138,38 +138,38 @@ protected:
 	bool						SnapSubpixelHorzText;
 
 	void		RenderGlyphsNeeded();
-	void		LayoutInternal( xoRenderDomNode& root );
-	void		RunNode3( const xoDomNode* node, const LayoutInput3& in );
-	void		RunText3( const xoDomText* node, const LayoutInput3& in );
-	void		GenerateTextOutput( const LayoutInput& in, LayoutOutput& out, TextRunState& ts );
-	xoPoint		PositionChildFromBindings( const LayoutInput& cin, const LayoutOutput& cout, xoRenderDomEl* rchild );
-	void		GenerateTextWords( TextRunState& ts );
-	void		FinishTextRNode( TextRunState& ts, xoRenderDomText* rnode, intp numChars );
-	void		OffsetTextHorz( TextRunState& ts, xoPos offsetHorz, intp numChars );
-	xoPos		MeasureWord( const char* txt, const xoFont* font, xoPos fontAscender, Chunk chunk, TextRunState& ts );
+	void		LayoutInternal(xoRenderDomNode& root);
+	void		RunNode3(const xoDomNode* node, const LayoutInput3& in);
+	void		RunText3(const xoDomText* node, const LayoutInput3& in);
+	void		GenerateTextOutput(const LayoutInput& in, LayoutOutput& out, TextRunState& ts);
+	xoPoint		PositionChildFromBindings(const LayoutInput& cin, const LayoutOutput& cout, xoRenderDomEl* rchild);
+	void		GenerateTextWords(TextRunState& ts);
+	void		FinishTextRNode(TextRunState& ts, xoRenderDomText* rnode, intp numChars);
+	void		OffsetTextHorz(TextRunState& ts, xoPos offsetHorz, intp numChars);
+	xoPos		MeasureWord(const char* txt, const xoFont* font, xoPos fontAscender, Chunk chunk, TextRunState& ts);
 
-	xoPos		ComputeDimension( xoPos container, xoStyleCategories cat );
-	xoPos		ComputeDimension( xoPos container, xoSize size );
-	xoBox		ComputeBox( xoPos containerWidth, xoPos containerHeight, xoStyleCategories cat );
-	xoBox		ComputeBox( xoPos containerWidth, xoPos containerHeight, xoStyleBox box );
+	xoPos		ComputeDimension(xoPos container, xoStyleCategories cat);
+	xoPos		ComputeDimension(xoPos container, xoSize size);
+	xoBox		ComputeBox(xoPos containerWidth, xoPos containerHeight, xoStyleCategories cat);
+	xoBox		ComputeBox(xoPos containerWidth, xoPos containerHeight, xoStyleBox box);
 	BindingSet	ComputeBinds();
 
-	xoPos		HoriAdvance( const xoGlyph* glyph, const TextRunState& ts );
+	xoPos		HoriAdvance(const xoGlyph* glyph, const TextRunState& ts);
 
-	static xoPos			HBindOffset( xoHorizontalBindings bind, xoPos width );
-	static xoPos			VBindOffset( xoVerticalBindings bind, xoPos baseline, xoPos height );
-	static bool				IsSpace( int ch );
-	static bool				IsLinebreak( int ch );
-	static xoGlyphCacheKey	MakeGlyphCacheKey( xoRenderDomText* rnode );
-	static xoGlyphCacheKey	MakeGlyphCacheKey( const TextRunState& ts );
-	static xoGlyphCacheKey	MakeGlyphCacheKey( bool isSubPixel, xoFontID fontID, int fontSizePx );
-	static void				FlowNewline( FlowState& flow );
-	static bool				FlowBreakBefore( const LayoutOutput& cout, FlowState& flow );
-	static xoPoint			FlowRun( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl );
-	static xoPoint			ApplyPosition( const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl );
+	static xoPos			HBindOffset(xoHorizontalBindings bind, xoPos width);
+	static xoPos			VBindOffset(xoVerticalBindings bind, xoPos baseline, xoPos height);
+	static bool				IsSpace(int ch);
+	static bool				IsLinebreak(int ch);
+	static xoGlyphCacheKey	MakeGlyphCacheKey(xoRenderDomText* rnode);
+	static xoGlyphCacheKey	MakeGlyphCacheKey(const TextRunState& ts);
+	static xoGlyphCacheKey	MakeGlyphCacheKey(bool isSubPixel, xoFontID fontID, int fontSizePx);
+	static void				FlowNewline(FlowState& flow);
+	static bool				FlowBreakBefore(const LayoutOutput& cout, FlowState& flow);
+	static xoPoint			FlowRun(const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl);
+	static xoPoint			ApplyPosition(const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl);
 
-	static bool				IsDefined( xoPos p )	{ return p != xoPosNULL; }
-	static bool				IsNull( xoPos p )		{ return p == xoPosNULL; }
+	static bool				IsDefined(xoPos p)	{ return p != xoPosNULL; }
+	static bool				IsNull(xoPos p)		{ return p == xoPosNULL; }
 
 	// Break a string up into chunks, where each chunk is either a word, or
 	// a series of one or more identical whitespace characters. A linebreak
@@ -178,10 +178,10 @@ protected:
 	class Chunker
 	{
 	public:
-		Chunker( const char* txt );
-		
+		Chunker(const char* txt);
+
 		// Returns false when there are no more chunks
-		bool Next( Chunk& c );
+		bool Next(Chunk& c);
 
 	private:
 		const char* Txt;

@@ -12,9 +12,9 @@ public:
 	ID3D11PixelShader*		Frag;
 	ID3D11InputLayout*      VertLayout;
 
-							xoDXProg();
+	xoDXProg();
 	virtual					~xoDXProg();
-	
+
 	// All of these virtual functions are overridden by auto-generated shader objects
 	virtual void			Reset();
 	virtual const char*		VertSrc();

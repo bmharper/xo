@@ -8,7 +8,7 @@ Instructions
 1. Create an application (not a dynamic library) that will host your tests.
 2. #define TT_MODULE_NAME as the name of your application, and include <TinyTest.h> into all files
 	that will define tests in them. For example:
-	
+
 	#define TT_MODULE_NAME imqstool
 	#include <TinyTest/TinyTest.h>
 
@@ -22,7 +22,7 @@ Instructions
 		return testretval;
 
 5. In other cpp files, write TT_TEST_FUNC(initfunc, teardown, size, testname, parallel) to define test functions, for example
-	
+
 	void InitSandbox() {...}
 	TT_TEST_FUNC(&InitSandbox, NULL, TTSizeSmall, hello, TTParallelDontCare)
 	{
@@ -47,7 +47,7 @@ For example:
 	{
 		TTASSERT(...); // Include testing code inside your application logic.
 	}
-	
+
 */
 
 #include <string>
@@ -114,36 +114,36 @@ static const int TT_IPC_MEM_SIZE = 1024;
 static const int TT_MAX_CMDLINE_ARGS = 10;	// Maximum number of command-line arguments that TTArgs() will return
 static const int TT_TEMP_DIR_SIZE = 2048;	// The maximum number of characters in path name.
 
-TT_NORETURN void TTAssertFailed( const char* expression, const char* filename, int line_number, bool die );
+TT_NORETURN void TTAssertFailed(const char* expression, const char* filename, int line_number, bool die);
 
 bool			TTIsRunningUnderMaster();				// Return true if this process was launched by a master test process (implies command line of test =TheTestName)
-void			TTLog( const char* msg, ... );
+void			TTLog(const char* msg, ...);
 void			TTSetProcessIdle();						// Sets the process' priority to IDLE. This is just convenient if you're running tests while working on your dev machine.
-void			TTNotifySubProcess( unsigned int pid );	// Notify the test runner that you have launched a sub-process
+void			TTNotifySubProcess(unsigned int pid);	// Notify the test runner that you have launched a sub-process
 unsigned int	TTGetProcessID();						// Get Process ID of this process
 std::string		TTGetProcessPath();
-void			TTSleep( unsigned int milliseconds );
+void			TTSleep(unsigned int milliseconds);
 char**			TTArgs();								// Retrieve the command-line parameters that were passed in to this test specifically. Terminates with a NULL.
-void			TTSetTempDir( const char* tmp );		// Set the global test directory parameter.
+void			TTSetTempDir(const char* tmp);		// Set the global test directory parameter.
 std::string		TTGetTempDir();							// Get the global test temporary directory
 
 // Generate the filename used for IPC between the executor and the tested app
 // up: If true, then this is the channel from tested app to test harness app (aka the executor)
 //     If false, then this is the channel from the executor to the tested app
-void		TT_IPC_Filename( bool up, unsigned int executorPID, unsigned int testedPID, char (&filename)[256] );
+void		TT_IPC_Filename(bool up, unsigned int executorPID, unsigned int testedPID, char (&filename)[256]);
 
 // Write an IPC message. Fails by killing the app.
-void		TT_IPC_Write_Raw( char (&filename)[256], const char* msg );
+void		TT_IPC_Write_Raw(char (&filename)[256], const char* msg);
 
 // Read an IPC message. Returns true if a full message was found and consumed.
-bool		TT_IPC_Read_Raw( unsigned int waitMS, char (&filename)[256], char (&msg)[TT_IPC_MEM_SIZE] );
+bool		TT_IPC_Read_Raw(unsigned int waitMS, char (&filename)[256], char (&msg)[TT_IPC_MEM_SIZE]);
 
 // Returns a process exit code (0 when all tests pass)
 // Before returning, these functions wipe all tests from the 'tests' parameter. This frees memory, causing zero memory leaks.
 // This means you can only run these functions once.
 // Use the TTRun macro to call one of these functions.
-int			TTRun_Wrapper( TT_TestList& tests, int argc, char** argv );
-int			TTRun_WrapperW( TT_TestList& tests, int argc, wchar_t** argv );
+int			TTRun_Wrapper(TT_TestList& tests, int argc, char** argv);
+int			TTRun_WrapperW(TT_TestList& tests, int argc, wchar_t** argv);
 
 // You can only run this function once.
 #define TTRun( argc, argv ) TTRun_Wrapper( TT_TESTS_ALL, argc, argv )
@@ -163,9 +163,9 @@ struct TTException
 	char	File[MsgLen];
 	int		Line;
 
-			TTException( const char* msg = nullptr, const char* file = nullptr, int line = 0 );
-	void	CopyStr( size_t n, char* dst, const char* src );
-	void	Set( const char* msg = nullptr, const char* file = nullptr, int line = 0 );
+	TTException(const char* msg = nullptr, const char* file = nullptr, int line = 0);
+	void	CopyStr(size_t n, char* dst, const char* src);
+	void	Set(const char* msg = nullptr, const char* file = nullptr, int line = 0);
 };
 
 // Test function
@@ -181,10 +181,10 @@ struct TT_Test
 	TTSizes			Size;
 	TTParallel		Parallel;
 
-	TT_Test( TTFuncBlank init, TTFuncBlank teardown, TTFuncBlank func, TTSizes size, const char* name, TTParallel parallel ) : Init(init), Teardown(teardown),  Blank(func), Size(size), Name(name), Parallel(parallel) {}
-	TT_Test( const TT_Test& t ) { memcpy(this, &t, sizeof(t)); }
+	TT_Test(TTFuncBlank init, TTFuncBlank teardown, TTFuncBlank func, TTSizes size, const char* name, TTParallel parallel) : Init(init), Teardown(teardown),  Blank(func), Size(size), Name(name), Parallel(parallel) {}
+	TT_Test(const TT_Test& t) { memcpy(this, &t, sizeof(t)); }
 
-	static int CompareName( const TT_Test* a, const TT_Test* b )
+	static int CompareName(const TT_Test* a, const TT_Test* b)
 	{
 		return strcmp(a->Name, b->Name);
 	}
@@ -195,17 +195,17 @@ struct TT_TestList
 	TT_Test*	List;
 	int			Capacity;
 	int			Count;
-	
-					TT_TestList();
-					~TT_TestList();
-	void			Add( const TT_Test& t );
+
+	TT_TestList();
+	~TT_TestList();
+	void			Add(const TT_Test& t);
 	void			Clear();
 	int				size() const { return Count; }
-	const TT_Test&	operator[]( int i ) const { return List[i]; }
+	const TT_Test&	operator[](int i) const { return List[i]; }
 };
 
 // Define a struct with a constructor that adds this test element to the process-global TT_TESTS_ALL vector. Then, instantiate one of those structs.
-// Generally, doing heap allocs before main() has entered is not desirable, but hopefully this won't cause any strange problems. 
+// Generally, doing heap allocs before main() has entered is not desirable, but hopefully this won't cause any strange problems.
 // Wrap the structure in an anonymous namespace, to avoid any linker symbol pollution.
 #define TT_TEST_FUNC(init, teardown, size, func, parallel) \
 	void test_##func(); \
@@ -232,6 +232,6 @@ extern TT_TestList TT_TESTS_ALL;
 // "External Module" is typically a DLL that needs to know a little bit about its testing environment,
 // or wants to call TTASSERT.
 #ifdef TT_EXTERNAL_MODULE
-	#define TT_UNIVERSAL_FUNC inline
-	#include "TinyAssert.cpp"
+#define TT_UNIVERSAL_FUNC inline
+#include "TinyAssert.cpp"
 #endif

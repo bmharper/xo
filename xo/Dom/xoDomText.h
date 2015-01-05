@@ -5,12 +5,12 @@ class XOAPI xoDomText : public xoDomEl
 {
 	DISALLOW_COPY_AND_ASSIGN(xoDomText);
 public:
-					xoDomText( xoDoc* doc, xoTag tag, xoInternalID parentID );
-					virtual ~xoDomText();
+	xoDomText(xoDoc* doc, xoTag tag, xoInternalID parentID);
+	virtual ~xoDomText();
 
-	virtual void			SetText( const char* txt ) override;
+	virtual void			SetText(const char* txt) override;
 	virtual const char*		GetText() const override;
-	virtual void			CloneSlowInto( xoDomEl& c, uint cloneFlags ) const override;
+	virtual void			CloneSlowInto(xoDomEl& c, uint cloneFlags) const override;
 	virtual void			ForgetChildren() override;
 
 protected:

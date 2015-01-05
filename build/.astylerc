@@ -1,0 +1,6 @@
+--pad-header
+--unpad-paren
+--keep-one-line-blocks
+--keep-one-line-statements
+--indent=tab=4
+--indent=force-tab=4

@@ -37,58 +37,58 @@ Bytes before alignment point
 We always allocate (bytes + alignment), we always waste extract "alignment" bytes.
 */
 
-O_INLINE void* AbcAlignedMalloc( size_t bytes, size_t alignment );
-O_INLINE void* AbcAlignedRealloc( size_t original_block_bytes, void* block, size_t bytes, size_t alignment );
-O_INLINE void  AbcAlignedFree( void* block );
+O_INLINE void* AbcAlignedMalloc(size_t bytes, size_t alignment);
+O_INLINE void* AbcAlignedRealloc(size_t original_block_bytes, void* block, size_t bytes, size_t alignment);
+O_INLINE void  AbcAlignedFree(void* block);
 
-O_INLINE void* AbcAlignedMalloc( size_t bytes, size_t alignment )
+O_INLINE void* AbcAlignedMalloc(size_t bytes, size_t alignment)
 {
 #ifdef _WIN32
-	return _aligned_malloc( bytes, alignment );
+	return _aligned_malloc(bytes, alignment);
 #elif defined(ABC_HAVE_POSIX_MEMALIGN)
 	void* p = NULL;
-	if ( 0 != posix_memalign( &p, alignment, bytes ) )
+	if (0 != posix_memalign(&p, alignment, bytes))
 		return NULL;
 	return p;
 #else
 	size_t alignment_mask = alignment - 1;
-	
+
 	// Ensure that alignment is a power of 2
-	if ( (alignment_mask & alignment) != 0 )
+	if ((alignment_mask & alignment) != 0)
 		return NULL;
 
-	size_t raw		= (size_t) malloc( bytes + alignment );
+	size_t raw		= (size_t) malloc(bytes + alignment);
 	size_t usable	= 0;
-	if ( raw )
+	if (raw)
 	{
 		usable = (raw + alignment) & ~alignment_mask;
-		*((unsigned char*) (usable - 1)) = (unsigned char) (usable - raw);
+		*((unsigned char*)(usable - 1)) = (unsigned char)(usable - raw);
 	}
 	return (void*) usable;
 #endif
 }
 
 // alignment must be the same as the original block
-O_INLINE void* AbcAlignedRealloc( size_t original_block_bytes, void* block, size_t bytes, size_t alignment )
+O_INLINE void* AbcAlignedRealloc(size_t original_block_bytes, void* block, size_t bytes, size_t alignment)
 {
 #ifdef _WIN32
-	return _aligned_realloc( block, bytes, alignment );
+	return _aligned_realloc(block, bytes, alignment);
 #else
-	void* p = AbcAlignedMalloc( bytes, alignment );
-	if ( !p )
+	void* p = AbcAlignedMalloc(bytes, alignment);
+	if (!p)
 		return NULL;
-	memcpy( p, block, original_block_bytes );
-	AbcAlignedFree( block );
+	memcpy(p, block, original_block_bytes);
+	AbcAlignedFree(block);
 	return p;
 #endif
 }
 
-O_INLINE void AbcAlignedFree( void* block )
+O_INLINE void AbcAlignedFree(void* block)
 {
 #ifdef _WIN32
-	_aligned_free( block );
+	_aligned_free(block);
 #elif defined(ABC_HAVE_POSIX_MEMALIGN)
-	free( block );
+	free(block);
 #else
 	unsigned char* usable = (unsigned char*) block;
 	unsigned char* raw = usable - usable[-1];

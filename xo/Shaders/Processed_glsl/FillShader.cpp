@@ -18,27 +18,27 @@ void xoGLProg_Fill::Reset()
 const char* xoGLProg_Fill::VertSrc()
 {
 	return
-	"uniform		mat4	mvproj;\n"
-	"attribute	vec4	vpos;\n"
-	"attribute	vec4	vcolor;\n"
-	"varying		vec4	color;\n"
-	"void main()\n"
-	"{\n"
-	"	gl_Position = mvproj * vpos;\n"
-	"	color = fromSRGB(vcolor);\n"
-	"}\n"
-;
+		"uniform		mat4	mvproj;\n"
+		"attribute	vec4	vpos;\n"
+		"attribute	vec4	vcolor;\n"
+		"varying		vec4	color;\n"
+		"void main()\n"
+		"{\n"
+		"	gl_Position = mvproj * vpos;\n"
+		"	color = fromSRGB(vcolor);\n"
+		"}\n"
+		;
 }
 
 const char* xoGLProg_Fill::FragSrc()
 {
 	return
-	"varying vec4	color;\n"
-	"void main()\n"
-	"{\n"
-	"	gl_FragColor = color;\n"
-	"}\n"
-;
+		"varying vec4	color;\n"
+		"void main()\n"
+		"{\n"
+		"	gl_FragColor = color;\n"
+		"}\n"
+		;
 }
 
 const char* xoGLProg_Fill::Name()
@@ -51,11 +51,11 @@ bool xoGLProg_Fill::LoadVariablePositions()
 {
 	int nfail = 0;
 
-	nfail += (v_mvproj = glGetUniformLocation( Prog, "mvproj" )) == -1;
-	nfail += (v_vpos = glGetAttribLocation( Prog, "vpos" )) == -1;
-	nfail += (v_vcolor = glGetAttribLocation( Prog, "vcolor" )) == -1;
-	if ( nfail != 0 )
-		XOTRACE( "Failed to bind %d variables of shader Fill\n", nfail );
+	nfail += (v_mvproj = glGetUniformLocation(Prog, "mvproj")) == -1;
+	nfail += (v_vpos = glGetAttribLocation(Prog, "vpos")) == -1;
+	nfail += (v_vcolor = glGetAttribLocation(Prog, "vcolor")) == -1;
+	if (nfail != 0)
+		XOTRACE("Failed to bind %d variables of shader Fill\n", nfail);
 
 	return nfail == 0;
 }

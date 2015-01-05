@@ -10,7 +10,7 @@ class XOAPI xoRenderer
 {
 public:
 	// I initially tried to not pass xoDoc in here, but I eventually needed it to lookup canvas objects
-	xoRenderResult	Render( const xoDoc* doc, xoImageStore* images, xoStringTable* strings, xoRenderBase* driver, const xoRenderDomNode* root );
+	xoRenderResult	Render(const xoDoc* doc, xoImageStore* images, xoStringTable* strings, xoRenderBase* driver, const xoRenderDomNode* root);
 
 protected:
 	enum TexUnits
@@ -23,13 +23,13 @@ protected:
 	xoStringTable*				Strings;
 	fhashset<xoGlyphCacheKey>	GlyphsNeeded;
 
-	void			RenderEl( xoPoint base, const xoRenderDomEl* node );
-	void			RenderNode( xoPoint base, const xoRenderDomNode* node );
-	void			RenderText( xoPoint base, const xoRenderDomText* node );
-	void			RenderTextChar_WholePixel( xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl );
-	void			RenderTextChar_SubPixel( xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl );
+	void			RenderEl(xoPoint base, const xoRenderDomEl* node);
+	void			RenderNode(xoPoint base, const xoRenderDomNode* node);
+	void			RenderText(xoPoint base, const xoRenderDomText* node);
+	void			RenderTextChar_WholePixel(xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl);
+	void			RenderTextChar_SubPixel(xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl);
 	void			RenderGlyphsNeeded();
 
-	bool			LoadTexture( xoTexture* tex, TexUnits texUnit );		// Load a texture and reset invalid rectangle
+	bool			LoadTexture(xoTexture* tex, TexUnits texUnit);		// Load a texture and reset invalid rectangle
 
 };

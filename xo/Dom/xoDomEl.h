@@ -9,12 +9,12 @@
 class XOAPI xoDomEl
 {
 public:
-							xoDomEl( xoDoc* doc, xoTag tag, xoInternalID parentID = xoInternalIDNull );
-							virtual ~xoDomEl();
+	xoDomEl(xoDoc* doc, xoTag tag, xoInternalID parentID = xoInternalIDNull);
+	virtual ~xoDomEl();
 
-	virtual void			SetText( const char* txt ) = 0;		// Replace all children with a single xoTagText child, or set internal text if 'this' is xoTagText.
+	virtual void			SetText(const char* txt) = 0;		// Replace all children with a single xoTagText child, or set internal text if 'this' is xoTagText.
 	virtual const char*		GetText() const = 0;				// Reverse behaviour of SetText()
-	virtual void			CloneSlowInto( xoDomEl& c, uint cloneFlags ) const = 0;
+	virtual void			CloneSlowInto(xoDomEl& c, uint cloneFlags) const = 0;
 	virtual void			ForgetChildren() = 0;
 
 	xoInternalID			GetInternalID() const		{ return InternalID; }
@@ -31,8 +31,8 @@ public:
 
 	//void					CloneFastInto( xoDomEl& c, xoPool* pool, uint cloneFlags ) const;
 
-	void					SetInternalID( xoInternalID id )			{ InternalID = id; }	// Used by xoDoc during element creation.
-	void					SetDoc( xoDoc* doc )						{ Doc = doc; }			// Used by xoDoc during element creation and destruction.
+	void					SetInternalID(xoInternalID id)			{ InternalID = id; }	// Used by xoDoc during element creation.
+	void					SetDoc(xoDoc* doc)						{ Doc = doc; }			// Used by xoDoc during element creation and destruction.
 	bool					IsNode() const								{ return Tag != xoTagText; }
 	bool					IsText() const								{ return Tag == xoTagText; }
 
@@ -44,5 +44,5 @@ protected:
 	uint32					Version = 0;		// Monotonic integer used to detect modified nodes
 
 	void					IncVersion();
-	void					CloneSlowIntoBase( xoDomEl& c, uint cloneFlags ) const;
+	void					CloneSlowIntoBase(xoDomEl& c, uint cloneFlags) const;
 };

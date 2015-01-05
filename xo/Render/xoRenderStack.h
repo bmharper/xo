@@ -16,7 +16,7 @@ public:
 
 	// $XO_GCC_ALIGN_BUG.
 	// WARNING. This is a straight memcpy
-	xoRenderStackEl& operator=( const xoRenderStackEl& b );
+	xoRenderStackEl& operator=(const xoRenderStackEl& b);
 };
 
 /* This is used during layout and rendering.
@@ -40,23 +40,23 @@ public:
 	xoPool*							Pool;
 	xoStyleAttrib					Defaults[xoCatEND];
 
-						xoRenderStack();
-						~xoRenderStack();
+	xoRenderStack();
+	~xoRenderStack();
 
-	void				Initialize( const xoDoc* doc, xoPool* pool );
+	void				Initialize(const xoDoc* doc, xoPool* pool);
 	void				Reset();
-	xoStyleAttrib		Get( xoStyleCategories cat ) const;
-	void				GetBox( xoStyleCategories cat, xoStyleBox& box ) const;
+	xoStyleAttrib		Get(xoStyleCategories cat) const;
+	void				GetBox(xoStyleCategories cat, xoStyleBox& box) const;
 
-	xoStyleBox			GetBox( xoStyleCategories cat ) const { xoStyleBox b; GetBox(cat, b); return b; }
-	
+	xoStyleBox			GetBox(xoStyleCategories cat) const { xoStyleBox b; GetBox(cat, b); return b; }
+
 	bool				HasHoverStyle() const;
 	bool				HasFocusStyle() const;
 
 	void				StackPop();
 	xoRenderStackEl&	StackPush();
 	xoRenderStackEl&	StackBack()			{ return Stack.back(); }
-	xoRenderStackEl&	StackAt( intp pos )	{ return Stack[pos]; }
+	xoRenderStackEl&	StackAt(intp pos)	{ return Stack[pos]; }
 	intp				StackSize() const	{ return Stack.size(); }
 
 protected:

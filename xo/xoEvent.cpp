@@ -9,14 +9,14 @@ XOAPI bool xoEventHandler_LambdaStaticFunc(const xoEvent& ev)
 
 xoEvent::xoEvent()
 {
-	memset( Points, 0, sizeof(Points) );
+	memset(Points, 0, sizeof(Points));
 }
 
 xoEvent::~xoEvent()
 {
 }
 
-void xoEvent::MakeWindowSize( int w, int h )
+void xoEvent::MakeWindowSize(int w, int h)
 {
 	Type = xoEventWindowSize;
 	Points[0].x = (float) w;
@@ -33,6 +33,6 @@ xoEventHandler::xoEventHandler()
 
 xoEventHandler::~xoEventHandler()
 {
-	if ( IsLambda() )
+	if (IsLambda())
 		delete reinterpret_cast<xoEventHandlerLambda*>(Context);
 }

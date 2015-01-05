@@ -1,6 +1,6 @@
 #include "../xo/xo.h"
 
-void xoMain( xoSysWnd* wnd )
+void xoMain(xoSysWnd* wnd)
 {
-	wnd->Doc()->Root.AddText( "Hello World" );
+	wnd->Doc()->Root.AddText("Hello World");
 }

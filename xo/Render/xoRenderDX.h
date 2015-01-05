@@ -41,28 +41,28 @@ private:
 	};
 
 public:
-						xoRenderDX();
+	xoRenderDX();
 	virtual				~xoRenderDX();
 
 	virtual const char*	RendererName();
 
-	virtual bool		InitializeDevice( xoSysWnd& wnd );
-	virtual void		DestroyDevice( xoSysWnd& wnd );
+	virtual bool		InitializeDevice(xoSysWnd& wnd);
+	virtual void		DestroyDevice(xoSysWnd& wnd);
 	virtual void		SurfaceLost();
 
-	virtual bool		BeginRender( xoSysWnd& wnd );
-	virtual void		EndRender( xoSysWnd& wnd, uint endRenderFlags );
+	virtual bool		BeginRender(xoSysWnd& wnd);
+	virtual void		EndRender(xoSysWnd& wnd, uint endRenderFlags);
 
 	virtual void		PreRender();
 	virtual void		PostRenderCleanup();
-	
-	virtual xoProgBase* GetShader( xoShaders shader );
-	virtual void		ActivateShader( xoShaders shader );
 
-	virtual void		DrawQuad( const void* v );
+	virtual xoProgBase* GetShader(xoShaders shader);
+	virtual void		ActivateShader(xoShaders shader);
 
-	virtual bool		LoadTexture( xoTexture* tex, int texUnit );
-	virtual bool		ReadBackbuffer( xoImage& image );
+	virtual void		DrawQuad(const void* v);
+
+	virtual bool		LoadTexture(xoTexture* tex, int texUnit);
+	virtual bool		ReadBackbuffer(xoImage& image);
 
 private:
 	struct Texture2D
@@ -82,24 +82,24 @@ private:
 	static const int		NumProgs = 5;
 	xoDXProg*				AllProgs[NumProgs];
 
-	bool				InitializeDXDevice( xoSysWnd& wnd );
-	bool				InitializeDXSurface( xoSysWnd& wnd );
+	bool				InitializeDXDevice(xoSysWnd& wnd);
+	bool				InitializeDXSurface(xoSysWnd& wnd);
 	bool				WindowResized();
 	bool				CreateShaders();
-	bool				CreateShader( xoDXProg* prog );
-	bool				CreateVertexLayout( xoDXProg* prog, ID3DBlob* vsBlob );
-	bool				CompileShader( const char* name, const char* source, const char* shaderTarget, ID3DBlob** blob );
+	bool				CreateShader(xoDXProg* prog);
+	bool				CreateVertexLayout(xoDXProg* prog, ID3DBlob* vsBlob);
+	bool				CompileShader(const char* name, const char* source, const char* shaderTarget, ID3DBlob** blob);
 	bool				SetupBuffers();
 	bool				SetShaderFrameUniforms();
 	bool				SetShaderObjectUniforms();
-	ID3D11Buffer*		CreateBuffer( size_t sizeBytes, D3D11_USAGE usage, D3D11_BIND_FLAG bind, uint cpuAccess, const void* initialContent );
-	bool				CreateTexture2D( xoTexture* tex );
-	void				UpdateTexture2D( ID3D11Texture2D* dxTex, xoTexture* tex );
-	
-	xoTextureID			RegisterTextureDX( Texture2D* tex )			{ return RegisterTexture(tex); }
-	Texture2D*			GetTextureDX( xoTextureID texID ) const		{ return (Texture2D*) GetTextureDeviceHandle(texID); }
+	ID3D11Buffer*		CreateBuffer(size_t sizeBytes, D3D11_USAGE usage, D3D11_BIND_FLAG bind, uint cpuAccess, const void* initialContent);
+	bool				CreateTexture2D(xoTexture* tex);
+	void				UpdateTexture2D(ID3D11Texture2D* dxTex, xoTexture* tex);
 
-	static int			TexFilterToDX( xoTexFilter f );
+	xoTextureID			RegisterTextureDX(Texture2D* tex)			{ return RegisterTexture(tex); }
+	Texture2D*			GetTextureDX(xoTextureID texID) const		{ return (Texture2D*) GetTextureDeviceHandle(texID); }
+
+	static int			TexFilterToDX(xoTexFilter f);
 
 };
 

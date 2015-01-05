@@ -9,16 +9,16 @@ and I am tempted to remove this path altogether.
 static xoSysWnd* Wnd1;
 static xoSysWnd* Wnd2;
 
-void xoMain( xoMainEvent ev )
+void xoMain(xoMainEvent ev)
 {
 	switch (ev)
 	{
 	case xoMainEventInit:
 		Wnd1 = xoSysWnd::CreateWithDoc();
-		Wnd1->Doc()->Root.AddText( "Hello low level 1" );
+		Wnd1->Doc()->Root.AddText("Hello low level 1");
 		Wnd1->Show();
 		Wnd2 = xoSysWnd::CreateWithDoc();
-		Wnd2->Doc()->Root.AddText( "Hello low level 2" );
+		Wnd2->Doc()->Root.AddText("Hello low level 2");
 		Wnd2->Show();
 		break;
 	case xoMainEventShutdown:

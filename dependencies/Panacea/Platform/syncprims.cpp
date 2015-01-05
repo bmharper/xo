@@ -18,67 +18,67 @@
 // In linux you can use named semaphores for ipc mutex.
 // Android doesn't support named semaphores though.
 #ifdef _WIN32
-PAPI void			AbcMutexCreate( AbcMutex& mutex, const char* name )
+PAPI void			AbcMutexCreate(AbcMutex& mutex, const char* name)
 {
-	mutex = CreateMutexA( NULL, false, name );
+	mutex = CreateMutexA(NULL, false, name);
 }
-PAPI void			AbcMutexDestroy( AbcMutex& mutex )
+PAPI void			AbcMutexDestroy(AbcMutex& mutex)
 {
-	CloseHandle( mutex );
+	CloseHandle(mutex);
 }
-PAPI bool			AbcMutexWait( AbcMutex& mutex, DWORD waitMS )
+PAPI bool			AbcMutexWait(AbcMutex& mutex, DWORD waitMS)
 {
-	return WaitForSingleObject( mutex, waitMS ) == WAIT_OBJECT_0;
+	return WaitForSingleObject(mutex, waitMS) == WAIT_OBJECT_0;
 }
-PAPI void			AbcMutexRelease( AbcMutex& mutex )
+PAPI void			AbcMutexRelease(AbcMutex& mutex)
 {
-	ReleaseMutex( mutex );
-}
-
-PAPI void			AbcCriticalSectionInitialize( AbcCriticalSection& cs, unsigned int spinCount )
-{
-	if ( spinCount != 0 )	AbcVerify( InitializeCriticalSectionAndSpinCount( &cs, spinCount ) );
-	else					InitializeCriticalSection( &cs );
-}
-PAPI void			AbcCriticalSectionDestroy( AbcCriticalSection& cs )
-{
-	DeleteCriticalSection( &cs );
-}
-PAPI bool			AbcCriticalSectionTryEnter( AbcCriticalSection& cs )
-{
-	return !!TryEnterCriticalSection( &cs );
-}
-PAPI void			AbcCriticalSectionEnter( AbcCriticalSection& cs )
-{
-	EnterCriticalSection( &cs );
-}
-PAPI void			AbcCriticalSectionLeave( AbcCriticalSection& cs )
-{
-	LeaveCriticalSection( &cs );
+	ReleaseMutex(mutex);
 }
 
-PAPI void			AbcSemaphoreInitialize( AbcSemaphore& sem )
+PAPI void			AbcCriticalSectionInitialize(AbcCriticalSection& cs, unsigned int spinCount)
 {
-	sem = CreateSemaphore( NULL, 0, 0x7fffffff, NULL );
+	if (spinCount != 0)	AbcVerify(InitializeCriticalSectionAndSpinCount(&cs, spinCount));
+	else					InitializeCriticalSection(&cs);
 }
-PAPI void			AbcSemaphoreDestroy( AbcSemaphore& sem )
+PAPI void			AbcCriticalSectionDestroy(AbcCriticalSection& cs)
 {
-	CloseHandle( sem );
+	DeleteCriticalSection(&cs);
+}
+PAPI bool			AbcCriticalSectionTryEnter(AbcCriticalSection& cs)
+{
+	return !!TryEnterCriticalSection(&cs);
+}
+PAPI void			AbcCriticalSectionEnter(AbcCriticalSection& cs)
+{
+	EnterCriticalSection(&cs);
+}
+PAPI void			AbcCriticalSectionLeave(AbcCriticalSection& cs)
+{
+	LeaveCriticalSection(&cs);
+}
+
+PAPI void			AbcSemaphoreInitialize(AbcSemaphore& sem)
+{
+	sem = CreateSemaphore(NULL, 0, 0x7fffffff, NULL);
+}
+PAPI void			AbcSemaphoreDestroy(AbcSemaphore& sem)
+{
+	CloseHandle(sem);
 	sem = NULL;
 }
-PAPI bool			AbcSemaphoreWait( AbcSemaphore& sem, DWORD waitMS )
+PAPI bool			AbcSemaphoreWait(AbcSemaphore& sem, DWORD waitMS)
 {
-	return WaitForSingleObject( sem, waitMS ) == WAIT_OBJECT_0;
+	return WaitForSingleObject(sem, waitMS) == WAIT_OBJECT_0;
 }
-PAPI void			AbcSemaphoreRelease( AbcSemaphore& sem, DWORD count )
+PAPI void			AbcSemaphoreRelease(AbcSemaphore& sem, DWORD count)
 {
-	ReleaseSemaphore( sem, (LONG) count, NULL );
+	ReleaseSemaphore(sem, (LONG) count, NULL);
 }
 
-PAPI void			AbcSleep( int milliseconds )
+PAPI void			AbcSleep(int milliseconds)
 {
 	YieldProcessor();
-	Sleep( milliseconds );	
+	Sleep(milliseconds);
 }
 
 #else // End Win32
@@ -87,12 +87,12 @@ PAPI void			AbcSleep( int milliseconds )
 // Linux
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void MillisecondsToAbsTimespec( DWORD ms, timespec& t )
+static void MillisecondsToAbsTimespec(DWORD ms, timespec& t)
 {
-	clock_gettime( CLOCK_REALTIME, &t );
+	clock_gettime(CLOCK_REALTIME, &t);
 	t.tv_sec += ms / 1000;
 	t.tv_nsec += (ms % 1000) * 1000;
-	if ( t.tv_nsec >= 1000000 )
+	if (t.tv_nsec >= 1000000)
 	{
 		t.tv_sec += 1;
 		t.tv_nsec -= 1000000;
@@ -101,110 +101,110 @@ static void MillisecondsToAbsTimespec( DWORD ms, timespec& t )
 
 // Android (at ndk-r9) does not have pthread_mutex_timedlock.
 // This is an absolutely horrible workaround.
-static bool pthread_mutex_timedlock_emulate_ms( AbcMutex& mutex, DWORD waitMS )
+static bool pthread_mutex_timedlock_emulate_ms(AbcMutex& mutex, DWORD waitMS)
 {
-	AbcAssert( waitMS > 0 );
-	for ( DWORD ms = 0; ms < waitMS; ms++ )
+	AbcAssert(waitMS > 0);
+	for (DWORD ms = 0; ms < waitMS; ms++)
 	{
-		if ( 0 == pthread_mutex_trylock( &mutex ) )
+		if (0 == pthread_mutex_trylock(&mutex))
 			return true;
-		AbcSleep( 1 );
+		AbcSleep(1);
 	}
 	return false;
 }
 
-PAPI void			AbcMutexCreate( AbcMutex& mutex, const char* name )
+PAPI void			AbcMutexCreate(AbcMutex& mutex, const char* name)
 {
-	AbcAssert( name == NULL || name[0] == 0 );
-	AbcVerify( 0 == pthread_mutex_init( &mutex, NULL ) );
+	AbcAssert(name == NULL || name[0] == 0);
+	AbcVerify(0 == pthread_mutex_init(&mutex, NULL));
 }
-PAPI void			AbcMutexDestroy( AbcMutex& mutex )
+PAPI void			AbcMutexDestroy(AbcMutex& mutex)
 {
-	AbcVerify( 0 == pthread_mutex_destroy( &mutex ) );
+	AbcVerify(0 == pthread_mutex_destroy(&mutex));
 }
-PAPI bool			AbcMutexWait( AbcMutex& mutex, DWORD waitMS )
+PAPI bool			AbcMutexWait(AbcMutex& mutex, DWORD waitMS)
 {
-	if ( waitMS == 0 )
-		return 0 == pthread_mutex_trylock( &mutex );
-	else if ( waitMS == AbcINFINITE )
-		return 0 == pthread_mutex_lock( &mutex );
+	if (waitMS == 0)
+		return 0 == pthread_mutex_trylock(&mutex);
+	else if (waitMS == AbcINFINITE)
+		return 0 == pthread_mutex_lock(&mutex);
 	else
 	{
 #ifdef ANDROID
-		return pthread_mutex_timedlock_emulate_ms( mutex, waitMS );
+		return pthread_mutex_timedlock_emulate_ms(mutex, waitMS);
 #else
 		timespec t;
-		MillisecondsToAbsTimespec( waitMS, t );
-		return 0 == pthread_mutex_timedlock( &mutex, &t );
+		MillisecondsToAbsTimespec(waitMS, t);
+		return 0 == pthread_mutex_timedlock(&mutex, &t);
 #endif
 	}
 }
-PAPI void			AbcMutexRelease( AbcMutex& mutex )
+PAPI void			AbcMutexRelease(AbcMutex& mutex)
 {
-	pthread_mutex_unlock( &mutex );
+	pthread_mutex_unlock(&mutex);
 }
 
-PAPI void			AbcCriticalSectionInitialize( AbcCriticalSection& cs, unsigned int spinCount )
+PAPI void			AbcCriticalSectionInitialize(AbcCriticalSection& cs, unsigned int spinCount)
 {
-	AbcVerify( 0 == pthread_mutex_init( &cs, NULL ) );
+	AbcVerify(0 == pthread_mutex_init(&cs, NULL));
 }
-PAPI void			AbcCriticalSectionDestroy( AbcCriticalSection& cs )
+PAPI void			AbcCriticalSectionDestroy(AbcCriticalSection& cs)
 {
-	AbcVerify( 0 == pthread_mutex_destroy( &cs ) );
+	AbcVerify(0 == pthread_mutex_destroy(&cs));
 }
-PAPI bool			AbcCriticalSectionTryEnter( AbcCriticalSection& cs )
+PAPI bool			AbcCriticalSectionTryEnter(AbcCriticalSection& cs)
 {
-	return 0 == pthread_mutex_trylock( &cs );
+	return 0 == pthread_mutex_trylock(&cs);
 }
-PAPI void			AbcCriticalSectionEnter( AbcCriticalSection& cs )
+PAPI void			AbcCriticalSectionEnter(AbcCriticalSection& cs)
 {
-	pthread_mutex_lock( &cs );
+	pthread_mutex_lock(&cs);
 }
-PAPI void			AbcCriticalSectionLeave( AbcCriticalSection& cs )
+PAPI void			AbcCriticalSectionLeave(AbcCriticalSection& cs)
 {
-	pthread_mutex_unlock( &cs );
+	pthread_mutex_unlock(&cs);
 }
 
-PAPI void			AbcSemaphoreInitialize( AbcSemaphore& sem )
+PAPI void			AbcSemaphoreInitialize(AbcSemaphore& sem)
 {
-	AbcVerify( 0 == sem_init( &sem, 0, 0 ) );
+	AbcVerify(0 == sem_init(&sem, 0, 0));
 }
-PAPI void			AbcSemaphoreDestroy( AbcSemaphore& sem )
+PAPI void			AbcSemaphoreDestroy(AbcSemaphore& sem)
 {
-	AbcVerify( 0 == sem_destroy( &sem ) );
+	AbcVerify(0 == sem_destroy(&sem));
 }
-PAPI bool			AbcSemaphoreWait( AbcSemaphore& sem, DWORD waitMS )
+PAPI bool			AbcSemaphoreWait(AbcSemaphore& sem, DWORD waitMS)
 {
-	if ( waitMS == 0 )
-		return 0 == sem_trywait( &sem );
-	else if ( waitMS == AbcINFINITE )
-		return 0 == sem_wait( &sem );
+	if (waitMS == 0)
+		return 0 == sem_trywait(&sem);
+	else if (waitMS == AbcINFINITE)
+		return 0 == sem_wait(&sem);
 	else
 	{
 		timespec t;
-		MillisecondsToAbsTimespec( waitMS, t );
-		return 0 == sem_timedwait( &sem, &t );
+		MillisecondsToAbsTimespec(waitMS, t);
+		return 0 == sem_timedwait(&sem, &t);
 	}
 }
-PAPI void			AbcSemaphoreRelease( AbcSemaphore& sem, DWORD count )
+PAPI void			AbcSemaphoreRelease(AbcSemaphore& sem, DWORD count)
 {
-	for ( DWORD i = 0; i < count; i++ )
-		sem_post( &sem );
+	for (DWORD i = 0; i < count; i++)
+		sem_post(&sem);
 }
 
 
-PAPI void			AbcSleep( int milliseconds )
+PAPI void			AbcSleep(int milliseconds)
 {
 	int64 nano = milliseconds * (int64) 1000;
 	timespec t;
-	t.tv_nsec = nano % 1000000000; 
+	t.tv_nsec = nano % 1000000000;
 	t.tv_sec = (nano - t.tv_nsec) / 1000000000;
-	nanosleep( &t, NULL );
+	nanosleep(&t, NULL);
 }
 
 #endif
 
-PAPI int			AbcLockFileLock( const char* path )
+PAPI int			AbcLockFileLock(const char* path)
 {
 #ifdef _WIN32
 	int mode = _S_IREAD | _S_IWRITE;
@@ -212,105 +212,105 @@ PAPI int			AbcLockFileLock( const char* path )
 	int mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 #endif
 
-	int f = open( path, O_CREAT | O_WRONLY, mode );
-	if ( f == -1 )
+	int f = open(path, O_CREAT | O_WRONLY, mode);
+	if (f == -1)
 		return -1;
 
 #ifdef _WIN32
-	int lock = _locking( f, _LK_NBLCK, 1 );
+	int lock = _locking(f, _LK_NBLCK, 1);
 #else
 #	ifdef ANDROID
-	int lock = flock( f, LOCK_EX );
+	int lock = flock(f, LOCK_EX);
 #	else
-	int lock = lockf( f, F_TLOCK, 1 );
+	int lock = lockf(f, F_TLOCK, 1);
 #	endif
 #endif
-	if ( lock == -1 )
+	if (lock == -1)
 	{
-		close( f );
+		close(f);
 		return -1;
 	}
 
 	return f;
 }
 
-PAPI void			AbcLockFileRelease( int f )
+PAPI void			AbcLockFileRelease(int f)
 {
-	if ( f == -1 )
+	if (f == -1)
 		return;
 
-	lseek( f, 0, SEEK_SET );
+	lseek(f, 0, SEEK_SET);
 #ifdef _WIN32
-	_locking( f, _LK_UNLCK, 1 );
+	_locking(f, _LK_UNLCK, 1);
 #else
 #	ifdef ANDROID
-	flock( f, LOCK_UN );
+	flock(f, LOCK_UN);
 #	else
-	lockf( f, F_ULOCK, 1 );
+	lockf(f, F_ULOCK, 1);
 #	endif
 #endif
-	close( f );
+	close(f);
 }
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // Cross-platform helpers
 
-PAPI void		AbcSpinLockWait( volatile unsigned int* p )
+PAPI void		AbcSpinLockWait(volatile unsigned int* p)
 {
-	while ( AbcCmpXChg( p, 1, 0 ) != 0 )
+	while (AbcCmpXChg(p, 1, 0) != 0)
 	{
 	}
 }
 
-PAPI void		AbcSpinLockRelease( volatile unsigned int* p )
+PAPI void		AbcSpinLockRelease(volatile unsigned int* p)
 {
-	AbcAssert( *p == 1 );
-	AbcInterlockedSet( p, 0 );
+	AbcAssert(*p == 1);
+	AbcInterlockedSet(p, 0);
 }
 
-PAPI void		AbcCriticalSectionInitialize( AbcGuardedCriticalSection& cs, unsigned int spinCount )
+PAPI void		AbcCriticalSectionInitialize(AbcGuardedCriticalSection& cs, unsigned int spinCount)
 {
-	AbcCriticalSectionInitialize( cs.CS, spinCount );
+	AbcCriticalSectionInitialize(cs.CS, spinCount);
 	cs.ThreadID = 0;
 }
 
-PAPI void		AbcCriticalSectionDestroy( AbcGuardedCriticalSection& cs )
+PAPI void		AbcCriticalSectionDestroy(AbcGuardedCriticalSection& cs)
 {
-	AbcAssert( cs.ThreadID == 0 );
-	AbcCriticalSectionDestroy( cs.CS );
+	AbcAssert(cs.ThreadID == 0);
+	AbcCriticalSectionDestroy(cs.CS);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TakeCriticalSection::TakeCriticalSection( AbcCriticalSection& cs )
+TakeCriticalSection::TakeCriticalSection(AbcCriticalSection& cs)
 {
 	CS = reinterpret_cast<AbcGuardedCriticalSection*>(&cs);
 	UseGuard = false;
-	AbcCriticalSectionEnter( CS->CS );
+	AbcCriticalSectionEnter(CS->CS);
 }
 
-TakeCriticalSection::TakeCriticalSection( AbcGuardedCriticalSection& cs )
+TakeCriticalSection::TakeCriticalSection(AbcGuardedCriticalSection& cs)
 {
 	CS = &cs;
 	UseGuard = true;
-	AbcCriticalSectionEnter( CS->CS );
+	AbcCriticalSectionEnter(CS->CS);
 	// On ARM one would have to use mintomic here and do a proper acquire on ThreadID
-	AbcAssert( CS->ThreadID == 0 );
+	AbcAssert(CS->ThreadID == 0);
 	CS->ThreadID = AbcThreadCurrentID();
 }
 
 TakeCriticalSection::~TakeCriticalSection()
 {
-	if ( UseGuard )
+	if (UseGuard)
 	{
-		AbcAssert( CS->ThreadID == AbcThreadCurrentID() );
+		AbcAssert(CS->ThreadID == AbcThreadCurrentID());
 		CS->ThreadID = 0;
 		// On ARM one would have to use mintomic here and do a proper release on ThreadID
 	}
-	AbcCriticalSectionLeave( CS->CS );
+	AbcCriticalSectionLeave(CS->CS);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -329,26 +329,26 @@ AbcSyncEvent::~AbcSyncEvent()
 	Destroy();
 }
 
-void AbcSyncEvent::Initialize( bool persistent )
+void AbcSyncEvent::Initialize(bool persistent)
 {
 #ifdef _WIN32
-	Event = CreateEvent( NULL, persistent, false, NULL );
+	Event = CreateEvent(NULL, persistent, false, NULL);
 #else
 	Persistent = persistent;
 	Initialized = true;
-	AbcSemaphoreInitialize( Sem );
+	AbcSemaphoreInitialize(Sem);
 #endif
 }
 
 void AbcSyncEvent::Destroy()
 {
 #ifdef _WIN32
-	if ( Event != NULL )
-		CloseHandle( Event );
+	if (Event != NULL)
+		CloseHandle(Event);
 	Event = NULL;
 #else
-	if ( Initialized )
-		AbcSemaphoreDestroy( Sem );
+	if (Initialized)
+		AbcSemaphoreDestroy(Sem);
 	Initialized = false;
 #endif
 }
@@ -356,26 +356,26 @@ void AbcSyncEvent::Destroy()
 void AbcSyncEvent::Signal()
 {
 #ifdef _WIN32
-	AbcAssert( Event != NULL );
-	SetEvent( Event );
+	AbcAssert(Event != NULL);
+	SetEvent(Event);
 #else
-	AbcAssert( Initialized );
+	AbcAssert(Initialized);
 	// When Persistent=true, this is racy (explained in the main comments)
-	AbcSemaphoreRelease( Sem, Persistent ? PersistentPostCount : 1 );
+	AbcSemaphoreRelease(Sem, Persistent ? PersistentPostCount : 1);
 #endif
 }
 
-bool AbcSyncEvent::Wait( DWORD waitMS )
+bool AbcSyncEvent::Wait(DWORD waitMS)
 {
 #ifdef _WIN32
-	return WaitForSingleObject( Event, waitMS ) == WAIT_OBJECT_0;
+	return WaitForSingleObject(Event, waitMS) == WAIT_OBJECT_0;
 #else
-	if ( AbcSemaphoreWait( Sem, waitMS ) )
+	if (AbcSemaphoreWait(Sem, waitMS))
 	{
-		if ( Persistent )
+		if (Persistent)
 		{
 			// this is racy (explained in the main comments)
-			AbcSemaphoreRelease( Sem, 1 );
+			AbcSemaphoreRelease(Sem, 1);
 		}
 		return true;
 	}

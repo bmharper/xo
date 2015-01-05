@@ -27,21 +27,21 @@ void xoTexture::FlipVertical()
 	byte sline[4096];
 	byte* line = sline;
 	size_t astride = std::abs(TexStride);
-	if ( astride > sizeof(sline) )
-		line = (byte*) AbcMallocOrDie( astride );
-	for ( uint32 i = 0; i < TexHeight / 2; i++ )
+	if (astride > sizeof(sline))
+		line = (byte*) AbcMallocOrDie(astride);
+	for (uint32 i = 0; i < TexHeight / 2; i++)
 	{
-		memcpy( line, TexDataAtLine(TexHeight - i - 1), astride );
-		memcpy( TexDataAtLine(TexHeight - i - 1), TexDataAtLine(i), astride );
-		memcpy( TexDataAtLine(i), line, astride );
+		memcpy(line, TexDataAtLine(TexHeight - i - 1), astride);
+		memcpy(TexDataAtLine(TexHeight - i - 1), TexDataAtLine(i), astride);
+		memcpy(TexDataAtLine(i), line, astride);
 	}
-	if ( line != sline )
-		free( line );
+	if (line != sline)
+		free(line);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void xoBox::SetInt( int32 left, int32 top, int32 right, int32 bottom )
+void xoBox::SetInt(int32 left, int32 top, int32 right, int32 bottom)
 {
 	Left = xoRealToPos((float) left);
 	Top = xoRealToPos((float) top);
@@ -49,7 +49,7 @@ void xoBox::SetInt( int32 left, int32 top, int32 right, int32 bottom )
 	Bottom = xoRealToPos((float) bottom);
 }
 
-void xoBox::ExpandToFit( const xoBox& expando )
+void xoBox::ExpandToFit(const xoBox& expando)
 {
 	Left = xoMin(Left, expando.Left);
 	Top = xoMin(Top, expando.Top);
@@ -57,7 +57,7 @@ void xoBox::ExpandToFit( const xoBox& expando )
 	Bottom = xoMax(Bottom, expando.Bottom);
 }
 
-void xoBox::ClampTo( const xoBox& clamp )
+void xoBox::ClampTo(const xoBox& clamp)
 {
 	Left = xoMax(Left, clamp.Left);
 	Top = xoMax(Top, clamp.Top);
@@ -65,7 +65,7 @@ void xoBox::ClampTo( const xoBox& clamp )
 	Bottom = xoMin(Bottom, clamp.Bottom);
 }
 
-xoBox xoBox::ShrunkBy( const xoBox& margins )
+xoBox xoBox::ShrunkBy(const xoBox& margins)
 {
 	xoBox c = *this;
 	c.Left += margins.Left;
@@ -78,10 +78,10 @@ xoBox xoBox::ShrunkBy( const xoBox& margins )
 xoBoxF xoBox::ToRealBox() const
 {
 	xoBoxF f;
-	f.Left = xoPosToReal( Left );
-	f.Right = xoPosToReal( Right );
-	f.Top = xoPosToReal( Top );
-	f.Bottom = xoPosToReal( Bottom );
+	f.Left = xoPosToReal(Left);
+	f.Right = xoPosToReal(Right);
+	f.Top = xoPosToReal(Top);
+	f.Bottom = xoPosToReal(Bottom);
 	return f;
 }
 
@@ -90,10 +90,10 @@ xoBoxF xoBox::ToRealBox() const
 xoBoxF xoBox16::ToRealBox() const
 {
 	xoBoxF f;
-	f.Left = xoPosToReal( Left );
-	f.Right = xoPosToReal( Right );
-	f.Top = xoPosToReal( Top );
-	f.Bottom = xoPosToReal( Bottom );
+	f.Left = xoPosToReal(Left);
+	f.Right = xoPosToReal(Right);
+	f.Top = xoPosToReal(Top);
+	f.Bottom = xoPosToReal(Bottom);
 	return f;
 }
 
@@ -102,16 +102,16 @@ xoBoxF xoBox16::ToRealBox() const
 xoVec4f	xoColor::GetVec4sRGB() const
 {
 	float s = 1.0f / 255.0f;
-	return xoVec4f( r * s, g * s, b * s, a * s );
+	return xoVec4f(r * s, g * s, b * s, a * s);
 }
 
 xoVec4f	xoColor::GetVec4Linear() const
 {
 	float s = 1.0f / 255.0f;
-	return xoVec4f( xoSRGB2Linear(r),
-					xoSRGB2Linear(g),
-					xoSRGB2Linear(b),
-					a * s );
+	return xoVec4f(xoSRGB2Linear(r),
+				   xoSRGB2Linear(g),
+				   xoSRGB2Linear(b),
+				   a * s);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,28 +119,28 @@ xoVec4f	xoColor::GetVec4Linear() const
 static const float sRGB_Low	= 0.0031308f;
 static const float sRGB_a	= 0.055f;
 
-XOAPI float	xoSRGB2Linear( uint8 srgb )
+XOAPI float	xoSRGB2Linear(uint8 srgb)
 {
 	float g = srgb * (1.0f / 255.0f);
-	if ( g <= 0.04045 )
+	if (g <= 0.04045)
 		return g / 12.92f;
 	else
-		return pow( (g + sRGB_a) / (1.0f + sRGB_a), 2.4f );
+		return pow((g + sRGB_a) / (1.0f + sRGB_a), 2.4f);
 }
 
-XOAPI uint8	xoLinear2SRGB( float linear )
+XOAPI uint8	xoLinear2SRGB(float linear)
 {
 	float g;
-	if ( linear <= sRGB_Low )
+	if (linear <= sRGB_Low)
 		g = 12.92f * linear;
 	else
 		g = (1.0f + sRGB_a) * pow(linear, 1.0f / 2.4f) - sRGB_a;
-	return (uint8) xoRound( 255.0f * g );
+	return (uint8) xoRound(255.0f * g);
 }
 
 void xoRenderStats::Reset()
 {
-	memset( this, 0, sizeof(*this) );
+	memset(this, 0, sizeof(*this));
 }
 
 // add or remove documents that are queued for addition or removal
@@ -148,23 +148,23 @@ XOAPI void xoProcessDocQueue()
 {
 	xoDocGroup* p = NULL;
 
-	while ( p = xoGlobal()->DocRemoveQueue.PopTailR() )
-		erase_delete( xoGlobal()->Docs, xoGlobal()->Docs.find(p) );
+	while (p = xoGlobal()->DocRemoveQueue.PopTailR())
+		erase_delete(xoGlobal()->Docs, xoGlobal()->Docs.find(p));
 
-	while ( p = xoGlobal()->DocAddQueue.PopTailR() )
+	while (p = xoGlobal()->DocAddQueue.PopTailR())
 		xoGlobal()->Docs += p;
 }
 
-AbcThreadReturnType AbcKernelCallbackDecl xoWorkerThreadFunc( void* threadContext )
+AbcThreadReturnType AbcKernelCallbackDecl xoWorkerThreadFunc(void* threadContext)
 {
-	while ( true )
+	while (true)
 	{
-		AbcSemaphoreWait( xoGlobal()->JobQueue.SemaphoreObj(), AbcINFINITE );
-		if ( ExitSignalled )
+		AbcSemaphoreWait(xoGlobal()->JobQueue.SemaphoreObj(), AbcINFINITE);
+		if (ExitSignalled)
 			break;
 		xoJob job;
-		XOVERIFY( xoGlobal()->JobQueue.PopTail( job ) );
-		job.JobFunc( job.JobData );
+		XOVERIFY(xoGlobal()->JobQueue.PopTail(job));
+		job.JobFunc(job.JobData);
 	}
 
 	return 0;
@@ -172,33 +172,33 @@ AbcThreadReturnType AbcKernelCallbackDecl xoWorkerThreadFunc( void* threadContex
 
 #if XO_PLATFORM_WIN_DESKTOP
 
-AbcThreadReturnType AbcKernelCallbackDecl xoUIThread( void* threadContext )
+AbcThreadReturnType AbcKernelCallbackDecl xoUIThread(void* threadContext)
 {
-	while ( true )
+	while (true)
 	{
-		AbcSemaphoreWait( xoGlobal()->EventQueue.SemaphoreObj(), AbcINFINITE );
-		if ( ExitSignalled )
+		AbcSemaphoreWait(xoGlobal()->EventQueue.SemaphoreObj(), AbcINFINITE);
+		if (ExitSignalled)
 			break;
 		xoOriginalEvent ev;
-		XOVERIFY( xoGlobal()->EventQueue.PopTail( ev ) );
-		ev.DocGroup->ProcessEvent( ev.Event );
+		XOVERIFY(xoGlobal()->EventQueue.PopTail(ev));
+		ev.DocGroup->ProcessEvent(ev.Event);
 	}
 	return 0;
 }
 
 static void xoInitialize_Win32()
 {
-	XOVERIFY( AbcThreadCreate( &xoUIThread, NULL, UIThread ) );
+	XOVERIFY(AbcThreadCreate(&xoUIThread, NULL, UIThread));
 }
 
 static void xoShutdown_Win32()
 {
-	if ( UIThread != NULL )
+	if (UIThread != NULL)
 	{
-		xoGlobal()->EventQueue.Add( xoOriginalEvent() );
-		for ( uint waitNum = 0; true; waitNum++ )
+		xoGlobal()->EventQueue.Add(xoOriginalEvent());
+		for (uint waitNum = 0; true; waitNum++)
 		{
-			if ( WaitForSingleObject( UIThread, waitNum ) == WAIT_OBJECT_0 )
+			if (WaitForSingleObject(UIThread, waitNum) == WAIT_OBJECT_0)
 				break;
 		}
 		UIThread = NULL;
@@ -223,12 +223,12 @@ static float ComputeEpToPixel()
 {
 #if XO_PLATFORM_WIN_DESKTOP
 	float scale = 1;
-	HDC dc = GetDC( NULL );
-	if ( dc != NULL )
+	HDC dc = GetDC(NULL);
+	if (dc != NULL)
 	{
-		int dpi = GetDeviceCaps( dc, LOGPIXELSX );
+		int dpi = GetDeviceCaps(dc, LOGPIXELSX);
 		scale = (float) dpi / 96.0f;
-		ReleaseDC( NULL, dc );
+		ReleaseDC(NULL, dc);
 	}
 	return scale;
 #elif XO_PLATFORM_ANDROID
@@ -254,31 +254,31 @@ static void InitializePlatform()
 }
 
 // This must be called once at application startup. It is automatically called by xoRunApp and xoRunAppLowLevel.
-XOAPI void xoInitialize( const xoInitParams* init )
+XOAPI void xoInitialize(const xoInitParams* init)
 {
 	InitializeCount++;
-	if ( InitializeCount != 1 )
+	if (InitializeCount != 1)
 		return;
 
 	InitializePlatform();
 
 	AbcMachineInformation minf;
-	AbcMachineInformationGet( minf );
+	AbcMachineInformationGet(minf);
 
 	xoGlobals = new xoGlobalStruct();
 
-	if ( init && init->EpToPixel != 0 )
+	if (init && init->EpToPixel != 0)
 		xoGlobals->EpToPixel = init->EpToPixel;
 	else
 		xoGlobals->EpToPixel = ComputeEpToPixel();
-	
-	if ( init && init->CacheDir != "" )
+
+	if (init && init->CacheDir != "")
 		xoGlobals->CacheDir = init->CacheDir;
 	else
 		xoGlobals->CacheDir = xoDefaultCacheDir();
 
 	xoGlobals->TargetFPS = 60;
-	xoGlobals->NumWorkerThreads = std::min( minf.LogicalCoreCount, MAX_WORKER_THREADS );
+	xoGlobals->NumWorkerThreads = std::min(minf.LogicalCoreCount, MAX_WORKER_THREADS);
 	xoGlobals->MaxSubpixelGlyphSize = 60;
 	xoGlobals->PreferOpenGL = false;
 	xoGlobals->EnableVSync = false;
@@ -312,12 +312,12 @@ XOAPI void xoInitialize( const xoInitParams* init )
 	xoGlobals->SnapSubpixelHorzText = true;
 	//xoGlobals->DebugZeroClonedChildList = true;
 	xoGlobals->MaxTextureID = ~((xoTextureID) 0);
-    //xoGlobals->ClearColor.Set( 200, 0, 200, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node
-	xoGlobals->ClearColor.Set( 255, 150, 255, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node
-	xoGlobals->DocAddQueue.Initialize( false );
-	xoGlobals->DocRemoveQueue.Initialize( false );
-	xoGlobals->EventQueue.Initialize( true );
-	xoGlobals->JobQueue.Initialize( true );
+	//xoGlobals->ClearColor.Set( 200, 0, 200, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node
+	xoGlobals->ClearColor.Set(255, 150, 255, 255);    // Make our clear color a very noticeable purple, so you know when you've screwed up the root node
+	xoGlobals->DocAddQueue.Initialize(false);
+	xoGlobals->DocRemoveQueue.Initialize(false);
+	xoGlobals->EventQueue.Initialize(true);
+	xoGlobals->JobQueue.Initialize(true);
 	xoGlobals->FontStore = new xoFontStore();
 	xoGlobals->FontStore->InitializeFreetype();
 	xoGlobals->GlyphCache = new xoGlyphCache();
@@ -325,10 +325,10 @@ XOAPI void xoInitialize( const xoInitParams* init )
 #if XO_PLATFORM_WIN_DESKTOP
 	xoInitialize_Win32();
 #endif
-	XOTRACE( "xo using %d/%d processors.\n", (int) xoGlobals->NumWorkerThreads, (int) minf.LogicalCoreCount );
-	for ( int i = 0; i < xoGlobals->NumWorkerThreads; i++ )
+	XOTRACE("xo using %d/%d processors.\n", (int) xoGlobals->NumWorkerThreads, (int) minf.LogicalCoreCount);
+	for (int i = 0; i < xoGlobals->NumWorkerThreads; i++)
 	{
-		XOVERIFY( AbcThreadCreate( xoWorkerThreadFunc, NULL, WorkerThreads[i] ) );
+		XOVERIFY(AbcThreadCreate(xoWorkerThreadFunc, NULL, WorkerThreads[i]));
 	}
 }
 
@@ -342,11 +342,11 @@ XOAPI void xoShutdown()
 {
 	XOASSERT(InitializeCount > 0);
 	InitializeCount--;
-	if ( InitializeCount != 0 ) return;
+	if (InitializeCount != 0) return;
 
-	AbcInterlockedSet( &ExitSignalled, 1 );
+	AbcInterlockedSet(&ExitSignalled, 1);
 
-	for ( int i = 0; i < xoTagEND; i++ )
+	for (int i = 0; i < xoTagEND; i++)
 		delete DefaultTagStyles[i];
 
 	// allow documents scheduled for deletion to be deleted
@@ -358,12 +358,12 @@ XOAPI void xoShutdown()
 
 	// signal all threads to exit
 	xoJob nullJob = xoJob();
-	for ( int i = 0; i < xoGlobal()->NumWorkerThreads; i++ )
-		xoGlobal()->JobQueue.Add( nullJob );
+	for (int i = 0; i < xoGlobal()->NumWorkerThreads; i++)
+		xoGlobal()->JobQueue.Add(nullJob);
 
 	// wait for each thread in turn
-	for ( int i = 0; i < xoGlobal()->NumWorkerThreads; i++ )
-		XOVERIFY( AbcThreadJoin( WorkerThreads[i] ) );
+	for (int i = 0; i < xoGlobal()->NumWorkerThreads; i++)
+		XOVERIFY(AbcThreadJoin(WorkerThreads[i]));
 
 	xoGlobals->GlyphCache->Clear();
 	delete xoGlobals->GlyphCache;
@@ -402,18 +402,18 @@ Example:
 		}
 	}
 */
-XOAPI void xoRunAppLowLevel( xoMainCallbackLowLevel mainCallback )
+XOAPI void xoRunAppLowLevel(xoMainCallbackLowLevel mainCallback)
 {
 	xoInitialize();
-	mainCallback( xoMainEventInit );
+	mainCallback(xoMainEventInit);
 #if XO_PLATFORM_WIN_DESKTOP
 	xoRunWin32MessageLoop();
 #elif XO_PLATFORM_LINUX_DESKTOP
 	xoRunXMessageLoop();
 #else
-	XOPANIC( "xoRunApp is not supported on this platform" );
+	XOPANIC("xoRunApp is not supported on this platform");
 #endif
-	mainCallback( xoMainEventShutdown );
+	mainCallback(xoMainEventShutdown);
 	xoShutdown();
 }
 
@@ -427,7 +427,7 @@ Example:
 		wnd->Doc()->Root.AddNode(...
 	}
 */
-XOAPI void xoRunApp( xoMainCallback mainCallback )
+XOAPI void xoRunApp(xoMainCallback mainCallback)
 {
 	xoSysWnd* mainWnd = nullptr;
 	auto mainCallbackEv = [mainCallback, &mainWnd](xoMainEvent ev) {
@@ -436,7 +436,7 @@ XOAPI void xoRunApp( xoMainCallback mainCallback )
 		case xoMainEventInit:
 			mainWnd = xoSysWnd::CreateWithDoc();
 			mainWnd->Show();
-			mainCallback( mainWnd );
+			mainCallback(mainWnd);
 			break;
 		case xoMainEventShutdown:
 			delete mainWnd;
@@ -444,7 +444,7 @@ XOAPI void xoRunApp( xoMainCallback mainCallback )
 			break;
 		}
 	};
-	xoRunAppLowLevel( mainCallbackEv );
+	xoRunAppLowLevel(mainCallbackEv);
 }
 
 XOAPI xoStyle** xoDefaultTagStyles()
@@ -452,37 +452,37 @@ XOAPI xoStyle** xoDefaultTagStyles()
 	return DefaultTagStyles;
 }
 
-XOAPI void xoParseFail( const char* msg, ... )
+XOAPI void xoParseFail(const char* msg, ...)
 {
 	char buff[4096] = "";
 	va_list va;
-	va_start( va, msg );
-	uint r = vsnprintf( buff, arraysize(buff), msg, va );
-	va_end( va );
-	if ( r < arraysize(buff) )
+	va_start(va, msg);
+	uint r = vsnprintf(buff, arraysize(buff), msg, va);
+	va_end(va);
+	if (r < arraysize(buff))
 		XOTRACE_WRITE(buff);
 }
 
-XOAPI void XOTRACE( const char* msg, ... )
+XOAPI void XOTRACE(const char* msg, ...)
 {
 	char buff[4096] = "";
 	va_list va;
-	va_start( va, msg );
-	uint r = vsnprintf( buff, arraysize(buff), msg, va );
-	va_end( va );
-	if ( r < arraysize(buff) )
+	va_start(va, msg);
+	uint r = vsnprintf(buff, arraysize(buff), msg, va);
+	va_end(va);
+	if (r < arraysize(buff))
 		XOTRACE_WRITE(buff);
 }
 
-XOAPI void XOTIME( const char* msg, ... )
+XOAPI void XOTIME(const char* msg, ...)
 {
 	const int timeChars = 16;
 	char buff[4096] = "";
-	sprintf( buff, "%-15.3f  ", AbcTimeAccurateRTSeconds() * 1000 );
+	sprintf(buff, "%-15.3f  ", AbcTimeAccurateRTSeconds() * 1000);
 	va_list va;
-	va_start( va, msg );
-	uint r = vsnprintf( buff + timeChars, arraysize(buff) - timeChars, msg, va );
-	va_end( va );
-	if ( r < arraysize(buff) )
+	va_start(va, msg);
+	uint r = vsnprintf(buff + timeChars, arraysize(buff) - timeChars, msg, va);
+	va_end(va);
+	if (r < arraysize(buff))
 		XOTRACE_WRITE(buff);
 }

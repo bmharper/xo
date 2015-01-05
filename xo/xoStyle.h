@@ -15,15 +15,15 @@ struct XOAPI xoSize
 	float 	Val;
 	Types 	Type;
 
-	static xoSize	Make( Types t, float v )	{ xoSize s = {v, t}; return s; }
-	static xoSize	Percent( float v )			{ xoSize s = {v, PERCENT}; return s; }
-	static xoSize	Points( float v )			{ xoSize s = {v, PT}; return s; }
-	static xoSize	Pixels( float v )			{ xoSize s = {v, PX}; return s; }
-	static xoSize	EyePixels( float v )		{ xoSize s = {v, EP}; return s; }
+	static xoSize	Make(Types t, float v)	{ xoSize s = {v, t}; return s; }
+	static xoSize	Percent(float v)			{ xoSize s = {v, PERCENT}; return s; }
+	static xoSize	Points(float v)			{ xoSize s = {v, PT}; return s; }
+	static xoSize	Pixels(float v)			{ xoSize s = {v, PX}; return s; }
+	static xoSize	EyePixels(float v)		{ xoSize s = {v, EP}; return s; }
 	static xoSize	Zero()						{ xoSize s = {0, PX}; return s; }
 	static xoSize	Null()						{ xoSize s = {0, NONE}; return s; }
 
-	static bool		Parse( const char* s, intp len, xoSize& v );
+	static bool		Parse(const char* s, intp len, xoSize& v);
 };
 
 // Convenience struct used during layout computation
@@ -32,16 +32,16 @@ struct XOAPI xoStyleBox
 	// This order (left,top,right,bottom) must be consistent with the order presented inside XO_STYLE_DEFINE
 	union
 	{
-		struct 
+		struct
 		{
 			xoSize	Left, Top, Right, Bottom;
 		};
 		xoSize All[4];
 	};
 
-	static bool			Parse( const char* s, intp len, xoStyleBox& v );
-	static xoStyleBox	Make( xoSize left, xoSize top, xoSize right, xoSize bottom )	{ xoStyleBox b; b.Left = left; b.Top = top; b.Right = right; b.Bottom = bottom; return b; }
-	static xoStyleBox	MakeUniform( xoSize all )										{ xoStyleBox b; b.Left = all; b.Top = all; b.Right = all; b.Bottom = all; return b; }
+	static bool			Parse(const char* s, intp len, xoStyleBox& v);
+	static xoStyleBox	Make(xoSize left, xoSize top, xoSize right, xoSize bottom)	{ xoStyleBox b; b.Left = left; b.Top = top; b.Right = right; b.Bottom = bottom; return b; }
+	static xoStyleBox	MakeUniform(xoSize all)										{ xoStyleBox b; b.Left = all; b.Top = all; b.Right = all; b.Bottom = all; return b; }
 	static xoStyleBox	MakeZero() { xoStyleBox b; b.SetZero(); return b; }
 	void SetZero() { Left = Top = Right = Bottom = xoSize::Pixels(0); }
 };
@@ -199,9 +199,9 @@ enum xoStyleCategories {
 #undef XX
 #undef XY
 
-static_assert( xoCatMargin_Left % 4 == 0, "Start of boxes must be multiple of 4" );
+static_assert(xoCatMargin_Left % 4 == 0, "Start of boxes must be multiple of 4");
 
-inline xoStyleCategories xoCatMakeBaseBox( xoStyleCategories c ) { return (xoStyleCategories) (c & ~3); }
+inline xoStyleCategories xoCatMakeBaseBox(xoStyleCategories c) { return (xoStyleCategories)(c & ~3); }
 
 // Styles that are inherited by default
 // Generally it is text styles that are inherited
@@ -236,60 +236,60 @@ public:
 
 	xoStyleAttrib();
 
-	static xoStyleAttrib MakeWidth( xoSize val )					{ xoStyleAttrib a; a.SetSize( xoCatWidth, val ); return a; }
-	static xoStyleAttrib MakeHeight( xoSize val )					{ xoStyleAttrib a; a.SetSize( xoCatHeight, val ); return a; }
+	static xoStyleAttrib MakeWidth(xoSize val)					{ xoStyleAttrib a; a.SetSize(xoCatWidth, val); return a; }
+	static xoStyleAttrib MakeHeight(xoSize val)					{ xoStyleAttrib a; a.SetSize(xoCatHeight, val); return a; }
 
-	void SetInherit( xoStyleCategories cat );
+	void SetInherit(xoStyleCategories cat);
 
-	void SetColor( xoStyleCategories cat, xoColor val )				{ SetU32( cat, val.u ); }
-	void SetSize( xoStyleCategories cat, xoSize val )				{ SetWithSubtypeF( cat, val.Type, val.Val ); }
-	void SetDisplay( xoDisplayType val )							{ SetU32( xoCatDisplay, val ); }
-	void SetBorderRadius( xoSize val )								{ SetSize( xoCatBorderRadius, val ); }
-	void SetPosition( xoPositionType val )							{ SetU32( xoCatPosition, val ); }
-	void SetFont( xoFontID val )									{ SetU32( xoCatFontFamily, val ); }
-	void SetBackgroundImage( const char* image, xoDoc* doc )		{ SetString( xoCatBackgroundImage, image, doc ); }
-	void SetBreak( xoBreakType type )								{ SetU32( xoCatBreak, type); }
-	void SetCanFocus( bool canFocus )								{ SetU32( xoCatCanFocus, canFocus ); }
-	void SetCursor( xoCursors cursor )								{ SetU32( xoCatCursor, cursor ); }
-	void SetFlowContext( xoFlowContext flowcx )						{ SetU32( xoCatFlowContext, flowcx ); }
-	void SetFlowAxis( xoFlowAxis axis )								{ SetU32( xoCatFlowAxis, axis ); }
-	void SetFlowDirectionHorizonal( xoFlowDirection dir )			{ SetU32( xoCatFlowDirection_Horizontal, dir ); }
-	void SetFlowDirectionVertical( xoFlowDirection dir )			{ SetU32( xoCatFlowDirection_Vertical, dir ); }
-	void SetBoxSizing( xoBoxSizeType type )							{ SetU32( xoCatBoxSizing, type ); }
-	void SetTextAlignVertical( xoTextAlignVertical align )			{ SetU32( xoCatText_Align_Vertical, align ); }
-	void SetLeft( xoHorizontalBindings bind )						{ SetU32( xoCatLeft, bind ); }
-	void SetHCenter( xoHorizontalBindings bind )					{ SetU32( xoCatHCenter, bind ); }
-	void SetRight( xoHorizontalBindings bind )						{ SetU32( xoCatRight, bind ); }
-	void SetTop( xoVerticalBindings bind )							{ SetU32( xoCatTop, bind ); }
-	void SetVCenter( xoVerticalBindings bind )						{ SetU32( xoCatVCenter, bind ); }
-	void SetBottom( xoVerticalBindings bind )						{ SetU32( xoCatBottom, bind ); }
-	void SetBaseline( xoVerticalBindings bind )						{ SetU32( xoCatBaseline, bind ); }
+	void SetColor(xoStyleCategories cat, xoColor val)				{ SetU32(cat, val.u); }
+	void SetSize(xoStyleCategories cat, xoSize val)				{ SetWithSubtypeF(cat, val.Type, val.Val); }
+	void SetDisplay(xoDisplayType val)							{ SetU32(xoCatDisplay, val); }
+	void SetBorderRadius(xoSize val)								{ SetSize(xoCatBorderRadius, val); }
+	void SetPosition(xoPositionType val)							{ SetU32(xoCatPosition, val); }
+	void SetFont(xoFontID val)									{ SetU32(xoCatFontFamily, val); }
+	void SetBackgroundImage(const char* image, xoDoc* doc)		{ SetString(xoCatBackgroundImage, image, doc); }
+	void SetBreak(xoBreakType type)								{ SetU32(xoCatBreak, type); }
+	void SetCanFocus(bool canFocus)								{ SetU32(xoCatCanFocus, canFocus); }
+	void SetCursor(xoCursors cursor)								{ SetU32(xoCatCursor, cursor); }
+	void SetFlowContext(xoFlowContext flowcx)						{ SetU32(xoCatFlowContext, flowcx); }
+	void SetFlowAxis(xoFlowAxis axis)								{ SetU32(xoCatFlowAxis, axis); }
+	void SetFlowDirectionHorizonal(xoFlowDirection dir)			{ SetU32(xoCatFlowDirection_Horizontal, dir); }
+	void SetFlowDirectionVertical(xoFlowDirection dir)			{ SetU32(xoCatFlowDirection_Vertical, dir); }
+	void SetBoxSizing(xoBoxSizeType type)							{ SetU32(xoCatBoxSizing, type); }
+	void SetTextAlignVertical(xoTextAlignVertical align)			{ SetU32(xoCatText_Align_Vertical, align); }
+	void SetLeft(xoHorizontalBindings bind)						{ SetU32(xoCatLeft, bind); }
+	void SetHCenter(xoHorizontalBindings bind)					{ SetU32(xoCatHCenter, bind); }
+	void SetRight(xoHorizontalBindings bind)						{ SetU32(xoCatRight, bind); }
+	void SetTop(xoVerticalBindings bind)							{ SetU32(xoCatTop, bind); }
+	void SetVCenter(xoVerticalBindings bind)						{ SetU32(xoCatVCenter, bind); }
+	void SetBottom(xoVerticalBindings bind)						{ SetU32(xoCatBottom, bind); }
+	void SetBaseline(xoVerticalBindings bind)						{ SetU32(xoCatBaseline, bind); }
 
 	// Generic Set() that is used by template code
-	void Set( xoStyleCategories cat, xoColor val )					{ SetColor( cat, val ); }
-	void Set( xoStyleCategories cat, xoSize val )					{ SetSize( cat, val ); }
-	void Set( xoStyleCategories cat, xoDisplayType val )			{ SetDisplay( val ); }
-	void Set( xoStyleCategories cat, xoPositionType val )			{ SetPosition( val ); }
-	void Set( xoStyleCategories cat, xoBreakType val )				{ SetBreak( val ); }
-	void Set( xoStyleCategories cat, xoCursors val )				{ SetCursor( val ); }
-	void Set( xoStyleCategories cat, xoFlowContext val )			{ SetFlowContext( val ); }
-	void Set( xoStyleCategories cat, xoFlowAxis val )				{ SetFlowAxis( val ); }
-	void Set( xoStyleCategories cat, xoFlowDirection val )			{ SetU32( cat, val ); }
-	void Set( xoStyleCategories cat, xoBoxSizeType val )			{ SetBoxSizing( val ); }
-	void Set( xoStyleCategories cat, xoTextAlignVertical val )		{ SetU32( cat, val ); }
-	void Set( xoStyleCategories cat, xoHorizontalBindings val )		{ SetU32( cat, val ); }
-	void Set( xoStyleCategories cat, xoVerticalBindings val )		{ SetU32( cat, val ); }
-	void Set( xoStyleCategories cat, xoFontID val )					{ SetFont( val ); }
-	void Set( xoStyleCategories cat, const char* val, xoDoc* doc )	{ SetString( cat, val, doc ); }
+	void Set(xoStyleCategories cat, xoColor val)					{ SetColor(cat, val); }
+	void Set(xoStyleCategories cat, xoSize val)					{ SetSize(cat, val); }
+	void Set(xoStyleCategories cat, xoDisplayType val)			{ SetDisplay(val); }
+	void Set(xoStyleCategories cat, xoPositionType val)			{ SetPosition(val); }
+	void Set(xoStyleCategories cat, xoBreakType val)				{ SetBreak(val); }
+	void Set(xoStyleCategories cat, xoCursors val)				{ SetCursor(val); }
+	void Set(xoStyleCategories cat, xoFlowContext val)			{ SetFlowContext(val); }
+	void Set(xoStyleCategories cat, xoFlowAxis val)				{ SetFlowAxis(val); }
+	void Set(xoStyleCategories cat, xoFlowDirection val)			{ SetU32(cat, val); }
+	void Set(xoStyleCategories cat, xoBoxSizeType val)			{ SetBoxSizing(val); }
+	void Set(xoStyleCategories cat, xoTextAlignVertical val)		{ SetU32(cat, val); }
+	void Set(xoStyleCategories cat, xoHorizontalBindings val)		{ SetU32(cat, val); }
+	void Set(xoStyleCategories cat, xoVerticalBindings val)		{ SetU32(cat, val); }
+	void Set(xoStyleCategories cat, xoFontID val)					{ SetFont(val); }
+	void Set(xoStyleCategories cat, const char* val, xoDoc* doc)	{ SetString(cat, val, doc); }
 
-	void SetBool( xoStyleCategories cat, bool val )					{ SetU32( cat, val ); }
+	void SetBool(xoStyleCategories cat, bool val)					{ SetU32(cat, val); }
 
 	bool					IsNull() const							{ return Category == xoCatNULL; }
 	bool					IsInherit() const						{ return Flags == FlagInherit; }
 
 	xoStyleCategories		GetCategory() const						{ return (xoStyleCategories) Category; }
-	xoSize					GetSize() const							{ return xoSize::Make( (xoSize::Types) SubType, ValF ); }
-	xoColor					GetColor() const						{ return xoColor::Make( ValU32 ); }
+	xoSize					GetSize() const							{ return xoSize::Make((xoSize::Types) SubType, ValF); }
+	xoColor					GetColor() const						{ return xoColor::Make(ValU32); }
 	xoDisplayType			GetDisplayType() const					{ return (xoDisplayType) ValU32; }
 	xoPositionType			GetPositionType() const					{ return (xoPositionType) ValU32; }
 	xoBreakType				GetBreakType() const					{ return (xoBreakType) ValU32; }
@@ -305,14 +305,14 @@ public:
 	xoHorizontalBindings	GetHorizontalBinding() const			{ return (xoHorizontalBindings) ValU32; }
 	xoVerticalBindings		GetVerticalBinding() const				{ return (xoVerticalBindings) ValU32; }
 
-	const char*				GetBackgroundImage( xoStringTable* strings ) const;
+	const char*				GetBackgroundImage(xoStringTable* strings) const;
 	xoFontID				GetFont() const;
 
 protected:
-	void SetString( xoStyleCategories cat, const char* str, xoDoc* doc );
-	void SetU32( xoStyleCategories cat, uint32 val );
-	void SetWithSubtypeU32( xoStyleCategories cat, uint8 subtype, uint32 val );
-	void SetWithSubtypeF( xoStyleCategories cat, uint8 subtype, float val );
+	void SetString(xoStyleCategories cat, const char* str, xoDoc* doc);
+	void SetU32(xoStyleCategories cat, uint32 val);
+	void SetWithSubtypeU32(xoStyleCategories cat, uint8 subtype, uint32 val);
+	void SetWithSubtypeF(xoStyleCategories cat, uint8 subtype, float val);
 };
 
 /* Collection of style attributes (border-width-left, color, etc)
@@ -325,20 +325,20 @@ class XOAPI xoStyle
 public:
 	podvec<xoStyleAttrib>	Attribs;
 
-	bool					Parse( const char* t, xoDoc* doc );
-	bool					Parse( const char* t, intp maxLen, xoDoc* doc );
-	const xoStyleAttrib*	Get( xoStyleCategories cat ) const;
-	void					SetBox( xoStyleCategories cat, xoStyleBox val );
-	void					GetBox( xoStyleCategories cat, xoStyleBox& box ) const;
-	void					SetUniformBox( xoStyleCategories cat, xoStyleAttrib val );
-	void					SetUniformBox( xoStyleCategories cat, xoColor color );
-	void					SetUniformBox( xoStyleCategories cat, xoSize size );
-	void					Set( xoStyleAttrib attrib );
-	void					Set( xoStyleCategories cat, xoStyleBox val );	// This overload is identical to SetBox, but needs to be present for templated parsing functions
+	bool					Parse(const char* t, xoDoc* doc);
+	bool					Parse(const char* t, intp maxLen, xoDoc* doc);
+	const xoStyleAttrib*	Get(xoStyleCategories cat) const;
+	void					SetBox(xoStyleCategories cat, xoStyleBox val);
+	void					GetBox(xoStyleCategories cat, xoStyleBox& box) const;
+	void					SetUniformBox(xoStyleCategories cat, xoStyleAttrib val);
+	void					SetUniformBox(xoStyleCategories cat, xoColor color);
+	void					SetUniformBox(xoStyleCategories cat, xoSize size);
+	void					Set(xoStyleAttrib attrib);
+	void					Set(xoStyleCategories cat, xoStyleBox val);	// This overload is identical to SetBox, but needs to be present for templated parsing functions
 	//void					Compute( const xoDoc& doc, const xoDomEl& node );
 	void					Discard();
-	void					CloneSlowInto( xoStyle& c ) const;
-	void					CloneFastInto( xoStyle& c, xoPool* pool ) const;
+	void					CloneSlowInto(xoStyle& c) const;
+	void					CloneFastInto(xoStyle& c, xoPool* pool) const;
 
 	bool					IsEmpty() const { return Attribs.size() == 0; }
 
@@ -366,7 +366,7 @@ public:
 
 protected:
 	//void					MergeInZeroCopy( int n, const xoStyle** src );
-	void					SetBoxInternal( xoStyleCategories catBase, xoStyleBox val );
+	void					SetBoxInternal(xoStyleCategories catBase, xoStyleBox val);
 };
 
 FHASH_SETUP_CLASS_CTOR_DTOR(xoStyle, xoStyle);
@@ -396,18 +396,18 @@ public:
 	static const uint32 InitialBitsPerSlot = 2;		// 1 << 2 = 4, is our lowest non-empty size
 	static const uint32 SlotOffset = 1;				// We need to reserve zero for the "empty" state of a slot
 
-					xoStyleSet();		// Simply calls Reset()
-					~xoStyleSet();		// Destructor does nothing
+	xoStyleSet();		// Simply calls Reset()
+	~xoStyleSet();		// Destructor does nothing
 
-	void			Set( int n, const xoStyleAttrib* attribs, xoPool* pool );
-	void			Set( const xoStyleAttrib& attrib, xoPool* pool );
-	xoStyleAttrib	Get( xoStyleCategories cat ) const;
-	bool			Contains( xoStyleCategories cat ) const;
+	void			Set(int n, const xoStyleAttrib* attribs, xoPool* pool);
+	void			Set(const xoStyleAttrib& attrib, xoPool* pool);
+	xoStyleAttrib	Get(xoStyleCategories cat) const;
+	bool			Contains(xoStyleCategories cat) const;
 	void			Reset();
 
 protected:
-	typedef void  (*SetSlotFunc) ( void* lookup, xoStyleCategories cat, int32 slot );
-	typedef int32 (*GetSlotFunc) ( const void* lookup, xoStyleCategories cat );
+	typedef void (*SetSlotFunc)(void* lookup, xoStyleCategories cat, int32 slot);
+	typedef int32(*GetSlotFunc)(const void* lookup, xoStyleCategories cat);
 
 	void*			Lookup;			// Variable bit-width table that indexes into Attribs. Size is always xoCatEND.
 	xoStyleAttrib*	Attribs;		// The Category field in here is wasted.
@@ -417,28 +417,28 @@ protected:
 	SetSlotFunc		SetSlotF;
 	GetSlotFunc		GetSlotF;
 
-	void			Grow( xoPool* pool );
-	int32			GetSlot( xoStyleCategories cat ) const;
-	void			SetSlot( xoStyleCategories cat, int32 slot );
+	void			Grow(xoPool* pool);
+	int32			GetSlot(xoStyleCategories cat) const;
+	void			SetSlot(xoStyleCategories cat, int32 slot);
 	void			DebugCheckSanity() const;
 
-	static void		MigrateLookup( const void* lutsrc, void* lutdst, GetSlotFunc getter, SetSlotFunc setter );
+	static void		MigrateLookup(const void* lutsrc, void* lutdst, GetSlotFunc getter, SetSlotFunc setter);
 
 	template<uint32 BITS_PER_SLOT>
-	static void		TSetSlot( void* lookup, xoStyleCategories cat, int32 slot );
+	static void		TSetSlot(void* lookup, xoStyleCategories cat, int32 slot);
 
 	template<uint32 BITS_PER_SLOT>
-	static int32	TGetSlot( const void* lookup, xoStyleCategories cat );
+	static int32	TGetSlot(const void* lookup, xoStyleCategories cat);
 
-	static int32	GetSlot2( const void* lookup, xoStyleCategories cat );
-	static int32	GetSlot4( const void* lookup, xoStyleCategories cat );
-	static int32	GetSlot8( const void* lookup, xoStyleCategories cat );
-	static void		SetSlot2( void* lookup, xoStyleCategories cat, int32 slot );
-	static void		SetSlot4( void* lookup, xoStyleCategories cat, int32 slot );
-	static void		SetSlot8( void* lookup, xoStyleCategories cat, int32 slot );
+	static int32	GetSlot2(const void* lookup, xoStyleCategories cat);
+	static int32	GetSlot4(const void* lookup, xoStyleCategories cat);
+	static int32	GetSlot8(const void* lookup, xoStyleCategories cat);
+	static void		SetSlot2(void* lookup, xoStyleCategories cat, int32 slot);
+	static void		SetSlot4(void* lookup, xoStyleCategories cat, int32 slot);
+	static void		SetSlot8(void* lookup, xoStyleCategories cat, int32 slot);
 
 	// The -1 here is for SlotOffset
-	static int32	CapacityAt( uint32 bitsPerSlot )	{ return (1 << bitsPerSlot) - 1; }
+	static int32	CapacityAt(uint32 bitsPerSlot)	{ return (1 << bitsPerSlot) - 1; }
 
 };
 
@@ -475,16 +475,16 @@ This allows us to reference styles by a 32-bit integer ID instead of by name.
 class XOAPI xoStyleTable
 {
 public:
-						xoStyleTable();
-						~xoStyleTable();
+	xoStyleTable();
+	~xoStyleTable();
 
 	void				AddDummyStyleZero();
 	void				Discard();
-	xoStyleClass*		GetOrCreate( const char* name );
-	const xoStyleClass*	GetByID( xoStyleClassID id ) const;
-	xoStyleClassID		GetClassID( const char* name );
-	void				CloneSlowInto( xoStyleTable& c ) const;					// Does not clone NameToIndex
-	void				CloneFastInto( xoStyleTable& c, xoPool* pool ) const;	// Does not clone NameToIndex
+	xoStyleClass*		GetOrCreate(const char* name);
+	const xoStyleClass*	GetByID(xoStyleClassID id) const;
+	xoStyleClassID		GetClassID(const char* name);
+	void				CloneSlowInto(xoStyleTable& c) const;					// Does not clone NameToIndex
+	void				CloneFastInto(xoStyleTable& c, xoPool* pool) const;	// Does not clone NameToIndex
 
 protected:
 	podvec<xoString>			Names;		// Names and Classes are parallel
@@ -494,16 +494,16 @@ protected:
 };
 
 
-XOAPI bool xoParseDisplayType( const char* s, intp len, xoDisplayType& t );
-XOAPI bool xoParsePositionType( const char* s, intp len, xoPositionType& t );
-XOAPI bool xoParseBreakType( const char* s, intp len, xoBreakType& t );
-XOAPI bool xoParseCursor( const char* s, intp len, xoCursors& t );
-XOAPI bool xoParseFlowContext( const char* s, intp len, xoFlowContext& t );
-XOAPI bool xoParseFlowAxis( const char* s, intp len, xoFlowAxis& t );
-XOAPI bool xoParseFlowDirection( const char* s, intp len, xoFlowDirection& t );
-XOAPI bool xoParseBoxSize( const char* s, intp len, xoBoxSizeType& t );
-XOAPI bool xoParseTextAlignVertical( const char* s, intp len, xoTextAlignVertical& t );
-XOAPI bool xoParseHorizontalBinding( const char* s, intp len, xoHorizontalBindings& t );
-XOAPI bool xoParseVerticalBinding( const char* s, intp len, xoVerticalBindings& t );
-XOAPI bool xoParseBorder( const char* s, intp len, xoStyle& style );
+XOAPI bool xoParseDisplayType(const char* s, intp len, xoDisplayType& t);
+XOAPI bool xoParsePositionType(const char* s, intp len, xoPositionType& t);
+XOAPI bool xoParseBreakType(const char* s, intp len, xoBreakType& t);
+XOAPI bool xoParseCursor(const char* s, intp len, xoCursors& t);
+XOAPI bool xoParseFlowContext(const char* s, intp len, xoFlowContext& t);
+XOAPI bool xoParseFlowAxis(const char* s, intp len, xoFlowAxis& t);
+XOAPI bool xoParseFlowDirection(const char* s, intp len, xoFlowDirection& t);
+XOAPI bool xoParseBoxSize(const char* s, intp len, xoBoxSizeType& t);
+XOAPI bool xoParseTextAlignVertical(const char* s, intp len, xoTextAlignVertical& t);
+XOAPI bool xoParseHorizontalBinding(const char* s, intp len, xoHorizontalBindings& t);
+XOAPI bool xoParseVerticalBinding(const char* s, intp len, xoVerticalBindings& t);
+XOAPI bool xoParseBorder(const char* s, intp len, xoStyle& style);
 

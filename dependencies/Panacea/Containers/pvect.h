@@ -39,7 +39,7 @@ public:
 		data = NULL;
 		reserve(_reserve);
 	}
-	
+
 	// copy constructor
 	pvoidvect(const pvoidvect& b)
 	{
@@ -62,19 +62,19 @@ public:
 			delete []data;
 	}
 
-	void hack( intp _count, intp _capacity, void** _data )
+	void hack(intp _count, intp _capacity, void** _data)
 	{
 		count = PVINT(_count);
 		capacity = PVINT(_capacity);
 		data = _data;
 	}
 
-	pvoidvect& operator=(const pvoidvect &b) 
+	pvoidvect& operator=(const pvoidvect &b)
 	{
-		if ( this != &b )
+		if (this != &b)
 		{
-			if ( b.count != capacity ) clear();
-			if ( b.count > 0 )
+			if (b.count != capacity) clear();
+			if (b.count > 0)
 			{
 				reserve(b.count);
 				memcpy(data, b.data, sizeof(void*)*b.count);
@@ -84,23 +84,23 @@ public:
 		return *this;
 	}
 
-	bool operator==( const pvoidvect& b ) const
+	bool operator==(const pvoidvect& b) const
 	{
-		if ( count != b.count ) return false;
-		for ( PVINT i = 0; i < count; i++ )
-			if ( data[i] != b.data[i] ) return false;
+		if (count != b.count) return false;
+		for (PVINT i = 0; i < count; i++)
+			if (data[i] != b.data[i]) return false;
 		return true;
 	}
-	bool operator!=( const pvoidvect& b ) const { return !(*this == b); }
+	bool operator!=(const pvoidvect& b) const { return !(*this == b); }
 
 	// safe set. Will resize if necessary
-	void set(intp _pos, const void* a) 
+	void set(intp _pos, const void* a)
 	{
 		PVINT pos = PVINT(_pos);
-		if (pos >= count) 
+		if (pos >= count)
 		{
 			// Do we need to resize, or can we just up our count?
-			if (pos >= capacity) 
+			if (pos >= capacity)
 				resize(pos+1);
 			else
 				count = pos+1;
@@ -108,7 +108,7 @@ public:
 		data[pos] = const_cast<void*>(a);
 	}
 
-	void insert(intp _pos, const void* a) 
+	void insert(intp _pos, const void* a)
 	{
 		PVINT pos = PVINT(_pos);
 		if (pos >= capacity || count+1 > capacity)
@@ -124,9 +124,9 @@ public:
 	{
 		PVINT pos1 = PVINT(_pos1);
 		PVINT pos2 = PVINT(_pos2);
-		if ( pos2 == -1 )			pos2 = pos1;
-		else if ( pos2 >= count )	pos2 = count -1;
-		ASSERT( pos1 >= 0 && pos1 <= pos2 );
+		if (pos2 == -1)			pos2 = pos1;
+		else if (pos2 >= count)	pos2 = count -1;
+		ASSERT(pos1 >= 0 && pos1 <= pos2);
 
 		PVINT nmove = (count - pos2) - 1;
 		if (nmove > 0)
@@ -135,25 +135,25 @@ public:
 	}
 
 	// Grift.... this causes no problems because we know that a void* is only 4 bytes.
-	void* pop_back() 
+	void* pop_back()
 	{
 		if (count > 0)
 			count--;
 		return data[count];
 	}
 
-	void push_back(const void* a) 
+	void push_back(const void* a)
 	{
 		if (count >= capacity)
-			reserve( _MAX_(capacity*2, 2) );
+			reserve(_MAX_(capacity*2, 2));
 		data[count++] = const_cast<void*>(a);
 	}
 
 #ifdef PVECT_RANGE_CHECK
-	const void* operator[](intp _i) const 
+	const void* operator[](intp _i) const
 	{
 		PVINT i = PVINT(_i);
-		ASSERT( i >= 0 && i < count );
+		ASSERT(i >= 0 && i < count);
 		return data[_i];
 	}
 #else
@@ -161,56 +161,56 @@ public:
 #endif
 
 #ifdef PVECT_RANGE_CHECK
-	void*& operator[](intp _i) 
+	void*& operator[](intp _i)
 	{
 		PVINT i = PVINT(_i);
-		ASSERT( i >= 0 && i < count );
+		ASSERT(i >= 0 && i < count);
 		return data[_i];
 	}
 #else
 	void*& operator[](intp _i) { return data[_i]; }
 #endif
 
-	void addn( intp n, void** p )
+	void addn(intp n, void** p)
 	{
-		for ( intp i = 0; i < n; i++ ) push_back(p[i]);
+		for (intp i = 0; i < n; i++) push_back(p[i]);
 	}
 
 	void* front() const
 	{
 		return data[0];
 	}
-	void*& front() 
+	void*& front()
 	{
 		return data[0];
 	}
 
-	void* back() const 
+	void* back() const
 	{
 		return data[count-1];
 	}
-	void*& back() 
+	void*& back()
 	{
 		return data[count-1];
 	}
 
-	bool contains( const void* t ) const { return find(t) != -1; }
+	bool contains(const void* t) const { return find(t) != -1; }
 
 	// returns -1 on failure
-	intp find( const void* t ) const
+	intp find(const void* t) const
 	{
-		for ( PVINT i = 0; i < count; i++ )
-			if ( data[i] == t ) return i;
+		for (PVINT i = 0; i < count; i++)
+			if (data[i] == t) return i;
 		return -1;
 	}
 
 	void nullfill()
 	{
-		for ( PVINT i = 0; i < count; i++ )
+		for (PVINT i = 0; i < count; i++)
 			data[i] = NULL;
 	}
 
-	void clear() 
+	void clear()
 	{
 		delete[] data;
 		data = NULL;
@@ -234,35 +234,35 @@ public:
 	intp size() const { return count; }
 
 	// preserves existing entities but doesn't set count
-	void reserve( intp _newsize )
+	void reserve(intp _newsize)
 	{
 		PVINT newsize = PVINT(_newsize);
-		if ( newsize <= capacity ) return;
+		if (newsize <= capacity) return;
 		PVINT oc = count;
 		resize(_MAX_(newsize, count));
 		count = oc;
 	}
 	// preserves existing entities and sets count to newsize
 	// does not realloc unless size is larger than existing capacity
-	void resize( intp newsize ) 
+	void resize(intp newsize)
 	{
-		resize_internal( newsize, true );
+		resize_internal(newsize, true);
 	}
 
 protected:
-	void add( const pvoidvect& a )
+	void add(const pvoidvect& a)
 	{
-		for ( PVINT i = 0; i < a.count; i++ )
-			push_back( a[i] );
+		for (PVINT i = 0; i < a.count; i++)
+			push_back(a[i]);
 	}
 
-	void resize_internal( intp newsize, bool zerofill ) 
+	void resize_internal(intp newsize, bool zerofill)
 	{
-		if ( newsize > capacity )
+		if (newsize > capacity)
 		{
 			void** nd = zerofill ? new void*[newsize]() : new void*[newsize];
-			if (count > 0) 
-				memcpy( nd, data, sizeof(void*) * count );
+			if (count > 0)
+				memcpy(nd, data, sizeof(void*) * count);
 			delete []data;
 			data = nd;
 			capacity = (PVINT) newsize;
@@ -270,7 +270,7 @@ protected:
 		count = (PVINT) newsize;
 	}
 
-	template<typename TYPE> TYPE _MAX_( TYPE a, TYPE b ) { return a < b ? b : a; }
+	template<typename TYPE> TYPE _MAX_(TYPE a, TYPE b) { return a < b ? b : a; }
 };
 
 
@@ -286,17 +286,17 @@ public:
 
 	pvect(const pvect& b) : Base(b) {}
 
-	pvect( std::initializer_list<T> list ) : Base()
+	pvect(std::initializer_list<T> list) : Base()
 	{
-		resize_internal( list.size(), false );
-		for ( size_t i = 0; i < list.size(); i++ )
+		resize_internal(list.size(), false);
+		for (size_t i = 0; i < list.size(); i++)
 			data[i] = list.begin()[i];
 	}
 
 	pvect& operator=(const pvect &b) { return (pvect&) Base::operator=(b); }
 
-	bool operator==( const pvoidvect& b ) const { return Base::operator==(b); }
-	bool operator!=( const pvoidvect& b ) const { return Base::operator!=(b); }
+	bool operator==(const pvoidvect& b) const { return Base::operator==(b); }
+	bool operator!=(const pvoidvect& b) const { return Base::operator!=(b); }
 
 	void set(intp pos, const T a) { Base::set(pos, (const void*) a); }
 
@@ -307,13 +307,13 @@ public:
 	T pop_back()	{ return static_cast<T>(Base::pop_back()); }
 	T pop()			{ return static_cast<T>(Base::pop_back()); }
 
-	void push_back( const T a ) { Base::push_back( (const void*) a ); }
+	void push_back(const T a) { Base::push_back((const void*) a); }
 
-	void addn( intp n, const T* p ) { Base::addn(n, (void**) p); }
+	void addn(intp n, const T* p) { Base::addn(n, (void**) p); }
 
-	pvect& operator+=( const T a ) { push_back( a ); return *this; }
+	pvect& operator+=(const T a) { push_back(a); return *this; }
 
-	pvect& operator+=( const pvect& a ) { add( a ); return *this; }
+	pvect& operator+=(const pvect& a) { add(a); return *this; }
 
 	//const T operator[](intp i) const { return static_cast<const T>(Base::operator[](i)); }
 	const T operator[](intp i) const { return (const T) Base::operator[](i); }
@@ -332,7 +332,7 @@ public:
 	const T front() const { return (const T) Base::front(); }
 	T& front() { return (T&) Base::front(); }
 
-	intp find( const T a ) const { return Base::find((const void*) a); }
+	intp find(const T a) const { return Base::find((const void*) a); }
 
 	void clear() { Base::clear(); }
 
@@ -351,22 +351,22 @@ public:
 /** erase and delete for pvect
 **/
 template < typename TData >
-void erase_delete( pvect<TData>& target, intp pos1, intp pos2 = -1 ) 
-{ 
-	if ( pos2 == -1 )						pos2 = pos1;
-	else if ( pos2 >= target.count )		pos2 = target.count - 1;
-	ASSERT( pos1 >= 0 && pos1 <= pos2 );
-	for ( intp i = pos1; i <= pos2; i++ )
+void erase_delete(pvect<TData>& target, intp pos1, intp pos2 = -1)
+{
+	if (pos2 == -1)						pos2 = pos1;
+	else if (pos2 >= target.count)		pos2 = target.count - 1;
+	ASSERT(pos1 >= 0 && pos1 <= pos2);
+	for (intp i = pos1; i <= pos2; i++)
 		delete target[i];
-	target.erase( pos1, pos2 ); 
+	target.erase(pos1, pos2);
 }
 
 /** clear and delete all for pvect.
 **/
 template < typename TData >
-void delete_all( pvect<TData>& target )
+void delete_all(pvect<TData>& target)
 {
-	for ( intp i = 0; i < target.size(); i++ )
+	for (intp i = 0; i < target.size(); i++)
 		delete target[i];
 	target.clear();
 }
@@ -374,7 +374,7 @@ void delete_all( pvect<TData>& target )
 /** concatenation for pvect.
 **/
 template < typename TData >
-pvect<TData> operator+( const pvect<TData>& a, const pvect<TData>& b )
+pvect<TData> operator+(const pvect<TData>& a, const pvect<TData>& b)
 {
 	pvect<TData> c = a;
 	c += b;
@@ -384,10 +384,10 @@ pvect<TData> operator+( const pvect<TData>& a, const pvect<TData>& b )
 /** Reverse for pvect.
 **/
 template < typename TData >
-void reverse( pvect<TData>& target )
+void reverse(pvect<TData>& target)
 {
 	intp lim = target.size() / 2;
-	for ( intp i = 0; i < lim; i++ )
+	for (intp i = 0; i < lim; i++)
 	{
 		intp j = target.size() - i - 1;
 		TData tt = target[i];
@@ -399,7 +399,7 @@ void reverse( pvect<TData>& target )
 // Sort for pvect.
 // These have to be custom written so that they can dereference the objects inside the pvect.
 
-template <typename T> int pvect_compare_operator_lt( void* context, const T& a, const T& b )
+template <typename T> int pvect_compare_operator_lt(void* context, const T& a, const T& b)
 {
 	return *a < *b ? -1 : 0;
 }
@@ -407,12 +407,12 @@ template <typename T> int pvect_compare_operator_lt( void* context, const T& a, 
 // See marshal_context_is_compare in cont_utils.h for an explanation.
 // We do the extra work of dereferencing
 template <typename T>
-int pvect_marshal_context_is_compare( void* context, const T& a, const T& b )
+int pvect_marshal_context_is_compare(void* context, const T& a, const T& b)
 {
 	// It's easier to go from T* to TType than the other way around.
 	typedef decltype(*a) TType;
 	typedef int (*tcompare)(const TType& a, const TType& b);
-	return ((tcompare) context)( *a, *b );
+	return ((tcompare) context)(*a, *b);
 }
 
 struct pvect_double_context
@@ -423,7 +423,7 @@ struct pvect_double_context
 
 // We need two levels of indirection because we need to perform the dereference first
 template <typename T>
-int pvect_double_marshal_context_is_compare( void* context, const T& a, const T& b )
+int pvect_double_marshal_context_is_compare(void* context, const T& a, const T& b)
 {
 	// save decltype() technique as above
 	typedef decltype(*a) TType;
@@ -431,42 +431,42 @@ int pvect_double_marshal_context_is_compare( void* context, const T& a, const T&
 
 	pvect_double_context* cxA = (pvect_double_context*) context;
 
-	return ((tcompare) cxA->Compare)( cxA->Context, *a, *b );
+	return ((tcompare) cxA->Compare)(cxA->Context, *a, *b);
 }
 
-template <typename T> void sort( pvect<T*>& target )
+template <typename T> void sort(pvect<T*>& target)
 {
-	vect_sort_cx<T*>( &target[0], 0, target.size() - 1, NULL, pvect_compare_operator_lt<T*> );
+	vect_sort_cx<T*>(&target[0], 0, target.size() - 1, NULL, pvect_compare_operator_lt<T*>);
 }
 
-template <typename T> void sort( pvect<T*>& target, int (*compare) (const T& a, const T& b) )
+template <typename T> void sort(pvect<T*>& target, int (*compare)(const T& a, const T& b))
 {
-	vect_sort_cx<T*>( &target[0], 0, target.size() - 1, (void*) compare, pvect_marshal_context_is_compare<T*> );
+	vect_sort_cx<T*>(&target[0], 0, target.size() - 1, (void*) compare, pvect_marshal_context_is_compare<T*>);
 }
 
-template <typename T> void sort( pvect<T*>& target, void* context, int (*compare) (void* context, const T& a, const T& b) )
+template <typename T> void sort(pvect<T*>& target, void* context, int (*compare)(void* context, const T& a, const T& b))
 {
 	// double-trouble!
 	pvect_double_context cxA;
 	cxA.Compare = (void*) compare;
 	cxA.Context = context;
-	vect_sort_cx<T*>( &target[0], 0, target.size() - 1, &cxA, pvect_double_marshal_context_is_compare<T*> );
+	vect_sort_cx<T*>(&target[0], 0, target.size() - 1, &cxA, pvect_double_marshal_context_is_compare<T*>);
 }
 
 // Returns a copy of the pvect, sorted based on your comparison function
 template< typename T >
-pvect<T*> sorted_by( const pvect<T*>& unsorted, int (*compare) (const T& a, const T& b) )
+pvect<T*> sorted_by(const pvect<T*>& unsorted, int (*compare)(const T& a, const T& b))
 {
 	pvect<T*> all = unsorted;
-	sort( all, compare );
+	sort(all, compare);
 	return all;
 }
 
 
 template < typename TData >
-void sort_insertion( pvect<TData>& target )
+void sort_insertion(pvect<TData>& target)
 {
-	sort_insertion( target, 0, target.size() - 1 );
+	sort_insertion(target, 0, target.size() - 1);
 }
 
 /** Very simple insertion sort for pvect.
@@ -474,25 +474,25 @@ The idea behind this is to avoid generating all the code needed for qsort,
 when only a very simple sort for a tiny set is required.
 **/
 template < typename TData >
-void sort_insertion( pvect<TData>& target, intp i, intp j )
+void sort_insertion(pvect<TData>& target, intp i, intp j)
 {
 	pvect<TData> rep;
-	for ( intp k = i; k <= j; k++ )
+	for (intp k = i; k <= j; k++)
 	{
 		TData a = target[k];
 		intp q;
-		for ( q = 0; q < rep.size(); q++ )
+		for (q = 0; q < rep.size(); q++)
 		{
-			if ( *a < *rep[q] )
+			if (*a < *rep[q])
 			{
-				rep.insert( q, a );
+				rep.insert(q, a);
 				break;
 			}
 		}
-		if ( q == rep.size() )
-			rep.push_back( a );
+		if (q == rep.size())
+			rep.push_back(a);
 	}
-	for ( intp k = i, s = 0; k <= j; k++, s++ )
+	for (intp k = i, s = 0; k <= j; k++, s++)
 		target[k] = rep[s];
 }
 
@@ -506,7 +506,7 @@ struct sort_item
 {
 	ST Key;
 	void* Object;
-	bool operator< ( const sort_item& b ) const
+	bool operator< (const sort_item& b) const
 	{
 		return Key < b.Key;
 	}
@@ -514,14 +514,14 @@ struct sort_item
 
 
 template< typename TData >
-intp least( const pvect<TData>& items )
+intp least(const pvect<TData>& items)
 {
-	if ( items.size() == 0 ) { ASSERT(false); return -1; }
+	if (items.size() == 0) { ASSERT(false); return -1; }
 	TData v = items[0];
 	intp index = 0;
-	for ( intp i = 0; i < items.size(); i++ )
+	for (intp i = 0; i < items.size(); i++)
 	{
-		if ( *items[i] < *v )
+		if (*items[i] < *v)
 		{
 			v = items[i];
 			index = i;
@@ -531,14 +531,14 @@ intp least( const pvect<TData>& items )
 }
 
 template< typename TData >
-intp greatest( const pvect<TData>& items )
+intp greatest(const pvect<TData>& items)
 {
-	if ( items.size() == 0 ) { ASSERT(false); return -1; }
+	if (items.size() == 0) { ASSERT(false); return -1; }
 	TData v = items[0];
 	intp index = 0;
-	for ( intp i = 0; i < items.size(); i++ )
+	for (intp i = 0; i < items.size(); i++)
 	{
-		if ( *v < *items[i] )
+		if (*v < *items[i])
 		{
 			v = items[i];
 			index = i;
@@ -547,7 +547,7 @@ intp greatest( const pvect<TData>& items )
 	return index;
 }
 
-template<typename TData> void remove_duplicates( pvect<TData>& target )	{ return vect_remove_duplicates( target ); }
+template<typename TData> void remove_duplicates(pvect<TData>& target)	{ return vect_remove_duplicates(target); }
 
 //#include "pvect_sort.h"
 

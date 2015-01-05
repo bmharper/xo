@@ -9,7 +9,7 @@ struct xoShaderPerFrame
 	xoVec2f		VPort_HSize;
 	float		Padding[2];
 };
-static_assert( (sizeof(xoShaderPerFrame) & 15) == 0, "xoShaderPerFrame size must be a multiple of 16 bytes (This is a DirectX constant buffer requirement)" );
+static_assert((sizeof(xoShaderPerFrame) & 15) == 0, "xoShaderPerFrame size must be a multiple of 16 bytes (This is a DirectX constant buffer requirement)");
 
 struct xoShaderPerObject
 {
@@ -19,7 +19,7 @@ struct xoShaderPerObject
 	float		Radius;
 	float		Padding[3];
 };
-static_assert( (sizeof(xoShaderPerObject) & 15) == 0, "xoShaderPerFrame size must be a multiple of 16 bytes (This is a DirectX constant buffer requirement)" );
+static_assert((sizeof(xoShaderPerObject) & 15) == 0, "xoShaderPerFrame size must be a multiple of 16 bytes (This is a DirectX constant buffer requirement)");
 
 /* Base class of device-specific renderer (such as GL or DX).
 
@@ -50,48 +50,48 @@ public:
 	xoShaderPerFrame		ShaderPerFrame;
 	xoShaderPerObject		ShaderPerObject;
 
-						xoRenderBase();
+	xoRenderBase();
 	virtual				~xoRenderBase();
 
 	// Setup a matrix equivalent to glOrtho. The matrix 'imat' is multiplied by the ortho matrix.
-	void				Ortho( xoMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar );
+	void				Ortho(xoMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar);
 
 	void				SurfaceLost_ForgetTextures();
-	bool				IsTextureValid( xoTextureID texID ) const;
+	bool				IsTextureValid(xoTextureID texID) const;
 	xoTextureID			FirstTextureID() const								{ return TexIDOffset + TEX_OFFSET_ONE; }
 
 	// Register a new texture. There is no "unregister".
-	xoTextureID			RegisterTexture( void* deviceTexID );
-	xoTextureID			RegisterTextureInt( uint deviceTexID )				{ return RegisterTexture( reinterpret_cast<void*>(deviceTexID) );  }
-	void*				GetTextureDeviceHandle( xoTextureID texID ) const;
-	uint				GetTextureDeviceHandleInt( xoTextureID texID ) const	{ return (uint) reinterpret_cast<uintptr_t>(GetTextureDeviceHandle( texID )); }
+	xoTextureID			RegisterTexture(void* deviceTexID);
+	xoTextureID			RegisterTextureInt(uint deviceTexID)				{ return RegisterTexture(reinterpret_cast<void*>(deviceTexID));  }
+	void*				GetTextureDeviceHandle(xoTextureID texID) const;
+	uint				GetTextureDeviceHandleInt(xoTextureID texID) const	{ return (uint) reinterpret_cast<uintptr_t>(GetTextureDeviceHandle(texID)); }
 
 	virtual const char*	RendererName() = 0;
 
-	virtual bool		InitializeDevice( xoSysWnd& wnd ) = 0;	// Initialize this device
-	virtual void		DestroyDevice( xoSysWnd& wnd ) = 0;		// Destroy this device and all associated textures, etc
+	virtual bool		InitializeDevice(xoSysWnd& wnd) = 0;	// Initialize this device
+	virtual void		DestroyDevice(xoSysWnd& wnd) = 0;		// Destroy this device and all associated textures, etc
 	virtual void		SurfaceLost() = 0;
-	
-	virtual bool		BeginRender( xoSysWnd& wnd ) = 0;						// Start of a frame
-	virtual void		EndRender( xoSysWnd& wnd, uint endRenderFlags ) = 0;	// Frame is finished. Present it (or possibly not, depending on flags).
+
+	virtual bool		BeginRender(xoSysWnd& wnd) = 0;						// Start of a frame
+	virtual void		EndRender(xoSysWnd& wnd, uint endRenderFlags) = 0;	// Frame is finished. Present it (or possibly not, depending on flags).
 
 	virtual void		PreRender() = 0;
 	virtual void		PostRenderCleanup() = 0;
 
-	virtual xoProgBase* GetShader( xoShaders shader ) = 0;
-	virtual void		ActivateShader( xoShaders shader ) = 0;
+	virtual xoProgBase* GetShader(xoShaders shader) = 0;
+	virtual void		ActivateShader(xoShaders shader) = 0;
 
-	virtual void		DrawQuad( const void* v ) = 0;
+	virtual void		DrawQuad(const void* v) = 0;
 
-	virtual bool		LoadTexture( xoTexture* tex, int texUnit ) = 0;
-	virtual bool		ReadBackbuffer( xoImage& image ) = 0;
+	virtual bool		LoadTexture(xoTexture* tex, int texUnit) = 0;
+	virtual bool		ReadBackbuffer(xoImage& image) = 0;
 
 protected:
 	static const xoTextureID	TEX_OFFSET_ONE = 1;	// This constant causes the xoTextureID that we expose to never be zero.
 	xoTextureID					TexIDOffset;
 	podvec<void*>				TexIDToNative;		// Maps from xoTextureID to native device texture (eg. GLuint or ID3D11Texture2D*). We're wasting 4 bytes here on OpenGL.
 
-	void				EnsureTextureProperlyDefined( xoTexture* tex, int texUnit );
+	void				EnsureTextureProperlyDefined(xoTexture* tex, int texUnit);
 	std::string			CommonShaderDefines();
 };
 
@@ -100,21 +100,21 @@ protected:
 class XOAPI xoRenderDummy
 {
 public:
-	virtual bool		InitializeDevice( xoSysWnd& wnd );
-	virtual void		DestroyDevice( xoSysWnd& wnd );
+	virtual bool		InitializeDevice(xoSysWnd& wnd);
+	virtual void		DestroyDevice(xoSysWnd& wnd);
 	virtual void		SurfaceLost();
-	
-	virtual bool		BeginRender( xoSysWnd& wnd );
-	virtual void		EndRender( xoSysWnd& wnd, uint endRenderFlags );
+
+	virtual bool		BeginRender(xoSysWnd& wnd);
+	virtual void		EndRender(xoSysWnd& wnd, uint endRenderFlags);
 
 	virtual void		PreRender();
 	virtual void		PostRenderCleanup();
 
-	virtual xoProgBase* GetShader( xoShaders shader );
-	virtual void		ActivateShader( xoShaders shader );
+	virtual xoProgBase* GetShader(xoShaders shader);
+	virtual void		ActivateShader(xoShaders shader);
 
-	virtual void		DrawQuad( const void* v );
+	virtual void		DrawQuad(const void* v);
 
-	virtual bool		LoadTexture( xoTexture* tex, int texUnit );
-	virtual bool		ReadBackbuffer( xoImage& image );
+	virtual bool		LoadTexture(xoTexture* tex, int texUnit);
+	virtual bool		ReadBackbuffer(xoImage& image);
 };

@@ -1,4 +1,4 @@
-   #pragma once
+#pragma once
 
 // A memory pool
 class XOAPI xoPool
@@ -7,15 +7,15 @@ public:
 	xoPool();
 	~xoPool();
 
-	void	SetChunkSize( size_t size );
+	void	SetChunkSize(size_t size);
 
-	void*	Alloc( size_t bytes, bool zeroInit );
-	
-	template<typename T>
-	T*		AllocT( bool zeroInit ) { return (T*) Alloc( sizeof(T), zeroInit ); }
+	void*	Alloc(size_t bytes, bool zeroInit);
 
 	template<typename T>
-	T*		AllocNT( size_t count, bool zeroInit ) { return (T*) Alloc( count * sizeof(T), zeroInit ); }
+	T*		AllocT(bool zeroInit) { return (T*) Alloc(sizeof(T), zeroInit); }
+
+	template<typename T>
+	T*		AllocNT(size_t count, bool zeroInit) { return (T*) Alloc(count * sizeof(T), zeroInit); }
 
 	void	FreeAll();
 	void	FreeAllExceptOne();
@@ -45,18 +45,18 @@ public:
 		Capacity = 0;
 	}
 
-	xoPoolArray& operator+=( const T& v )
+	xoPoolArray& operator+=(const T& v)
 	{
-		add( &v );
+		add(&v);
 		return *this;
 	}
 
-	T& operator[]( intp _i )
+	T& operator[](intp _i)
 	{
 		return Data[_i];
 	}
 
-	const T& operator[]( intp _i ) const
+	const T& operator[](intp _i) const
 	{
 		return Data[_i];
 	}
@@ -77,12 +77,12 @@ public:
 		Count--;
 	}
 
-	T& add( const T* v = nullptr )
+	T& add(const T* v = nullptr)
 	{
-		if ( Count == Capacity )
+		if (Count == Capacity)
 			grow();
 
-		if ( v )
+		if (v)
 			Data[Count++] = *v;
 		else
 			Data[Count++] = T();
@@ -92,23 +92,23 @@ public:
 
 	intp size() const { return Count; }
 
-	void resize( intp n )
+	void resize(intp n)
 	{
-		if ( n != Count )
+		if (n != Count)
 		{
 			clear();
-			if ( n != 0 )
+			if (n != 0)
 			{
-				growto( n );
+				growto(n);
 				Count = n;
 			}
 		}
 	}
 
-	void reserve( intp n )
+	void reserve(intp n)
 	{
-		if ( n > (intp) Capacity )
-			growto( n );
+		if (n > (intp) Capacity)
+			growto(n);
 	}
 
 	void clear()
@@ -122,15 +122,15 @@ protected:
 	void grow()
 	{
 		uintp ncap = std::max(Capacity * 2, (uintp) 2);
-		growto( ncap );
+		growto(ncap);
 	}
 
-	void growto( uintp ncap )
+	void growto(uintp ncap)
 	{
-		T* ndata = (T*) Pool->Alloc( sizeof(T) * ncap, false );
+		T* ndata = (T*) Pool->Alloc(sizeof(T) * ncap, false);
 		XOCHECKALLOC(ndata);
-		memcpy( ndata, Data, sizeof(T) * Capacity );
-		memset( ndata + Capacity, 0, sizeof(T) * (ncap - Capacity) );
+		memcpy(ndata, Data, sizeof(T) * Capacity);
+		memset(ndata + Capacity, 0, sizeof(T) * (ncap - Capacity));
 		Capacity = ncap;
 		Data = ndata;
 	}
@@ -202,31 +202,31 @@ protected:
 class XOAPI xoLifoBuf
 {
 public:
-			xoLifoBuf();
-			xoLifoBuf( size_t size );	// This simply calls Init(size)
-			~xoLifoBuf();
+	xoLifoBuf();
+	xoLifoBuf(size_t size);	// This simply calls Init(size)
+	~xoLifoBuf();
 
 	// Initialize the buffer.
 	// This will panic if the buffer is not empty.
-	void	Init( size_t size );
+	void	Init(size_t size);
 
 	// Allocate a new item.
 	// It is legal to allocate 0 bytes. You can then us Realloc to grow. Regardless
 	// of the size of your initial allocation, you must always call Free() on anything
 	// that you have Alloc'ed.
 	// This will panic if the buffer size is exhausted.
-	void*	Alloc( size_t bytes );
-	
+	void*	Alloc(size_t bytes);
+
 	// Grow the most recently allocated item to the specified size.
 	// This will panic if buf is not the most recently allocated item, or if the buffer size is exhausted.
-	void	Realloc( void* buf, size_t bytes );
+	void	Realloc(void* buf, size_t bytes);
 
 	// This is a less safe version of Realloc. The only check it performs is whether we will run out of space.
-	void	GrowLast( size_t moreBytes );
+	void	GrowLast(size_t moreBytes);
 
 	// Free the most recently allocated item
 	// This will panic if buf is not the most recently allocated item, and buf is not null.
-	void	Free( void* buf );
+	void	Free(void* buf);
 
 private:
 	podvec<intp>	ItemSizes;
@@ -244,43 +244,43 @@ template<typename T>
 class xoLifoVector
 {
 public:
-	xoLifoVector( xoLifoBuf& lifo )
+	xoLifoVector(xoLifoBuf& lifo)
 	{
 		Lifo = &lifo;
 	}
 	~xoLifoVector()
 	{
-		Lifo->Free( Items );
+		Lifo->Free(Items);
 	}
 
 	intp Size() const { return Count; }
 
 	T& Add()
 	{
-		AddN( 1 );
+		AddN(1);
 		return Back();
 	}
 
 	T& AddZeroed()
 	{
 		T& t = Add();
-		memset( &t, 0, sizeof(t) );
+		memset(&t, 0, sizeof(t));
 		return Back();
 	}
 
-	void AddN( intp numElementsToAdd )
+	void AddN(intp numElementsToAdd)
 	{
-		if ( Items == nullptr )
-			Items = (T*) Lifo->Alloc( numElementsToAdd * sizeof(T) );
+		if (Items == nullptr)
+			Items = (T*) Lifo->Alloc(numElementsToAdd * sizeof(T));
 		else
-			Lifo->GrowLast( numElementsToAdd * sizeof(T) );
+			Lifo->GrowLast(numElementsToAdd * sizeof(T));
 		Count += numElementsToAdd;
 	}
 
-	void Push( const T& t )
+	void Push(const T& t)
 	{
 		intp c = Count;
-		AddN( 1 );
+		AddN(1);
 		Items[c] = t;
 	}
 
@@ -295,13 +295,13 @@ public:
 		return Items[Count - 1];
 	}
 
-	xoLifoVector& operator+=( const T& t )
+	xoLifoVector& operator+=(const T& t)
 	{
-		Push( t );
+		Push(t);
 		return *this;
 	}
 
-	T& operator[]( intp i ) { return Items[i]; }
+	T& operator[](intp i) { return Items[i]; }
 
 private:
 	xoLifoBuf*	Lifo;
@@ -330,12 +330,12 @@ public:
 
 	~xoStack()
 	{
-		for ( intp i = 0; i < HighwaterMark; i++ )
+		for (intp i = 0; i < HighwaterMark; i++)
 			Items[i].~T();
-		free( Items );
+		free(Items);
 	}
 
-	void Init( intp capacity )
+	void Init(intp capacity)
 	{
 		XOASSERT(Items == nullptr);
 		Capacity = capacity;
@@ -346,9 +346,9 @@ public:
 	T& Add()
 	{
 		XOASSERT(Count < Capacity);
-		if ( Count == HighwaterMark )
+		if (Count == HighwaterMark)
 		{
-			new (Items + Count) T();
+			new(Items + Count) T();
 			HighwaterMark++;
 		}
 		Count++;
@@ -366,7 +366,7 @@ public:
 		return Items[Count - 1];
 	}
 
-	T& operator[]( intp i ) { return Items[i]; }
+	T& operator[](intp i) { return Items[i]; }
 };
 
 // Circular buffer
@@ -386,7 +386,7 @@ public:
 	xoRingBuf()
 	{
 	}
-	
+
 	~xoRingBuf()
 	{
 		free(Ring);
@@ -394,7 +394,7 @@ public:
 
 	T& PushHead()
 	{
-		if ( ((Head + 1) & Mask) == Tail )
+		if (((Head + 1) & Mask) == Tail)
 			Grow();
 		T& item = Ring[Head];
 		Head = (Head + 1) & Mask;
@@ -403,7 +403,7 @@ public:
 
 	const T& PopTail()
 	{
-		XOASSERTDEBUG( Head != Tail );
+		XOASSERTDEBUG(Head != Tail);
 		const T& item = Ring[Tail];
 		Tail = (Tail + 1) & Mask;
 		return item;
@@ -413,13 +413,13 @@ public:
 	// A value of 0 returns the head element.
 	// A value of 1 returns the head element - 1.
 	// etc
-	T& FromHead( int relative )
+	T& FromHead(int relative)
 	{
 		uint32 p = (Head - relative - 1) & Mask;
 		return Ring[p];
 	}
 
-	intp Size() const { return (intp) ((Head - Tail) & Mask); }
+	intp Size() const { return (intp)((Head - Tail) & Mask); }
 
 private:
 	T*			Ring = nullptr;
@@ -431,21 +431,21 @@ private:
 
 	void Grow()
 	{
-		if ( Ring == nullptr )
+		if (Ring == nullptr)
 		{
-			Ring = (T*) xoMallocOrDie( DefaultInitialSize * sizeof(T) );
+			Ring = (T*) xoMallocOrDie(DefaultInitialSize * sizeof(T));
 			Mask = DefaultInitialSize - 1;
 		}
 		else
 		{
 			uint32 orgSize = RingSize();
-			Ring = (T*) xoReallocOrDie( Ring, orgSize * 2 * sizeof(T) );
-			if ( Head < Tail )
+			Ring = (T*) xoReallocOrDie(Ring, orgSize * 2 * sizeof(T));
+			if (Head < Tail)
 			{
 				// Handle the scenario where the head is behind the tail (numerically)
 				// [  H T  ]   =>  [    T     H    ]
 				// [c - a b]   =>  [- - a b c - - -]
-				for ( uint32 i = 0; i < Head; i++ )
+				for (uint32 i = 0; i < Head; i++)
 					Ring[orgSize + i] = Ring[i];
 				Head += orgSize;
 			}

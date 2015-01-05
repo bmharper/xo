@@ -32,14 +32,14 @@ enum AbcThreadPriority
 	AbcThreadPriorityBackgroundEnd,
 };
 
-PAPI bool				AbcThreadCreate( AbcThreadFunc threadfunc, void* context, AbcThreadHandle& handle );
-PAPI bool				AbcThreadJoin( AbcThreadHandle handle );
-PAPI bool				AbcThreadJoinAndCloseHandle( AbcThreadHandle handle );
-PAPI void				AbcThreadCloseHandle( AbcThreadHandle handle );
+PAPI bool				AbcThreadCreate(AbcThreadFunc threadfunc, void* context, AbcThreadHandle& handle);
+PAPI bool				AbcThreadJoin(AbcThreadHandle handle);
+PAPI bool				AbcThreadJoinAndCloseHandle(AbcThreadHandle handle);
+PAPI void				AbcThreadCloseHandle(AbcThreadHandle handle);
 PAPI AbcThreadHandle	AbcThreadCurrent();
 PAPI AbcThreadID		AbcThreadCurrentID();
-PAPI bool				AbcThreadIDEqual( AbcThreadID a, AbcThreadID b );
+PAPI bool				AbcThreadIDEqual(AbcThreadID a, AbcThreadID b);
 // This is currently a no-op on linux
-PAPI void				AbcThreadSetPriority( AbcThreadHandle handle, AbcThreadPriority priority );
+PAPI void				AbcThreadSetPriority(AbcThreadHandle handle, AbcThreadPriority priority);
 
 #endif // ABC_THREAD_H_INCLUDED

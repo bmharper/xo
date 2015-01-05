@@ -58,7 +58,7 @@ public:
 	// Mutating operations
 	/////////////////////////////////////////////////////////////////////////////////////////////
 
-	void set(const vreal _x, const vreal _y) 
+	void set(const vreal _x, const vreal _y)
 	{
 		x = _x;
 		y = _y;
@@ -74,7 +74,7 @@ public:
 	void normalizeIfNotZero()
 	{
 		double lenSq = x * x + y * y;
-		if ( lenSq != 0 )
+		if (lenSq != 0)
 		{
 			double r = 1.0 / sqrt(lenSq);
 			x *= r;
@@ -104,7 +104,7 @@ public:
 	{
 		return x == v.x && y == v.y;
 	}
-	bool operator!=(const VecBase2T& v) const 
+	bool operator!=(const VecBase2T& v) const
 	{
 		return x != v.x || y != v.y;
 	}
@@ -115,7 +115,7 @@ public:
 	vreal size() const {
 		return sqrt(x*x + y*y);
 	}
-	
+
 	vreal distance(const VecBase2T &b) const	{ return sqrt((x-b.x)*(x-b.x) + (y-b.y)*(y-b.y)); }
 	vreal distance2d(const VecBase2T &b) const	{ return sqrt((x-b.x)*(x-b.x) + (y-b.y)*(y-b.y)); }
 	vreal distance3d(const VecBase2T &b) const	{ return sqrt((x-b.x)*(x-b.x) + (y-b.y)*(y-b.y)); }
@@ -127,7 +127,7 @@ public:
 	// makes sure all members are not NaN
 	bool checkNaN() const
 	{
-		if ( vec_IsNaN(x) || vec_IsNaN(y) )
+		if (vec_IsNaN(x) || vec_IsNaN(y))
 			return false;
 		return true;
 	}
@@ -135,12 +135,12 @@ public:
 	/// Only valid for Vec2T<double>. Checks whether we won't overflow if converted to float.
 	bool checkFloatOverflow() const
 	{
-		if (	x > FLT_MAX || x < -FLT_MAX ||
-				y > FLT_MAX || y < -FLT_MAX ) return false;
+		if (x > FLT_MAX || x < -FLT_MAX ||
+				y > FLT_MAX || y < -FLT_MAX) return false;
 		return true;
 	}
 
-	void copyTo( vreal *dst ) const
+	void copyTo(vreal *dst) const
 	{
 		dst[0] = x;
 		dst[1] = y;
@@ -168,10 +168,10 @@ public:
 	using VecBase2T<vreal>::y;
 
 	Vec2T()													{}
-	Vec2T( vreal _x, vreal _y )								{ x = _x; y = _y; }
-	Vec2T( const VecBase2T<vreal>& b )						{ x = b.x; y = b.y; }
+	Vec2T(vreal _x, vreal _y)								{ x = _x; y = _y; }
+	Vec2T(const VecBase2T<vreal>& b)						{ x = b.x; y = b.y; }
 
-	static Vec2T Create( vreal x, vreal y )
+	static Vec2T Create(vreal x, vreal y)
 	{
 		Vec2T v;
 		v.x = x;
@@ -180,13 +180,13 @@ public:
 	}
 
 	/// Returns a vector that is [cos(angle), sin(angle)]
-	static Vec2T AtAngle( vreal angle ) 
+	static Vec2T AtAngle(vreal angle)
 	{
-		return Vec2T::Create( cos(angle), sin(angle) );
+		return Vec2T::Create(cos(angle), sin(angle));
 	}
 
 	const Vec2T& AsVec2() const { return *this; }
-	      Vec2T& AsVec2()       { return *this; }
+	Vec2T& AsVec2()       { return *this; }
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Duplicated inside VecBase2T
@@ -217,83 +217,83 @@ public:
 	Vec2T operator-() const  {  return Vec2T(-x, -y);  }
 
 	/// Returns the result of sprintf
-	int ToStringABare( char* buff, size_t buffChars ) const
+	int ToStringABare(char* buff, size_t buffChars) const
 	{
 #ifdef _WIN32
-		return sprintf_s( buff, buffChars, Vec2Traits<vreal>::StringAFormatBare(), x, y );
+		return sprintf_s(buff, buffChars, Vec2Traits<vreal>::StringAFormatBare(), x, y);
 #else
-		return snprintf( buff, buffChars, Vec2Traits<vreal>::StringAFormatBare(), x, y );
+		return snprintf(buff, buffChars, Vec2Traits<vreal>::StringAFormatBare(), x, y);
 #endif
 	}
 
-	#ifndef NO_XSTRING
-		/// Writes "[ %g %g ]"
-		XString ToString() const
-		{
-			XString s;
-			s.Format( Vec2Traits<vreal>::StringFormat(), x, y );
-			return s;
-		}
+#ifndef NO_XSTRING
+	/// Writes "[ %g %g ]"
+	XString ToString() const
+	{
+		XString s;
+		s.Format(Vec2Traits<vreal>::StringFormat(), x, y);
+		return s;
+	}
 
-		/// Writes "%g %g"
-		XString ToStringBare() const
-		{
-			XString s;
-			s.Format( Vec2Traits<vreal>::StringFormatBare(), x, y );
-			return s;
-		}
+	/// Writes "%g %g"
+	XString ToStringBare() const
+	{
+		XString s;
+		s.Format(Vec2Traits<vreal>::StringFormatBare(), x, y);
+		return s;
+	}
 
-		/// Writes "[ %g %g ]" or "%g %g"
-		XString ToString( int significant_digits, bool bare = false ) const
-		{
-			XString f, s;
-			if ( bare ) f.Format( _T("%%.%dg %%.%dg"), significant_digits, significant_digits );
-			else		f.Format( _T("[ %%.%dg %%.%dg ]"), significant_digits, significant_digits );
-			s.Format( f, x, y );
-			return s;
-		}
+	/// Writes "[ %g %g ]" or "%g %g"
+	XString ToString(int significant_digits, bool bare = false) const
+	{
+		XString f, s;
+		if (bare) f.Format(_T("%%.%dg %%.%dg"), significant_digits, significant_digits);
+		else		f.Format(_T("[ %%.%dg %%.%dg ]"), significant_digits, significant_digits);
+		s.Format(f, x, y);
+		return s;
+	}
 
-		/// Parses "[ x y ]", "x y", "x,y"
-		bool Parse( const XString& str )
-		{
-			double a, b;
+	/// Parses "[ x y ]", "x y", "x,y"
+	bool Parse(const XString& str)
+	{
+		double a, b;
 #ifdef LM_VS2005_SECURE
-			if ( _stscanf_s( str, _T("[ %lf %lf ]"), &a, &b ) != 2 )
-			{
-				if ( _stscanf_s( str, _T("%lf %lf"), &a, &b ) != 2 )
-				{
-					if ( _stscanf_s( str, _T("%lf, %lf"), &a, &b ) != 2 )
-					{
-						return false;
-					}
-				}
-			}
-#else
-			if ( _stscanf( str, _T("[ %lf %lf ]"), &a, &b ) != 2 )
-			{
-				if ( _stscanf( str, _T("%lf %lf"), &a, &b ) != 2 )
-				{
-					if ( _stscanf( str, _T("%lf, %lf"), &a, &b ) != 2 )
-					{
-						return false;
-					}
-				}
-			}
-#endif
-			x = (vreal) a;
-			y = (vreal) b;
-			
-			return true;
-		}
-
-		static Vec2T FromString( const XString& str )
+		if (_stscanf_s(str, _T("[ %lf %lf ]"), &a, &b) != 2)
 		{
-			Vec2T v;
-			v.Parse( str );
-			return v;
+			if (_stscanf_s(str, _T("%lf %lf"), &a, &b) != 2)
+			{
+				if (_stscanf_s(str, _T("%lf, %lf"), &a, &b) != 2)
+				{
+					return false;
+				}
+			}
 		}
+#else
+		if (_stscanf(str, _T("[ %lf %lf ]"), &a, &b) != 2)
+		{
+			if (_stscanf(str, _T("%lf %lf"), &a, &b) != 2)
+			{
+				if (_stscanf(str, _T("%lf, %lf"), &a, &b) != 2)
+				{
+					return false;
+				}
+			}
+		}
+#endif
+		x = (vreal) a;
+		y = (vreal) b;
 
-	#endif 
+		return true;
+	}
+
+	static Vec2T FromString(const XString& str)
+	{
+		Vec2T v;
+		v.Parse(str);
+		return v;
+	}
+
+#endif
 
 };
 
@@ -303,7 +303,7 @@ template<typename vreal> inline Vec2T<vreal> operator*(const VecBase2T<vreal> &a
 template<typename vreal> inline Vec2T<vreal> operator+(const VecBase2T<vreal> &a, const VecBase2T<vreal> &b)		{ return Vec2T<vreal>(a.x + b.x, a.y + b.y); }
 template<typename vreal> inline Vec2T<vreal> operator-(const VecBase2T<vreal> &a, const VecBase2T<vreal> &b)		{ return Vec2T<vreal>(a.x - b.x, a.y - b.y); }
 template<typename vreal> inline Vec2T<vreal> operator/(const VecBase2T<vreal> &a, const VecBase2T<vreal> &b)		{ return Vec2T<vreal>(a.x / b.x, a.y / b.y); }
-template<typename vreal> inline Vec2T<vreal> operator/(const vreal s, const Vec2T<vreal> &b)						{ return Vec2T<vreal>(s   / b.x, s   / b.y ); }
+template<typename vreal> inline Vec2T<vreal> operator/(const vreal s, const Vec2T<vreal> &b)						{ return Vec2T<vreal>(s   / b.x, s   / b.y); }
 template<typename vreal> inline vreal        dot(const VecBase2T<vreal>& a, const VecBase2T<vreal>& b)				{ return a.x * b.x + a.y * b.y; }
 template<typename vreal> inline Vec2T<vreal> operator/(const VecBase2T<vreal> &a, const vreal s)					{ vreal rec = (vreal) 1.0 / s; return Vec2T<vreal>(a.x * rec, a.y * rec); }
 template<typename vreal> inline Vec2T<vreal> normalize(const VecBase2T<vreal>& a)									{ Vec2T<vreal> copy = a; copy.normalized(); return copy; }
@@ -344,9 +344,9 @@ typedef dvect< Vec2f > Vec2fVect;
 typedef dvect< Vec2d > Vec2dVect;
 #endif
 
-inline Vec2		ToVec2( vec2 v )  { return Vec2::Create( v.x, v.y ); }
-inline Vec2		ToVec2( Vec2f v ) { return Vec2::Create( v.x, v.y ); }
-inline Vec2f	ToVec2f( Vec2 v ) { return Vec2f::Create( (float) v.x, (float) v.y ); }
+inline Vec2		ToVec2(vec2 v)  { return Vec2::Create(v.x, v.y); }
+inline Vec2		ToVec2(Vec2f v) { return Vec2::Create(v.x, v.y); }
+inline Vec2f	ToVec2f(Vec2 v) { return Vec2f::Create((float) v.x, (float) v.y); }
 
 #include "VecUndef.h"
 #endif // DEFINED_Vec2

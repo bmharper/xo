@@ -17,11 +17,11 @@ static bool			Initialized = false;
 extern xoSysWnd*	SingleMainWnd;			// This is defined inside xoSysWnd.cpp
 
 // This is defined inside one of your app-specific .cpp files. It is your only entry point.
-void xoMain( xoSysWnd* wnd );
+void xoMain(xoSysWnd* wnd);
 
 // I am keeping this structure here merely to remind myself that we might want to support
 // a more complex application lifecycle than "one window"
-void xoMain( xoMainEvent ev )
+void xoMain(xoMainEvent ev)
 {
 	switch (ev)
 	{
@@ -39,15 +39,15 @@ void xoMain( xoMainEvent ev )
 
 extern "C" {
 	JNIEXPORT jint	JNICALL	JNI_OnLoad(JavaVM* vm, void* reserved);
-    JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_initXo(JNIEnv * env, jobject obj, jstring cacheDir, jfloat scaledDensity);
+	JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_initXo(JNIEnv * env, jobject obj, jstring cacheDir, jfloat scaledDensity);
 	JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_initSurface(JNIEnv * env, jobject obj, jint width, jint height, jfloat scaledDensity);
 	JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_surfacelost(JNIEnv * env, jobject obj);
-    JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_destroy(JNIEnv * env, jobject obj, jint iskilling);
-    JNIEXPORT int	JNICALL Java_com_android_xo_XoLib_render(JNIEnv * env, jobject obj);
-    JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_input(JNIEnv * env, jobject obj, jint type, jfloatArray x, jfloatArray y);
+	JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_destroy(JNIEnv * env, jobject obj, jint iskilling);
+	JNIEXPORT int	JNICALL Java_com_android_xo_XoLib_render(JNIEnv * env, jobject obj);
+	JNIEXPORT void	JNICALL Java_com_android_xo_XoLib_input(JNIEnv * env, jobject obj, jint type, jfloatArray x, jfloatArray y);
 };
 
-// Right now our Android applications can have only one window, 
+// Right now our Android applications can have only one window,
 // but we might have more windows if we were doing things such as
 // notifications or widgets.
 static xoOriginalEvent MakeEvent()
@@ -59,14 +59,14 @@ static xoOriginalEvent MakeEvent()
 
 static void ProcessAllEvents()
 {
-	while ( true )
+	while (true)
 	{
 		xoProcessDocQueue();
-		if ( !AbcSemaphoreWait( xoGlobal()->EventQueue.SemaphoreObj(), 0 ) )
+		if (!AbcSemaphoreWait(xoGlobal()->EventQueue.SemaphoreObj(), 0))
 			break;
 		xoOriginalEvent ev;
-		XOVERIFY( xoGlobal()->EventQueue.PopTail( ev ) );
-		ev.DocGroup->ProcessEvent( ev.Event );
+		XOVERIFY(xoGlobal()->EventQueue.PopTail(ev));
+		ev.DocGroup->ProcessEvent(ev.Event);
 	}
 }
 
@@ -76,84 +76,84 @@ static void ProcessAllEvents()
 // It is good to keep it in this style, because it means that in future we can switch
 // to a purely native application, where we DO control the message loop, and we want
 // to process UI on a dedicated thread, the same as we do for Win32 and X11.
-static void PostEvent( const xoOriginalEvent& ev )
+static void PostEvent(const xoOriginalEvent& ev)
 {
-	xoGlobal()->EventQueue.Add( ev );
+	xoGlobal()->EventQueue.Add(ev);
 	ProcessAllEvents();
 }
 
-static xoString GetString( JNIEnv* env, jstring jstr )
+static xoString GetString(JNIEnv* env, jstring jstr)
 {
-	const char* buf = env->GetStringUTFChars( jstr, nullptr );
+	const char* buf = env->GetStringUTFChars(jstr, nullptr);
 	xoString copy;
-	if ( buf != nullptr )
+	if (buf != nullptr)
 	{
 		copy = buf;
-		env->ReleaseStringUTFChars( jstr, buf );
+		env->ReleaseStringUTFChars(jstr, buf);
 	}
 	return copy;
 }
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
 {
-    JNIEnv* env;
-    if ( vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK )
-        return -1;
+	JNIEnv* env;
+	if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK)
+		return -1;
 
-    LOGI("JNI_OnLoad");
+	LOGI("JNI_OnLoad");
 
-    return JNI_VERSION_1_6;
+	return JNI_VERSION_1_6;
 }
 
 JNIEXPORT void JNICALL Java_com_android_xo_XoLib_initXo(JNIEnv * env, jobject obj, jstring cacheDir, jfloat scaledDensity)
 {
-    LOGI("XoLib_initXo 1");
-	if ( !Initialized )
+	LOGI("XoLib_initXo 1");
+	if (!Initialized)
 	{
 		Initialized = true;
-	    
+
 		LOGI("XoLib_init scaledDensity = %f", scaledDensity);
 
 		xoInitParams ip;
 		ip.EpToPixel = scaledDensity;
-		ip.CacheDir = GetString( env, cacheDir );
+		ip.CacheDir = GetString(env, cacheDir);
 
 		LOGI("XoLib_init 2");
-		xoInitialize( &ip );
+		xoInitialize(&ip);
 
 		LOGI("XoLib_init 3");
-		xoMain( xoMainEventInit );	// this is no-op
-	    
+		xoMain(xoMainEventInit);	// this is no-op
+
 		LOGI("XoLib_init 4");
 	}
 }
 
 JNIEXPORT void JNICALL Java_com_android_xo_XoLib_initSurface(JNIEnv * env, jobject obj, jint width, jint height, jfloat scaledDensity)
 {
-    LOGI("XoLib_initSurface 1 (%d, %d, %f)", width, height, scaledDensity);
+	LOGI("XoLib_initSurface 1 (%d, %d, %f)", width, height, scaledDensity);
 
-	if ( !Initialized )
+	if (!Initialized)
 	{
 		LOGE("XoLib_initSurface called, but initXo has not yet been called (or we have been shutdown)");
 		return;
 	}
-	
+
 	bool firstTime = SingleMainWnd == nullptr;
 
-	if ( firstTime )
+	if (firstTime)
 		SingleMainWnd = xoSysWnd::CreateWithDoc();
 
-	if ( SingleMainWnd != nullptr )
+	if (SingleMainWnd != nullptr)
 	{
-		SingleMainWnd->RelativeClientRect = xoBox( 0, 0, width, height );
+		SingleMainWnd->RelativeClientRect = xoBox(0, 0, width, height);
 		xoOriginalEvent ev = MakeEvent();
-		ev.Event.MakeWindowSize( width, height );
+		ev.Event.MakeWindowSize(width, height);
 		LOGI("XoLib_initSurface posting window size event");
-		PostEvent( ev );
-		if ( firstTime )
+		PostEvent(ev);
+		if (firstTime)
 		{
 			LOGI("XoLib_initSurface xoMain()");
-			xoMain( SingleMainWnd );
+			xoMain(SingleMainWnd);
 		}
 		LOGI("XoLib_initSurface done");
 	}
@@ -165,11 +165,11 @@ JNIEXPORT void JNICALL Java_com_android_xo_XoLib_initSurface(JNIEnv * env, jobje
 
 JNIEXPORT void JNICALL Java_com_android_xo_XoLib_destroy(JNIEnv * env, jobject obj, jint iskilling)
 {
-	if ( Initialized )
+	if (Initialized)
 	{
 		Initialized = false;
-	    LOGI("destroy");
-		xoMain( xoMainEventShutdown );	// this is a no-op
+		LOGI("destroy");
+		xoMain(xoMainEventShutdown);	// this is a no-op
 		xoShutdown();
 	}
 }
@@ -177,13 +177,13 @@ JNIEXPORT void JNICALL Java_com_android_xo_XoLib_destroy(JNIEnv * env, jobject o
 JNIEXPORT void JNICALL Java_com_android_xo_XoLib_surfacelost(JNIEnv * env, jobject obj)
 {
 	LOGI("XoLib_surfacelost");
-	if ( SingleMainWnd )
+	if (SingleMainWnd)
 		SingleMainWnd->SurfaceLost();
 }
 
 JNIEXPORT int JNICALL Java_com_android_xo_XoLib_render(JNIEnv * env, jobject obj)
 {
-	if ( SingleMainWnd )
+	if (SingleMainWnd)
 	{
 		//LOGI("render 1 %d %d", Proc->Doc->WindowWidth, Proc->Doc->WindowHeight );
 		//SingleMainWnd->DocGroup->RenderDoc->CopyFromCanonical( *SingleMainWnd->DocGroup->Doc );
@@ -200,32 +200,32 @@ JNIEXPORT int JNICALL Java_com_android_xo_XoLib_render(JNIEnv * env, jobject obj
 
 JNIEXPORT void JNICALL Java_com_android_xo_XoLib_input(JNIEnv * env, jobject obj, jint type, jfloatArray x, jfloatArray y)
 {
-    jfloat* xe = env->GetFloatArrayElements( x, 0 );
-	jfloat* ye = env->GetFloatArrayElements( y, 0 );
-	int n = env->GetArrayLength( x );
-	
+	jfloat* xe = env->GetFloatArrayElements(x, 0);
+	jfloat* ye = env->GetFloatArrayElements(y, 0);
+	int n = env->GetArrayLength(x);
+
 	/*
 	if ( n > 0 )   LOGI( "cool %d. element 0: %f %f\n", n, xe[0], ye[0] );
-    else           LOGI( "none\n" );
-    if ( n >= 1 )   RED = fmod( xe[0], 300.0f ) / 300.0f;
-    if ( n >= 2 )   GREEN = fmod( xe[0], 300.0f ) / 300.0f;
-    if ( n >= 3 )   BLUE = fmod( xe[0], 300.0f ) / 300.0f;
+	else           LOGI( "none\n" );
+	if ( n >= 1 )   RED = fmod( xe[0], 300.0f ) / 300.0f;
+	if ( n >= 2 )   GREEN = fmod( xe[0], 300.0f ) / 300.0f;
+	if ( n >= 3 )   BLUE = fmod( xe[0], 300.0f ) / 300.0f;
 	*/
-	if ( SingleMainWnd )
+	if (SingleMainWnd)
 	{
-	    //LOGI("dispatching touch input %d", type);
+		//LOGI("dispatching touch input %d", type);
 
 		xoOriginalEvent ev = MakeEvent();
 		ev.Event.Type = xoEventTouch;
 		ev.Event.PointCount = n;
-		for ( int i = 0; i < n; i++ )
+		for (int i = 0; i < n; i++)
 		{
 			ev.Event.Points[i].x = xe[i];
 			ev.Event.Points[i].y = ye[i];
 		}
-		PostEvent( ev );
+		PostEvent(ev);
 	}
 
-    env->ReleaseFloatArrayElements( x, xe, 0 );
-	env->ReleaseFloatArrayElements( y, ye, 0 );
+	env->ReleaseFloatArrayElements(x, xe, 0);
+	env->ReleaseFloatArrayElements(y, ye, 0);
 }

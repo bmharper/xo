@@ -1,14 +1,14 @@
 #pragma once
 
 #ifdef _WIN32
-	#define _CRT_SECURE_NO_WARNINGS 1
-	#ifndef _CRTDBG_MAP_ALLOC
-		#define _CRTDBG_MAP_ALLOC
-	#endif
-	#include <stdlib.h>
-	#include <crtdbg.h>
-	#include <WinSock2.h>
-	#include <windows.h>
+#define _CRT_SECURE_NO_WARNINGS 1
+#ifndef _CRTDBG_MAP_ALLOC
+#define _CRTDBG_MAP_ALLOC
+#endif
+#include <stdlib.h>
+#include <crtdbg.h>
+#include <WinSock2.h>
+#include <windows.h>
 #endif
 
 #include "../xo/xo.h"

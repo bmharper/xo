@@ -8,7 +8,7 @@
 #include "../Image/xoImage.h"
 #include "../Dom/xoDomCanvas.h"
 
-xoRenderResult xoRenderer::Render( const xoDoc* doc, xoImageStore* images, xoStringTable* strings, xoRenderBase* driver, const xoRenderDomNode* root )
+xoRenderResult xoRenderer::Render(const xoDoc* doc, xoImageStore* images, xoStringTable* strings, xoRenderBase* driver, const xoRenderDomNode* root)
 {
 	Doc = doc;
 	Driver = driver;
@@ -18,7 +18,7 @@ xoRenderResult xoRenderer::Render( const xoDoc* doc, xoImageStore* images, xoStr
 	Driver->PreRender();
 
 	// This phase is probably worth parallelizing
-	RenderEl( xoPoint(0,0), root );
+	RenderEl(xoPoint(0,0), root);
 	// After RenderNode we are serial again.
 
 	Driver->PostRenderCleanup();
@@ -29,37 +29,37 @@ xoRenderResult xoRenderer::Render( const xoDoc* doc, xoImageStore* images, xoStr
 	return needGlyphs ? xoRenderResultNeedMore : xoRenderResultIdle;
 }
 
-void xoRenderer::RenderEl( xoPoint base, const xoRenderDomEl* el )
+void xoRenderer::RenderEl(xoPoint base, const xoRenderDomEl* el)
 {
-	if ( el->Tag == xoTagText )
+	if (el->Tag == xoTagText)
 	{
-		xoPoint newBase = base + xoPoint( el->Pos.Left, el->Pos.Top );
-		RenderText( newBase, static_cast<const xoRenderDomText*>(el) );
+		xoPoint newBase = base + xoPoint(el->Pos.Left, el->Pos.Top);
+		RenderText(newBase, static_cast<const xoRenderDomText*>(el));
 	}
 	else
 	{
 		const xoRenderDomNode* node = static_cast<const xoRenderDomNode*>(el);
-		RenderNode( base, node );
-		xoPoint newBase = base + xoPoint( node->Pos.Left, node->Pos.Top );
-		for ( intp i = 0; i < node->Children.size(); i++ )
-			RenderEl( newBase, node->Children[i] );
+		RenderNode(base, node);
+		xoPoint newBase = base + xoPoint(node->Pos.Left, node->Pos.Top);
+		for (intp i = 0; i < node->Children.size(); i++)
+			RenderEl(newBase, node->Children[i]);
 	}
 }
 
-void xoRenderer::RenderNode( xoPoint base, const xoRenderDomNode* node )
+void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 {
 	// always shade rectangles well
 	const bool alwaysGoodRects = true;
 
 	const xoStyleRender* style = &node->Style;
 	xoBox pos = node->Pos;
-	pos.Offset( base );
+	pos.Offset(base);
 	xoBoxF border = style->BorderSize.ToRealBox();
 	xoBoxF padding = style->Padding.ToRealBox();
-	float bottom = xoPosToReal( pos.Bottom ) + border.Bottom + padding.Bottom;
-	float top = xoPosToReal( pos.Top ) - border.Top - padding.Top;
-	float left = xoPosToReal( pos.Left ) - border.Left - padding.Left;
-	float right = xoPosToReal( pos.Right ) + border.Right + padding.Right;
+	float bottom = xoPosToReal(pos.Bottom) + border.Bottom + padding.Bottom;
+	float top = xoPosToReal(pos.Top) - border.Top - padding.Top;
+	float left = xoPosToReal(pos.Left) - border.Left - padding.Left;
+	float right = xoPosToReal(pos.Right) + border.Right + padding.Right;
 
 	float radius = style->BorderRadius;
 	bool useRectShader = alwaysGoodRects || radius != 0;
@@ -70,13 +70,13 @@ void xoRenderer::RenderNode( xoPoint base, const xoRenderDomNode* node )
 	mindim = xoMax(mindim, 0.0f);
 	radius = xoMin(radius, mindim / 2);
 
-	if ( mindim <= 0 )
+	if (mindim <= 0)
 		return;
 
 	float padU = 0;
 	float padV = 0;
 	float pad = useRectShader ? 1.0f : 0.0f;
-	if ( pad != 0 )
+	if (pad != 0)
 	{
 		padU = pad / width;
 		padV = pad / height;
@@ -96,84 +96,84 @@ void xoRenderer::RenderNode( xoPoint base, const xoRenderDomNode* node )
 	//auto bg = style.Get( xoCatBackground );
 	//auto bgImage = style.Get( xoCatBackgroundImage );
 	xoColor bg = style->BackgroundColor;
-	const char* bgImage = Strings->GetStr( style->BackgroundImageID );
-	if ( bg.a != 0 )
+	const char* bgImage = Strings->GetStr(style->BackgroundImageID);
+	if (bg.a != 0)
 	{
-		for ( int i = 0; i < 4; i++ )
+		for (int i = 0; i < 4; i++)
 			corners[i].Color = bg.GetRGBA();
 
-		if ( useRectShader )
+		if (useRectShader)
 		{
-			Driver->ActivateShader( xoShaderRect );
-			Driver->ShaderPerObject.Box = xoVec4f( left, top, right, bottom );
+			Driver->ActivateShader(xoShaderRect);
+			Driver->ShaderPerObject.Box = xoVec4f(left, top, right, bottom);
 			//Driver->ShaderPerObject.Border = xoVec4f( border.Left, border.Top, border.Right, border.Bottom );
-			Driver->ShaderPerObject.Border = xoVec4f( border.Left + 0.5f, border.Top + 0.5f, border.Right + 0.5f, border.Bottom + 0.5f );
+			Driver->ShaderPerObject.Border = xoVec4f(border.Left + 0.5f, border.Top + 0.5f, border.Right + 0.5f, border.Bottom + 0.5f);
 			//Driver->ShaderPerObject.Border = xoVec4f( border.Left - 0.5f, border.Top - 0.5f, border.Right - 0.5f, border.Bottom - 0.5f );
 			Driver->ShaderPerObject.Radius = radius + 0.5f; // see the shader for an explanation of this 0.5
 			Driver->ShaderPerObject.BorderColor = style->BorderColor.GetVec4Linear();
-			Driver->DrawQuad( corners );
+			Driver->DrawQuad(corners);
 		}
 		else
 		{
-			if ( bgImage[0] != 0 )
+			if (bgImage[0] != 0)
 			{
-				Driver->ActivateShader( xoShaderFillTex );
-				if ( !LoadTexture( Images->GetOrNull( bgImage ), TexUnit0 ) )
+				Driver->ActivateShader(xoShaderFillTex);
+				if (!LoadTexture(Images->GetOrNull(bgImage), TexUnit0))
 					return;
-				Driver->DrawQuad( corners );
+				Driver->DrawQuad(corners);
 			}
 			else
 			{
-				Driver->ActivateShader( xoShaderFill );
-				Driver->DrawQuad( corners );
+				Driver->ActivateShader(xoShaderFill);
+				Driver->DrawQuad(corners);
 			}
 		}
 	}
 
-	if ( node->IsCanvas() )
+	if (node->IsCanvas())
 	{
-		for ( int i = 0; i < 4; i++ )
+		for (int i = 0; i < 4; i++)
 			corners[i].Color = 0xffffffff; // could be used to tint the canvas
 
-		const xoDomCanvas* canvas = static_cast<const xoDomCanvas*>(Doc->GetChildByInternalID( node->InternalID ));
-		xoImage* canvasImage = Images->Get( canvas->GetCanvasImageName() );
-		if ( canvasImage != nullptr )
+		const xoDomCanvas* canvas = static_cast<const xoDomCanvas*>(Doc->GetChildByInternalID(node->InternalID));
+		xoImage* canvasImage = Images->Get(canvas->GetCanvasImageName());
+		if (canvasImage != nullptr)
 		{
-			Driver->ActivateShader( xoShaderFillTex );
-			if ( LoadTexture( canvasImage, TexUnit0 ) )
-				Driver->DrawQuad( corners );
+			Driver->ActivateShader(xoShaderFillTex);
+			if (LoadTexture(canvasImage, TexUnit0))
+				Driver->DrawQuad(corners);
 		}
 	}
 }
 
-void xoRenderer::RenderText( xoPoint base, const xoRenderDomText* node )
+void xoRenderer::RenderText(xoPoint base, const xoRenderDomText* node)
 {
 	bool subPixelGlyphs = node->Flags & xoRenderDomText::FlagSubPixelGlyphs;
-	for ( intp i = 0; i < node->Text.size(); i++ )
+	for (intp i = 0; i < node->Text.size(); i++)
 	{
-		if ( subPixelGlyphs )
-			RenderTextChar_SubPixel( base, node, node->Text[i] );
+		if (subPixelGlyphs)
+			RenderTextChar_SubPixel(base, node, node->Text[i]);
 		else
-			RenderTextChar_WholePixel( base, node, node->Text[i] );
+			RenderTextChar_WholePixel(base, node, node->Text[i]);
 	}
 }
 
-void xoRenderer::RenderTextChar_SubPixel( xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl )
+void xoRenderer::RenderTextChar_SubPixel(xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl)
 {
-	xoGlyphCacheKey glyphKey( node->FontID, txtEl.Char, node->FontSizePx, xoGlyphFlag_SubPixel_RGB );
-	const xoGlyph* glyph = xoGlobal()->GlyphCache->GetGlyph( glyphKey );
-	if ( !glyph )
+	xoGlyphCacheKey glyphKey(node->FontID, txtEl.Char, node->FontSizePx, xoGlyphFlag_SubPixel_RGB);
+	const xoGlyph* glyph = xoGlobal()->GlyphCache->GetGlyph(glyphKey);
+	if (!glyph)
 	{
-		GlyphsNeeded.insert( glyphKey );
+		GlyphsNeeded.insert(glyphKey);
 		return;
 	}
 
-	xoTextureAtlas* atlas = xoGlobal()->GlyphCache->GetAtlasMutable( glyph->AtlasID );
+	xoTextureAtlas* atlas = xoGlobal()->GlyphCache->GetAtlasMutable(glyph->AtlasID);
 	float atlasScaleX = 1.0f / atlas->GetWidth();
 	float atlasScaleY = 1.0f / atlas->GetHeight();
 
-	float top = xoPosToReal( xoPosRound(base.Y + txtEl.Y) );
-	float left = xoPosToReal( base.X + txtEl.X );
+	float top = xoPosToReal(xoPosRound(base.Y + txtEl.Y));
+	float left = xoPosToReal(base.X + txtEl.X);
 
 	// Our glyph has a single column on the left and right side, so that our clamped texture
 	// reads will pickup a zero when reading off beyond the edge of the glyph
@@ -231,34 +231,34 @@ void xoRenderer::RenderTextChar_SubPixel( xoPoint base, const xoRenderDomText* n
 
 	uint32 color = node->Color.GetRGBA();
 
-	for ( int i = 0; i < 4; i++ )
+	for (int i = 0; i < 4; i++)
 	{
 		corners[i].Color = color;
 		corners[i].V4 = clamp;
 	}
 
-	Driver->ActivateShader( xoShaderTextRGB );
-	if ( !LoadTexture( atlas, TexUnit0 ) )
+	Driver->ActivateShader(xoShaderTextRGB);
+	if (!LoadTexture(atlas, TexUnit0))
 		return;
-	Driver->DrawQuad( corners );
+	Driver->DrawQuad(corners);
 }
 
-void xoRenderer::RenderTextChar_WholePixel( xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl )
+void xoRenderer::RenderTextChar_WholePixel(xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl)
 {
-	xoGlyphCacheKey glyphKey( node->FontID, txtEl.Char, node->FontSizePx, 0 );
-	const xoGlyph* glyph = xoGlobal()->GlyphCache->GetGlyph( glyphKey );
-	if ( !glyph )
+	xoGlyphCacheKey glyphKey(node->FontID, txtEl.Char, node->FontSizePx, 0);
+	const xoGlyph* glyph = xoGlobal()->GlyphCache->GetGlyph(glyphKey);
+	if (!glyph)
 	{
-		GlyphsNeeded.insert( glyphKey );
+		GlyphsNeeded.insert(glyphKey);
 		return;
 	}
 
-	xoTextureAtlas* atlas = xoGlobal()->GlyphCache->GetAtlasMutable( glyph->AtlasID );
+	xoTextureAtlas* atlas = xoGlobal()->GlyphCache->GetAtlasMutable(glyph->AtlasID);
 	float atlasScaleX = 1.0f / atlas->GetWidth();
 	float atlasScaleY = 1.0f / atlas->GetHeight();
 
-	float top = xoPosToReal( base.Y + txtEl.Y );
-	float left = xoPosToReal( base.X + txtEl.X );
+	float top = xoPosToReal(base.Y + txtEl.Y);
+	float left = xoPosToReal(base.X + txtEl.X);
 
 	// a single pixel of padding is necessary to ensure that we're not short-sampling
 	// the edges of the glyphs
@@ -267,13 +267,13 @@ void xoRenderer::RenderTextChar_WholePixel( xoPoint base, const xoRenderDomText*
 	// We only use whole pixel rendering on high resolution devices, and glyph sizes, as measured
 	// in device pixels, are always high enough that it ends up being more important to have sub-pixel
 	// positioning than to render the glyphs without any resampling.
-	// 
+	//
 	//                       Snapping On                                 Snapping Off
 	// Rendering             Crisper, because no resampling              Fuzzier, because of resampling
 	// Positioning           Text cannot be positioned sub-pixel         Text can be positioned with sub-pixel accuracy in X and Y
 
 	bool snapToWholePixels = false;
-	if ( snapToWholePixels )
+	if (snapToWholePixels)
 	{
 		left = (float) floor(left + 0.5f);
 		top = (float) floor(top + 0.5f);
@@ -303,25 +303,25 @@ void xoRenderer::RenderTextChar_WholePixel( xoPoint base, const xoRenderDomText*
 
 	uint32 color = node->Color.GetRGBA();
 
-	for ( int i = 0; i < 4; i++ )
+	for (int i = 0; i < 4; i++)
 		corners[i].Color = color;
 
-	Driver->ActivateShader( xoShaderTextWhole );
-	if ( !LoadTexture( atlas, TexUnit0 ) )
+	Driver->ActivateShader(xoShaderTextWhole);
+	if (!LoadTexture(atlas, TexUnit0))
 		return;
-	Driver->DrawQuad( corners );
+	Driver->DrawQuad(corners);
 }
 
 void xoRenderer::RenderGlyphsNeeded()
 {
-	for ( auto it = GlyphsNeeded.begin(); it != GlyphsNeeded.end(); it++ )
-		xoGlobal()->GlyphCache->RenderGlyph( *it );
+	for (auto it = GlyphsNeeded.begin(); it != GlyphsNeeded.end(); it++)
+		xoGlobal()->GlyphCache->RenderGlyph(*it);
 	GlyphsNeeded.clear();
 }
 
-bool xoRenderer::LoadTexture( xoTexture* tex, TexUnits texUnit )
+bool xoRenderer::LoadTexture(xoTexture* tex, TexUnits texUnit)
 {
-	if ( !Driver->LoadTexture(tex, texUnit) )
+	if (!Driver->LoadTexture(tex, texUnit))
 		return false;
 
 	tex->TexClearInvalidRect();

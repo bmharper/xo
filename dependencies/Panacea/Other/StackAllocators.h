@@ -7,216 +7,216 @@
 
 namespace AbCore
 {
-	typedef void* (*CxAllocFunc)	( void* context, size_t bytes );
-	typedef void (*CxFreeFunc)		( void* context, void* ptr );
-	inline void* CxAllocFunc_Default	( void* context, size_t bytes ) { return malloc(bytes); }
-	inline void CxFreeFunc_Default		( void* context, void* ptr )	{ free(ptr); }
+typedef void* (*CxAllocFunc)(void* context, size_t bytes);
+typedef void (*CxFreeFunc)(void* context, void* ptr);
+inline void* CxAllocFunc_Default(void* context, size_t bytes) { return malloc(bytes); }
+inline void CxFreeFunc_Default(void* context, void* ptr)	{ free(ptr); }
 
-	struct ABC_ALIGN(16) Bytes16Aligned
+struct ABC_ALIGN(16) Bytes16Aligned
+{
+	int64 Space[4];
+};
+
+struct IAllocator
+{
+	virtual void* Alloc(size_t bytes) = 0;
+	virtual void Free(void* ptr) = 0;
+};
+
+struct DefaultAllocator : public IAllocator
+{
+	virtual void* Alloc(size_t bytes)		{ return malloc(bytes); }
+	virtual void Free(void* ptr)			{ return free(ptr); }
+};
+
+/** Allocator that initially uses a single fixed-size block off the stack, and thereafter goes to the general heap.
+**/
+struct SingleStackAllocator : public IAllocator
+{
+	virtual void* Alloc(size_t bytes)
 	{
-		int64 Space[4];
-	};
+		if (bytes <= StackBlockSize) { StackBlockSize = 0; return StackBlock; }
+		else return malloc(bytes);
+	}
 
-	struct IAllocator
+	virtual void Free(void* ptr)
 	{
-		virtual void* Alloc( size_t bytes ) = 0;
-		virtual void Free( void* ptr ) = 0;
-	};
+		if (ptr != StackBlock)
+			free(ptr);
+	}
 
-	struct DefaultAllocator : public IAllocator
+	SingleStackAllocator(void* block, size_t bytes)
 	{
-		virtual void* Alloc( size_t bytes )		{ return malloc(bytes); }
-		virtual void Free( void* ptr )			{ return free(ptr); }
-	};
+		StackBlock = block;
+		StackBlockSize = bytes;
+	}
 
-	/** Allocator that initially uses a single fixed-size block off the stack, and thereafter goes to the general heap.
-	**/
-	struct SingleStackAllocator : public IAllocator
+	void Init(void* block, size_t bytes)
 	{
-		virtual void* Alloc( size_t bytes )
-		{
-			if ( bytes <= StackBlockSize ) { StackBlockSize = 0; return StackBlock; }
-			else return malloc(bytes);
-		}
+		StackBlock = block;
+		StackBlockSize = bytes;
+	}
 
-		virtual void Free( void* ptr )
-		{
-			if ( ptr != StackBlock )
-				free(ptr);
-		}
+	void* StackBlock;
+	size_t StackBlockSize;
+};
 
-		SingleStackAllocator( void* block, size_t bytes )
-		{
-			StackBlock = block;
-			StackBlockSize = bytes;
-		}
+template< typename TData >
+class CxStack
+{
+public:
+	typedef unsigned int TRef;
+	AbCore::IAllocator*		Allocator;
+	TData*					Data;
+	TRef					Capacity, Count;
 
-		void Init( void* block, size_t bytes )
-		{
-			StackBlock = block;
-			StackBlockSize = bytes;
-		}
-		
-		void* StackBlock;
-		size_t StackBlockSize;
-	};
-
-	template< typename TData >
-	class CxStack
+	CxStack()
 	{
-	public:
-		typedef unsigned int TRef;
-		AbCore::IAllocator*		Allocator;
-		TData*					Data;
-		TRef					Capacity, Count;
+		Allocator = NULL;
+		Data = NULL;
+		Count = 0;
+		Capacity = 0;
+	}
 
-		CxStack()
-		{
-			Allocator = NULL;
-			Data = NULL;
-			Count = 0;
-			Capacity = 0;
-		}
-
-		~CxStack()
-		{
-			Allocator->Free( Data );
-		}
-
-		TData& operator[]( int i ) { return Data[i]; }
-
-		TData& Back() { return Data[Count - 1]; }
-
-		void Clear()
-		{
-			Allocator->Free( Data );
-			Data = NULL;
-			Count = 0;
-			Capacity = 0;
-		}
-
-		TRef Size() { return Count; }
-
-		void Reserve( int n )
-		{
-			ABCASSERT( Capacity == 0 && Data == NULL );
-			Data = (TData*) Allocator->Alloc( n * sizeof(TData) );
-			Capacity = n;
-		}
-
-		void Resize( int n )
-		{
-			ABCASSERT( Count == 0 );
-			if ( (TRef) n > Capacity )
-				Grow( n );
-			Count = n;
-		}
-
-		void Push( const TData& d )
-		{
-			if ( Count == Capacity ) Grow(1);
-			Data[Count++] = d;
-		}
-
-		void Pop()
-		{
-			ABCASSERT( Count > 0 );
-			Count--;
-		}
-
-	protected:
-
-		void Grow( TRef needed )
-		{
-			TRef ocap = Capacity;
-			if ( Capacity == 0 ) Capacity = 1;
-			else Capacity = Capacity * 2;
-			if ( needed > Capacity )
-				Capacity = needed;
-			TData* d = (TData*) Allocator->Alloc( Capacity * sizeof(TData) );
-			memcpy( d, Data, ocap * sizeof(TData) );
-			Allocator->Free( Data );
-			Data = d;
-		}
-
-	};
-
-	/// Contiguous block of memory, initially on the stack, then on the heap
-	// NOTE! It's probably easier to use smallvec_stack. This was a dumb thing to create.
-	// Actually... not so entirely. This thing is in fact useful when you want the size of your stack buffer to be independent of the container.
-	// See also StackBufferT, below.
-	class StackBuffer
+	~CxStack()
 	{
-	public:
-		typedef unsigned char byte;
-		byte*		Buffer;		// The buffer
-		size_t		Pos;		// The number of bytes appended
-		size_t		Capacity;	// Capacity of 'Buffer'
-		bool		OwnBuffer;	// If true, then our destructor does "free(Buffer)"
+		Allocator->Free(Data);
+	}
 
-		template< typename TBuf, size_t elements >
-		StackBuffer( TBuf (&stack_buffer)[elements] )
+	TData& operator[](int i) { return Data[i]; }
+
+	TData& Back() { return Data[Count - 1]; }
+
+	void Clear()
+	{
+		Allocator->Free(Data);
+		Data = NULL;
+		Count = 0;
+		Capacity = 0;
+	}
+
+	TRef Size() { return Count; }
+
+	void Reserve(int n)
+	{
+		ABCASSERT(Capacity == 0 && Data == NULL);
+		Data = (TData*) Allocator->Alloc(n * sizeof(TData));
+		Capacity = n;
+	}
+
+	void Resize(int n)
+	{
+		ABCASSERT(Count == 0);
+		if ((TRef) n > Capacity)
+			Grow(n);
+		Count = n;
+	}
+
+	void Push(const TData& d)
+	{
+		if (Count == Capacity) Grow(1);
+		Data[Count++] = d;
+	}
+
+	void Pop()
+	{
+		ABCASSERT(Count > 0);
+		Count--;
+	}
+
+protected:
+
+	void Grow(TRef needed)
+	{
+		TRef ocap = Capacity;
+		if (Capacity == 0) Capacity = 1;
+		else Capacity = Capacity * 2;
+		if (needed > Capacity)
+			Capacity = needed;
+		TData* d = (TData*) Allocator->Alloc(Capacity * sizeof(TData));
+		memcpy(d, Data, ocap * sizeof(TData));
+		Allocator->Free(Data);
+		Data = d;
+	}
+
+};
+
+/// Contiguous block of memory, initially on the stack, then on the heap
+// NOTE! It's probably easier to use smallvec_stack. This was a dumb thing to create.
+// Actually... not so entirely. This thing is in fact useful when you want the size of your stack buffer to be independent of the container.
+// See also StackBufferT, below.
+class StackBuffer
+{
+public:
+	typedef unsigned char byte;
+	byte*		Buffer;		// The buffer
+	size_t		Pos;		// The number of bytes appended
+	size_t		Capacity;	// Capacity of 'Buffer'
+	bool		OwnBuffer;	// If true, then our destructor does "free(Buffer)"
+
+	template< typename TBuf, size_t elements >
+	StackBuffer(TBuf(&stack_buffer)[elements])
+	{
+		OwnBuffer = false;
+		Pos = 0;
+		Buffer = (byte*) stack_buffer;
+		Capacity = sizeof(stack_buffer[0]) * elements;
+	}
+
+	~StackBuffer()
+	{
+		if (OwnBuffer) free(Buffer);
+	}
+
+	void Reserve(size_t bytes)
+	{
+		if (Pos + bytes > Capacity)
 		{
-			OwnBuffer = false;
-			Pos = 0;
-			Buffer = (byte*) stack_buffer;
-			Capacity = sizeof(stack_buffer[0]) * elements;
+			size_t ncap = Capacity * 2;
+			if (ncap < Pos + bytes) ncap = Pos + bytes;
+			byte* nbuf = (byte*) AbcMallocOrDie(ncap);
+			memcpy(nbuf, Buffer, Pos);
+			Capacity = ncap;
+			if (OwnBuffer) free(Buffer);
+			OwnBuffer = true;
+			Buffer = nbuf;
 		}
+	}
 
-		~StackBuffer()
-		{
-			if ( OwnBuffer ) free(Buffer);
-		}
+	/// Current position
+	byte* Current()					{ return Buffer + Pos; }
 
-		void Reserve( size_t bytes )
-		{
-			if ( Pos + bytes > Capacity )
-			{
-				size_t ncap = Capacity * 2;
-				if ( ncap < Pos + bytes ) ncap = Pos + bytes;
-				byte* nbuf = (byte*) AbcMallocOrDie( ncap );
-				memcpy( nbuf, Buffer, Pos );
-				Capacity = ncap;
-				if ( OwnBuffer ) free(Buffer);
-				OwnBuffer = true;
-				Buffer = nbuf;
-			}
-		}
+	template< typename T >
+	T* TCurrent()					{ return (T*)(Buffer + Pos); }
 
-		/// Current position
-		byte* Current()					{ return Buffer + Pos; }
+	template< typename T >
+	T& TItem(int el)				{ return ((T*) Buffer)[el]; }
 
-		template< typename T >
-		T* TCurrent()					{ return (T*) (Buffer + Pos); }
+	template< typename T >
+	int TSize() const				{ return int(Pos / sizeof(T)); }
 
-		template< typename T >
-		T& TItem( int el )				{ return ((T*) Buffer)[el]; }
+	void MoveCurrentPos(intp bytes)	{ Pos += bytes; ABCASSERT(Pos <= Capacity); }
 
-		template< typename T >
-		int TSize() const				{ return int(Pos / sizeof(T)); }
+	byte* Add(size_t bytes)
+	{
+		Reserve(bytes);
+		byte* p = Buffer + Pos;
+		Pos += bytes;
+		return p;
+	}
 
-		void MoveCurrentPos( intp bytes )	{ Pos += bytes; ABCASSERT(Pos <= Capacity); }
+	void Add(const void* p, size_t bytes)
+	{
+		memcpy(Add(bytes), p, bytes);
+	}
 
-		byte* Add( size_t bytes )
-		{
-			Reserve( bytes );
-			byte* p = Buffer + Pos;
-			Pos += bytes;
-			return p;
-		}
+	template< typename T >
+	void AddItem(const T& v)
+	{
+		Add(&v, sizeof(v));
+	}
 
-		void Add( const void* p, size_t bytes )
-		{
-			memcpy( Add(bytes), p, bytes );
-		}
-
-		template< typename T >
-		void AddItem( const T& v )
-		{
-			Add( &v, sizeof(v) );
-		}
-
-	};
+};
 }
 
 //	Usage pattern:
@@ -225,7 +225,7 @@ namespace AbCore
 //		..
 //		zbuf.Init(n);					-- Call Init ONCE
 //		zbuf[i..n] = xyz;
-// 
+//
 //	You can also use the parameterized constructor, which simply calls Init()
 
 template < typename VT, size_t TStaticSize >
@@ -245,7 +245,7 @@ public:
 		Data = NULL;
 	}
 
-	StackBufferT( int s )
+	StackBufferT(int s)
 	{
 		Data = NULL;
 		Init(s);
@@ -253,18 +253,18 @@ public:
 
 	~StackBufferT()
 	{
-		if ( Data != Static ) delete[] Data;
+		if (Data != Static) delete[] Data;
 	}
 
-	void Init( int s )
+	void Init(int s)
 	{
 		Count = s;
-		if ( Count > TStaticSize )
+		if (Count > TStaticSize)
 			Data = new VT[Count];
 		else
 			Data = Static;
 	}
-	void Fill( const VT& v )		{ for ( u32 i = 0; i < Count; i++ ) Data[i] = v; }
+	void Fill(const VT& v)		{ for (u32 i = 0; i < Count; i++) Data[i] = v; }
 
 	operator VT*()					{ return Data; }
 };

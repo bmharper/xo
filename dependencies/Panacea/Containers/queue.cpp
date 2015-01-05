@@ -11,77 +11,77 @@ AbcQueue::AbcQueue()
 	ItemSize = 0;
 	Buffer = NULL;
 	HaveSemaphore = false;
-	AbcCriticalSectionInitialize( Lock, 4000 );
+	AbcCriticalSectionInitialize(Lock, 4000);
 }
 
 AbcQueue::~AbcQueue()
 {
 	free(Buffer);
-	if ( HaveSemaphore ) AbcSemaphoreDestroy( Semaphore );
-	AbcCriticalSectionDestroy( Lock );
+	if (HaveSemaphore) AbcSemaphoreDestroy(Semaphore);
+	AbcCriticalSectionDestroy(Lock);
 }
 
-void AbcQueue::Initialize( bool useSemaphore, size_t itemSize )
+void AbcQueue::Initialize(bool useSemaphore, size_t itemSize)
 {
-	AbcAssert( SizeInternal() == 0 );
-	if ( itemSize != this->ItemSize )
+	AbcAssert(SizeInternal() == 0);
+	if (itemSize != this->ItemSize)
 	{
-		AbcAssert( this->ItemSize == 0 );
-		AbcAssert( itemSize > 0 );
-		AbcAssert( itemSize < 0xffff );		// sanity
+		AbcAssert(this->ItemSize == 0);
+		AbcAssert(itemSize > 0);
+		AbcAssert(itemSize < 0xffff);		// sanity
 		ItemSize = (u32) itemSize;
 	}
-	AbcAssert( !HaveSemaphore );
-	if ( useSemaphore )
+	AbcAssert(!HaveSemaphore);
+	if (useSemaphore)
 	{
 		HaveSemaphore = true;
-		AbcSemaphoreInitialize( Semaphore );
+		AbcSemaphoreInitialize(Semaphore);
 	}
 }
 
-void AbcQueue::Add( const void* item )
+void AbcQueue::Add(const void* item)
 {
 	TakeCriticalSection lock(Lock);
-	
-	if ( SizeInternal() >= (int32) RingSize - 1 )
+
+	if (SizeInternal() >= (int32) RingSize - 1)
 		Grow();
 
-	memcpy( Slot(Head), item, ItemSize );
-	Increment( Head );
+	memcpy(Slot(Head), item, ItemSize);
+	Increment(Head);
 
-	if ( HaveSemaphore )
-		AbcSemaphoreRelease( Semaphore, 1 );
+	if (HaveSemaphore)
+		AbcSemaphoreRelease(Semaphore, 1);
 }
 
-bool AbcQueue::PopTail( void* item )
+bool AbcQueue::PopTail(void* item)
 {
 	TakeCriticalSection lock(Lock);
-	if ( SizeInternal() == 0 ) return false;
-	memcpy( item, Slot(Tail), ItemSize );
+	if (SizeInternal() == 0) return false;
+	memcpy(item, Slot(Tail), ItemSize);
 	//mtlog( "pop %d:%d", (int) Tail, (int) *((u64*) item) );
-	Increment( Tail );
+	Increment(Tail);
 	return true;
 }
 
-bool AbcQueue::PeekTail( void* item )
+bool AbcQueue::PeekTail(void* item)
 {
 	TakeCriticalSection lock(Lock);
-	if ( SizeInternal() == 0 ) return false;
-	memcpy( item, Slot(Tail), ItemSize );
+	if (SizeInternal() == 0) return false;
+	memcpy(item, Slot(Tail), ItemSize);
 	return true;
 }
 
 void AbcQueue::Grow()
 {
 	u32 newsize = std::max(RingSize * 2, (u32) 2);
-	void* nb = realloc( Buffer, (size_t) ItemSize * newsize );
+	void* nb = realloc(Buffer, (size_t) ItemSize * newsize);
 	AbcAssert(nb != NULL);
 	Buffer = nb;
 	// If head is behind tail, then we need to copy the later items in front of the earlier ones.
-	if ( Head < Tail )
+	if (Head < Tail)
 	{
 		//mtlog( "Grow + swap (%d - %d)\n", (int) RingSize, (int) newsize );
-		memcpy( Slot(RingSize), Slot(0), (size_t) ItemSize * Head );
+		memcpy(Slot(RingSize), Slot(0), (size_t) ItemSize * Head);
 		Head = RingSize + Head;
 	}
 	else

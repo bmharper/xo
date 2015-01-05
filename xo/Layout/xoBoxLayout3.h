@@ -51,18 +51,18 @@ public:
 	};
 	xoPool*	Pool = nullptr;
 
-						xoBoxLayout3();
-						~xoBoxLayout3();
+	xoBoxLayout3();
+	~xoBoxLayout3();
 
 	//void				BeginDocument( int vpWidth, int vpHeight, xoRenderDomNode* root );
-	void				BeginDocument( xoRenderDomNode* root );
+	void				BeginDocument(xoRenderDomNode* root);
 	void				EndDocument();
 
-	void				BeginNode( const NodeInput& in );
-	void				EndNode( xoRenderDomNode*& rnode, xoBox& marginBox );
+	void				BeginNode(const NodeInput& in);
+	void				EndNode(xoRenderDomNode*& rnode, xoBox& marginBox);
 
-	void				AddWord( const WordInput& in, xoRenderDomText*& rtxt, xoPos& posX );
-	void				AddSpace( xoPos width );
+	void				AddWord(const WordInput& in, xoRenderDomText*& rtxt, xoPos& posX);
+	void				AddSpace(xoPos width);
 	void				AddLinebreak();
 
 protected:
@@ -72,7 +72,7 @@ protected:
 		xoPos		InnerBaseline;
 		int			InnerBaselineDefinedBy;
 		int			LastChild;
-		static LineBox Make( xoPos innerBaseline, int innerBaselineDefinedBy, int lastChild ) { return {innerBaseline, innerBaselineDefinedBy, lastChild}; }
+		static LineBox Make(xoPos innerBaseline, int innerBaselineDefinedBy, int lastChild) { return {innerBaseline, innerBaselineDefinedBy, lastChild}; }
 	};
 
 	struct FlowState
@@ -105,7 +105,7 @@ protected:
 	xoStack<NodeState>		NodeStates;
 	//podvec<OutBox>			Result;
 
-	bool	Flow( const NodeState& ns, FlowState& flow, xoBox& marginBox );
-	void	NewLine( FlowState& flow );
+	bool	Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox);
+	void	NewLine(FlowState& flow);
 
 };

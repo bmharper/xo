@@ -10,30 +10,30 @@
 #endif
 
 // This is your "main" function, which you define in your own code
-void xoMain( xoMainEvent ev );
+void xoMain(xoMainEvent ev);
 
 #if XO_PLATFORM_WIN_DESKTOP
 
 #pragma warning(disable: 28251) // Inconsistent annotation for 'WinMain': this instance has no annotations. See c:\program files (x86)\windows kits\8.0\include\um\winbase.h(2188). 
 
-static int __cdecl CrtAllocHook( int allocType, void *pvData, size_t size, int blockUse, long request, const unsigned char *filename, int fileLine )
+static int __cdecl CrtAllocHook(int allocType, void *pvData, size_t size, int blockUse, long request, const unsigned char *filename, int fileLine)
 {
 	return TRUE;
 }
 
-int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	_CrtSetAllocHook( CrtAllocHook );
-	xoRunAppLowLevel( xoMain );
+	_CrtSetAllocHook(CrtAllocHook);
+	xoRunAppLowLevel(xoMain);
 	_CrtDumpMemoryLeaks();
 	return 0;
 }
 
 #elif XO_PLATFORM_LINUX_DESKTOP
 
-int main( int argc, char** argv )
+int main(int argc, char** argv)
 {
-	xoRunAppLowLevel( xoMain );
+	xoRunAppLowLevel(xoMain);
 	return 0;
 }
 

@@ -45,13 +45,13 @@ public:
 	static const int Dimensions = 3;
 	typedef vreal FT;
 
-	union 
+	union
 	{
-		struct 
+		struct
 		{
 			vreal x,y,z;
 		};
-		struct 
+		struct
 		{
 			vreal v[3];
 		};
@@ -59,7 +59,7 @@ public:
 		{
 			VecBase2T<vreal> vec2;
 		};
-		struct 
+		struct
 		{
 			vreal n[3];
 		};
@@ -70,7 +70,7 @@ public:
 	void set(const vreal _x, const vreal _y, const vreal _z) {		x = _x;		y = _y;		z = _z;	}
 
 	// fills all with _uniform
-	void set( const vreal _uniform ) 	{	x = _uniform;	y = _uniform;	z = _uniform;	}
+	void set(const vreal _uniform) 	{	x = _uniform;	y = _uniform;	z = _uniform;	}
 
 	void scale(vreal _scale)
 	{
@@ -103,11 +103,11 @@ public:
 	}
 
 	/// Clamps values individually
-	void clamp( vreal vmin, vreal vmax )
+	void clamp(vreal vmin, vreal vmax)
 	{
-		x = CLAMP( x, vmin, vmax );
-		y = CLAMP( y, vmin, vmax );
-		z = CLAMP( z, vmin, vmax );
+		x = CLAMP(x, vmin, vmax);
+		y = CLAMP(y, vmin, vmax);
+		z = CLAMP(z, vmin, vmax);
 	}
 
 	// Returns false if any member is a NaN.
@@ -125,9 +125,9 @@ public:
 	/// Only valid for VecBase3T<double>. Checks whether we won't overflow if converted to float.
 	bool checkFloatOverflow() const
 	{
-		if (	x > FLT_MAX || x < -FLT_MAX ||
+		if (x > FLT_MAX || x < -FLT_MAX ||
 				y > FLT_MAX || y < -FLT_MAX ||
-				z > FLT_MAX || z < -FLT_MAX ) return false;
+				z > FLT_MAX || z < -FLT_MAX) return false;
 		return true;
 	}
 
@@ -144,7 +144,7 @@ public:
 		return x == FLT_MIN && y == FLT_MIN && z == FLT_MIN;
 	}
 
-	void normalize() 
+	void normalize()
 	{
 		vreal s = (vreal) 1.0 / sqrt(sizeSquared());
 		x *= s;
@@ -152,7 +152,7 @@ public:
 		z *= s;
 	}
 
-	void copyTo( vreal *dst ) const
+	void copyTo(vreal *dst) const
 	{
 		dst[0] = x;
 		dst[1] = y;
@@ -161,10 +161,10 @@ public:
 
 	// only normalizes if size is not zero. Returns 0 if size() > 0
 	// Sets vector to (1,0,0) if size is 0, and returns -1.
-	int normalizeCheck() 
+	int normalizeCheck()
 	{
 		vreal s = sizeSquared();
-		if (s == 0) 
+		if (s == 0)
 		{
 			x = 1;
 			y = 0;
@@ -211,12 +211,12 @@ public:
 	using VecBase3T<vreal>::normalizeCheck;
 
 	Vec3T()													{}
-	Vec3T( vreal _x, vreal _y, vreal _z )					{ x = _x; y = _y; z = _z; }
-	Vec3T( const VecBase3T<vreal>& b )						{ x = b.x; y = b.y; z = b.z; }
-	Vec3T( const VecBase2T<vreal>& v2, const vreal _z )		{ x = v2.x, y = v2.y, z = _z; }
-	explicit Vec3T( vreal _uniform )						{ x = y = z = _uniform; }
+	Vec3T(vreal _x, vreal _y, vreal _z)					{ x = _x; y = _y; z = _z; }
+	Vec3T(const VecBase3T<vreal>& b)						{ x = b.x; y = b.y; z = b.z; }
+	Vec3T(const VecBase2T<vreal>& v2, const vreal _z)		{ x = v2.x, y = v2.y, z = _z; }
+	explicit Vec3T(vreal _uniform)						{ x = y = z = _uniform; }
 
-	static Vec3T Create( vreal x, vreal y, vreal z )
+	static Vec3T Create(vreal x, vreal y, vreal z)
 	{
 		Vec3T v;
 		v.x = x;
@@ -233,15 +233,15 @@ public:
 	}
 
 	/// Returns a vector that is [cos(angle), sin(angle), 0]
-	static Vec3T AtAngle( vreal angle ) 
+	static Vec3T AtAngle(vreal angle)
 	{
-		return Vec3T::Create( cos(angle), sin(angle), 0 );
+		return Vec3T::Create(cos(angle), sin(angle), 0);
 	}
 
 	const Vec2T<vreal>& AsVec2() const    	{ return (const Vec2T<vreal>&) vec2; }
-	      Vec2T<vreal>& AsVec2()          	{ return (Vec2T<vreal>&) vec2; }
+	Vec2T<vreal>& AsVec2()          	{ return (Vec2T<vreal>&) vec2; }
 	const Vec3T<vreal>& AsVec3() const		{ return *this; }
-	      Vec3T<vreal>& AsVec3()			{ return *this; }
+	Vec3T<vreal>& AsVec3()			{ return *this; }
 
 	Vec3T operator-() const { return Vec3T(-x, -y, -z); }
 
@@ -281,83 +281,83 @@ public:
 	Vec3T        operator^(const VecBase3T<vreal>& v) const;
 	int MakeOrthonormalBasis(VecBase3T<vreal> & base1, VecBase3T<vreal> & base2);
 
-	int ToStringABare( char* buff, size_t buffChars ) const
+	int ToStringABare(char* buff, size_t buffChars) const
 	{
 #ifdef _WIN32
-		return sprintf_s( buff, buffChars, Vec3Traits<vreal>::StringAFormatBare(), x, y, z );
+		return sprintf_s(buff, buffChars, Vec3Traits<vreal>::StringAFormatBare(), x, y, z);
 #else
-		return snprintf( buff, buffChars, Vec3Traits<vreal>::StringAFormatBare(), x, y, z );
+		return snprintf(buff, buffChars, Vec3Traits<vreal>::StringAFormatBare(), x, y, z);
 #endif
 	}
 
-	#ifndef NO_XSTRING
-		/// Writes "[ %.8g %.8g %.8g ]"
-		XString ToString() const
-		{
-			XString s;
-			s.Format( Vec3Traits<vreal>::StringFormat(), x, y, z );
-			return s;
-		}
+#ifndef NO_XSTRING
+	/// Writes "[ %.8g %.8g %.8g ]"
+	XString ToString() const
+	{
+		XString s;
+		s.Format(Vec3Traits<vreal>::StringFormat(), x, y, z);
+		return s;
+	}
 
-		/// Writes "%lf %lf %lf"
-		XString ToStringBare() const
-		{
-			XString s;
-			s.Format( Vec3Traits<vreal>::StringFormatBare(), x, y, z );
-			return s;
-		}
+	/// Writes "%lf %lf %lf"
+	XString ToStringBare() const
+	{
+		XString s;
+		s.Format(Vec3Traits<vreal>::StringFormatBare(), x, y, z);
+		return s;
+	}
 
-		XString ToString( int significant_digits, bool bare = false ) const
-		{
-			XString f, s;
-			if ( bare ) f.Format( _T("%%.%dg %%.%dg %%.%dg"), significant_digits, significant_digits, significant_digits );
-			else		f.Format( _T("[ %%.%dg %%.%dg %%.%dg ]"), significant_digits, significant_digits, significant_digits );
-			s.Format( f, x, y, z );
-			return s;
-		}
+	XString ToString(int significant_digits, bool bare = false) const
+	{
+		XString f, s;
+		if (bare) f.Format(_T("%%.%dg %%.%dg %%.%dg"), significant_digits, significant_digits, significant_digits);
+		else		f.Format(_T("[ %%.%dg %%.%dg %%.%dg ]"), significant_digits, significant_digits, significant_digits);
+		s.Format(f, x, y, z);
+		return s;
+	}
 
-		/// Parses "[ x y z ]", "x y z", "x,y,z"
-		bool Parse( const XString& str )
-		{
-			double a, b, c;
+	/// Parses "[ x y z ]", "x y z", "x,y,z"
+	bool Parse(const XString& str)
+	{
+		double a, b, c;
 #ifdef LM_VS2005_SECURE
-			if ( _stscanf_s( str, _T("[ %lf %lf %lf ]"), &a, &b, &c ) != 3 )
-			{
-				if ( _stscanf_s( str, _T("%lf %lf %lf"), &a, &b, &c ) != 3 )
-				{
-					if ( _stscanf_s( str, _T("%lf, %lf, %lf"), &a, &b, &c ) != 3 )
-					{
-						return false;
-					}
-				}
-			}
-#else
-			if ( _stscanf( str, _T("[ %lf %lf %lf ]"), &a, &b, &c ) != 3 )
-			{
-				if ( _stscanf( str, _T("%lf %lf %lf"), &a, &b, &c ) != 3 )
-				{
-					if ( _stscanf( str, _T("%lf, %lf, %lf"), &a, &b, &c ) != 3 )
-					{
-						return false;
-					}
-				}
-			}
-#endif
-			x = (vreal) a;
-			y = (vreal) b;
-			z = (vreal) c;
-			
-			return true;
-		}
-
-		static Vec3T FromString( const XString& str )
+		if (_stscanf_s(str, _T("[ %lf %lf %lf ]"), &a, &b, &c) != 3)
 		{
-			Vec3T v;
-			v.Parse( str );
-			return v;
+			if (_stscanf_s(str, _T("%lf %lf %lf"), &a, &b, &c) != 3)
+			{
+				if (_stscanf_s(str, _T("%lf, %lf, %lf"), &a, &b, &c) != 3)
+				{
+					return false;
+				}
+			}
 		}
+#else
+		if (_stscanf(str, _T("[ %lf %lf %lf ]"), &a, &b, &c) != 3)
+		{
+			if (_stscanf(str, _T("%lf %lf %lf"), &a, &b, &c) != 3)
+			{
+				if (_stscanf(str, _T("%lf, %lf, %lf"), &a, &b, &c) != 3)
+				{
+					return false;
+				}
+			}
+		}
+#endif
+		x = (vreal) a;
+		y = (vreal) b;
+		z = (vreal) c;
 
-	#endif 
+		return true;
+	}
+
+	static Vec3T FromString(const XString& str)
+	{
+		Vec3T v;
+		v.Parse(str);
+		return v;
+	}
+
+#endif
 
 };
 
@@ -365,26 +365,26 @@ public:
 template <class vreal> INLINE bool
 operator < (const VecBase3T<vreal>& v1, const VecBase3T<vreal>& v2)
 {
-		return v1.x < v2.x && v1.y < v2.y && v1.z < v2.z;
+	return v1.x < v2.x && v1.y < v2.y && v1.z < v2.z;
 }
 
 template <class vreal> INLINE bool
 operator <= (const VecBase3T<vreal>& v1, const VecBase3T<vreal>& v2)
 {
-		return v1.x <= v2.x && v1.y <= v2.y && v1.z <= v2.z;
+	return v1.x <= v2.x && v1.y <= v2.y && v1.z <= v2.z;
 }
 
 
 template <class vreal> INLINE bool
 operator > (const VecBase3T<vreal>& v1, const VecBase3T<vreal>& v2)
 {
-		return v1.x > v2.x && v1.y > v2.y && v1.z > v2.z;
+	return v1.x > v2.x && v1.y > v2.y && v1.z > v2.z;
 }
 
 template <class vreal> INLINE bool
 operator >= (const VecBase3T<vreal>& v1, const VecBase3T<vreal>& v2)
 {
-		return v1.x >= v2.x && v1.y >= v2.y && v1.z >= v2.z;
+	return v1.x >= v2.x && v1.y >= v2.y && v1.z >= v2.z;
 }
 
 template<typename vreal> inline Vec3T<vreal> operator*(vreal s, const VecBase3T<vreal> &v)							{ return Vec3T<vreal>(v.x * s, v.y * s, v.z * s); }
@@ -392,8 +392,8 @@ template<typename vreal> inline Vec3T<vreal> operator*(const VecBase3T<vreal> &v
 template<typename vreal> inline Vec3T<vreal> operator*(const VecBase3T<vreal> &a, const VecBase3T<vreal> &b)		{ return Vec3T<vreal>(a.x * b.x, a.y * b.y, a.z * b.z); }
 template<typename vreal> inline Vec3T<vreal> operator/(const VecBase3T<vreal> &a, const VecBase3T<vreal> &b)		{ return Vec3T<vreal>(a.x / b.x, a.y / b.y, a.z / b.z); }
 template<typename vreal> inline Vec3T<vreal> operator/(const VecBase3T<vreal> &a, vreal s)							{ vreal r = (vreal) 1.0 / s; return Vec3T<vreal>(a.x * r, a.y * r, a.z * r); }
-template<typename vreal> inline Vec3T<vreal> operator+(const VecBase3T<vreal>& a, const VecBase3T<vreal>& b)		{ return Vec3T<vreal>(a.x + b.x, a.y + b.y, a.z + b.z ); }
-template<typename vreal> inline Vec3T<vreal> operator-(const VecBase3T<vreal>& a, const VecBase3T<vreal>& b)		{ return Vec3T<vreal>(a.x - b.x, a.y - b.y, a.z - b.z ); }
+template<typename vreal> inline Vec3T<vreal> operator+(const VecBase3T<vreal>& a, const VecBase3T<vreal>& b)		{ return Vec3T<vreal>(a.x + b.x, a.y + b.y, a.z + b.z); }
+template<typename vreal> inline Vec3T<vreal> operator-(const VecBase3T<vreal>& a, const VecBase3T<vreal>& b)		{ return Vec3T<vreal>(a.x - b.x, a.y - b.y, a.z - b.z); }
 template<typename vreal> inline vreal        dot(const VecBase3T<vreal>& a, const VecBase3T<vreal>& b)				{ return a.x * b.x + a.y * b.y + a.z * b.z; }
 template<typename vreal> inline vreal        operator&(const VecBase3T<vreal>& a, const VecBase3T<vreal>& b)		{ return dot(a,b); }
 template<typename vreal> inline Vec3T<vreal> normalize(const VecBase3T<vreal>& a)									{ Vec3T<vreal> copy = a; copy.normalize(); return copy; }
@@ -404,9 +404,9 @@ template<typename vreal> inline vreal        lengthSQ(const VecBase3T<vreal>& a)
 template<typename vreal> inline
 Vec3T<vreal> Vec3T<vreal>::operator^(const VecBase3T<vreal>& v) const
 {
-		return Vec3T<vreal>::Create( n[1]*v[2] - v[1]*n[2],
-									-n[0]*v[2] + v[0]*n[2],
-									 n[0]*v[1] - v[0]*n[1] );
+	return Vec3T<vreal>::Create(n[1]*v[2] - v[1]*n[2],
+								-n[0]*v[2] + v[0]*n[2],
+								n[0]*v[1] - v[0]*n[1]);
 }
 
 
@@ -442,26 +442,26 @@ typedef Vec3d Vec3;
 #ifdef OHASH_DEFINED
 namespace ohash
 {
-	template< class vreal >
-	class ohashfunc_Vec3T
+template< class vreal >
+class ohashfunc_Vec3T
+{
+public:
+	static ohash::hashkey_t gethashcode(const VecBase3T<vreal>& elem)
 	{
-	public:
-		static ohash::hashkey_t gethashcode( const VecBase3T<vreal>& elem )
-		{
-			vreal sum = elem.x + elem.y + elem.z;
-			ohash::hashkey_t* hard = (ohash::hashkey_t*) &sum;
-			return *hard;
-		}
-	};
+		vreal sum = elem.x + elem.y + elem.z;
+		ohash::hashkey_t* hard = (ohash::hashkey_t*) &sum;
+		return *hard;
+	}
+};
 
-	typedef ohashfunc_Vec3T<double> ohashfunc_Vec3;
-	typedef ohashfunc_Vec3T<double> ohashfunc_Vec3d;
-	typedef ohashfunc_Vec3T<float> ohashfunc_Vec3f;
+typedef ohashfunc_Vec3T<double> ohashfunc_Vec3;
+typedef ohashfunc_Vec3T<double> ohashfunc_Vec3d;
+typedef ohashfunc_Vec3T<float> ohashfunc_Vec3f;
 }
 #endif
 
-inline Vec3		ToVec3( Vec3f v ) { return Vec3( v.x, v.y, v.z ); }
-inline Vec3f	ToVec3f( Vec3 v ) { return Vec3f( (float) v.x, (float) v.y, (float) v.z ); }
+inline Vec3		ToVec3(Vec3f v) { return Vec3(v.x, v.y, v.z); }
+inline Vec3f	ToVec3f(Vec3 v) { return Vec3f((float) v.x, (float) v.y, (float) v.z); }
 
 #include "VecUndef.h"
 #endif // DEFINED_Vec3

@@ -9,7 +9,7 @@ struct AbcMachineInformation
 	uint64	PhysicalMemory;
 };
 
-PAPI void				AbcMachineInformationGet( AbcMachineInformation& info );
+PAPI void				AbcMachineInformationGet(AbcMachineInformation& info);
 PAPI uint64				AbcPhysicalMemory(); // Wrapper around AbcMachineInformationGet()
 
 #endif // ABC_CPU_H_INCLUDED

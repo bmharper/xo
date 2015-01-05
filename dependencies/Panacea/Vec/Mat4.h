@@ -19,14 +19,14 @@ public:
 	}
 
 	// Don't initialize to identity
-	Mat4T( int uninit )
+	Mat4T(int uninit)
 	{
 	}
 
-	Mat4T(	FT a0, FT b0, FT c0, FT d0,
-			FT a1, FT b1, FT c1, FT d1,
-			FT a2, FT b2, FT c2, FT d2,
-			FT a3, FT b3, FT c3, FT d3)
+	Mat4T(FT a0, FT b0, FT c0, FT d0,
+		  FT a1, FT b1, FT c1, FT d1,
+		  FT a2, FT b2, FT c2, FT d2,
+		  FT a3, FT b3, FT c3, FT d3)
 	{
 		XX = a0;
 		XY = b0;
@@ -56,7 +56,7 @@ public:
 	FT Determinant() const;
 
 	/// Returns the diagonal
-	Vec4T<FT> Diagonal() const { return Vec4T<FT>( row[0].x, row[1].y, row[2].z, row[3].w ); }
+	Vec4T<FT> Diagonal() const { return Vec4T<FT>(row[0].x, row[1].y, row[2].z, row[3].w); }
 
 	Mat4T Transposed(void) const {
 		Mat4T t;
@@ -64,23 +64,23 @@ public:
 		t.YX = XY;
 		t.ZX = XZ;
 		t.WX = XW;
-					
+
 		t.XY = YX;
 		t.YY = YY;
 		t.ZY = YZ;
 		t.WY = YW;
-					
+
 		t.XZ = ZX;
 		t.YZ = ZY;
 		t.ZZ = ZZ;
 		t.WZ = ZW;
-					
+
 		t.XW = WX;
 		t.YW = WY;
 		t.ZW = WZ;
 		t.WW = WW;
 		return t;
-	} 
+	}
 
 	Mat4T Inverted() const {
 		Mat4T mr;
@@ -89,23 +89,23 @@ public:
 		return mr;
 	}
 
-	void Zero() 
+	void Zero()
 	{
 		XX = 0;
 		XY = 0;
 		XZ = 0;
 		XW = 0;
-		
+
 		YX = 0;
 		YY = 0;
 		YZ = 0;
 		YW = 0;
-		
+
 		ZX = 0;
 		ZY = 0;
 		ZZ = 0;
 		ZW = 0;
-		
+
 		WX = 0;
 		WY = 0;
 		WZ = 0;
@@ -118,17 +118,17 @@ public:
 		XY = 0;
 		XZ = 0;
 		XW = 0;
-		
+
 		YX = 0;
 		YY = 1;
 		YZ = 0;
 		YW = 0;
-		
+
 		ZX = 0;
 		ZY = 0;
 		ZZ = 1;
 		ZW = 0;
-		
+
 		WX = 0;
 		WY = 0;
 		WZ = 0;
@@ -143,31 +143,31 @@ public:
 		b.XY = XY * d;
 		b.XZ = XZ * d;
 		b.XW = XW * d;
-		
+
 		b.YX = YX * d;
 		b.YY = YY * d;
 		b.YZ = YZ * d;
 		b.YW = YW * d;
-		
+
 		b.ZX = ZX * d;
 		b.ZY = ZY * d;
 		b.ZZ = ZZ * d;
 		b.ZW = ZW * d;
-		
+
 		b.WX = WX * d;
 		b.WY = WY * d;
 		b.WZ = WZ * d;
 		b.WW = WW * d;
-		
+
 		return b;
 	}
 
-	void Translate( const Vec3T<FT>& vec, bool post = true ) 
+	void Translate(const Vec3T<FT>& vec, bool post = true)
 	{
 		Translate(vec.x, vec.y, vec.z, post);
 	}
 
-	void Translate( double x, double y, double z, bool post = true ) 
+	void Translate(double x, double y, double z, bool post = true)
 	{
 		Mat4T tm;
 		tm.XW = x;
@@ -179,13 +179,13 @@ public:
 			*this = tm * (*this);
 	}
 
-	void Scale( const Vec3T<FT>& vec, bool post = true ) 
+	void Scale(const Vec3T<FT>& vec, bool post = true)
 	{
 		Scale(vec.x, vec.y, vec.z, post);
 	}
 
 	// equivalent to a glScale3d
-	void Scale( FT x, FT y, FT z, bool post = true ) 
+	void Scale(FT x, FT y, FT z, bool post = true)
 	{
 		Mat4T m;
 		m.XX = x;
@@ -198,7 +198,7 @@ public:
 	}
 
 	// equivalent to glRotated(), except RADIANS
-	void Rotate( FT angle, FT x, FT y, FT z, bool post = true )
+	void Rotate(FT angle, FT x, FT y, FT z, bool post = true)
 	{
 		Vec3 v(x,y,z);
 		v.normalize();
@@ -237,7 +237,7 @@ public:
 
 
 
-	void Invert() 
+	void Invert()
 	{
 		/************************************************************
 		*
@@ -347,7 +347,7 @@ public:
 		det=src[0]*dst[0]+src[1]*dst[1]+src[2]*dst[2]+src[3]*dst[3];
 		/* calculate matrix inverse */
 		det = 1/det;
-		for ( int j = 0; j < 16; j++) {
+		for (int j = 0; j < 16; j++) {
 			dst[j] *= det;
 		}
 		memcpy((void*) this, dst, 16*sizeof(FT));
@@ -357,11 +357,11 @@ public:
 	XString ToString() const
 	{
 		XString s;
-		s.Format(_T("[ %f %f %f %f;\n  %f %f %f %f;\n  %f %f %f %f;\n  %f %f %f %f ]"), 
-							XX, XY, XZ, XW,
-							YX, YY, YZ, YW,
-							ZX, ZY, ZZ, ZW,
-							WX, WY, WZ, WW );
+		s.Format(_T("[ %f %f %f %f;\n  %f %f %f %f;\n  %f %f %f %f;\n  %f %f %f %f ]"),
+				 XX, XY, XZ, XW,
+				 YX, YY, YZ, YW,
+				 ZX, ZY, ZZ, ZW,
+				 WX, WY, WZ, WW);
 		return s;
 	}
 #endif
@@ -386,97 +386,97 @@ template <class FT>
 INLINE FT Mat4T<FT>::Determinant() const
 {
 	FT sub1 = YY * (ZZ * WW - ZW * WZ) -
-						YZ * (ZY * WW - ZW * WY) +
-						YW * (ZY * WZ - ZZ * WY);
-	
+			  YZ * (ZY * WW - ZW * WY) +
+			  YW * (ZY * WZ - ZZ * WY);
+
 	FT sub2 = YX * (ZZ * WW - ZW * WZ) -
-						YZ * (ZX * WW - ZW * WX) +
-						YW * (ZX * WZ - ZZ * WX);
-	
+			  YZ * (ZX * WW - ZW * WX) +
+			  YW * (ZX * WZ - ZZ * WX);
+
 	FT sub3 = YX * (ZY * WW - ZW * WY) -
-						YY * (ZX * WW - ZW * WX) +
-						YW * (ZX * WY - ZY * WX);
-		
+			  YY * (ZX * WW - ZW * WX) +
+			  YW * (ZX * WY - ZY * WX);
+
 	FT sub4 = YX * (ZY * WZ - ZZ * WY) -
-						YY * (ZX * WZ - ZZ * WX) +
-						YZ * (ZX * WY - ZY * WX);
+			  YY * (ZX * WZ - ZZ * WX) +
+			  YZ * (ZX * WY - ZY * WX);
 	FT det = XX * sub1 - XY * sub2 + XZ * sub3 - XW * sub4;
 	return det;
 }
 
 template <class FT>
 INLINE Mat4T<FT> operator + (const Mat4T<FT>& a, const Mat4T<FT>& b)
-{ 
+{
 	Mat4T<FT> c;
-	
+
 	c.XX = a.XX + b.XX;
 	c.XY = a.XY + b.XY;
 	c.XZ = a.XZ + b.XZ;
 	c.XW = a.XW + b.XW;
-	
+
 	c.YX = a.YX + b.YX;
 	c.YY = a.YY + b.YY;
 	c.YZ = a.YZ + b.YZ;
 	c.YW = a.YW + b.YW;
-	
+
 	c.ZX = a.ZX + b.ZX;
 	c.ZY = a.ZY + b.ZY;
 	c.ZZ = a.ZZ + b.ZZ;
 	c.ZW = a.ZW + b.ZW;
-	
+
 	c.WX = a.WX + b.WX;
 	c.WY = a.WY + b.WY;
 	c.WZ = a.WZ + b.WZ;
 	c.WW = a.WW + b.WW;
-	
-	return c; 
+
+	return c;
 }
 
 
 template <class FT>
 INLINE Mat4T<FT> operator - (const Mat4T<FT>& a, const Mat4T<FT>& b)
-{ 
-		Mat4T<FT> c;
-		
-		c.XX = a.XX - b.XX;
-		c.XY = a.XY - b.XY;
-		c.XZ = a.XZ - b.XZ;
-		c.XW = a.XW - b.XW;
-		
-		c.YX = a.YX - b.YX;
-		c.YY = a.YY - b.YY;
-		c.YZ = a.YZ - b.YZ;
-		c.YW = a.YW - b.YW;
-		
-		c.ZX = a.ZX - b.ZX;
-		c.ZY = a.ZY - b.ZY;
-		c.ZZ = a.ZZ - b.ZZ;
-		c.ZW = a.ZW - b.ZW;
-		
-		c.WX = a.WX - b.WX;
-		c.WY = a.WY - b.WY;
-		c.WZ = a.WZ - b.WZ;
-		c.WW = a.WW - b.WW;
-		
-		return c;
+{
+	Mat4T<FT> c;
+
+	c.XX = a.XX - b.XX;
+	c.XY = a.XY - b.XY;
+	c.XZ = a.XZ - b.XZ;
+	c.XW = a.XW - b.XW;
+
+	c.YX = a.YX - b.YX;
+	c.YY = a.YY - b.YY;
+	c.YZ = a.YZ - b.YZ;
+	c.YW = a.YW - b.YW;
+
+	c.ZX = a.ZX - b.ZX;
+	c.ZY = a.ZY - b.ZY;
+	c.ZZ = a.ZZ - b.ZZ;
+	c.ZW = a.ZW - b.ZW;
+
+	c.WX = a.WX - b.WX;
+	c.WY = a.WY - b.WY;
+	c.WZ = a.WZ - b.WZ;
+	c.WW = a.WW - b.WW;
+
+	return c;
 }
 
 
 template <class FT>
-INLINE Mat4T<FT> operator * (const Mat4T<FT>& b, const Mat4T<FT>& a) 
+INLINE Mat4T<FT> operator * (const Mat4T<FT>& b, const Mat4T<FT>& a)
 {
 	Mat4T<FT> c;
-	
+
 	c.XX = a.XX * b.XX + a.YX * b.XY + a.ZX * b.XZ + a.WX * b.XW;
 	c.XY = a.XY * b.XX + a.YY * b.XY + a.ZY * b.XZ + a.WY * b.XW;
 	c.XZ = a.XZ * b.XX + a.YZ * b.XY + a.ZZ * b.XZ + a.WZ * b.XW;
 	c.XW = a.XW * b.XX + a.YW * b.XY + a.ZW * b.XZ + a.WW * b.XW;
-	
+
 	c.YX = a.XX * b.YX + a.YX * b.YY + a.ZX * b.YZ + a.WX * b.YW;
 	c.YY = a.XY * b.YX + a.YY * b.YY + a.ZY * b.YZ + a.WY * b.YW;
 	c.YZ = a.XZ * b.YX + a.YZ * b.YY + a.ZZ * b.YZ + a.WZ * b.YW;
 	c.YW = a.XW * b.YX + a.YW * b.YY + a.ZW * b.YZ + a.WW * b.YW;
-	
+
 	c.ZX = a.XX * b.ZX + a.YX * b.ZY + a.ZX * b.ZZ + a.WX * b.ZW;
 	c.ZY = a.XY * b.ZX + a.YY * b.ZY + a.ZY * b.ZZ + a.WY * b.ZW;
 	c.ZZ = a.XZ * b.ZX + a.YZ * b.ZY + a.ZZ * b.ZZ + a.WZ * b.ZW;
@@ -485,8 +485,8 @@ INLINE Mat4T<FT> operator * (const Mat4T<FT>& b, const Mat4T<FT>& a)
 	c.WX = a.XX * b.WX + a.YX * b.WY + a.ZX * b.WZ + a.WX * b.WW;
 	c.WY = a.XY * b.WX + a.YY * b.WY + a.ZY * b.WZ + a.WY * b.WW;
 	c.WZ = a.XZ * b.WX + a.YZ * b.WY + a.ZZ * b.WZ + a.WZ * b.WW;
-	c.WW = a.XW * b.WX + a.YW * b.WY + a.ZW * b.WZ + a.WW * b.WW;                                                                  
-	
+	c.WW = a.XW * b.WX + a.YW * b.WY + a.ZW * b.WZ + a.WW * b.WW;
+
 	return c;
 }
 
@@ -494,7 +494,7 @@ INLINE Mat4T<FT> operator * (const Mat4T<FT>& b, const Mat4T<FT>& a)
 
 template <class FT>
 INLINE Mat4T<FT> operator * (const Mat4T<FT>& a, const FT d)
-{ 
+{
 	Mat4T<FT> b;
 	b.XX = a.XX * d;
 	b.XY = a.XY * d;
@@ -536,11 +536,11 @@ INLINE Vec3T<FT> operator * (const Vec3T<FT>& v3, const Mat4T<FT>& m4)
 	v4.w = 1.0f;
 	v4 = v4 * m4;
 	v4.Homogenize();
-	
+
 	ret.x = v4.x;
 	ret.y = v4.y;
 	ret.z = v4.z;
-	return( ret );
+	return (ret);
 }
 
 template <class FT>
@@ -555,31 +555,31 @@ INLINE Vec3T<FT> operator * (const Mat4T<FT>& m4, const Vec3T<FT>& v3)
 	v4.w = 1.0f;
 	v4 = m4 * v4;
 	v4.Homogenize();
-	
+
 	ret.x = v4.x;
 	ret.y = v4.y;
 	ret.z = v4.z;
-	return( ret );
+	return (ret);
 }
 
 template <class FT>
-INLINE Vec4T<FT> operator * ( const Vec4T<FT>& v, const Mat4T<FT>& a )
+INLINE Vec4T<FT> operator * (const Vec4T<FT>& v, const Mat4T<FT>& a)
 {
 	return Vec4T<FT> (
-		v.x * a.XX + v.y * a.YX + v.z * a.ZX + v.w * a.WX,
-		v.x * a.XY + v.y * a.YY + v.z * a.ZY + v.w * a.WY,
-		v.x * a.XZ + v.y * a.YZ + v.z * a.ZZ + v.w * a.WZ,
-		v.x * a.XW + v.y * a.YW + v.z * a.ZW + v.w * a.WW );
+			   v.x * a.XX + v.y * a.YX + v.z * a.ZX + v.w * a.WX,
+			   v.x * a.XY + v.y * a.YY + v.z * a.ZY + v.w * a.WY,
+			   v.x * a.XZ + v.y * a.YZ + v.z * a.ZZ + v.w * a.WZ,
+			   v.x * a.XW + v.y * a.YW + v.z * a.ZW + v.w * a.WW);
 }
 
 template <class FT>
-INLINE Vec4T<FT> operator * ( const Mat4T<FT>& a, const Vec4T<FT>& v )
+INLINE Vec4T<FT> operator * (const Mat4T<FT>& a, const Vec4T<FT>& v)
 {
 	return Vec4T<FT> (
-		v.x * a.XX + v.y * a.XY + v.z * a.XZ + v.w * a.XW,
-		v.x * a.YX + v.y * a.YY + v.z * a.YZ + v.w * a.YW,
-		v.x * a.ZX + v.y * a.ZY + v.z * a.ZZ + v.w * a.ZW,
-		v.x * a.WX + v.y * a.WY + v.z * a.WZ + v.w * a.WW );
+			   v.x * a.XX + v.y * a.XY + v.z * a.XZ + v.w * a.XW,
+			   v.x * a.YX + v.y * a.YY + v.z * a.YZ + v.w * a.YW,
+			   v.x * a.ZX + v.y * a.ZY + v.z * a.ZZ + v.w * a.ZW,
+			   v.x * a.WX + v.y * a.WY + v.z * a.WZ + v.w * a.WW);
 }
 
 
@@ -616,24 +616,24 @@ template <class FT>
 INLINE bool operator == (const Mat4T<FT>& a, const Mat4T<FT>& b)
 {
 	// I don't care about the IEEE == semantics
-	return memcmp( &a, &b, sizeof(a) ) == 0;
+	return memcmp(&a, &b, sizeof(a)) == 0;
 	/*
 	return (
 			(b.XX == a.XX) &&
 			(b.XY == a.XY) &&
 			(b.XZ == a.XZ) &&
 			(b.XW == a.XW) &&
-			
+
 			(b.YX == a.YX) &&
 			(b.YY == a.YY) &&
 			(b.YZ == a.YZ) &&
 			(b.YW == a.YW) &&
-			
+
 			(b.ZX == a.ZX) &&
 			(b.ZY == a.ZY) &&
 			(b.ZZ == a.ZZ) &&
 			(b.ZW == a.ZW) &&
-			
+
 			(b.WX == a.WX) &&
 			(b.WY == a.WY) &&
 			(b.WZ == a.WZ) &&
@@ -647,7 +647,7 @@ INLINE bool operator != (const Mat4T<FT>& a, const Mat4T<FT>& b)
 
 // sum of component absolute differences
 template <class FT>
-double Difference( const Mat4T<FT>& a, const Mat4T<FT>& b )
+double Difference(const Mat4T<FT>& a, const Mat4T<FT>& b)
 {
 	double d = 0;
 	FT *ap = (FT*) &a;

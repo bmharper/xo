@@ -7,7 +7,7 @@
 class XOAPI xoLayoutResult
 {
 public:
-	xoLayoutResult( const xoDoc& doc );
+	xoLayoutResult(const xoDoc& doc);
 	~xoLayoutResult();
 
 	bool					IsLocked;		// True if we are being used by the UI thread to do things like hit-testing
@@ -30,17 +30,17 @@ public:
 	//xoPool						RenderPool;
 	//podvec<xoInternalID>		ModifiedNodeIDs;
 
-					xoRenderDoc();
-					~xoRenderDoc();
+	xoRenderDoc();
+	~xoRenderDoc();
 
-	xoRenderResult	Render( xoRenderBase* driver );
-	void			CopyFromCanonical( const xoDoc& canonical, xoRenderStats& stats );
+	xoRenderResult	Render(xoRenderBase* driver);
+	void			CopyFromCanonical(const xoDoc& canonical, xoRenderStats& stats);
 	//xoInternalID	FindElement( xoPoint pos );
 
 	// Acquire the latest layout object. Call ReleaseLayout when you are done using it. Returns nullptr if no layouts exist.
 	// Panics if the latest layout has already been acquired.
-	xoLayoutResult*	AcquireLatestLayout();						
-	void			ReleaseLayout( xoLayoutResult* layout );
+	xoLayoutResult*	AcquireLatestLayout();
+	void			ReleaseLayout(xoLayoutResult* layout);
 
 protected:
 	// Cloned image metadata

@@ -3,21 +3,21 @@
 #include "xoDocGroup.h"
 #include "xoSysWnd.h"
 
-LRESULT CALLBACK xoDocGroup::StaticWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
+LRESULT CALLBACK xoDocGroup::StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	xoDocGroup* proc = (xoDocGroup*) GetWindowLongPtr( hWnd, GWLP_USERDATA );
-	if ( proc == NULL && lParam != NULL && message == WM_NCCREATE )
+	xoDocGroup* proc = (xoDocGroup*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	if (proc == NULL && lParam != NULL && message == WM_NCCREATE)
 	{
 		// This is passed in via CreateWindow()
 		// The one message that we unfortunately miss is WM_GETMINMAXINFO, which gets sent before WM_NCCREATE
 		CREATESTRUCT* cs = (CREATESTRUCT*) lParam;
 		proc = (xoDocGroup*) cs->lpCreateParams;
-		SetWindowLongPtr( hWnd, GWLP_USERDATA, (LONG_PTR) proc );
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR) proc);
 	}
 
-	if ( proc && proc->Doc )
+	if (proc && proc->Doc)
 	{
-		return proc->WndProc( hWnd, message, wParam, lParam );
+		return proc->WndProc(hWnd, message, wParam, lParam);
 	}
 	else
 	{
@@ -47,9 +47,9 @@ enum XoWindowsTimers
 	XoWindowsTimerGenericEvent				= 2,		// A user event, such as when you call xoDomNode.OnTimer. Don't think this is used yet.
 };
 
-static xoMouseButton WM_ButtonToXo( UINT message, WPARAM wParam )
+static xoMouseButton WM_ButtonToXo(UINT message, WPARAM wParam)
 {
-	switch ( message )
+	switch (message)
 	{
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
@@ -68,21 +68,21 @@ static xoMouseButton WM_ButtonToXo( UINT message, WPARAM wParam )
 	case WM_XBUTTONDBLCLK:
 		// If this assertion fails, then raise the enums above xoMouseButtonX4
 		XOASSERTDEBUG(GET_XBUTTON_WPARAM(wParam) < 4);
-		return (xoMouseButton) (xoMouseButtonX1 + (GET_XBUTTON_WPARAM(wParam) - XBUTTON1));
+		return (xoMouseButton)(xoMouseButtonX1 + (GET_XBUTTON_WPARAM(wParam) - XBUTTON1));
 	}
 	return xoMouseButtonNull;
 }
 
-LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
+LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	XOASSERT( Doc != NULL );
+	XOASSERT(Doc != NULL);
 	PAINTSTRUCT ps;
 	HDC dc;
 	xoOriginalEvent ev;
 	ev.DocGroup = this;
 	ev.Event.Doc = Doc;
 	LRESULT result = 0;
-	auto cursor = XOVEC2( (float) GET_X_LPARAM(lParam), (float) GET_Y_LPARAM(lParam) );
+	auto cursor = XOVEC2((float) GET_X_LPARAM(lParam), (float) GET_Y_LPARAM(lParam));
 
 	switch (message)
 	{
@@ -100,29 +100,29 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		break;
 
 	case WM_SIZE:
-		ev.Event.MakeWindowSize( int(lParam & 0xffff), int((lParam >> 16) & 0xffff) );
-		xoGlobal()->EventQueue.Add( ev );
+		ev.Event.MakeWindowSize(int(lParam & 0xffff), int((lParam >> 16) & 0xffff));
+		xoGlobal()->EventQueue.Add(ev);
 		break;
 
 	case WM_TIMER:
-		if ( wParam == XoWindowsTimerRenderOutsideMainMsgPump )
+		if (wParam == XoWindowsTimerRenderOutsideMainMsgPump)
 			Render();
-		else if ( wParam == XoWindowsTimerGenericEvent )
+		else if (wParam == XoWindowsTimerGenericEvent)
 		{
 			ev.Event.Type = xoEventTimer;
-			xoGlobal()->EventQueue.Add( ev );
+			xoGlobal()->EventQueue.Add(ev);
 		}
 		break;
 
 	case WM_NCLBUTTONDOWN:
 		// Explanation above titled 'WM_NCLBUTTONDOWN'
-		SetTimer( hWnd, XoWindowsTimerRenderOutsideMainMsgPump, (uint) (1000.0 / xoGlobal()->TargetFPS), NULL );
+		SetTimer(hWnd, XoWindowsTimerRenderOutsideMainMsgPump, (uint)(1000.0 / xoGlobal()->TargetFPS), NULL);
 		result = DefWindowProc(hWnd, message, wParam, lParam);
-		KillTimer( hWnd, XoWindowsTimerRenderOutsideMainMsgPump );
+		KillTimer(hWnd, XoWindowsTimerRenderOutsideMainMsgPump);
 		return result;
 
 	case WM_DESTROY:
-		if ( Wnd->QuitAppWhenWindowDestroyed )
+		if (Wnd->QuitAppWhenWindowDestroyed)
 			PostQuitMessage(0);
 		break;
 
@@ -131,17 +131,17 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		// update the Doc->UI.Cursor on WM_MOUSEMOVE, when is sent after WM_SETCURSOR. We
 		// need a way to asynchronously update the cursor here, but I haven't figured out
 		// a neat way to do that yet.
-		xoSysWnd::SetSystemCursor( Doc->UI.GetCursor() );
+		xoSysWnd::SetSystemCursor(Doc->UI.GetCursor());
 		break;
 
 	case WM_MOUSEMOVE:
-		if ( !IsMouseTracking )
+		if (!IsMouseTracking)
 		{
 			TRACKMOUSEEVENT tme = {0};
 			tme.cbSize = sizeof(tme);
 			tme.dwFlags = TME_LEAVE;
 			tme.hwndTrack = hWnd;
-			TrackMouseEvent( &tme );
+			TrackMouseEvent(&tme);
 			IsMouseTracking = true;
 			// We don't send xoEventMouseEnter from here. It is the DocUI's job to synthesize that message
 			// on a per-DOM-node basis. It determines this when it receives mousemove messages.
@@ -155,7 +155,7 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		ev.Event.PointCount = 1;
 		ev.Event.Points[0] = cursor;
 		XOTRACE_LATENCY("MouseMove\n");
-		xoGlobal()->EventQueue.Add( ev );
+		xoGlobal()->EventQueue.Add(ev);
 		break;
 
 	case WM_MOUSELEAVE:
@@ -163,7 +163,7 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		ev.Event.Type = xoEventMouseLeave;
 		ev.Event.PointCount = 1;
 		ev.Event.Points[0] = cursor;
-		xoGlobal()->EventQueue.Add( ev );
+		xoGlobal()->EventQueue.Add(ev);
 		break;
 
 	case WM_LBUTTONDOWN:
@@ -172,10 +172,10 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 	case WM_XBUTTONDOWN:
 		XOTRACE_LATENCY("ButtonDown\n");
 		ev.Event.Type = xoEventMouseDown;
-		ev.Event.Button = WM_ButtonToXo( message, wParam );
+		ev.Event.Button = WM_ButtonToXo(message, wParam);
 		ev.Event.PointCount = 1;
 		ev.Event.Points[0] = cursor;
-		xoGlobal()->EventQueue.Add( ev );
+		xoGlobal()->EventQueue.Add(ev);
 		break;
 
 	case WM_LBUTTONUP:
@@ -184,13 +184,13 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 	case WM_XBUTTONUP:
 		XOTRACE_LATENCY("ButtonUp\n");
 		ev.Event.Type = xoEventMouseUp;
-		ev.Event.Button = WM_ButtonToXo( message, wParam );
+		ev.Event.Button = WM_ButtonToXo(message, wParam);
 		ev.Event.PointCount = 1;
 		ev.Event.Points[0] = cursor;
-		xoGlobal()->EventQueue.Add( ev );
+		xoGlobal()->EventQueue.Add(ev);
 		// Click event needs refinement (ie on down, capture, etc)
 		ev.Event.Type = xoEventClick;
-		xoGlobal()->EventQueue.Add( ev );
+		xoGlobal()->EventQueue.Add(ev);
 		break;
 
 	case WM_LBUTTONDBLCLK:
@@ -199,10 +199,10 @@ LRESULT xoDocGroup::WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 	case WM_XBUTTONDBLCLK:
 		XOTRACE_LATENCY("ButtonDblClick\n");
 		ev.Event.Type = xoEventDblClick;
-		ev.Event.Button = WM_ButtonToXo( message, wParam );
+		ev.Event.Button = WM_ButtonToXo(message, wParam);
 		ev.Event.PointCount = 1;
 		ev.Event.Points[0] = cursor;
-		xoGlobal()->EventQueue.Add( ev );
+		xoGlobal()->EventQueue.Add(ev);
 		break;
 
 	default:

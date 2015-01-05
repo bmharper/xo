@@ -18,7 +18,7 @@ A very naive approach would be to simply process a node until you've finished X 
 of its children, where X is some arbitrary constant such as 1000. Initially your queue
 consists only of the root node. You would in this case limit the depth of each evaluation
 to some other arbitrary constant such as 5. Whenever you hit a node that was at a depth
-greater than your limit (our hypothetical 5), then you don't process that node, but 
+greater than your limit (our hypothetical 5), then you don't process that node, but
 instead add it to the queue.
 
 However, it would probably be fast enough to do a first initial pass over the entire tree,
@@ -35,13 +35,13 @@ class XOAPI xoStyleResolver
 {
 public:
 	// Resolves the given node, and places its style on the top of the stack
-	static void		ResolveAndPush( xoRenderStack& stack, const xoDomNode* node );
+	static void		ResolveAndPush(xoRenderStack& stack, const xoDomNode* node);
 
 protected:
-	static void		Set( xoRenderStack& stack, const xoDomEl* node, intp n, const xoStyleAttrib* vals );
-	static void		Set( xoRenderStack& stack, const xoDomEl* node, const xoStyleClass& klass );
-	static void		Set( xoRenderStack& stack, const xoDomEl* node, const xoStyle& style );
-	static void		SetInherited( xoRenderStack& stack, const xoDomEl* node, xoStyleCategories cat );
+	static void		Set(xoRenderStack& stack, const xoDomEl* node, intp n, const xoStyleAttrib* vals);
+	static void		Set(xoRenderStack& stack, const xoDomEl* node, const xoStyleClass& klass);
+	static void		Set(xoRenderStack& stack, const xoDomEl* node, const xoStyle& style);
+	static void		SetInherited(xoRenderStack& stack, const xoDomEl* node, xoStyleCategories cat);
 };
 
 /* This is intended for resolving the style of an element, once-off.
@@ -54,7 +54,7 @@ class XOAPI xoStyleResolveOnceOff
 public:
 	xoRenderStack*	RS;
 
-	xoStyleResolveOnceOff( const xoDomNode* node );
+	xoStyleResolveOnceOff(const xoDomNode* node);
 	~xoStyleResolveOnceOff();
 
 protected:

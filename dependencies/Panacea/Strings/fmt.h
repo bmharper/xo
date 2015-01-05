@@ -70,23 +70,23 @@ public:
 	Types Type;
 
 	fmtarg()								: Type(TNull), CStr(NULL) {}
-	fmtarg( const char* v )					: Type(TCStr), CStr(v) {}
-	fmtarg( const wchar_t* v )				: Type(TWStr), WStr(v) {}
+	fmtarg(const char* v)					: Type(TCStr), CStr(v) {}
+	fmtarg(const wchar_t* v)				: Type(TWStr), WStr(v) {}
 #ifdef XSTRING_DEFINED
-	fmtarg( const XStringT<char>& v )		: Type(TCStr), CStr((const char*) v) {}
-	fmtarg( const XStringT<wchar_t>& v )	: Type(TWStr), WStr((const wchar_t*) v) {}
+	fmtarg(const XStringT<char>& v)		: Type(TCStr), CStr((const char*) v) {}
+	fmtarg(const XStringT<wchar_t>& v)	: Type(TWStr), WStr((const wchar_t*) v) {}
 #endif
-	fmtarg( const std::string& v )			: Type(TCStr), CStr(v.c_str()) {}
-	fmtarg( const std::wstring& v )			: Type(TWStr), WStr(v.c_str()) {}
-	fmtarg( int32_t v )						: Type(TI32), I32(v) {}
-	fmtarg( uint32_t v )					: Type(TU32), UI32(v) {}
+	fmtarg(const std::string& v)			: Type(TCStr), CStr(v.c_str()) {}
+	fmtarg(const std::wstring& v)			: Type(TWStr), WStr(v.c_str()) {}
+	fmtarg(int32_t v)						: Type(TI32), I32(v) {}
+	fmtarg(uint32_t v)					: Type(TU32), UI32(v) {}
 #ifdef _MSC_VER
-	fmtarg( long v )						: Type(TI32), I32(v) {}
-	fmtarg( unsigned long v )				: Type(TU32), UI32(v) {}
+	fmtarg(long v)						: Type(TI32), I32(v) {}
+	fmtarg(unsigned long v)				: Type(TU32), UI32(v) {}
 #endif
-	fmtarg( int64_t v )						: Type(TI64), I64(v) {}
-	fmtarg( uint64_t v )					: Type(TU64), UI64(v) {}
-	fmtarg( double v )						: Type(TDbl), Dbl(v) {}
+	fmtarg(int64_t v)						: Type(TI64), I64(v) {}
+	fmtarg(uint64_t v)					: Type(TU64), UI64(v) {}
+	fmtarg(double v)						: Type(TDbl), Dbl(v) {}
 };
 
 /* This can be used to add custom formatting tokens.
@@ -97,7 +97,7 @@ struct fmt_context
 {
 	// Return the number of characters written, or -1 if outBufSize is not large enough to hold
 	// the number of characters that you need to write. Do not write a null terminator.
-	typedef intp (*WriteSpecialFunc)( char* outBuf, intp outBufSize, const fmtarg& val );
+	typedef intp(*WriteSpecialFunc)(char* outBuf, intp outBufSize, const fmtarg& val);
 
 	WriteSpecialFunc Escape_Q;
 	WriteSpecialFunc Escape_q;
@@ -109,25 +109,25 @@ struct fmt_context
 	}
 };
 
-PAPI FMT_STRING fmt_core( const fmt_context& context, const char* fmt, intp nargs, const fmtarg** args );
+PAPI FMT_STRING fmt_core(const fmt_context& context, const char* fmt, intp nargs, const fmtarg** args);
 
-PAPI FMT_STRING fmt( const char* fs );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14, const fmtarg& a15 );
-PAPI FMT_STRING fmt( const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14, const fmtarg& a15, const fmtarg& a16 );
+PAPI FMT_STRING fmt(const char* fs);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14, const fmtarg& a15);
+PAPI FMT_STRING fmt(const char* fs, const fmtarg& a1, const fmtarg& a2, const fmtarg& a3, const fmtarg& a4, const fmtarg& a5, const fmtarg& a6, const fmtarg& a7, const fmtarg& a8, const fmtarg& a9, const fmtarg& a10, const fmtarg& a11, const fmtarg& a12, const fmtarg& a13, const fmtarg& a14, const fmtarg& a15, const fmtarg& a16);
 
 /*
 PAPI FMT_STRING fmt( const char* fs,
@@ -161,7 +161,7 @@ PAPI FMT_STRING fmt( const char* fs,
 
 // The approach of making this proper function has the added advantage that we can write strings with null characters in them
 // Returns the number of characters written (ie the result of fwrite).
-PAPI size_t fmt_write( FILE* file, const FMT_STRING& s );
+PAPI size_t fmt_write(FILE* file, const FMT_STRING& s);
 
 /*  cross-platform "snprintf"
 
@@ -172,9 +172,9 @@ PAPI size_t fmt_write( FILE* file, const FMT_STRING& s );
 		-1				Not enough space
 		0..count-1		Number of characters written, excluding the null terminator. The null terminator was written though.
 */
-PAPI int fmt_snprintf( char* destination, size_t count, const char* format_str, ... );
+PAPI int fmt_snprintf(char* destination, size_t count, const char* format_str, ...);
 
 // Identical in all respects to fmt_snprintf, except that we deal with wide character strings
-PAPI int fmt_swprintf( wchar_t* destination, size_t count, const wchar_t* format_str, ... );
+PAPI int fmt_swprintf(wchar_t* destination, size_t count, const wchar_t* format_str, ...);
 
 #endif // FMT_H_INCLUDED

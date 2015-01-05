@@ -10,7 +10,7 @@ enum xoGlyphFlags
 	xoGlyphFlag_SubPixel_RGB = 1
 };
 
-inline bool xoGlyphFlag_IsSubPixel( uint32 flags ) { return !!(flags & xoGlyphFlag_SubPixel_RGB); }
+inline bool xoGlyphFlag_IsSubPixel(uint32 flags) { return !!(flags & xoGlyphFlag_SubPixel_RGB); }
 
 struct xoGlyph
 {
@@ -37,16 +37,16 @@ struct xoGlyphCacheKey
 	uint32		Char;
 	uint8		Size;
 	uint8		Flags;
-	
+
 	xoGlyphCacheKey() : FontID(0), Char(0), Size(0), Flags(0) {}
-	xoGlyphCacheKey( xoFontID fid, uint32 ch, uint8 size, uint32 flags ) : FontID(fid), Char(ch), Size(size), Flags(flags) {}
+	xoGlyphCacheKey(xoFontID fid, uint32 ch, uint8 size, uint32 flags) : FontID(fid), Char(ch), Size(size), Flags(flags) {}
 
 	int	GetHashCode() const
 	{
 		// Assume we'll have less than 1024 fonts
 		return (FontID << 22) ^ (Flags << 20) ^ (Size << 10) ^ Char;
 	}
-	bool operator==( const xoGlyphCacheKey& b ) const { return FontID == b.FontID && Char == b.Char && Size == b.Size && Flags == b.Flags; }
+	bool operator==(const xoGlyphCacheKey& b) const { return FontID == b.FontID && Char == b.Char && Size == b.Size && Flags == b.Flags; }
 };
 FHASH_SETUP_POD_GETHASHCODE(xoGlyphCacheKey);
 
@@ -61,21 +61,21 @@ If a glyph render fails, then the resulting xoGlyph will have .IsNull() == true.
 class XOAPI xoGlyphCache
 {
 public:
-			xoGlyphCache();
-			~xoGlyphCache();
+	xoGlyphCache();
+	~xoGlyphCache();
 
 	void			Clear();
 	//bool			GetGlyphFromChar( const xoString& facename, int ch, uint8 size, uint8 flags, xoGlyph& glyph );
 	//bool			GetGlyphFromChar( xoFontID fontID, int ch, uint8 size, uint8 flags, xoGlyph& glyph );
-	
+
 	// Returns NULL if the glyph is not in the cache. Even if the glyph pointer is not NULL, you must still check
 	// whether it is the logical "null glyph", which is empty. You can detect that with xoGlyph.IsNull().
-	const xoGlyph*		GetGlyph( const xoGlyphCacheKey& key ) const;
+	const xoGlyph*		GetGlyph(const xoGlyphCacheKey& key) const;
 
-	uint				RenderGlyph( const xoGlyphCacheKey& key );
+	uint				RenderGlyph(const xoGlyphCacheKey& key);
 
-	const xoTextureAtlas*	GetAtlas( uint i ) const		{ return Atlasses[i]; }
-	xoTextureAtlas*			GetAtlasMutable( uint i )		{ return Atlasses[i]; }
+	const xoTextureAtlas*	GetAtlas(uint i) const		{ return Atlasses[i]; }
+	xoTextureAtlas*			GetAtlasMutable(uint i)		{ return Atlasses[i]; }
 
 	static const uint					NullGlyphIndex;	// = 0. Our first element in 'Glyphs' is always the null glyph (GCC 4.6 won't allow us to write =0 here)
 
@@ -86,6 +86,6 @@ protected:
 	xoGlyph								NullGlyph;
 
 	void	Initialize();
-	void	FilterAndCopyBitmap( const xoFont* font, void* target, int target_stride );
-	void	CopyBitmap( const xoFont* font, void* target, int target_stride );
+	void	FilterAndCopyBitmap(const xoFont* font, void* target, int target_stride);
+	void	CopyBitmap(const xoFont* font, void* target, int target_stride);
 };

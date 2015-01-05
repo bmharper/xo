@@ -6,7 +6,7 @@
 
 // Found this in the Chrome sources, via a PVS studio blog post
 template <typename T, size_t N>
-char (&ArraySizeHelper(T (&array)[N]))[N];
+char (&ArraySizeHelper(T(&array)[N]))[N];
 #define arraysize(array) (sizeof(ArraySizeHelper(array)))
 
 // A macro to disallow the copy constructor and operator= functions

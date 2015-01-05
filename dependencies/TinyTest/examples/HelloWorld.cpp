@@ -11,7 +11,7 @@ TT_TEST_FUNC(NULL, NULL, TTSizeSmall, Hello, TTParallelDontCare)
 TT_TEST_FUNC(NULL, NULL, TTSizeSmall, Fail, TTParallelDontCare)
 {
 	printf("About to fail\n");
-	TTASSERT( 1 + 1 == 3 );
+	TTASSERT(1 + 1 == 3);
 }
 
 int main(int argc, char** argv)

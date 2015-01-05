@@ -5,7 +5,7 @@
 #include "xoDomText.h"
 #include "xoCloneHelpers.h"
 
-xoDomEl::xoDomEl( xoDoc* doc, xoTag tag, xoInternalID parentID )
+xoDomEl::xoDomEl(xoDoc* doc, xoTag tag, xoInternalID parentID)
 	: Doc(doc), Tag(tag), ParentID(parentID)
 {
 }
@@ -16,7 +16,7 @@ xoDomEl::~xoDomEl()
 
 const xoDomNode* xoDomEl::GetParent() const
 {
-	return Doc->GetNodeByInternalID( ParentID );
+	return Doc->GetNodeByInternalID(ParentID);
 }
 
 xoDomNode* xoDomEl::ToNode()
@@ -56,11 +56,11 @@ void xoDomEl::CloneFastInto( xoDomEl& c, xoPool* pool, uint cloneFlags ) const
 
 	// alloc list of pointers to children
 	xoClonePvectPrepare( c.Children, Children, pool );
-	
+
 	// alloc children
 	for ( int i = 0; i < Children.size(); i++ )
 		c.Children[i] = pool->AllocT<xoDomEl>( true );
-	
+
 	// copy children
 	for ( int i = 0; i < Children.size(); i++ )
 	{
@@ -78,11 +78,11 @@ void xoDomEl::CloneFastInto( xoDomEl& c, xoPool* pool, uint cloneFlags ) const
 void xoDomEl::IncVersion()
 {
 	Version++;
-	Doc->SetChildModified( InternalID );
+	Doc->SetChildModified(InternalID);
 }
 
 // memory allocations come from the regular heap. This also happens to not be recursive.
-void xoDomEl::CloneSlowIntoBase( xoDomEl& c, uint cloneFlags ) const
+void xoDomEl::CloneSlowIntoBase(xoDomEl& c, uint cloneFlags) const
 {
 	c.InternalID = InternalID;
 	c.Tag = Tag;

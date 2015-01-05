@@ -44,10 +44,10 @@ public:
 	int				PointCount	= 0;					// Mouse = 1	Touch >= 1
 	xoVec2f			Points[XO_MAX_TOUCHES];
 
-			xoEvent();
-			~xoEvent();
+	xoEvent();
+	~xoEvent();
 
-	void	MakeWindowSize( int w, int h );
+	void	MakeWindowSize(int w, int h);
 };
 
 // This is the event that the Windowing system will post onto the single event queue.
@@ -78,10 +78,10 @@ public:
 	void*				Context;
 	xoEventHandlerF		Func;
 
-			xoEventHandler();
-			~xoEventHandler();
+	xoEventHandler();
+	~xoEventHandler();
 
-	bool	Handles( xoEvents ev ) const	{ return !!(Mask & ev); }
+	bool	Handles(xoEvents ev) const	{ return !!(Mask & ev); }
 	bool	IsLambda() const				{ return !!(Flags & xoEventHandlerFlag_IsLambda); }
 	void	SetLambda()						{ Flags |= xoEventHandlerFlag_IsLambda; }
 };

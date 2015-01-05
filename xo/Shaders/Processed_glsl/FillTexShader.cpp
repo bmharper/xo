@@ -20,32 +20,32 @@ void xoGLProg_FillTex::Reset()
 const char* xoGLProg_FillTex::VertSrc()
 {
 	return
-	"uniform		mat4	mvproj;\n"
-	"attribute	vec4	vpos;\n"
-	"attribute	vec4	vcolor;\n"
-	"attribute	vec2	vtexuv0;\n"
-	"varying		vec4	color;\n"
-	"varying		vec2	texuv0;\n"
-	"void main()\n"
-	"{\n"
-	"	gl_Position = mvproj * vpos;\n"
-	"	texuv0 = vtexuv0;\n"
-	"	color = fromSRGB(vcolor);\n"
-	"}\n"
-;
+		"uniform		mat4	mvproj;\n"
+		"attribute	vec4	vpos;\n"
+		"attribute	vec4	vcolor;\n"
+		"attribute	vec2	vtexuv0;\n"
+		"varying		vec4	color;\n"
+		"varying		vec2	texuv0;\n"
+		"void main()\n"
+		"{\n"
+		"	gl_Position = mvproj * vpos;\n"
+		"	texuv0 = vtexuv0;\n"
+		"	color = fromSRGB(vcolor);\n"
+		"}\n"
+		;
 }
 
 const char* xoGLProg_FillTex::FragSrc()
 {
 	return
-	"uniform sampler2D	tex0;\n"
-	"varying vec4		color;\n"
-	"varying vec2		texuv0;\n"
-	"void main()\n"
-	"{\n"
-	"	gl_FragColor = color * texture2D(tex0, texuv0.st);\n"
-	"}\n"
-;
+		"uniform sampler2D	tex0;\n"
+		"varying vec4		color;\n"
+		"varying vec2		texuv0;\n"
+		"void main()\n"
+		"{\n"
+		"	gl_FragColor = color * texture2D(tex0, texuv0.st);\n"
+		"}\n"
+		;
 }
 
 const char* xoGLProg_FillTex::Name()
@@ -58,13 +58,13 @@ bool xoGLProg_FillTex::LoadVariablePositions()
 {
 	int nfail = 0;
 
-	nfail += (v_mvproj = glGetUniformLocation( Prog, "mvproj" )) == -1;
-	nfail += (v_vpos = glGetAttribLocation( Prog, "vpos" )) == -1;
-	nfail += (v_vcolor = glGetAttribLocation( Prog, "vcolor" )) == -1;
-	nfail += (v_vtexuv0 = glGetAttribLocation( Prog, "vtexuv0" )) == -1;
-	nfail += (v_tex0 = glGetUniformLocation( Prog, "tex0" )) == -1;
-	if ( nfail != 0 )
-		XOTRACE( "Failed to bind %d variables of shader FillTex\n", nfail );
+	nfail += (v_mvproj = glGetUniformLocation(Prog, "mvproj")) == -1;
+	nfail += (v_vpos = glGetAttribLocation(Prog, "vpos")) == -1;
+	nfail += (v_vcolor = glGetAttribLocation(Prog, "vcolor")) == -1;
+	nfail += (v_vtexuv0 = glGetAttribLocation(Prog, "vtexuv0")) == -1;
+	nfail += (v_tex0 = glGetUniformLocation(Prog, "tex0")) == -1;
+	if (nfail != 0)
+		XOTRACE("Failed to bind %d variables of shader FillTex\n", nfail);
 
 	return nfail == 0;
 }

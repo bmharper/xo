@@ -1,7 +1,7 @@
 #include "../../amalgamation/xo-amalgamation.h"
 
-void xoMain( xoSysWnd* wnd )
+void xoMain(xoSysWnd* wnd)
 {
-	XOTRACE( "Hello 1\n" );
-	wnd->Doc()->Root.SetText( "Hello amalgamation" );
+	XOTRACE("Hello 1\n");
+	wnd->Doc()->Root.SetText("Hello amalgamation");
 }

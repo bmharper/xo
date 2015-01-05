@@ -10,17 +10,17 @@
 #include "coredefs.h"
 
 #ifdef _WIN32
-	// This block here is necessary to quiet macro redefinition warnings from including stdint.h and intsafe.h.
-	// Issue https://connect.microsoft.com/VisualStudio/feedback/details/621653/including-stdint-after-intsafe-generates-warnings
-	#pragma warning( push )
-	#pragma warning( disable: 4005 ) // macro redef.
-	#include <limits.h>
-	#include <stdint.h>
-	#include <intsafe.h>
-	#pragma warning( pop )
+// This block here is necessary to quiet macro redefinition warnings from including stdint.h and intsafe.h.
+// Issue https://connect.microsoft.com/VisualStudio/feedback/details/621653/including-stdint-after-intsafe-generates-warnings
+#pragma warning( push )
+#pragma warning( disable: 4005 ) // macro redef.
+#include <limits.h>
+#include <stdint.h>
+#include <intsafe.h>
+#pragma warning( pop )
 #else
-	#include <limits.h>
-	#include <stdint.h>
+#include <limits.h>
+#include <stdint.h>
 #endif
 
 typedef signed char		i8;			// preferred (i8)
@@ -29,7 +29,7 @@ typedef signed char		int8_t;
 typedef unsigned char	u8;			// preferred (u8)
 typedef unsigned char	uint8;
 typedef unsigned char	uint8_t;
-typedef unsigned char	byte;		
+typedef unsigned char	byte;
 typedef int int32;					// preferred (int or int32) -- see also intr/intp below
 typedef int INT32;
 typedef int int32_t;
@@ -140,35 +140,35 @@ typedef UINT32 DWORD;
 
 
 #ifdef _WIN32
-	#define INTMIN		_I32_MIN
-	#define INTMAX		_I32_MAX
-	#define INT8MIN		_I8_MIN
-	#define INT8MAX		_I8_MAX
-	#define INT16MIN	_I16_MIN
-	#define INT16MAX	_I16_MAX
-	#define INT32MIN	_I32_MIN
-	#define INT32MAX	_I32_MAX
-	#define INT64MIN	_I64_MIN
-	#define INT64MAX	_I64_MAX
-	#define UINT8MAX	_UI8_MAX
-	#define UINT16MAX	_UI16_MAX
-	#define UINT32MAX	_UI32_MAX
-	#define UINT64MAX	_UI64_MAX
+#define INTMIN		_I32_MIN
+#define INTMAX		_I32_MAX
+#define INT8MIN		_I8_MIN
+#define INT8MAX		_I8_MAX
+#define INT16MIN	_I16_MIN
+#define INT16MAX	_I16_MAX
+#define INT32MIN	_I32_MIN
+#define INT32MAX	_I32_MAX
+#define INT64MIN	_I64_MIN
+#define INT64MAX	_I64_MAX
+#define UINT8MAX	_UI8_MAX
+#define UINT16MAX	_UI16_MAX
+#define UINT32MAX	_UI32_MAX
+#define UINT64MAX	_UI64_MAX
 #else
-	#define INTMIN		INT32_MIN
-	#define INTMAX		INT32_MAX
-	#define INT8MIN		INT8_MIN
-	#define INT8MAX		INT8_MAX
-	#define INT16MIN	INT16_MIN
-	#define INT16MAX	INT16_MAX
-	#define INT32MIN	INT32_MIN
-	#define INT32MAX	INT32_MAX
-	#define INT64MIN	INT64_MIN
-	#define INT64MAX	INT64_MAX
-	#define UINT8MAX	UINT8_MAX
-	#define UINT16MAX	UINT16_MAX
-	#define UINT32MAX	UINT32_MAX
-	#define UINT64MAX	UINT64_MAX
+#define INTMIN		INT32_MIN
+#define INTMAX		INT32_MAX
+#define INT8MIN		INT8_MIN
+#define INT8MAX		INT8_MAX
+#define INT16MIN	INT16_MIN
+#define INT16MAX	INT16_MAX
+#define INT32MIN	INT32_MIN
+#define INT32MAX	INT32_MAX
+#define INT64MIN	INT64_MIN
+#define INT64MAX	INT64_MAX
+#define UINT8MAX	UINT8_MAX
+#define UINT16MAX	UINT16_MAX
+#define UINT32MAX	UINT32_MAX
+#define UINT64MAX	UINT64_MAX
 #endif
 
 #endif // ABC_STDINT_H_INCLUDED

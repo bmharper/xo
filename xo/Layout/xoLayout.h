@@ -30,7 +30,7 @@ class XOAPI xoLayout
 {
 public:
 
-	void Layout( const xoDoc& doc, u32 docWidth, u32 docHeight, xoRenderDomNode& root, xoPool* pool );
+	void Layout(const xoDoc& doc, u32 docWidth, u32 docHeight, xoRenderDomNode& root, xoPool* pool);
 
 protected:
 
@@ -77,26 +77,26 @@ protected:
 
 	TextRunState				TempText;
 
-	xoPos	ComputeDimension( xoPos container, bool isContainerDefined, xoStyleCategories cat );
-	xoPos	ComputeDimension( xoPos container, bool isContainerDefined, xoSize size );
-	xoBox	ComputeBox( xoBox container, bool widthDefined, bool heightDefined, xoStyleCategories cat );
-	xoBox	ComputeBox( xoBox container, bool widthDefined, bool heightDefined, xoStyleBox box );
-	xoBox	ComputeSpecifiedPosition( const NodeState& s );
-	void	ComputeRelativeOffset( const NodeState& s, xoBox& box );
+	xoPos	ComputeDimension(xoPos container, bool isContainerDefined, xoStyleCategories cat);
+	xoPos	ComputeDimension(xoPos container, bool isContainerDefined, xoSize size);
+	xoBox	ComputeBox(xoBox container, bool widthDefined, bool heightDefined, xoStyleCategories cat);
+	xoBox	ComputeBox(xoBox container, bool widthDefined, bool heightDefined, xoStyleBox box);
+	xoBox	ComputeSpecifiedPosition(const NodeState& s);
+	void	ComputeRelativeOffset(const NodeState& s, xoBox& box);
 
-	void	LayoutInternal( xoRenderDomNode& root );
+	void	LayoutInternal(xoRenderDomNode& root);
 	void	RenderGlyphsNeeded();
-	void	RunNode( NodeState& s, const xoDomNode& node, xoRenderDomNode* rnode );
-	void	RunText( NodeState& s, const xoDomText& node, xoRenderDomText* rnode );
-	void	GenerateTextWords( NodeState& s, TextRunState& ts );
-	void	GenerateTextOutput( NodeState& s, TextRunState& ts );
-	void	NextLine( NodeState& s );
-	xoPoint	PositionBlock( NodeState& s, xoBox& marginBox );
-	void	OffsetRecursive( xoRenderDomNode* rnode, xoPoint offset );
+	void	RunNode(NodeState& s, const xoDomNode& node, xoRenderDomNode* rnode);
+	void	RunText(NodeState& s, const xoDomText& node, xoRenderDomText* rnode);
+	void	GenerateTextWords(NodeState& s, TextRunState& ts);
+	void	GenerateTextOutput(NodeState& s, TextRunState& ts);
+	void	NextLine(NodeState& s);
+	xoPoint	PositionBlock(NodeState& s, xoBox& marginBox);
+	void	OffsetRecursive(xoRenderDomNode* rnode, xoPoint offset);
 
-	static bool				IsSpace( int ch );
-	static bool				IsLinebreak( int ch );
-	static xoGlyphCacheKey	MakeGlyphCacheKey( xoRenderDomText* rnode );
+	static bool				IsSpace(int ch);
+	static bool				IsLinebreak(int ch);
+	static xoGlyphCacheKey	MakeGlyphCacheKey(xoRenderDomText* rnode);
 
 };
 

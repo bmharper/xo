@@ -37,10 +37,10 @@ Examples:
 class XOAPI xoDocParser
 {
 public:
-	xoString Parse( const char* src, xoDomNode* target );
+	xoString Parse(const char* src, xoDomNode* target);
 
 protected:
-	static bool IsWhite( int c );
-	static bool IsAlpha( int c );
-	static bool EqNoCase( const char* a, const char* b, intp bLen );
+	static bool IsWhite(int c);
+	static bool IsAlpha(int c);
+	static bool EqNoCase(const char* a, const char* b, intp bLen);
 };

@@ -1,12 +1,12 @@
 #pragma once
 
 #ifndef ASSERT
-	#define TEMP_ASSERT
-	#ifdef _DEBUG
-		#define ASSERT(condition) (void)0
-	#else
-		#define ASSERT(condition) assert(condition)
-	#endif
+#define TEMP_ASSERT
+#ifdef _DEBUG
+#define ASSERT(condition) (void)0
+#else
+#define ASSERT(condition) assert(condition)
+#endif
 #endif
 
 #include "../dependencies/agg/include/agg_basics.h"
@@ -45,6 +45,6 @@
 #include "../dependencies/hash/xxhash.h"
 
 #ifdef TEMP_ASSERT
-	#undef TEMP_ASSERT
-	#undef ASSERT
+#undef TEMP_ASSERT
+#undef ASSERT
 #endif

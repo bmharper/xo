@@ -1,8 +1,8 @@
 /*
  * Copyright 2001-2004 Unicode, Inc.
- * 
+ *
  * Disclaimer
- * 
+ *
  * This source code is provided as is by Unicode, Inc. No claims are
  * made as to fitness for any particular purpose. No warranties of any
  * kind are expressed or implied. The recipient agrees to determine
@@ -10,9 +10,9 @@
  * purchased on magnetic or optical media from Unicode, Inc., the
  * sole remedy for any claim will be exchange of defective media
  * within 90 days of receipt.
- * 
+ *
  * Limitations on Rights to Redistribute This Code
- * 
+ *
  * Unicode, Inc. hereby grants the right to freely use the information
  * supplied in this file in the creation of products supporting the
  * Unicode Standard, and to make copies of this file in any form
@@ -33,7 +33,7 @@
 
     Each routine converts the text between *sourceStart and sourceEnd,
     putting the result into the buffer between *targetStart and
-    targetEnd. Note: the end pointers are *after* the last item: e.g. 
+    targetEnd. Note: the end pointers are *after* the last item: e.g.
     *(sourceEnd - 1) is the last item.
 
     The return result indicates whether the conversion was successful,
@@ -71,7 +71,7 @@
 	sequence is malformed.  When "sourceIllegal" is returned, the source
 	value will point to the illegal value that caused the problem. E.g.,
 	in UTF-8 when a sequence is malformed, it points to the start of the
-	malformed sequence.  
+	malformed sequence.
 
     Author: Mark E. Davis, 1994.
     Rev History: Rick McGowan, fixes & updates May 2001.
@@ -85,49 +85,49 @@
 //#include <string>
 
 /// Returns true if any characters in the string are greater than 127
-inline bool IsHighAscii( const char* src )
+inline bool IsHighAscii(const char* src)
 {
-	while ( *src )
-		if ( *src++ < 0 ) return true;
+	while (*src)
+		if (*src++ < 0) return true;
 	return false;
 }
 
 /// Returns true if any characters in the string are greater than 127
-inline bool IsHighAscii( const char* src, size_t maxLen )
+inline bool IsHighAscii(const char* src, size_t maxLen)
 {
 	size_t p = 0;
-	while ( src[p] && p < maxLen )
-		if ( src[p++] < 0 ) return true;
+	while (src[p] && p < maxLen)
+		if (src[p++] < 0) return true;
 	return false;
 }
 
 /// Returns true if all characters in the string are less than 128.
-inline bool IsLowAscii( const wchar_t* src )
+inline bool IsLowAscii(const wchar_t* src)
 {
-	while ( *src )
-		if ( *src++ > 127 ) return false;
+	while (*src)
+		if (*src++ > 127) return false;
 	return true;
 }
 
 /// Returns true if all characters in the string are less than 128.
-inline bool IsLowAscii( const wchar_t* src, size_t maxLen )
+inline bool IsLowAscii(const wchar_t* src, size_t maxLen)
 {
 	size_t p = 0;
-	while ( src[p] && p < maxLen )
-		if ( src[p++] > 127 ) return false;
+	while (src[p] && p < maxLen)
+		if (src[p++] > 127) return false;
 	return true;
 }
 
 #ifdef XSTRING_DEFINED
-XStringA	PAPI ConvertHighAsciiToUTF8( const XStringA& src );
-XStringA	PAPI ConvertUTF8ToHighAscii( const XStringA& src );
-XStringW	PAPI ConvertUTF8ToWide( const XStringA& src );
-XStringA	PAPI ConvertWideToUTF8( const XStringW& src );
+XStringA	PAPI ConvertHighAsciiToUTF8(const XStringA& src);
+XStringA	PAPI ConvertUTF8ToHighAscii(const XStringA& src);
+XStringW	PAPI ConvertUTF8ToWide(const XStringA& src);
+XStringA	PAPI ConvertWideToUTF8(const XStringW& src);
 #endif
 
 #ifdef _STRING_
-std::wstring	PAPI ConvertUTF8ToWide( const std::string& src );
-std::string		PAPI ConvertWideToUTF8( const std::wstring& src );
+std::wstring	PAPI ConvertUTF8ToWide(const std::string& src);
+std::string		PAPI ConvertWideToUTF8(const std::wstring& src);
 #endif
 
 /** Convert UTF16 to UTF8.
@@ -137,10 +137,10 @@ std::string		PAPI ConvertWideToUTF8( const std::wstring& src );
 @param dstLen The length in characters of the destination buffer.
 @param relaxNullTerminator If true, then we don't make sure that we can add a null terminator to dst.
 **/
-bool		PAPI ConvertWideToUTF8( const wchar_t* src, size_t srcLen, char* dst, size_t& dstLen, bool relaxNullTerminator = false );
+bool		PAPI ConvertWideToUTF8(const wchar_t* src, size_t srcLen, char* dst, size_t& dstLen, bool relaxNullTerminator = false);
 
 /// Analogue of ConvertWideToUTF8
-bool		PAPI ConvertUTF8ToWide( const char* src, size_t srcLen, wchar_t* dst, size_t& dstLen, bool relaxNullTerminator = false );
+bool		PAPI ConvertUTF8ToWide(const char* src, size_t srcLen, wchar_t* dst, size_t& dstLen, bool relaxNullTerminator = false);
 
 /** Returns the maximum number of UTF8 bytes necessary in order to represent any legal UTF16 string of the indicated number of UTF16 characters.
 
@@ -153,32 +153,32 @@ for values less than 0x10000, we have the maximum number of UTF8 bytes equal to 
 equal to 0x10000, we need (N/2) * 4 = N * 2. So the maximum number of bytes necessary is N * 3.
 
 **/
-inline size_t MaximumUtf8FromUtf16( size_t utf16Len )
+inline size_t MaximumUtf8FromUtf16(size_t utf16Len)
 {
 	return utf16Len * 3;
 }
 
-inline size_t MaximumUtf8FromUtf32( size_t utf32Len )
+inline size_t MaximumUtf8FromUtf32(size_t utf32Len)
 {
 	return utf32Len * 4;
 }
 
-inline size_t MaximumUtf8FromWide( size_t wideLen )
+inline size_t MaximumUtf8FromWide(size_t wideLen)
 {
 	return sizeof(wchar_t) == 2 ? MaximumUtf8FromUtf16(wideLen) : MaximumUtf8FromUtf32(wideLen);
 }
 
-inline size_t MaximumUtf16FromUtf8( size_t utf8Len )
+inline size_t MaximumUtf16FromUtf8(size_t utf8Len)
 {
 	return utf8Len * 2;
 }
 
-inline size_t MaximumUtf32FromUtf8( size_t utf8Len )
+inline size_t MaximumUtf32FromUtf8(size_t utf8Len)
 {
 	return utf8Len;
 }
 
-inline size_t MaximumWideFromUtf8( size_t utf8Len )
+inline size_t MaximumWideFromUtf8(size_t utf8Len)
 {
 	return sizeof(wchar_t) == 2 ? MaximumUtf16FromUtf8(utf8Len) : MaximumUtf32FromUtf8(utf8Len);
 }
@@ -210,7 +210,7 @@ enum ConversionResult
 	ConversionOk, 						// Conversion successful.
 	ConversionResultSourceExhausted,	// Partial character in source, but hit end.
 	ConversionResultTargetExhausted,	// Insufficient room in target for conversion.
-	ConversionResultSourceIllegal		// Source sequence is illegal/malformed. 
+	ConversionResultSourceIllegal		// Source sequence is illegal/malformed.
 };
 
 enum ConversionFlags
@@ -219,25 +219,25 @@ enum ConversionFlags
 	ConversionLenient
 };
 
-ConversionResult PAPI ConvertUTF8toUTF16 ( const UTF8** sourceStart, const UTF8* sourceEnd,
-											UTF16** targetStart, UTF16* targetEnd, ConversionFlags flags );
+ConversionResult PAPI ConvertUTF8toUTF16(const UTF8** sourceStart, const UTF8* sourceEnd,
+		UTF16** targetStart, UTF16* targetEnd, ConversionFlags flags);
 
-ConversionResult PAPI ConvertUTF16toUTF8 ( const UTF16** sourceStart, const UTF16* sourceEnd, 
-											UTF8** targetStart, UTF8* targetEnd, ConversionFlags flags );
-		
-ConversionResult PAPI ConvertUTF8toUTF32 (	const UTF8** sourceStart, const UTF8* sourceEnd, 
-											UTF32** targetStart, UTF32* targetEnd, ConversionFlags flags );
+ConversionResult PAPI ConvertUTF16toUTF8(const UTF16** sourceStart, const UTF16* sourceEnd,
+		UTF8** targetStart, UTF8* targetEnd, ConversionFlags flags);
 
-ConversionResult PAPI ConvertUTF32toUTF8 ( const UTF32** sourceStart, const UTF32* sourceEnd,
-											UTF8** targetStart, UTF8* targetEnd, ConversionFlags flags );
-		
-ConversionResult PAPI ConvertUTF16toUTF32 ( const UTF16** sourceStart, const UTF16* sourceEnd,
-											UTF32** targetStart, UTF32* targetEnd, ConversionFlags flags );
+ConversionResult PAPI ConvertUTF8toUTF32(const UTF8** sourceStart, const UTF8* sourceEnd,
+		UTF32** targetStart, UTF32* targetEnd, ConversionFlags flags);
 
-ConversionResult PAPI ConvertUTF32toUTF16 ( const UTF32** sourceStart, const UTF32* sourceEnd,
-											UTF16** targetStart, UTF16* targetEnd, ConversionFlags flags );
+ConversionResult PAPI ConvertUTF32toUTF8(const UTF32** sourceStart, const UTF32* sourceEnd,
+		UTF8** targetStart, UTF8* targetEnd, ConversionFlags flags);
 
-bool PAPI IsLegalUTF8Sequence( const UTF8 *source, const UTF8 *sourceEnd );
+ConversionResult PAPI ConvertUTF16toUTF32(const UTF16** sourceStart, const UTF16* sourceEnd,
+		UTF32** targetStart, UTF32* targetEnd, ConversionFlags flags);
+
+ConversionResult PAPI ConvertUTF32toUTF16(const UTF32** sourceStart, const UTF32* sourceEnd,
+		UTF16** targetStart, UTF16* targetEnd, ConversionFlags flags);
+
+bool PAPI IsLegalUTF8Sequence(const UTF8 *source, const UTF8 *sourceEnd);
 
 }
 

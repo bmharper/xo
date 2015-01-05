@@ -20,6 +20,6 @@ public:
 	int32		Descender_x256;					// Descender
 	uint32		MaxAutoHinterSize;				// Maximum font size at which we force use of the auto hinter. Heuristic thumb-suck observations. Only applies to sub-pixel rendering.
 
-			xoFont();
-			~xoFont();
+	xoFont();
+	~xoFont();
 };

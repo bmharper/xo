@@ -11,9 +11,9 @@ public:
 	GLuint Frag;
 	GLuint Prog;
 
-							xoGLProg();
+	xoGLProg();
 	virtual					~xoGLProg();
-	
+
 	// All of these virtual functions are overridden by auto-generated shader objects
 	virtual void			Reset();
 	virtual const char*		VertSrc();

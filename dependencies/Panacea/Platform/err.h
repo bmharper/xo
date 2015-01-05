@@ -23,13 +23,13 @@ PAPI NORETURN	void		AbcDie();
 #define AbcCheckNULL( obj )					if ( !(obj) )	{ AbcPanicHere(); }
 #define AbcCheckAlloc( buf )				if ( !(buf) )	{ AbcPanic("Out of memory"); }
 #define AbcMemoryExhausted()				AbcPanic("Out of memory")
-PAPI void* AbcMallocOrDie( size_t bytes );
-PAPI void* AbcReallocOrDie( void* p, size_t bytes );
+PAPI void* AbcMallocOrDie(size_t bytes);
+PAPI void* AbcReallocOrDie(void* p, size_t bytes);
 
 
 // If this returns false, then we are a headless process, for example a windows service.
 // This means no user32.dll - no messagebox, etc.
 PAPI bool AbcAllowGUI();
-PAPI void AbcSetAllowGUI( bool allowGUI );
+PAPI void AbcSetAllowGUI(bool allowGUI);
 
 #endif // ABC_ERR_H_INCLUDED
