@@ -359,6 +359,7 @@ local Test = Program {
 		"tests/test.cpp",
 		"tests/test_DocumentClone.cpp",
 		"tests/test_Layout.cpp",
+		"tests/test_Parser.cpp",
 		--"tests/test_Preprocessor.cpp",
 		"tests/test_Stats.cpp",
 		"tests/test_String.cpp",

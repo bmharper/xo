@@ -323,6 +323,9 @@ void xoLayout3::GenerateTextWords(TextRunState& ts)
 	xoPos fontAscender = xoRealx256ToPos(font->Ascender_x256 * ts.FontSizePx);
 	xoPos charWidth_32 = xoRealx256ToPos(font->LinearHoriAdvance_Space_x256) * ts.FontSizePx;
 
+	if (SnapSubpixelHorzText)
+		charWidth_32 = xoPosRound(charWidth_32);
+
 	// if we add a "line-height" style then we'll want to multiply that by this
 	xoPos lineHeight = xoRealx256ToPos(ts.FontSizePx * font->LineHeight_x256);
 	if (xoGlobal()->RoundLineHeights)

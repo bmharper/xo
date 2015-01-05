@@ -394,12 +394,12 @@ struct xoGlobalStruct
 	bool						EnableKerning;			// Enable kerning on text
 	bool						RoundLineHeights;		// Round text line heights to integer amounts, so that text line separation is not subject to sub-pixel positioning differences.
 	bool						SnapBoxes;				// Round certain boxes up to integer pixels.
-	// From the perspective of having the exact same layout on multiple devices, it seems desirable to operate
-	// in subpixel coordinates always. However, this ends up producing ugly visuals, for example when
-	// you have a box with a single pixel border, and it is not aligned to a pixel boundary, then you get
-	// the border smudged across two pixels.
+														// From the perspective of having the exact same layout on multiple devices, it seems desirable to operate
+														// in subpixel coordinates always. However, this ends up producing ugly visuals, for example when
+														// you have a box with a single pixel border, and it is not aligned to a pixel boundary, then you get
+														// the border smudged across two pixels.
 	bool						SnapSubpixelHorzText;	// When rendering subpixel text, snap glyphs to whole pixels, instead of sub-pixel horizontal positioning.
-	// This not only determines layout behaviour, but also how our subpixel glyphs are rasterized.
+														// This not only determines layout behaviour, but also how our subpixel glyphs are rasterized.
 	//bool						EmulateGammaBlending;	// Only applicable when EnableSRGBFramebuffer = true, this tries to emulate gamma-space blending. You would turn this on to get consistent blending on all devices. FAILED EXPERIMENT - BAD IDEA.
 	float						SubPixelTextGamma;		// Tweak freetype's gamma when doing sub-pixel text rendering. Should be no need to use anything other than 1.0
 	float						WholePixelTextGamma;	// Tweak freetype's gamma when doing whole-pixel text rendering. Should be no need to use anything other than 1.0

@@ -95,9 +95,7 @@ void DoBaselineAlignment_rev2(xoDoc* doc)
 		// inner element's size comes from text
 		e = root->Parse(
 				"<div style='width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep'>"
-				"	<lab style='hcenter: hcenter; vcenter: vcenter; background: #faa;'>"
-				"		Hello\nWorld!"
-				"	</lab>"
+				"	<lab style='hcenter: hcenter; vcenter: vcenter; background: #faa;'>Hello\nWorld!</lab>"
 				"</div>"
 			);
 	}
@@ -121,14 +119,10 @@ void DoBaselineAlignment_rev2(xoDoc* doc)
 		// The first block has text centered inside it. The second block's text is aligned to the baseline of the first.
 		e = root->Parse(
 				"<div style='width: 150ep; height: 80ep; box-sizing: margin; margin: 0 4ep 0 4ep; background: #ddd'>"
-				"	<lab style='vcenter: vcenter; font-size: 40ep; background: #dbb'>"
-				"		Hello-p"
-				"	</lab>"
+				"	<lab style='vcenter: vcenter; font-size: 40ep; background: #dbb'>Hello-p</lab>"
 				"</div>"
 				"<div style='width: 100ep; height: 80ep; box-sizing: margin; margin: 0 8ep 0 8ep; background: #bbb'>"
-				"	<lab style='baseline: baseline; font-size: 16ep; background: #bdb'>"
-				"		world"
-				"	</lab>"
+				"	<lab style='baseline: baseline; font-size: 16ep; background: #bdb'>world</lab>"
 				"</div>"
 			);
 		// TODO:
@@ -236,8 +230,8 @@ void DoLongText(xoDoc* doc)
 void DoInlineFlow(xoDoc* doc)
 {
 	//doc->Root.ParseAppend( R"(The quick brown fox jumps over the lazy dogggggggggggggggggggg moon star)");
-	//doc->Root.ParseAppend( R"(The quick <span style='color: #a00; background: #fff'>brown fox jumps</span> over)");
-	doc->Root.ParseAppend(R"(The <span style='color: #a00; background: #fff'>brown</span>)");
+	doc->Root.ParseAppend( R"(The quick <span style='color: #a00; background: #ddd'>brown fox jumps</span> over)");
+	//doc->Root.ParseAppend(R"(The <span style='color: #a00; background: #fff'>brown</span>)");
 	//doc->Root.ParseAppend( R"(The quick)");
 }
 
@@ -248,15 +242,15 @@ void DoBackupSettings(xoDoc* doc)
 	root->StyleParse("font-family: Segoe UI; font-size: 12px;");
 	//root->StyleParse( "font-family: Audiowide; font-size: 12px;" );
 	doc->ClassParse("pad-light",		"background: #f8f8f8; width: 140ep; height: 10ep;");
-	doc->ClassParse("pad-dark",		"background: #efefef; width: 470ep; height: 10ep;");
-	doc->ClassParse("bg-light",		"color: #000; background: #f8f8f8; width: 140ep; height: 36ep; padding: 8ep;");
+	doc->ClassParse("pad-dark",			"background: #efefef; width: 470ep; height: 10ep;");
+	doc->ClassParse("bg-light",			"color: #000; background: #f8f8f8; width: 140ep; height: 36ep; padding: 8ep;");
 	doc->ClassParse("bg-dark",			"color: #000; background: #efefef; width: 470ep; height: 36ep; padding: 8ep");
 	doc->ClassParse("textbox",			"color: #000; background: #fff; padding: 3ep 3ep 3ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd; canfocus: true; cursor: text");
-	doc->ClassParse("textbox:focus",   "border: 1px #8888ee");
+	doc->ClassParse("textbox:focus",	"border: 1px #8888ee");
 	doc->ClassParse("button",			"color: #000; background: #ececec; margin: 6ep 0ep 6ep 0ep; padding: 14ep 3ep 14ep 3ep; border: 1px #bdbdbd; canfocus: true");
-	doc->ClassParse("button:focus",	"border: 1px #8888ee");
-	doc->ClassParse("button:hover",	"background: #ddd");
-	doc->ClassParse("baseline",		"baseline:baseline");
+	doc->ClassParse("button:focus",		"border: 1px #8888ee");
+	doc->ClassParse("button:hover",		"background: #ddd");
+	doc->ClassParse("baseline",			"baseline:baseline");
 
 	auto horzPadder =
 		"<div style='break:after'>"

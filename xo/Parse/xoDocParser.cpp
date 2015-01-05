@@ -98,7 +98,7 @@ xoString xoDocParser::Parse(const char* src, xoDomNode* target)
 
 	auto newText = [&]() -> xoString
 	{
-		bool white = true;
+		bool white = true;	// True if the entire string is whitespace or empty
 		intp escape = -1;
 		TempString str;
 		for (intp i = txtStart; i < pos; i++)
@@ -111,6 +111,7 @@ xoString xoDocParser::Parse(const char* src, xoDomNode* target)
 					intp len = i - escape;
 					if (len == 2 && src[escape] == 'l' && src[escape + 1] == 't') str.Add('<');
 					else if (len == 2 && src[escape] == 'g' && src[escape + 1] == 't') str.Add('>');
+					else if (len == 2 && src[escape] == 's' && src[escape + 1] == 'p') str.Add(' ');
 					else if (len == 3 && src[escape] == 'a' && src[escape + 1] == 'm' && src[escape + 2] == 'p') str.Add('&');
 					else return fmt("Invalid escape sequence (%v)", xoString(src + escape, len).Z);
 					escape = -1;
@@ -120,17 +121,16 @@ xoString xoDocParser::Parse(const char* src, xoDomNode* target)
 			{
 				bool w = IsWhite(c);
 				if (c == '&')				escape = i + 1;
-				else if (w && white)		{}					// trim leading whitespace
-				else if (c == '\r')		{}					// ignore '\r'
+				else if (c == '\r')			{}					// ignore '\r'
 				else						str.Add(c);
 				white = white && w;
 			}
 		}
 		if (escape != -1)
 			return "Unfinished escape sequence";
-		// trim trailing whitespace
-		while (str.Len != 0 && IsWhite(str.Buf[str.Len - 1]))
-			str.Len--;
+		// Pure whitespace is discarded. This is solely so that one can indent DOM elements.
+		if (white)
+			return "";
 		if (str.Len != 0)
 		{
 			str.Terminate();
