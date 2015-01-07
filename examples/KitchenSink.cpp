@@ -9,8 +9,11 @@ void InitDOM(xoDoc* doc);
 void xoMain(xoSysWnd* wnd)
 {
 	xoGlobal()->FontStore->AddFontDirectory("C:\\temp\\fonts");
-	//wnd->SetPosition( xoBox(2100, 60, 2100 + 1300, 60 + 800), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size ); // DO NOT COMMIT ME
-	wnd->SetPosition(xoBox(-250, 60, -250 + 120, 60 + 140), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size);   // DO NOT COMMIT ME
+	int left = -320;
+	int width = 300;
+	int top = 60;
+	int height = 140;
+	wnd->SetPosition(xoBox(left, top, left + width, top + height), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size);   // DO NOT COMMIT ME
 	InitDOM(wnd->Doc());
 }
 

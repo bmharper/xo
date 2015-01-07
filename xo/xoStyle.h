@@ -131,73 +131,67 @@ enum xoFlowContext
 // The order of the box components (left,top,right,bottom) must be consistent with the order in xoStyleBox
 // In addition, all 'box' types must fall between Margin_Left and Border_Bottom. This is simply for sanity. It is verified
 // inside xoStyle.SetBox()
-#define XO_STYLE_DEFINE \
-XX(NULL, 0) \
-XY(Color) \
-XY(Display) \
-XY(Background) \
-XY(BackgroundImage) \
-XY(Text_Align_Vertical) \
-\
-XY(Break) \
-XY(CanFocus) \
-XY(Cursor) \
-\
-XY(Padding_Use_Me_1) \
-XY(Padding_Use_Me_2) \
-XY(Padding_Use_Me_3) \
-\
-XY(Margin_Left) \
-XY(Margin_Top) \
-XY(Margin_Right) \
-XY(Margin_Bottom) \
-\
-XY(Padding_Left) \
-XY(Padding_Top) \
-XY(Padding_Right) \
-XY(Padding_Bottom) \
-\
-XY(Border_Left) \
-XY(Border_Top) \
-XY(Border_Right) \
-XY(Border_Bottom) \
-\
-XY(BorderColor_Left) \
-XY(BorderColor_Top) \
-XY(BorderColor_Right) \
-XY(BorderColor_Bottom) \
-\
-XY(Width) \
-XY(Height) \
-\
-XY(Top) \
-XY(VCenter) \
-XY(Bottom) \
-XY(Baseline) \
-XY(Left) \
-XY(HCenter) \
-XY(Right) \
-\
-XY(FontSize) \
-XY(FontFamily) \
-\
-XY(BorderRadius) \
-XY(Position) \
-XY(FlowContext) \
-XY(FlowAxis) \
-XY(FlowDirection_Horizontal) \
-XY(FlowDirection_Vertical) \
-XY(BoxSizing) \
-XY(END)
-
-#define XX(a,b) xoCat##a = b,
-#define XY(a) xoCat##a,
-enum xoStyleCategories {
-	XO_STYLE_DEFINE
+enum xoStyleCategories
+{
+	xoCatNULL = 0,
+	xoCatColor,
 	xoCatFIRST = xoCatColor,
+	xoCatDisplay,
+	xoCatBackground,
+	xoCatBackgroundImage,
+	xoCatText_Align_Vertical,
+
+	xoCatBreak,
+	xoCatCanFocus,
+	xoCatCursor,
+
+	xoCatPadding_Use_Me_1,
+	xoCatPadding_Use_Me_2,
+	xoCatPadding_Use_Me_3,
+
+	xoCatMargin_Left,
+	xoCatMargin_Top,
+	xoCatMargin_Right,
+	xoCatMargin_Bottom,
+
+	xoCatPadding_Left,
+	xoCatPadding_Top,
+	xoCatPadding_Right,
+	xoCatPadding_Bottom,
+
+	xoCatBorder_Left,
+	xoCatBorder_Top,
+	xoCatBorder_Right,
+	xoCatBorder_Bottom,
+
+	xoCatBorderColor_Left,
+	xoCatBorderColor_Top,
+	xoCatBorderColor_Right,
+	xoCatBorderColor_Bottom,
+
+	xoCatWidth,
+	xoCatHeight,
+
+	xoCatTop,
+	xoCatVCenter,
+	xoCatBottom,
+	xoCatBaseline,
+	xoCatLeft,
+	xoCatHCenter,
+	xoCatRight,
+
+	xoCatFontSize,
+	xoCatFontFamily,
+
+	xoCatBorderRadius,
+	xoCatPosition,
+	xoCatFlowContext,
+	xoCatFlowAxis,
+	xoCatFlowDirection_Horizontal,
+	xoCatFlowDirection_Vertical,
+	xoCatBoxSizing,
+	xoCatEND,
 };
-#undef XX
-#undef XY
 
 static_assert(xoCatMargin_Left % 4 == 0, "Start of boxes must be multiple of 4");
 
@@ -212,7 +206,7 @@ extern const xoStyleCategories	xoInheritedStyleCategories[xoNumInheritedStyleCat
 /* Single style attribute (such as Margin-Left, Width, FontSize, etc).
 This must be zero-initializable (i.e. with memset(0)).
 It must remain small.
-Currently, sizeof(xoStyleAttrib) = 8.
+Currently, sizeof(xoStyleAttrib) = 8. This is verified by a static assertion below.
 */
 class XOAPI xoStyleAttrib
 {
@@ -224,10 +218,10 @@ public:
 		FlagInherit = 1,
 	};
 
-	uint8				Category;		// type xoStyleCategories
-	uint8				SubType;
-	uint8				Flags;
-	uint8				Unused2;
+	xoStyleCategories	Category : 8;
+	uint				SubType : 8;
+	uint				Flags : 8;
+	uint				Unused2 : 8;
 	union
 	{
 		uint32			ValU32;
@@ -236,49 +230,49 @@ public:
 
 	xoStyleAttrib();
 
-	static xoStyleAttrib MakeWidth(xoSize val)					{ xoStyleAttrib a; a.SetSize(xoCatWidth, val); return a; }
-	static xoStyleAttrib MakeHeight(xoSize val)					{ xoStyleAttrib a; a.SetSize(xoCatHeight, val); return a; }
+	static xoStyleAttrib MakeWidth(xoSize val)						{ xoStyleAttrib a; a.SetSize(xoCatWidth, val); return a; }
+	static xoStyleAttrib MakeHeight(xoSize val)						{ xoStyleAttrib a; a.SetSize(xoCatHeight, val); return a; }
 
 	void SetInherit(xoStyleCategories cat);
 
 	void SetColor(xoStyleCategories cat, xoColor val)				{ SetU32(cat, val.u); }
-	void SetSize(xoStyleCategories cat, xoSize val)				{ SetWithSubtypeF(cat, val.Type, val.Val); }
-	void SetDisplay(xoDisplayType val)							{ SetU32(xoCatDisplay, val); }
+	void SetSize(xoStyleCategories cat, xoSize val)					{ SetWithSubtypeF(cat, val.Type, val.Val); }
+	void SetDisplay(xoDisplayType val)								{ SetU32(xoCatDisplay, val); }
 	void SetBorderRadius(xoSize val)								{ SetSize(xoCatBorderRadius, val); }
 	void SetPosition(xoPositionType val)							{ SetU32(xoCatPosition, val); }
-	void SetFont(xoFontID val)									{ SetU32(xoCatFontFamily, val); }
-	void SetBackgroundImage(const char* image, xoDoc* doc)		{ SetString(xoCatBackgroundImage, image, doc); }
-	void SetBreak(xoBreakType type)								{ SetU32(xoCatBreak, type); }
-	void SetCanFocus(bool canFocus)								{ SetU32(xoCatCanFocus, canFocus); }
+	void SetFont(xoFontID val)										{ SetU32(xoCatFontFamily, val); }
+	void SetBackgroundImage(const char* image, xoDoc* doc)			{ SetString(xoCatBackgroundImage, image, doc); }
+	void SetBreak(xoBreakType type)									{ SetU32(xoCatBreak, type); }
+	void SetCanFocus(bool canFocus)									{ SetU32(xoCatCanFocus, canFocus); }
 	void SetCursor(xoCursors cursor)								{ SetU32(xoCatCursor, cursor); }
 	void SetFlowContext(xoFlowContext flowcx)						{ SetU32(xoCatFlowContext, flowcx); }
 	void SetFlowAxis(xoFlowAxis axis)								{ SetU32(xoCatFlowAxis, axis); }
-	void SetFlowDirectionHorizonal(xoFlowDirection dir)			{ SetU32(xoCatFlowDirection_Horizontal, dir); }
-	void SetFlowDirectionVertical(xoFlowDirection dir)			{ SetU32(xoCatFlowDirection_Vertical, dir); }
+	void SetFlowDirectionHorizonal(xoFlowDirection dir)				{ SetU32(xoCatFlowDirection_Horizontal, dir); }
+	void SetFlowDirectionVertical(xoFlowDirection dir)				{ SetU32(xoCatFlowDirection_Vertical, dir); }
 	void SetBoxSizing(xoBoxSizeType type)							{ SetU32(xoCatBoxSizing, type); }
 	void SetTextAlignVertical(xoTextAlignVertical align)			{ SetU32(xoCatText_Align_Vertical, align); }
-	void SetLeft(xoHorizontalBindings bind)						{ SetU32(xoCatLeft, bind); }
-	void SetHCenter(xoHorizontalBindings bind)					{ SetU32(xoCatHCenter, bind); }
+	void SetLeft(xoHorizontalBindings bind)							{ SetU32(xoCatLeft, bind); }
+	void SetHCenter(xoHorizontalBindings bind)						{ SetU32(xoCatHCenter, bind); }
 	void SetRight(xoHorizontalBindings bind)						{ SetU32(xoCatRight, bind); }
 	void SetTop(xoVerticalBindings bind)							{ SetU32(xoCatTop, bind); }
 	void SetVCenter(xoVerticalBindings bind)						{ SetU32(xoCatVCenter, bind); }
-	void SetBottom(xoVerticalBindings bind)						{ SetU32(xoCatBottom, bind); }
+	void SetBottom(xoVerticalBindings bind)							{ SetU32(xoCatBottom, bind); }
 	void SetBaseline(xoVerticalBindings bind)						{ SetU32(xoCatBaseline, bind); }
 
 	// Generic Set() that is used by template code
 	void Set(xoStyleCategories cat, xoColor val)					{ SetColor(cat, val); }
-	void Set(xoStyleCategories cat, xoSize val)					{ SetSize(cat, val); }
-	void Set(xoStyleCategories cat, xoDisplayType val)			{ SetDisplay(val); }
-	void Set(xoStyleCategories cat, xoPositionType val)			{ SetPosition(val); }
+	void Set(xoStyleCategories cat, xoSize val)						{ SetSize(cat, val); }
+	void Set(xoStyleCategories cat, xoDisplayType val)				{ SetDisplay(val); }
+	void Set(xoStyleCategories cat, xoPositionType val)				{ SetPosition(val); }
 	void Set(xoStyleCategories cat, xoBreakType val)				{ SetBreak(val); }
-	void Set(xoStyleCategories cat, xoCursors val)				{ SetCursor(val); }
-	void Set(xoStyleCategories cat, xoFlowContext val)			{ SetFlowContext(val); }
-	void Set(xoStyleCategories cat, xoFlowAxis val)				{ SetFlowAxis(val); }
+	void Set(xoStyleCategories cat, xoCursors val)					{ SetCursor(val); }
+	void Set(xoStyleCategories cat, xoFlowContext val)				{ SetFlowContext(val); }
+	void Set(xoStyleCategories cat, xoFlowAxis val)					{ SetFlowAxis(val); }
 	void Set(xoStyleCategories cat, xoFlowDirection val)			{ SetU32(cat, val); }
-	void Set(xoStyleCategories cat, xoBoxSizeType val)			{ SetBoxSizing(val); }
+	void Set(xoStyleCategories cat, xoBoxSizeType val)				{ SetBoxSizing(val); }
 	void Set(xoStyleCategories cat, xoTextAlignVertical val)		{ SetU32(cat, val); }
 	void Set(xoStyleCategories cat, xoHorizontalBindings val)		{ SetU32(cat, val); }
-	void Set(xoStyleCategories cat, xoVerticalBindings val)		{ SetU32(cat, val); }
+	void Set(xoStyleCategories cat, xoVerticalBindings val)			{ SetU32(cat, val); }
 	void Set(xoStyleCategories cat, xoFontID val)					{ SetFont(val); }
 	void Set(xoStyleCategories cat, const char* val, xoDoc* doc)	{ SetString(cat, val, doc); }
 
@@ -314,6 +308,8 @@ protected:
 	void SetWithSubtypeU32(xoStyleCategories cat, uint8 subtype, uint32 val);
 	void SetWithSubtypeF(xoStyleCategories cat, uint8 subtype, float val);
 };
+
+static_assert(sizeof(xoStyleAttrib) == 8, "Why has xoStyleAttrib grown?");
 
 /* Collection of style attributes (border-width-left, color, etc)
 This container is simple and list-based.

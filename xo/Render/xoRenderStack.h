@@ -36,9 +36,9 @@ styles to blow that limit often. If they do, then it's simply a performance hit.
 class XOAPI xoRenderStack
 {
 public:
-	const xoDoc*					Doc;
-	xoPool*							Pool;
-	xoStyleAttrib					Defaults[xoCatEND];
+	const xoDoc*		Doc;
+	xoPool*				Pool;
+	xoStyleAttrib		Defaults[xoCatEND];
 
 	xoRenderStack();
 	~xoRenderStack();

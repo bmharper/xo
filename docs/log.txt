@@ -271,4 +271,35 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	(span, text, word). Where did the text object disappear then? We split the <span>
 	according to how the words flowed, but we just kind of forgot about the text object.
 
+2015-01-05	Whitespace in our markup language
+	I want to be able to write markup like so:
+	<div>
+		<div>foo <span style='color: #f00'>bar</span></div>
+	</div>
+
+	The thing to note about the above markup is that the whitespace in "foo " is important.
+	What's also important is that we have the ability to indent the inner <div> without it
+	affecting the document. So, the rule is that any text that is pure whitespace is
+	ignored. If you want to have a text object consisting solely of whitespace, then make
+	sure it contains at least one &sp; element, which is just an escape sequence for
+	a regular space character (ie ascii 32).
+	
+	And now I'm thinking, maybe a LISP-ish thing would be better...
+	<div
+		<div 'foo ' <span style='color: #f00' 'bar'>>
+	>
+
+	And while we're at it, why don't we remove the need for the 'style' attribute:
+	<div
+		<div 'foo ' <span color: #f00 'bar'>>
+	>
+
+	That's looking closer to something one might be able to create as a DSL in C++.
+
+2015-01-07	Boxer
+	AT LAST. All I needed was a chunk of uninterrupted time to figure out how to
+	write xoBoxLayout3 in such a manner that it takes care only of the box layout,
+	and not of populating the renderer's data structures, nor the specifics of
+	text. xoBoxLayout3 now deals only in boxes, and inline flow on a simple example
+	also works.
 	

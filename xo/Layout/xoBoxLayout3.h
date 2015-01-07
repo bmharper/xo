@@ -38,8 +38,7 @@ public:
 	{
 		xoInternalID	InternalID;
 		xoTag			Tag;
-		xoBox			Margin;
-		xoBox			Padding;
+		xoBox			MarginAndPadding;
 		xoPos			ContentWidth;
 		xoPos			ContentHeight;
 		bool			NewFlowContext;
@@ -54,14 +53,13 @@ public:
 	xoBoxLayout3();
 	~xoBoxLayout3();
 
-	//void				BeginDocument( int vpWidth, int vpHeight, xoRenderDomNode* root );
-	void				BeginDocument(xoRenderDomNode* root);
+	void				BeginDocument();
 	void				EndDocument();
 
 	void				BeginNode(const NodeInput& in);
-	void				EndNode(xoRenderDomNode*& rnode, xoBox& marginBox);
+	void				EndNode(xoBox& marginBox);
 
-	void				AddWord(const WordInput& in, xoRenderDomText*& rtxt, xoPos& posX);
+	void				AddWord(const WordInput& in, xoBox& marginBox);
 	void				AddSpace(xoPos width);
 	void				AddLinebreak();
 
@@ -93,19 +91,12 @@ protected:
 	{
 		NodeInput			Input;
 		xoBox				MarginBox;
-		xoRenderDomNode*	RNode;
 	};
-	//struct OutBox
-	//{
-	//	xoBox					MarginBox;
-	//	xoPoolArrayLite<int32>	Children;
-	//};
 
 	xoStack<FlowState>		FlowStates;	// We need to be careful to manage the heap-allocated memory inside FlowState.Lines
 	xoStack<NodeState>		NodeStates;
-	//podvec<OutBox>			Result;
 
-	bool	Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox);
+	void	Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox);
 	void	NewLine(FlowState& flow);
 
 };

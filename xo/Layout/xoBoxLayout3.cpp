@@ -21,8 +21,7 @@ xoBoxLayout3::~xoBoxLayout3()
 {
 }
 
-//void xoBoxLayout3::BeginDocument( int vpWidth, int vpHeight, xoRenderDomNode* root )
-void xoBoxLayout3::BeginDocument(xoRenderDomNode* root)
+void xoBoxLayout3::BeginDocument()
 {
 	// Add a dummy root node. This root node has no limits. This does not house the
 	// top-level <body> tag; it is the parent of the <body> tag.
@@ -30,7 +29,6 @@ void xoBoxLayout3::BeginDocument(xoRenderDomNode* root)
 	// and so that we never have an empty NodeStates stack.
 	NodeState& s = NodeStates.Add();
 	s.Input.NewFlowContext = false;
-	s.RNode = root;
 	FlowState& flow = FlowStates.Add();
 	flow.Reset();
 }
@@ -42,10 +40,6 @@ void xoBoxLayout3::EndDocument()
 	NodeStates.Pop();
 	FlowStates.Pop();
 }
-
-// Eventually we'll want to add a method AddWordBox, which will be used to add
-// word boxes. This is for efficiency, because we know that word boxes are simple
-// and have no children.
 
 void xoBoxLayout3::BeginNode(const NodeInput& in)
 {
@@ -60,21 +54,9 @@ void xoBoxLayout3::BeginNode(const NodeInput& in)
 		flow.MaxMinor = in.ContentWidth;
 		flow.MaxMajor = in.ContentHeight;
 	}
-
-	//if ( in.Tag == xoTagText )
-	//{
-	//	xoRenderDomText* rchild = new (Pool->AllocT<xoRenderDomText>(false)) xoRenderDomText( ns.Input.InternalID, Pool );
-	//	parentNode.RNode->Children += rchild;
-	//}
-	//else
-	{
-		xoRenderDomNode* rchild = new(Pool->AllocT<xoRenderDomNode>(false)) xoRenderDomNode(ns.Input.InternalID, ns.Input.Tag, Pool);
-		parentNode.RNode->Children += rchild;
-		ns.RNode = rchild;
-	}
 }
 
-void xoBoxLayout3::EndNode(xoRenderDomNode*& rnode, xoBox& marginBox)
+void xoBoxLayout3::EndNode(xoBox& marginBox)
 {
 	NodeState* ns = &NodeStates.Back();
 	if (ns->Input.NewFlowContext)
@@ -82,12 +64,7 @@ void xoBoxLayout3::EndNode(xoRenderDomNode*& rnode, xoBox& marginBox)
 		FlowStates.Pop();
 		Flow(*ns, FlowStates.Back(), ns->MarginBox);
 	}
-	else
-	{
 
-	}
-
-	rnode = ns->RNode;
 	marginBox = ns->MarginBox;
 
 	NodeStates.Pop(); // ns is invalid after Pop()
@@ -101,38 +78,13 @@ void xoBoxLayout3::EndNode(xoRenderDomNode*& rnode, xoBox& marginBox)
 	* The returned rtxt is a new value.
 	* The returned posX is zero (which is consistent with the definition of the above case #1).
 */
-void xoBoxLayout3::AddWord(const WordInput& in, xoRenderDomText*& rtxt, xoPos& posX)
+void xoBoxLayout3::AddWord(const WordInput& in, xoBox& marginBox)
 {
 	NodeState ns;
 	ns.Input.ContentWidth = in.Width;
 	ns.Input.ContentHeight = in.Height;
-	ns.Input.Margin = xoBox(0,0,0,0);
-	ns.Input.Padding = xoBox(0,0,0,0);
-	xoBox marginBox;
-	xoPos posMinorBeforeFlow = FlowStates.Back().PosMinor;
-	bool isNewLine = Flow(ns, FlowStates.Back(), marginBox);
-
-	NodeState& parentNode = NodeStates.Back();
-	xoRenderDomText* lastChild = nullptr;
-	if (parentNode.RNode->Children.size() != 0 && parentNode.RNode->Children.back()->IsText())
-		lastChild = static_cast<xoRenderDomText*>(parentNode.RNode->Children.back());
-
-	if (isNewLine || lastChild == nullptr)
-	{
-		// For a new line, we need to start a new xoRenderDomText object.
-		xoRenderDomText* rchild = new(Pool->AllocT<xoRenderDomText>(false)) xoRenderDomText(parentNode.Input.InternalID, Pool);
-		parentNode.RNode->Children += rchild;
-		rchild->Pos = marginBox;
-		rtxt = rchild;
-		posX = 0;
-	}
-	else
-	{
-		// Reuse the existing text object
-		lastChild->Pos.Right = marginBox.Right;
-		rtxt = lastChild;
-		posX = posMinorBeforeFlow;
-	}
+	ns.Input.MarginAndPadding = xoBox(0, 0, 0, 0);
+	Flow(ns, FlowStates.Back(), marginBox);
 }
 
 void xoBoxLayout3::AddSpace(xoPos width)
@@ -145,18 +97,14 @@ void xoBoxLayout3::AddLinebreak()
 	NewLine(FlowStates.Back());
 }
 
-bool xoBoxLayout3::Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox)
+void xoBoxLayout3::Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox)
 {
-	bool isNewLine = false;
-	xoPos marginBoxWidth = ns.Input.Margin.Left + ns.Input.Margin.Right + ns.Input.Padding.Left + ns.Input.Padding.Right + (ns.Input.ContentWidth != xoPosNULL ? ns.Input.ContentWidth : 0);
-	xoPos marginBoxHeight = ns.Input.Margin.Top + ns.Input.Margin.Bottom + ns.Input.Padding.Top + ns.Input.Padding.Bottom + (ns.Input.ContentHeight != xoPosNULL ? ns.Input.ContentHeight : 0);
+	xoPos marginBoxWidth = ns.Input.MarginAndPadding.Left + ns.Input.MarginAndPadding.Right + (ns.Input.ContentWidth != xoPosNULL ? ns.Input.ContentWidth : 0);
+	xoPos marginBoxHeight = ns.Input.MarginAndPadding.Top + ns.Input.MarginAndPadding.Bottom + (ns.Input.ContentHeight != xoPosNULL ? ns.Input.ContentHeight : 0);
 	bool overflow = flow.PosMinor + marginBoxWidth > flow.MaxMinor;
 	bool onNewLine = flow.PosMinor == 0;
 	if (flow.MaxMinor != xoPosNULL && overflow && !onNewLine)
-	{
-		isNewLine = true;
 		NewLine(flow);
-	}
 
 	marginBox.Left = flow.PosMinor;
 	marginBox.Top = flow.PosMajor;
@@ -165,7 +113,6 @@ bool xoBoxLayout3::Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox)
 
 	flow.PosMinor = marginBox.Right;
 	flow.HighMajor = xoMax(flow.HighMajor, marginBox.Bottom);
-	return isNewLine;
 }
 
 void xoBoxLayout3::NewLine(FlowState& flow)

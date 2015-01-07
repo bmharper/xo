@@ -69,8 +69,9 @@ void xoLayout3::LayoutInternal(xoRenderDomNode& root)
 	LayoutInput3 in;
 	in.ParentWidth = xoIntToPos(Doc->UI.GetViewportWidth());
 	in.ParentHeight = xoIntToPos(Doc->UI.GetViewportHeight());
+	in.ParentRNode = &root;
 
-	Boxer.BeginDocument(&root);
+	Boxer.BeginDocument();
 	RunNode3(&Doc->Root, in);
 	Boxer.EndDocument();
 }
@@ -80,10 +81,12 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in)
 	xoBoxLayout3::NodeInput boxIn;
 
 	xoStyleResolver::ResolveAndPush(Stack, node);
-	//rnode->SetStyle( Stack );
 
 	xoPos contentWidth = ComputeDimension(in.ParentWidth, xoCatWidth);
 	xoPos contentHeight = ComputeDimension(in.ParentHeight, xoCatHeight);
+
+	xoRenderDomNode* rchild = new(Pool->AllocT<xoRenderDomNode>(false)) xoRenderDomNode(node->GetInternalID(), node->GetTag(), Pool);
+	in.ParentRNode->Children += rchild;
 
 	boxIn.InternalID = node->GetInternalID();
 	boxIn.Tag = node->GetTag();
@@ -94,6 +97,7 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in)
 	LayoutInput3 childIn;
 	childIn.ParentWidth = contentWidth;
 	childIn.ParentHeight = contentHeight;
+	childIn.ParentRNode = rchild;
 
 	Boxer.BeginNode(boxIn);
 
@@ -109,27 +113,23 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in)
 			RunText3(static_cast<const xoDomText*>(c), childIn);
 		}
 	}
-	xoRenderDomNode* rnode;
 	xoBox marginBox;
-	Boxer.EndNode(rnode, marginBox);
+	Boxer.EndNode(marginBox);
 	// Boxer doesn't know what our element's padding or margins are. The only thing it
 	// emits is the margin-box for our element. We need to subtract the margin and
 	// the padding in order to compute the content-box, which is what xoRenderDomNode needs.
 	xoBox margin = ComputeBox(in.ParentWidth, in.ParentHeight, xoCatMargin_Left);
 	xoBox padding = ComputeBox(in.ParentWidth, in.ParentHeight, xoCatPadding_Left);
-	rnode->Pos = marginBox.ShrunkBy(margin).ShrunkBy(padding);
-	rnode->SetStyle(Stack);
+	rchild->Pos = marginBox.ShrunkBy(margin).ShrunkBy(padding);
+	rchild->SetStyle(Stack);
+
+	Stack.StackPop();
 }
 
 void xoLayout3::RunText3(const xoDomText* node, const LayoutInput3& in)
 {
 	//XOTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 1\n", node.GetInternalID() );
-	//rnode->InternalID = node.GetInternalID();
-	//rnode->SetStyle( Stack );
 
-	//XOTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 2\n", node.GetInternalID() );
-
-	//rnode->FontID = Stack.Get( xoCatFontFamily ).GetFont();
 	xoFontID fontID = Stack.Get(xoCatFontFamily).GetFont();
 
 	xoStyleAttrib fontSizeAttrib = Stack.Get(xoCatFontSize);
@@ -138,47 +138,40 @@ void xoLayout3::RunText3(const xoDomText* node, const LayoutInput3& in)
 	float fontSizePxUnrounded = xoPosToReal(fontHeight);
 
 	// round font size to integer units
-	//rnode->FontSizePx = (uint8) xoRound( fontSizePxUnrounded );
 	uint8 fontSizePx = (uint8) xoRound(fontSizePxUnrounded);
 
-	//out.NodeWidth = 0;
-	//out.NodeHeight = 0;
-	//out.NodeBaseline = 0;
-
 	// Nothing prevents somebody from setting a font size to zero
-	//if ( rnode->FontSizePx < 1 )
 	if (fontSizePx < 1)
 		return;
 
-	bool subPixel = xoGlobal()->EnableSubpixelText && fontSizePx <= xoGlobal()->MaxSubpixelGlyphSize;
-	//if ( subPixel )
-	//	rnode->Flags |= xoRenderDomText::FlagSubPixelGlyphs;
-
-	//xoBoxLayout3::NodeInput bnode;
-	//bnode.NewFlowContext = false;
-	//bnode.ContentHeight = xoPosNULL;
-	//bnode.ContentWidth = xoPosNULL;
-	//bnode.InternalID = node->GetInternalID();
-	//bnode.Margin = xoBox(0,0,0,0);
-	//bnode.Padding = xoBox(0,0,0,0);
-	//bnode.Tag = xoTagText;
-	//Boxer.BeginNode( bnode );
-
 	TempText.Node = node;
-	//TempText.RNode = rnode;
-	TempText.Words.clear_noalloc();
-	TempText.GlyphCount = 0;
+	TempText.RNode = in.ParentRNode;
 	TempText.FontWidthScale = 1.0f;
-	TempText.IsSubPixel = subPixel;
+	TempText.IsSubPixel = xoGlobal()->EnableSubpixelText && fontSizePx <= xoGlobal()->MaxSubpixelGlyphSize;
 	TempText.FontID = fontID;
 	TempText.FontSizePx = fontSizePx;
 	TempText.Color = Stack.Get(xoCatColor).GetColor();
 	GenerateTextWords(TempText);
-
-	//Boxer.EndNode();
 }
 
+
 /*
+Calling FinishTextRNode:
+The order of events here can be a little bit confusing. We need to
+do it this way to ensure that we only write out the characters into
+the xoRenderDomText element once. The simpler approach would be to
+append characters to xoRenderDomText after every word, but that
+appending involves growing a vector, so plenty of memory reallocs.
+Instead, we queue up a string of characters and write them all
+out at once, when we either detect a new line, or when we are done
+with the entire text object.
+Having this tight coupling between xoLayout3 and xoBoxLayout is
+unfortunate. Perhaps if all the dust has settled, then it might
+be worth it to break that coupling, to the degree that xoLayout3
+doesn't know where its word boxes are going - it just dumps them
+to xoBoxLayout and forgets about them.
+This would mean that xoBoxLayout is responsible for adjusting
+the positions of the glyphs inside an xoRenderDomText object.
 
 This diagram was created using asciiflow (http://asciiflow.com/)
 
@@ -199,118 +192,6 @@ descender   X  |                    X              |             X
                |                                   |             X
                +–––––––––––––––––––––––––––––––––––+  XXXXXXXXXXXX
 
-
-*/
-void xoLayout3::GenerateTextOutput(const LayoutInput& in, LayoutOutput& out, TextRunState& ts)
-{
-	const char* txt = ts.Node->GetText();
-	xoGlyphCache* glyphCache = xoGlobal()->GlyphCache;
-	xoGlyphCacheKey key = MakeGlyphCacheKey(ts.RNode);
-	const xoFont* font = Fonts.GetByFontID(ts.RNode->FontID);
-
-	xoPos fontHeightRounded = xoRealToPos(ts.RNode->FontSizePx);
-	xoPos fontAscender = xoRealx256ToPos(font->Ascender_x256 * ts.RNode->FontSizePx);
-
-	// if we add a "line-height" style then we'll want to multiply that by this
-	xoPos lineHeight = xoRealx256ToPos(ts.RNode->FontSizePx * font->LineHeight_x256);
-	if (xoGlobal()->RoundLineHeights)
-		lineHeight = xoPosRoundUp(lineHeight);
-
-	int fontHeightPx = ts.RNode->FontSizePx;
-	ts.RNode->Text.reserve(ts.GlyphCount);
-	bool parentHasWidth = IsDefined(in.ParentWidth);
-	bool enableKerning = xoGlobal()->EnableKerning;
-
-	xoPos posX = 0;
-	xoPos posMaxX = 0;
-	xoPos posMaxY = 0;
-	xoPos baseline = fontAscender;
-	out.NodeBaseline = baseline;
-
-	for (intp iword = 0; iword < ts.Words.size(); iword++)
-	{
-		const Word& word = ts.Words[iword];
-		bool isSpace = word.Length() == 1 && txt[word.Start] == 32;
-		bool isNewline = word.Length() == 1 && txt[word.Start] == '\n';
-		bool over = parentHasWidth ? posX + word.Width > in.ParentWidth : false;
-		if (over)
-		{
-			bool futile = posX == 0;
-			if (!futile)
-			{
-				//NextLine( s );
-				baseline += lineHeight;
-				posX = 0;
-				// If the line break was performed for a space, then treat that space as "done"
-				if (isSpace)
-					continue;
-			}
-		}
-
-		if (isSpace)
-		{
-			posX += xoRealx256ToPos(font->LinearHoriAdvance_Space_x256) * fontHeightPx;
-		}
-		else if (isNewline)
-		{
-			//NextLine( s );
-			baseline += lineHeight;
-			posX = 0;
-		}
-		else
-		{
-			const xoGlyph* prevGlyph = nullptr;
-			for (intp i = word.Start; i < word.End; i++)
-			{
-				key.Char = txt[i];
-				const xoGlyph* glyph = glyphCache->GetGlyph(key);
-				__analysis_assume(glyph != nullptr);
-				if (glyph->IsNull())
-					continue;
-				if (enableKerning && prevGlyph)
-				{
-					// Multithreading hazard here. I'm not sure whether FT_Get_Kerning is thread safe.
-					// Also, I have stepped inside there and I see it does a binary search. We would probably
-					// be better off caching the kerning for frequent pairs of glyphs in a hash table.
-					FT_Vector kern;
-					FT_Get_Kerning(font->FTFace, prevGlyph->FTGlyphIndex, glyph->FTGlyphIndex, FT_KERNING_UNSCALED, &kern);
-					xoPos kerning = ((kern.x * fontHeightPx) << xoPosShift) / font->FTFace->units_per_EM;
-					posX += kerning;
-				}
-				ts.RNode->Text.Count++;
-				xoRenderCharEl& rtxt = ts.RNode->Text.back();
-				rtxt.Char = key.Char;
-				rtxt.X = posX + xoRealx256ToPos(glyph->MetricLeftx256);
-				rtxt.Y = baseline - xoRealToPos(glyph->MetricTop);			// rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
-				posX += HoriAdvance(glyph, ts);
-				posMaxX = xoMax(posMaxX, posX);
-				prevGlyph = glyph;
-			}
-		}
-		posMaxY = xoMax(posMaxY, baseline - fontAscender + lineHeight);
-	}
-
-	out.NodeWidth = posMaxX;
-	out.NodeHeight = posMaxY;
-}
-
-/*
-Calling FinishTextRNode:
-The order of events here can be a little bit confusing. We need to
-do it this way to ensure that we only write out the characters into
-the xoRenderDomText element once. The simpler approach would be to
-append characters to xoRenderDomText after every word, but that
-appending involves growing a vector, so plenty of memory reallocs.
-Instead, we queue up a string of characters and write them all
-out at once, when we either detect a new line, or when we are done
-with the entire text object.
-Having this tight coupling between xoLayout3 and xoBoxLayout is
-unfortunate. Perhaps if all the dust has settled, then it might
-be worth it to break that coupling, to the degree that xoLayout3
-doesn't know where its word boxes are going - it just dumps them
-to xoBoxLayout and forgets about them.
-This would mean that xoBoxLayout is responsible for adjusting
-the positions of the glyphs inside an xoRenderDomText object.
 */
 void xoLayout3::GenerateTextWords(TextRunState& ts)
 {
@@ -331,10 +212,15 @@ void xoLayout3::GenerateTextWords(TextRunState& ts)
 	if (xoGlobal()->RoundLineHeights)
 		lineHeight = xoPosRoundUp(lineHeight);
 
+	if (strcmp(txt, "brown fox jumps") == 0)
+		int abc = 123;
+
 	ts.GlyphsNeeded = false;
 	xoPos baseline = fontAscender;
 	const xoGlyph* prevGlyph = nullptr;
 	xoRenderDomText* rtxt = nullptr;
+	xoPos rtxt_left = xoPosNULL;
+	xoPos lastWordTop = xoPosNULL;
 	int numCharsInQueue = 0;			// Number of characters in TextRunState::Chars that are waiting to be flushed to rtxt
 	Chunk chunk;
 	Chunker chunker(txt);
@@ -355,28 +241,30 @@ void xoLayout3::GenerateTextWords(TextRunState& ts)
 			xoBoxLayout3::WordInput wordin;
 			wordin.Width = wordWidth;
 			wordin.Height = lineHeight; // unsure
-			xoPos posX = 0;
-			Boxer.AddWord(wordin, rtxt_new, posX);
+			xoBox marginBox;
+			Boxer.AddWord(wordin, marginBox);
 
-			if (rtxt_new != nullptr && rtxt == nullptr)
+			if (rtxt == nullptr || marginBox.Top != lastWordTop)
 			{
-				// first output
+				// We need a new output object
+				xoRenderDomText* rtxt_new = new(Pool->AllocT<xoRenderDomText>(false)) xoRenderDomText(ts.Node->GetInternalID(), Pool);
+				ts.RNode->Children += rtxt_new;
+				if (rtxt != nullptr)
+				{
+					// retire previous text object - which is all characters in the queue, except for the most recent word
+					FinishTextRNode(ts, rtxt, numCharsInQueue);
+				}
+				rtxt_new->Pos = marginBox;
 				rtxt = rtxt_new;
+				rtxt_left = marginBox.Left;
 				numCharsInQueue = chunkLen;
 			}
-			else if (rtxt_new != rtxt && rtxt != nullptr)
-			{
-				// first word on new line. retire the old line, and start a new one.
-				FinishTextRNode(ts, rtxt, numCharsInQueue);
-				rtxt = rtxt_new;
-				numCharsInQueue = chunkLen;
-			}
-			else if (rtxt_new != nullptr && rtxt != nullptr && rtxt_new == rtxt)
+			else
 			{
 				// another word on existing line
 				numCharsInQueue += chunkLen;
+				OffsetTextHorz(ts, marginBox.Left - rtxt_left, chunkLen);
 			}
-			OffsetTextHorz(ts, posX, chunkLen);
 		}
 		break;
 		case ChunkSpace:

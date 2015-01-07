@@ -38,8 +38,9 @@ protected:
 
 	struct LayoutInput3
 	{
-		xoPos	ParentWidth;
-		xoPos	ParentHeight;
+		xoRenderDomNode*	ParentRNode;
+		xoPos				ParentWidth;
+		xoPos				ParentHeight;
 	};
 
 	struct LayoutInput
@@ -95,20 +96,14 @@ protected:
 	struct TextRunState
 	{
 		const xoDomText*			Node;
-		xoRenderDomText*			RNode;
-		// Alternates between runs of non-whitespace and whitespace. Non-whitespace is not divisible across lines.
-		podvec<Word>				Words;
-		int							GlyphCount;		// Number of non-empty glyphs
+		xoRenderDomNode*			RNode;
+		xoRingBuf<xoRenderCharEl>	Chars;
 		bool						GlyphsNeeded;
-		float						FontWidthScale;
-
-		// New state created for xoLayout3, because we don't have an xoRenderDomText at this stage
-		int							FontSizePx;
 		bool						IsSubPixel;
+		float						FontWidthScale;
+		int							FontSizePx;
 		xoFontID					FontID;
 		xoColor						Color;
-		//podvec<xoRenderCharEl>		Chars;
-		xoRingBuf<xoRenderCharEl>	Chars;
 	};
 
 	struct FlowState
@@ -141,7 +136,6 @@ protected:
 	void		LayoutInternal(xoRenderDomNode& root);
 	void		RunNode3(const xoDomNode* node, const LayoutInput3& in);
 	void		RunText3(const xoDomText* node, const LayoutInput3& in);
-	void		GenerateTextOutput(const LayoutInput& in, LayoutOutput& out, TextRunState& ts);
 	xoPoint		PositionChildFromBindings(const LayoutInput& cin, const LayoutOutput& cout, xoRenderDomEl* rchild);
 	void		GenerateTextWords(TextRunState& ts);
 	void		FinishTextRNode(TextRunState& ts, xoRenderDomText* rnode, intp numChars);
