@@ -33,8 +33,9 @@ public:
 
 	AbcQueue();
 	~AbcQueue();
-	void	Initialize(bool useSemaphore, size_t itemSize);	// Every item must be the same size
-	void	Add(const void* item);							// Add to head. We copy in itemSize bytes, from base address 'item'
+
+	void	Initialize(bool useSemaphore, size_t itemSize);		// Every item must be the same size
+	void	Add(const void* item);								// Add to head. We copy in itemSize bytes, from base address 'item'
 	bool	PopTail(void* item);								// Pop the tail of the queue. Returns false if the queue is empty.
 	bool	PeekTail(void* item);								// Get the tail of the queue, but do not pop it. Obviously useless for multithreaded scenarios, unless you have acquired the lock.
 	int32	Size();
@@ -43,15 +44,16 @@ private:
 	bool				HaveSemaphore;
 	u32					Tail;
 	u32					Head;
-	u32					RingSize;				// Size of the ring buffer. Always a power of 2.
+	u32					RingSize;					// Size of the ring buffer. Always a power of 2.
 	u32					ItemSize;
 	void*				Buffer;
+
 	u32					Mask() const				{ return RingSize - 1; }
-	void*				Slot(u32 pos) const		{ return (byte*) Buffer + (pos * ItemSize); }
-	void				Increment(u32& i) const	{ i = (i + 1) & Mask(); }
+	void*				Slot(u32 pos) const			{ return (byte*) Buffer + (pos * ItemSize); }
+	void				Increment(u32& i) const		{ i = (i + 1) & Mask(); }
 	int32				SizeInternal() const		{ return (Head - Tail) & Mask(); }
 
-	void	Grow();
+	void				Grow();
 };
 
 // Typed wrapper around AbcQueue
@@ -59,9 +61,9 @@ template<typename T>
 class TAbcQueue
 {
 public:
-	TAbcQueue()							{ Q.Initialize(false, sizeof(T)); }
+	TAbcQueue()													{ Q.Initialize(false, sizeof(T)); }
 	void					Initialize(bool useSemaphore)		{ Q.Initialize(useSemaphore, sizeof(T)); }
-	void					Add(const T& item)				{ Q.Add(&item); }
+	void					Add(const T& item)					{ Q.Add(&item); }
 	bool					PopTail(T& item)					{ return Q.PopTail(&item); }
 	bool					PeekTail(T& item)					{ return Q.PeekTail(&item); }
 	T						PopTailR()							{ T t = T(); PopTail(t); return t; }

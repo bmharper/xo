@@ -21,7 +21,12 @@ static bool AnyDocsDirty()
 
 XOAPI void xoRunWin32MessageLoop()
 {
-	const double HEAT_TIME = 0.3;
+	// Before HEAT_TIME_1, we sleep(1 ms), and call PeekMessage
+	// Before HEAT_TIME_2, we sleep(5 ms), and call PeekMessage
+	// After HEAT_TIME_2, we call GetMessage
+	const double HEAT_TIME_1 = 0.020;
+	const double HEAT_TIME_2 = 0.300;
+
 	double lastFrameStart = AbcTimeAccurateRTSeconds();
 	double lastHeatAt = AbcTimeAccurateRTSeconds();
 
@@ -39,7 +44,7 @@ XOAPI void xoRunWin32MessageLoop()
 		// When idle, use GetMessage so that the OS can put us into a good sleep
 		MSG msg;
 		bool haveMsg = true;
-		if (renderIdle && !AnyDocsDirty() && AbcTimeAccurateRTSeconds() - lastHeatAt > HEAT_TIME)
+		if (renderIdle && !AnyDocsDirty() && AbcTimeAccurateRTSeconds() - lastHeatAt > HEAT_TIME_2)
 		{
 			XOTIME("Render cold\n");
 			MSGTRACE("Render cold\n");
@@ -82,12 +87,13 @@ XOAPI void xoRunWin32MessageLoop()
 		}
 		else
 		{
-			if (AbcTimeAccurateRTSeconds() - lastHeatAt > 0.050)
+			if (AbcTimeAccurateRTSeconds() - lastHeatAt > HEAT_TIME_1)
 				AbcSleep(5);
 			else
-				AbcSleep(0);
+				AbcSleep(1);
 		}
 
+		// Add/remove items from the global list of windows. This happens only at xoDoc creation/destruction time.
 		xoProcessDocQueue();
 	}
 

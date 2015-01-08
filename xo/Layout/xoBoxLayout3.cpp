@@ -61,6 +61,14 @@ void xoBoxLayout3::EndNode(xoBox& marginBox)
 	NodeState* ns = &NodeStates.Back();
 	if (ns->Input.NewFlowContext)
 	{
+		FlowState& flow = FlowStates.Back();
+		
+		if (ns->Input.ContentWidth == xoPosNULL)
+			ns->Input.ContentWidth = flow.PosMinor;
+		
+		if (ns->Input.ContentHeight == xoPosNULL)
+			ns->Input.ContentHeight = flow.HighMajor;
+
 		FlowStates.Pop();
 		Flow(*ns, FlowStates.Back(), ns->MarginBox);
 	}

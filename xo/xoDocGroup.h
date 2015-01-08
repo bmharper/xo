@@ -2,18 +2,15 @@
 #include "xoDefs.h"
 #include "xoEvent.h"
 
-// The umbrella class that houses a DOM tree.
-// This processes UI input.
-// It schedules rendering.
-// It coordinates between DOM and Render threads.
+// The umbrella class that houses a DOM tree, as well as its rendered representation.
 // TODO: Pull the platform-specific stuff (ie WndProc, StaticWndProc, IsMouseTracking) out of this class.
 class XOAPI xoDocGroup
 {
 	DISALLOW_COPY_AND_ASSIGN(xoDocGroup);
 public:
-	xoDoc*				Doc;
+	xoDoc*				Doc;					// Canonical Document, which the UI thread manipulates. Guarded by DocLock.
 	xoSysWnd*			Wnd;
-	xoRenderDoc*		RenderDoc;
+	xoRenderDoc*		RenderDoc;				// Copy of Canonical Document, as well as rendered state of document
 	bool				DestroyDocWithGroup;
 
 	xoRenderStats		RenderStats;

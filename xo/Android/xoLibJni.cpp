@@ -62,10 +62,10 @@ static void ProcessAllEvents()
 	while (true)
 	{
 		xoProcessDocQueue();
-		if (!AbcSemaphoreWait(xoGlobal()->EventQueue.SemaphoreObj(), 0))
+		if (!AbcSemaphoreWait(xoGlobal()->UIEventQueue.SemaphoreObj(), 0))
 			break;
 		xoOriginalEvent ev;
-		XOVERIFY(xoGlobal()->EventQueue.PopTail(ev));
+		XOVERIFY(xoGlobal()->UIEventQueue.PopTail(ev));
 		ev.DocGroup->ProcessEvent(ev.Event);
 	}
 }
@@ -78,7 +78,7 @@ static void ProcessAllEvents()
 // to process UI on a dedicated thread, the same as we do for Win32 and X11.
 static void PostEvent(const xoOriginalEvent& ev)
 {
-	xoGlobal()->EventQueue.Add(ev);
+	xoGlobal()->UIEventQueue.Add(ev);
 	ProcessAllEvents();
 }
 

@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "xoDocGroup.h"
 #include "xoDocUI.h"
-#include "xoSysWnd.h"		// Imported only for SetSystemCursor. SetSystemCursor belongs in a different namespace
 #include "Render/xoRenderDoc.h"
 #include "Render/xoRenderDomEl.h"
 #include "Render/xoRenderStack.h"
@@ -211,10 +210,11 @@ void xoDocUI::UpdateCursorLocation(const pvect<const xoRenderDomNode*>& nodeChai
 	for (intp i = 0; i < HoverNodes.size(); i++)
 		HoverSet.insert(HoverNodes[i].InternalID);
 
-	// Update mouse cursor
+	// Update mouse cursor.
+	// Note that cursor changes are monitored by xoDocGroup. If it detects that our cursor has changed during this function,
+	// then it will notify the main thread to update it's cursor immediately.
 	if (anyHoverChanges)
 	{
-		xoCursors oldCursor = Cursor;
 		if (nodeChain.size() == 0)
 			Cursor = xoCursorArrow;
 		else
@@ -226,13 +226,6 @@ void xoDocUI::UpdateCursorLocation(const pvect<const xoRenderDomNode*>& nodeChai
 				Cursor = style.RS->Get(xoCatCursor).GetCursor();
 			}
 		}
-
-		// This does not work, because we are running on a different thread to the
-		// thread that owns the Window's message queue. We need a more sophisticated mechanism
-		// of asynchronously updating the Windows cursor. I haven't figured out yet how
-		// that should look.
-		//if ( Cursor != oldCursor )
-		//	xoSysWnd::SetSystemCursor( Cursor );
 	}
 }
 

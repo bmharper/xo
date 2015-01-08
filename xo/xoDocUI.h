@@ -18,10 +18,10 @@ public:
 	void				InternalProcessEvent(xoEvent& ev, const xoLayoutResult* layout);		// This is always called from the UI thread. Do not call this yourself. It is called only by DocGroup::ProcessEvent()
 	void				CloneSlowInto(xoDocUI& c) const;
 
-	uint32				GetViewportWidth() const	{ return ViewportWidth; }
-	uint32				GetViewportHeight() const	{ return ViewportHeight; }
+	uint32				GetViewportWidth() const			{ return ViewportWidth; }
+	uint32				GetViewportHeight() const			{ return ViewportHeight; }
 
-	bool				IsHovering(xoInternalID id) const { return HoverSet.contains(id); }
+	bool				IsHovering(xoInternalID id) const	{ return HoverSet.contains(id); }
 	bool				IsFocused(xoInternalID id) const	{ return CurrentFocusID == id; }
 	xoCursors			GetCursor() const					{ return Cursor; }
 

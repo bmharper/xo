@@ -170,21 +170,21 @@ AbcThreadReturnType AbcKernelCallbackDecl xoWorkerThreadFunc(void* threadContext
 	return 0;
 }
 
-#if XO_PLATFORM_WIN_DESKTOP
-
 AbcThreadReturnType AbcKernelCallbackDecl xoUIThread(void* threadContext)
 {
 	while (true)
 	{
-		AbcSemaphoreWait(xoGlobal()->EventQueue.SemaphoreObj(), AbcINFINITE);
+		AbcSemaphoreWait(xoGlobal()->UIEventQueue.SemaphoreObj(), AbcINFINITE);
 		if (ExitSignalled)
 			break;
 		xoOriginalEvent ev;
-		XOVERIFY(xoGlobal()->EventQueue.PopTail(ev));
+		XOVERIFY(xoGlobal()->UIEventQueue.PopTail(ev));
 		ev.DocGroup->ProcessEvent(ev.Event);
 	}
 	return 0;
 }
+
+#if XO_PLATFORM_WIN_DESKTOP
 
 static void xoInitialize_Win32()
 {
@@ -195,7 +195,7 @@ static void xoShutdown_Win32()
 {
 	if (UIThread != NULL)
 	{
-		xoGlobal()->EventQueue.Add(xoOriginalEvent());
+		xoGlobal()->UIEventQueue.Add(xoOriginalEvent());
 		for (uint waitNum = 0; true; waitNum++)
 		{
 			if (WaitForSingleObject(UIThread, waitNum) == WAIT_OBJECT_0)
@@ -316,7 +316,7 @@ XOAPI void xoInitialize(const xoInitParams* init)
 	xoGlobals->ClearColor.Set(255, 150, 255, 255);    // Make our clear color a very noticeable purple, so you know when you've screwed up the root node
 	xoGlobals->DocAddQueue.Initialize(false);
 	xoGlobals->DocRemoveQueue.Initialize(false);
-	xoGlobals->EventQueue.Initialize(true);
+	xoGlobals->UIEventQueue.Initialize(true);
 	xoGlobals->JobQueue.Initialize(true);
 	xoGlobals->FontStore = new xoFontStore();
 	xoGlobals->FontStore->InitializeFreetype();

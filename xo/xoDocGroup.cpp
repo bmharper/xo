@@ -53,12 +53,12 @@ xoRenderResult xoDocGroup::RenderInternal(xoImage* targetImage)
 	// I'm not quite sure how we should handle this. The idea is that you don't want to go without a UI update
 	// for too long, even if the UI thread is taking its time, and being bombarded with messages.
 	uint32 rDocAge = Doc->GetVersion() - RenderDoc->Doc.GetVersion();
-	if (rDocAge > 0 || targetImage != NULL)
+	if (rDocAge >= 2 || targetImage != NULL)
 	{
 		// If UI thread has performed many updates since we last rendered,
 		// then pause our thread until we can gain the DocLock
-		haveLock = true;
 		AbcCriticalSectionEnter(DocLock);
+		haveLock = true;
 	}
 	else
 	{
@@ -158,7 +158,16 @@ void xoDocGroup::ProcessEvent(xoEvent& ev)
 
 	xoLayoutResult* layout = RenderDoc->AcquireLatestLayout();
 
+	xoCursors oldCursor = Doc->UI.GetCursor();
+
 	Doc->UI.InternalProcessEvent(ev, layout);
+
+	// Get the main thread to update it's cursor now
+	if (Doc->UI.GetCursor() != oldCursor)
+	{
+		auto blah = Doc->UI.GetCursor();
+		Wnd->PostCursorChangedMessage();
+	}
 
 	RenderDoc->ReleaseLayout(layout);
 }

@@ -413,38 +413,38 @@ bool xoStyle::Parse(const char* t, intp maxLen, xoDoc* doc)
 		else if (t[i] == ';' || (eof && startv != -1))
 		{
 			bool ok = true;
-			if (MATCH(t, startk, eq, "background"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoColor::Parse, xoCatBackground, *this); }
-			else if (MATCH(t, startk, eq, "color"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoColor::Parse, xoCatColor, *this); }
-			else if (MATCH(t, startk, eq, "width"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoSize::Parse, xoCatWidth, *this); }
+			if (MATCH(t, startk, eq, "background"))							{ ok = ParseSingleAttrib(TSTART, TLEN, &xoColor::Parse, xoCatBackground, *this); }
+			else if (MATCH(t, startk, eq, "color"))							{ ok = ParseSingleAttrib(TSTART, TLEN, &xoColor::Parse, xoCatColor, *this); }
+			else if (MATCH(t, startk, eq, "width"))							{ ok = ParseSingleAttrib(TSTART, TLEN, &xoSize::Parse, xoCatWidth, *this); }
 			else if (MATCH(t, startk, eq, "height"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoSize::Parse, xoCatHeight, *this); }
 			else if (MATCH(t, startk, eq, "padding"))						{ ok = ParseCompound(TSTART, TLEN, &xoStyleBox::Parse, xoCatPadding_Left, *this); }
 			else if (MATCH(t, startk, eq, "margin"))						{ ok = ParseCompound(TSTART, TLEN, &xoStyleBox::Parse, xoCatMargin_Left, *this); }
 			else if (MATCH(t, startk, eq, "display"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseDisplayType, xoCatDisplay, *this); }
-			else if (MATCH(t, startk, eq, "position"))					{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParsePositionType, xoCatPosition, *this); }
+			else if (MATCH(t, startk, eq, "position"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParsePositionType, xoCatPosition, *this); }
 			else if (MATCH(t, startk, eq, "border"))						{ ok = ParseDirect(TSTART, TLEN, &xoParseBorder, *this); }
-			else if (MATCH(t, startk, eq, "border-radius"))				{ ok = ParseSingleAttrib(TSTART, TLEN, &xoSize::Parse, xoCatBorderRadius, *this); }
+			else if (MATCH(t, startk, eq, "border-radius"))					{ ok = ParseSingleAttrib(TSTART, TLEN, &xoSize::Parse, xoCatBorderRadius, *this); }
 			//else if ( MATCH(t, startk, eq, "left") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatLeft, *this ); }
 			//else if ( MATCH(t, startk, eq, "right") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatRight, *this ); }
-			//else if ( MATCH(t, startk, eq, "top") )							{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatTop, *this ); }
-			//else if ( MATCH(t, startk, eq, "bottom") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatBottom, *this ); }
-			else if (MATCH(t, startk, eq, "break"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseBreakType, xoCatBreak, *this); }
-			else if (MATCH(t, startk, eq, "canfocus"))					{ ok = ParseBool(TSTART, TLEN, xoCatCanFocus, *this); }
+			//else if ( MATCH(t, startk, eq, "top") )						{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatTop, *this ); }
+			//else if ( MATCH(t, startk, eq, "bottom") )					{ ok = ParseSingleAttrib( TSTART, TLEN, &xoSize::Parse, xoCatBottom, *this ); }
+			else if (MATCH(t, startk, eq, "break"))							{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseBreakType, xoCatBreak, *this); }
+			else if (MATCH(t, startk, eq, "canfocus"))						{ ok = ParseBool(TSTART, TLEN, xoCatCanFocus, *this); }
 			else if (MATCH(t, startk, eq, "cursor"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseCursor, xoCatCursor, *this); }
-			else if (MATCH(t, startk, eq, "flow-context"))				{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseFlowContext, xoCatFlowContext, *this); }
-			else if (MATCH(t, startk, eq, "flow-axis"))					{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseFlowAxis, xoCatFlowAxis, *this); }
-			else if (MATCH(t, startk, eq, "flow-direction-horizontal"))	{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseFlowDirection, xoCatFlowDirection_Horizontal, *this); }
+			else if (MATCH(t, startk, eq, "flow-context"))					{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseFlowContext, xoCatFlowContext, *this); }
+			else if (MATCH(t, startk, eq, "flow-axis"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseFlowAxis, xoCatFlowAxis, *this); }
+			else if (MATCH(t, startk, eq, "flow-direction-horizontal"))		{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseFlowDirection, xoCatFlowDirection_Horizontal, *this); }
 			else if (MATCH(t, startk, eq, "flow-direction-vertical"))		{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseFlowDirection, xoCatFlowDirection_Vertical, *this); }
 			else if (MATCH(t, startk, eq, "box-sizing"))					{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseBoxSize, xoCatBoxSizing, *this); }
-			else if (MATCH(t, startk, eq, "font-size"))					{ ok = ParseSingleAttrib(TSTART, TLEN, &xoSize::Parse, xoCatFontSize, *this); }
+			else if (MATCH(t, startk, eq, "font-size"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoSize::Parse, xoCatFontSize, *this); }
 			else if (MATCH(t, startk, eq, "font-family"))					{ ok = ParseSingleAttrib(TSTART, TLEN, &ParseFontFamily, xoCatFontFamily, *this); }
 			else if (MATCH(t, startk, eq, "text-align-vertical"))			{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseTextAlignVertical, xoCatText_Align_Vertical, *this); }
-			else if (MATCH(t, startk, eq, "left"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseHorizontalBinding, xoCatLeft, *this); }
+			else if (MATCH(t, startk, eq, "left"))							{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseHorizontalBinding, xoCatLeft, *this); }
 			else if (MATCH(t, startk, eq, "hcenter"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseHorizontalBinding, xoCatHCenter, *this); }
-			else if (MATCH(t, startk, eq, "right"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseHorizontalBinding, xoCatRight, *this); }
+			else if (MATCH(t, startk, eq, "right"))							{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseHorizontalBinding, xoCatRight, *this); }
 			else if (MATCH(t, startk, eq, "top"))							{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseVerticalBinding, xoCatTop, *this); }
 			else if (MATCH(t, startk, eq, "vcenter"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseVerticalBinding, xoCatVCenter, *this); }
 			else if (MATCH(t, startk, eq, "bottom"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseVerticalBinding, xoCatBottom, *this); }
-			else if (MATCH(t, startk, eq, "baseline"))					{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseVerticalBinding, xoCatBaseline, *this); }
+			else if (MATCH(t, startk, eq, "baseline"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseVerticalBinding, xoCatBaseline, *this); }
 			else
 			{
 				ok = false;
@@ -877,31 +877,31 @@ void xoStyleTable::CloneFastInto(xoStyleTable& c, xoPool* pool) const
 
 XOAPI bool xoParseDisplayType(const char* s, intp len, xoDisplayType& t)
 {
-	if (MATCH(s, 0, len, "block")) { t = xoDisplayBlock; return true; }
-	if (MATCH(s, 0, len, "inline")) { t = xoDisplayInline; return true; }
+	if (MATCH(s, 0, len, "block"))		{ t = xoDisplayBlock; return true; }
+	if (MATCH(s, 0, len, "inline"))		{ t = xoDisplayInline; return true; }
 	return false;
 }
 
 XOAPI bool xoParsePositionType(const char* s, intp len, xoPositionType& t)
 {
-	if (MATCH(s, 0, len, "static"))	{ t = xoPositionStatic; return true; }
-	if (MATCH(s, 0, len, "absolute")) { t = xoPositionAbsolute; return true; }
-	if (MATCH(s, 0, len, "relative")) { t = xoPositionRelative; return true; }
-	if (MATCH(s, 0, len, "fixed"))	{ t = xoPositionFixed; return true; }
+	if (MATCH(s, 0, len, "static"))		{ t = xoPositionStatic; return true; }
+	if (MATCH(s, 0, len, "absolute"))	{ t = xoPositionAbsolute; return true; }
+	if (MATCH(s, 0, len, "relative"))	{ t = xoPositionRelative; return true; }
+	if (MATCH(s, 0, len, "fixed"))		{ t = xoPositionFixed; return true; }
 	return false;
 }
 
 XOAPI bool xoParseBreakType(const char* s, intp len, xoBreakType& t)
 {
 	if (MATCH(s, 0, len, "none"))		{ t = xoBreakNULL; return true; }
-	if (MATCH(s, 0, len, "before"))	{ t = xoBreakBefore; return true; }
-	if (MATCH(s, 0, len, "after"))	{ t = xoBreakAfter; return true; }
+	if (MATCH(s, 0, len, "before"))		{ t = xoBreakBefore; return true; }
+	if (MATCH(s, 0, len, "after"))		{ t = xoBreakAfter; return true; }
 	return false;
 }
 
 XOAPI bool xoParseCursor(const char* s, intp len, xoCursors& t)
 {
-	if (MATCH(s, 0, len, "arrow"))	{ t = xoCursorArrow; return true; }
+	if (MATCH(s, 0, len, "arrow"))		{ t = xoCursorArrow; return true; }
 	if (MATCH(s, 0, len, "hand"))		{ t = xoCursorHand; return true; }
 	if (MATCH(s, 0, len, "text"))		{ t = xoCursorText; return true; }
 	if (MATCH(s, 0, len, "wait"))		{ t = xoCursorWait; return true; }
@@ -911,20 +911,20 @@ XOAPI bool xoParseCursor(const char* s, intp len, xoCursors& t)
 XOAPI bool xoParseFlowContext(const char* s, intp len, xoFlowContext& t)
 {
 	if (MATCH(s, 0, len, "new"))		{ t = xoFlowContextNew; return true; }
-	if (MATCH(s, 0, len, "inject"))	{ t = xoFlowContextInject; return true; }
+	if (MATCH(s, 0, len, "inject"))		{ t = xoFlowContextInject; return true; }
 	return false;
 }
 
 XOAPI bool xoParseFlowAxis(const char* s, intp len, xoFlowAxis& t)
 {
 	if (MATCH(s, 0, len, "horizontal"))	{ t = xoFlowAxisHorizontal; return true; }
-	if (MATCH(s, 0, len, "vertical"))		{ t = xoFlowAxisVertical; return true; }
+	if (MATCH(s, 0, len, "vertical"))	{ t = xoFlowAxisVertical; return true; }
 	return false;
 }
 
 XOAPI bool xoParseFlowDirection(const char* s, intp len, xoFlowDirection& t)
 {
-	if (MATCH(s, 0, len, "normal"))	{ t = xoFlowDirectionNormal; return true; }
+	if (MATCH(s, 0, len, "normal"))		{ t = xoFlowDirectionNormal; return true; }
 	if (MATCH(s, 0, len, "reverse"))	{ t = xoFlowDirectionReversed; return true; }
 	return false;
 }
@@ -932,8 +932,8 @@ XOAPI bool xoParseFlowDirection(const char* s, intp len, xoFlowDirection& t)
 XOAPI bool xoParseBoxSize(const char* s, intp len, xoBoxSizeType& t)
 {
 	if (MATCH(s, 0, len, "content"))	{ t = xoBoxSizeContent; return true; }
-	if (MATCH(s, 0, len, "border"))	{ t = xoBoxSizeBorder; return true; }
-	if (MATCH(s, 0, len, "margin"))	{ t = xoBoxSizeMargin; return true; }
+	if (MATCH(s, 0, len, "border"))		{ t = xoBoxSizeBorder; return true; }
+	if (MATCH(s, 0, len, "margin"))		{ t = xoBoxSizeMargin; return true; }
 	return false;
 }
 
@@ -948,7 +948,7 @@ XOAPI bool xoParseHorizontalBinding(const char* s, intp len, xoHorizontalBinding
 {
 	if (MATCH(s, 0, len, "left"))		{ t = xoHorizontalBindingLeft; return true; }
 	if (MATCH(s, 0, len, "hcenter"))	{ t = xoHorizontalBindingCenter; return true; }
-	if (MATCH(s, 0, len, "right"))	{ t = xoHorizontalBindingRight; return true; }
+	if (MATCH(s, 0, len, "right"))		{ t = xoHorizontalBindingRight; return true; }
 	return false;
 }
 
@@ -956,7 +956,7 @@ XOAPI bool xoParseVerticalBinding(const char* s, intp len, xoVerticalBindings& t
 {
 	if (MATCH(s, 0, len, "top"))		{ t = xoVerticalBindingTop; return true; }
 	if (MATCH(s, 0, len, "vcenter"))	{ t = xoVerticalBindingCenter; return true; }
-	if (MATCH(s, 0, len, "bottom"))	{ t = xoVerticalBindingBottom; return true; }
+	if (MATCH(s, 0, len, "bottom"))		{ t = xoVerticalBindingBottom; return true; }
 	if (MATCH(s, 0, len, "baseline"))	{ t = xoVerticalBindingBaseline; return true; }
 	return false;
 }

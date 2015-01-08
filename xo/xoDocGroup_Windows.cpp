@@ -3,6 +3,9 @@
 #include "xoDocGroup.h"
 #include "xoSysWnd.h"
 
+// TODO: Why is this functionality inside xoDocGroup_Windows.
+// Perhaps it should be inside xoSysWnd instead?
+
 LRESULT CALLBACK xoDocGroup::StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	xoDocGroup* proc = (xoDocGroup*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
@@ -73,6 +76,42 @@ static xoMouseButton WM_ButtonToXo(UINT message, WPARAM wParam)
 	return xoMouseButtonNull;
 }
 
+// This is called the moment xoDocUI detects a change in cursor. Because that xoDocUI processing
+// happens in a different thread to the one that responds to Windows messages, it effectively
+// delays the updating of the system cursor by at least one mouse-move message. This shortcut
+// is here to remove that delay.
+static void UpdateWindowsCursor(HWND wnd, xoCursors cursor, WPARAM wParam, LPARAM lParam)
+{
+	POINT pos;
+	RECT cr;
+	GetCursorPos(&pos);
+	ScreenToClient(wnd, &pos);
+	GetClientRect(wnd, &cr);
+	if (pos.x < cr.left || pos.x >= cr.right || pos.y < cr.top || pos.y >= cr.bottom)
+	{
+		if (wParam == 0 && lParam == 0)
+		{
+			// We are being called from WM_XO_CURSOR_CHANGED, so we can't call through to DefWindowProc.
+			// It is safe to ignore this, because the previous WM_SETCURSOR would have taken care of this correctly.
+		}
+		else
+		{
+			DefWindowProc(wnd, WM_SETCURSOR, wParam, lParam);
+		}
+		return;
+	}
+	LPTSTR wc = IDC_ARROW;
+	switch (cursor)
+	{
+	case xoCursorArrow:	wc = IDC_ARROW; break;
+	case xoCursorHand:	wc = IDC_HAND; break;
+	case xoCursorText:	wc = IDC_IBEAM; break;
+	case xoCursorWait:	wc = IDC_WAIT; break;
+	}
+	static_assert(xoCursorWait == 3, "Implement new cursor");
+	SetCursor(LoadCursor(NULL, wc));
+}
+
 LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	XOASSERT(Doc != NULL);
@@ -83,6 +122,10 @@ LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	ev.Event.Doc = Doc;
 	LRESULT result = 0;
 	auto cursor = XOVEC2((float) GET_X_LPARAM(lParam), (float) GET_Y_LPARAM(lParam));
+
+	// Remember that we are the Main Thread, so we do not own Doc.
+	// Doc is owned and manipulated by the UI Thread.
+	// We are only allowed to read niche volatile stuff from Doc, such as the latest cursor.
 
 	switch (message)
 	{
@@ -101,7 +144,7 @@ LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 
 	case WM_SIZE:
 		ev.Event.MakeWindowSize(int(lParam & 0xffff), int((lParam >> 16) & 0xffff));
-		xoGlobal()->EventQueue.Add(ev);
+		xoGlobal()->UIEventQueue.Add(ev);
 		break;
 
 	case WM_TIMER:
@@ -110,7 +153,7 @@ LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 		else if (wParam == XoWindowsTimerGenericEvent)
 		{
 			ev.Event.Type = xoEventTimer;
-			xoGlobal()->EventQueue.Add(ev);
+			xoGlobal()->UIEventQueue.Add(ev);
 		}
 		break;
 
@@ -128,10 +171,19 @@ LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 
 	case WM_SETCURSOR:
 		// Note that this is always at least one mouse move message behind, because we only
-		// update the Doc->UI.Cursor on WM_MOUSEMOVE, when is sent after WM_SETCURSOR. We
-		// need a way to asynchronously update the cursor here, but I haven't figured out
-		// a neat way to do that yet.
-		xoSysWnd::SetSystemCursor(Doc->UI.GetCursor());
+		// update the Doc->UI.Cursor on WM_MOUSEMOVE, which is sent after WM_SETCURSOR.
+		// We COULD process this message inside this thread, but that would mean that we
+		// process mouse move messages twice - once in the UI thread and once in the main thread.
+		// If necessary for latency sake, just do it, because it's not too expensive to
+		// do a hit-test in the main thread. I have simply omitted doing it in the name
+		// of simplicity.
+		UpdateWindowsCursor(hWnd, Doc->UI.GetCursor(), wParam, lParam);
+		break;
+
+	case xoSysWnd::WM_XO_CURSOR_CHANGED:
+		// The UI thread will post this message to us after it has processed a mouse move
+		// message, and detected that the cursor changed as a result of that.
+		UpdateWindowsCursor(hWnd, Doc->UI.GetCursor(), 0, 0);
 		break;
 
 	case WM_MOUSEMOVE:
@@ -149,13 +201,13 @@ LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 			//evEnter.Type = xoEventMouseEnter;
 			//evEnter.PointCount = 1;
 			//evEnter.Points[0] = cursor;
-			//xoGlobal()->EventQueue.Add( evEnter );
+			//xoGlobal()->UIEventQueue.Add( evEnter );
 		}
 		ev.Event.Type = xoEventMouseMove;
 		ev.Event.PointCount = 1;
 		ev.Event.Points[0] = cursor;
 		XOTRACE_LATENCY("MouseMove\n");
-		xoGlobal()->EventQueue.Add(ev);
+		xoGlobal()->UIEventQueue.Add(ev);
 		break;
 
 	case WM_MOUSELEAVE:
@@ -163,7 +215,7 @@ LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 		ev.Event.Type = xoEventMouseLeave;
 		ev.Event.PointCount = 1;
 		ev.Event.Points[0] = cursor;
-		xoGlobal()->EventQueue.Add(ev);
+		xoGlobal()->UIEventQueue.Add(ev);
 		break;
 
 	case WM_LBUTTONDOWN:
@@ -175,7 +227,7 @@ LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 		ev.Event.Button = WM_ButtonToXo(message, wParam);
 		ev.Event.PointCount = 1;
 		ev.Event.Points[0] = cursor;
-		xoGlobal()->EventQueue.Add(ev);
+		xoGlobal()->UIEventQueue.Add(ev);
 		break;
 
 	case WM_LBUTTONUP:
@@ -187,10 +239,10 @@ LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 		ev.Event.Button = WM_ButtonToXo(message, wParam);
 		ev.Event.PointCount = 1;
 		ev.Event.Points[0] = cursor;
-		xoGlobal()->EventQueue.Add(ev);
+		xoGlobal()->UIEventQueue.Add(ev);
 		// Click event needs refinement (ie on down, capture, etc)
 		ev.Event.Type = xoEventClick;
-		xoGlobal()->EventQueue.Add(ev);
+		xoGlobal()->UIEventQueue.Add(ev);
 		break;
 
 	case WM_LBUTTONDBLCLK:
@@ -202,7 +254,7 @@ LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 		ev.Event.Button = WM_ButtonToXo(message, wParam);
 		ev.Event.PointCount = 1;
 		ev.Event.Points[0] = cursor;
-		xoGlobal()->EventQueue.Add(ev);
+		xoGlobal()->UIEventQueue.Add(ev);
 		break;
 
 	default:

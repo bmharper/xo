@@ -32,7 +32,7 @@ public:
 	~xoDoc();
 	void				Reset();
 	void				IncVersion();
-	uint32				GetVersion()		{ return Version; }									// Renderers use purposefully loose MT semantics on this.
+	uint32				GetVersion()		{ return Version; }									// Renderers use purposefully loose thread semantics on this.
 	void				ResetModifiedBitmap();													// Reset the 'ismodified' bitmap of all DOM elements.
 	void				MakeFreeIDsUsable();													// All of our dependent renderers have been updated, we can move FreeIDs over to UsableIDs.
 	void				CloneSlowInto(xoDoc& c, uint cloneFlags, xoRenderStats& stats) const;	// Used to make a read-only clone for the renderer. Preserves existing.
@@ -52,10 +52,10 @@ public:
 	void				SetChildModified(xoInternalID id);
 	intp				ChildByInternalIDListSize() const				{ return ChildByInternalID.size(); }
 	const xoDomEl**		ChildByInternalIDList() const					{ return (const xoDomEl**) ChildByInternalID.data; }
-	const xoDomEl*		GetChildByInternalID(xoInternalID id) const	{ return ChildByInternalID[id]; }						// A NULL result means this child has been deleted
-	const xoDomNode*	GetNodeByInternalID(xoInternalID id) const	{ return ChildByInternalID[id] ? ChildByInternalID[id]->ToNode() : nullptr; }
+	const xoDomEl*		GetChildByInternalID(xoInternalID id) const		{ return ChildByInternalID[id]; }						// A NULL result means this child has been deleted
+	const xoDomNode*	GetNodeByInternalID(xoInternalID id) const		{ return ChildByInternalID[id] ? ChildByInternalID[id]->ToNode() : nullptr; }
 	xoDomEl*			GetChildByInternalIDMutable(xoInternalID id)	{ return ChildByInternalID[id]; }
-	xoDomNode*			GetNodeByInternalIDMutable(xoInternalID id)	{ return ChildByInternalID[id] ? ChildByInternalID[id]->ToNode() : nullptr; }
+	xoDomNode*			GetNodeByInternalIDMutable(xoInternalID id)		{ return ChildByInternalID[id] ? ChildByInternalID[id]->ToNode() : nullptr; }
 
 protected:
 	volatile uint32				Version;
