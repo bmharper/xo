@@ -303,3 +303,36 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	text. xoBoxLayout3 now deals only in boxes, and inline flow on a simple example
 	also works.
 	
+2015-01-10	Recursive inline flow
+	Recursive inline flow is where you have more than one <span> object. For example,
+
+	<div id='abc'>
+		<span class='red-border'>
+			<span class='blue-border'>quick brown fox</span>
+		</span>
+	</div>
+
+	Imagine the scenario where "quick brown" fits on a line, but "fox" flows onto
+	the next line. What you want in this case is for "quick brown" to have a blue
+	border on the inside, and a red border on the outside. Likewise for "fox",
+	it must get two different boxes surrounding it. There are different ways of
+	achieving this, but what I'm thinking of right now is that when a text object
+	notices that a word flows onto a new line, then it bubbles out to it's closest
+	ancestor with it's own flow context. That closest ancestor ('abc' in our example)
+	then restarts its rendering process, but skips all of the elements that have
+	already been dealt with.
+	
+	Now let's look at a slightly more complex example:
+
+	<div id='abc'>
+		<span class='red-border'>
+			<span class='bold'>THE</span>
+			<span class='blue-border'>quick brown fox</span>
+		</span>
+	</div>
+
+	Imagine again, "THE quick brown" fits on a line, and "fox" flows onto a new line. 
+	Before "fox" is emitted, we need to detect that it is going to flow, and
+	buble out to 'abc', so that a new 'red-border' span can be created, as well
+	as a new 'blue-border' span. Note however, that when the rendering is restarted,
+	we skip over the span containing 'THE'. We also skip over "quick brown", of course.

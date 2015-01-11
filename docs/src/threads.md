@@ -1,16 +1,9 @@
 # Threads
 
-## Setting the Windows Cursor
-erg.. It feels like it's going to take longer to describe the problems
-with the system than to just fix it. But let it be said that there IS
-a problem keeping the Windows cursor up to date. Right now it's always
-behind by at least one mouse-move message. We need a more sophisticated
-synchronization system than "add message to queue and forget".
-
 The following diagrams are true for Windows. I intend to have the
 other systems work in a similar fashion.
 
-Event flow for a left mouse click:
+### Event flow for a left mouse click:
 
 	                Main Thread     UI Thread                         
 	                +---------+     +-------+                         
@@ -33,3 +26,28 @@ Event flow for a left mouse click:
 	                          | +-> |  Future DOM event processing    
 	                          |     |  uses the new Latest Layout     
 	                          +     +                                 
+
+
+### Setting the cursor is somewhat special:
+
+	                Main Thread     UI Thread                           
+	                +---------+     +-------+                           
+	                          |     |                                   
+	Mouse move message is     |     |                                   
+	read from the system      |     |                                   
+	message queue. For a      |     |                                   
+	WM_SETCURSOR, we use the  |     |                                   
+	most recent cursor        |     |                                   
+	that was computed by the  |     |                                   
+	UI thread.                | +-> | Cursor position is hit-tested     
+	                          |     | against most recent DOM rendering,
+	                          |     | and the 'cursor' style is read    
+	                          |     | from the DOM element that contains
+	                          |     | the cursor.                       
+	                          |     | If the cursor has changed, then a 
+	                          |     | custom message is posted to the   
+	                          |     | system window's queue, telling it 
+	The custom message is     | <-+ | to refresh its cursor.            
+	picked up, and the system |     |                                   
+	cursor is updated.        |     |                                   
+	                          +     +                                   

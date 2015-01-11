@@ -233,10 +233,10 @@ void DoLongText(xoDoc* doc)
 void DoInlineFlow(xoDoc* doc)
 {
 	//doc->Root.ParseAppend(R"(<div style='cursor: hand'>The dogge</div>)");
-	doc->Root.ParseAppend(R"(The quick <span style='color: #a00; background: #aaa; cursor: hand'>brown fox jumps</span> over)");
+	//doc->Root.ParseAppend(R"(The quick <span style='color: #a00; background: #aaa; cursor: hand'>brown fox jumps</span> over)");
 	//doc->Root.ParseAppend(R"(<div style='cursor: hand'>blah!</div>)");
 	//doc->Root.ParseAppend(R"(The <span style='color: #a00; background: #fff'>brown</span>)");
-	//doc->Root.ParseAppend( R"(The quick)");
+	doc->Root.ParseAppend( R"(The quick)");
 }
 
 void DoBackupSettings(xoDoc* doc)
@@ -321,6 +321,7 @@ void InitDOM(xoDoc* doc)
 
 	body->OnClick([doc](const xoEvent& ev) -> bool {
 		xoGlobal()->EnableKerning = !xoGlobal()->EnableKerning;
+		XOTRACE("InternalID: %d\n", ev.Target->GetInternalID());
 		doc->IncVersion();
 		return true;
 	});

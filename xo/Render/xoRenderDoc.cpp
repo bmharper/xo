@@ -7,6 +7,8 @@
 #include "xoRenderDX.h"
 #include "xoRenderGL.h"
 
+#define USE_LAYOUT_3
+
 xoLayoutResult::xoLayoutResult(const xoDoc& doc)
 {
 	IsLocked = false;
@@ -22,8 +24,12 @@ const xoRenderDomNode* xoLayoutResult::Body() const
 {
 	if (Root.Children.size() == 0)
 		return nullptr;
+#ifdef USE_LAYOUT_3
 	XOASSERT(Root.Children[0]->IsNode());
 	return static_cast<const xoRenderDomNode*>(Root.Children[0]);
+#else
+	return static_cast<const xoRenderDomNode*>(&Root);
+#endif
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,7 +68,11 @@ xoRenderResult xoRenderDoc::Render(xoRenderBase* driver)
 	xoLayoutResult* layout = new xoLayoutResult(Doc);
 
 	XOTRACE_RENDER("RenderDoc: Layout\n");
+#ifdef USE_LAYOUT_3
 	xoLayout3 lay;
+#else
+	xoLayout2 lay;
+#endif
 	lay.Layout(Doc, layout->Root, &layout->Pool);
 
 	XOTRACE_RENDER("RenderDoc: Render\n");

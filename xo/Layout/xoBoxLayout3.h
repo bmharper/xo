@@ -27,9 +27,13 @@ xoRenderDomNode objects, but only concern itself with the spatial stuff there.
 
 Note that we have an AddWord() function, but that doesn't mean that words
 are a particularly special type of object. Words are flowed like any other
-box. The reason they have their own function is for efficiency, and also
-because they end up being output into an xoRenderDomText object instead
-of xoRenderDomNode.
+box. The reason they have their own function is for efficiency.
+
+Coordinate Space of parent-flow nodes
+It's not obvious what the coordinate system should be of nodes that
+do not define their own flow context. The route we take here is to say that
+nodes without their own flow context are defined in the coordinate space
+of their most recent ancestor with a flow context.
 */
 class XOAPI xoBoxLayout3
 {
@@ -60,8 +64,10 @@ public:
 	void				EndNode(xoBox& marginBox);
 
 	void				AddWord(const WordInput& in, xoBox& marginBox);
-	void				AddSpace(xoPos width);
+	void				AddSpace(xoPos size);
 	void				AddLinebreak();
+
+	bool				WouldFlow(xoPos size);		// Returns true if adding a box of this size would cause us to flow onto a new line
 
 protected:
 	// Every time we start a new line, another one of these is created
@@ -96,6 +102,7 @@ protected:
 	xoStack<FlowState>		FlowStates;	// We need to be careful to manage the heap-allocated memory inside FlowState.Lines
 	xoStack<NodeState>		NodeStates;
 
+	bool	MustFlow(const FlowState& flow, xoPos size);
 	void	Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox);
 	void	NewLine(FlowState& flow);
 

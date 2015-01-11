@@ -75,17 +75,9 @@ void xoBoxLayout3::EndNode(xoBox& marginBox)
 
 	marginBox = ns->MarginBox;
 
-	NodeStates.Pop(); // ns is invalid after Pop()
+	NodeStates.Pop(); // 'ns' is invalid after Pop()
 }
 
-/* One of two things can happen when you add a word:
-1. The word fits on the current line.
-	* The returned rtxt is an existing value.
-	* The returned posX is the offset inside rtxt where this word starts.
-2. The word needs to go onto a new line.
-	* The returned rtxt is a new value.
-	* The returned posX is zero (which is consistent with the definition of the above case #1).
-*/
 void xoBoxLayout3::AddWord(const WordInput& in, xoBox& marginBox)
 {
 	NodeState ns;
@@ -95,9 +87,9 @@ void xoBoxLayout3::AddWord(const WordInput& in, xoBox& marginBox)
 	Flow(ns, FlowStates.Back(), marginBox);
 }
 
-void xoBoxLayout3::AddSpace(xoPos width)
+void xoBoxLayout3::AddSpace(xoPos size)
 {
-	FlowStates.Back().PosMinor += width;
+	FlowStates.Back().PosMinor += size;
 }
 
 void xoBoxLayout3::AddLinebreak()
@@ -105,13 +97,23 @@ void xoBoxLayout3::AddLinebreak()
 	NewLine(FlowStates.Back());
 }
 
+bool xoBoxLayout3::WouldFlow(xoPos size)
+{
+	return MustFlow(FlowStates.Back(), size);
+}
+
+bool xoBoxLayout3::MustFlow(const FlowState& flow, xoPos size)
+{
+	bool overflow = flow.PosMinor + size > flow.MaxMinor;
+	bool onNewLine = flow.PosMinor == 0;
+	return flow.MaxMinor != xoPosNULL && overflow && !onNewLine;
+}
+
 void xoBoxLayout3::Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox)
 {
 	xoPos marginBoxWidth = ns.Input.MarginAndPadding.Left + ns.Input.MarginAndPadding.Right + (ns.Input.ContentWidth != xoPosNULL ? ns.Input.ContentWidth : 0);
 	xoPos marginBoxHeight = ns.Input.MarginAndPadding.Top + ns.Input.MarginAndPadding.Bottom + (ns.Input.ContentHeight != xoPosNULL ? ns.Input.ContentHeight : 0);
-	bool overflow = flow.PosMinor + marginBoxWidth > flow.MaxMinor;
-	bool onNewLine = flow.PosMinor == 0;
-	if (flow.MaxMinor != xoPosNULL && overflow && !onNewLine)
+	if (MustFlow(flow, marginBoxWidth))
 		NewLine(flow);
 
 	marginBox.Left = flow.PosMinor;
