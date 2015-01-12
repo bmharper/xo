@@ -318,6 +318,10 @@ objects, and call it on the object immediately after Add(). This
 Reset function should reset the object to a clean slate, but
 leave any heap-allocated memory intact. For example, podvec's
 clear_noalloc() function.
+A convenient attribute of forcing you to declare your size up-front
+is that pointers are stable. It avoids that class of bugs where
+you take a reference to an object inside the container, and then
+you grow the container, and then your reference is invalid.
 */
 template<typename T>
 class xoStack
@@ -390,6 +394,11 @@ public:
 	~xoRingBuf()
 	{
 		free(Ring);
+	}
+
+	void Clear()
+	{
+		Head = Tail = 0;
 	}
 
 	T& PushHead()

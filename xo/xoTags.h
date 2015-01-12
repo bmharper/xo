@@ -2,22 +2,20 @@
 
 // The default styles for tags are defined inside xoDoc::InitializeDefaultTagStyles()
 
-#define XO_TAGS_DEFINE \
-XX(NULL, 0) \
-XY(Body) \
-XY(Div) \
-XY(Text) \
-XY(Lab) \
-XY(Span) \
-XY(Canvas) \
-XY(END) \
-
-#define XX(a,b) xoTag##a = b,
-#define XY(a) xoTag##a,
+// If you change this, remember to update xoTagNames
+// I initially used a generator macro here, but that breaks IDE comprehension (VS 2013),
+// and it's also convenient to have different strings for the dummy types.
 enum xoTag {
-	XO_TAGS_DEFINE
+	xoTagNULL = 0,
+	xoTagBody,
+	xoTagDiv,
+	xoTagText,
+	xoTagLab,
+	xoTagSpan,
+	xoTagCanvas,
+	xoTagEND,
+	xoTag_DummyRoot,	// Not something you can create in a document. Used internally for debugging.
+	xoTag_DummyWord,	// Not something you can create in a document. Used internally for debugging.
 };
-#undef XX
-#undef XY
 
-extern const char* xoTagNames[xoTagEND + 1];
+extern const char* xoTagNames[xoTagEND];

@@ -23,10 +23,11 @@ void xoRenderDomNode::Discard()
 
 void xoRenderDomNode::SetStyle(xoRenderStack& stack)
 {
-	auto bgColor = stack.Get(xoCatBackground);
-	auto bgImage = stack.Get(xoCatBackgroundImage);
-	if (!bgColor.IsNull()) Style.BackgroundColor = bgColor.GetColor();
-	if (!bgImage.IsNull()) Style.BackgroundImageID = bgImage.GetStringID();
+	Style.BackgroundImageID = stack.Get(xoCatBackgroundImage).GetStringID();
+	Style.BackgroundColor = stack.Get(xoCatBackground).GetColor();
+	Style.BorderColor = stack.Get(xoCatBorderColor_Left).GetColor();
+	Style.HasHoverStyle = stack.HasHoverStyle();
+	Style.HasFocusStyle = stack.HasFocusStyle();
 }
 
 void xoRenderDomNode::SetPool(xoPool* pool)

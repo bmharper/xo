@@ -10,7 +10,7 @@ void xoMain(xoSysWnd* wnd)
 {
 	xoGlobal()->FontStore->AddFontDirectory("C:\\temp\\fonts");
 	int left = -320;
-	int width = 300;
+	int width = 140;
 	int top = 60;
 	int height = 140;
 	wnd->SetPosition(xoBox(left, top, left + width, top + height), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size);   // DO NOT COMMIT ME
@@ -232,11 +232,14 @@ void DoLongText(xoDoc* doc)
 // This was used when developing Layout3
 void DoInlineFlow(xoDoc* doc)
 {
+	doc->ClassParse("red", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #d00; background: #fdd");
+	doc->ClassParse("blue", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #00d; background: #ddf");
 	//doc->Root.ParseAppend(R"(<div style='cursor: hand'>The dogge</div>)");
 	//doc->Root.ParseAppend(R"(The quick <span style='color: #a00; background: #aaa; cursor: hand'>brown fox jumps</span> over)");
+	doc->Root.ParseAppend(R"(The quick <span class='red'><span class='blue'>brown fox jumps</span></span> over)");
 	//doc->Root.ParseAppend(R"(<div style='cursor: hand'>blah!</div>)");
 	//doc->Root.ParseAppend(R"(The <span style='color: #a00; background: #fff'>brown</span>)");
-	doc->Root.ParseAppend( R"(The quick)");
+	//doc->Root.ParseAppend( R"(The quick)");
 }
 
 void DoBackupSettings(xoDoc* doc)

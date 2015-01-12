@@ -459,7 +459,7 @@ public:
 	xoColor BorderColor;
 	int		BackgroundImageID;
 	float	BorderRadius;
-	bool	HasHoverStyle : 1;	// Element's appearance depends upon whether the cursor is over it it.
+	bool	HasHoverStyle : 1;	// Element's appearance depends upon whether the cursor is over it.
 	bool	HasFocusStyle : 1;	// Element's appearance depends upon whether it has the focus
 
 	xoStyleRender() { memset(this, 0, sizeof(*this)); }

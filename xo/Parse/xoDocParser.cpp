@@ -84,7 +84,7 @@ xoString xoDocParser::Parse(const char* src, xoDomNode* target)
 	auto newNode = [&]() -> xoString
 	{
 		if (xEnd - xStart <= 0) return "Tag is empty";
-		intp i = 0;
+		intp i = xoTagNULL + 1;
 		for (; i < xoTagEND; i++)
 		{
 			if (EqNoCase(xoTagNames[i], src + xStart, xEnd - xStart))

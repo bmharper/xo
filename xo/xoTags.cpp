@@ -1,13 +1,13 @@
 #include "pch.h"
 #include "xoTags.h"
 
-#define XX(a,b) #a,
-#define XY(a) #a,
-
-const char* xoTagNames[xoTagEND + 1] =
+const char* xoTagNames[xoTagEND] =
 {
-	XO_TAGS_DEFINE
+	"Tag-NULL",
+	"Body",
+	"Div",
+	"Text",
+	"Lab",
+	"Span",
+	"Canvas",
 };
-
-#undef XX
-#undef XY

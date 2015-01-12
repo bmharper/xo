@@ -75,6 +75,16 @@ xoBox xoBox::ShrunkBy(const xoBox& margins)
 	return c;
 }
 
+xoBox xoBox::PiecewiseSum(const xoBox& box)
+{
+	xoBox c = *this;
+	c.Left += box.Left;
+	c.Right += box.Right;
+	c.Top += box.Top;
+	c.Bottom += box.Bottom;
+	return c;
+}
+
 xoBoxF xoBox::ToRealBox() const
 {
 	xoBoxF f;

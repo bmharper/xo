@@ -70,6 +70,7 @@ void xoLayout3::LayoutInternal(xoRenderDomNode& root)
 	in.ParentWidth = xoIntToPos(Doc->UI.GetViewportWidth());
 	in.ParentHeight = xoIntToPos(Doc->UI.GetViewportHeight());
 	in.ParentRNode = &root;
+	in.RestartPoints = nullptr;
 
 	Boxer.BeginDocument();
 	RunNode3(&Doc->Root, in);
@@ -82,6 +83,8 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in)
 
 	xoStyleResolver::ResolveAndPush(Stack, node);
 
+	xoBox margin = ComputeBox(in.ParentWidth, in.ParentHeight, xoCatMargin_Left);
+	xoBox padding = ComputeBox(in.ParentWidth, in.ParentHeight, xoCatPadding_Left);
 	xoPos contentWidth = ComputeDimension(in.ParentWidth, xoCatWidth);
 	xoPos contentHeight = ComputeDimension(in.ParentHeight, xoCatHeight);
 
@@ -92,16 +95,27 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in)
 	boxIn.Tag = node->GetTag();
 	boxIn.ContentWidth = contentWidth;
 	boxIn.ContentHeight = contentHeight;
-	boxIn.NewFlowContext = Stack.Get(xoCatFlowContext).GetFlowContext() == xoFlowContextNew;
+	boxIn.MarginAndPadding = margin.PiecewiseSum(padding);
+	boxIn.NewFlowContext = Stack.Get(xoCatFlowContext).GetFlowContext() == xoFlowContextNew || node->GetTag() == xoTagBody; // Body MUST be a new flow context
+
+	podvec<int32> myRestartPoints;
 
 	LayoutInput3 childIn;
 	childIn.ParentWidth = contentWidth;
 	childIn.ParentHeight = contentHeight;
 	childIn.ParentRNode = rchild;
+	if (boxIn.NewFlowContext)
+		childIn.RestartPoints = &myRestartPoints;
+	else
+		childIn.RestartPoints = in.RestartPoints;
 
 	Boxer.BeginNode(boxIn);
 
-	for (intp i = 0; i < node->ChildCount(); i++)
+	intp i = 0;
+	if (childIn.RestartPoints->size() != 0)
+		i = childIn.RestartPoints->rpop();
+
+	for (; i < node->ChildCount(); i++)
 	{
 		const xoDomEl* c = node->ChildByIndex(i);
 		if (c->IsNode())
@@ -112,16 +126,42 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in)
 		{
 			RunText3(static_cast<const xoDomText*>(c), childIn);
 		}
+
+		// Child is breaking out. Continue to break out until we hit a NewFlowContext
+		if (childIn.RestartPoints->size() != 0)
+		{
+			if (boxIn.NewFlowContext)
+			{
+				// We are the the final stop on a restart. So restart at our current child.
+				i--;
+				Boxer.Restart();
+			}
+			else
+			{
+				// We are just an intermediate node along the way
+				childIn.RestartPoints->push((int32) i);
+				break;
+			}
+		}
 	}
+	// I don't know yet how to think about having a restart initiated here. So far
+	// I have only thought about the case where a restart is initiated from a word
+	// emitted by a text object.
 	xoBox marginBox;
-	Boxer.EndNode(marginBox);
+	bool restart = Boxer.EndNode(marginBox) == xoBoxLayout3::FlowRestart;
+	if (restart)
+	{
+		XOPANIC("Untested layout restart position");
+		in.RestartPoints->push(0);
+	}
 	// Boxer doesn't know what our element's padding or margins are. The only thing it
 	// emits is the margin-box for our element. We need to subtract the margin and
 	// the padding in order to compute the content-box, which is what xoRenderDomNode needs.
-	xoBox margin = ComputeBox(in.ParentWidth, in.ParentHeight, xoCatMargin_Left);
-	xoBox padding = ComputeBox(in.ParentWidth, in.ParentHeight, xoCatPadding_Left);
 	rchild->Pos = marginBox.ShrunkBy(margin).ShrunkBy(padding);
 	rchild->SetStyle(Stack);
+	rchild->Style.BorderRadius = xoPosToReal(ComputeDimension(in.ParentWidth, xoCatBorderRadius));
+	rchild->Style.BorderSize = ComputeBox(in.ParentWidth, in.ParentHeight, xoCatBorder_Left);
+	rchild->Style.Padding = padding;
 
 	Stack.StackPop();
 }
@@ -151,7 +191,12 @@ void xoLayout3::RunText3(const xoDomText* node, const LayoutInput3& in)
 	TempText.FontID = fontID;
 	TempText.FontSizePx = fontSizePx;
 	TempText.Color = Stack.Get(xoCatColor).GetColor();
+	TempText.RestartPoints = in.RestartPoints;
 	GenerateTextWords(TempText);
+
+	// If we are restarting output, then it's possible that some characters in the
+	// buffer were not flushed. So just wipe the buffer always.
+	TempText.Chars.Clear();
 }
 
 
@@ -195,7 +240,17 @@ descender   X  |                    X              |             X
 */
 void xoLayout3::GenerateTextWords(TextRunState& ts)
 {
+	XOASSERTDEBUG(ts.Chars.Size() == 0);
+
 	const char* txt = ts.Node->GetText();
+	int32 txt_offset = 0;
+	if (ts.RestartPoints->size() != 0)
+	{
+		txt_offset = ts.RestartPoints->rpop();
+		txt += txt_offset;
+		XOASSERT(ts.RestartPoints->size() == 0); // Text is a leaf node. The restart stack must be empty now.
+	}
+
 	xoGlyphCache* glyphCache = xoGlobal()->GlyphCache;
 	xoGlyphCacheKey key = MakeGlyphCacheKey(ts);
 	const xoFont* font = Fonts.GetByFontID(ts.FontID);
@@ -222,9 +277,10 @@ void xoLayout3::GenerateTextWords(TextRunState& ts)
 	xoPos rtxt_left = xoPosNULL;
 	xoPos lastWordTop = xoPosNULL;
 	int numCharsInQueue = 0;			// Number of characters in TextRunState::Chars that are waiting to be flushed to rtxt
+	bool aborted = false;
 	Chunk chunk;
 	Chunker chunker(txt);
-	while (chunker.Next(chunk))
+	while (!aborted && chunker.Next(chunk))
 	{
 		switch (chunk.Type)
 		{
@@ -236,13 +292,21 @@ void xoLayout3::GenerateTextWords(TextRunState& ts)
 			if (ts.GlyphsNeeded)
 				continue;
 
+			if (strncmp(txt + chunk.Start, "jumps", 5) == 0)
+				int abcd = 123;
+
 			// output word
 			xoRenderDomText* rtxt_new = nullptr;
 			xoBoxLayout3::WordInput wordin;
 			wordin.Width = wordWidth;
-			wordin.Height = lineHeight; // unsure
+			wordin.Height = lineHeight;
 			xoBox marginBox;
-			Boxer.AddWord(wordin, marginBox);
+			if (Boxer.AddWord(wordin, marginBox) == xoBoxLayout3::FlowRestart)
+			{
+				aborted = true;
+				ts.RestartPoints->push(chunk.Start + txt_offset);
+				break;
+			}
 
 			if (rtxt == nullptr || marginBox.Top != lastWordTop)
 			{

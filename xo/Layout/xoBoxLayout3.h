@@ -38,6 +38,11 @@ of their most recent ancestor with a flow context.
 class XOAPI xoBoxLayout3
 {
 public:
+	enum FlowResult
+	{
+		FlowNormal,
+		FlowRestart,
+	};
 	struct NodeInput
 	{
 		xoInternalID	InternalID;
@@ -61,12 +66,13 @@ public:
 	void				EndDocument();
 
 	void				BeginNode(const NodeInput& in);
-	void				EndNode(xoBox& marginBox);
+	FlowResult			EndNode(xoBox& marginBox);
 
-	void				AddWord(const WordInput& in, xoBox& marginBox);
+	FlowResult			AddWord(const WordInput& in, xoBox& marginBox);
 	void				AddSpace(xoPos size);
 	void				AddLinebreak();
 
+	void				Restart();					// The layout engine is about to restart layout, after receiving FlowRestart
 	bool				WouldFlow(xoPos size);		// Returns true if adding a box of this size would cause us to flow onto a new line
 
 protected:
@@ -99,11 +105,12 @@ protected:
 		xoBox				MarginBox;
 	};
 
-	xoStack<FlowState>		FlowStates;	// We need to be careful to manage the heap-allocated memory inside FlowState.Lines
+	xoStack<FlowState>		FlowStates;			// We need to be careful to manage the heap-allocated memory inside FlowState.Lines
 	xoStack<NodeState>		NodeStates;
+	bool					WaitingForRestart;
 
-	bool	MustFlow(const FlowState& flow, xoPos size);
-	void	Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox);
-	void	NewLine(FlowState& flow);
-
+	bool		MustFlow(const FlowState& flow, xoPos size);
+	void		Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox);
+	void		NewLine(FlowState& flow);
+	intp		MostRecentUniqueFlowAncestor();
 };

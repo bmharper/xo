@@ -193,6 +193,7 @@ public:
 	void	ExpandToFit(const xoBox& expando);
 	void	ClampTo(const xoBox& clamp);
 	xoBox	ShrunkBy(const xoBox& margins);
+	xoBox	PiecewiseSum(const xoBox& box);
 	xoBoxF	ToRealBox() const;
 
 	void	SetInverted()							{ *this = Inverted(); }
@@ -204,9 +205,9 @@ public:
 	xoPoint	TopLeft() const							{ return xoPoint(Left, Top); }
 	void	Offset(int32 x, int32 y)				{ Left += x; Right += x; Top += y; Bottom += y; }
 	void	Offset(xoPoint p)						{ Offset(p.X, p.Y); }
-	xoBox	OffsetBy(int32 x, int32 y)			{ return xoBox(Left + x, Top + y, Right + x, Bottom + y); }
-	xoBox	OffsetBy(xoPoint p)					{ return xoBox(Left + p.X, Top + p.Y, Right + p.X, Bottom + p.Y); }
-	bool	IsInsideMe(xoPoint p) const			{ return p.X >= Left && p.Y >= Top && p.X < Right && p.Y < Bottom; }
+	xoBox	OffsetBy(int32 x, int32 y)				{ return xoBox(Left + x, Top + y, Right + x, Bottom + y); }
+	xoBox	OffsetBy(xoPoint p)						{ return xoBox(Left + p.X, Top + p.Y, Right + p.X, Bottom + p.Y); }
+	bool	IsInsideMe(xoPoint p) const				{ return p.X >= Left && p.Y >= Top && p.X < Right && p.Y < Bottom; }
 	bool	IsAreaZero() const						{ return Width() == 0 || Height() == 0; }
 
 	bool operator==(const xoBox& b) { return Left == b.Left && Right == b.Right && Top == b.Top && Bottom == b.Bottom; }

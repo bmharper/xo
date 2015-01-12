@@ -38,6 +38,7 @@ protected:
 
 	struct LayoutInput3
 	{
+		podvec<int32>*		RestartPoints;	// This is IN/OUT
 		xoRenderDomNode*	ParentRNode;
 		xoPos				ParentWidth;
 		xoPos				ParentHeight;
@@ -45,9 +46,9 @@ protected:
 
 	struct LayoutInput
 	{
-		xoPos	ParentWidth;
-		xoPos	ParentHeight;
-		xoPos	OuterBaseline;
+		xoPos			ParentWidth;
+		xoPos			ParentHeight;
+		xoPos			OuterBaseline;
 	};
 
 	struct LayoutOutput
@@ -100,6 +101,7 @@ protected:
 		xoRingBuf<xoRenderCharEl>	Chars;
 		bool						GlyphsNeeded;
 		bool						IsSubPixel;
+		podvec<int32>*				RestartPoints;
 		float						FontWidthScale;
 		int							FontSizePx;
 		xoFontID					FontID;
