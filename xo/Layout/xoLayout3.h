@@ -163,6 +163,7 @@ protected:
 	static bool				FlowBreakBefore(const LayoutOutput& cout, FlowState& flow);
 	static xoPoint			FlowRun(const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl);
 	static xoPoint			ApplyPosition(const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl);
+	static bool				IsAllZeros(const podvec<int32>& list);
 
 	static bool				IsDefined(xoPos p)	{ return p != xoPosNULL; }
 	static bool				IsNull(xoPos p)		{ return p == xoPosNULL; }

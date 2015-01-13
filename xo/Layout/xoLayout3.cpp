@@ -135,6 +135,12 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in)
 				// We are the the final stop on a restart. So restart at our current child.
 				i--;
 				Boxer.Restart();
+				// If all children are going to restart at zero, then delete the rchild that we already
+				// created, because it will consist purely of empty husks. Unfortunately the empty children
+				// end up as garbage memory in our render pool. One could probably reclaim the memory from
+				// the pool in most cases, but I'm not convinced it's worth the effort.
+				if (IsAllZeros(*childIn.RestartPoints))
+					rchild->Children.Count--;
 			}
 			else
 			{
@@ -597,6 +603,16 @@ xoPoint xoLayout3::FlowRun(const LayoutInput& cin, const LayoutOutput& cout, Flo
 		FlowNewline(flow);
 
 	return offset;
+}
+
+bool xoLayout3::IsAllZeros(const podvec<int32>& list)
+{
+	for (intp i = 0; i < list.size(); i++)
+	{
+		if (list[i] != 0)
+			return false;
+	}
+	return true;
 }
 
 xoLayout3::Chunker::Chunker(const char* txt) :

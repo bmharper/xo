@@ -87,11 +87,12 @@ protected:
 
 	struct FlowState
 	{
-		xoPos				PosMinor;		// In default flow, this is the horizontal (X) position
-		xoPos				PosMajor;		// In default flow, this is the vertical (Y) position
-		xoPos				MaxMinor;		// In default flow, this is the horizontal (X) position at which we wrap around. xoPosNULL means no limit.
-		xoPos				MaxMajor;		// In default flow, this is the vertical (Y) position at which we need scroll bars. xoPosNULL means no limit.
-		xoPos				HighMajor;		// In default flow, this is the greatest vertical (Y) coordinate seen so far.
+		bool				FlowOnZeroMinor;	// If true, allow flowing to next line even when PosMinor = 0. This exists for injected flow.
+		xoPos				PosMinor;			// In default flow, this is the horizontal (X) position
+		xoPos				PosMajor;			// In default flow, this is the vertical (Y) position
+		xoPos				MaxMinor;			// In default flow, this is the horizontal (X) position at which we wrap around. xoPosNULL means no limit.
+		xoPos				MaxMajor;			// In default flow, this is the vertical (Y) position at which we need scroll bars. xoPosNULL means no limit.
+		xoPos				HighMajor;			// In default flow, this is the greatest vertical (Y) coordinate seen so far.
 		// Meh -- implement these when the need arises
 		// bool	IsVertical;		// default true, normal flow
 		// bool	ReverseMajor;	// Major goes from high to low numbers (right to left, or bottom to top)

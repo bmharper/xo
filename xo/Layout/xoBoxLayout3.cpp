@@ -66,6 +66,10 @@ void xoBoxLayout3::BeginNode(const NodeInput& in)
 	{
 		// We preload MaxMinor with the remaining space in our parent, minus our own margin and padding.
 		flow.MaxMinor = parentFlow.MaxMinor - parentFlow.PosMinor - (ns.Input.MarginAndPadding.Left + ns.Input.MarginAndPadding.Right);
+
+		// We also correct the determination of whether we are at the start of a new line
+		if (parentFlow.PosMinor != 0 || parentFlow.FlowOnZeroMinor)
+			flow.FlowOnZeroMinor = true;
 	}
 }
 
@@ -162,7 +166,7 @@ bool xoBoxLayout3::MustFlow(const FlowState& flow, xoPos size)
 {
 	bool onNewLine = flow.PosMinor == 0;
 	bool overflow = (flow.MaxMinor != xoPosNULL) && (flow.PosMinor + size > flow.MaxMinor);
-	return !onNewLine && overflow;
+	return (!onNewLine || flow.FlowOnZeroMinor) && overflow;
 }
 
 void xoBoxLayout3::Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox)
@@ -201,6 +205,7 @@ intp xoBoxLayout3::MostRecentUniqueFlowAncestor()
 
 void xoBoxLayout3::FlowState::Reset()
 {
+	FlowOnZeroMinor = false;
 	PosMinor = 0;
 	PosMajor = 0;
 	HighMajor = 0;
