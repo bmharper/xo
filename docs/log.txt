@@ -106,6 +106,7 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	alignment occurs, it destroys the inner "baseline". Actually.. that's wrong.
 
 2014-07-23	Layout - baseline
+	[Invalidated by 2015-01-16]
 	I have decided to ignore the thorny problem of aligning to baseline deep
 	inside the tree. Instead, if one wants baseline:baseline to work, then
 	you must specify it high up in the tree, like so:
@@ -336,3 +337,17 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	buble out to 'abc', so that a new 'red-border' span can be created, as well
 	as a new 'blue-border' span. Note however, that when the rendering is restarted,
 	we skip over the span containing 'THE'. We also skip over "quick brown", of course.
+
+2015-01-16	Alignment
+	I have realized that aligning things to baseline is actually easier than I
+	previously thought. You don't need to maintain any kind of "parent baseline".
+	Every node starts with an undefined baseline, and it places it's children
+	as though it's the root of the tree. Once it's done, it fills out it's own
+	baseline, and that is used by it's parent to place it. The key point here
+	is that baseline propagates horizontally (from one node of a branch to it's
+	siblings), but it does not move vertically down (from one node to it's
+	children). It does however move upward. My original design moved baseline
+	down as well as up, but that ends up doing alignment twice, which forced
+	one to have to not use baseline:baseline on intermediate nodes. I first
+	noticed this was broken when nesting two <span> nodes, which both have
+	baseline:baseline.

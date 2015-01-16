@@ -143,3 +143,84 @@ void xoLifoBuf::Free(void* buf)
 	Pos -= ItemSizes.back();
 	ItemSizes.pop();
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+xoFixedSizeHeap::xoFixedSizeHeap()
+{
+}
+
+xoFixedSizeHeap::~xoFixedSizeHeap()
+{
+	free(Heap);
+}
+
+void xoFixedSizeHeap::Initialize(uint32 maxAllocations, uint32 allocationSize)
+{
+	XOASSERT(maxAllocations * allocationSize < 2147483648u);
+	XOASSERT(((allocationSize - 1) & allocationSize) == 0);		// allocationSize must be a power of 2
+
+	Heap = xoMallocOrDie(maxAllocations * allocationSize);
+	FreeList.resize(maxAllocations);
+	for (uint32 i = 0; i < maxAllocations; i++)
+		FreeList[i] = i;
+	MaxAllocations = maxAllocations;
+	AllocationShift = 1;
+	while ((1u << AllocationShift) < allocationSize)
+		AllocationShift++;
+}
+
+void* xoFixedSizeHeap::Alloc(size_t bytes)
+{
+	if (FreeList.size() == 0 || bytes > (size_t) AllocationSize())
+		return xoMallocOrDie(bytes);
+
+	uint32 slot = FreeList.rpop();
+	return ((byte*) Heap) + (slot << AllocationShift);
+}
+
+void* xoFixedSizeHeap::Realloc(void* buf, size_t bytes)
+{
+	if (buf == nullptr)
+		return Alloc(bytes);
+
+	uint32 slot = SlotFromPtr(buf);
+	if (slot != -1)
+	{
+		if (bytes <= AllocationSize())
+			return buf;
+
+		void* newBuf = xoMallocOrDie(bytes);
+		memcpy(newBuf, buf, AllocationSize());
+		Free(buf);
+		return newBuf;
+	}
+	else
+	{
+		// never attempt to shrink into an internal buffer
+		return xoReallocOrDie(buf, bytes);
+	}
+}
+
+void xoFixedSizeHeap::Free(void* buf)
+{
+	if (buf == nullptr)
+		return;
+
+	uint32 slot = SlotFromPtr(buf);
+	if (slot != -1)
+		FreeList += slot;
+	else
+		free(buf);
+}
+
+uint32 xoFixedSizeHeap::SlotFromPtr(void* p) const
+{
+	uint32 slot = (uint32) (((byte*) p - (byte*) Heap) >> AllocationShift);
+	if (slot < MaxAllocations)
+		return slot;
+	else
+		return -1;
+}

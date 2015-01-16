@@ -97,16 +97,13 @@ xoBoxLayout3::FlowResult xoBoxLayout3::EndNode(xoBox& marginBox)
 	{
 		// Bail out. The caller is going to have to unwind his stack out to the nearest ancestor
 		// that defines its own flow. That ancestor is going to have to create another copy of the
-		// child that it was busy with, but this new child will end up on a new line. Notice how
-		// we are doing NewLine() on our nearest unique-flow ancestor, not our direct parent.
-		// This new line is like a placeholder.
-		//intp ancestor = MostRecentUniqueFlowAncestor();
-		//NewLine(FlowStates[ancestor]);
+		// child that it was busy with, but this new child will end up on a new line.
+		// We don't create the new line here. That happens when Restart() is called.
 		NodeStates.Pop();
 		// Disable any intermediate nodes from emitting new lines. This is necessary when you have
 		// for example, <div><span><span>The quick brown fox</span></span></div>. In other words, when
-		// you have nested nodes that do not define their own flow contexts. If we didn't set EnableNewLine
-		// to false here, then the outer span object might want to span itself across two lines, which
+		// you have nested nodes that do not define their own flow contexts. If we didn't set WaitingForRestart
+		// to true here, then the outer span object might want to span itself across two lines, which
 		// makes no sense. We still need to run the 'Flow' function though, when we end the second span,
 		// so that it can calculate its content width.
 		WaitingForRestart = true;
@@ -124,12 +121,6 @@ xoBoxLayout3::FlowResult xoBoxLayout3::EndNode(xoBox& marginBox)
 
 xoBoxLayout3::FlowResult xoBoxLayout3::AddWord(const WordInput& in, xoBox& marginBox)
 {
-	//NodeState ns;
-	//ns.Input.ContentWidth = in.Width;
-	//ns.Input.ContentHeight = in.Height;
-	//ns.Input.MarginAndPadding = xoBox(0, 0, 0, 0);
-	//Flow(ns, FlowStates.Back(), marginBox);
-
 	NodeInput nin;
 	nin.ContentWidth = in.Width;
 	nin.ContentHeight = in.Height;
@@ -149,6 +140,30 @@ void xoBoxLayout3::AddSpace(xoPos size)
 void xoBoxLayout3::AddLinebreak()
 {
 	NewLine(FlowStates.Back());
+}
+
+void xoBoxLayout3::SetBaseline(xoPos baseline)
+{
+	auto& line = FlowStates.Back().Lines.back();
+	if (line.InnerBaseline == xoPosNULL)
+	{
+		line.InnerBaseline = baseline;
+		// We probably also need to record which element set the inner baseline, so that if that
+		// element is moved by vertical alignment, then we can move the inner baseline too.
+	}
+}
+
+xoPos xoBoxLayout3::GetBaseline()
+{
+	auto& line = FlowStates.Back().Lines.back();
+	return line.InnerBaseline;
+}
+
+xoPos xoBoxLayout3::GetFirstBaseline()
+{
+	if (FlowStates.Back().Lines.size() != 0)
+		return FlowStates.Back().Lines[0].InnerBaseline;
+	return xoPosNULL;
 }
 
 void xoBoxLayout3::Restart()
@@ -187,7 +202,7 @@ void xoBoxLayout3::Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox)
 
 void xoBoxLayout3::NewLine(FlowState& flow)
 {
-	flow.Lines += LineBox::Make(0, 0, 0);
+	flow.Lines += LineBox::MakeFresh();
 	flow.PosMajor = flow.HighMajor;
 	flow.PosMinor = 0;
 }
@@ -212,4 +227,5 @@ void xoBoxLayout3::FlowState::Reset()
 	MaxMajor = xoPosNULL;
 	MaxMinor = xoPosNULL;
 	Lines.clear_noalloc();
+	Lines += LineBox::MakeFresh();
 }

@@ -1,5 +1,4 @@
-Layout Concepts
-===============
+# Layout Concepts
 
 Horizontal vs Vertical
 ----------------------

@@ -276,7 +276,7 @@ void xoDoc::InitializeDefaultTagStyles()
 	// If this were true here also, then it would imply that all text on a page is selectable.
 	//TagStyles[xoTagLab].Parse( "cursor: text", this );
 
-	TagStyles[xoTagSpan].Parse("flow-context: inject", this);
+	TagStyles[xoTagSpan].Parse("flow-context: inject; baseline: baseline", this);
 
 	static_assert(xoTagCanvas == xoTagEND - 1, "add default style for new tag");
 }

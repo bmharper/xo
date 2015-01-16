@@ -314,12 +314,12 @@ XOAPI void xoInitialize(const xoInitParams* init)
 	xoGlobals->EnableSRGBFramebuffer = false;
 	//xoGlobals->EmulateGammaBlending = false;
 #endif
-	xoGlobals->EnableKerning = true;
 	// Do we round text line heights to whole pixels?
 	// We only render sub-pixel text on low resolution monitors that do not change orientation (ie desktop).
 	xoGlobals->RoundLineHeights = xoGlobals->EnableSubpixelText || xoGlobals->EpToPixel < 2.0f;
 	xoGlobals->SnapBoxes = true;
 	xoGlobals->SnapSubpixelHorzText = true;
+	xoGlobals->EnableKerning = !xoGlobals->EnableSubpixelText || !xoGlobals->SnapSubpixelHorzText;
 	//xoGlobals->DebugZeroClonedChildList = true;
 	xoGlobals->MaxTextureID = ~((xoTextureID) 0);
 	//xoGlobals->ClearColor.Set( 200, 0, 200, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node

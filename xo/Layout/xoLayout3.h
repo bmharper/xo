@@ -44,6 +44,15 @@ protected:
 		xoPos				ParentHeight;
 	};
 
+	struct LayoutOutput3
+	{
+		BindingSet			Binds;
+		xoPos				MarginBoxWidth;
+		xoPos				MarginBoxHeight;
+		xoPos				Baseline;		// This is given in the coordinate system of the parent
+		xoRenderDomEl*		RNode;
+	};
+
 	struct LayoutInput
 	{
 		xoPos			ParentWidth;
@@ -61,15 +70,6 @@ protected:
 		//xoPositionType	Position: 3;
 		xoBreakType		GetBreak() const		{ return xoBreakType(Break & 3); }
 		//xoPositionType	GetPosition() const		{ return xoPositionType(Position & 7); }
-	};
-
-	// Every time we start a new line, another one of these is created
-	struct LineBox
-	{
-		xoPos		InnerBaseline;
-		int			InnerBaselineDefinedBy;
-		int			LastChild;
-		static LineBox Make(xoPos innerBaseline, int innerBaselineDefinedBy, int lastChild) { return {innerBaseline, innerBaselineDefinedBy, lastChild}; }
 	};
 
 	struct Word
@@ -97,13 +97,15 @@ protected:
 	struct TextRunState
 	{
 		const xoDomText*			Node;
-		xoRenderDomNode*			RNode;
+		xoRenderDomNode*			RNode;		// Parent of the text nodes
+		xoRenderDomText*			RNodeTxt;	// Child of RNode
 		xoRingBuf<xoRenderCharEl>	Chars;
 		bool						GlyphsNeeded;
 		bool						IsSubPixel;
 		podvec<int32>*				RestartPoints;
 		float						FontWidthScale;
 		int							FontSizePx;
+		xoPos						FontAscender;
 		xoFontID					FontID;
 		xoColor						Color;
 	};
@@ -124,8 +126,7 @@ protected:
 	xoBoxLayout3				Boxer;
 	xoPool*						Pool;
 	xoRenderStack				Stack;
-	xoLifoBuf					ChildOutStack;
-	xoLifoBuf					LineBoxStack;
+	xoFixedSizeHeap				FHeap;
 	float						PtToPixel;
 	float						EpToPixel;
 	xoFontTableImmutable		Fonts;
@@ -133,12 +134,13 @@ protected:
 	TextRunState				TempText;
 	bool						SnapBoxes;
 	bool						SnapSubpixelHorzText;
+	bool						EnableKerning;
 
 	void		RenderGlyphsNeeded();
 	void		LayoutInternal(xoRenderDomNode& root);
-	void		RunNode3(const xoDomNode* node, const LayoutInput3& in);
-	void		RunText3(const xoDomText* node, const LayoutInput3& in);
-	xoPoint		PositionChildFromBindings(const LayoutInput& cin, const LayoutOutput& cout, xoRenderDomEl* rchild);
+	void		RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOutput3& out);
+	void		RunText3(const xoDomText* node, const LayoutInput3& in, LayoutOutput3& out);
+	xoPoint		PositionChildFromBindings(const LayoutInput3& cin, xoPos parentBaseline, const LayoutOutput3& cout);
 	void		GenerateTextWords(TextRunState& ts);
 	void		FinishTextRNode(TextRunState& ts, xoRenderDomText* rnode, intp numChars);
 	void		OffsetTextHorz(TextRunState& ts, xoPos offsetHorz, intp numChars);
@@ -159,10 +161,6 @@ protected:
 	static xoGlyphCacheKey	MakeGlyphCacheKey(xoRenderDomText* rnode);
 	static xoGlyphCacheKey	MakeGlyphCacheKey(const TextRunState& ts);
 	static xoGlyphCacheKey	MakeGlyphCacheKey(bool isSubPixel, xoFontID fontID, int fontSizePx);
-	static void				FlowNewline(FlowState& flow);
-	static bool				FlowBreakBefore(const LayoutOutput& cout, FlowState& flow);
-	static xoPoint			FlowRun(const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl);
-	static xoPoint			ApplyPosition(const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl);
 	static bool				IsAllZeros(const podvec<int32>& list);
 
 	static bool				IsDefined(xoPos p)	{ return p != xoPosNULL; }

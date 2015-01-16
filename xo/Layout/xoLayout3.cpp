@@ -23,11 +23,17 @@ void xoLayout3::Layout(const xoDoc& doc, xoRenderDomNode& root, xoPool* pool)
 	Pool = pool;
 	Boxer.Pool = pool;
 	Stack.Initialize(Doc, Pool);
-	ChildOutStack.Init(1024 * 1024);
-	LineBoxStack.Init(1024 * 1024);
+	
+	// These are thumbsuck numbers.
+	// 100 is max expected tree depth.
+	// 64 is related to size of LayoutOutput3, and number of expected objects
+	// inside the vectors that store LayoutOutput3 inside RunNode3
+	FHeap.Initialize(100, 64);		
+
 	Fonts = xoGlobal()->FontStore->GetImmutableTable();
 	SnapBoxes = xoGlobal()->SnapBoxes;
 	SnapSubpixelHorzText = xoGlobal()->SnapSubpixelHorzText;
+	EnableKerning = xoGlobal()->EnableKerning;
 
 	while (true)
 	{
@@ -72,13 +78,18 @@ void xoLayout3::LayoutInternal(xoRenderDomNode& root)
 	in.ParentRNode = &root;
 	in.RestartPoints = nullptr;
 
+	LayoutOutput3 out;
+
 	Boxer.BeginDocument();
-	RunNode3(&Doc->Root, in);
+	RunNode3(&Doc->Root, in, out);
 	Boxer.EndDocument();
 }
 
-void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in)
+void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOutput3& out)
 {
+	static int debug_num_run;
+	debug_num_run++;
+
 	xoBoxLayout3::NodeInput boxIn;
 
 	xoStyleResolver::ResolveAndPush(Stack, node);
@@ -88,8 +99,14 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in)
 	xoPos contentWidth = ComputeDimension(in.ParentWidth, xoCatWidth);
 	xoPos contentHeight = ComputeDimension(in.ParentHeight, xoCatHeight);
 
-	xoRenderDomNode* rchild = new(Pool->AllocT<xoRenderDomNode>(false)) xoRenderDomNode(node->GetInternalID(), node->GetTag(), Pool);
-	in.ParentRNode->Children += rchild;
+	if (SnapBoxes)
+	{
+		if (IsDefined(contentWidth))	contentWidth = xoPosRoundUp(contentWidth);
+		if (IsDefined(contentHeight))	contentHeight = xoPosRoundUp(contentHeight);
+	}
+
+	xoRenderDomNode* rnode = new(Pool->AllocT<xoRenderDomNode>(false)) xoRenderDomNode(node->GetInternalID(), node->GetTag(), Pool);
+	in.ParentRNode->Children += rnode;
 
 	boxIn.InternalID = node->GetInternalID();
 	boxIn.Tag = node->GetTag();
@@ -103,7 +120,7 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in)
 	LayoutInput3 childIn;
 	childIn.ParentWidth = contentWidth;
 	childIn.ParentHeight = contentHeight;
-	childIn.ParentRNode = rchild;
+	childIn.ParentRNode = rnode;
 	if (boxIn.NewFlowContext)
 		childIn.RestartPoints = &myRestartPoints;
 	else
@@ -111,20 +128,23 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in)
 
 	Boxer.BeginNode(boxIn);
 
-	intp i = 0;
+	intp istart = 0;
 	if (childIn.RestartPoints->size() != 0)
-		i = childIn.RestartPoints->rpop();
+		istart = childIn.RestartPoints->rpop();
 
-	for (; i < node->ChildCount(); i++)
+	xoFixedVector<LayoutOutput3> childOuts(FHeap);
+
+	for (intp i = istart; i < node->ChildCount(); i++)
 	{
+		LayoutOutput3 childOut;
 		const xoDomEl* c = node->ChildByIndex(i);
 		if (c->IsNode())
 		{
-			RunNode3(static_cast<const xoDomNode*>(c), childIn);
+			RunNode3(static_cast<const xoDomNode*>(c), childIn, childOut);
 		}
 		else
 		{
-			RunText3(static_cast<const xoDomText*>(c), childIn);
+			RunText3(static_cast<const xoDomText*>(c), childIn, childOut);
 		}
 
 		// Child is breaking out. Continue to break out until we hit a NewFlowContext
@@ -135,12 +155,12 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in)
 				// We are the the final stop on a restart. So restart at our current child.
 				i--;
 				Boxer.Restart();
-				// If all children are going to restart at zero, then delete the rchild that we already
+				// If all children are going to restart at zero, then delete the rnode that we already
 				// created, because it will consist purely of empty husks. Unfortunately the empty children
 				// end up as garbage memory in our render pool. One could probably reclaim the memory from
 				// the pool in most cases, but I'm not convinced it's worth the effort.
 				if (IsAllZeros(*childIn.RestartPoints))
-					rchild->Children.Count--;
+					rnode->Children.Count--;
 			}
 			else
 			{
@@ -149,7 +169,19 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in)
 				break;
 			}
 		}
+		else
+		{
+			if (childOut.Baseline != xoPosNULL)
+				Boxer.SetBaseline(childOut.Baseline);
+			childOuts.Push(childOut);
+		}
 	}
+
+	// We're gonna have to suck out baselines before calling Boxer.EndNode.
+	xoPos myBaseline = xoPosNULL;
+	if (Boxer.GetFirstBaseline() != xoPosNULL)
+		myBaseline = Boxer.GetFirstBaseline();
+
 	// I don't know yet how to think about having a restart initiated here. So far
 	// I have only thought about the case where a restart is initiated from a word
 	// emitted by a text object.
@@ -160,19 +192,43 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in)
 		XOPANIC("Untested layout restart position");
 		in.RestartPoints->push(0);
 	}
+
 	// Boxer doesn't know what our element's padding or margins are. The only thing it
 	// emits is the margin-box for our element. We need to subtract the margin and
 	// the padding in order to compute the content-box, which is what xoRenderDomNode needs.
-	rchild->Pos = marginBox.ShrunkBy(margin).ShrunkBy(padding);
-	rchild->SetStyle(Stack);
-	rchild->Style.BorderRadius = xoPosToReal(ComputeDimension(in.ParentWidth, xoCatBorderRadius));
-	rchild->Style.BorderSize = ComputeBox(in.ParentWidth, in.ParentHeight, xoCatBorder_Left);
-	rchild->Style.Padding = padding;
+	rnode->Pos = marginBox.ShrunkBy(margin).ShrunkBy(padding);
+	rnode->SetStyle(Stack);
+	rnode->Style.BorderRadius = xoPosToReal(ComputeDimension(in.ParentWidth, xoCatBorderRadius));
+	rnode->Style.BorderSize = ComputeBox(in.ParentWidth, in.ParentHeight, xoCatBorder_Left);
+	rnode->Style.Padding = padding;
+
+	// Apply alignment bindings
+	if (childIn.ParentWidth == xoPosNULL)
+		childIn.ParentWidth = rnode->Pos.Width();
+	
+	if (childIn.ParentHeight == xoPosNULL)
+		childIn.ParentHeight = rnode->Pos.Height();
+
+	for (intp i = 0; i < childOuts.Size(); i++)
+	{
+		if (childOuts[i].RNode != nullptr)
+			PositionChildFromBindings(childIn, myBaseline, childOuts[i]);
+	}
+
+	if (myBaseline != xoPosNULL)
+		out.Baseline = myBaseline + rnode->Pos.Top;	// we emit baseline in the coordinate system of our parent
+	else
+		out.Baseline = xoPosNULL;
+
+	out.Binds = ComputeBinds();
+	out.RNode = rnode;
+	out.MarginBoxWidth = marginBox.Width();
+	out.MarginBoxHeight = marginBox.Height();
 
 	Stack.StackPop();
 }
 
-void xoLayout3::RunText3(const xoDomText* node, const LayoutInput3& in)
+void xoLayout3::RunText3(const xoDomText* node, const LayoutInput3& in, LayoutOutput3& out)
 {
 	//XOTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 1\n", node.GetInternalID() );
 
@@ -192,17 +248,27 @@ void xoLayout3::RunText3(const xoDomText* node, const LayoutInput3& in)
 
 	TempText.Node = node;
 	TempText.RNode = in.ParentRNode;
+	TempText.RNodeTxt = nullptr;
 	TempText.FontWidthScale = 1.0f;
 	TempText.IsSubPixel = xoGlobal()->EnableSubpixelText && fontSizePx <= xoGlobal()->MaxSubpixelGlyphSize;
 	TempText.FontID = fontID;
 	TempText.FontSizePx = fontSizePx;
 	TempText.Color = Stack.Get(xoCatColor).GetColor();
 	TempText.RestartPoints = in.RestartPoints;
+	TempText.FontAscender = xoPosNULL;
 	GenerateTextWords(TempText);
 
 	// If we are restarting output, then it's possible that some characters in the
 	// buffer were not flushed. So just wipe the buffer always.
 	TempText.Chars.Clear();
+
+	out.Baseline = TempText.FontAscender;
+	// I can't think why you'd want to align text objects. Surely you'd rather align the containing elements?
+	// Since all of our binding points are null, we don't need to populate our width and height, so we leave them zero.
+	out.MarginBoxHeight = 0;
+	out.MarginBoxWidth = 0;
+	out.Binds = BindingSet{ xoHorizontalBindingNULL, xoHorizontalBindingNULL, xoVerticalBindingNULL, xoVerticalBindingNULL };
+	out.RNode = TempText.RNodeTxt;
 }
 
 
@@ -262,8 +328,9 @@ void xoLayout3::GenerateTextWords(TextRunState& ts)
 	const xoFont* font = Fonts.GetByFontID(ts.FontID);
 
 	xoPos fontHeightRounded = xoRealToPos((float) ts.FontSizePx);
-	xoPos fontAscender = xoRealx256ToPos(font->Ascender_x256 * ts.FontSizePx);
 	xoPos charWidth_32 = xoRealx256ToPos(font->LinearHoriAdvance_Space_x256) * ts.FontSizePx;
+	xoPos fontAscender = xoRealx256ToPos(font->Ascender_x256 * ts.FontSizePx);
+	ts.FontAscender = fontAscender;
 
 	if (SnapSubpixelHorzText)
 		charWidth_32 = xoPosRound(charWidth_32);
@@ -277,7 +344,6 @@ void xoLayout3::GenerateTextWords(TextRunState& ts)
 		int abc = 123;
 
 	ts.GlyphsNeeded = false;
-	xoPos baseline = fontAscender;
 	const xoGlyph* prevGlyph = nullptr;
 	xoRenderDomText* rtxt = nullptr;
 	xoPos rtxt_left = xoPosNULL;
@@ -348,6 +414,7 @@ void xoLayout3::GenerateTextWords(TextRunState& ts)
 	// the end
 	if (rtxt != nullptr)
 		FinishTextRNode(ts, rtxt, numCharsInQueue);
+	ts.RNodeTxt = rtxt;
 }
 
 void xoLayout3::FinishTextRNode(TextRunState& ts, xoRenderDomText* rnode, intp numChars)
@@ -399,7 +466,7 @@ xoPos xoLayout3::MeasureWord(const char* txt, const xoFont* font, xoPos fontAsce
 			continue;
 			prevGlyph = nullptr;
 		}
-		if (xoGlobal()->EnableKerning && prevGlyph)
+		if (EnableKerning && prevGlyph)
 		{
 			// Multithreading hazard here. I'm not sure whether FT_Get_Kerning is thread safe.
 			// Also, I have stepped inside there and I see it does a binary search. We might
@@ -423,15 +490,15 @@ xoPos xoLayout3::MeasureWord(const char* txt, const xoFont* font, xoPos fontAsce
 	return posX;
 }
 
-xoPoint xoLayout3::PositionChildFromBindings(const LayoutInput& cin, const LayoutOutput& cout, xoRenderDomEl* rchild)
+xoPoint xoLayout3::PositionChildFromBindings(const LayoutInput3& cin, xoPos parentBaseline, const LayoutOutput3& cout)
 {
 	xoPoint child, parent;
-	child.X = HBindOffset(cout.Binds.HChild, cout.NodeWidth);
-	child.Y = VBindOffset(cout.Binds.VChild, cout.NodeBaseline, cout.NodeHeight);
+	child.X = HBindOffset(cout.Binds.HChild, cout.MarginBoxWidth);
+	child.Y = VBindOffset(cout.Binds.VChild, cout.Baseline, cout.MarginBoxHeight);
 	parent.X = HBindOffset(cout.Binds.HParent, cin.ParentWidth);
-	parent.Y = VBindOffset(cout.Binds.VParent, cin.OuterBaseline, cin.ParentHeight);
+	parent.Y = VBindOffset(cout.Binds.VParent, parentBaseline, cin.ParentHeight);
 	xoPoint offset(parent.X - child.X, parent.Y - child.Y);
-	rchild->Pos.Offset(offset);
+	cout.RNode->Pos.Offset(offset);
 	return offset;
 }
 
@@ -486,13 +553,13 @@ xoLayout3::BindingSet xoLayout3::ComputeBinds()
 	BindingSet binds = {xoHorizontalBindingNULL, xoHorizontalBindingNULL, xoVerticalBindingNULL, xoVerticalBindingNULL};
 
 	if (left != xoHorizontalBindingNULL)		{ binds.HChild = xoHorizontalBindingLeft; binds.HParent = left; }
-	if (hcenter != xoHorizontalBindingNULL)	{ binds.HChild = xoHorizontalBindingCenter; binds.HParent = hcenter; }
+	if (hcenter != xoHorizontalBindingNULL)		{ binds.HChild = xoHorizontalBindingCenter; binds.HParent = hcenter; }
 	if (right != xoHorizontalBindingNULL)		{ binds.HChild = xoHorizontalBindingRight; binds.HParent = right; }
 
 	if (top != xoVerticalBindingNULL)			{ binds.VChild = xoVerticalBindingTop; binds.VParent = top; }
 	if (vcenter != xoVerticalBindingNULL)		{ binds.VChild = xoVerticalBindingCenter; binds.VParent = vcenter; }
 	if (bottom != xoVerticalBindingNULL)		{ binds.VChild = xoVerticalBindingBottom; binds.VParent = bottom; }
-	if (baseline != xoVerticalBindingNULL)	{ binds.VChild = xoVerticalBindingBaseline; binds.VParent = baseline; }
+	if (baseline != xoVerticalBindingNULL)		{ binds.VChild = xoVerticalBindingBaseline; binds.VParent = baseline; }
 
 	return binds;
 }
@@ -566,43 +633,6 @@ xoGlyphCacheKey	xoLayout3::MakeGlyphCacheKey(bool isSubPixel, xoFontID fontID, i
 {
 	uint8 glyphFlags = isSubPixel ? xoGlyphFlag_SubPixel_RGB : 0;
 	return xoGlyphCacheKey(fontID, 0, fontSizePx, glyphFlags);
-}
-
-void xoLayout3::FlowNewline(FlowState& flow)
-{
-	flow.PosMinor = 0;
-	flow.PosMajor = flow.MajorMax;
-	flow.NumLines++;
-}
-
-bool xoLayout3::FlowBreakBefore(const LayoutOutput& cout, FlowState& flow)
-{
-	if (cout.GetBreak() == xoBreakBefore)
-	{
-		FlowNewline(flow);
-		return true;
-	}
-	return false;
-}
-
-xoPoint xoLayout3::FlowRun(const LayoutInput& cin, const LayoutOutput& cout, FlowState& flow, xoRenderDomEl* rendEl)
-{
-	if (IsDefined(cin.ParentWidth))
-	{
-		bool over = flow.PosMinor + cout.NodeWidth > cin.ParentWidth;
-		bool futile = flow.PosMinor == 0;
-		if (over && !futile)
-			FlowNewline(flow);
-	}
-	xoPoint offset(flow.PosMinor, flow.PosMajor);
-	rendEl->Pos.Offset(offset.X, offset.Y);
-	flow.PosMinor += cout.NodeWidth;
-	flow.MajorMax = xoMax(flow.MajorMax, flow.PosMajor + cout.NodeHeight);
-
-	if (cout.GetBreak() == xoBreakAfter)
-		FlowNewline(flow);
-
-	return offset;
 }
 
 bool xoLayout3::IsAllZeros(const podvec<int32>& list)

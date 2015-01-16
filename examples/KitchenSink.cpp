@@ -236,7 +236,9 @@ void DoInlineFlow(xoDoc* doc)
 	doc->ClassParse("blue", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #00d; background: #ddf");
 	//doc->Root.ParseAppend(R"(<div style='cursor: hand'>The dogge</div>)");
 	//doc->Root.ParseAppend(R"(The quick <span style='color: #a00; background: #aaa; cursor: hand'>brown fox jumps</span> over)");
-	doc->Root.ParseAppend(R"(Once upon a time, The quick <span class='red'><span class='blue'>brown fox jumps</span></span> over)");
+	//doc->Root.ParseAppend(R"(Once upon a time, The quick <span class='red'><span class='blue'>brown fox jumps</span></span> over)");
+	//doc->Root.ParseAppend(R"(The <span class='red'>brown</span>)");
+	doc->Root.ParseAppend(R"(The <span class='red'><span class='blue'>brown</span></span>)");
 	//doc->Root.ParseAppend(R"(<div style='cursor: hand'>blah!</div>)");
 	//doc->Root.ParseAppend(R"(The <span style='color: #a00; background: #fff'>brown</span>)");
 	//doc->Root.ParseAppend( R"(The quick)");

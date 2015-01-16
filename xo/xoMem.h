@@ -462,3 +462,95 @@ private:
 		}
 	}
 };
+
+/*
+	A simple fixed-size heap.
+
+	* The total number of allocations is fixed
+	* The size of each allocation is fixed (and must be a power of 2)
+
+	This is intended to be used in scenarios where you need a very fast heap, but for objects
+	with a fairly predictable size. One advantage when using this for vector storage is that
+	you can be guaranteed that the vector will grow at zero cost up to the point where it
+	hits the heap allocation size.
+
+	You use it like so:
+	
+		xoFixedSizeHeap fheap;
+		fheap.Initialize(10, 64);
+		void* x = fheap.Alloc(30);
+		void* y = fheap.Alloc(70);
+		x = fheap.Realloc(x, 60);
+		fheap.Free(x);
+		fheap.Free(y);
+
+	Basically, treat it like a normal heap. If an allocation cannot be serviced internally, then
+	it will simply default to malloc. Any allocation that is smaller than the fixed allocation size
+	will be serviced internally. You are simply wasting bytes in that case.
+
+	Any malloc() failure will panic.
+
+*/
+class XOAPI xoFixedSizeHeap
+{
+public:
+	xoFixedSizeHeap();
+	~xoFixedSizeHeap();
+
+	void	Initialize(uint32 maxAllocations, uint32 allocationSize);
+	void*	Alloc(size_t bytes);
+	void*	Realloc(void* buf, size_t bytes);
+	void	Free(void* buf);
+
+protected:
+	void*			Heap = nullptr;
+	uint32*			Used = nullptr;	// Bitmap indicating whether a slot is used
+	uint32			MaxAllocations = 0;
+	uint32			AllocationShift = 0;
+	podvec<uint32>	FreeList;
+
+	uint32			SlotFromPtr(void* p) const;
+	uint32			TotalHeapSize() const		{ return MaxAllocations << AllocationShift; }
+	uint32			AllocationSize() const		{ return 1 << AllocationShift; }
+};
+
+// Vector that uses xoFixedSizeHeap
+// This was built for xoLayout3. It doesn't do proper object initialization, but that would be easy to add.
+template<typename T>
+class xoFixedVector
+{
+public:
+	xoFixedVector(xoFixedSizeHeap& heap) : Heap(&heap)
+	{
+	}
+
+	~xoFixedVector()
+	{
+		Heap->Free(Items);
+	}
+
+	intp Size() const { return Count; }
+
+	void Push(const T& t)
+	{
+		if (Count == Capacity)
+		{
+			// Start buffer size at 1, because we happen to know that small reallocs are free
+			// (ie until we hit the allocation unit size of xoFixedSizeHeap)
+			Capacity = xoMax(1u, Capacity * 2);
+			Items = (T*) Heap->Realloc(Items, Capacity * sizeof(T));
+		}
+		Items[Count++] = t;
+	}
+
+	void Pop() { Count--; }
+	
+	const T& operator[](intp i) const	{ return Items[i]; }
+	T& operator[](intp i)				{ return Items[i]; }
+
+protected:
+	xoFixedSizeHeap*	Heap;
+	uint32				Capacity = 0;
+	uint32				Count = 0;
+	T*					Items = nullptr;
+};

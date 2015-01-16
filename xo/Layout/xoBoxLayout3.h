@@ -71,9 +71,12 @@ public:
 	FlowResult			AddWord(const WordInput& in, xoBox& marginBox);
 	void				AddSpace(xoPos size);
 	void				AddLinebreak();
+	void				SetBaseline(xoPos baseline);	// Set the baseline of the current line box, but only if it's null
+	xoPos				GetBaseline();					// Retrieve the baseline of the current line box
+	xoPos				GetFirstBaseline();				// Retrieve the baseline of the first line box. This is the outer baseline of a node.
 
-	void				Restart();					// The layout engine is about to restart layout, after receiving FlowRestart
-	bool				WouldFlow(xoPos size);		// Returns true if adding a box of this size would cause us to flow onto a new line
+	void				Restart();						// The layout engine is about to restart layout, after receiving FlowRestart
+	bool				WouldFlow(xoPos size);			// Returns true if adding a box of this size would cause us to flow onto a new line
 
 protected:
 	// Every time we start a new line, another one of these is created
@@ -82,7 +85,8 @@ protected:
 		xoPos		InnerBaseline;
 		int			InnerBaselineDefinedBy;
 		int			LastChild;
-		static LineBox Make(xoPos innerBaseline, int innerBaselineDefinedBy, int lastChild) { return {innerBaseline, innerBaselineDefinedBy, lastChild}; }
+		static LineBox Make(xoPos innerBaseline, int innerBaselineDefinedBy, int lastChild) { return{ innerBaseline, innerBaselineDefinedBy, lastChild }; }
+		static LineBox MakeFresh()															{ return{ xoPosNULL, 0, 0}; }
 	};
 
 	struct FlowState
