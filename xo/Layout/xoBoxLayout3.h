@@ -57,6 +57,16 @@ public:
 		xoPos			Width;
 		xoPos			Height;
 	};
+	// Every time we start a new line, another one of these is created
+	struct LineBox
+	{
+		xoPos		InnerBaseline;
+		int			InnerBaselineDefinedBy;
+		int			LastChild;					// This is used to keep track of which line each child is on.
+		static LineBox Make(xoPos innerBaseline, int innerBaselineDefinedBy, int lastChild) { return{ innerBaseline, innerBaselineDefinedBy, lastChild }; }
+		static LineBox MakeFresh()															{ return{ xoPosNULL, 0, INT32MAX }; }
+	};
+
 	xoPool*	Pool = nullptr;
 
 	xoBoxLayout3();
@@ -71,24 +81,21 @@ public:
 	FlowResult			AddWord(const WordInput& in, xoBox& marginBox);
 	void				AddSpace(xoPos size);
 	void				AddLinebreak();
-	void				SetBaseline(xoPos baseline);	// Set the baseline of the current line box, but only if it's null
-	xoPos				GetBaseline();					// Retrieve the baseline of the current line box
-	xoPos				GetFirstBaseline();				// Retrieve the baseline of the first line box. This is the outer baseline of a node.
+	void				SetBaseline(xoPos baseline, int child);	// Set the baseline of the current line box, but only if it's null
+	xoPos				GetBaseline();							// Retrieve the baseline of the current line box
+	xoPos				GetFirstBaseline();						// Retrieve the baseline of the first line box. This is the outer baseline of a node.
+	
+	// Retrieve the linebox 'line_index', from the node that has most recently been finished with EndNode
+	// It may seem strange that we can retrieve linebox data from a node that has already ended,
+	// because surely we have popped that data structure off it's stack? Yes, we have, but we
+	// operate our stack in such a way that we don't wipe the data, we simply decrement a counter.
+	// Provided a new node hasn't been started yet, that old data is still there, 100% intact.
+	LineBox				GetLineFromPreviousNode(int line_index);
 
-	void				Restart();						// The layout engine is about to restart layout, after receiving FlowRestart
-	bool				WouldFlow(xoPos size);			// Returns true if adding a box of this size would cause us to flow onto a new line
+	void				Restart();								// The layout engine is about to restart layout, after receiving FlowRestart
+	bool				WouldFlow(xoPos size);					// Returns true if adding a box of this size would cause us to flow onto a new line
 
 protected:
-	// Every time we start a new line, another one of these is created
-	struct LineBox
-	{
-		xoPos		InnerBaseline;
-		int			InnerBaselineDefinedBy;
-		int			LastChild;
-		static LineBox Make(xoPos innerBaseline, int innerBaselineDefinedBy, int lastChild) { return{ innerBaseline, innerBaselineDefinedBy, lastChild }; }
-		static LineBox MakeFresh()															{ return{ xoPosNULL, 0, 0}; }
-	};
-
 	struct FlowState
 	{
 		bool				FlowOnZeroMinor;	// If true, allow flowing to next line even when PosMinor = 0. This exists for injected flow.

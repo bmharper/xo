@@ -65,9 +65,20 @@
 			<Item Name="HighwaterMark">HighwaterMark</Item> 
 			<ArrayItems> 
 				<Size>Count</Size> 
-				<ValuePointer>(T*)Items</ValuePointer> 
+				<ValuePointer>Items</ValuePointer> 
 			</ArrayItems> 
 		</Expand>         
+	</Type>
+	<Type Name="xoFixedVector&lt;*&gt;">
+		<DisplayString>{Count}/{Capacity}</DisplayString>
+		<Expand>
+			<Item Name="Count">Count</Item>
+			<Item Name="Capacity">Capacity</Item>
+			<ArrayItems>
+				<Size>Count</Size>
+				<ValuePointer>Items</ValuePointer>
+			</ArrayItems>
+		</Expand>
 	</Type>
 	<Type Name="xoRingBuf&lt;*&gt;">
 		<DisplayString>{Tail} >> {Head}</DisplayString>

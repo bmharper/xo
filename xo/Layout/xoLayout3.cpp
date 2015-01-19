@@ -132,6 +132,8 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 	if (childIn.RestartPoints->size() != 0)
 		istart = childIn.RestartPoints->rpop();
 
+	// Remember that childOuts can be larger than node->ChildCount(), due to restarts.
+	// childOuts contains a unique entry for every generated render-node.
 	xoFixedVector<LayoutOutput3> childOuts(FHeap);
 
 	for (intp i = istart; i < node->ChildCount(); i++)
@@ -147,12 +149,15 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 			RunText3(static_cast<const xoDomText*>(c), childIn, childOut);
 		}
 
-		// Child is breaking out. Continue to break out until we hit a NewFlowContext
+		Boxer.SetBaseline(childOut.Baseline, (int) childOuts.Size());
+		childOuts.Push(childOut);
+
 		if (childIn.RestartPoints->size() != 0)
 		{
+			// Child is breaking out. Continue to break out until we hit a NewFlowContext
 			if (boxIn.NewFlowContext)
 			{
-				// We are the the final stop on a restart. So restart at our current child.
+				// We are the final stop on a restart. So restart at our current child.
 				i--;
 				Boxer.Restart();
 				// If all children are going to restart at zero, then delete the rnode that we already
@@ -169,18 +174,7 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 				break;
 			}
 		}
-		else
-		{
-			if (childOut.Baseline != xoPosNULL)
-				Boxer.SetBaseline(childOut.Baseline);
-			childOuts.Push(childOut);
-		}
 	}
-
-	// We're gonna have to suck out baselines before calling Boxer.EndNode.
-	xoPos myBaseline = xoPosNULL;
-	if (Boxer.GetFirstBaseline() != xoPosNULL)
-		myBaseline = Boxer.GetFirstBaseline();
 
 	// I don't know yet how to think about having a restart initiated here. So far
 	// I have only thought about the case where a restart is initiated from a word
@@ -209,10 +203,18 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 	if (childIn.ParentHeight == xoPosNULL)
 		childIn.ParentHeight = rnode->Pos.Height();
 
+	// This tracks the line that we're on. The boxer keeps track of the last entity that got placed
+	// on every line, and we use that information to figure out which line our child is on.
+	int linebox_index = 0;
+	auto linebox = Boxer.GetLineFromPreviousNode(linebox_index);
+	xoPos myBaseline = linebox.InnerBaseline;
 	for (intp i = 0; i < childOuts.Size(); i++)
 	{
+		while (i > linebox.LastChild)
+			linebox = Boxer.GetLineFromPreviousNode(++linebox_index);
+
 		if (childOuts[i].RNode != nullptr)
-			PositionChildFromBindings(childIn, myBaseline, childOuts[i]);
+			PositionChildFromBindings(childIn, linebox.InnerBaseline, childOuts[i]);
 	}
 
 	if (myBaseline != xoPosNULL)

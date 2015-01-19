@@ -142,7 +142,7 @@ void xoBoxLayout3::AddLinebreak()
 	NewLine(FlowStates.Back());
 }
 
-void xoBoxLayout3::SetBaseline(xoPos baseline)
+void xoBoxLayout3::SetBaseline(xoPos baseline, int child)
 {
 	auto& line = FlowStates.Back().Lines.back();
 	if (line.InnerBaseline == xoPosNULL)
@@ -151,6 +151,7 @@ void xoBoxLayout3::SetBaseline(xoPos baseline)
 		// We probably also need to record which element set the inner baseline, so that if that
 		// element is moved by vertical alignment, then we can move the inner baseline too.
 	}
+	line.LastChild = child;
 }
 
 xoPos xoBoxLayout3::GetBaseline()
@@ -164,6 +165,11 @@ xoPos xoBoxLayout3::GetFirstBaseline()
 	if (FlowStates.Back().Lines.size() != 0)
 		return FlowStates.Back().Lines[0].InnerBaseline;
 	return xoPosNULL;
+}
+
+xoBoxLayout3::LineBox xoBoxLayout3::GetLineFromPreviousNode(int line_index)
+{
+	return FlowStates[FlowStates.Count].Lines[line_index];
 }
 
 void xoBoxLayout3::Restart()
