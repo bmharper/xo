@@ -45,7 +45,7 @@ void xoImageTester::DoDirectory(const char* dir)
 			{
 				intp slash = fullName.RIndex("-");
 				XOASSERT(slash != -1);
-				imageSize = atoi(fullName.SubStr(slash + 1, fullName.Length() - 7).Z); // 7 = len(px.xoml)
+				imageSize = atoi(fullName.SubStr(slash + 1, fullName.Length() - 7).Z); // 7 = length of "px.xoml"
 			}
 			files += Item{ fullName, imageSize };
 		}
@@ -102,6 +102,10 @@ void xoImageTester::SetSize(u32 width, u32 height)
 {
 	if (width == ImageWidth && height == ImageHeight)
 		return;
+
+	// Note that the following technique does not work when the OS enforces a minimum window size.
+	// Windows does this if you use a regular window. But we don't use a regular window - we use
+	// a window without any border or any caption.
 
 	// This sets the non-client rectangle, but we want our client size to be width,height
 	int sampleSize = 200;

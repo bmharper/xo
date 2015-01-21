@@ -76,8 +76,12 @@ void xoRenderStack::Initialize(const xoDoc* doc, xoPool* pool)
 	Defaults[xoCatBorderRadius].SetSize(xoCatBorderRadius, xoSize::Zero());
 	Defaults[xoCatPosition].SetPosition(xoPositionStatic);
 	Defaults[xoCatFlowContext].SetFlowContext(xoFlowContextNew);
-	Defaults[xoCatBoxSizing].SetBoxSizing(xoBoxSizeBorder);	// HTML default is Content
-	//XY(END)
+	
+	// HTML default is Content. At first I was thinking that our default should be
+	// BorderBox, but now I'm not so sure anymore.
+	//Defaults[xoCatBoxSizing].SetBoxSizing(xoBoxSizeBorder);	
+	Defaults[xoCatBoxSizing].SetBoxSizing(xoBoxSizeContent);
+
 }
 
 void xoRenderStack::Reset()

@@ -192,7 +192,7 @@ public:
 	void	SetInt(int32 left, int32 top, int32 right, int32 bottom);
 	void	ExpandToFit(const xoBox& expando);
 	void	ClampTo(const xoBox& clamp);
-	xoBox	ShrunkBy(const xoBox& margins);
+	xoBox	ShrunkBy(const xoBox& marginBox);
 	xoBox	PiecewiseSum(const xoBox& box);
 	xoBoxF	ToRealBox() const;
 

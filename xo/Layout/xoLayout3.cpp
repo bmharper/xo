@@ -96,6 +96,7 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 
 	xoBox margin = ComputeBox(in.ParentWidth, in.ParentHeight, xoCatMargin_Left);
 	xoBox padding = ComputeBox(in.ParentWidth, in.ParentHeight, xoCatPadding_Left);
+	xoBox border = ComputeBox(in.ParentWidth, in.ParentHeight, xoCatBorder_Left);
 	xoPos contentWidth = ComputeDimension(in.ParentWidth, xoCatWidth);
 	xoPos contentHeight = ComputeDimension(in.ParentHeight, xoCatHeight);
 
@@ -112,7 +113,7 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 	boxIn.Tag = node->GetTag();
 	boxIn.ContentWidth = contentWidth;
 	boxIn.ContentHeight = contentHeight;
-	boxIn.MarginAndPadding = margin.PiecewiseSum(padding);
+	boxIn.MarginBorderPadding = margin.PiecewiseSum(border).PiecewiseSum(padding);
 	boxIn.NewFlowContext = Stack.Get(xoCatFlowContext).GetFlowContext() == xoFlowContextNew || node->GetTag() == xoTagBody; // Body MUST be a new flow context
 
 	podvec<int32> myRestartPoints;
@@ -190,10 +191,10 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 	// Boxer doesn't know what our element's padding or margins are. The only thing it
 	// emits is the margin-box for our element. We need to subtract the margin and
 	// the padding in order to compute the content-box, which is what xoRenderDomNode needs.
-	rnode->Pos = marginBox.ShrunkBy(margin).ShrunkBy(padding);
+	rnode->Pos = marginBox.ShrunkBy(boxIn.MarginBorderPadding);
 	rnode->SetStyle(Stack);
 	rnode->Style.BorderRadius = xoPosToReal(ComputeDimension(in.ParentWidth, xoCatBorderRadius));
-	rnode->Style.BorderSize = ComputeBox(in.ParentWidth, in.ParentHeight, xoCatBorder_Left);
+	rnode->Style.BorderSize = border;
 	rnode->Style.Padding = padding;
 
 	// Apply alignment bindings

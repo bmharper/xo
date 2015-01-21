@@ -65,13 +65,13 @@ void xoBox::ClampTo(const xoBox& clamp)
 	Bottom = xoMin(Bottom, clamp.Bottom);
 }
 
-xoBox xoBox::ShrunkBy(const xoBox& margins)
+xoBox xoBox::ShrunkBy(const xoBox& marginBox)
 {
 	xoBox c = *this;
-	c.Left += margins.Left;
-	c.Right -= margins.Right;
-	c.Top += margins.Top;
-	c.Bottom -= margins.Bottom;
+	c.Left += marginBox.Left;
+	c.Right -= marginBox.Right;
+	c.Top += marginBox.Top;
+	c.Bottom -= marginBox.Bottom;
 	return c;
 }
 

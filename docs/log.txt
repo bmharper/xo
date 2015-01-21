@@ -351,3 +351,14 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	one to have to not use baseline:baseline on intermediate nodes. I first
 	noticed this was broken when nesting two <span> nodes, which both have
 	baseline:baseline.
+
+2015-01-21	Render node reference frame (2)
+	In the log entry 2014-08-02, I said that I thought it was redundant storing
+	the following three items:
+	* ContentBox
+	* Padding (x4)
+	* Border Size (x4)
+	However, I don't know what I was thinking there, because now it seems to me
+	that you absolutely DO need to store all three of these things. And I like
+	that because storing the content box relative to your parent's context box
+	just makes perfect intuitive sense.

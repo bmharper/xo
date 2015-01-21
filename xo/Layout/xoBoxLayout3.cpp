@@ -65,7 +65,7 @@ void xoBoxLayout3::BeginNode(const NodeInput& in)
 	if (!in.NewFlowContext && in.ContentWidth == xoPosNULL && parentFlow.MaxMinor != xoPosNULL)
 	{
 		// We preload MaxMinor with the remaining space in our parent, minus our own margin and padding.
-		flow.MaxMinor = parentFlow.MaxMinor - parentFlow.PosMinor - (ns.Input.MarginAndPadding.Left + ns.Input.MarginAndPadding.Right);
+		flow.MaxMinor = parentFlow.MaxMinor - parentFlow.PosMinor - (ns.Input.MarginBorderPadding.Left + ns.Input.MarginBorderPadding.Right);
 
 		// We also correct the determination of whether we are at the start of a new line
 		if (parentFlow.PosMinor != 0 || parentFlow.FlowOnZeroMinor)
@@ -125,7 +125,7 @@ xoBoxLayout3::FlowResult xoBoxLayout3::AddWord(const WordInput& in, xoBox& margi
 	nin.ContentWidth = in.Width;
 	nin.ContentHeight = in.Height;
 	nin.InternalID = 0;
-	nin.MarginAndPadding = xoBox(0,0,0,0);
+	nin.MarginBorderPadding = xoBox(0, 0, 0, 0);
 	nin.NewFlowContext = true;
 	nin.Tag = xoTag_DummyWord;
 	BeginNode(nin);
@@ -192,8 +192,8 @@ bool xoBoxLayout3::MustFlow(const FlowState& flow, xoPos size)
 
 void xoBoxLayout3::Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox)
 {
-	xoPos marginBoxWidth = ns.Input.MarginAndPadding.Left + ns.Input.MarginAndPadding.Right + (ns.Input.ContentWidth != xoPosNULL ? ns.Input.ContentWidth : 0);
-	xoPos marginBoxHeight = ns.Input.MarginAndPadding.Top + ns.Input.MarginAndPadding.Bottom + (ns.Input.ContentHeight != xoPosNULL ? ns.Input.ContentHeight : 0);
+	xoPos marginBoxWidth = ns.Input.MarginBorderPadding.Left + ns.Input.MarginBorderPadding.Right + (ns.Input.ContentWidth != xoPosNULL ? ns.Input.ContentWidth : 0);
+	xoPos marginBoxHeight = ns.Input.MarginBorderPadding.Top + ns.Input.MarginBorderPadding.Bottom + (ns.Input.ContentHeight != xoPosNULL ? ns.Input.ContentHeight : 0);
 	if (!WaitingForRestart && MustFlow(flow, marginBoxWidth))
 		NewLine(flow);
 

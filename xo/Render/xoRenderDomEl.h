@@ -19,7 +19,7 @@ public:
 	xoRenderDomEl(xoInternalID id, xoTag tag);
 
 	xoInternalID					InternalID;			// Reference to our original xoDomEl. There can be many xoRenderDomEl per xoDomEl (text is an example)
-	xoBox							Pos;				// For rectangles, this is the ContentBox. See log entry from 2014-08-02
+	xoBox							Pos;				// This is the ContentBox, relative to the parent xoRenderDomEl's context box. See log entry from 2014-08-02
 	xoTag							Tag;
 
 	bool IsNode() const		{ return Tag != xoTagText; }

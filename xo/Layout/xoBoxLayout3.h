@@ -47,7 +47,7 @@ public:
 	{
 		xoInternalID	InternalID;
 		xoTag			Tag;
-		xoBox			MarginAndPadding;
+		xoBox			MarginBorderPadding;	// Sum of Margin, Border, and Padding boxes
 		xoPos			ContentWidth;
 		xoPos			ContentHeight;
 		bool			NewFlowContext;

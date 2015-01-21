@@ -454,7 +454,7 @@ class XOAPI xoStyleRender
 {
 public:
 	xoBox16 BorderSize;
-	xoBox16 Padding;			// This is probably not necessary. See log entry from 2014-08-02
+	xoBox16 Padding;
 	xoColor BackgroundColor;
 	xoColor BorderColor;
 	int		BackgroundImageID;
