@@ -1,5 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+	<!-- One UIVisualizer per file -->
+	<UIVisualizer ServiceId="{A452AFEA-3DF6-46BB-9177-C0B08F318025}" Id="1" MenuName="Add to Image Watch"/>
+
+	<Type Name="xoImage">
+		<UIVisualizer ServiceId="{A452AFEA-3DF6-46BB-9177-C0B08F318025}" Id="1" />
+	</Type>
+
+	<Type Name="xoImage">
+		<Expand>
+			<Synthetic Name="[type]">
+				<DisplayString>UINT8</DisplayString>
+			</Synthetic>
+			<Synthetic Name="[channels]" Condition='TexFormat == xoTexFormatRGBA8'>
+				<DisplayString>RGBA</DisplayString>
+			</Synthetic>
+			<Synthetic Name="[channels]" Condition='TexFormat == xoTexFormatGrey8'>
+				<DisplayString>1</DisplayString>
+			</Synthetic>
+			<Item Name="[width]">TexWidth</Item>
+			<Item Name="[height]">TexHeight</Item>
+			<Item Name="[data]">TexData</Item>
+			<Item Name="[stride]">TexStride</Item>
+		</Expand>
+	</Type>
+
+	<Type Name="xoTexture">
+		<UIVisualizer ServiceId="{A452AFEA-3DF6-46BB-9177-C0B08F318025}" Id="1" />
+	</Type>
+
+	<Type Name="xoTexture">
+		<Expand>
+			<Synthetic Name="[type]">
+				<DisplayString>UINT8</DisplayString>
+			</Synthetic>
+			<Synthetic Name="[channels]" Condition='TexFormat == xoTexFormatRGBA8'>
+				<DisplayString>RGBA</DisplayString>
+			</Synthetic>
+			<Synthetic Name="[channels]" Condition='TexFormat == xoTexFormatGrey8'>
+				<DisplayString>1</DisplayString>
+			</Synthetic>
+			<Item Name="[width]">TexWidth</Item>
+			<Item Name="[height]">TexHeight</Item>
+			<Item Name="[data]">TexData</Item>
+			<Item Name="[stride]">TexStride</Item>
+		</Expand>
+	</Type>
+
 	<Type Name="xoBox">
 		<DisplayString>{Left},{Top},{Right},{Bottom}</DisplayString>
 		<Expand> 
@@ -91,4 +139,5 @@
 			</ArrayItems>
 		</Expand>
 	</Type>
+	
 </AutoVisualizer>

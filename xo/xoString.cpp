@@ -76,6 +76,21 @@ intp xoStringRaw::RIndex(const char* find) const
 	return last;
 }
 
+bool xoStringRaw::EndsWith(const char* suffix) const
+{
+	intp suffix_len = strlen(suffix);
+	intp j = Length() - suffix_len;
+	if (j < 0)
+		return false;
+	for (intp i = 0; i < suffix_len; i++, j++)
+	{
+		if (Z[j] != suffix[i])
+			return false;
+	}
+	return true;
+
+}
+
 bool xoStringRaw::operator==(const char* b) const
 {
 	return *this == Temp(const_cast<char*>(b));
@@ -145,6 +160,12 @@ xoString::xoString(const char* z, intp maxLength)
 xoString::~xoString()
 {
 	Free();
+}
+
+void xoString::Resize(intp newLength)
+{
+	Z = (char*) xoReallocOrDie(Z, newLength + 1);
+	Z[newLength] = 0;
 }
 
 void xoString::Set(const char* z, intp maxLength)

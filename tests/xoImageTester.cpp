@@ -13,7 +13,7 @@
 
 xoImageTester::xoImageTester()
 {
-	Wnd = xoSysWnd::CreateWithDoc();
+	Wnd = xoSysWnd::CreateWithDoc(0);
 	xoProcessDocQueue();
 	SetSize(256, 256);
 	Wnd->Show();
@@ -25,22 +25,97 @@ xoImageTester::~xoImageTester()
 	xoProcessDocQueue();
 }
 
+void xoImageTester::DoDirectory(const char* dir)
+{
+	struct Item
+	{
+		xoString	Path;
+		int			ImageSize;
+	};
+	podvec<Item> files;
+	auto found = [&files](const AbcFilesystemItem& item)
+	{
+		if (xoTempString(item.Name).EndsWith(".xoml"))
+		{
+			int imageSize = 256;
+			xoString root = item.Root;
+			xoString fullName = xoString(item.Root) + ABC_DIR_SEP_STR + item.Name;
+			// interpret example-32px.xoml to mean the output image is 32 x 32 pixels
+			if (fullName.EndsWith("px.xoml"))
+			{
+				intp slash = fullName.RIndex("-");
+				XOASSERT(slash != -1);
+				imageSize = atoi(fullName.SubStr(slash + 1, fullName.Length() - 7).Z); // 7 = len(px.xoml)
+			}
+			files += Item{ fullName, imageSize };
+		}
+		return true;
+	};
+	AbcFilesystemFindFiles(PathRelativeToTestData(dir).Z, found);
+
+	xoImageTester tester;
+
+	for (intp i = 0; i < files.size(); i++)
+	{
+		Item& item = files[i];
+		printf("Test %3d %30s\n", (int) i, item.Path.Z);
+		auto setup = [&item](xoDomNode& root)
+		{
+			xoString err = root.Parse(LoadFileAsString(item.Path.Z).Z);
+			XOASSERT(err == "");
+		};
+		tester.SetSize(item.ImageSize, item.ImageSize);
+		tester.TruthImage(item.Path.Z, setup);
+	}
+}
+
 void xoImageTester::DoTruthImage(const char* filename, std::function<void(xoDomNode& root)> setup)
 {
 	xoImageTester t;
 	t.TruthImage(filename, setup);
 }
 
+xoString xoImageTester::PathRelativeToTestData(const char* path, const char* extension)
+{
+	// binPath: C:\dev\individual\xo\t2-output\win64-msvc2013-debug-default\Test.exe
+	// result:  C:\dev\individual\xo\testdata\<path>
+	char binPath[2048];
+	AbcProcessGetPath(binPath, arraysize(binPath));
+	xoString fullPath = binPath;
+	auto parts = fullPath.Split(ABC_DIR_SEP_STR);
+	parts.pop();
+	parts.pop();
+	parts.pop();
+	fullPath = xoString::Join(parts, ABC_DIR_SEP_STR);
+	fullPath += xoString(ABC_DIR_SEP_STR) + "testdata";
+	if (path[0] != 0 || (extension && extension[0] != 0))
+	{
+		fullPath += ABC_DIR_SEP_STR;
+		fullPath += path;
+	}
+	if (extension != nullptr)
+		fullPath += extension;
+	return fullPath;
+}
+
 void xoImageTester::SetSize(u32 width, u32 height)
 {
+	if (width == ImageWidth && height == ImageHeight)
+		return;
+
 	// This sets the non-client rectangle, but we want our client size to be width,height
-	Wnd->SetPosition(xoBox(0, 0, width, height), xoSysWnd::SetPosition_Size);
+	int sampleSize = 200;
+	Wnd->SetPosition(xoBox(0, 0, sampleSize, sampleSize), xoSysWnd::SetPosition_Size);
 	xoBox client = Wnd->GetRelativeClientRect();
 	// Compensate by making non-client larger
-	u32 nwidth = width + (width - client.Width());
-	u32 nheight = height + (height - client.Height());
-	if (nwidth != width || nheight != height)
-		Wnd->SetPosition(xoBox(0, 0, nwidth, nheight), xoSysWnd::SetPosition_Size);
+	u32 necessaryWidth = width + (sampleSize - client.Width());
+	u32 necessaryHeight = height + (sampleSize - client.Height());
+	Wnd->SetPosition(xoBox(0, 0, necessaryWidth, necessaryHeight), xoSysWnd::SetPosition_Size);
+
+	client = Wnd->GetRelativeClientRect();
+
+	ImageWidth = width;
+	ImageHeight = height;
 }
 
 void xoImageTester::TruthImage(const char* filename, std::function<void(xoDomNode& root)> setup)
@@ -99,8 +174,15 @@ void xoImageTester::CreateOrVerifyTruthImage(bool create, const char* filename, 
 	Wnd->DocGroup->Doc->Reset();
 	setup(Wnd->DocGroup->Doc->Root);
 
-	xoString truthFile = FullPath(filename);
-	xoString newSample = FullPath((xoString(filename) + "-observed-result").Z);
+	// if filename is not rooted, then assume it's relative to 'testdata'
+	xoString fixedRoot = filename;
+	if (filename[0] != '/' && filename[0] != '\\' && filename[1] != ':')
+		fixedRoot = PathRelativeToTestData(filename);
+
+	xoString truthFile = fixedRoot;
+	xoString newSample = fixedRoot + "-observed-result";
+	truthFile += ".png";
+	newSample += ".png";
 
 	xoImage img;
 	xoRenderResult res = Wnd->DocGroup->RenderToImage(img);
@@ -120,23 +202,4 @@ void xoImageTester::CreateOrVerifyTruthImage(bool create, const char* filename, 
 		TTASSERT(same);
 		stbi_image_free(data);
 	}
-}
-
-xoString xoImageTester::FullPath(const char* path)
-{
-	// binPath: C:\dev\individual\xo\t2-output\win64-msvc2013-debug-default\Test.exe
-	// result:  C:/dev/individual/xo/testdata/<path>
-	char binPath[2048];
-	AbcProcessGetPath(binPath, arraysize(binPath));
-	xoString fullPath = binPath;
-	fullPath.ReplaceAll("\\", "/");
-	auto parts = fullPath.Split("/");
-	parts.pop();
-	parts.pop();
-	parts.pop();
-	fullPath = xoString::Join(parts, "/");
-	fullPath += "/testdata/";
-	fullPath += path;
-	fullPath += ".png";
-	return fullPath;
 }

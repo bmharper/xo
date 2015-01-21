@@ -7,7 +7,9 @@ public:
 	xoImageTester();
 	~xoImageTester();
 
-	static void DoTruthImage(const char* filename, std::function<void(xoDomNode& root)> setup);
+	static void		DoDirectory(const char* dir);
+	static void		DoTruthImage(const char* filename, std::function<void(xoDomNode& root)> setup);
+	static xoString	PathRelativeToTestData(const char* path, const char* extension = nullptr);
 
 	void		SetSize(u32 width, u32 height);
 
@@ -23,7 +25,8 @@ public:
 
 protected:
 	xoSysWnd*	Wnd;
+	int			ImageWidth = 0;
+	int			ImageHeight = 0;
 
 	void		CreateOrVerifyTruthImage(bool create, const char* filename, std::function<void(xoDomNode& root)> setup);
-	xoString	FullPath(const char* path);
 };

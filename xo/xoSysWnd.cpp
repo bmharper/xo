@@ -98,13 +98,20 @@ xoSysWnd::~xoSysWnd()
 	DocGroup = NULL;
 }
 
-xoSysWnd* xoSysWnd::Create()
+xoSysWnd* xoSysWnd::Create(uint createFlags)
 {
 #if XO_PLATFORM_WIN_DESKTOP
 	bool ok = false;
 	xoSysWnd* w = new xoSysWnd();
 	XOTRACE("DocGroup = %p\n", w->DocGroup);
-	w->SysWnd = CreateWindow(WClass, _T("xo"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup);
+	uint ws = 0;
+	if (!!(createFlags & CreateMinimizeButton)) ws |= WS_CAPTION | WS_MINIMIZEBOX;
+	if (!!(createFlags & CreateMaximizeButton)) ws |= WS_CAPTION | WS_MAXIMIZEBOX;
+	if (!!(createFlags & CreateCloseButton)) ws |= WS_CAPTION | WS_SYSMENU;
+	if (!(createFlags & CreateBorder)) ws |= WS_POPUP;
+	uint wsx = 0;
+	//w->SysWnd = CreateWindow(WClass, _T("xo"), ws, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup);
+	w->SysWnd = CreateWindowEx(wsx, WClass, _T("xo"), ws, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup);
 	if (w->SysWnd)
 	{
 		if (w->InitializeRenderer())
@@ -147,9 +154,9 @@ xoSysWnd* xoSysWnd::Create()
 #endif
 }
 
-xoSysWnd* xoSysWnd::CreateWithDoc()
+xoSysWnd* xoSysWnd::CreateWithDoc(uint createFlags)
 {
-	xoSysWnd* w = Create();
+	xoSysWnd* w = Create(createFlags);
 	if (!w)
 		return NULL;
 	w->Attach(new xoDoc(), true);

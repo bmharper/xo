@@ -18,8 +18,9 @@ public:
 	void	CloneFastInto(xoStringRaw& b, xoPool* pool) const;
 	void	Discard();
 	u32		GetHashCode() const;
-	intp	Index(const char* find) const;
-	intp	RIndex(const char* find) const;
+	intp	Index(const char* find) const;			// Find the first occurrence of 'find', or -1 if none
+	intp	RIndex(const char* find) const;			// Find the last occurrence of 'find', or -1 if none
+	bool	EndsWith(const char* suffix) const;		// Returns true if the string ends with 'suffix'
 
 	bool	operator==(const char* b) const;
 	bool	operator!=(const char* b) const			{ return !(*this == b); }
@@ -46,6 +47,7 @@ public:
 	~xoString();
 
 	void				Set(const char* z, intp maxLength = -1);	// checks maxLength against strlen(z) and clamps automatically
+	void				Resize(intp newLength);
 	void				ReplaceAll(const char* find, const char* replace);
 	podvec<xoString>	Split(const char* splitter) const;
 	xoString			SubStr(intp start, intp end) const;	// Returns [start .. end - 1]

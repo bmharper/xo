@@ -12,3 +12,8 @@ TESTFUNC(Layout_BodyMargin)
 		root.StyleParse("margin: 20px;");
 	});
 }
+
+TESTFUNC(Layout_All)
+{
+	xoImageTester::DoDirectory("");
+}

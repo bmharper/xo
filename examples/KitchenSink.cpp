@@ -313,14 +313,14 @@ void InitDOM(xoDoc* doc)
 	xoDomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
 
-	//DoBorder( doc );
+	DoBorder(doc);
 	//DoBaselineAlignment( doc );
 	//DoBaselineAlignment_rev2( doc );
 	//DoBaselineAlignment_Multiline( doc );
 	//DoTwoTextRects( doc );
 	//DoBlockMargins( doc );
 	//DoLongText( doc );
-	DoInlineFlow(doc);
+	//DoInlineFlow(doc);
 	//DoBackupSettings( doc );
 	//DoPadding( doc );
 	//DoTextQuality( doc );

@@ -13,6 +13,14 @@ public:
 		SetPosition_Move = 1,
 		SetPosition_Size = 2,
 	};
+	enum CreateFlags
+	{
+		CreateMinimizeButton = 1,
+		CreateMaximizeButton = 2,
+		CreateCloseButton = 4,
+		CreateBorder = 8,
+		CreateDefault = CreateMinimizeButton | CreateMaximizeButton | CreateCloseButton | CreateBorder,
+	};
 #if XO_PLATFORM_WIN_DESKTOP
 	HWND					SysWnd;
 	bool					QuitAppWhenWindowDestroyed;		// This is here for multi-window applications. Close the first window, and the app exits.
@@ -40,8 +48,8 @@ public:
 	xoSysWnd();
 	~xoSysWnd();
 
-	static xoSysWnd*	Create();
-	static xoSysWnd*	CreateWithDoc();
+	static xoSysWnd*	Create(uint createFlags = CreateDefault);
+	static xoSysWnd*	CreateWithDoc(uint createFlags = CreateDefault);
 	static void			PlatformInitialize();
 
 	void	Attach(xoDoc* doc, bool destroyDocWithProcessor);
