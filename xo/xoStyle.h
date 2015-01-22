@@ -116,6 +116,14 @@ enum xoFlowContext
 	xoFlowContextInject,	// This object does not flow; it's children are promoted into it's parent's flow context.
 };
 
+enum xoBumpStyle
+{
+	xoBumpRegular,			// Normal. Padding + Border + Margin affect surrounding objects
+	xoBumpHorzOnly,			// Special for spans, and other things in injected flow. Their padding + border + margin don't affect vertical flow.
+	xoBumpVertOnly,			// No intended use - just here for completeness
+	xoBumpNone,				// Neither horizontal nor vertical bumps have effect
+};
+
 // The following attributes are "bind sources". You bind a position of your own to a position on your parent node.
 // The "bind targets" that you can bind to on your parent node are the same properties that can be used as bind sources.
 // So if you bind left:right, then you are binding your left edge to your parent content box's right edge.
@@ -190,6 +198,7 @@ enum xoStyleCategories
 	xoCatFlowDirection_Horizontal,
 	xoCatFlowDirection_Vertical,
 	xoCatBoxSizing,
+	xoCatBump,
 	xoCatEND,
 };
 
@@ -258,6 +267,7 @@ public:
 	void SetVCenter(xoVerticalBindings bind)						{ SetU32(xoCatVCenter, bind); }
 	void SetBottom(xoVerticalBindings bind)							{ SetU32(xoCatBottom, bind); }
 	void SetBaseline(xoVerticalBindings bind)						{ SetU32(xoCatBaseline, bind); }
+	void SetBump(xoBumpStyle bump)									{ SetU32(xoCatBump, bump); }
 
 	// Generic Set() that is used by template code
 	void Set(xoStyleCategories cat, xoColor val)					{ SetColor(cat, val); }
@@ -274,6 +284,7 @@ public:
 	void Set(xoStyleCategories cat, xoHorizontalBindings val)		{ SetU32(cat, val); }
 	void Set(xoStyleCategories cat, xoVerticalBindings val)			{ SetU32(cat, val); }
 	void Set(xoStyleCategories cat, xoFontID val)					{ SetFont(val); }
+	void Set(xoStyleCategories cat, xoBumpStyle val)				{ SetU32(cat, val); }
 	void Set(xoStyleCategories cat, const char* val, xoDoc* doc)	{ SetString(cat, val, doc); }
 
 	void SetBool(xoStyleCategories cat, bool val)					{ SetU32(cat, val); }
@@ -298,6 +309,7 @@ public:
 	xoTextAlignVertical		GetTextAlignVertical() const			{ return (xoTextAlignVertical) ValU32; }
 	xoHorizontalBindings	GetHorizontalBinding() const			{ return (xoHorizontalBindings) ValU32; }
 	xoVerticalBindings		GetVerticalBinding() const				{ return (xoVerticalBindings) ValU32; }
+	xoBumpStyle				GetBump() const							{ return (xoBumpStyle) ValU32; }
 
 	const char*				GetBackgroundImage(xoStringTable* strings) const;
 	xoFontID				GetFont() const;
@@ -501,5 +513,6 @@ XOAPI bool xoParseBoxSize(const char* s, intp len, xoBoxSizeType& t);
 XOAPI bool xoParseTextAlignVertical(const char* s, intp len, xoTextAlignVertical& t);
 XOAPI bool xoParseHorizontalBinding(const char* s, intp len, xoHorizontalBindings& t);
 XOAPI bool xoParseVerticalBinding(const char* s, intp len, xoVerticalBindings& t);
+XOAPI bool xoParseBump(const char* s, intp len, xoBumpStyle& t);
 XOAPI bool xoParseBorder(const char* s, intp len, xoStyle& style);
 

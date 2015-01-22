@@ -87,7 +87,7 @@ xoBoxLayout3::FlowResult xoBoxLayout3::EndNode(xoBox& marginBox)
 	if (ns->Input.ContentHeight == xoPosNULL)
 		ns->Input.ContentHeight = flow->HighMajor;
 
-	// We are done with the flow state of the node that's ending.
+	// We are done with the flow state of the node that's ending (ie the flow of objects inside this node).
 	FlowStates.Pop();
 	flow = nullptr;
 
@@ -192,18 +192,46 @@ bool xoBoxLayout3::MustFlow(const FlowState& flow, xoPos size)
 
 void xoBoxLayout3::Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox)
 {
+	bool doVertBump = ns.Input.Bump == xoBumpRegular || ns.Input.Bump == xoBumpVertOnly;
+	bool doHorzBump = ns.Input.Bump == xoBumpRegular || ns.Input.Bump == xoBumpHorzOnly;
+
 	xoPos marginBoxWidth = ns.Input.MarginBorderPadding.Left + ns.Input.MarginBorderPadding.Right + (ns.Input.ContentWidth != xoPosNULL ? ns.Input.ContentWidth : 0);
 	xoPos marginBoxHeight = ns.Input.MarginBorderPadding.Top + ns.Input.MarginBorderPadding.Bottom + (ns.Input.ContentHeight != xoPosNULL ? ns.Input.ContentHeight : 0);
-	if (!WaitingForRestart && MustFlow(flow, marginBoxWidth))
+	
+	xoPos widthForFlow = marginBoxWidth;
+	if (!doHorzBump)
+		widthForFlow = marginBoxWidth - ns.Input.MarginBorderPadding.Left + ns.Input.MarginBorderPadding.Right;
+
+	if (!WaitingForRestart && MustFlow(flow, widthForFlow))
 		NewLine(flow);
 
 	marginBox.Left = flow.PosMinor;
 	marginBox.Top = flow.PosMajor;
 	marginBox.Right = flow.PosMinor + marginBoxWidth;
 	marginBox.Bottom = flow.PosMajor + marginBoxHeight;
+	
+	xoPos right = marginBox.Right;
+	if (!doHorzBump)
+	{
+		// move the box to the left
+		marginBox.Left -= ns.Input.MarginBorderPadding.Left;
+		marginBox.Right -= ns.Input.MarginBorderPadding.Left;
+		// recreate our right-most point, so that it excludes the right 'bump' region
+		right = marginBox.Right - ns.Input.MarginBorderPadding.Right;
+	}
 
-	flow.PosMinor = marginBox.Right;
-	flow.HighMajor = xoMax(flow.HighMajor, marginBox.Bottom);
+	xoPos bottom = marginBox.Bottom;
+	if (!doVertBump)
+	{
+		// move the box up
+		marginBox.Top -= ns.Input.MarginBorderPadding.Top;
+		marginBox.Bottom -= ns.Input.MarginBorderPadding.Top;
+		// recreate our lower-most point, so that it excludes the lower 'bump' region
+		bottom = marginBox.Bottom - ns.Input.MarginBorderPadding.Bottom;
+	}
+
+	flow.PosMinor = right;
+	flow.HighMajor = xoMax(flow.HighMajor, bottom);
 }
 
 void xoBoxLayout3::NewLine(FlowState& flow)

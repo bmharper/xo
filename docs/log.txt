@@ -362,3 +362,33 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	that you absolutely DO need to store all three of these things. And I like
 	that because storing the content box relative to your parent's context box
 	just makes perfect intuitive sense.
+
+2015-01-21	What to do next?
+	1. Fix up baselines when wrapping onto next line.
+	2. Add line boxes as render nodes, and then bump down line boxes if they
+	have content that has extended upward beyond their top. This is for
+	if you start a line with a small font, and end it with a big font.
+	Instead of having the big font pop out the top of the line, you want
+	the whole line box to be brought down. This must be a configurable
+	property of the container that holds the line boxes.
+	3. Add a new property that takes effect on injection-flow elements,
+	allowing one to specify whether their padding, border, and margin
+	boxes affect layout. In HTML, adding padding and a border around <span>
+	elements doesn't change layout at all. It literally just places a box
+	around it's contents, as though it's some kind of post-process step.
+	This is a nice thing to use when doing the classic <code> style of
+	highlighting pieces of text. Hmm well.. actually in HTML <span> elements
+	do affect horizontal layout (ie they increase spacing around words),
+	but they don't affect vertical layout. I guess we'll want to be able
+	to control which of the two dimensions are affected. See the
+	line-heights.html example.
+
+2015-01-22	Bump
+	I implemented the feature (3) from the previous post, and called it
+	"bump" for desperate lack of a better word. The concept is that you're
+	either allowing your padding + border + margin to affect layout, or
+	you're not. And you can make that choice in both horizontal and vertical
+	dimensions. The default is to have both dimensions affected, but
+	for <span> elements, they only affect horizontal bump, which gets us
+	the same behaviour as an HTML inline element.
+

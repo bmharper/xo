@@ -108,7 +108,8 @@ xoSysWnd* xoSysWnd::Create(uint createFlags)
 	if (!!(createFlags & CreateMinimizeButton)) ws |= WS_CAPTION | WS_MINIMIZEBOX;
 	if (!!(createFlags & CreateMaximizeButton)) ws |= WS_CAPTION | WS_MAXIMIZEBOX;
 	if (!!(createFlags & CreateCloseButton)) ws |= WS_CAPTION | WS_SYSMENU;
-	if (!(createFlags & CreateBorder)) ws |= WS_POPUP;
+	if (!!(createFlags & CreateBorder)) ws |= WS_THICKFRAME; 
+	else ws |= WS_POPUP;
 	uint wsx = 0;
 	//w->SysWnd = CreateWindow(WClass, _T("xo"), ws, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup);
 	w->SysWnd = CreateWindowEx(wsx, WClass, _T("xo"), ws, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup);

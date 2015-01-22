@@ -50,6 +50,7 @@ public:
 		xoBox			MarginBorderPadding;	// Sum of Margin, Border, and Padding boxes
 		xoPos			ContentWidth;
 		xoPos			ContentHeight;
+		xoBumpStyle		Bump;
 		bool			NewFlowContext;
 	};
 	struct WordInput

@@ -115,6 +115,7 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 	boxIn.ContentHeight = contentHeight;
 	boxIn.MarginBorderPadding = margin.PiecewiseSum(border).PiecewiseSum(padding);
 	boxIn.NewFlowContext = Stack.Get(xoCatFlowContext).GetFlowContext() == xoFlowContextNew || node->GetTag() == xoTagBody; // Body MUST be a new flow context
+	boxIn.Bump = Stack.Get(xoCatBump).GetBump();
 
 	podvec<int32> myRestartPoints;
 
@@ -266,11 +267,13 @@ void xoLayout3::RunText3(const xoDomText* node, const LayoutInput3& in, LayoutOu
 	TempText.Chars.Clear();
 
 	out.Baseline = TempText.FontAscender;
-	// I can't think why you'd want to align text objects. Surely you'd rather align the containing elements?
-	// Since all of our binding points are null, we don't need to populate our width and height, so we leave them zero.
+	// It makes sense to bind text words on baseline. The extremely simply document
+	// "<span style='padding: 10px'>something</span> else" would not have 'else' aligned
+	// to 'something' if we didn't align words to baseline.
+	// Since we only bind on baseline, we don't need to populate width and height
 	out.MarginBoxHeight = 0;
 	out.MarginBoxWidth = 0;
-	out.Binds = BindingSet{ xoHorizontalBindingNULL, xoHorizontalBindingNULL, xoVerticalBindingNULL, xoVerticalBindingNULL };
+	out.Binds = BindingSet{ xoHorizontalBindingNULL, xoHorizontalBindingNULL, xoVerticalBindingBaseline, xoVerticalBindingBaseline };
 	out.RNode = TempText.RNodeTxt;
 }
 

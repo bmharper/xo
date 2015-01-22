@@ -232,17 +232,34 @@ void DoLongText(xoDoc* doc)
 // This was used when developing Layout3
 void DoInlineFlow(xoDoc* doc)
 {
-	doc->ClassParse("red", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #d00; background: #fdd");
-	doc->ClassParse("blue", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #00d; background: #ddf");
-	//doc->Root.ParseAppend(R"(<div style='cursor: hand'>The dogge</div>)");
-	//doc->Root.ParseAppend(R"(The quick <span style='color: #a00; background: #aaa; cursor: hand'>brown fox jumps</span> over)");
-	//doc->Root.ParseAppend(R"(The quick <span class='red'>brown fox jumps</span> over)");
-	doc->Root.ParseAppend(R"(Once upon a time, The quick <span class='red'><span class='blue'>brown fox jumps</span></span> over)");
-	//doc->Root.ParseAppend(R"(The <span class='red'>brown</span>)");
-	//doc->Root.ParseAppend(R"(The <span class='red'><span class='blue'>brown</span></span>)");
-	//doc->Root.ParseAppend(R"(<div style='cursor: hand'>blah!</div>)");
-	//doc->Root.ParseAppend(R"(The <span style='color: #a00; background: #fff'>brown</span>)");
-	//doc->Root.ParseAppend( R"(The quick)");
+	auto create = [doc](const xoEvent& ev) -> bool
+	{
+		static bool doSpan = false;
+		doSpan = !doSpan;
+		doc->Root.RemoveAllChildren();
+		doc->ClassParse("red", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #d00b; background: #fddb");
+		doc->ClassParse("blue", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #00d; background: #ddf");
+		//doc->Root.ParseAppend(R"(<div style='cursor: hand'>The dogge</div>)");
+		//doc->Root.ParseAppend(R"(The quick <span style='color: #a00; background: #aaa; cursor: hand'>brown fox jumps</span> over)");
+		//doc->Root.ParseAppend(R"(The slow quick fast one two three four five six seven eight nine <span class='red'>brown fox jumps</span> over)");
+		//doc->Root.StyleParse("margin: 5px");
+		doc->Root.StyleParse("font-size: 30px");
+		if (doSpan)
+			doc->Root.ParseAppend(R"(The slow quick fast <span class='red'>brown Fox jumps</span> over)");
+		else
+			doc->Root.ParseAppend(R"(The slow quick fast brown Fox jumps over)");
+		//doc->Root.ParseAppend(R"(<span class='red'>brown</span> over)");
+		//doc->Root.ParseAppend(R"(<span class='red'>brown fox jumps</span> over)");
+		//doc->Root.ParseAppend(R"(Once upon a time, The quick <span class='red'><span class='blue'>brown fox jumps</span></span> over)");
+		//doc->Root.ParseAppend(R"(The <span class='red'>brown</span>)");
+		//doc->Root.ParseAppend(R"(The <span class='red'><span class='blue'>brown</span></span>)");
+		//doc->Root.ParseAppend(R"(<div style='cursor: hand'>blah!</div>)");
+		//doc->Root.ParseAppend(R"(The <span style='color: #a00; background: #fff'>brown</span>)");
+		//doc->Root.ParseAppend( R"(The quick)");
+		return true;
+	};
+	doc->Root.OnClick(create);
+	create(xoEvent());
 }
 
 void DoBackupSettings(xoDoc* doc)
@@ -313,22 +330,22 @@ void InitDOM(xoDoc* doc)
 	xoDomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
 
-	DoBorder(doc);
+	//DoBorder(doc);
 	//DoBaselineAlignment( doc );
 	//DoBaselineAlignment_rev2( doc );
 	//DoBaselineAlignment_Multiline( doc );
 	//DoTwoTextRects( doc );
 	//DoBlockMargins( doc );
 	//DoLongText( doc );
-	//DoInlineFlow(doc);
+	DoInlineFlow(doc);
 	//DoBackupSettings( doc );
 	//DoPadding( doc );
 	//DoTextQuality( doc );
 
 	body->OnClick([doc](const xoEvent& ev) -> bool {
-		xoGlobal()->EnableKerning = !xoGlobal()->EnableKerning;
-		XOTRACE("InternalID: %d\n", ev.Target->GetInternalID());
-		doc->IncVersion();
+		//xoGlobal()->EnableKerning = !xoGlobal()->EnableKerning;
+		//XOTRACE("InternalID: %d\n", ev.Target->GetInternalID());
+		//doc->IncVersion();
 		return true;
 	});
 }

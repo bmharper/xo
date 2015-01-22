@@ -445,6 +445,7 @@ bool xoStyle::Parse(const char* t, intp maxLen, xoDoc* doc)
 			else if (MATCH(t, startk, eq, "vcenter"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseVerticalBinding, xoCatVCenter, *this); }
 			else if (MATCH(t, startk, eq, "bottom"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseVerticalBinding, xoCatBottom, *this); }
 			else if (MATCH(t, startk, eq, "baseline"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseVerticalBinding, xoCatBaseline, *this); }
+			else if (MATCH(t, startk, eq, "bump"))							{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseBump, xoCatBump, *this); }
 			else
 			{
 				ok = false;
@@ -958,6 +959,15 @@ XOAPI bool xoParseVerticalBinding(const char* s, intp len, xoVerticalBindings& t
 	if (MATCH(s, 0, len, "vcenter"))	{ t = xoVerticalBindingCenter; return true; }
 	if (MATCH(s, 0, len, "bottom"))		{ t = xoVerticalBindingBottom; return true; }
 	if (MATCH(s, 0, len, "baseline"))	{ t = xoVerticalBindingBaseline; return true; }
+	return false;
+}
+
+XOAPI bool xoParseBump(const char* s, intp len, xoBumpStyle& t)
+{
+	if (MATCH(s, 0, len, "regular"))		{ t = xoBumpRegular; return true; }
+	if (MATCH(s, 0, len, "horizontal"))		{ t = xoBumpHorzOnly; return true; }
+	if (MATCH(s, 0, len, "vertical"))		{ t = xoBumpVertOnly; return true; }
+	if (MATCH(s, 0, len, "none"))			{ t = xoBumpNone; return true; }
 	return false;
 }
 
