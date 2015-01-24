@@ -114,8 +114,7 @@ void xoBoxLayout3::SetBaseline(xoPos baseline, int child)
 	if (line.InnerBaseline == xoPosNULL)
 	{
 		line.InnerBaseline = baseline;
-		// We probably also need to record which element set the inner baseline, so that if that
-		// element is moved by vertical alignment, then we can move the inner baseline too.
+		line.InnerBaselineDefinedBy = child;
 	}
 	line.LastChild = child;
 }
@@ -133,17 +132,16 @@ xoPos xoBoxLayout3::GetFirstBaseline()
 	return xoPosNULL;
 }
 
-xoBoxLayout3::LineBox xoBoxLayout3::GetLineFromPreviousNode(int line_index)
+xoBoxLayout3::LineBox* xoBoxLayout3::GetLineFromPreviousNode(int line_index)
 {
 	// If FlowStates did bounds checking, then the following call would fail that check.
 	// We explicitly choose a container for FlowStates that leaves items intact when
 	// popping off the end.
-	return FlowStates[FlowStates.Count].Lines[line_index];
+	return &FlowStates[FlowStates.Count].Lines[line_index];
 }
 
 void xoBoxLayout3::Restart()
 {
-	AddLinebreak();
 	WaitingForRestart = false;
 }
 
@@ -161,7 +159,7 @@ xoBoxLayout3::FlowResult xoBoxLayout3::EndNodeInternal(xoBox& marginBox, bool in
 	FlowState* flow = &FlowStates.Back();
 
 	if (ns->Input.ContentWidth == xoPosNULL)
-		ns->Input.ContentWidth = flow->PosMinor;
+		ns->Input.ContentWidth = xoMax(flow->HighMinor, flow->PosMinor);
 
 	if (ns->Input.ContentHeight == xoPosNULL)
 		ns->Input.ContentHeight = flow->HighMajor;
@@ -251,6 +249,7 @@ void xoBoxLayout3::NewLine(FlowState& flow)
 {
 	flow.Lines += LineBox::MakeFresh();
 	flow.PosMajor = flow.HighMajor;
+	flow.HighMinor = xoMax(flow.HighMinor, flow.PosMinor);
 	flow.PosMinor = 0;
 }
 
@@ -270,6 +269,7 @@ void xoBoxLayout3::FlowState::Reset()
 	FlowOnZeroMinor = false;
 	PosMinor = 0;
 	PosMajor = 0;
+	HighMinor = 0;
 	HighMajor = 0;
 	MaxMajor = xoPosNULL;
 	MaxMinor = xoPosNULL;

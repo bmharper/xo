@@ -79,7 +79,7 @@
 			<Item Name="capacity">capacity</Item> 
 			<ArrayItems> 
 				<Size>count</Size> 
-				<ValuePointer>(TElem*)data</ValuePointer> 
+				<ValuePointer>data</ValuePointer> 
 			</ArrayItems> 
 		</Expand>         
 	</Type>
@@ -101,7 +101,7 @@
 			<Item Name="Capacity">Capacity</Item> 
 			<ArrayItems> 
 				<Size>Count</Size> 
-				<ValuePointer>(T*)Data</ValuePointer> 
+				<ValuePointer>Data</ValuePointer> 
 			</ArrayItems> 
 		</Expand>
 	</Type>
@@ -133,9 +133,10 @@
 		<Expand> 
 			<Item Name="Tail">Tail</Item> 
 			<Item Name="Head">Head</Item> 
+			<Item Name="Count">(Head - Tail) &amp; Mask</Item> 
 			<ArrayItems> 
 				<Size>Mask + 1</Size>
-				<ValuePointer>(T*)Ring</ValuePointer> 
+				<ValuePointer>Ring</ValuePointer> 
 			</ArrayItems>
 		</Expand>
 	</Type>

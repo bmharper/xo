@@ -33,8 +33,8 @@ public:
 
 	void					SetInternalID(xoInternalID id)			{ InternalID = id; }	// Used by xoDoc during element creation.
 	void					SetDoc(xoDoc* doc)						{ Doc = doc; }			// Used by xoDoc during element creation and destruction.
-	bool					IsNode() const								{ return Tag != xoTagText; }
-	bool					IsText() const								{ return Tag == xoTagText; }
+	bool					IsNode() const							{ return Tag != xoTagText; }
+	bool					IsText() const							{ return Tag == xoTagText; }
 
 protected:
 	xoDoc*					Doc;				// Owning document

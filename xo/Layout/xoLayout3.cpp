@@ -99,12 +99,31 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 	xoBox border = ComputeBox(in.ParentWidth, in.ParentHeight, xoCatBorder_Left);
 	xoPos contentWidth = ComputeDimension(in.ParentWidth, xoCatWidth);
 	xoPos contentHeight = ComputeDimension(in.ParentHeight, xoCatHeight);
+	xoBoxSizeType boxSizeType = Stack.Get(xoCatBoxSizing).GetBoxSizing();
+	
+	if (boxSizeType == xoBoxSizeMargin)
+	{
+		if (contentWidth != xoPosNULL) contentWidth -= margin.Left + margin.Right + padding.Left + padding.Right + border.Left + border.Right;
+		if (contentHeight != xoPosNULL) contentHeight -= margin.Top + margin.Bottom + padding.Top + padding.Bottom + border.Top + border.Bottom;
+	}
+	else if (boxSizeType == xoBoxSizeBorder)
+	{
+		if (contentWidth != xoPosNULL) contentWidth -= padding.Left + padding.Right + border.Left + border.Right;
+		if (contentHeight != xoPosNULL) contentHeight -= padding.Top + padding.Bottom + border.Top + border.Bottom;
+	}
+
+	xoBreakType myBreak = Stack.Get(xoCatBreak).GetBreakType();
+	if (myBreak == xoBreakBefore && in.RestartPoints->size() == 0)
+		Boxer.AddLinebreak();
 
 	if (SnapBoxes)
 	{
 		if (IsDefined(contentWidth))	contentWidth = xoPosRoundUp(contentWidth);
 		if (IsDefined(contentHeight))	contentHeight = xoPosRoundUp(contentHeight);
 	}
+
+	if (node->GetInternalID() == 5)
+		int abcd = 123;
 
 	xoRenderDomNode* rnode = new(Pool->AllocT<xoRenderDomNode>(false)) xoRenderDomNode(node->GetInternalID(), node->GetTag(), Pool);
 	in.ParentRNode->Children += rnode;
@@ -167,6 +186,9 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 		{
 			Boxer.SetBaseline(childOut.Baseline, (int) childOuts.Size());
 			childOuts.Push(childOut);
+
+			if (childOut.Break == xoBreakAfter)
+				Boxer.AddLinebreak();
 		}
 
 		if (isRestarting)
@@ -176,6 +198,7 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 			{
 				// We are the final stop on a restart. So restart at our current child.
 				i--;
+				Boxer.AddLinebreak();
 				Boxer.Restart();
 				// If all children are going to restart at zero, then delete the rnode that we already
 				// created, because it will consist purely of empty husks. Unfortunately the empty children
@@ -224,16 +247,25 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 	// on every line, and we use that information to figure out which line our child is on.
 	int linebox_index = 0;
 	auto linebox = Boxer.GetLineFromPreviousNode(linebox_index);
-	// This node's baseline is the baseline of it's first linebox. We store it here for later use.
-	xoPos myBaseline = linebox.InnerBaseline;
 	for (intp i = 0; i < childOuts.Size(); i++)
 	{
-		while (i > linebox.LastChild)
+		while (i > linebox->LastChild)
 			linebox = Boxer.GetLineFromPreviousNode(++linebox_index);
 
 		if (childOuts[i].RNode != nullptr)
-			PositionChildFromBindings(childIn, linebox.InnerBaseline, childOuts[i]);
+		{
+			xoPoint offset = PositionChildFromBindings(childIn, linebox->InnerBaseline, childOuts[i]);
+			if (linebox->InnerBaselineDefinedBy == i)
+			{
+				// The child that originally defined the baseline has been moved, so we need to move the baseline along with it
+				linebox->InnerBaseline += offset.Y;
+			}
+		}
 	}
+
+	// This node's baseline is the baseline of it's first linebox. Note that if the baseline has been moved
+	// by the previous alignment phase, then we will receive the updated baseline here.
+	xoPos myBaseline = Boxer.GetLineFromPreviousNode(0)->InnerBaseline;
 
 	if (myBaseline != xoPosNULL)
 		out.Baseline = myBaseline + rnode->Pos.Top;	// we emit baseline in the coordinate system of our parent
@@ -244,6 +276,7 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 	out.RNode = rnode;
 	out.MarginBoxWidth = marginBox.Width();
 	out.MarginBoxHeight = marginBox.Height();
+	out.Break = Stack.Get(xoCatBreak).GetBreakType();
 
 	Stack.StackPop();
 }
@@ -294,6 +327,7 @@ void xoLayout3::RunText3(const xoDomText* node, const LayoutInput3& in, LayoutOu
 	out.MarginBoxWidth = 0;
 	out.Binds = BindingSet{ xoHorizontalBindingNULL, xoHorizontalBindingNULL, xoVerticalBindingBaseline, xoVerticalBindingBaseline };
 	out.RNode = TempText.RNodeTxt;
+	out.Break = xoBreakNULL;
 }
 
 
@@ -314,6 +348,12 @@ doesn't know where its word boxes are going - it just dumps them
 to xoBoxLayout and forgets about them.
 This would mean that xoBoxLayout is responsible for adjusting
 the positions of the glyphs inside an xoRenderDomText object.
+
+NOTE: This function has some defunct history to it. It was originally
+written such that it would output words on different lines.
+Since implementing "restarts" though, this function will never
+emit more than a single text object, and that single text object
+will always be on one line only. We should clean this function up.
 
 This diagram was created using asciiflow (http://asciiflow.com/)
 
@@ -389,11 +429,10 @@ void xoLayout3::GenerateTextWords(TextRunState& ts)
 			if (ts.GlyphsNeeded)
 				continue;
 
-			if (strncmp(txt + chunk.Start, "fox", 3) == 0)
+			if (strncmp(txt + chunk.Start, "and", 3) == 0)
 				int abcd = 123;
 
 			// output word
-			xoRenderDomText* rtxt_new = nullptr;
 			xoBoxLayout3::WordInput wordin;
 			wordin.Width = wordWidth;
 			wordin.Height = lineHeight;
@@ -409,6 +448,7 @@ void xoLayout3::GenerateTextWords(TextRunState& ts)
 			{
 				// We need a new output object
 				xoRenderDomText* rtxt_new = new(Pool->AllocT<xoRenderDomText>(false)) xoRenderDomText(ts.Node->GetInternalID(), Pool);
+				XO_ANALYSIS_ASSUME(rtxt_new != nullptr);
 				ts.RNode->Children += rtxt_new;
 				if (rtxt != nullptr)
 				{
@@ -418,6 +458,7 @@ void xoLayout3::GenerateTextWords(TextRunState& ts)
 				rtxt_new->Pos = marginBox;
 				rtxt = rtxt_new;
 				rtxt_left = marginBox.Left;
+				lastWordTop = marginBox.Top;
 				numCharsInQueue = chunkLen;
 			}
 			else
@@ -432,8 +473,11 @@ void xoLayout3::GenerateTextWords(TextRunState& ts)
 			Boxer.AddSpace(charWidth_32);
 			break;
 		case ChunkLineBreak:
-			Boxer.AddLinebreak();
+		{
+			aborted = true;
+			ts.RestartPoints->push(chunk.Start + txt_offset + 1);
 			break;
+		}
 		}
 	}
 	// the end

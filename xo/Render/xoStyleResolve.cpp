@@ -86,6 +86,8 @@ xoStyleResolveOnceOff::xoStyleResolveOnceOff(const xoDomNode* node)
 	for (const xoDomNode* nodeWalk = node; nodeWalk != nullptr; nodeWalk = nodeWalk->GetParent())
 		chain += nodeWalk;
 
+	XO_ANALYSIS_ASSUME(node != nullptr);
+
 	// The user of this class might want to be made aware if the node walk
 	// fails before hitting the root.
 	if (chain.back() != &node->GetDoc()->Root)

@@ -51,6 +51,7 @@ protected:
 		xoPos				MarginBoxHeight;
 		xoPos				Baseline;		// This is given in the coordinate system of the parent
 		xoRenderDomEl*		RNode;
+		xoBreakType			Break;
 	};
 
 	struct LayoutInput

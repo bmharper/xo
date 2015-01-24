@@ -38,10 +38,10 @@ void xoRenderDomNode::SetPool(xoPool* pool)
 xoBox xoRenderDomNode::BorderBox() const
 {
 	xoBox box = Pos;
-	box.Left -= Style.BorderSize.Left;
-	box.Top -= Style.BorderSize.Top;
-	box.Right += Style.BorderSize.Right;
-	box.Bottom += Style.BorderSize.Bottom;
+	box.Left -= Style.Padding.Left + Style.BorderSize.Left;
+	box.Top -= Style.Padding.Top + Style.BorderSize.Top;
+	box.Right += Style.Padding.Right + Style.BorderSize.Right;
+	box.Bottom += Style.Padding.Bottom + Style.BorderSize.Bottom;
 	return box;
 }
 

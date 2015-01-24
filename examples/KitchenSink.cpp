@@ -9,10 +9,10 @@ void InitDOM(xoDoc* doc);
 void xoMain(xoSysWnd* wnd)
 {
 	xoGlobal()->FontStore->AddFontDirectory("C:\\temp\\fonts");
-	int left = -320;
-	int width = 145;
+	int left = -360;
+	int width = 350;
 	int top = 60;
-	int height = 140;
+	int height = 200;
 	wnd->SetPosition(xoBox(left, top, left + width, top + height), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size);   // DO NOT COMMIT ME
 	InitDOM(wnd->Doc());
 }
@@ -50,7 +50,8 @@ void DoBaselineAlignment(xoDoc* doc)
 	{
 		root->ParseAppend("<div                  style='font-size: 38px; font-family: Microsoft Sans Serif; background: #fff0f0'>H</div>");
 		root->ParseAppend("<div class='baseline' style='font-size: 13px; font-family: Microsoft Sans Serif; background: #f0fff0'>ello.</div>");
-		root->ParseAppend("<div class='baseline' style='font-size: 18px; font-family: Times New Roman; background: #f0f0ff'> More times at a smaller size.</div>");
+		//root->ParseAppend("<div class='baseline' style='font-size: 18px; font-family: Times New Roman; background: #f0f0ff'> More times at a smaller size.</div>");
+		root->ParseAppend("<span class='baseline' style='font-size: 18px; font-family: Times New Roman; background: #f0f0ff'> More times at a smaller size.</span>");
 	}
 
 	// ramp of 'e' characters from 8 to 30 pixels
@@ -72,7 +73,7 @@ void DoBaselineAlignment_rev2(xoDoc* doc)
 {
 	auto root = &doc->Root;
 	xoString e;
-	int v = 5;
+	int v = 6;
 	if (v == 1)
 	{
 		// only 1 deep
@@ -120,6 +121,9 @@ void DoBaselineAlignment_rev2(xoDoc* doc)
 		// This creates 2 blocks in a row.
 		// The first block has 20ep text, and the second block has 10ep text.
 		// The first block has text centered inside it. The second block's text is aligned to the baseline of the first.
+		// Unfortunately this concept is impossible to imitate in Layout3, since we're no longer propagating baseline
+		// down the tree, only horizontally across the tree. You'll just have to use injected-flow elements, such as "spans",
+		// if you want baseline to cross over multiple objects at different heights.
 		e = root->Parse(
 				"<div style='width: 150ep; height: 80ep; box-sizing: margin; margin: 0 4ep 0 4ep; background: #ddd'>"
 				"	<lab style='vcenter: vcenter; font-size: 40ep; background: #dbb'>Hello-p</lab>"
@@ -134,6 +138,18 @@ void DoBaselineAlignment_rev2(xoDoc* doc)
 		  edit me
 		<edit>
 		*/
+	}
+	else if (v == 6)
+	{
+		// this is like 5, but changed to work with layout3
+		e = root->Parse(
+			"<div style='width: 150ep; height: 80ep; box-sizing: margin; margin: 0 4ep 0 4ep; background: #ddd'>"
+			"	<lab style='vcenter: vcenter; font-size: 40ep; background: #dbb'>Hello-p</lab>"
+			"</div>"
+			"<div style='width: 100ep; height: 80ep; box-sizing: margin; margin: 0 8ep 0 8ep; background: #bbb; baseline: baseline;'>"
+			"	<lab style='vcenter: vcenter; font-size: 16ep; background: #bdb'>world</lab>"
+			"</div>"
+			);
 	}
 
 	XOASSERT(e == "");
@@ -165,7 +181,6 @@ void DoTwoTextRects(xoDoc* doc)
 		xoDomNode* div = doc->Root.AddNode(xoTagDiv);
 		div->StyleParse("width: 90px; height: 90px; background: #faa; margin: 4px");
 		div->StyleParse("font-size: 13px");
-		//div->StyleParse( "text-align-vertical: top" );
 		div->SetText("Ave quick brown fox jumps over the lazy dog.\nText wrap and kerning. >>");
 	}
 
@@ -174,7 +189,7 @@ void DoTwoTextRects(xoDoc* doc)
 		// This block has width=height=unspecified, so it gets its size from its children
 		// We expect to see the green background behind this text
 		xoDomNode* div = doc->Root.AddNode(xoTagDiv);
-		div->StyleParse("background: #afa8; margin: 4px");
+		div->StyleParse("background: #afa8; margin: 4px; padding: 5px");
 		div->StyleParse("font-size: 13px");
 		div->SetText("Parent has no size, but this text gives it size. Expect green background behind this text.\nPpPp\npPpP\n\naaa\naaapq");
 	}
@@ -322,7 +337,7 @@ void DoPadding(xoDoc* doc)
 
 void DoTextQuality(xoDoc* doc)
 {
-	//doc->Root.ParseAppend( "<div style='font-family: Microsoft Sans Serif'>The quick brown fox jumps over the laxy dog<div>" );
+	doc->Root.ParseAppend( "<div style='font-family: Microsoft Sans Serif'>The quick brown fox jumps over the lazy dog<div>" );
 	//doc->Root.ParseAppend( "<div style='padding: 20px; font-family: Microsoft Sans Serif'>h<div>" );
 	//doc->Root.ParseAppend( "<div style='font-family: Microsoft Sans Serif'>Backup from<div>" );
 
@@ -339,12 +354,12 @@ void InitDOM(xoDoc* doc)
 
 	//DoBorder(doc);
 	//DoBaselineAlignment( doc );
-	//DoBaselineAlignment_rev2( doc );
+	DoBaselineAlignment_rev2( doc );
 	//DoBaselineAlignment_Multiline( doc );
 	//DoTwoTextRects( doc );
 	//DoBlockMargins( doc );
 	//DoLongText( doc );
-	DoInlineFlow(doc);
+	//DoInlineFlow(doc);
 	//DoBackupSettings( doc );
 	//DoPadding( doc );
 	//DoTextQuality( doc );
@@ -352,7 +367,8 @@ void InitDOM(xoDoc* doc)
 	body->OnClick([doc](const xoEvent& ev) -> bool {
 		//xoGlobal()->EnableKerning = !xoGlobal()->EnableKerning;
 		//XOTRACE("InternalID: %d\n", ev.Target->GetInternalID());
-		//doc->IncVersion();
+		// Force a re-layout. Useful to click on the document and be able to debug the layout that occurs.
+		doc->IncVersion();
 		return true;
 	});
 }

@@ -14,12 +14,14 @@ enum xoPlatform
 #define XO_PLATFORM_LINUX_DESKTOP	0
 #define XO_PLATFORM					xoPlatform_WinDesktop
 #define XOTRACE_WRITE				OutputDebugStringA
+#define XO_ANALYSIS_ASSUME(x)		__analysis_assume(x)
 #elif defined(ANDROID)
 #define XO_PLATFORM_ANDROID			1
 #define XO_PLATFORM_WIN_DESKTOP		0
 #define XO_PLATFORM_LINUX_DESKTOP	0
 #define XO_PLATFORM					xoPlatform_Android
 #define XOTRACE_WRITE(msg)			__android_log_write(ANDROID_LOG_INFO, "xo", msg)
+#define XO_ANALYSIS_ASSUME(x)		((void)0)
 #define XOASSERT(x)					(void) ((x) || (__android_log_print(ANDROID_LOG_ERROR, "xo", "assertion failed %s:%d %s", __FILE__, __LINE__, #x), AbcPanicHere(), 0))
 #elif defined(__linux__)
 #define XO_PLATFORM_ANDROID			0
@@ -27,6 +29,7 @@ enum xoPlatform
 #define XO_PLATFORM_LINUX_DESKTOP	1
 #define XO_PLATFORM					xoPlatform_LinuxDesktop
 #define XOTRACE_WRITE(msg)			fputs(msg, stderr)
+#define XO_ANALYSIS_ASSUME(x)		((void)0)
 #else
 #ifdef _MSC_VER
 #pragma error( "Unknown xo platform" )

@@ -91,7 +91,7 @@ public:
 	// because surely we have popped that data structure off it's stack? Yes, we have, but we
 	// operate our stack in such a way that we don't wipe the data, we simply decrement a counter.
 	// Provided a new node hasn't been started yet, that old data is still there, 100% intact.
-	LineBox				GetLineFromPreviousNode(int line_index);
+	LineBox*			GetLineFromPreviousNode(int line_index);
 
 	void				Restart();								// The layout engine is about to restart layout, after receiving FlowRestart
 	bool				WouldFlow(xoPos size);					// Returns true if adding a box of this size would cause us to flow onto a new line
@@ -104,6 +104,7 @@ protected:
 		xoPos				PosMajor;			// In default flow, this is the vertical (Y) position
 		xoPos				MaxMinor;			// In default flow, this is the horizontal (X) position at which we wrap around. xoPosNULL means no limit.
 		xoPos				MaxMajor;			// In default flow, this is the vertical (Y) position at which we need scroll bars. xoPosNULL means no limit.
+		xoPos				HighMinor;			// In default flow, this is the greatest horizontal (X) coordinate seen so far.
 		xoPos				HighMajor;			// In default flow, this is the greatest vertical (Y) coordinate seen so far.
 		// Meh -- implement these when the need arises
 		// bool	IsVertical;		// default true, normal flow
