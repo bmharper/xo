@@ -392,3 +392,17 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	for <span> elements, they only affect horizontal bump, which gets us
 	the same behaviour as an HTML inline element.
 
+2015-01-24	Nested spans
+	Yay! I tested my 'bump' implementation with two nested spans that surround
+	some text. I was surprised to see that the inner box's height is the same
+	as the outer box's height. It is comforting to see that HTML ends up
+	up with the same result. I don't fully understand why this happens, and
+	I'm not sure I want it to happen, but I'm OK with letting it slide for now,
+	given HTML does the same thing.
+
+2015-01-24	Line boxes
+	I'm becoming increasingly convinced that the coordinate space into which
+	text is output should be "line box", and not "containing node". We're just
+	sort of barely hanging onto understandability with the current management
+	of line boxes, but it might be much simpler if we forced line boxes as
+	proper elements that went into nodes.

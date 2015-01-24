@@ -122,8 +122,9 @@ protected:
 	xoStack<NodeState>		NodeStates;
 	bool					WaitingForRestart;
 
-	bool		MustFlow(const FlowState& flow, xoPos size);
-	void		Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox);
-	void		NewLine(FlowState& flow);
-	intp		MostRecentUniqueFlowAncestor();
+	FlowResult		EndNodeInternal(xoBox& marginBox, bool insideInjectedFlow);
+	bool			MustFlow(const FlowState& flow, xoPos size);
+	void			Flow(const NodeState& ns, FlowState& flow, xoBox& marginBox);
+	void			NewLine(FlowState& flow);
+	intp			MostRecentUniqueFlowAncestor();
 };

@@ -75,48 +75,8 @@ void xoBoxLayout3::BeginNode(const NodeInput& in)
 
 xoBoxLayout3::FlowResult xoBoxLayout3::EndNode(xoBox& marginBox)
 {
-	// If the node being finished did not define its content width or content height,
-	// then read them now from its flow state. Once that's done, we can throw away
-	// the flow state of the node that's ending.
-	NodeState* ns = &NodeStates.Back();
-	FlowState* flow = &FlowStates.Back();
-		
-	if (ns->Input.ContentWidth == xoPosNULL)
-		ns->Input.ContentWidth = flow->PosMinor;
-		
-	if (ns->Input.ContentHeight == xoPosNULL)
-		ns->Input.ContentHeight = flow->HighMajor;
-
-	// We are done with the flow state of the node that's ending (ie the flow of objects inside this node).
-	FlowStates.Pop();
-	flow = nullptr;
-
 	bool insideInjectedFlow = !NodeStates[NodeStates.Count - 2].Input.NewFlowContext;
-
-	if (!WaitingForRestart && insideInjectedFlow && WouldFlow(ns->Input.ContentWidth))
-	{
-		// Bail out. The caller is going to have to unwind his stack out to the nearest ancestor
-		// that defines its own flow. That ancestor is going to have to create another copy of the
-		// child that it was busy with, but this new child will end up on a new line.
-		// We don't create the new line here. That happens when Restart() is called.
-		NodeStates.Pop();
-		// Disable any intermediate nodes from emitting new lines. This is necessary when you have
-		// for example, <div><span><span>The quick brown fox</span></span></div>. In other words, when
-		// you have nested nodes that do not define their own flow contexts. If we didn't set WaitingForRestart
-		// to true here, then the outer span object might want to span itself across two lines, which
-		// makes no sense. We still need to run the 'Flow' function though, when we end the second span,
-		// so that it can calculate its content width.
-		WaitingForRestart = true;
-		return FlowRestart;
-	}
-
-	Flow(*ns, FlowStates.Back(), ns->MarginBox);
-
-	marginBox = ns->MarginBox;
-
-	NodeStates.Pop();
-	ns = nullptr;
-	return FlowNormal;
+	return EndNodeInternal(marginBox, insideInjectedFlow);
 }
 
 xoBoxLayout3::FlowResult xoBoxLayout3::AddWord(const WordInput& in, xoBox& marginBox)
@@ -128,8 +88,14 @@ xoBoxLayout3::FlowResult xoBoxLayout3::AddWord(const WordInput& in, xoBox& margi
 	nin.MarginBorderPadding = xoBox(0, 0, 0, 0);
 	nin.NewFlowContext = true;
 	nin.Tag = xoTag_DummyWord;
+	nin.Bump = xoBumpRegular;	// should have no effect, because margins,border,padding are all zero
 	BeginNode(nin);
-	return EndNode(marginBox);
+	// Words are always inside an injected-flow context. We cannot rely on EndNode()'s logic
+	// of determining the flow context, because words aren't added inside a special "text"
+	// node, they're just added naked inside their container, which could be a <div> or
+	// anything else. Conceptually, it might be better to add a proper node for words,
+	// which we would call a "line box", but I fear that might just add confusion.
+	return EndNodeInternal(marginBox, true);
 }
 
 void xoBoxLayout3::AddSpace(xoPos size)
@@ -169,6 +135,9 @@ xoPos xoBoxLayout3::GetFirstBaseline()
 
 xoBoxLayout3::LineBox xoBoxLayout3::GetLineFromPreviousNode(int line_index)
 {
+	// If FlowStates did bounds checking, then the following call would fail that check.
+	// We explicitly choose a container for FlowStates that leaves items intact when
+	// popping off the end.
 	return FlowStates[FlowStates.Count].Lines[line_index];
 }
 
@@ -181,6 +150,50 @@ void xoBoxLayout3::Restart()
 bool xoBoxLayout3::WouldFlow(xoPos size)
 {
 	return MustFlow(FlowStates.Back(), size);
+}
+
+xoBoxLayout3::FlowResult xoBoxLayout3::EndNodeInternal(xoBox& marginBox, bool insideInjectedFlow)
+{
+	// If the node being finished did not define its content width or content height,
+	// then read them now from its flow state. Once that's done, we can throw away
+	// the flow state of the node that's ending.
+	NodeState* ns = &NodeStates.Back();
+	FlowState* flow = &FlowStates.Back();
+
+	if (ns->Input.ContentWidth == xoPosNULL)
+		ns->Input.ContentWidth = flow->PosMinor;
+
+	if (ns->Input.ContentHeight == xoPosNULL)
+		ns->Input.ContentHeight = flow->HighMajor;
+
+	// We are done with the flow state of the node that's ending (ie the flow of objects inside this node).
+	FlowStates.Pop();
+	flow = nullptr;
+
+	if (!WaitingForRestart && insideInjectedFlow && WouldFlow(ns->Input.ContentWidth))
+	{
+		// Bail out. The caller is going to have to unwind his stack out to the nearest ancestor
+		// that defines its own flow. That ancestor is going to have to create another copy of the
+		// child that it was busy with, but this new child will end up on a new line.
+		// We don't create the new line here. That happens when Restart() is called.
+		NodeStates.Pop();
+		// Disable any intermediate nodes from emitting new lines. This is necessary when you have
+		// for example, <div><span><span>The quick brown fox</span></span></div>. In other words, when
+		// you have nested nodes that do not define their own flow contexts. If we didn't set WaitingForRestart
+		// to true here, then the outer span object might want to span itself across two lines, which
+		// makes no sense. We still need to run the 'Flow' function though, when we end the second span,
+		// so that it can calculate its content width.
+		WaitingForRestart = true;
+		return FlowRestart;
+	}
+
+	Flow(*ns, FlowStates.Back(), ns->MarginBox);
+
+	marginBox = ns->MarginBox;
+
+	NodeStates.Pop();
+	ns = nullptr;
+	return FlowNormal;
 }
 
 bool xoBoxLayout3::MustFlow(const FlowState& flow, xoPos size)

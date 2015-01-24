@@ -138,6 +138,15 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 	// childOuts contains a unique entry for every generated render-node.
 	xoFixedVector<LayoutOutput3> childOuts(FHeap);
 
+	// Understanding RestartPoints
+	// RestartPoints can be difficult to understand because they are an in/out parameter
+	// that is carried inside childIn. Combine the in/out with recursion, and it is easy
+	// to lose track of what is going on. It turns out it's simple enough to understand:
+	// If RestartPoints are not empty, then calling RunNode3 or RunText3 should "use up"
+	// the entire RestartPoints array. It gets used up deep, not wide. If RunNode3 or
+	// RunText3 returns with a non-empty RestartPoints, it means a node inside that child
+	// has begun a new restart.
+
 	for (intp i = istart; i < node->ChildCount(); i++)
 	{
 		LayoutOutput3 childOut;
@@ -151,10 +160,16 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 			RunText3(static_cast<const xoDomText*>(c), childIn, childOut);
 		}
 
-		Boxer.SetBaseline(childOut.Baseline, (int) childOuts.Size());
-		childOuts.Push(childOut);
+		bool isRestarting = childIn.RestartPoints->size() != 0;
+		bool isRestartAllZeroes = IsAllZeros(*childIn.RestartPoints);
 
-		if (childIn.RestartPoints->size() != 0)
+		if (!isRestarting || !isRestartAllZeroes)
+		{
+			Boxer.SetBaseline(childOut.Baseline, (int) childOuts.Size());
+			childOuts.Push(childOut);
+		}
+
+		if (isRestarting)
 		{
 			// Child is breaking out. Continue to break out until we hit a NewFlowContext
 			if (boxIn.NewFlowContext)
@@ -209,6 +224,7 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 	// on every line, and we use that information to figure out which line our child is on.
 	int linebox_index = 0;
 	auto linebox = Boxer.GetLineFromPreviousNode(linebox_index);
+	// This node's baseline is the baseline of it's first linebox. We store it here for later use.
 	xoPos myBaseline = linebox.InnerBaseline;
 	for (intp i = 0; i < childOuts.Size(); i++)
 	{
@@ -266,11 +282,14 @@ void xoLayout3::RunText3(const xoDomText* node, const LayoutInput3& in, LayoutOu
 	// buffer were not flushed. So just wipe the buffer always.
 	TempText.Chars.Clear();
 
-	out.Baseline = TempText.FontAscender;
 	// It makes sense to bind text words on baseline. The extremely simply document
 	// "<span style='padding: 10px'>something</span> else" would not have 'else' aligned
 	// to 'something' if we didn't align words to baseline.
 	// Since we only bind on baseline, we don't need to populate width and height
+	if (TempText.RNodeTxt != nullptr)
+		out.Baseline = TempText.RNodeTxt->Pos.Top + TempText.FontAscender;
+	else
+		out.Baseline = xoPosNULL;
 	out.MarginBoxHeight = 0;
 	out.MarginBoxWidth = 0;
 	out.Binds = BindingSet{ xoHorizontalBindingNULL, xoHorizontalBindingNULL, xoVerticalBindingBaseline, xoVerticalBindingBaseline };
@@ -370,7 +389,7 @@ void xoLayout3::GenerateTextWords(TextRunState& ts)
 			if (ts.GlyphsNeeded)
 				continue;
 
-			if (strncmp(txt + chunk.Start, "jumps", 5) == 0)
+			if (strncmp(txt + chunk.Start, "fox", 3) == 0)
 				int abcd = 123;
 
 			// output word

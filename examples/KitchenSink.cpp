@@ -10,7 +10,7 @@ void xoMain(xoSysWnd* wnd)
 {
 	xoGlobal()->FontStore->AddFontDirectory("C:\\temp\\fonts");
 	int left = -320;
-	int width = 140;
+	int width = 145;
 	int top = 60;
 	int height = 140;
 	wnd->SetPosition(xoBox(left, top, left + width, top + height), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size);   // DO NOT COMMIT ME
@@ -237,17 +237,24 @@ void DoInlineFlow(xoDoc* doc)
 		static bool doSpan = false;
 		doSpan = !doSpan;
 		doc->Root.RemoveAllChildren();
+		doc->Root.StyleParse("font-size: 26px");
+		//doc->Root.StyleParse("margin: 5px");
 		doc->ClassParse("red", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #d00b; background: #fddb");
 		doc->ClassParse("blue", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #00d; background: #ddf");
 		//doc->Root.ParseAppend(R"(<div style='cursor: hand'>The dogge</div>)");
-		//doc->Root.ParseAppend(R"(The quick <span style='color: #a00; background: #aaa; cursor: hand'>brown fox jumps</span> over)");
+		doc->Root.ParseAppend(R"(The quick <span style='color: #a00; background: #aaa; cursor: hand'>brown fox jumps</span> over)");
 		//doc->Root.ParseAppend(R"(The slow quick fast one two three four five six seven eight nine <span class='red'>brown fox jumps</span> over)");
-		//doc->Root.StyleParse("margin: 5px");
-		doc->Root.StyleParse("font-size: 30px");
-		if (doSpan)
-			doc->Root.ParseAppend(R"(The slow quick fast <span class='red'>brown Fox jumps</span> over)");
-		else
-			doc->Root.ParseAppend(R"(The slow quick fast brown Fox jumps over)");
+		//doc->Root.ParseAppend(R"(The brown fox)");
+		//doc->Root.ParseAppend(R"(The <span class='red'>brown</span> fox)");
+		//doc->Root.ParseAppend(R"(<span class='red'>The brown</span> fox)");
+		//if (doSpan)
+		//	doc->Root.ParseAppend(R"(The <span class='red'>brown</span> fox)");
+		//else
+		//	doc->Root.ParseAppend(R"(The brown fox)");
+		//if (doSpan)
+		//	doc->Root.ParseAppend(R"(The slow quick fast <span class='red'>brown Fox jumps</span> over)");
+		//else
+		//	doc->Root.ParseAppend(R"(The slow quick fast brown Fox jumps over)");
 		//doc->Root.ParseAppend(R"(<span class='red'>brown</span> over)");
 		//doc->Root.ParseAppend(R"(<span class='red'>brown fox jumps</span> over)");
 		//doc->Root.ParseAppend(R"(Once upon a time, The quick <span class='red'><span class='blue'>brown fox jumps</span></span> over)");
