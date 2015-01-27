@@ -655,8 +655,8 @@ void xoStyleSet::Reset()
 	Count = 0;
 	Capacity = 0;
 	BitsPerSlot = 0;
-	SetSlotF = NULL;
-	GetSlotF = NULL;
+	//SetSlotF = NULL;
+	//GetSlotF = NULL;
 }
 
 void xoStyleSet::Grow(xoPool* pool)
@@ -677,9 +677,9 @@ void xoStyleSet::Grow(xoPool* pool)
 	Lookup = newlookup;
 	Attribs = newattribs;
 	BitsPerSlot = newbits;
-	if (newbits == 2)			{ SetSlotF = &SetSlot2; GetSlotF = &GetSlot2; }
-	else if (newbits == 4)	{ SetSlotF = &SetSlot4; GetSlotF = &GetSlot4; }
-	else if (newbits == 8)	{ SetSlotF = &SetSlot8; GetSlotF = &GetSlot8; }
+	//if (newbits == 2)		{ SetSlotF = &SetSlot2; GetSlotF = &GetSlot2; }
+	//else if (newbits == 4)	{ SetSlotF = &SetSlot4; GetSlotF = &GetSlot4; }
+	//else if (newbits == 8)	{ SetSlotF = &SetSlot8; GetSlotF = &GetSlot8; }
 }
 
 void xoStyleSet::Set(int n, const xoStyleAttrib* attribs, xoPool* pool)
@@ -690,8 +690,6 @@ void xoStyleSet::Set(int n, const xoStyleAttrib* attribs, xoPool* pool)
 
 void xoStyleSet::Set(const xoStyleAttrib& attrib, xoPool* pool)
 {
-	if (attrib.Category == xoCatFontSize)
-		int abc = 123;
 	int32 slot = GetSlot(attrib.GetCategory());
 	if (slot != 0)
 	{
@@ -714,14 +712,11 @@ xoStyleAttrib xoStyleSet::Get(xoStyleCategories cat) const
 	return Attribs[slot];
 }
 
-void xoStyleSet::DebugCheckSanity() const
+void xoStyleSet::EraseOrSetNull(xoStyleCategories cat) const
 {
-	for (int i = xoCatFIRST; i < xoCatEND; i++)
-	{
-		xoStyleCategories cat = (xoStyleCategories) i;
-		xoStyleAttrib val = Get(cat);
-		XOASSERTDEBUG(val.IsNull() || val.Category == cat);
-	}
+	int32 slot = GetSlot(cat) - SlotOffset;
+	if (slot != -1)
+		Attribs[slot] = xoStyleAttrib();
 }
 
 bool xoStyleSet::Contains(xoStyleCategories cat) const
@@ -741,13 +736,26 @@ void xoStyleSet::MigrateLookup(const void* lutsrc, void* lutdst, GetSlotFunc get
 
 int32 xoStyleSet::GetSlot(xoStyleCategories cat) const
 {
-	if (!GetSlotF) return 0;
-	return GetSlotF(Lookup, cat);
+	if (Lookup == nullptr)
+		return 0;
+	GetSlotFunc f = (BitsPerSlot == 2) ? &GetSlot2 : (BitsPerSlot == 4 ? &GetSlot4 : &GetSlot8);
+	return f(Lookup, cat);
 }
 
 void xoStyleSet::SetSlot(xoStyleCategories cat, int32 slot)
 {
-	SetSlotF(Lookup, cat, slot);
+	SetSlotFunc f = (BitsPerSlot == 2) ? &SetSlot2 : (BitsPerSlot == 4 ? &SetSlot4 : &SetSlot8);
+	f(Lookup, cat, slot);
+}
+
+void xoStyleSet::DebugCheckSanity() const
+{
+	for (int i = xoCatFIRST; i < xoCatEND; i++)
+	{
+		xoStyleCategories cat = (xoStyleCategories) i;
+		xoStyleAttrib val = Get(cat);
+		XOASSERTDEBUG(val.IsNull() || val.Category == cat);
+	}
 }
 
 template<uint32 BITS_PER_SLOT>
@@ -764,7 +772,7 @@ void xoStyleSet::TSetSlot(void* lookup, xoStyleCategories cat, int32 slot)
 	{
 		uint32	intra_byte_mask;
 		uint32	ibyte;
-		if (BITS_PER_SLOT == 2)		{ ibyte = ((uint32) cat) >> 2;	intra_byte_mask = 3; }
+		if (BITS_PER_SLOT == 2)			{ ibyte = ((uint32) cat) >> 2;	intra_byte_mask = 3; }
 		else if (BITS_PER_SLOT == 4)	{ ibyte = ((uint32) cat) >> 1;	intra_byte_mask = 1; }
 
 		uint8	v = lookup8[ibyte];
@@ -791,7 +799,7 @@ int32 xoStyleSet::TGetSlot(const void* lookup, xoStyleCategories cat)
 	{
 		uint32	intra_byte_mask;
 		uint32	ibyte;
-		if (BITS_PER_SLOT == 2)		{ ibyte = ((uint32) cat) >> 2;	intra_byte_mask = 3; }
+		if (BITS_PER_SLOT == 2)			{ ibyte = ((uint32) cat) >> 2;	intra_byte_mask = 3; }
 		else if (BITS_PER_SLOT == 4)	{ ibyte = ((uint32) cat) >> 1;	intra_byte_mask = 1; }
 
 		uint8	v = lookup8[ibyte];

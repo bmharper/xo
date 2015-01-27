@@ -410,6 +410,7 @@ public:
 	void			Set(int n, const xoStyleAttrib* attribs, xoPool* pool);
 	void			Set(const xoStyleAttrib& attrib, xoPool* pool);
 	xoStyleAttrib	Get(xoStyleCategories cat) const;
+	void			EraseOrSetNull(xoStyleCategories cat) const;		// If an item was already set, then Contains() will return true, but Get() will return a null xoStyleAttrib
 	bool			Contains(xoStyleCategories cat) const;
 	void			Reset();
 
@@ -422,8 +423,8 @@ protected:
 	int32			Count;			// Size of Attribs
 	int32			Capacity;		// Capacity of Attribs
 	uint32			BitsPerSlot;	// Number of bits in each slot of Lookup. Our possible sizes are 2,4,8.
-	SetSlotFunc		SetSlotF;
-	GetSlotFunc		GetSlotF;
+	//SetSlotFunc		SetSlotF;
+	//GetSlotFunc		GetSlotF;
 
 	void			Grow(xoPool* pool);
 	int32			GetSlot(xoStyleCategories cat) const;

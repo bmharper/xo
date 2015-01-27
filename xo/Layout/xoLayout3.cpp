@@ -566,7 +566,9 @@ xoPoint xoLayout3::PositionChildFromBindings(const LayoutInput3& cin, xoPos pare
 	child.Y = VBindOffset(cout.Binds.VChild, cout.Baseline, cout.MarginBoxHeight);
 	parent.X = HBindOffset(cout.Binds.HParent, cin.ParentWidth);
 	parent.Y = VBindOffset(cout.Binds.VParent, parentBaseline, cin.ParentHeight);
-	xoPoint offset(parent.X - child.X, parent.Y - child.Y);
+	xoPoint offset;
+	if (IsDefined(parent.X) && IsDefined(child.X)) offset.X = parent.X - child.X;
+	if (IsDefined(parent.Y) && IsDefined(child.Y)) offset.Y = parent.Y - child.Y;
 	cout.RNode->Pos.Offset(offset);
 	return offset;
 }
@@ -668,8 +670,9 @@ xoPos xoLayout3::VBindOffset(xoVerticalBindings bind, xoPos baseline, xoPos heig
 			return baseline;
 		else
 		{
-			XOTRACE_LAYOUT_WARNING("Undefined baseline used in alignment\n");
-			return height;
+			// This occurs often enough that it's not too noisy to be useful
+			//XOTRACE_LAYOUT_WARNING("Undefined baseline used in alignment\n");
+			return xoPosNULL;
 		}
 	default:
 		XOASSERTDEBUG(false);

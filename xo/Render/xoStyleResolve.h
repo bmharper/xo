@@ -4,6 +4,7 @@
 #include "xoRenderDomEl.h"
 
 class xoRenderStack;
+class xoRenderStackEl;
 
 /* This is responsible for producing an exact list of style attributes for every DOM element.
 
@@ -42,6 +43,7 @@ protected:
 	static void		Set(xoRenderStack& stack, const xoDomEl* node, const xoStyleClass& klass);
 	static void		Set(xoRenderStack& stack, const xoDomEl* node, const xoStyle& style);
 	static void		SetInherited(xoRenderStack& stack, const xoDomEl* node, xoStyleCategories cat);
+	static void		SetFinal(xoRenderStackEl& result, xoStyleAttrib attrib);
 };
 
 /* This is intended for resolving the style of an element, once-off.

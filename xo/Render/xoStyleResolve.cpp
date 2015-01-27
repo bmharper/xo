@@ -53,7 +53,7 @@ void xoStyleResolver::Set(xoRenderStack& stack, const xoDomEl* node, intp n, con
 		if (vals[i].IsInherit())
 			SetInherited(stack, node, vals[i].GetCategory());
 		else
-			result.Styles.Set(vals[i], result.Pool);
+			SetFinal(result, vals[i]);
 	}
 }
 
@@ -67,10 +67,27 @@ void xoStyleResolver::SetInherited(xoRenderStack& stack, const xoDomEl* node, xo
 		xoStyleAttrib attrib = stack.StackAt(j).Styles.Get(cat);
 		if (!attrib.IsNull())
 		{
-			result.Styles.Set(attrib, result.Pool);
+			SetFinal(result, attrib);
 			break;
 		}
 	}
+}
+
+void xoStyleResolver::SetFinal(xoRenderStackEl& result, xoStyleAttrib attrib)
+{
+	// Force conflicting categories to pick a winner, by clobbering any existing
+	// style with a NULL value for itself. Ideally we could erase a style from xoStyleSet.
+	xoStyleCategories nullify = xoCatNULL;
+	switch (attrib.Category)
+	{
+	case xoCatVCenter:		nullify = xoCatBaseline; break;
+	case xoCatBaseline:		nullify = xoCatVCenter; break;
+	}
+	if (nullify != xoCatNULL)
+		result.Styles.EraseOrSetNull(nullify);
+
+	// Set the new attribute
+	result.Styles.Set(attrib, result.Pool);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
