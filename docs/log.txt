@@ -420,7 +420,7 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	baseline. I'm wary of it because you'd have to document it, and people might
 	not understand it, and just be annoyed by the apparent inconsistency.
 
-2015-01-28	Baseline alignment x4
+2015-01-27	Baseline alignment x4
 	Dammit no. Propagating baselines down into nodes is a BAD IDEA. Don't ever
 	try that again. HTML doesn't do it. It's horribe. Look at the simple case
 	in does-baseline-propagate-downward.html to get a better understanding.

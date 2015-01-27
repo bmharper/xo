@@ -73,7 +73,7 @@ void DoBaselineAlignment_rev2(xoDoc* doc)
 {
 	auto root = &doc->Root;
 	xoString e;
-	int v = 5;
+	int v = 6;
 	if (v == 1)
 	{
 		// only 1 deep
@@ -366,12 +366,12 @@ void InitDOM(xoDoc* doc)
 	//DoBaselineAlignment( doc );
 	//DoBaselineAlignment_rev2( doc );
 	//DoBaselineAlignment_Multiline( doc );
-	DoBaselineAlignment_DownPropagate(doc);
+	//DoBaselineAlignment_DownPropagate(doc);
 	//DoTwoTextRects( doc );
 	//DoBlockMargins( doc );
 	//DoLongText( doc );
 	//DoInlineFlow(doc);
-	//DoBackupSettings( doc );
+	DoBackupSettings( doc );
 	//DoPadding( doc );
 	//DoTextQuality( doc );
 

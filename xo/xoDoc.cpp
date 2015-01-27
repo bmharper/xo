@@ -268,7 +268,7 @@ void xoDoc::InitializeDefaultTagStyles()
 	TagStyles[xoTagBody].Parse("background: #fff; width: 100%; height: 100%; box-sizing: margin; cursor: arrow", this);
 	TagStyles[xoTagBody].Set(afont);
 	//TagStyles[xoTagBody].Parse( "background: #000; width: 100%; height: 100%;", this );
-	//TagStyles[xoTagDiv].Parse( "display: block;", this );
+	TagStyles[xoTagDiv].Parse("baseline:baseline;", this);
 	// Hack to give text some size
 	//TagStyles[xoTagText].Parse( "width: 70px; height: 30px;", this );
 

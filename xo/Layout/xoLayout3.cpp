@@ -73,7 +73,6 @@ void xoLayout3::LayoutInternal(xoRenderDomNode& root)
 	XOTRACE_LAYOUT_VERBOSE("Layout 2\n");
 
 	LayoutInput3 in;
-	in.ParentBaseline = xoPosNULL;
 	in.ParentWidth = xoIntToPos(Doc->UI.GetViewportWidth());
 	in.ParentHeight = xoIntToPos(Doc->UI.GetViewportHeight());
 	in.ParentRNode = &root;
@@ -143,18 +142,12 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 	childIn.ParentWidth = contentWidth;
 	childIn.ParentHeight = contentHeight;
 	childIn.ParentRNode = rnode;
-	childIn.ParentBaseline = xoPosNULL;
 	if (boxIn.NewFlowContext)
 		childIn.RestartPoints = &myRestartPoints;
 	else
 		childIn.RestartPoints = in.RestartPoints;
 
 	Boxer.BeginNode(boxIn);
-
-	// We only propagate baselines downward through to objects that define their own flow contexts. Doing it
-	// for spans etc just doesn't make sense. Too long to explain here - need to write a decent doc about it.
-	if (in.ParentBaseline != xoPosNULL && boxIn.NewFlowContext)
-		Boxer.SetBaseline(in.ParentBaseline - margin.Top - border.Top - padding.Top, -1);
 
 	intp istart = 0;
 	if (childIn.RestartPoints->size() != 0)
@@ -175,7 +168,6 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 
 	for (intp i = istart; i < node->ChildCount(); i++)
 	{
-		childIn.ParentBaseline = Boxer.GetBaseline();
 		LayoutOutput3 childOut;
 		const xoDomEl* c = node->ChildByIndex(i);
 		if (c->IsNode())

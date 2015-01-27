@@ -39,7 +39,6 @@ protected:
 	struct LayoutInput3
 	{
 		podvec<int32>*		RestartPoints;	// This is IN/OUT
-		xoPos				ParentBaseline;
 		xoRenderDomNode*	ParentRNode;
 		xoPos				ParentWidth;
 		xoPos				ParentHeight;
