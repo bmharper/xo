@@ -48,10 +48,10 @@ void DoBaselineAlignment(xoDoc* doc)
 
 	if (1)
 	{
-		root->ParseAppend("<div                  style='font-size: 38px; font-family: Microsoft Sans Serif; background: #fff0f0'>H</div>");
-		root->ParseAppend("<div class='baseline' style='font-size: 13px; font-family: Microsoft Sans Serif; background: #f0fff0'>ello.</div>");
-		//root->ParseAppend("<div class='baseline' style='font-size: 18px; font-family: Times New Roman; background: #f0f0ff'> More times at a smaller size.</div>");
-		root->ParseAppend("<span class='baseline' style='font-size: 18px; font-family: Times New Roman; background: #f0f0ff'> More times at a smaller size.</span>");
+		root->ParseAppend("<div                  style='font-size: 38px; font-family: Microsoft Sans Serif; background: #ffe0e0'>H</div>");
+		root->ParseAppend("<div class='baseline' style='font-size: 13px; font-family: Microsoft Sans Serif; background: #e0ffe0'>ello.</div>");
+		//root->ParseAppend("<div class='baseline' style='font-size: 18px; font-family: Times New Roman; background: #e0e0ff'> More times at a smaller size.</div>");
+		root->ParseAppend("<span class='baseline' style='font-size: 18px; font-family: Times New Roman; background: #e0e0ff'> More times at a smaller size.</span>");
 	}
 
 	// ramp of 'e' characters from 8 to 30 pixels
@@ -73,7 +73,7 @@ void DoBaselineAlignment_rev2(xoDoc* doc)
 {
 	auto root = &doc->Root;
 	xoString e;
-	int v = 6;
+	int v = 5;
 	if (v == 1)
 	{
 		// only 1 deep
@@ -153,6 +153,16 @@ void DoBaselineAlignment_rev2(xoDoc* doc)
 	}
 
 	XOASSERT(e == "");
+}
+
+void DoBaselineAlignment_DownPropagate(xoDoc* doc)
+{
+	// These examples were used when trying out downward baseline propagation with layout3.
+	// AHEM. I have abandoned downward baseline propagation, hopefully for the last time.
+	doc->Root.Parse(R"(
+		<div style='font-family: Times New Roman; background: #fcc; font-size: 35ep'>I just called</div>
+		<div style='font-family: Times New Roman; background: #fcf; font-size: 14ep'>to say hello</div>
+	)");
 }
 
 void DoBaselineAlignment_Multiline(xoDoc* doc)
@@ -257,7 +267,7 @@ void DoInlineFlow(xoDoc* doc)
 		doc->ClassParse("red", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #d00b; background: #fddb");
 		doc->ClassParse("blue", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #00d; background: #ddf");
 		//doc->Root.ParseAppend(R"(<div style='cursor: hand'>The dogge</div>)");
-		doc->Root.ParseAppend(R"(The quick <span style='color: #a00; background: #aaa; cursor: hand'>brown fox jumps</span> over)");
+		//doc->Root.ParseAppend(R"(The quick <span style='color: #a00; background: #aaa; cursor: hand'>brown fox jumps</span> over)");
 		//doc->Root.ParseAppend(R"(The slow quick fast one two three four five six seven eight nine <span class='red'>brown fox jumps</span> over)");
 		//doc->Root.ParseAppend(R"(The brown fox)");
 		//doc->Root.ParseAppend(R"(The <span class='red'>brown</span> fox)");
@@ -272,7 +282,7 @@ void DoInlineFlow(xoDoc* doc)
 		//	doc->Root.ParseAppend(R"(The slow quick fast brown Fox jumps over)");
 		//doc->Root.ParseAppend(R"(<span class='red'>brown</span> over)");
 		//doc->Root.ParseAppend(R"(<span class='red'>brown fox jumps</span> over)");
-		//doc->Root.ParseAppend(R"(Once upon a time, The quick <span class='red'><span class='blue'>brown fox jumps</span></span> over)");
+		doc->Root.ParseAppend(R"(Once upon a time, The quick <span class='red'><span class='blue'>brown fox jumps</span></span> over)");
 		//doc->Root.ParseAppend(R"(The <span class='red'>brown</span>)");
 		//doc->Root.ParseAppend(R"(The <span class='red'><span class='blue'>brown</span></span>)");
 		//doc->Root.ParseAppend(R"(<div style='cursor: hand'>blah!</div>)");
@@ -290,10 +300,10 @@ void DoBackupSettings(xoDoc* doc)
 	xoDomNode* root = &doc->Root;
 	root->StyleParse("font-family: Segoe UI; font-size: 12px;");
 	//root->StyleParse( "font-family: Audiowide; font-size: 12px;" );
-	doc->ClassParse("pad-light",		"background: #f8f8f8; width: 140ep; height: 10ep;");
-	doc->ClassParse("pad-dark",			"background: #efefef; width: 470ep; height: 10ep;");
-	doc->ClassParse("bg-light",			"color: #000; background: #f8f8f8; width: 140ep; height: 36ep; padding: 8ep;");
-	doc->ClassParse("bg-dark",			"color: #000; background: #efefef; width: 470ep; height: 36ep; padding: 8ep");
+	doc->ClassParse("pad-light",		"box-sizing: border; background: #f8f8f8; width: 140ep; height: 10ep;");
+	doc->ClassParse("pad-dark",			"box-sizing: border; background: #efefef; width: 470ep; height: 10ep;");
+	doc->ClassParse("bg-light",			"box-sizing: border; color: #000; background: #f8f8f8; width: 140ep; height: 36ep; padding: 8ep;");
+	doc->ClassParse("bg-dark",			"box-sizing: border; color: #000; background: #efefef; width: 470ep; height: 36ep; padding: 8ep");
 	doc->ClassParse("textbox",			"color: #000; background: #fff; padding: 3ep 3ep 3ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd; canfocus: true; cursor: text");
 	doc->ClassParse("textbox:focus",	"border: 1px #8888ee");
 	doc->ClassParse("button",			"color: #000; background: #ececec; margin: 6ep 0ep 6ep 0ep; padding: 14ep 3ep 14ep 3ep; border: 1px #bdbdbd; canfocus: true");
@@ -354,8 +364,9 @@ void InitDOM(xoDoc* doc)
 
 	//DoBorder(doc);
 	//DoBaselineAlignment( doc );
-	DoBaselineAlignment_rev2( doc );
+	//DoBaselineAlignment_rev2( doc );
 	//DoBaselineAlignment_Multiline( doc );
+	DoBaselineAlignment_DownPropagate(doc);
 	//DoTwoTextRects( doc );
 	//DoBlockMargins( doc );
 	//DoLongText( doc );

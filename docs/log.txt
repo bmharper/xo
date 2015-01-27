@@ -406,3 +406,23 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	sort of barely hanging onto understandability with the current management
 	of line boxes, but it might be much simpler if we forced line boxes as
 	proper elements that went into nodes.
+
+2015-01-26	Baseline alignment x3
+	Back in [2015-01-16] I noted that I was getting rid of propagating baseline
+	down into nodes. I am now going to try re-instating it, but only for nodes
+	that define their own flow. I suspect this is a useful compromise.
+
+2015-01-27	Early alignment
+	If one knows the content-width and content-height, then you can do alignment
+	immediately immediately after generating a child, instead of doing all
+	alignments after all children. This could be useful if you're aligning the
+	child that defines your baseline, so that subsequent children get the right
+	baseline. I'm wary of it because you'd have to document it, and people might
+	not understand it, and just be annoyed by the apparent inconsistency.
+
+2015-01-28	Baseline alignment x4
+	Dammit no. Propagating baselines down into nodes is a BAD IDEA. Don't ever
+	try that again. HTML doesn't do it. It's horribe. Look at the simple case
+	in does-baseline-propagate-downward.html to get a better understanding.
+	By propagating baseline downward you're introducing a nightmare of side
+	effects. Don't try it again!
