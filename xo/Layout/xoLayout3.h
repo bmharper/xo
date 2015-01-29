@@ -34,6 +34,11 @@ protected:
 		xoHorizontalBindings	HParent:	8;
 		xoVerticalBindings		VChild:		8;
 		xoVerticalBindings		VParent:	8;
+
+		xoVerticalBindings		VChildTop : 8;
+		xoVerticalBindings		VChildCenter : 8;
+		xoVerticalBindings		VChildBottom : 8;
+		xoVerticalBindings		VChildBaseline : 8;
 	};
 
 	struct LayoutInput3
@@ -52,6 +57,7 @@ protected:
 		xoPos				Baseline;		// This is given in the coordinate system of the parent
 		xoRenderDomEl*		RNode;
 		xoBreakType			Break;
+		xoPos				BaselineInParent() const;
 	};
 
 	struct LayoutInput
@@ -141,7 +147,7 @@ protected:
 	void		LayoutInternal(xoRenderDomNode& root);
 	void		RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOutput3& out);
 	void		RunText3(const xoDomText* node, const LayoutInput3& in, LayoutOutput3& out);
-	xoPoint		PositionChildFromBindings(const LayoutInput3& cin, xoPos parentBaseline, const LayoutOutput3& cout);
+	xoPoint		PositionChildFromBindings(const LayoutInput3& cin, xoPos parentBaseline, LayoutOutput3& cout);
 	void		GenerateTextWords(TextRunState& ts);
 	void		FinishTextRNode(TextRunState& ts, xoRenderDomText* rnode, intp numChars);
 	void		OffsetTextHorz(TextRunState& ts, xoPos offsetHorz, intp numChars);
@@ -156,13 +162,14 @@ protected:
 	xoPos		HoriAdvance(const xoGlyph* glyph, const TextRunState& ts);
 
 	static xoPos			HBindOffset(xoHorizontalBindings bind, xoPos width);
-	static xoPos			VBindOffset(xoVerticalBindings bind, xoPos baseline, xoPos height);
+	static xoPos			VBindOffset(xoVerticalBindings bind, xoPos top, xoPos baseline, xoPos height);
 	static bool				IsSpace(int ch);
 	static bool				IsLinebreak(int ch);
 	static xoGlyphCacheKey	MakeGlyphCacheKey(xoRenderDomText* rnode);
 	static xoGlyphCacheKey	MakeGlyphCacheKey(const TextRunState& ts);
 	static xoGlyphCacheKey	MakeGlyphCacheKey(bool isSubPixel, xoFontID fontID, int fontSizePx);
 	static bool				IsAllZeros(const podvec<int32>& list);
+	static void				MoveTop(xoRenderDomEl* relem, xoPos delta);
 
 	static bool				IsDefined(xoPos p)	{ return p != xoPosNULL; }
 	static bool				IsNull(xoPos p)		{ return p == xoPosNULL; }
@@ -183,4 +190,23 @@ protected:
 		const char* Txt;
 		int32		Pos;
 	};
+
+	// This helps make the binding code a lot less repetitive.
+	class VBindHelper
+	{
+	public:
+		xoPos ParentHeight;
+		xoPos ParentBaseline;
+		xoPos ChildTop;
+		xoPos ChildHeight;
+		xoPos ChildBaseline;
+
+ 		VBindHelper(xoPos parentHeight, xoPos parentBaseline, xoPos childTop, xoPos childHeight, xoPos childBaseline) :
+			ParentHeight(parentHeight), ParentBaseline(parentBaseline), ChildTop(childTop), ChildHeight(childHeight), ChildBaseline(childBaseline) {}
+
+		xoPos Parent(xoVerticalBindings bind);
+		xoPos Child(xoVerticalBindings bind);
+		xoPos Delta(xoVerticalBindings parent, xoVerticalBindings child);
+	};
+
 };

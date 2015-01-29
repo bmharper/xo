@@ -9,10 +9,10 @@ void InitDOM(xoDoc* doc);
 void xoMain(xoSysWnd* wnd)
 {
 	xoGlobal()->FontStore->AddFontDirectory("C:\\temp\\fonts");
-	int left = -360;
-	int width = 350;
+	int left = -750;
+	int width = 700;
 	int top = 60;
-	int height = 200;
+	int height = 300;
 	wnd->SetPosition(xoBox(left, top, left + width, top + height), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size);   // DO NOT COMMIT ME
 	InitDOM(wnd->Doc());
 }
@@ -302,8 +302,9 @@ void DoBackupSettings(xoDoc* doc)
 	//root->StyleParse( "font-family: Audiowide; font-size: 12px;" );
 	doc->ClassParse("pad-light",		"box-sizing: border; background: #f8f8f8; width: 140ep; height: 10ep;");
 	doc->ClassParse("pad-dark",			"box-sizing: border; background: #efefef; width: 470ep; height: 10ep;");
-	doc->ClassParse("bg-light",			"box-sizing: border; color: #000; background: #f8f8f8; width: 140ep; height: 50ep; padding: 8ep;");
-	doc->ClassParse("bg-dark",			"box-sizing: border; color: #000; background: #efefef; width: 470ep; height: 50ep; padding: 10ep;");
+	doc->ClassParse("bg-light",			"box-sizing: border; color: #000; background: #08f8f8; width: 140ep; height: 50ep; padding: 8ep;");
+	//doc->ClassParse("bg-dark",			"box-sizing: border; color: #000; background: #0fefef; width: 470ep; height: 50ep; padding: 10ep;");
+	doc->ClassParse("bg-dark",			"box-sizing: border; color: #000; background: #0fefef; width: 470ep; top: top; bottom: bottom");
 	doc->ClassParse("textbox",			"color: #000; background: #fff; padding: 5ep 3ep 5ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd; canfocus: true; cursor: text");
 	doc->ClassParse("textbox:focus",	"border: 1px #8888ee");
 	doc->ClassParse("button",			"color: #000; background: #ececec; margin: 6ep 0ep 6ep 0ep; padding: 14ep 3ep 14ep 3ep; border: 1px #bdbdbd; canfocus: true");
@@ -333,8 +334,8 @@ void DoBackupSettings(xoDoc* doc)
 	};
 
 	addLine("Backup from");
-	addLine("Backup to");
-	addLine("Description");
+	//addLine("Backup to");
+	//addLine("Description");
 	
 	root->ParseAppend(horzPadder);
 }

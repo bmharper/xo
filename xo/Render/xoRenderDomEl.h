@@ -4,6 +4,9 @@
 #include "../xoMem.h"
 
 class xoRenderStack;
+class xoRenderDomEl;
+class xoRenderDomNode;
+class xoRenderDomText;
 
 struct XOAPI xoRenderCharEl
 {
@@ -13,6 +16,8 @@ struct XOAPI xoRenderCharEl
 };
 
 // Element that is ready for rendering
+// It's kinda nice that these objects don't have a vtable, because it saves a few bytes on each one,
+// but I guess if you need it, then go ahead and add it. But if you can do it statically, then.. do it statically.
 class XOAPI xoRenderDomEl
 {
 public:
@@ -25,6 +30,9 @@ public:
 	bool IsNode() const		{ return Tag != xoTagText; }
 	bool IsText() const		{ return Tag == xoTagText; }
 	bool IsCanvas() const	{ return Tag == xoTagCanvas; }
+
+	xoRenderDomNode* ToNode() { return Tag == xoTagText ? nullptr : reinterpret_cast<xoRenderDomNode*>(this); }
+	xoRenderDomText* ToText() { return Tag == xoTagText ? reinterpret_cast<xoRenderDomText*>(this) : nullptr; }
 };
 
 class XOAPI xoRenderDomNode : public xoRenderDomEl

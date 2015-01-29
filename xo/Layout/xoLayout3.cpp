@@ -184,7 +184,7 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 
 		if (!isRestarting || !isRestartAllZeroes)
 		{
-			Boxer.SetBaseline(childOut.Baseline, (int) childOuts.Size());
+			Boxer.SetBaseline(childOut.BaselineInParent(), (int) childOuts.Size());
 			childOuts.Push(childOut);
 
 			if (childOut.Break == xoBreakAfter)
@@ -268,7 +268,7 @@ void xoLayout3::RunNode3(const xoDomNode* node, const LayoutInput3& in, LayoutOu
 	xoPos myBaseline = Boxer.GetLineFromPreviousNode(0)->InnerBaseline;
 
 	if (myBaseline != xoPosNULL)
-		out.Baseline = myBaseline + rnode->Pos.Top;	// we emit baseline in the coordinate system of our parent
+		out.Baseline = myBaseline; // +rnode->Pos.Top;	// we emit baseline in the coordinate system of our parent
 	else
 		out.Baseline = xoPosNULL;
 
@@ -559,18 +559,97 @@ xoPos xoLayout3::MeasureWord(const char* txt, const xoFont* font, xoPos fontAsce
 	return posX;
 }
 
-xoPoint xoLayout3::PositionChildFromBindings(const LayoutInput3& cin, xoPos parentBaseline, const LayoutOutput3& cout)
+xoPoint xoLayout3::PositionChildFromBindings(const LayoutInput3& cin, xoPos parentBaseline, LayoutOutput3& cout)
 {
-	xoPoint child, parent;
-	child.X = HBindOffset(cout.Binds.HChild, cout.MarginBoxWidth);
-	child.Y = VBindOffset(cout.Binds.VChild, cout.Baseline, cout.MarginBoxHeight);
-	parent.X = HBindOffset(cout.Binds.HParent, cin.ParentWidth);
-	parent.Y = VBindOffset(cout.Binds.VParent, parentBaseline, cin.ParentHeight);
-	xoPoint offset;
-	if (IsDefined(parent.X) && IsDefined(child.X)) offset.X = parent.X - child.X;
-	if (IsDefined(parent.Y) && IsDefined(child.Y)) offset.Y = parent.Y - child.Y;
-	cout.RNode->Pos.Offset(offset);
-	return offset;
+	if (0)
+	{
+		if (cout.RNode->InternalID == 12)
+			int adsdds = 1221;
+		xoPoint child, parent;
+		child.X = HBindOffset(cout.Binds.HChild, cout.MarginBoxWidth);
+		child.Y = VBindOffset(cout.Binds.VChild, cout.RNode->Pos.Top, cout.Baseline, cout.MarginBoxHeight);
+		parent.X = HBindOffset(cout.Binds.HParent, cin.ParentWidth);
+		parent.Y = VBindOffset(cout.Binds.VParent, 0, parentBaseline, cin.ParentHeight);
+		xoPoint offset;
+		if (IsDefined(parent.X) && IsDefined(child.X)) offset.X = parent.X - child.X;
+		if (IsDefined(parent.Y) && IsDefined(child.Y)) offset.Y = parent.Y - child.Y;
+
+		cout.RNode->Pos.Offset(offset);
+		return offset;
+	}
+	else
+	{
+		xoPoint retval(0, 0);
+		VBindHelper helperV(cin.ParentHeight, parentBaseline, cout.RNode->Pos.Top, cout.MarginBoxHeight, cout.Baseline);
+
+		xoPoint child, parent;
+		child.X = HBindOffset(cout.Binds.HChild, cout.MarginBoxWidth);
+		//child.Y = VBindOffset(cout.Binds.VChild, cout.Baseline, cout.MarginBoxHeight);
+		parent.X = HBindOffset(cout.Binds.HParent, cin.ParentWidth);
+		//parent.Y = VBindOffset(cout.Binds.VParent, parentBaseline, cin.ParentHeight);
+		xoPoint offset;
+		if (IsDefined(parent.X) && IsDefined(child.X)) offset.X = parent.X - child.X;
+		//if (IsDefined(parent.Y) && IsDefined(child.Y)) offset.Y = parent.Y - child.Y;
+
+		if (cout.RNode->InternalID == 9)
+			int adasdasdwew = 1221;
+
+		xoPos moveY = 0;
+		xoPos parentMoveY = xoPosNULL;
+		xoPos childMoveY = xoPosNULL;
+		
+		// If either VCenter or Baseline were bound, then move the child to the binding point
+		moveY = helperV.Delta(cout.Binds.VChildBaseline, xoVerticalBindingBaseline);
+		if (moveY == 0)
+			moveY = helperV.Delta(cout.Binds.VChildCenter, xoVerticalBindingCenter);
+
+		if (moveY != 0)
+		{
+			cout.RNode->Pos.Offset(0, moveY);
+			helperV.ChildTop += moveY;
+		}
+
+		retval.Y = moveY;
+
+		if (cout.Binds.VChildTop != xoVerticalBindingNULL)
+			int krelreker = 232;
+
+		xoPos topDelta = helperV.Delta(cout.Binds.VChildTop, xoVerticalBindingTop);
+		xoPos bottomDelta = helperV.Delta(cout.Binds.VChildBottom, xoVerticalBindingBottom);
+		if (topDelta != 0)
+		{
+			if (moveY || bottomDelta != 0)
+			{
+				// stretch to top. don't change absolute position of children of cout.RNode
+				MoveTop(cout.RNode, topDelta);
+				cout.Baseline -= topDelta;
+				helperV.ChildTop += topDelta;
+				helperV.ChildHeight -= topDelta;
+				helperV.ChildBaseline -= topDelta;
+			}
+			else
+			{
+				// Move to top
+				cout.RNode->Pos.Offset(0, topDelta);
+			}
+		}
+
+		if (bottomDelta != 0)
+		{
+			if (moveY || topDelta != 0)
+			{
+				// stretch to bottom. since we're not changing our reference frame, this is simpler than stretching the top
+				cout.RNode->Pos.Bottom += bottomDelta;
+			}
+			else
+			{
+				// Move to bottom
+				cout.RNode->Pos.Offset(0, bottomDelta);
+			}
+		}
+
+		return retval;
+	}
 }
 
 xoPos xoLayout3::ComputeDimension(xoPos container, xoStyleCategories cat)
@@ -632,6 +711,11 @@ xoLayout3::BindingSet xoLayout3::ComputeBinds()
 	if (bottom != xoVerticalBindingNULL)		{ binds.VChild = xoVerticalBindingBottom; binds.VParent = bottom; }
 	if (baseline != xoVerticalBindingNULL)		{ binds.VChild = xoVerticalBindingBaseline; binds.VParent = baseline; }
 
+	binds.VChildTop = top;
+	binds.VChildCenter = vcenter;
+	binds.VChildBottom = bottom;
+	binds.VChildBaseline = baseline;
+
 	return binds;
 }
 
@@ -657,17 +741,17 @@ xoPos xoLayout3::HBindOffset(xoHorizontalBindings bind, xoPos width)
 	}
 }
 
-xoPos xoLayout3::VBindOffset(xoVerticalBindings bind, xoPos baseline, xoPos height)
+xoPos xoLayout3::VBindOffset(xoVerticalBindings bind, xoPos top, xoPos baseline, xoPos height)
 {
 	switch (bind)
 	{
 	case xoVerticalBindingNULL:
-	case xoVerticalBindingTop:		return 0;
-	case xoVerticalBindingCenter:	return height / 2;
-	case xoVerticalBindingBottom:	return height;
+	case xoVerticalBindingTop:		return top;
+	case xoVerticalBindingCenter:	return top + height / 2;
+	case xoVerticalBindingBottom:	return top + height;
 	case xoVerticalBindingBaseline:
 		if (IsDefined(baseline))
-			return baseline;
+			return top + baseline;
 		else
 		{
 			// This occurs often enough that it's not too noisy to be useful
@@ -717,6 +801,28 @@ bool xoLayout3::IsAllZeros(const podvec<int32>& list)
 	return true;
 }
 
+void xoLayout3::MoveTop(xoRenderDomEl* relem, xoPos delta)
+{
+	relem->Pos.Top += delta;
+
+	xoRenderDomNode* rnode = relem->ToNode();
+	if (rnode != nullptr)
+	{
+		for (intp i = 0; i < rnode->Children.size(); i++)
+			rnode->Children[i]->Pos.Offset(0, -delta);
+	}
+	else
+	{
+		// do we need to do anything here?
+		//xoRenderDomText* rtxt = relem->ToText();
+	}
+}
+
+xoPos xoLayout3::LayoutOutput3::BaselineInParent() const
+{
+	return Baseline == xoPosNULL ? xoPosNULL : Baseline + RNode->Pos.Top;
+}
+
 xoLayout3::Chunker::Chunker(const char* txt) :
 	Txt(txt),
 	Pos(0)
@@ -760,4 +866,24 @@ bool xoLayout3::Chunker::Next(Chunk& c)
 	}
 	c.End = Pos;
 	return true;
+}
+
+xoPos xoLayout3::VBindHelper::Parent(xoVerticalBindings bind)
+{
+	return xoLayout3::VBindOffset(bind, 0, ParentBaseline, ParentHeight);
+}
+
+xoPos xoLayout3::VBindHelper::Child(xoVerticalBindings bind)
+{
+	return xoLayout3::VBindOffset(bind, ChildTop, ChildBaseline, ChildHeight);
+}
+
+xoPos xoLayout3::VBindHelper::Delta(xoVerticalBindings parent, xoVerticalBindings child)
+{
+	if (parent == xoVerticalBindingNULL || child == xoVerticalBindingNULL)
+		return 0;
+	xoPos p = Parent(parent);
+	xoPos c = Child(child);
+	if (IsDefined(p) && IsDefined(c)) return p - c;
+	return 0;
 }
