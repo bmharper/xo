@@ -12,7 +12,7 @@ void xoMain(xoSysWnd* wnd)
 	int left = -750;
 	int width = 700;
 	int top = 60;
-	int height = 300;
+	int height = 500;
 	wnd->SetPosition(xoBox(left, top, left + width, top + height), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size);   // DO NOT COMMIT ME
 	InitDOM(wnd->Doc());
 }
@@ -73,7 +73,7 @@ void DoBaselineAlignment_rev2(xoDoc* doc)
 {
 	auto root = &doc->Root;
 	xoString e;
-	int v = 6;
+	int v = 3;
 	if (v == 1)
 	{
 		// only 1 deep
@@ -84,39 +84,6 @@ void DoBaselineAlignment_rev2(xoDoc* doc)
 			);
 	}
 	else if (v == 2)
-	{
-		// inner element's size comes from text impostor
-		e = root->Parse(
-				"<div style='width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep'>"
-				"	<lab style='hcenter: hcenter; vcenter: vcenter; background: #faa;'>"
-				"		<div style='width: 80ep; height: 50ep; background: #eee'/>"
-				"	</lab>"
-				"</div>"
-			);
-	}
-	else if (v == 3)
-	{
-		// inner element's size comes from text
-		e = root->Parse(
-				"<div style='width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep'>"
-				"	<lab style='hcenter: hcenter; vcenter: vcenter; background: #faa;'>Hello\nWorld!</lab>"
-				"</div>"
-			);
-	}
-	else if (v == 4)
-	{
-		// two text elements beneath each other, centered horizontally
-		// txtContainer needs two passes over its children, so that it can center them horizontally, after it knows its own width.
-		e = root->Parse(
-				"<div style='width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep'>"
-				"	<div style='hcenter: hcenter; vcenter: vcenter; background: #faa;'>"
-				"		<lab style='hcenter: hcenter; background: #cfc; break: after'>Hello</lab>"
-				"		<lab style='hcenter: hcenter; background: #cfc;'>&lt;World&gt;</lab>"
-				"	</div>"
-				"</div>"
-			);
-	}
-	else if (v == 5)
 	{
 		// This creates 2 blocks in a row.
 		// The first block has 20ep text, and the second block has 10ep text.
@@ -139,7 +106,7 @@ void DoBaselineAlignment_rev2(xoDoc* doc)
 		<edit>
 		*/
 	}
-	else if (v == 6)
+	else if (v == 3)
 	{
 		// this is like 5, but changed to work with layout3
 		e = root->Parse(
@@ -182,6 +149,70 @@ void DoBaselineAlignment_Multiline(xoDoc* doc)
 		"<div class='big baseline'            >Line 2, text item A</div><div class='small baseline breakafter'>Line 2, text item B (break after)</div>"
 		"<div class='big baseline'            >Line 3, text item A</div><div class='small baseline breakafter'>Line 3, text item B (break after)</div>"
 	);
+}
+
+void DoCenter(xoDoc* doc)
+{
+	auto root = &doc->Root;
+	xoString e;
+	int v = 3;
+	if (v == 1)
+	{
+		// inner element's size comes from text impostor
+		e = root->Parse(
+			"<div style='width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep'>"
+			"	<lab style='hcenter: hcenter; vcenter: vcenter; background: #faa;'>"
+			"		<div style='width: 80ep; height: 50ep; background: #eee'/>"
+			"	</lab>"
+			"</div>"
+			);
+	}
+	else if (v == 2)
+	{
+		// inner element's size comes from text
+		e = root->Parse(
+			"<div style='width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep'>"
+			"	<lab style='hcenter: hcenter; vcenter: vcenter; background: #faa;'>Hello\nWorld!</lab>"
+			"</div>"
+			);
+	}
+	else if (v == 3)
+	{
+		// two text elements beneath each other, centered horizontally
+		// txtContainer needs two passes over its children, so that it can center them horizontally, after it knows its own width.
+		e = root->Parse(
+			"<div style='width: 140ep; height: 70ep; box-sizing: margin; background: #ddd; margin: 0 5ep 0 5ep'>"
+			"	<div style='hcenter: hcenter; vcenter: vcenter; background: #faa;'>"
+			"		<lab style='hcenter: hcenter; background: #cfc; break: after'>Hello</lab>"
+			"		<lab style='hcenter: hcenter; background: #cfc;'>&lt;World&gt;</lab>"
+			"	</div>"
+			"</div>"
+			);
+	}
+}
+
+void DoHCenter(xoDoc* doc)
+{
+	doc->ClassParse("h-outer", "width: 140ep; height: 70ep; background: #fef; border: 1px #0008; margin: 1ep");
+	doc->ClassParse("v-outer", "width: 140ep; height: 70ep; background: #ffe; border: 1px #0008; margin: 1ep");
+	doc->ClassParse("h-inner", "vcenter: vcenter; background: #faa");
+	doc->ClassParse("v-inner", "hcenter: hcenter; baseline: none; background: #faa;"); // note that we need to remove 'baseline' from <div>
+	doc->Root.ParseAppend(
+		"<div class='h-outer'><lab class='h-inner' style='hcenter: hcenter; left: left'>stretch left</lab></div>"
+		"<div class='h-outer'><lab class='h-inner' style='hcenter: hcenter; right: right'>stretch right</lab></div>"
+		"<div class='h-outer'><lab class='h-inner' style='hcenter: hcenter; left: left; right: right'>stretch both 1</lab></div>"
+		"<div class='h-outer'><lab class='h-inner' style='left: left; right: right'>stretch both 2</lab></div>"
+		"<div class='h-outer'><lab class='h-inner' style='left: left'>move left (identity)</lab></div>"
+		"<div class='h-outer'><lab class='h-inner' style='right: right'>move right</lab></div>"
+		);
+	doc->Root.ParseAppend(
+		"<div class='v-outer'><lab class='v-inner' style='vcenter: vcenter; top: top'>stretch top</lab></div>"
+		"<div class='v-outer'><lab class='v-inner' style='vcenter: vcenter; bottom: bottom'>stretch bottom</lab></div>"
+		"<div class='v-outer'><lab class='v-inner' style='vcenter: vcenter; top: top; bottom: bottom'>stretch both</lab></div>"
+		"<div class='v-outer'><lab class='v-inner' style='top: top'>move top (identity)</lab></div>"
+		"<div class='v-outer'><lab class='v-inner' style='bottom: bottom'>move bottom</lab></div>"	
+		"<div class='v-outer'><lab class='v-inner' style='top: top; bottom: bottom'>stretch</lab></div>"
+		);
 }
 
 void DoTwoTextRects(xoDoc* doc)
@@ -334,8 +365,8 @@ void DoBackupSettings(xoDoc* doc)
 	};
 
 	addLine("Backup from");
-	//addLine("Backup to");
-	//addLine("Description");
+	addLine("Backup to");
+	addLine("Description");
 	
 	root->ParseAppend(horzPadder);
 }
@@ -368,6 +399,9 @@ void InitDOM(xoDoc* doc)
 	//DoBaselineAlignment_rev2( doc );
 	//DoBaselineAlignment_Multiline( doc );
 	//DoBaselineAlignment_DownPropagate(doc);
+	//DoCenter(doc);
+	//DoHCenter(doc);
+	//DoVCenter(doc);
 	//DoTwoTextRects( doc );
 	//DoBlockMargins( doc );
 	//DoLongText( doc );

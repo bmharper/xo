@@ -955,6 +955,7 @@ XOAPI bool xoParseTextAlignVertical(const char* s, intp len, xoTextAlignVertical
 
 XOAPI bool xoParseHorizontalBinding(const char* s, intp len, xoHorizontalBindings& t)
 {
+	if (MATCH(s, 0, len, "none"))		{ t = xoHorizontalBindingNULL; return true; }
 	if (MATCH(s, 0, len, "left"))		{ t = xoHorizontalBindingLeft; return true; }
 	if (MATCH(s, 0, len, "hcenter"))	{ t = xoHorizontalBindingCenter; return true; }
 	if (MATCH(s, 0, len, "right"))		{ t = xoHorizontalBindingRight; return true; }
@@ -963,6 +964,7 @@ XOAPI bool xoParseHorizontalBinding(const char* s, intp len, xoHorizontalBinding
 
 XOAPI bool xoParseVerticalBinding(const char* s, intp len, xoVerticalBindings& t)
 {
+	if (MATCH(s, 0, len, "none"))		{ t = xoVerticalBindingNULL; return true; }
 	if (MATCH(s, 0, len, "top"))		{ t = xoVerticalBindingTop; return true; }
 	if (MATCH(s, 0, len, "vcenter"))	{ t = xoVerticalBindingCenter; return true; }
 	if (MATCH(s, 0, len, "bottom"))		{ t = xoVerticalBindingBottom; return true; }

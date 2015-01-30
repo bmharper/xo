@@ -30,10 +30,9 @@ protected:
 	// Packed set of bindings between child and parent node
 	struct BindingSet
 	{
-		xoHorizontalBindings	HChild:		8;
-		xoHorizontalBindings	HParent:	8;
-		xoVerticalBindings		VChild:		8;
-		xoVerticalBindings		VParent:	8;
+		xoHorizontalBindings	HChildLeft : 8;
+		xoHorizontalBindings	HChildCenter : 8;
+		xoHorizontalBindings	HChildRight : 8;
 
 		xoVerticalBindings		VChildTop : 8;
 		xoVerticalBindings		VChildCenter : 8;
@@ -58,33 +57,6 @@ protected:
 		xoRenderDomEl*		RNode;
 		xoBreakType			Break;
 		xoPos				BaselineInParent() const;
-	};
-
-	struct LayoutInput
-	{
-		xoPos			ParentWidth;
-		xoPos			ParentHeight;
-		xoPos			OuterBaseline;
-	};
-
-	struct LayoutOutput
-	{
-		BindingSet		Binds;
-		xoPos			NodeWidth;
-		xoPos			NodeHeight;
-		xoPos			NodeBaseline;
-		xoBreakType		Break: 2;		// Keep in mind that you need to mask this off against 3 (ie if (x.Break & 3 == xoBreakAfter)), because of sign extension. ie enums are signed.
-		//xoPositionType	Position: 3;
-		xoBreakType		GetBreak() const		{ return xoBreakType(Break & 3); }
-		//xoPositionType	GetPosition() const		{ return xoPositionType(Position & 7); }
-	};
-
-	struct Word
-	{
-		xoPos	Width;
-		int32	Start;
-		int32	End;
-		int32	Length() const { return End - Start; }
 	};
 
 	enum ChunkType
@@ -161,7 +133,7 @@ protected:
 
 	xoPos		HoriAdvance(const xoGlyph* glyph, const TextRunState& ts);
 
-	static xoPos			HBindOffset(xoHorizontalBindings bind, xoPos width);
+	static xoPos			HBindOffset(xoHorizontalBindings bind, xoPos left, xoPos width);
 	static xoPos			VBindOffset(xoVerticalBindings bind, xoPos top, xoPos baseline, xoPos height);
 	static bool				IsSpace(int ch);
 	static bool				IsLinebreak(int ch);
@@ -169,7 +141,7 @@ protected:
 	static xoGlyphCacheKey	MakeGlyphCacheKey(const TextRunState& ts);
 	static xoGlyphCacheKey	MakeGlyphCacheKey(bool isSubPixel, xoFontID fontID, int fontSizePx);
 	static bool				IsAllZeros(const podvec<int32>& list);
-	static void				MoveTop(xoRenderDomEl* relem, xoPos delta);
+	static void				MoveLeftTop(xoRenderDomEl* relem, xoPoint delta);
 
 	static bool				IsDefined(xoPos p)	{ return p != xoPosNULL; }
 	static bool				IsNull(xoPos p)		{ return p == xoPosNULL; }
@@ -191,7 +163,7 @@ protected:
 		int32		Pos;
 	};
 
-	// This helps make the binding code a lot less repetitive.
+	// These helpers make the binding code a lot less repetitive.
 	class VBindHelper
 	{
 	public:
@@ -207,6 +179,21 @@ protected:
 		xoPos Parent(xoVerticalBindings bind);
 		xoPos Child(xoVerticalBindings bind);
 		xoPos Delta(xoVerticalBindings parent, xoVerticalBindings child);
+	};
+
+	class HBindHelper
+	{
+	public:
+		xoPos ParentWidth;
+		xoPos ChildLeft;
+		xoPos ChildWidth;
+
+		HBindHelper(xoPos parentWidth, xoPos childLeft, xoPos childWidth) :
+			ParentWidth(parentWidth), ChildLeft(childLeft), ChildWidth(childWidth) {}
+
+		xoPos Parent(xoHorizontalBindings bind);
+		xoPos Child(xoHorizontalBindings bind);
+		xoPos Delta(xoHorizontalBindings parent, xoHorizontalBindings child);
 	};
 
 };
