@@ -84,11 +84,6 @@ inline int32	xoPosRoundDown(int32 pos)		{ return pos & ~xoPosMask; }
 inline int32	xoPosRoundUp(int32 pos)		{ return pos + ((1 << xoPosShift) - 1) & ~xoPosMask; }
 inline float	xoRound(float real)			{ return floor(real + 0.5f); }
 
-// These purposefully do not pass by reference, because of this: http://randomascii.wordpress.com/2013/11/24/stdmin-causing-three-times-slowdown-on-vc/
-template<typename T>	T xoClamp(T v, T vmin, T vmax)	{ return (v < vmin) ? vmin : (v > vmax) ? vmax : v; }
-template<typename T>	T xoMin(T a, T b)					{ return a < b ? a : b; }
-template<typename T>	T xoMax(T a, T b)					{ return a < b ? b : a; }
-
 enum xoCloneFlags
 {
 	xoCloneFlagEvents = 1,		// Include events in clone

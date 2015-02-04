@@ -124,8 +124,10 @@ xo/Render/xoRenderGL.h
 xo/Render/xoRenderStack.h
 xo/Render/xoStyleResolve.h
 xo/Render/xoTextureAtlas.h
+xo/Layout/xoBoxLayout3.h
 xo/Layout/xoLayout.h
 xo/Layout/xoLayout2.h
+xo/Layout/xoLayout3.h
 xo/Layout/xoTextLayout.h
 xo/Parse/xoDocParser.h
 
@@ -148,8 +150,10 @@ xo/Dom/xoDomCanvas.cpp
 xo/Image/xoImage.cpp
 xo/Image/xoImageStore.cpp
 xo/Canvas/xoCanvas2D.cpp
+xo/Layout/xoBoxLayout3.cpp
 xo/Layout/xoLayout.cpp
 xo/Layout/xoLayout2.cpp
+xo/Layout/xoLayout3.cpp
 xo/Layout/xoTextLayout.cpp
 xo/Parse/xoDocParser.cpp
 xo/Render/xoRenderBase.cpp
