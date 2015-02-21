@@ -94,7 +94,7 @@ const char* xoDXProg_Rect::VertSrc()
 		"	output.color = fromSRGB(vertex.color);\n"
 		"	return output;\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoDXProg_Rect::FragSrc()
@@ -223,7 +223,7 @@ const char* xoDXProg_Rect::FragSrc()
 		"	output.a = mycolor.a * clamp(radius_out - dist_out, 0.0f, 1.0f);\n"
 		"	return premultiply(output);\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoDXProg_Rect::Name()

@@ -3,10 +3,10 @@
 
 #include "../../Render/xoRenderGL_Defs.h"
 
-class xoGLProg_Curve : public xoGLProg
+class xoGLProg_Rect2 : public xoGLProg
 {
 public:
-	xoGLProg_Curve();
+	xoGLProg_Rect2();
 	virtual void			Reset();
 	virtual const char*		VertSrc();
 	virtual const char*		FragSrc();
@@ -18,7 +18,15 @@ public:
 	GLint v_mvproj;           // uniform mat4
 	GLint v_vpos;             // attribute vec4
 	GLint v_vcolor;           // attribute vec4
-	GLint v_vtexuv0;          // attribute vec2
+	GLint v_vradius;          // attribute float
+	GLint v_vborder_width;    // attribute float
+	GLint v_vborder_color;    // attribute vec4
+	GLint v_vport_hsize;      // uniform vec2
+	GLint v_out_vector;       // uniform vec2
+	GLint v_shadow_offset;    // uniform vec2
+	GLint v_shadow_color;     // uniform vec4
+	GLint v_shadow_size_inv;  // uniform float
+	GLint v_edges;            // uniform vec2
 };
 
 #endif // XO_BUILD_OPENGL

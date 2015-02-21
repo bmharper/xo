@@ -48,6 +48,12 @@ void xoRenderer::RenderEl(xoPoint base, const xoRenderDomEl* el)
 
 void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 {
+	//if (node->Style.BackgroundColor == xoColor::RGBA(0xff, 0xf0, 0xf0, 0xff))
+	//{
+	//	RenderCubic(base, node);
+	//	return;
+	//}
+
 	// always shade rectangles well
 	const bool alwaysGoodRects = true;
 
@@ -56,13 +62,15 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 	pos.Offset(base);
 	xoBoxF border = style->BorderSize.ToRealBox();
 	xoBoxF padding = style->Padding.ToRealBox();
-	float bottom = xoPosToReal(pos.Bottom) + border.Bottom + padding.Bottom;
 	float top = xoPosToReal(pos.Top) - border.Top - padding.Top;
+	float bottom = xoPosToReal(pos.Bottom) + border.Bottom + padding.Bottom;
 	float left = xoPosToReal(pos.Left) - border.Left - padding.Left;
 	float right = xoPosToReal(pos.Right) + border.Right + padding.Right;
 
 	float radius = style->BorderRadius;
 	bool useRectShader = alwaysGoodRects || radius != 0;
+	// I only tried out rect2 shader on OpenGL, and then went ahead to try Blinn/Loop rendering.
+	bool useRect2Shader = false; // strcmp(Driver->RendererName(), "OpenGL") == 0;
 
 	float width = right - left;
 	float height = bottom - top;
@@ -81,7 +89,9 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		padU = pad / width;
 		padV = pad / height;
 	}
-
+	 
+	// Vertex ordering: 0 3
+	//                  1 2 
 	xoVx_PTC corners[4];
 	corners[0].Pos = XOVEC3(left - pad, top - pad, 0);
 	corners[1].Pos = XOVEC3(left - pad, bottom + pad, 0);
@@ -102,13 +112,71 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		for (int i = 0; i < 4; i++)
 			corners[i].Color = bg.GetRGBA();
 
-		if (useRectShader)
+		if (useRect2Shader)
+		{
+			Driver->ActivateShader(xoShaderRect2);
+			xoVec2f center = XOVEC2((left + right) / 2.0f,(top + bottom) / 2.0f);
+			xoVx_PTCV4 quads[4];
+			quads[0].PTC = corners[0];
+			quads[1].PTC = corners[1];
+			quads[2].PTC = corners[2];
+			quads[3].PTC = corners[3];
+			for (int i = 0; i < 4; i++)
+			{
+				quads[i].Color2 = style->BorderColor.GetRGBA();
+				quads[i].UV.x = radius;
+				quads[i].UV.y = border.Left;
+			}
+
+			Driver->ShaderPerObject.ShadowColor = xoVec4f(0, 0, 0, 0);
+			Driver->ShaderPerObject.ShadowOffset = xoVec2f(0, 0);
+			Driver->ShaderPerObject.ShadowSizeInv = 0;
+
+			// top-left
+			Driver->ShaderPerObject.Edges = xoVec2f(left, top);
+			Driver->ShaderPerObject.OutVector = xoVec2f(-1, -1);
+			quads[0].Pos.vec2 = corners[0].Pos.vec2;
+			quads[1].Pos.vec2 = XOVEC2(corners[1].Pos.x, center.y);
+			quads[2].Pos.vec2 = XOVEC2(center.x, center.y);
+			quads[3].Pos.vec2 = XOVEC2(center.x, corners[3].Pos.y);
+			quads[0].UV.y = border.Left;
+			quads[1].UV.y = border.Left;
+			quads[2].UV.y = border.Left;
+			quads[3].UV.y = border.Left;
+			Driver->DrawQuad(quads);
+
+			// top-right
+			Driver->ShaderPerObject.Edges = xoVec2f(right, top);
+			Driver->ShaderPerObject.OutVector = xoVec2f(1, -1);
+			quads[0].Pos.vec2 = XOVEC2(center.x, corners[0].Pos.y);
+			quads[1].Pos.vec2 = XOVEC2(center.x, center.y);
+			quads[2].Pos.vec2 = XOVEC2(corners[2].Pos.x, center.y);
+			quads[3].Pos.vec2 = XOVEC2(corners[3].Pos.x, corners[3].Pos.y);
+			Driver->DrawQuad(quads);
+
+			// bottom-left
+			Driver->ShaderPerObject.Edges = xoVec2f(left, bottom);
+			Driver->ShaderPerObject.OutVector = xoVec2f(-1, 1);
+			quads[0].Pos.vec2 = XOVEC2(corners[0].Pos.x, center.y);
+			quads[1].Pos.vec2 = XOVEC2(corners[1].Pos.x, corners[1].Pos.y);
+			quads[2].Pos.vec2 = XOVEC2(center.x, corners[2].Pos.y);
+			quads[3].Pos.vec2 = XOVEC2(center.x, center.y);
+			Driver->DrawQuad(quads);
+
+			// bottom-right
+			Driver->ShaderPerObject.Edges = xoVec2f(right, bottom);
+			Driver->ShaderPerObject.OutVector = xoVec2f(1, 1);
+			quads[0].Pos.vec2 = XOVEC2(center.x, center.y);
+			quads[1].Pos.vec2 = XOVEC2(center.x, corners[1].Pos.y);
+			quads[2].Pos.vec2 = XOVEC2(corners[2].Pos.x, corners[2].Pos.y);
+			quads[3].Pos.vec2 = XOVEC2(corners[3].Pos.x, center.y);
+			Driver->DrawQuad(quads);
+		}
+		else if (useRectShader)
 		{
 			Driver->ActivateShader(xoShaderRect);
 			Driver->ShaderPerObject.Box = xoVec4f(left, top, right, bottom);
-			//Driver->ShaderPerObject.Border = xoVec4f( border.Left, border.Top, border.Right, border.Bottom );
 			Driver->ShaderPerObject.Border = xoVec4f(border.Left + 0.5f, border.Top + 0.5f, border.Right + 0.5f, border.Bottom + 0.5f);
-			//Driver->ShaderPerObject.Border = xoVec4f( border.Left - 0.5f, border.Top - 0.5f, border.Right - 0.5f, border.Bottom - 0.5f );
 			Driver->ShaderPerObject.Radius = radius + 0.5f; // see the shader for an explanation of this 0.5
 			Driver->ShaderPerObject.BorderColor = style->BorderColor.GetVec4Linear();
 			Driver->DrawQuad(corners);
@@ -144,6 +212,11 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 				Driver->DrawQuad(corners);
 		}
 	}
+}
+
+void xoRenderer::RenderCubic(xoPoint base, const xoRenderDomNode* node)
+{
+
 }
 
 void xoRenderer::RenderText(xoPoint base, const xoRenderDomText* node)

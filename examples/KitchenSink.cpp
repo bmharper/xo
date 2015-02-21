@@ -22,6 +22,7 @@ void DoBorder(xoDoc* doc)
 	auto root = &doc->Root;
 	root->StyleParse("background: #aaa");
 	root->Parse(
+		"<div style='border: #007; border: 1px 2px 3px 4px; border-radius: 5px; width: 200ep; height: 200ep; background: #fff; margin: 10px'></div>"
 		"<div style='border: #070; border: 1px 1px 2px 3px; border-radius: 0px; width: 200ep; height: 200ep; background: #fff; margin: 1px'>aaaaa</div>"
 		"<div style='border: 5px #070; border-radius: 8px; width: 100ep; height: 100ep; background: #fff; margin: 1px'>b</div>"
 		"<div style='border: 1px #557; width: 150ep; height: 22ep; background: #fff; margin: 1px'>c</div>"

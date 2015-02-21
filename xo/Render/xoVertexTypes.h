@@ -4,19 +4,27 @@
 struct XOAPI xoVx_PTC
 {
 	// Note that xoRenderGL::DrawQuad assumes that we share our base layout with xoVx_PTCV4
-	xoVec3f		Pos;
-	xoVec2f		UV;
-	uint32		Color;
+	xoVecBase3f		Pos;
+	xoVecBase2f		UV;
+	uint32			Color;
 };
 
-// Position, UV, Color, Vec4
+// Position, UV, Color, Color2, Vec4
 struct XOAPI xoVx_PTCV4
 {
 	// Note that xoRenderGL::DrawQuad assumes that we share our base layout with xoVx_PTC
-	xoVec3f		Pos;
-	xoVec2f		UV;
-	uint32		Color;
-	xoVec4f		V4;
+	union
+	{
+		struct
+		{
+			xoVecBase3f		Pos;
+			xoVecBase2f		UV;
+			uint32			Color;
+		};
+		xoVx_PTC PTC;
+	};
+	uint32			Color2;
+	xoVecBase4f		V4;
 };
 
 enum xoVertexType

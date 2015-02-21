@@ -98,7 +98,7 @@ const char* xoDXProg_TextRGB::VertSrc()
 		"	output.uvClamp = vertex.v4;\n"
 		"	return output;\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoDXProg_TextRGB::FragSrc()
@@ -228,7 +228,7 @@ const char* xoDXProg_TextRGB::FragSrc()
 		"	output.color1 = float4(aR, aG, aB, avgA);\n"
 		"	return output;\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoDXProg_TextRGB::Name()

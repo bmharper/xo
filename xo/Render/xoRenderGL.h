@@ -3,10 +3,11 @@
 #include "xoRenderGL_Defs.h"
 #include "xoRenderBase.h"
 #include "../Shaders/Helpers/xoPreprocessor.h"
-//#include "../Shaders/Processed_glsl/CurveShader.h"
+#include "../Shaders/Processed_glsl/CurveShader.h"
 #include "../Shaders/Processed_glsl/FillShader.h"
 #include "../Shaders/Processed_glsl/FillTexShader.h"
 #include "../Shaders/Processed_glsl/RectShader.h"
+#include "../Shaders/Processed_glsl/Rect2Shader.h"
 #include "../Shaders/Processed_glsl/TextRGBShader.h"
 #include "../Shaders/Processed_glsl/TextWholeShader.h"
 
@@ -19,12 +20,13 @@ public:
 #endif
 
 	xoGLProg_Rect		PRect;
+	xoGLProg_Rect2		PRect2;
 	xoGLProg_Fill		PFill;
 	xoGLProg_FillTex	PFillTex;
 	xoGLProg_TextRGB	PTextRGB;
 	xoGLProg_TextWhole	PTextWhole;
-	//xoGLProg_Curve		PCurve;
-	static const int	NumProgs = 5;
+	xoGLProg_Curve		PCurve;
+	static const int	NumProgs = 7;
 	xoGLProg*			AllProgs[NumProgs];	// All of the above programs
 
 	xoRenderGL();

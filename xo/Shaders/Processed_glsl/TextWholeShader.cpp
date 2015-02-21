@@ -32,7 +32,7 @@ const char* xoGLProg_TextWhole::VertSrc()
 		"	texuv0 = vtexuv0;\n"
 		"	color = fromSRGB(vcolor);\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoGLProg_TextWhole::FragSrc()
@@ -47,7 +47,7 @@ const char* xoGLProg_TextWhole::FragSrc()
 		"	gl_FragColor = premultiply(color) * texCol.r;\n"
 		"}\n"
 		"\n"
-		;
+;
 }
 
 const char* xoGLProg_TextWhole::Name()
@@ -60,11 +60,11 @@ bool xoGLProg_TextWhole::LoadVariablePositions()
 {
 	int nfail = 0;
 
-	nfail += (v_mvproj = glGetUniformLocation(Prog, "mvproj")) == -1;
-	nfail += (v_vpos = glGetAttribLocation(Prog, "vpos")) == -1;
-	nfail += (v_vcolor = glGetAttribLocation(Prog, "vcolor")) == -1;
-	nfail += (v_vtexuv0 = glGetAttribLocation(Prog, "vtexuv0")) == -1;
-	nfail += (v_tex0 = glGetUniformLocation(Prog, "tex0")) == -1;
+	nfail += (v_mvproj = glGetUniformLocation( Prog, "mvproj" )) == -1;
+	nfail += (v_vpos = glGetAttribLocation( Prog, "vpos" )) == -1;
+	nfail += (v_vcolor = glGetAttribLocation( Prog, "vcolor" )) == -1;
+	nfail += (v_vtexuv0 = glGetAttribLocation( Prog, "vtexuv0" )) == -1;
+	nfail += (v_tex0 = glGetUniformLocation( Prog, "tex0" )) == -1;
 	if (nfail != 0)
 		XOTRACE("Failed to bind %d variables of shader TextWhole\n", nfail);
 

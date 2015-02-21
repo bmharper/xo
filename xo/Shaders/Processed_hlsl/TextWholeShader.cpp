@@ -96,7 +96,7 @@ const char* xoDXProg_TextWhole::VertSrc()
 		"	output.texuv0 = vertex.uv;\n"
 		"	return output;\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoDXProg_TextWhole::FragSrc()
@@ -180,7 +180,7 @@ const char* xoDXProg_TextWhole::FragSrc()
 		"	col = premultiply(input.color) * shader_texture.Sample(sample_type, input.texuv0).r;\n"
 		"    return col;\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoDXProg_TextWhole::Name()

@@ -96,7 +96,7 @@ const char* xoDXProg_FillTex::VertSrc()
 		"	output.texuv0 = vertex.uv;\n"
 		"	return output;\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoDXProg_FillTex::FragSrc()
@@ -180,7 +180,7 @@ const char* xoDXProg_FillTex::FragSrc()
 		"	col = input.color * shader_texture.Sample(sample_type, input.texuv0);\n"
 		"    return col;\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoDXProg_FillTex::Name()

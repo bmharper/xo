@@ -17,7 +17,13 @@ struct xoShaderPerObject
 	xoVec4f		Border;
 	xoVec4f		BorderColor;
 	float		Radius;
-	float		Padding[3];
+	xoVec2f		Edges;
+	float		Padding[1];
+	xoVec4f		ShadowColor;
+	xoVec2f		ShadowOffset;
+	float		ShadowSizeInv;
+	xoVec2f		OutVector;
+	float		Padding2[7];
 };
 static_assert((sizeof(xoShaderPerObject) & 15) == 0, "xoShaderPerFrame size must be a multiple of 16 bytes (This is a DirectX constant buffer requirement)");
 

@@ -6,7 +6,7 @@ uniform vec4	border;
 uniform vec4	border_color;
 uniform vec2	vport_hsize;
 
-vec2 to_screen( vec2 unit_pt )
+vec2 to_screen(vec2 unit_pt)
 {
 	return (vec2(unit_pt.x, -unit_pt.y) + vec2(1,1)) * vport_hsize;
 }

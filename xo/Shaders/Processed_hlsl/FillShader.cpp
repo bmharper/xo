@@ -94,7 +94,7 @@ const char* xoDXProg_Fill::VertSrc()
 		"	output.color = fromSRGB(vertex.color);\n"
 		"	return output;\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoDXProg_Fill::FragSrc()
@@ -175,7 +175,7 @@ const char* xoDXProg_Fill::FragSrc()
 		"{\n"
 		"    return input.color;\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoDXProg_Fill::Name()

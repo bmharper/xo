@@ -73,12 +73,13 @@ xoRenderGL::xoRenderGL()
 	Have_sRGB_Framebuffer = false;
 	Have_BlendFuncExtended = false;
 	AllProgs[0] = &PRect;
-	AllProgs[1] = &PFill;
-	AllProgs[2] = &PFillTex;
-	AllProgs[3] = &PTextRGB;
-	AllProgs[4] = &PTextWhole;
-	//AllProgs[5] = &PCurve;
-	static_assert(NumProgs == 5, "Add your new shader here");
+	AllProgs[1] = &PRect2;
+	AllProgs[2] = &PFill;
+	AllProgs[3] = &PFillTex;
+	AllProgs[4] = &PTextRGB;
+	AllProgs[5] = &PTextWhole;
+	AllProgs[6] = &PCurve;
+	static_assert(NumProgs == 7, "Add your new shader here");
 	Reset();
 }
 
@@ -350,11 +351,13 @@ xoProgBase* xoRenderGL::GetShader(xoShaders shader)
 {
 	switch (shader)
 	{
-	case xoShaderFill:		return &PFill;
-	case xoShaderFillTex:	return &PFillTex;
-	case xoShaderRect:		return &PRect;
-	case xoShaderTextRGB:	return &PTextRGB;
-	case xoShaderTextWhole:	return &PTextWhole;
+	case xoShaderFill:			return &PFill;
+	case xoShaderFillTex:		return &PFillTex;
+	case xoShaderRect:			return &PRect;
+	case xoShaderRect2:			return &PRect2;
+	case xoShaderTextRGB:		return &PTextRGB;
+	case xoShaderTextWhole:		return &PTextWhole;
+	case xoShaderCubicSpline:	return &PCurve;
 	default:
 		XOASSERT(false);
 		return NULL;
@@ -512,10 +515,14 @@ void xoRenderGL::SetShaderFrameUniforms()
 	if (SetMVProj(xoShaderRect, PRect, mvprojT))
 		glUniform2f(PRect.v_vport_hsize, FBWidth / 2.0f, FBHeight / 2.0f);
 
+	if (SetMVProj(xoShaderRect2, PRect2, mvprojT))
+		glUniform2f(PRect2.v_vport_hsize, FBWidth / 2.0f, FBHeight / 2.0f);
+
 	SetMVProj(xoShaderFill, PFill, mvprojT);
 	SetMVProj(xoShaderFillTex, PFillTex, mvprojT);
 	SetMVProj(xoShaderTextRGB, PTextRGB, mvprojT);
 	SetMVProj(xoShaderTextWhole, PTextWhole, mvprojT);
+	SetMVProj(xoShaderCubicSpline, PCurve, mvprojT);
 }
 
 void xoRenderGL::SetShaderObjectUniforms()
@@ -526,6 +533,14 @@ void xoRenderGL::SetShaderObjectUniforms()
 		glUniform4fv(PRect.v_border, 1, &ShaderPerObject.Border.x);
 		glUniform4fv(PRect.v_border_color, 1, &ShaderPerObject.BorderColor.x);
 		glUniform1f(PRect.v_radius, ShaderPerObject.Radius);
+	}
+	else if (ActiveShader == xoShaderRect2)
+	{
+		glUniform2fv(PRect2.v_out_vector, 1, &ShaderPerObject.OutVector.x);
+		glUniform2fv(PRect2.v_shadow_offset, 1, &ShaderPerObject.ShadowOffset.x);
+		glUniform4fv(PRect2.v_shadow_color, 1, &ShaderPerObject.ShadowColor.x);
+		glUniform1f(PRect2.v_shadow_size_inv, ShaderPerObject.ShadowSizeInv);
+		glUniform2fv(PRect2.v_edges, 1, &ShaderPerObject.Edges.x);
 	}
 }
 
@@ -585,6 +600,18 @@ void xoRenderGL::DrawQuad(const void* v)
 		varvpos = PRect.v_vpos;
 		varvcol = PRect.v_vcolor;
 		break;
+	case xoShaderRect2:
+		stride = sizeof(xoVx_PTCV4);
+		varvpos = PRect2.v_vpos;
+		varvcol = PRect2.v_vcolor;
+		glVertexAttribPointer(PRect2.v_vradius, 1, GL_FLOAT, true, stride, vbyte + offsetof(xoVx_PTCV4, UV.x));
+		glEnableVertexAttribArray(PRect2.v_vradius);
+		glVertexAttribPointer(PRect2.v_vborder_width, 1, GL_FLOAT, true, stride, vbyte + offsetof(xoVx_PTCV4, UV.y));
+		glEnableVertexAttribArray(PRect2.v_vborder_width);
+		glVertexAttribPointer(PRect2.v_vborder_color, 4, GL_UNSIGNED_BYTE, true, stride, vbyte + offsetof(xoVx_PTCV4, Color2));
+		glEnableVertexAttribArray(PRect2.v_vborder_color);
+		Check();
+		break;
 	case xoShaderFill:
 		varvpos = PFill.v_vpos;
 		varvcol = PFill.v_vcolor;
@@ -610,6 +637,12 @@ void xoRenderGL::DrawQuad(const void* v)
 		varvtex0 = PTextWhole.v_vtexuv0;
 		vartexUnit0 = PTextWhole.v_tex0;
 		break;
+	case xoShaderCubicSpline:
+		varvpos = PCurve.v_vpos;
+		varvcol = PCurve.v_vcolor;
+		varvtex0 = PCurve.v_vtexuv0;
+		//vartexUnit0 = PCurve.v_tex0;
+		break;
 	}
 
 	// We assume here that xoVx_PTC and xoVx_PTCV4 share the same base layout
@@ -619,9 +652,11 @@ void xoRenderGL::DrawQuad(const void* v)
 	glVertexAttribPointer(varvcol, 4, GL_UNSIGNED_BYTE, true, stride, vbyte + offsetof(xoVx_PTC, Color));
 	glEnableVertexAttribArray(varvcol);
 
+	if (vartexUnit0 != 0)
+		glUniform1i(vartexUnit0, 0);
+
 	if (varvtex0 != 0)
 	{
-		glUniform1i(vartexUnit0, 0);
 		glVertexAttribPointer(varvtex0, 2, GL_FLOAT, true, stride, vbyte + offsetof(xoVx_PTC, UV));
 		glEnableVertexAttribArray(varvtex0);
 	}

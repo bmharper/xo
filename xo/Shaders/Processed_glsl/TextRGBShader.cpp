@@ -36,7 +36,7 @@ const char* xoGLProg_TextRGB::VertSrc()
 		"	texClamp = vtexClamp;\n"
 		"	color = fromSRGB(vcolor);\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoGLProg_TextRGB::FragSrc()
@@ -97,7 +97,7 @@ const char* xoGLProg_TextRGB::FragSrc()
 		"	outputColor0 = vec4(color.rgb, avgA);\n"
 		"	outputColor1 = vec4(aR, aG, aB, avgA);\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoGLProg_TextRGB::Name()
@@ -110,12 +110,12 @@ bool xoGLProg_TextRGB::LoadVariablePositions()
 {
 	int nfail = 0;
 
-	nfail += (v_mvproj = glGetUniformLocation(Prog, "mvproj")) == -1;
-	nfail += (v_vpos = glGetAttribLocation(Prog, "vpos")) == -1;
-	nfail += (v_vcolor = glGetAttribLocation(Prog, "vcolor")) == -1;
-	nfail += (v_vtexuv0 = glGetAttribLocation(Prog, "vtexuv0")) == -1;
-	nfail += (v_vtexClamp = glGetAttribLocation(Prog, "vtexClamp")) == -1;
-	nfail += (v_tex0 = glGetUniformLocation(Prog, "tex0")) == -1;
+	nfail += (v_mvproj = glGetUniformLocation( Prog, "mvproj" )) == -1;
+	nfail += (v_vpos = glGetAttribLocation( Prog, "vpos" )) == -1;
+	nfail += (v_vcolor = glGetAttribLocation( Prog, "vcolor" )) == -1;
+	nfail += (v_vtexuv0 = glGetAttribLocation( Prog, "vtexuv0" )) == -1;
+	nfail += (v_vtexClamp = glGetAttribLocation( Prog, "vtexClamp" )) == -1;
+	nfail += (v_tex0 = glGetUniformLocation( Prog, "tex0" )) == -1;
 	if (nfail != 0)
 		XOTRACE("Failed to bind %d variables of shader TextRGB\n", nfail);
 

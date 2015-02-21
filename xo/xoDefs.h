@@ -372,8 +372,10 @@ enum xoShaders
 	xoShaderFill,
 	xoShaderFillTex,
 	xoShaderRect,
+	xoShaderRect2,
 	xoShaderTextRGB,
-	xoShaderTextWhole
+	xoShaderTextWhole,
+	xoShaderCubicSpline,
 	// We may someday want to have slots down here available for application-defined custom shaders
 };
 

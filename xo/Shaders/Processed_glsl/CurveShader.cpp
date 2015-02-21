@@ -10,23 +10,29 @@ xoGLProg_Curve::xoGLProg_Curve()
 void xoGLProg_Curve::Reset()
 {
 	ResetBase();
-
+	v_mvproj = -1;
+	v_vpos = -1;
+	v_vcolor = -1;
+	v_vtexuv0 = -1;
 }
 
 const char* xoGLProg_Curve::VertSrc()
 {
 	return
-		"varying vec4 pos;\n"
-		"varying vec2 texuv0;\n"
+		"uniform		mat4	mvproj;\n"
+		"attribute	vec4	vpos;\n"
+		"attribute	vec4	vcolor;\n"
+		"attribute	vec2	vtexuv0;\n"
+		"varying		vec4	color;\n"
+		"varying		vec2	texuv0;\n"
 		"void main()\n"
 		"{\n"
-		"	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
-		"	gl_FrontColor = gl_Color;\n"
-		"	pos = gl_Position;\n"
-		"	texuv0 = gl_MultiTexCoord0.xy;\n"
+		"	gl_Position = mvproj * vpos;\n"
+		"	texuv0 = vtexuv0;\n"
+		"	color = fromSRGB(vcolor);\n"
 		"}\n"
 		"\n"
-		;
+;
 }
 
 const char* xoGLProg_Curve::FragSrc()
@@ -35,7 +41,6 @@ const char* xoGLProg_Curve::FragSrc()
 		"// This is from Jim Blinn and Charles Loop's paper \"Resolution Independent Curve Rendering using Programmable Graphics Hardware\"\n"
 		"// We don't need this complexity here.. and if I recall correctly, this technique aliases under minification faster than\n"
 		"// our simpler rounded-rectangle alternative.\n"
-		"varying vec4 pos;\n"
 		"varying vec2 texuv0;\n"
 		"\n"
 		"void main()\n"
@@ -66,7 +71,7 @@ const char* xoGLProg_Curve::FragSrc()
 		"		gl_FragColor.a = alpha;\n"
 		"}\n"
 		"\n"
-		;
+;
 }
 
 const char* xoGLProg_Curve::Name()
@@ -79,6 +84,10 @@ bool xoGLProg_Curve::LoadVariablePositions()
 {
 	int nfail = 0;
 
+	nfail += (v_mvproj = glGetUniformLocation( Prog, "mvproj" )) == -1;
+	nfail += (v_vpos = glGetAttribLocation( Prog, "vpos" )) == -1;
+	nfail += (v_vcolor = glGetAttribLocation( Prog, "vcolor" )) == -1;
+	nfail += (v_vtexuv0 = glGetAttribLocation( Prog, "vtexuv0" )) == -1;
 	if (nfail != 0)
 		XOTRACE("Failed to bind %d variables of shader Curve\n", nfail);
 

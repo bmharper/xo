@@ -25,6 +25,7 @@ protected:
 
 	void			RenderEl(xoPoint base, const xoRenderDomEl* node);
 	void			RenderNode(xoPoint base, const xoRenderDomNode* node);
+	void			RenderCubic(xoPoint base, const xoRenderDomNode* node);
 	void			RenderText(xoPoint base, const xoRenderDomText* node);
 	void			RenderTextChar_WholePixel(xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl);
 	void			RenderTextChar_SubPixel(xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl);

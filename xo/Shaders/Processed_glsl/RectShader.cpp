@@ -34,7 +34,7 @@ const char* xoGLProg_Rect::VertSrc()
 		"	gl_Position = pos;\n"
 		"	color = fromSRGB(vcolor);\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoGLProg_Rect::FragSrc()
@@ -48,7 +48,7 @@ const char* xoGLProg_Rect::FragSrc()
 		"uniform vec4	border_color;\n"
 		"uniform vec2	vport_hsize;\n"
 		"\n"
-		"vec2 to_screen( vec2 unit_pt )\n"
+		"vec2 to_screen(vec2 unit_pt)\n"
 		"{\n"
 		"	return (vec2(unit_pt.x, -unit_pt.y) + vec2(1,1)) * vport_hsize;\n"
 		"}\n"
@@ -104,7 +104,7 @@ const char* xoGLProg_Rect::FragSrc()
 		"	gl_FragColor.a = outcolor.a;\n"
 		"#endif\n"
 		"}\n"
-		;
+;
 }
 
 const char* xoGLProg_Rect::Name()
@@ -117,14 +117,14 @@ bool xoGLProg_Rect::LoadVariablePositions()
 {
 	int nfail = 0;
 
-	nfail += (v_mvproj = glGetUniformLocation(Prog, "mvproj")) == -1;
-	nfail += (v_vpos = glGetAttribLocation(Prog, "vpos")) == -1;
-	nfail += (v_vcolor = glGetAttribLocation(Prog, "vcolor")) == -1;
-	nfail += (v_radius = glGetUniformLocation(Prog, "radius")) == -1;
-	nfail += (v_box = glGetUniformLocation(Prog, "box")) == -1;
-	nfail += (v_border = glGetUniformLocation(Prog, "border")) == -1;
-	nfail += (v_border_color = glGetUniformLocation(Prog, "border_color")) == -1;
-	nfail += (v_vport_hsize = glGetUniformLocation(Prog, "vport_hsize")) == -1;
+	nfail += (v_mvproj = glGetUniformLocation( Prog, "mvproj" )) == -1;
+	nfail += (v_vpos = glGetAttribLocation( Prog, "vpos" )) == -1;
+	nfail += (v_vcolor = glGetAttribLocation( Prog, "vcolor" )) == -1;
+	nfail += (v_radius = glGetUniformLocation( Prog, "radius" )) == -1;
+	nfail += (v_box = glGetUniformLocation( Prog, "box" )) == -1;
+	nfail += (v_border = glGetUniformLocation( Prog, "border" )) == -1;
+	nfail += (v_border_color = glGetUniformLocation( Prog, "border_color" )) == -1;
+	nfail += (v_vport_hsize = glGetUniformLocation( Prog, "vport_hsize" )) == -1;
 	if (nfail != 0)
 		XOTRACE("Failed to bind %d variables of shader Rect\n", nfail);
 
