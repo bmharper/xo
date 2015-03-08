@@ -39,4 +39,6 @@ protected:
 
 	xoRenderResult	RenderInternal(xoImage* targetImage);
 	void			UploadImagesToGPU(bool& beganRender);
+
+	static void		AddOrReplaceMessage(const xoOriginalEvent& ev);
 };

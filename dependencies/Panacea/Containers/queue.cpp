@@ -96,3 +96,24 @@ int32 AbcQueue::Size()
 	TakeCriticalSection lock(Lock);
 	return SizeInternal();
 }
+
+void AbcQueue::Scan(bool forwards, void* context, ScanCallback cb)
+{
+	TakeCriticalSection lock(Lock);
+	if (forwards)
+	{
+		for (u32 i = Head; i != Tail; i = (i - 1) & Mask())
+		{
+			if (!cb(context, Slot(i)))
+				return;
+		}
+	}
+	else
+	{
+		for (u32 i = Tail; i != Head; i = (i + 1) & Mask())
+		{
+			if (!cb(context, Slot(i)))
+				return;
+		}
+	}
+}

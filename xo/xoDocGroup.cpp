@@ -33,7 +33,7 @@ xoDocGroup::~xoDocGroup()
 
 xoRenderResult xoDocGroup::Render()
 {
-	return RenderInternal(NULL);
+	return RenderInternal(nullptr);
 }
 
 xoRenderResult xoDocGroup::RenderToImage(xoImage& image)
@@ -53,16 +53,15 @@ xoRenderResult xoDocGroup::RenderInternal(xoImage* targetImage)
 	// I'm not quite sure how we should handle this. The idea is that you don't want to go without a UI update
 	// for too long, even if the UI thread is taking its time, and being bombarded with messages.
 	uint32 rDocAge = Doc->GetVersion() - RenderDoc->Doc.GetVersion();
-	if (rDocAge >= 2 || targetImage != NULL)
+	if (rDocAge >= 1 || targetImage != NULL)
 	{
-		// If UI thread has performed many updates since we last rendered,
-		// then pause our thread until we can gain the DocLock
+		// If UI thread has performed even a single update since we last rendered, then pause our thread until we can gain the DocLock
 		AbcCriticalSectionEnter(DocLock);
 		haveLock = true;
 	}
 	else
 	{
-		// The UI thread has not done much since we last rendered, so do not wait for the lock
+		// The UI thread has not made any change since we last rendered, so do not wait for the lock
 		haveLock = AbcCriticalSectionTryEnter(DocLock);
 	}
 
@@ -146,6 +145,43 @@ void xoDocGroup::UploadImagesToGPU(bool& beganRender)
 				XOTRACE_WARNING("Failed to upload image to GPU\n");
 			}
 		}
+	}
+}
+
+struct AddOrReplaceMessage_Context
+{
+	const xoOriginalEvent*	NewEvent;
+	bool					DidReplace;
+};
+
+static bool AddOrReplaceMessage_Scan(void* context, xoOriginalEvent* iter)
+{
+	AddOrReplaceMessage_Context* cx = (AddOrReplaceMessage_Context*) context;
+	if (iter->DocGroup == cx->NewEvent->DocGroup && iter->Event.Type == cx->NewEvent->Event.Type)
+	{
+		// TODO: Keep a history of the replaced events, so that a program that needs to have
+		// smooth cursor input can use all of the events that were sent by the OS. To do this, we'll
+		// want to store time of events, as well as extend xoEvent to be able to store a chain of
+		// missed events that came before it.
+		cx->DidReplace = true;
+		*iter = *cx->NewEvent;
+		return false;
+	}
+	return true;
+}
+
+// Why do we do this? Normally the OS does this for us - it coalesces mouse move messages into
+// a single message, when we ask for it. However, because our message polling loop runs on a different
+// thread to our 'program' thread, we can consume mouse move messages faster than the 'program'
+// can process them. So we can end up with a massive backlog of messages to process. Right now
+// all we do is replace old events from the queue, but in future.. see the TODO message above.
+void xoDocGroup::AddOrReplaceMessage(const xoOriginalEvent& ev)
+{
+	AddOrReplaceMessage_Context cx = { &ev, false };
+	xoGlobal()->UIEventQueue.Scan(false, &cx, &AddOrReplaceMessage_Scan);
+	if (!cx.DidReplace)
+	{
+		xoGlobal()->UIEventQueue.Add(ev);
 	}
 }
 

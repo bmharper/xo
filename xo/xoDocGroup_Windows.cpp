@@ -197,17 +197,12 @@ LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 			IsMouseTracking = true;
 			// We don't send xoEventMouseEnter from here. It is the DocUI's job to synthesize that message
 			// on a per-DOM-node basis. It determines this when it receives mousemove messages.
-			//xoEvent evEnter;
-			//evEnter.Type = xoEventMouseEnter;
-			//evEnter.PointCount = 1;
-			//evEnter.Points[0] = cursor;
-			//xoGlobal()->UIEventQueue.Add( evEnter );
 		}
 		ev.Event.Type = xoEventMouseMove;
 		ev.Event.PointCount = 1;
 		ev.Event.Points[0] = cursor;
+		AddOrReplaceMessage(ev);
 		XOTRACE_LATENCY("MouseMove\n");
-		xoGlobal()->UIEventQueue.Add(ev);
 		break;
 
 	case WM_MOUSELEAVE:

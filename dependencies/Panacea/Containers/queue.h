@@ -28,17 +28,26 @@ If you choose to use the semaphore, then ALL of your queue consumers MUST obey t
 class PAPI AbcQueue
 {
 public:
+	typedef bool(*ScanCallback)(void* context, void* item);
+
 	AbcCriticalSection	Lock;			// Lock on the queue data structures
 	AbcSemaphore		Semaphore;		// Can be used to wait for detection of a non-empty queue. Only valid if semaphore was enabled during call to Initialize(). Read CAVEAT.
 
 	AbcQueue();
 	~AbcQueue();
 
-	void	Initialize(bool useSemaphore, size_t itemSize);		// Every item must be the same size
-	void	Add(const void* item);								// Add to head. We copy in itemSize bytes, from base address 'item'
-	bool	PopTail(void* item);								// Pop the tail of the queue. Returns false if the queue is empty.
-	bool	PeekTail(void* item);								// Get the tail of the queue, but do not pop it. Obviously useless for multithreaded scenarios, unless you have acquired the lock.
+	void	Initialize(bool useSemaphore, size_t itemSize);					// Every item must be the same size
+	void	Add(const void* item);											// Add to head. We copy in itemSize bytes, from base address 'item'
+	bool	PopTail(void* item);											// Pop the tail of the queue. Returns false if the queue is empty.
+	bool	PeekTail(void* item);											// Get the tail of the queue, but do not pop it. Obviously useless for multithreaded scenarios, unless you have acquired the lock.
 	int32	Size();
+
+	// Scan through the queue, allowing you to mutate items inside the queue.
+	// The callback function 'cb' is called once for every item in the queue.
+	// If forwards is true, then we iterate from Tail to Head.
+	// If forwards is false, then we iterate from Head to Tail.
+	// Return false from your iterator function to end the scan prematurely.
+	void	Scan(bool forwards, void* context, ScanCallback cb);
 
 private:
 	bool				HaveSemaphore;
@@ -71,6 +80,9 @@ public:
 	int32					Size()								{ return Q.Size(); }
 	AbcCriticalSection&		LockObj()							{ return Q.Lock; }
 	AbcSemaphore&			SemaphoreObj()						{ return Q.Semaphore; }
+
+	void					Scan(bool forwards, void* context, bool(*cb)(void* context, T* item)) { Q.Scan(forwards, context, (AbcQueue::ScanCallback) cb); }
+
 private:
 	AbcQueue Q;
 };
