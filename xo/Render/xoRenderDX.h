@@ -59,7 +59,7 @@ public:
 	virtual xoProgBase* GetShader(xoShaders shader);
 	virtual void		ActivateShader(xoShaders shader);
 
-	virtual void		DrawQuad(const void* v);
+	virtual void		Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v);
 
 	virtual bool		LoadTexture(xoTexture* tex, int texUnit);
 	virtual bool		ReadBackbuffer(xoImage& image);

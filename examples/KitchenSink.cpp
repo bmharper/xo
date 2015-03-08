@@ -9,7 +9,8 @@ void InitDOM(xoDoc* doc);
 void xoMain(xoSysWnd* wnd)
 {
 	xoGlobal()->FontStore->AddFontDirectory("C:\\temp\\fonts");
-	int left = -750;
+	//int left = -750;
+	int left = 750;
 	int width = 700;
 	int top = 60;
 	int height = 500;
@@ -334,9 +335,8 @@ void DoBackupSettings(xoDoc* doc)
 	//root->StyleParse( "font-family: Audiowide; font-size: 12px;" );
 	doc->ClassParse("pad-light",		"box-sizing: border; background: #f8f8f8; width: 140ep; height: 10ep;");
 	doc->ClassParse("pad-dark",			"box-sizing: border; background: #efefef; width: 470ep; height: 10ep;");
-	doc->ClassParse("bg-light",			"box-sizing: border; color: #000; background: #08f8f8; width: 140ep; height: 50ep; padding: 8ep;");
-	//doc->ClassParse("bg-dark",			"box-sizing: border; color: #000; background: #0fefef; width: 470ep; height: 50ep; padding: 10ep;");
-	doc->ClassParse("bg-dark",			"box-sizing: border; color: #000; background: #0fefef; width: 470ep; top: top; bottom: bottom");
+	doc->ClassParse("bg-light",			"box-sizing: border; color: #000; background: #f8f8f8; width: 140ep; height: 50ep; padding: 8ep;");
+	doc->ClassParse("bg-dark",			"box-sizing: border; color: #000; background: #efefef; width: 470ep; top: top; bottom: bottom");
 	doc->ClassParse("textbox",			"color: #000; background: #fff; padding: 5ep 3ep 5ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd; canfocus: true; cursor: text");
 	doc->ClassParse("textbox:focus",	"border: 1px #8888ee");
 	doc->ClassParse("button",			"color: #000; background: #ececec; margin: 6ep 0ep 6ep 0ep; padding: 14ep 3ep 14ep 3ep; border: 1px #bdbdbd; canfocus: true");
@@ -390,6 +390,24 @@ void DoTextQuality(xoDoc* doc)
 	//doc->Root.ParseAppend( "<div style='font-family: Consolas; font-size: 12px; color: #383'>DoBaselineAlignment_Multiline<div>" );
 }
 
+void DoQuadraticSplines(xoDoc* doc)
+{
+	// In order for this example to be meaningful, you must uncomment the magic color detection at the top line of xoRenderer::RenderNode(),
+	// and it was only implemented on OpenGL.
+	// Also, you must disable backface culling, or the bottom (blue) curve won't render.
+
+	doc->Root.ParseAppend("<div style='width: 10ep; height: 10ep; break: after'>top<div>"); // top pad
+	doc->Root.ParseAppend("<div style='width: 20ep; height: 50ep'>left<div>"); // left pad
+	doc->Root.ParseAppend("<div style='background: #fff0f0ff; width: 100ep; height: 100ep'><div>");
+	auto top_pad = doc->Root.ChildByIndex(0)->GetInternalID();
+	auto left_pad = doc->Root.ChildByIndex(1)->GetInternalID();
+	doc->Root.OnMouseMove([top_pad, left_pad](const xoEvent& ev) -> bool {
+		ev.Doc->GetNodeByInternalIDMutable(top_pad)->StyleParsef("height: %dep", (int) ev.Points[0].y);
+		ev.Doc->GetNodeByInternalIDMutable(left_pad)->StyleParsef("width: %dep", (int) ev.Points[0].x);
+		return true;
+	});
+}
+
 void InitDOM(xoDoc* doc)
 {
 	xoDomNode* body = &doc->Root;
@@ -410,12 +428,13 @@ void InitDOM(xoDoc* doc)
 	DoBackupSettings( doc );
 	//DoPadding( doc );
 	//DoTextQuality( doc );
+	//DoQuadraticSplines( doc );
 
-	body->OnClick([doc](const xoEvent& ev) -> bool {
+	body->OnClick([](const xoEvent& ev) -> bool {
 		//xoGlobal()->EnableKerning = !xoGlobal()->EnableKerning;
 		//XOTRACE("InternalID: %d\n", ev.Target->GetInternalID());
 		// Force a re-layout. Useful to click on the document and be able to debug the layout that occurs.
-		doc->IncVersion();
+		ev.Doc->IncVersion();
 		return true;
 	});
 }

@@ -1,0 +1,61 @@
+<!DOCTYPE HTML>
+<head>
+<script>
+var orgx = 0;
+var orgy = 0;
+function onload()
+{
+	//document.getElementById('c2').onmousemove = onmousemove;
+	document.body.onmousemove = onmousemove;
+	draw();
+}
+function onmousemove(ev)
+{
+	// at 1/256 scale, one should see a change with every mouse pixel move
+	orgx = (ev.clientX - 100) / 256.0;	
+	orgy = (ev.clientY - 100) / 256.0;	
+	draw();
+}
+function draw()
+{
+	var c1 = document.getElementById('c1');
+	var c2 = document.getElementById('c2');
+	var cx = c1.getContext("2d");
+	var cx2 = c2.getContext("2d");
+	var w = 50;
+	var h = 50;
+	var scale = 12;
+	c1.width = 260;
+	c1.height = 260;
+	c2.width = w * scale;
+	c2.height = h * scale;
+	cx.fillStyle = "#ffffff";
+	cx.fillRect(0, 0, w, h);
+	cx.fillStyle = "#000000";
+	cx.beginPath();
+	var size = 1;
+	cx.moveTo(orgx, orgy);
+	//cx.bezierCurveTo(orgx,orgy+size, orgx+size,orgy+size, orgx+size,orgy);
+	cx.lineTo(orgx, orgy+size);
+	cx.lineTo(orgx+size, orgy+size);
+	cx.lineTo(orgx+size, orgy);
+	cx.fill();
+	cx2.imageSmoothingEnabled = false;
+	cx2.msImageSmoothingEnabled = false;
+	cx2.drawImage(c1, 0, 0, w, h, 0, 0, scale * w, scale * h);
+
+	cx2.strokeStyle = "rgba(255,0,0,1.0)";
+	cx2.strokeRect(scale * orgx - 1, scale * orgy - 1, scale * size + 2, scale * size + 2);
+
+	var img = cx.getImageData(1, 1, 1, 1);
+	var txt = document.getElementById('txt');
+	//txt.innerText = "Pixel 1,1: " + img.data[0] + ", " + img.data[1] + ", " + img.data[2] + " a:" + img.data[3];
+	txt.innerText = "Pixel 1,1: " + img.data[1];
+}
+</script>
+</head>
+<body onload="onload()">
+<canvas id='c1' style='vertical-align: top; border: 1px solid #eee'></canvas>
+<canvas id='c2' style='vertical-align: top; border: 1px solid #eee'></canvas>
+<div id='txt'></div>
+</body>

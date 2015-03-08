@@ -48,11 +48,7 @@ void xoRenderer::RenderEl(xoPoint base, const xoRenderDomEl* el)
 
 void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 {
-	//if (node->Style.BackgroundColor == xoColor::RGBA(0xff, 0xf0, 0xf0, 0xff))
-	//{
-	//	RenderCubic(base, node);
-	//	return;
-	//}
+	//if (node->Style.BackgroundColor == xoColor::RGBA(0xff, 0xf0, 0xf0, 0xff)) { RenderQuadratic(base, node); return; }
 
 	// always shade rectangles well
 	const bool alwaysGoodRects = true;
@@ -143,7 +139,7 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 			quads[1].UV.y = border.Left;
 			quads[2].UV.y = border.Left;
 			quads[3].UV.y = border.Left;
-			Driver->DrawQuad(quads);
+			Driver->Draw(xoGPUPrimQuads, 4, quads);
 
 			// top-right
 			Driver->ShaderPerObject.Edges = xoVec2f(right, top);
@@ -152,7 +148,7 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 			quads[1].Pos.vec2 = XOVEC2(center.x, center.y);
 			quads[2].Pos.vec2 = XOVEC2(corners[2].Pos.x, center.y);
 			quads[3].Pos.vec2 = XOVEC2(corners[3].Pos.x, corners[3].Pos.y);
-			Driver->DrawQuad(quads);
+			Driver->Draw(xoGPUPrimQuads, 4, quads);
 
 			// bottom-left
 			Driver->ShaderPerObject.Edges = xoVec2f(left, bottom);
@@ -161,7 +157,7 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 			quads[1].Pos.vec2 = XOVEC2(corners[1].Pos.x, corners[1].Pos.y);
 			quads[2].Pos.vec2 = XOVEC2(center.x, corners[2].Pos.y);
 			quads[3].Pos.vec2 = XOVEC2(center.x, center.y);
-			Driver->DrawQuad(quads);
+			Driver->Draw(xoGPUPrimQuads, 4, quads);
 
 			// bottom-right
 			Driver->ShaderPerObject.Edges = xoVec2f(right, bottom);
@@ -170,7 +166,7 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 			quads[1].Pos.vec2 = XOVEC2(center.x, corners[1].Pos.y);
 			quads[2].Pos.vec2 = XOVEC2(corners[2].Pos.x, corners[2].Pos.y);
 			quads[3].Pos.vec2 = XOVEC2(corners[3].Pos.x, center.y);
-			Driver->DrawQuad(quads);
+			Driver->Draw(xoGPUPrimQuads, 4, quads);
 		}
 		else if (useRectShader)
 		{
@@ -179,7 +175,7 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 			Driver->ShaderPerObject.Border = xoVec4f(border.Left + 0.5f, border.Top + 0.5f, border.Right + 0.5f, border.Bottom + 0.5f);
 			Driver->ShaderPerObject.Radius = radius + 0.5f; // see the shader for an explanation of this 0.5
 			Driver->ShaderPerObject.BorderColor = style->BorderColor.GetVec4Linear();
-			Driver->DrawQuad(corners);
+			Driver->Draw(xoGPUPrimQuads, 4, corners);
 		}
 		else
 		{
@@ -188,12 +184,12 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 				Driver->ActivateShader(xoShaderFillTex);
 				if (!LoadTexture(Images->GetOrNull(bgImage), TexUnit0))
 					return;
-				Driver->DrawQuad(corners);
+				Driver->Draw(xoGPUPrimQuads, 4, corners);
 			}
 			else
 			{
 				Driver->ActivateShader(xoShaderFill);
-				Driver->DrawQuad(corners);
+				Driver->Draw(xoGPUPrimQuads, 4, corners);
 			}
 		}
 	}
@@ -209,14 +205,56 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		{
 			Driver->ActivateShader(xoShaderFillTex);
 			if (LoadTexture(canvasImage, TexUnit0))
-				Driver->DrawQuad(corners);
+				Driver->Draw(xoGPUPrimQuads, 4, corners);
 		}
 	}
 }
 
-void xoRenderer::RenderCubic(xoPoint base, const xoRenderDomNode* node)
+void xoRenderer::RenderQuadratic(xoPoint base, const xoRenderDomNode* node)
 {
+	base.X += node->Pos.Left;
+	base.Y += node->Pos.Top;
 
+	// I get these coordinates by drawing circles in Albion. The other circle is centered around the origin.
+	float vx[] = {
+		0, 5,
+		-5, 5,
+		-5, 0,
+
+		-5, 0,
+		-4, 0,
+		-3, 0,
+
+		-3, 0,
+		-3, 4,
+		0, 4,
+	
+		0, 4,
+		0, 4.5,
+		0, 5,
+	};
+
+	xoVx_PTCV4 corners[50];
+	xoVec2f uv[3];
+	uv[0] = XOVEC2(0, 0);
+	uv[1] = XOVEC2(0.5, 0);
+	uv[2] = XOVEC2(1, 1);
+	xoVec3f basef(xoPosToReal(base.X), xoPosToReal(base.Y), 0);
+
+	basef = xoVec3f(180, 30, 0) + 0.02f * basef;
+
+	for (int i = 0; i < arraysize(vx); i++)
+	{
+		xoVec3f p(vx[i * 2], 5 - vx[i * 2 + 1], 0);
+		p = 30.0f * p;
+		corners[i].Pos = basef + p;
+		corners[i].UV = uv[i % 3];
+		corners[i].Color = i < 3 ? xoColor::RGBA(250, 50, 50, 255).GetRGBA() : xoColor::RGBA(50, 50, 250, 255).GetRGBA();
+		corners[i].V4.x = -1;
+	}
+
+	Driver->ActivateShader(xoShaderQuadraticSpline);
+	Driver->Draw(xoGPUPrimTriangles, 12, corners);
 }
 
 void xoRenderer::RenderText(xoPoint base, const xoRenderDomText* node)
@@ -313,7 +351,7 @@ void xoRenderer::RenderTextChar_SubPixel(xoPoint base, const xoRenderDomText* no
 	Driver->ActivateShader(xoShaderTextRGB);
 	if (!LoadTexture(atlas, TexUnit0))
 		return;
-	Driver->DrawQuad(corners);
+	Driver->Draw(xoGPUPrimQuads, 4, corners);
 }
 
 void xoRenderer::RenderTextChar_WholePixel(xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl)
@@ -382,7 +420,7 @@ void xoRenderer::RenderTextChar_WholePixel(xoPoint base, const xoRenderDomText* 
 	Driver->ActivateShader(xoShaderTextWhole);
 	if (!LoadTexture(atlas, TexUnit0))
 		return;
-	Driver->DrawQuad(corners);
+	Driver->Draw(xoGPUPrimQuads, 4, corners);
 }
 
 void xoRenderer::RenderGlyphsNeeded()

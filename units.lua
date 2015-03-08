@@ -254,6 +254,7 @@ local xo = SharedLibrary {
 		"xo/Render/xoStyleResolve.cpp",
 		"xo/Render/xoTextureAtlas.cpp",
 		"xo/Render/xoVertexTypes.cpp",
+		"xo/Splines/xoSplineProcess.cpp",
 		"xo/Text/xoFontStore.cpp",
 		"xo/Text/xoGlyphCache.cpp",
 		"xo/Text/xoTextDefs.cpp",
@@ -333,6 +334,7 @@ local ExampleCanvas      = XoExampleApp("xoWinMain.cpp", "Canvas")
 local ExampleEvents      = XoExampleApp("xoWinMain.cpp", "Events")
 local ExampleHelloWorld  = XoExampleApp("xoWinMain.cpp", "HelloWorld")
 local ExampleKitchenSink = XoExampleApp("xoWinMain.cpp", "KitchenSink")
+local ExampleSplineDev   = XoExampleApp("xoWinMain.cpp", "SplineDev")
 local ExampleLowLevel    = XoExampleApp("xoWinMainLowLevel.cpp", "RunAppLowLevel")
 
 local Test = Program {

@@ -351,13 +351,13 @@ xoProgBase* xoRenderGL::GetShader(xoShaders shader)
 {
 	switch (shader)
 	{
-	case xoShaderFill:			return &PFill;
-	case xoShaderFillTex:		return &PFillTex;
-	case xoShaderRect:			return &PRect;
-	case xoShaderRect2:			return &PRect2;
-	case xoShaderTextRGB:		return &PTextRGB;
-	case xoShaderTextWhole:		return &PTextWhole;
-	case xoShaderCubicSpline:	return &PCurve;
+	case xoShaderFill:				return &PFill;
+	case xoShaderFillTex:			return &PFillTex;
+	case xoShaderRect:				return &PRect;
+	case xoShaderRect2:				return &PRect2;
+	case xoShaderTextRGB:			return &PTextRGB;
+	case xoShaderTextWhole:			return &PTextWhole;
+	case xoShaderQuadraticSpline:	return &PCurve;
 	default:
 		XOASSERT(false);
 		return NULL;
@@ -522,7 +522,7 @@ void xoRenderGL::SetShaderFrameUniforms()
 	SetMVProj(xoShaderFillTex, PFillTex, mvprojT);
 	SetMVProj(xoShaderTextRGB, PTextRGB, mvprojT);
 	SetMVProj(xoShaderTextWhole, PTextWhole, mvprojT);
-	SetMVProj(xoShaderCubicSpline, PCurve, mvprojT);
+	SetMVProj(xoShaderQuadraticSpline, PCurve, mvprojT);
 }
 
 void xoRenderGL::SetShaderObjectUniforms()
@@ -580,7 +580,7 @@ void xoRenderGL::PostRenderCleanup()
 	ActiveShader = xoShaderInvalid;
 }
 
-void xoRenderGL::DrawQuad(const void* v)
+void xoRenderGL::Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v)
 {
 	XOTRACE_RENDER("DrawQuad\n");
 
@@ -637,11 +637,14 @@ void xoRenderGL::DrawQuad(const void* v)
 		varvtex0 = PTextWhole.v_vtexuv0;
 		vartexUnit0 = PTextWhole.v_tex0;
 		break;
-	case xoShaderCubicSpline:
+	case xoShaderQuadraticSpline:
+		stride = sizeof(xoVx_PTCV4);
 		varvpos = PCurve.v_vpos;
 		varvcol = PCurve.v_vcolor;
 		varvtex0 = PCurve.v_vtexuv0;
 		//vartexUnit0 = PCurve.v_tex0;
+		glVertexAttribPointer(PCurve.v_vflip, 1, GL_FLOAT, true, stride, vbyte + offsetof(xoVx_PTCV4, V4.x));
+		glEnableVertexAttribArray(PCurve.v_vflip);
 		break;
 	}
 
@@ -666,12 +669,31 @@ void xoRenderGL::DrawQuad(const void* v)
 		glEnableVertexAttribArray(varvtexClamp);
 	}
 
-	uint16 indices[4];
-	indices[0] = 0;
-	indices[1] = 1;
-	indices[2] = 3;
-	indices[3] = 2;
-	glDrawElements(GL_TRIANGLE_STRIP, 4, GL_UNSIGNED_SHORT, indices);
+	XOASSERT(nvertex < 65536);
+	uint16* indices = (uint16*) xoMallocOrDie(sizeof(uint16) * nvertex);
+
+	if (type == xoGPUPrimQuads)
+	{
+		for (int i = 0; i < nvertex; i += 4)
+		{
+			indices[i + 0] = i;
+			indices[i + 1] = i + 1;
+			indices[i + 2] = i + 3;
+			indices[i + 3] = i + 2;
+		}
+		glDrawElements(GL_TRIANGLE_STRIP, nvertex, GL_UNSIGNED_SHORT, indices);
+	}
+	else if (type == xoGPUPrimTriangles)
+	{
+		for (int i = 0; i < nvertex; i++)
+			indices[i] = i;
+		glDrawElements(GL_TRIANGLES, nvertex, GL_UNSIGNED_SHORT, indices);
+	}
+	else
+	{
+		XOTODO;
+	}
+	free(indices);
 
 	//auto vx = (xoVx_PTC*) vbyte;
 	//XOTRACE_RENDER( "DrawQuad done (%f,%f) (%f,%f) (%f,%f) (%f,%f)\n", vx[0].Pos.x, vx[0].Pos.y, vx[1].Pos.x, vx[1].Pos.y, vx[2].Pos.x, vx[2].Pos.y, vx[3].Pos.x, vx[3].Pos.y );

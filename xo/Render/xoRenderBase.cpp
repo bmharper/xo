@@ -117,7 +117,7 @@ void xoRenderDummy::ActivateShader(xoShaders shader)
 {
 }
 
-void xoRenderDummy::DrawQuad(const void* v)
+void xoRenderDummy::Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v)
 {
 }
 

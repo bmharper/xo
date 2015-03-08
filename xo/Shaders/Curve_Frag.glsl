@@ -3,7 +3,9 @@
 // This is from Jim Blinn and Charles Loop's paper "Resolution Independent Curve Rendering using Programmable Graphics Hardware"
 // We don't need this complexity here.. and if I recall correctly, this technique aliases under minification faster than
 // our simpler rounded-rectangle alternative.
-varying vec2 texuv0;
+varying vec2		texuv0;
+varying vec4		color;
+varying float		flip;
 
 void main()
 {
@@ -21,15 +23,12 @@ void main()
 	float sd = (p.x * p.x - p.y) / sqrt(fx * fx + fy * fy);
 
 	// Linear alpha
-	float alpha = 0.5 - sd;
+	float alpha = 0.5 - (flip * sd);
+	alpha = min(alpha, 1.0);
 
-	gl_FragColor = gl_Color;
+	vec4 col = color;
+	col.a *= alpha;
 
-	if ( alpha > 1 )
-		gl_FragColor.a = 1;
-	else if ( alpha < 0 )
-		discard;
-	else
-		gl_FragColor.a = alpha;
+	gl_FragColor = premultiply(col);
 }
 

@@ -18,6 +18,7 @@ public:
 	GLint v_mvproj;           // uniform mat4
 	GLint v_vpos;             // attribute vec4
 	GLint v_vcolor;           // attribute vec4
+	GLint v_vflip;            // attribute float
 	GLint v_vtexuv0;          // attribute vec2
 };
 

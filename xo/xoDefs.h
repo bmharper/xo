@@ -74,15 +74,18 @@ static const xoTextureID xoTextureIDNull = 0;		// Zero is always an invalid Text
 static const u32 xoMaxTextureUnits = 8;
 
 inline int32	xoIntToPos(int real)			{ return real << xoPosShift; }
-inline int32	xoRealx256ToPos(int32 real)	{ return int32(real * ((1 << xoPosShift) / 256)); }   // Since xoPosShift = 256, xoRealx256ToPos simplifies out to identity
-inline int32	xoRealToPos(float real)		{ return int32(real * (1 << xoPosShift)); }
-inline int32	xoDoubleToPos(double real)	{ return int32(real * (1 << xoPosShift)); }
-inline float	xoPosToReal(int32 pos)		{ return pos * (1.0f / (1 << xoPosShift)); }
+inline int32	xoRealx256ToPos(int32 real)		{ return int32(real * ((1 << xoPosShift) / 256)); }   // Since xoPosShift = 256, xoRealx256ToPos simplifies out to identity
+inline int32	xoRealToPos(float real)			{ return int32(real * (1 << xoPosShift)); }
+inline int32	xoDoubleToPos(double real)		{ return int32(real * (1 << xoPosShift)); }
+inline float	xoPosToReal(int32 pos)			{ return pos * (1.0f / (1 << xoPosShift)); }
 inline double	xoPosToDouble(int32 pos)		{ return pos * (1.0 / (1 << xoPosShift)); }
 inline int32	xoPosRound(int32 pos)			{ return pos + (1 << (xoPosShift-1)) & ~xoPosMask; }
 inline int32	xoPosRoundDown(int32 pos)		{ return pos & ~xoPosMask; }
-inline int32	xoPosRoundUp(int32 pos)		{ return pos + ((1 << xoPosShift) - 1) & ~xoPosMask; }
-inline float	xoRound(float real)			{ return floor(real + 0.5f); }
+inline int32	xoPosRoundUp(int32 pos)			{ return pos + ((1 << xoPosShift) - 1) & ~xoPosMask; }
+inline float	xoRound(float real)				{ return floor(real + 0.5f); }
+
+template<typename T>
+int xoSign(T real)							{ return (real == 0) ? 0 : (real < 0 ? -1 : 1); }
 
 enum xoCloneFlags
 {
@@ -375,7 +378,7 @@ enum xoShaders
 	xoShaderRect2,
 	xoShaderTextRGB,
 	xoShaderTextWhole,
-	xoShaderCubicSpline,
+	xoShaderQuadraticSpline,
 	// We may someday want to have slots down here available for application-defined custom shaders
 };
 

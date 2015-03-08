@@ -571,7 +571,7 @@ void xoRenderDX::ActivateShader(xoShaders shader)
 	D3D.Context->PSSetSamplers(0, 1, &D3D.SamplerPoint);
 }
 
-void xoRenderDX::DrawQuad(const void* v)
+void xoRenderDX::Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v)
 {
 	SetShaderObjectUniforms();
 
@@ -588,11 +588,13 @@ void xoRenderDX::DrawQuad(const void* v)
 		return;
 	}
 
-	//int vertexSize = D3D.ActiveProgramInfo->VertexSize;
 	int vertexSize = (int) xoVertexSize(D3D.ActiveProgram->VertexType());
 
 	memcpy(map.pData, v, nvert * vertexSize);
 	D3D.Context->Unmap(D3D.VertBuffer, 0);
+
+	// Triangles are TODO, as well as more than a single quad
+	XOASSERT(type == xoGPUPrimQuads && nvertex == 4);
 
 	UINT stride = vertexSize;
 	UINT offset = 0;
@@ -600,7 +602,7 @@ void xoRenderDX::DrawQuad(const void* v)
 	D3D.Context->IASetIndexBuffer(D3D.QuadIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 	//D3D.Context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 	D3D.Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-	D3D.Context->DrawIndexed(4, 0, 0);
+	D3D.Context->DrawIndexed(nvertex, 0, 0);
 
 	//D3D.Context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 	//D3D.Context->Draw( 3, 0 );

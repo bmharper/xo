@@ -50,7 +50,7 @@ public:
 	virtual void		PreRender();
 	virtual void		PostRenderCleanup();
 
-	virtual void		DrawQuad(const void* v);
+	virtual void		Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v);
 
 	virtual xoProgBase* GetShader(xoShaders shader);
 	virtual void		ActivateShader(xoShaders shader);

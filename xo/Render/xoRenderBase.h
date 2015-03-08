@@ -27,6 +27,12 @@ struct xoShaderPerObject
 };
 static_assert((sizeof(xoShaderPerObject) & 15) == 0, "xoShaderPerFrame size must be a multiple of 16 bytes (This is a DirectX constant buffer requirement)");
 
+enum xoGPUPrimitiveTypes
+{
+	xoGPUPrimQuads,
+	xoGPUPrimTriangles,
+};
+
 /* Base class of device-specific renderer (such as GL or DX).
 
 Texture IDs
@@ -87,7 +93,7 @@ public:
 	virtual xoProgBase* GetShader(xoShaders shader) = 0;
 	virtual void		ActivateShader(xoShaders shader) = 0;
 
-	virtual void		DrawQuad(const void* v) = 0;
+	virtual void		Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v) = 0;
 
 	virtual bool		LoadTexture(xoTexture* tex, int texUnit) = 0;
 	virtual bool		ReadBackbuffer(xoImage& image) = 0;
@@ -119,7 +125,7 @@ public:
 	virtual xoProgBase* GetShader(xoShaders shader);
 	virtual void		ActivateShader(xoShaders shader);
 
-	virtual void		DrawQuad(const void* v);
+	virtual void		Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v);
 
 	virtual bool		LoadTexture(xoTexture* tex, int texUnit);
 	virtual bool		ReadBackbuffer(xoImage& image);

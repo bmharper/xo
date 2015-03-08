@@ -131,7 +131,6 @@ bool xoStyleBox::Parse(const char* s, intp len, xoStyleBox& v)
 	int nspaces = FindSpaces(s, len, spaces);
 
 	// 20px
-	// 1px 2px 3px 4px (TODO)
 	xoStyleBox b;
 	if (nspaces == 0)
 	{

@@ -21,7 +21,7 @@ public:
 	void*		Buffer()						{ return RenderBuff.buf(); }
 	const void*	Buffer() const					{ return RenderBuff.buf(); }
 	void*		RowPtr(int line)				{ return RenderBuff.row_ptr(line); }
-	const void*	RowPtr(int line) const		{ return RenderBuff.row_ptr(line); }
+	const void*	RowPtr(int line) const			{ return RenderBuff.row_ptr(line); }
 	int32		Stride() const					{ return RenderBuff.stride(); }
 	uint32		StrideAbs() const				{ return RenderBuff.stride_abs(); }
 	uint32		Width() const					{ return RenderBuff.width(); }

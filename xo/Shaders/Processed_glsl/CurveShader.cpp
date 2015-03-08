@@ -13,6 +13,7 @@ void xoGLProg_Curve::Reset()
 	v_mvproj = -1;
 	v_vpos = -1;
 	v_vcolor = -1;
+	v_vflip = -1;
 	v_vtexuv0 = -1;
 }
 
@@ -22,13 +23,16 @@ const char* xoGLProg_Curve::VertSrc()
 		"uniform		mat4	mvproj;\n"
 		"attribute	vec4	vpos;\n"
 		"attribute	vec4	vcolor;\n"
+		"attribute	float	vflip;\n"
 		"attribute	vec2	vtexuv0;\n"
 		"varying		vec4	color;\n"
 		"varying		vec2	texuv0;\n"
+		"varying		float	flip;\n"
 		"void main()\n"
 		"{\n"
 		"	gl_Position = mvproj * vpos;\n"
 		"	texuv0 = vtexuv0;\n"
+		"	flip = vflip;\n"
 		"	color = fromSRGB(vcolor);\n"
 		"}\n"
 		"\n"
@@ -41,7 +45,9 @@ const char* xoGLProg_Curve::FragSrc()
 		"// This is from Jim Blinn and Charles Loop's paper \"Resolution Independent Curve Rendering using Programmable Graphics Hardware\"\n"
 		"// We don't need this complexity here.. and if I recall correctly, this technique aliases under minification faster than\n"
 		"// our simpler rounded-rectangle alternative.\n"
-		"varying vec2 texuv0;\n"
+		"varying vec2		texuv0;\n"
+		"varying vec4		color;\n"
+		"varying float		flip;\n"
 		"\n"
 		"void main()\n"
 		"{\n"
@@ -59,16 +65,13 @@ const char* xoGLProg_Curve::FragSrc()
 		"	float sd = (p.x * p.x - p.y) / sqrt(fx * fx + fy * fy);\n"
 		"\n"
 		"	// Linear alpha\n"
-		"	float alpha = 0.5 - sd;\n"
+		"	float alpha = 0.5 - (flip * sd);\n"
+		"	alpha = min(alpha, 1.0);\n"
 		"\n"
-		"	gl_FragColor = gl_Color;\n"
+		"	vec4 col = color;\n"
+		"	col.a *= alpha;\n"
 		"\n"
-		"	if ( alpha > 1 )\n"
-		"		gl_FragColor.a = 1;\n"
-		"	else if ( alpha < 0 )\n"
-		"		discard;\n"
-		"	else\n"
-		"		gl_FragColor.a = alpha;\n"
+		"	gl_FragColor = premultiply(col);\n"
 		"}\n"
 		"\n"
 ;
@@ -87,6 +90,7 @@ bool xoGLProg_Curve::LoadVariablePositions()
 	nfail += (v_mvproj = glGetUniformLocation( Prog, "mvproj" )) == -1;
 	nfail += (v_vpos = glGetAttribLocation( Prog, "vpos" )) == -1;
 	nfail += (v_vcolor = glGetAttribLocation( Prog, "vcolor" )) == -1;
+	nfail += (v_vflip = glGetAttribLocation( Prog, "vflip" )) == -1;
 	nfail += (v_vtexuv0 = glGetAttribLocation( Prog, "vtexuv0" )) == -1;
 	if (nfail != 0)
 		XOTRACE("Failed to bind %d variables of shader Curve\n", nfail);
