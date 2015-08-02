@@ -414,15 +414,64 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 
 2015-01-27	Early alignment
 	If one knows the content-width and content-height, then you can do alignment
-	immediately immediately after generating a child, instead of doing all
-	alignments after all children. This could be useful if you're aligning the
-	child that defines your baseline, so that subsequent children get the right
-	baseline. I'm wary of it because you'd have to document it, and people might
-	not understand it, and just be annoyed by the apparent inconsistency.
+	immediately after generating a child, instead of doing all alignments after
+	all children. This could be useful if you're aligning the child that defines
+	your baseline, so that subsequent children get the right baseline. I'm wary
+	of it because you'd have to document it, and people might not understand it,
+	and just be annoyed by the apparent inconsistency.
 
 2015-01-27	Baseline alignment x4
 	Dammit no. Propagating baselines down into nodes is a BAD IDEA. Don't ever
-	try that again. HTML doesn't do it. It's horribe. Look at the simple case
+	try that again. HTML doesn't do it. It's horrible. Look at the simple case
 	in does-baseline-propagate-downward.html to get a better understanding.
 	By propagating baseline downward you're introducing a nightmare of side
 	effects. Don't try it again!
+
+2015-06-30	Style bloat
+	I'm busy adding left/right/top/bottom background colors, and realizing I'm
+	gonna have to do the same for borders, and all of a sudden I'm seeing that
+	xoRenderStyle is probably going to continue to grow. I wonder if at some point,
+	instead of storing all these styles, you might want to store a vector of
+	styles that were combined to produce a particular node. I can see this being
+	a thorny problem, and I'm really being irresponsible by not looking at how
+	the browsers do it.
+
+2015-07-09	Background color gradients
+	My goal here is to reproduce the subtle vertical gradients that one finds
+	on Windows 8 buttons. I started out by allowing a style to define 4 colors
+	for left/right/top/bottom. That doesn't work at all. It's not even well
+	defined. Does your top-left corner get the left color or the top color?
+	I was inspired by an old short conversation I had with Michael Herf on
+	Twitter, and I'm going to try and do these kinds of things with textures
+	instead. If the styling language (ie my CSS ripoff) allows one to define
+	textures inline with some amount of ease, then it should be a nice fit.
+	One potential gotcha here is interpolating between two textures. For example,
+	in Windows 8, when your cursor moves over a button, it quickly becomes
+	a blue gradient. When you move your cursor away from the button, it slowly
+	fades back to a grey gradient. Assuming 60 different fade states (60 fps
+	over 1 second), that's 60 different textures that you'd need to manage.
+	This could get tricky - you'd want to be hashing textures, and reusing
+	those that you had used before.
+	I'm thinking about this here in the context of having a generic "scratch"
+	texture that is used as a throwaway canvas. The textures defined by styles
+	would need to be uploaded on demand into this scratch texture atlas, and
+	we'd need to coordinate this so that the texture is uploaded once at the
+	start of a frame. You'd have all of these tiny 2x2 textures inside that
+	atlas, and you'd want to reuse them.
+	Simply hashing their contents (and dimensions) is the simplest thing I
+	can think of, and that ought to work pretty well. But perhaps there is an
+	even simpler solution than this: Allow the user to interpolate between
+	two textures, but force the user to define textures by giving them names.
+	If the user wants to dynamically generate different textures each frame,
+	then it's up to the user to define the lifecycle of that texture. I would
+	imagine that one would create one such texture, give it a name, and then
+	mutate that one texture from one frame to the next. This is actually
+	far better than trying to be all smart and generic about it, because most
+	of the time your textures are going to be pretty static. Allowing
+	interpolation between two textures should suffice for the other big chunk
+	of the mutability of textures. The few times when one does need a
+	runtime-defined texture, you can manage that thing's lifecycle yourself.
+	
+
+
+
