@@ -532,10 +532,10 @@ void xoLayout::ComputeRelativeOffset(const NodeState& s, xoBox& box)
 
 xoBox xoLayout::ComputeBox(xoBox container, bool widthDefined, bool heightDefined, xoStyleCategories cat)
 {
-	return ComputeBox(container, widthDefined, heightDefined, Stack.GetBox(cat));
+	return ComputeBox(container, widthDefined, heightDefined, Stack.GetSizeQuad(cat));
 }
 
-xoBox xoLayout::ComputeBox(xoBox container, bool widthDefined, bool heightDefined, xoStyleBox box)
+xoBox xoLayout::ComputeBox(xoBox container, bool widthDefined, bool heightDefined, xoSizeQuad box)
 {
 	xoBox b;
 	b.Left = ComputeDimension(container.Width(), widthDefined, box.Left);

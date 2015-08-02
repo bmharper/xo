@@ -46,9 +46,11 @@ public:
 	void				Initialize(const xoDoc* doc, xoPool* pool);
 	void				Reset();
 	xoStyleAttrib		Get(xoStyleCategories cat) const;
-	void				GetBox(xoStyleCategories cat, xoStyleBox& box) const;
+	void				GetSizeQuad(xoStyleCategories cat, xoSizeQuad& quad) const;
+	void				GetColorQuad(xoStyleCategories cat, xoColorQuad& quad) const;
 
-	xoStyleBox			GetBox(xoStyleCategories cat) const { xoStyleBox b; GetBox(cat, b); return b; }
+	xoSizeQuad			GetSizeQuad(xoStyleCategories cat) const { xoSizeQuad q; GetSizeQuad(cat, q); return q; }
+	xoColorQuad			GetColorQuad(xoStyleCategories cat) const { xoColorQuad q; GetColorQuad(cat, q); return q; }
 
 	bool				HasHoverStyle() const;
 	bool				HasFocusStyle() const;

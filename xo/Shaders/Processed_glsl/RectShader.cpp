@@ -13,6 +13,7 @@ void xoGLProg_Rect::Reset()
 	v_mvproj = -1;
 	v_vpos = -1;
 	v_vcolor = -1;
+	v_vtexuv0 = -1;
 	v_radius = -1;
 	v_box = -1;
 	v_border = -1;
@@ -26,12 +27,15 @@ const char* xoGLProg_Rect::VertSrc()
 		"uniform		mat4	mvproj;\n"
 		"attribute	vec4	vpos;\n"
 		"attribute	vec4	vcolor;\n"
+		"attribute	vec2	vtexuv0;\n"
 		"varying		vec4	pos;\n"
 		"varying		vec4	color;\n"
+		"varying		vec2	texuv0;\n"
 		"void main()\n"
 		"{\n"
 		"	pos = mvproj * vpos;\n"
 		"	gl_Position = pos;\n"
+		"	texuv0 = vtexuv0;\n"
 		"	color = fromSRGB(vcolor);\n"
 		"}\n"
 ;
@@ -42,6 +46,7 @@ const char* xoGLProg_Rect::FragSrc()
 	return
 		"varying vec4	pos;\n"
 		"varying vec4	color;\n"
+		"varying vec2	texuv0;\n"
 		"uniform float	radius;\n"
 		"uniform vec4	box;\n"
 		"uniform vec4	border;\n"
@@ -94,6 +99,7 @@ const char* xoGLProg_Rect::FragSrc()
 		"		outcolor = mix(outcolor, border_color, borderMix);\n"
 		"\n"
 		"	outcolor.a *= clamp(radius_out - dist_out, 0.0, 1.0);\n"
+		"	outcolor.r = texuv0.s;\n"
 		"	outcolor = premultiply(outcolor);\n"
 		"\n"
 		"#ifdef XO_SRGB_FRAMEBUFFER\n"
@@ -120,6 +126,7 @@ bool xoGLProg_Rect::LoadVariablePositions()
 	nfail += (v_mvproj = glGetUniformLocation( Prog, "mvproj" )) == -1;
 	nfail += (v_vpos = glGetAttribLocation( Prog, "vpos" )) == -1;
 	nfail += (v_vcolor = glGetAttribLocation( Prog, "vcolor" )) == -1;
+	nfail += (v_vtexuv0 = glGetAttribLocation( Prog, "vtexuv0" )) == -1;
 	nfail += (v_radius = glGetUniformLocation( Prog, "radius" )) == -1;
 	nfail += (v_box = glGetUniformLocation( Prog, "box" )) == -1;
 	nfail += (v_border = glGetUniformLocation( Prog, "border" )) == -1;

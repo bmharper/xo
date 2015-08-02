@@ -1,5 +1,6 @@
 varying vec4	pos;
 varying vec4	color;
+varying vec2	texuv0;
 uniform float	radius;
 uniform vec4	box;
 uniform vec4	border;
@@ -52,6 +53,7 @@ void main()
 		outcolor = mix(outcolor, border_color, borderMix);
 
 	outcolor.a *= clamp(radius_out - dist_out, 0.0, 1.0);
+	outcolor.r = texuv0.s;
 	outcolor = premultiply(outcolor);
 
 #ifdef XO_SRGB_FRAMEBUFFER

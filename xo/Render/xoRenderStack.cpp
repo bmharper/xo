@@ -38,12 +38,15 @@ void xoRenderStack::Initialize(const xoDoc* doc, xoPool* pool)
 	memset(Defaults, 0, sizeof(Defaults));
 	Defaults[xoCatColor].SetColor(xoCatColor, xoColor::RGBA(0,0,0,255));
 	Defaults[xoCatDisplay].SetDisplay(xoDisplayInline);
-	Defaults[xoCatBackground].SetColor(xoCatBackground, xoColor::RGBA(0,0,0,0));
 	//Defaults[xoCatBackgroundImage]
 	Defaults[xoCatCursor].SetCursor(xoCursorArrow);
 	Defaults[xoCatText_Align_Vertical].SetTextAlignVertical(xoTextAlignVerticalBaseline);
-	//Defaults[xoCatDummy2_UseMe]
-	//Defaults[xoCatDummy3_UseMe]
+
+	Defaults[xoCatBackColor_Left].SetColor(xoCatBackColor_Left, xoColor::RGBA(0, 0, 0, 0));
+	Defaults[xoCatBackColor_Top].SetColor(xoCatBackColor_Top, xoColor::RGBA(0, 0, 0, 0));
+	Defaults[xoCatBackColor_Right].SetColor(xoCatBackColor_Right, xoColor::RGBA(0, 0, 0, 0));
+	Defaults[xoCatBackColor_Bottom].SetColor(xoCatBackColor_Bottom, xoColor::RGBA(0, 0, 0, 0));
+
 	Defaults[xoCatMargin_Left].SetSize(xoCatMargin_Left, xoSize::Zero());
 	Defaults[xoCatMargin_Top].SetSize(xoCatMargin_Top, xoSize::Zero());
 	Defaults[xoCatMargin_Right].SetSize(xoCatMargin_Right, xoSize::Zero());
@@ -99,13 +102,22 @@ xoStyleAttrib xoRenderStack::Get(xoStyleCategories cat) const
 		return v;
 }
 
-void xoRenderStack::GetBox(xoStyleCategories cat, xoStyleBox& box) const
+void xoRenderStack::GetSizeQuad(xoStyleCategories cat, xoSizeQuad& quad) const
 {
-	xoStyleCategories base = xoCatMakeBaseBox(cat);
-	box.Left = Get((xoStyleCategories)(base + 0)).GetSize();
-	box.Top = Get((xoStyleCategories)(base + 1)).GetSize();
-	box.Right = Get((xoStyleCategories)(base + 2)).GetSize();
-	box.Bottom = Get((xoStyleCategories)(base + 3)).GetSize();
+	xoStyleCategories base = xoCatMakeBaseQuad(cat);
+	quad.Left = Get((xoStyleCategories)(base + 0)).GetSize();
+	quad.Top = Get((xoStyleCategories)(base + 1)).GetSize();
+	quad.Right = Get((xoStyleCategories)(base + 2)).GetSize();
+	quad.Bottom = Get((xoStyleCategories)(base + 3)).GetSize();
+}
+
+void xoRenderStack::GetColorQuad(xoStyleCategories cat, xoColorQuad& quad) const
+{
+	xoStyleCategories base = xoCatMakeBaseQuad(cat);
+	quad.Left = Get((xoStyleCategories) (base + 0)).GetColor();
+	quad.Top = Get((xoStyleCategories) (base + 1)).GetColor();
+	quad.Right = Get((xoStyleCategories) (base + 2)).GetColor();
+	quad.Bottom = Get((xoStyleCategories) (base + 3)).GetColor();
 }
 
 bool xoRenderStack::HasHoverStyle() const

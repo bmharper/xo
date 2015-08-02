@@ -117,7 +117,7 @@ protected:
 	xoPos		ComputeDimension(xoPos container, xoStyleCategories cat);
 	xoPos		ComputeDimension(xoPos container, xoSize size);
 	xoBox		ComputeBox(xoPos containerWidth, xoPos containerHeight, xoStyleCategories cat);
-	xoBox		ComputeBox(xoPos containerWidth, xoPos containerHeight, xoStyleBox box);
+	xoBox		ComputeBox(xoPos containerWidth, xoPos containerHeight, xoSizeQuad box);
 	BindingSet	ComputeBinds();
 
 	xoPos		HoriAdvance(const xoGlyph* glyph, const TextRunState& ts);

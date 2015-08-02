@@ -693,10 +693,10 @@ xoPos xoLayout3::ComputeDimension(xoPos container, xoSize size)
 
 xoBox xoLayout3::ComputeBox(xoPos containerWidth, xoPos containerHeight, xoStyleCategories cat)
 {
-	return ComputeBox(containerWidth, containerHeight, Stack.GetBox(cat));
+	return ComputeBox(containerWidth, containerHeight, Stack.GetSizeQuad(cat));
 }
 
-xoBox xoLayout3::ComputeBox(xoPos containerWidth, xoPos containerHeight, xoStyleBox box)
+xoBox xoLayout3::ComputeBox(xoPos containerWidth, xoPos containerHeight, xoSizeQuad box)
 {
 	xoBox b;
 	b.Left = ComputeDimension(containerWidth, box.Left);

@@ -125,20 +125,20 @@ bool xoSize::Parse(const char* s, intp len, xoSize& v)
 	return true;
 }
 
-bool xoStyleBox::Parse(const char* s, intp len, xoStyleBox& v)
+template<typename TQuad>
+bool TParseQuad(const char* s, intp len, TQuad& v)
 {
+	typedef typename TQuad::Component TComponent;
 	int spaces[10];
 	int nspaces = FindSpaces(s, len, spaces);
 
 	// 20px
-	xoStyleBox b;
+	TQuad b;
 	if (nspaces == 0)
 	{
-		xoSize one;
-		if (xoSize::Parse(s, len, one))
+		if (TComponent::Parse(s, len, b.Left))
 		{
-			b.Left = b.Top = b.Bottom = b.Right = one;
-			v = b;
+			v = TQuad::MakeUniform(b.Left);
 			return true;
 		}
 	}
@@ -146,10 +146,10 @@ bool xoStyleBox::Parse(const char* s, intp len, xoStyleBox& v)
 	// 1px 2px 3px 4px
 	if (nspaces == 3)
 	{
-		bool ok1 = xoSize::Parse(s, spaces[0], b.Left);
-		bool ok2 = xoSize::Parse(s + spaces[0] + 1, spaces[1] - spaces[0] - 1, b.Top);
-		bool ok3 = xoSize::Parse(s + spaces[1] + 1, spaces[2] - spaces[1] - 1, b.Right);
-		bool ok4 = xoSize::Parse(s + spaces[2] + 1, (int) len - spaces[2] - 1, b.Bottom);
+		bool ok1 = TComponent::Parse(s, spaces[0], b.Left);
+		bool ok2 = TComponent::Parse(s + spaces[0] + 1, spaces[1] - spaces[0] - 1, b.Top);
+		bool ok3 = TComponent::Parse(s + spaces[1] + 1, spaces[2] - spaces[1] - 1, b.Right);
+		bool ok4 = TComponent::Parse(s + spaces[2] + 1, (int) len - spaces[2] - 1, b.Bottom);
 		if (ok1 && ok2 && ok3 && ok4)
 		{
 			v = b;
@@ -157,6 +157,16 @@ bool xoStyleBox::Parse(const char* s, intp len, xoStyleBox& v)
 		}
 	}
 	return false;
+}
+
+bool xoSizeQuad::Parse(const char* s, intp len, xoSizeQuad& v)
+{
+	return TParseQuad(s, len, v);
+}
+
+bool xoColorQuad::Parse(const char* s, intp len, xoColorQuad& v)
+{
+	return TParseQuad(s, len, v);
 }
 
 bool xoColor::Parse(const char* s, intp len, xoColor& v)
@@ -412,12 +422,12 @@ bool xoStyle::Parse(const char* t, intp maxLen, xoDoc* doc)
 		else if (t[i] == ';' || (eof && startv != -1))
 		{
 			bool ok = true;
-			if (MATCH(t, startk, eq, "background"))							{ ok = ParseSingleAttrib(TSTART, TLEN, &xoColor::Parse, xoCatBackground, *this); }
+			if (MATCH(t, startk, eq, "background"))							{ ok = ParseCompound(TSTART, TLEN, &xoColorQuad::Parse, xoCatBackColor_Left, *this); }
 			else if (MATCH(t, startk, eq, "color"))							{ ok = ParseSingleAttrib(TSTART, TLEN, &xoColor::Parse, xoCatColor, *this); }
 			else if (MATCH(t, startk, eq, "width"))							{ ok = ParseSingleAttrib(TSTART, TLEN, &xoSize::Parse, xoCatWidth, *this); }
 			else if (MATCH(t, startk, eq, "height"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoSize::Parse, xoCatHeight, *this); }
-			else if (MATCH(t, startk, eq, "padding"))						{ ok = ParseCompound(TSTART, TLEN, &xoStyleBox::Parse, xoCatPadding_Left, *this); }
-			else if (MATCH(t, startk, eq, "margin"))						{ ok = ParseCompound(TSTART, TLEN, &xoStyleBox::Parse, xoCatMargin_Left, *this); }
+			else if (MATCH(t, startk, eq, "padding"))						{ ok = ParseCompound(TSTART, TLEN, &xoSizeQuad::Parse, xoCatPadding_Left, *this); }
+			else if (MATCH(t, startk, eq, "margin"))						{ ok = ParseCompound(TSTART, TLEN, &xoSizeQuad::Parse, xoCatMargin_Left, *this); }
 			else if (MATCH(t, startk, eq, "display"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParseDisplayType, xoCatDisplay, *this); }
 			else if (MATCH(t, startk, eq, "position"))						{ ok = ParseSingleAttrib(TSTART, TLEN, &xoParsePositionType, xoCatPosition, *this); }
 			else if (MATCH(t, startk, eq, "border"))						{ ok = ParseDirect(TSTART, TLEN, &xoParseBorder, *this); }
@@ -478,9 +488,9 @@ const xoStyleAttrib* xoStyle::Get(xoStyleCategories cat) const
 	return NULL;
 }
 
-void xoStyle::GetBox(xoStyleCategories cat, xoStyleBox& box) const
+void xoStyle::GetSizeQuad(xoStyleCategories cat, xoSizeQuad& box) const
 {
-	xoStyleCategories base = xoCatMakeBaseBox(cat);
+	xoStyleCategories base = xoCatMakeBaseQuad(cat);
 	for (intp i = 0; i < Attribs.size(); i++)
 	{
 		uint pindex = uint(Attribs[i].Category - base);
@@ -489,45 +499,55 @@ void xoStyle::GetBox(xoStyleCategories cat, xoStyleBox& box) const
 	}
 }
 
-void xoStyle::SetBox(xoStyleCategories cat, xoStyleBox val)
+void xoStyle::SetSizeQuad(xoStyleCategories cat, xoSizeQuad val)
 {
 	if (cat >= xoCatMargin_Left && cat <= xoCatBorder_Bottom)
 	{
-		SetBoxInternal(xoCatMakeBaseBox(cat), val);
+		TSetQuadInternal(xoCatMakeBaseQuad(cat), val);
 	}
 	else XOASSERT(false);
 }
 
-void xoStyle::SetUniformBox(xoStyleCategories cat, xoStyleAttrib val)
+void xoStyle::SetColorQuad(xoStyleCategories cat, xoColorQuad val)
 {
-	cat = xoCatMakeBaseBox(cat);
+	if (cat >= xoCatBackColor_Left && cat <= xoCatBorderColor_Bottom)
+	{
+		TSetQuadInternal(xoCatMakeBaseQuad(cat), val);
+	}
+	else XOASSERT(false);
+}
+
+void xoStyle::SetUniformQuad(xoStyleCategories cat, xoStyleAttrib val)
+{
+	cat = xoCatMakeBaseQuad(cat);
 	val.Category = (xoStyleCategories)(cat + 0);	Set(val);
 	val.Category = (xoStyleCategories)(cat + 1);	Set(val);
 	val.Category = (xoStyleCategories)(cat + 2);	Set(val);
 	val.Category = (xoStyleCategories)(cat + 3);	Set(val);
 }
 
-void xoStyle::SetUniformBox(xoStyleCategories cat, xoColor color)
+void xoStyle::SetUniformQuad(xoStyleCategories cat, xoColor color)
 {
 	xoStyleAttrib val;
 	val.SetColor(cat, color);
-	SetUniformBox(cat, val);
+	SetUniformQuad(cat, val);
 }
 
-void xoStyle::SetUniformBox(xoStyleCategories cat, xoSize size)
+void xoStyle::SetUniformQuad(xoStyleCategories cat, xoSize size)
 {
 	xoStyleAttrib val;
 	val.SetSize(cat, size);
-	SetUniformBox(cat, val);
+	SetUniformQuad(cat, val);
 }
 
-void xoStyle::SetBoxInternal(xoStyleCategories catBase, xoStyleBox val)
+template<typename TQuad>
+void xoStyle::TSetQuadInternal(xoStyleCategories catBase, TQuad val)
 {
 	xoStyleAttrib a;
-	a.SetSize((xoStyleCategories)(catBase + 0), val.Left);	Set(a);
-	a.SetSize((xoStyleCategories)(catBase + 1), val.Top);	Set(a);
-	a.SetSize((xoStyleCategories)(catBase + 2), val.Right);	Set(a);
-	a.SetSize((xoStyleCategories)(catBase + 3), val.Bottom);	Set(a);
+	a.Set((xoStyleCategories) (catBase + 0), val.Left);		Set(a);
+	a.Set((xoStyleCategories) (catBase + 1), val.Top);		Set(a);
+	a.Set((xoStyleCategories) (catBase + 2), val.Right);	Set(a);
+	a.Set((xoStyleCategories) (catBase + 3), val.Bottom);	Set(a);
 }
 
 void xoStyle::Set(xoStyleAttrib attrib)
@@ -543,9 +563,14 @@ void xoStyle::Set(xoStyleAttrib attrib)
 	Attribs += attrib;
 }
 
-void xoStyle::Set(xoStyleCategories cat, xoStyleBox val)
+void xoStyle::Set(xoStyleCategories cat, xoSizeQuad val)
 {
-	SetBox(cat, val);
+	SetSizeQuad(cat, val);
+}
+
+void xoStyle::Set(xoStyleCategories cat, xoColorQuad val)
+{
+	SetColorQuad(cat, val);
 }
 
 /*
@@ -992,13 +1017,13 @@ XOAPI bool xoParseBorder(const char* s, intp len, xoStyle& style)
 		xoColor color;
 		if (xoColor::Parse(s, len, color))
 		{
-			style.SetUniformBox(xoCatBorderColor_Left, color);
+			style.SetUniformQuad(xoCatBorderColor_Left, color);
 			return true;
 		}
 		xoSize size;
 		if (xoSize::Parse(s, len, size))
 		{
-			style.SetBox(xoCatBorder_Left, xoStyleBox::MakeUniform(size));
+			style.SetSizeQuad(xoCatBorder_Left, xoSizeQuad::MakeUniform(size));
 			return true;
 		}
 	}
@@ -1011,8 +1036,8 @@ XOAPI bool xoParseBorder(const char* s, intp len, xoStyle& style)
 		{
 			if (xoColor::Parse(s + spaces[0] + 1, len - spaces[0] - 1, color))
 			{
-				style.SetBox(xoCatBorder_Left, xoStyleBox::MakeUniform(size));
-				style.SetUniformBox(xoCatBorderColor_Left, color);
+				style.SetSizeQuad(xoCatBorder_Left, xoSizeQuad::MakeUniform(size));
+				style.SetUniformQuad(xoCatBorderColor_Left, color);
 				return true;
 			}
 		}
@@ -1020,14 +1045,14 @@ XOAPI bool xoParseBorder(const char* s, intp len, xoStyle& style)
 	else if (nspaces == 3)
 	{
 		// 1px 2px 3px 4px
-		xoStyleBox box;
+		xoSizeQuad box;
 		bool s1 = xoSize::Parse(s, spaces[0], box.Left);
 		bool s2 = xoSize::Parse(s + spaces[0] + 1, spaces[1] - spaces[0] - 1, box.Top);
 		bool s3 = xoSize::Parse(s + spaces[1] + 1, spaces[2] - spaces[1] - 1, box.Right);
 		bool s4 = xoSize::Parse(s + spaces[2] + 1, len - spaces[2] - 1, box.Bottom);
 		if (s1 && s2 && s3 && s4)
 		{
-			style.SetBox(xoCatBorder_Left, box);
+			style.SetSizeQuad(xoCatBorder_Left, box);
 			return true;
 		}
 	}

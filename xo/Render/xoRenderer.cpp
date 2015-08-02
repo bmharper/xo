@@ -99,9 +99,9 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 	corners[2].UV = XOVEC2(1 + padU, 1 + padV);
 	corners[3].UV = XOVEC2(1 + padU, -padV);
 
-	//auto bg = style.Get( xoCatBackground );
-	//auto bgImage = style.Get( xoCatBackgroundImage );
-	xoColor bg = style->BackgroundColor;
+	if (style->BackgroundColor.Top != style->BackgroundColor.Bottom)
+		int abc = 123;
+	xoColor bg = style->BackgroundColor.Left;
 	const char* bgImage = Strings->GetStr(style->BackgroundImageID);
 	if (bg.a != 0)
 	{
@@ -110,63 +110,7 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 
 		if (useRect2Shader)
 		{
-			Driver->ActivateShader(xoShaderRect2);
-			xoVec2f center = XOVEC2((left + right) / 2.0f,(top + bottom) / 2.0f);
-			xoVx_PTCV4 quads[4];
-			quads[0].PTC = corners[0];
-			quads[1].PTC = corners[1];
-			quads[2].PTC = corners[2];
-			quads[3].PTC = corners[3];
-			for (int i = 0; i < 4; i++)
-			{
-				quads[i].Color2 = style->BorderColor.GetRGBA();
-				quads[i].UV.x = radius;
-				quads[i].UV.y = border.Left;
-			}
-
-			Driver->ShaderPerObject.ShadowColor = xoVec4f(0, 0, 0, 0);
-			Driver->ShaderPerObject.ShadowOffset = xoVec2f(0, 0);
-			Driver->ShaderPerObject.ShadowSizeInv = 0;
-
-			// top-left
-			Driver->ShaderPerObject.Edges = xoVec2f(left, top);
-			Driver->ShaderPerObject.OutVector = xoVec2f(-1, -1);
-			quads[0].Pos.vec2 = corners[0].Pos.vec2;
-			quads[1].Pos.vec2 = XOVEC2(corners[1].Pos.x, center.y);
-			quads[2].Pos.vec2 = XOVEC2(center.x, center.y);
-			quads[3].Pos.vec2 = XOVEC2(center.x, corners[3].Pos.y);
-			quads[0].UV.y = border.Left;
-			quads[1].UV.y = border.Left;
-			quads[2].UV.y = border.Left;
-			quads[3].UV.y = border.Left;
-			Driver->Draw(xoGPUPrimQuads, 4, quads);
-
-			// top-right
-			Driver->ShaderPerObject.Edges = xoVec2f(right, top);
-			Driver->ShaderPerObject.OutVector = xoVec2f(1, -1);
-			quads[0].Pos.vec2 = XOVEC2(center.x, corners[0].Pos.y);
-			quads[1].Pos.vec2 = XOVEC2(center.x, center.y);
-			quads[2].Pos.vec2 = XOVEC2(corners[2].Pos.x, center.y);
-			quads[3].Pos.vec2 = XOVEC2(corners[3].Pos.x, corners[3].Pos.y);
-			Driver->Draw(xoGPUPrimQuads, 4, quads);
-
-			// bottom-left
-			Driver->ShaderPerObject.Edges = xoVec2f(left, bottom);
-			Driver->ShaderPerObject.OutVector = xoVec2f(-1, 1);
-			quads[0].Pos.vec2 = XOVEC2(corners[0].Pos.x, center.y);
-			quads[1].Pos.vec2 = XOVEC2(corners[1].Pos.x, corners[1].Pos.y);
-			quads[2].Pos.vec2 = XOVEC2(center.x, corners[2].Pos.y);
-			quads[3].Pos.vec2 = XOVEC2(center.x, center.y);
-			Driver->Draw(xoGPUPrimQuads, 4, quads);
-
-			// bottom-right
-			Driver->ShaderPerObject.Edges = xoVec2f(right, bottom);
-			Driver->ShaderPerObject.OutVector = xoVec2f(1, 1);
-			quads[0].Pos.vec2 = XOVEC2(center.x, center.y);
-			quads[1].Pos.vec2 = XOVEC2(center.x, corners[1].Pos.y);
-			quads[2].Pos.vec2 = XOVEC2(corners[2].Pos.x, corners[2].Pos.y);
-			quads[3].Pos.vec2 = XOVEC2(corners[3].Pos.x, center.y);
-			Driver->Draw(xoGPUPrimQuads, 4, quads);
+			RenderRect2(left, right, top, bottom, corners, style, radius, border);
 		}
 		else if (useRectShader)
 		{
@@ -208,6 +152,67 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 				Driver->Draw(xoGPUPrimQuads, 4, corners);
 		}
 	}
+}
+
+void xoRenderer::RenderRect2(float left, float right, float top, float bottom, xoVx_PTC* corners, const xoStyleRender* style, float radius, xoBoxF& border)
+{
+	Driver->ActivateShader(xoShaderRect2);
+	xoVec2f center = XOVEC2((left + right) / 2.0f, (top + bottom) / 2.0f);
+	xoVx_PTCV4 quads[4];
+	quads[0].PTC = corners[0];
+	quads[1].PTC = corners[1];
+	quads[2].PTC = corners[2];
+	quads[3].PTC = corners[3];
+	for (int i = 0; i < 4; i++)
+	{
+		quads[i].Color2 = style->BorderColor.GetRGBA();
+		quads[i].UV.x = radius;
+		quads[i].UV.y = border.Left;
+	}
+
+	Driver->ShaderPerObject.ShadowColor = xoVec4f(0, 0, 0, 0);
+	Driver->ShaderPerObject.ShadowOffset = xoVec2f(0, 0);
+	Driver->ShaderPerObject.ShadowSizeInv = 0;
+
+	// top-left
+	Driver->ShaderPerObject.Edges = xoVec2f(left, top);
+	Driver->ShaderPerObject.OutVector = xoVec2f(-1, -1);
+	quads[0].Pos.vec2 = corners[0].Pos.vec2;
+	quads[1].Pos.vec2 = XOVEC2(corners[1].Pos.x, center.y);
+	quads[2].Pos.vec2 = XOVEC2(center.x, center.y);
+	quads[3].Pos.vec2 = XOVEC2(center.x, corners[3].Pos.y);
+	quads[0].UV.y = border.Left;
+	quads[1].UV.y = border.Left;
+	quads[2].UV.y = border.Left;
+	quads[3].UV.y = border.Left;
+	Driver->Draw(xoGPUPrimQuads, 4, quads);
+
+	// top-right
+	Driver->ShaderPerObject.Edges = xoVec2f(right, top);
+	Driver->ShaderPerObject.OutVector = xoVec2f(1, -1);
+	quads[0].Pos.vec2 = XOVEC2(center.x, corners[0].Pos.y);
+	quads[1].Pos.vec2 = XOVEC2(center.x, center.y);
+	quads[2].Pos.vec2 = XOVEC2(corners[2].Pos.x, center.y);
+	quads[3].Pos.vec2 = XOVEC2(corners[3].Pos.x, corners[3].Pos.y);
+	Driver->Draw(xoGPUPrimQuads, 4, quads);
+
+	// bottom-left
+	Driver->ShaderPerObject.Edges = xoVec2f(left, bottom);
+	Driver->ShaderPerObject.OutVector = xoVec2f(-1, 1);
+	quads[0].Pos.vec2 = XOVEC2(corners[0].Pos.x, center.y);
+	quads[1].Pos.vec2 = XOVEC2(corners[1].Pos.x, corners[1].Pos.y);
+	quads[2].Pos.vec2 = XOVEC2(center.x, corners[2].Pos.y);
+	quads[3].Pos.vec2 = XOVEC2(center.x, center.y);
+	Driver->Draw(xoGPUPrimQuads, 4, quads);
+
+	// bottom-right
+	Driver->ShaderPerObject.Edges = xoVec2f(right, bottom);
+	Driver->ShaderPerObject.OutVector = xoVec2f(1, 1);
+	quads[0].Pos.vec2 = XOVEC2(center.x, center.y);
+	quads[1].Pos.vec2 = XOVEC2(center.x, corners[1].Pos.y);
+	quads[2].Pos.vec2 = XOVEC2(corners[2].Pos.x, corners[2].Pos.y);
+	quads[3].Pos.vec2 = XOVEC2(corners[3].Pos.x, center.y);
+	Driver->Draw(xoGPUPrimQuads, 4, quads);
 }
 
 void xoRenderer::RenderQuadratic(xoPoint base, const xoRenderDomNode* node)

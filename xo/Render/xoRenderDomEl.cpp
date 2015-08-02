@@ -23,8 +23,8 @@ void xoRenderDomNode::Discard()
 
 void xoRenderDomNode::SetStyle(xoRenderStack& stack)
 {
+	stack.GetColorQuad(xoCatBackColor_Left, Style.BackgroundColor);
 	Style.BackgroundImageID = stack.Get(xoCatBackgroundImage).GetStringID();
-	Style.BackgroundColor = stack.Get(xoCatBackground).GetColor();
 	Style.BorderColor = stack.Get(xoCatBorderColor_Left).GetColor();
 	Style.HasHoverStyle = stack.HasHoverStyle();
 	Style.HasFocusStyle = stack.HasFocusStyle();

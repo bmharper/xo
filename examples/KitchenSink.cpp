@@ -339,7 +339,7 @@ void DoBackupSettings(xoDoc* doc)
 	doc->ClassParse("bg-dark",			"box-sizing: border; color: #000; background: #efefef; width: 470ep; top: top; bottom: bottom");
 	doc->ClassParse("textbox",			"color: #000; background: #fff; padding: 5ep 3ep 5ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd; canfocus: true; cursor: text");
 	doc->ClassParse("textbox:focus",	"border: 1px #8888ee");
-	doc->ClassParse("button",			"color: #000; background: #ececec; margin: 6ep 0ep 6ep 0ep; padding: 14ep 3ep 14ep 3ep; border: 1px #bdbdbd; canfocus: true");
+	doc->ClassParse("button",			"color: #000; background: #ebebeb #efefef #ebebeb #e6e6e6; margin: 6ep 0ep 6ep 0ep; padding: 14ep 3ep 14ep 3ep; border: 1px #bdbdbd; canfocus: true");
 	doc->ClassParse("button:focus",		"border: 1px #8888ee");
 	doc->ClassParse("button:hover",		"background: #ddd");
 	doc->ClassParse("baseline",			"baseline:baseline");

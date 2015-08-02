@@ -80,7 +80,7 @@ protected:
 	xoPos	ComputeDimension(xoPos container, bool isContainerDefined, xoStyleCategories cat);
 	xoPos	ComputeDimension(xoPos container, bool isContainerDefined, xoSize size);
 	xoBox	ComputeBox(xoBox container, bool widthDefined, bool heightDefined, xoStyleCategories cat);
-	xoBox	ComputeBox(xoBox container, bool widthDefined, bool heightDefined, xoStyleBox box);
+	xoBox	ComputeBox(xoBox container, bool widthDefined, bool heightDefined, xoSizeQuad box);
 	xoBox	ComputeSpecifiedPosition(const NodeState& s);
 	void	ComputeRelativeOffset(const NodeState& s, xoBox& box);
 

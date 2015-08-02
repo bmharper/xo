@@ -215,11 +215,11 @@ void xoLayout2::RunNode(const xoDomNode& node, const LayoutInput& in, LayoutOutp
 	}
 
 	rnode->Pos = xoBox(0, 0, contentWidth, contentHeight).OffsetBy(toContent.Left, toContent.Top);
-	rnode->Style.BackgroundColor = Stack.Get(xoCatBackground).GetColor();
+	Stack.GetColorQuad(xoCatBackColor_Left, rnode->Style.BackgroundColor);
+	rnode->Style.BorderColor = Stack.Get(xoCatBorderColor_Left).GetColor();
 	rnode->Style.BorderRadius = xoPosToReal(borderRadius);
 	rnode->Style.BorderSize = border;
 	rnode->Style.Padding = padding;
-	rnode->Style.BorderColor = Stack.Get(xoCatBorderColor_Left).GetColor();
 	rnode->Style.HasHoverStyle = Stack.HasHoverStyle();
 	rnode->Style.HasFocusStyle = Stack.HasFocusStyle();
 
@@ -480,10 +480,10 @@ xoPos xoLayout2::ComputeDimension(xoPos container, xoSize size)
 
 xoBox xoLayout2::ComputeBox(xoPos containerWidth, xoPos containerHeight, xoStyleCategories cat)
 {
-	return ComputeBox(containerWidth, containerHeight, Stack.GetBox(cat));
+	return ComputeBox(containerWidth, containerHeight, Stack.GetSizeQuad(cat));
 }
 
-xoBox xoLayout2::ComputeBox(xoPos containerWidth, xoPos containerHeight, xoStyleBox box)
+xoBox xoLayout2::ComputeBox(xoPos containerWidth, xoPos containerHeight, xoSizeQuad box)
 {
 	xoBox b;
 	b.Left = ComputeDimension(containerWidth, box.Left);

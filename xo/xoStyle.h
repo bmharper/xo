@@ -27,23 +27,47 @@ struct XOAPI xoSize
 };
 
 // Convenience struct used during layout computation
-struct XOAPI xoStyleBox
+struct XOAPI xoSizeQuad
 {
-	// This order (left,top,right,bottom) must be consistent with the order presented inside XO_STYLE_DEFINE
+	// This order (left,top,right,bottom) must be consistent with the order presented inside xoStyleCategories
+	typedef xoSize Component;
 	union
 	{
 		struct
 		{
-			xoSize	Left, Top, Right, Bottom;
+			xoSize Left, Top, Right, Bottom;
 		};
 		xoSize All[4];
 	};
 
-	static bool			Parse(const char* s, intp len, xoStyleBox& v);
-	static xoStyleBox	Make(xoSize left, xoSize top, xoSize right, xoSize bottom)	{ xoStyleBox b; b.Left = left; b.Top = top; b.Right = right; b.Bottom = bottom; return b; }
-	static xoStyleBox	MakeUniform(xoSize all)										{ xoStyleBox b; b.Left = all; b.Top = all; b.Right = all; b.Bottom = all; return b; }
-	static xoStyleBox	MakeZero() { xoStyleBox b; b.SetZero(); return b; }
-	void SetZero() { Left = Top = Right = Bottom = xoSize::Pixels(0); }
+	static bool			Parse(const char* s, intp len, xoSizeQuad& v);
+	static xoSizeQuad	Make(xoSize left, xoSize top, xoSize right, xoSize bottom)	{ xoSizeQuad b; b.Left = left; b.Top = top; b.Right = right; b.Bottom = bottom; return b; }
+	static xoSizeQuad	MakeUniform(xoSize all)										{ xoSizeQuad b; b.Left = all; b.Top = all; b.Right = all; b.Bottom = all; return b; }
+	static xoSizeQuad	MakeZero()													{ xoSizeQuad b; b.SetZero(); return b; }
+
+	void SetZero()																	{ Left = Top = Right = Bottom = xoSize::Pixels(0); }
+};
+
+// Convenience struct used during parsing
+struct XOAPI xoColorQuad
+{
+	// This order (left,top,right,bottom) must be consistent with the order presented inside xoStyleCategories
+	typedef xoColor Component;
+	union
+	{
+		struct
+		{
+			xoColor Left, Top, Right, Bottom;
+		};
+		xoColor All[4];
+	};
+
+	static bool			Parse(const char* s, intp len, xoColorQuad& v);
+	static xoColorQuad	Make(xoColor left, xoColor top, xoColor right, xoColor bottom)	{ xoColorQuad b; b.Left = left; b.Top = top; b.Right = right; b.Bottom = bottom; return b; }
+	static xoColorQuad	MakeUniform(xoColor all)										{ xoColorQuad b; b.Left = all; b.Top = all; b.Right = all; b.Bottom = all; return b; }
+	static xoColorQuad	MakeZero()														{ xoColorQuad b; b.SetTransparent(); return b; }
+
+	void SetTransparent()																{ Left = Top = Right = Bottom = xoColor::Transparent(); }
 };
 
 enum xoDisplayType
@@ -136,16 +160,15 @@ enum xoBumpStyle
 // * Bottom
 // * Baseline
 
-// The order of the box components (left,top,right,bottom) must be consistent with the order in xoStyleBox
-// In addition, all 'box' types must fall between Margin_Left and Border_Bottom. This is simply for sanity. It is verified
-// inside xoStyle.SetBox()
+// The order of the box components (left,top,right,bottom) must be consistent with the order in xoSizeQuad
+// In addition, all 'quad' color types must be clustered together, and all 'quad' size types. This is simply for sanity. It is verified
+// inside xoStyle.SetSizeQuad() and xoStyle.SetColorQuad
 enum xoStyleCategories
 {
 	xoCatNULL = 0,
 	xoCatColor,
 	xoCatFIRST = xoCatColor,
 	xoCatDisplay,
-	xoCatBackground,
 	xoCatBackgroundImage,
 	xoCatText_Align_Vertical,
 
@@ -153,10 +176,19 @@ enum xoStyleCategories
 	xoCatCanFocus,
 	xoCatCursor,
 
-	xoCatPadding_Use_Me_1,
-	xoCatPadding_Use_Me_2,
-	xoCatPadding_Use_Me_3,
+	// Start of color quads
+	xoCatBackColor_Left,
+	xoCatBackColor_Top,
+	xoCatBackColor_Right,
+	xoCatBackColor_Bottom,
 
+	xoCatBorderColor_Left,
+	xoCatBorderColor_Top,
+	xoCatBorderColor_Right,
+	xoCatBorderColor_Bottom,
+	// End of color quads
+
+	// Start of size quads
 	xoCatMargin_Left,
 	xoCatMargin_Top,
 	xoCatMargin_Right,
@@ -171,11 +203,7 @@ enum xoStyleCategories
 	xoCatBorder_Top,
 	xoCatBorder_Right,
 	xoCatBorder_Bottom,
-
-	xoCatBorderColor_Left,
-	xoCatBorderColor_Top,
-	xoCatBorderColor_Right,
-	xoCatBorderColor_Bottom,
+	// End of size quads
 
 	xoCatWidth,
 	xoCatHeight,
@@ -202,9 +230,10 @@ enum xoStyleCategories
 	xoCatEND,
 };
 
+static_assert(xoCatBackColor_Left % 4 == 0, "Start of boxes must be multiple of 4");
 static_assert(xoCatMargin_Left % 4 == 0, "Start of boxes must be multiple of 4");
 
-inline xoStyleCategories xoCatMakeBaseBox(xoStyleCategories c) { return (xoStyleCategories)(c & ~3); }
+inline xoStyleCategories xoCatMakeBaseQuad(xoStyleCategories c) { return (xoStyleCategories)(c & ~3); }
 
 // Styles that are inherited by default
 // Generally it is text styles that are inherited
@@ -336,13 +365,15 @@ public:
 	bool					Parse(const char* t, xoDoc* doc);
 	bool					Parse(const char* t, intp maxLen, xoDoc* doc);
 	const xoStyleAttrib*	Get(xoStyleCategories cat) const;
-	void					SetBox(xoStyleCategories cat, xoStyleBox val);
-	void					GetBox(xoStyleCategories cat, xoStyleBox& box) const;
-	void					SetUniformBox(xoStyleCategories cat, xoStyleAttrib val);
-	void					SetUniformBox(xoStyleCategories cat, xoColor color);
-	void					SetUniformBox(xoStyleCategories cat, xoSize size);
+	void					SetSizeQuad(xoStyleCategories cat, xoSizeQuad val);
+	void					GetSizeQuad(xoStyleCategories cat, xoSizeQuad& box) const;
+	void					SetColorQuad(xoStyleCategories cat, xoColorQuad val);
+	void					SetUniformQuad(xoStyleCategories cat, xoStyleAttrib val);
+	void					SetUniformQuad(xoStyleCategories cat, xoColor color);
+	void					SetUniformQuad(xoStyleCategories cat, xoSize size);
 	void					Set(xoStyleAttrib attrib);
-	void					Set(xoStyleCategories cat, xoStyleBox val);	// This overload is identical to SetBox, but needs to be present for templated parsing functions
+	void					Set(xoStyleCategories cat, xoSizeQuad val);		// This overload is identical to SetSizeQuad, but needs to be present for templated parsing functions
+	void					Set(xoStyleCategories cat, xoColorQuad val);	// ^^ same as above ^^
 	//void					Compute( const xoDoc& doc, const xoDomEl& node );
 	void					Discard();
 	void					CloneSlowInto(xoStyle& c) const;
@@ -350,9 +381,9 @@ public:
 
 	bool					IsEmpty() const { return Attribs.size() == 0; }
 
+	//XX(BackgroundColor, xoColor, SetColor, xoCatBackground) \
 // Setter functions with 2 parameters
 #define NUSTYLE_SETTERS_2P \
-	XX(BackgroundColor,		xoColor,	SetColor,	xoCatBackground) \
 	XX(Width,				xoSize,		SetSize,	xoCatWidth) \
 	XX(Height,				xoSize,		SetSize,	xoCatHeight) \
 	XX(Left,				xoSize,		SetSize,	xoCatLeft) \
@@ -374,7 +405,8 @@ public:
 
 protected:
 	//void					MergeInZeroCopy( int n, const xoStyle** src );
-	void					SetBoxInternal(xoStyleCategories catBase, xoStyleBox val);
+	template<typename TQuad>
+	void					TSetQuadInternal(xoStyleCategories catBase, TQuad val);
 };
 
 FHASH_SETUP_CLASS_CTOR_DTOR(xoStyle, xoStyle);
@@ -466,14 +498,14 @@ public:
 class XOAPI xoStyleRender
 {
 public:
-	xoBox16 BorderSize;
-	xoBox16 Padding;
-	xoColor BackgroundColor;
-	xoColor BorderColor;
-	int		BackgroundImageID;
-	float	BorderRadius;
-	bool	HasHoverStyle : 1;	// Element's appearance depends upon whether the cursor is over it.
-	bool	HasFocusStyle : 1;	// Element's appearance depends upon whether it has the focus
+	xoBox16		BorderSize;
+	xoBox16		Padding;
+	xoColorQuad	BackgroundColor;
+	xoColor		BorderColor;
+	int			BackgroundImageID;
+	float		BorderRadius;
+	bool		HasHoverStyle : 1;	// Element's appearance depends upon whether the cursor is over it.
+	bool		HasFocusStyle : 1;	// Element's appearance depends upon whether it has the focus
 
 	xoStyleRender() { memset(this, 0, sizeof(*this)); }
 };

@@ -157,10 +157,15 @@ def gen_combined(common, ext, vert, frag, name, filename_base)
 		src.each_line { |line|
 			use_line = true
 			# uniform mat4 mvproj;
+			# uniform vec4 color[4];
 			if line =~ /uniform\s+(\w+)\s+(\w+);/
 				variables << Variable.new("uniform", $1, $2)
-			elsif line =~ /attribute\s+(\w+)\s+(\w+);/
+			elsif line =~ /uniform\s+(\w+)\s+(\w+)\[(\d+)\]/
+				variables << Variable.new("uniform", $1 + "[" + $3 + "]", $2)
+			elsif line =~ /attribute\s+(\w+)\s+(\w+)/
 				variables << Variable.new("attribute", $1, $2)
+			elsif line =~ /attribute\s+(\w+)\s+(\w+)\[(\d+)\]/
+				variables << Variable.new("attribute", $1 + "[" + $3 + "]", $2)
 			end
 
 			if line =~ /#XO_PLATFORM_(\w+)/

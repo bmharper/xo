@@ -43,6 +43,7 @@ class xoFont;
 class xoFontStore;
 class xoGlyphCache;
 class xoTextureAtlas;
+struct xoVx_PTC;
 #ifndef XO_MAT4F_DEFINED
 class xoMat4f;
 #endif
