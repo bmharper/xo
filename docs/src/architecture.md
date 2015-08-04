@@ -70,7 +70,7 @@ Why do we even care about optimizing for a full document clone per frame?
 The reason is because it allows one to do a purely functional UI, where
 you build up the entire UI from scratch, on every frame. This has its place
 (see IMGUI for an example and further discussions on the topic). The design
-of xoDom does not exactly lend itself to that style of UI code though, since if
+of xodoes not exactly lend itself to that style of UI code though, since if
 you throw away your entire DOM on every frame, then you're losing the
 ability to let the framework handle things like transition animations
 for you, as well as any other similar functionality that might exist inside

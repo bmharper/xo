@@ -14,7 +14,7 @@
 xoImageTester::xoImageTester()
 {
 	Wnd = xoSysWnd::CreateWithDoc(0);
-	xoProcessDocQueue();
+	xoAddOrRemoveDocsFromGlobalList();
 	SetSize(256, 256);
 	Wnd->Show();
 }
@@ -22,7 +22,7 @@ xoImageTester::xoImageTester()
 xoImageTester::~xoImageTester()
 {
 	delete Wnd;
-	xoProcessDocQueue();
+	xoAddOrRemoveDocsFromGlobalList();
 }
 
 void xoImageTester::DoDirectory(const char* dir)

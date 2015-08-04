@@ -26,13 +26,15 @@ public:
 	uint32		StrideAbs() const				{ return RenderBuff.stride_abs(); }
 	uint32		Width() const					{ return RenderBuff.width(); }
 	uint32		Height() const					{ return RenderBuff.height(); }
-	xoBox		GetInvalidRect() const			{ return InvalidRect; }						// Retrieve the bounding rectangle of all pixels that have been modified
-	void		Invalidate(xoBox box)			{ InvalidRect.ExpandToFit(box); }			// Call this if you modify the buffer by directly accessing its memory
+	xoBox		GetInvalidRect() const			{ return InvalidRect; }								// Retrieve the bounding rectangle of all pixels that have been modified
+	void		Invalidate(xoBox box)			{ InvalidRect.ExpandToFit(box); }					// Call this if you modify the buffer by directly accessing its memory
+	void		Invalidate()					{ InvalidRect = xoBox(0, 0, Width(), Height()); }	// Call this if you modify the buffer by directly accessing its memory
 	xoImage*	GetImage()						{ return Image; }
 
 	// Drawing functions
 	void		Fill(xoColor color);
 	void		FillRect(xoBox box, xoColor color);
+	void		StrokeRect(xoBox box, xoColor color, float linewidth);
 	void		StrokeLine(bool closed, int nvx, const float* vx, int vx_stride_bytes, xoColor color, float linewidth);
 
 protected:

@@ -439,7 +439,7 @@ XOAPI void				xoInitialize(const xoInitParams* init = nullptr);
 XOAPI void				xoShutdown();
 XOAPI void				xoRunAppLowLevel(xoMainCallbackLowLevel mainCallback);
 XOAPI void				xoRunApp(xoMainCallback mainCallback);
-XOAPI void				xoProcessDocQueue();
+XOAPI void				xoAddOrRemoveDocsFromGlobalList();
 XOAPI void				xoParseFail(const char* msg, ...);
 XOAPI void				XOTRACE(const char* msg, ...);
 XOAPI void				XOTIME(const char* msg, ...);
@@ -455,6 +455,7 @@ XOAPI void				xoRunXMessageLoop();
 //#define XOTRACE_EVENTS_ENABLE
 //#define XOTRACE_LATENCY_ENABLE
 //#define XOTRACE_FONTS_ENABLE
+//#define XOTRACE_OS_MSG_QUEUE_ENABLE
 
 #define XOTRACE_WARNING_ENABLE
 #define XOTRACE_LAYOUT_WARNINGS_ENABLE
@@ -493,6 +494,12 @@ XOAPI void				xoRunXMessageLoop();
 #define XOTRACE_FONTS(msg, ...) XOTIME(msg, ##__VA_ARGS__)
 #else
 #define XOTRACE_FONTS(msg, ...) ((void)0)
+#endif
+
+#ifdef XOTRACE_OS_MSG_QUEUE_ENABLE
+#define XOTRACE_OS_MSG_QUEUE(msg, ...) XOTIME(msg, ##__VA_ARGS__)
+#else
+#define XOTRACE_OS_MSG_QUEUE(msg, ...) ((void)0)
 #endif
 
 #ifdef XOTRACE_WARNING_ENABLE

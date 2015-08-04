@@ -108,6 +108,7 @@ xo/Shaders/Processed_glsl/CurveShader.h
 xo/Shaders/Processed_glsl/FillShader.h
 xo/Shaders/Processed_glsl/FillTexShader.h
 xo/Shaders/Processed_glsl/RectShader.h
+xo/Shaders/Processed_glsl/Rect2Shader.h
 xo/Shaders/Processed_glsl/TextRGBShader.h
 xo/Shaders/Processed_glsl/TextWholeShader.h
 xo/Shaders/Processed_hlsl/FillShader.h
@@ -177,6 +178,7 @@ xo/Shaders/Processed_glsl/CurveShader.cpp
 xo/Shaders/Processed_glsl/FillShader.cpp
 xo/Shaders/Processed_glsl/FillTexShader.cpp
 xo/Shaders/Processed_glsl/RectShader.cpp
+xo/Shaders/Processed_glsl/Rect2Shader.cpp
 xo/Shaders/Processed_glsl/TextRGBShader.cpp
 xo/Shaders/Processed_glsl/TextWholeShader.cpp
 xo/Shaders/Processed_hlsl/FillShader.cpp

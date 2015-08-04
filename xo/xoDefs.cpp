@@ -154,7 +154,7 @@ void xoRenderStats::Reset()
 }
 
 // add or remove documents that are queued for addition or removal
-XOAPI void xoProcessDocQueue()
+XOAPI void xoAddOrRemoveDocsFromGlobalList()
 {
 	xoDocGroup* p = NULL;
 
@@ -360,7 +360,7 @@ XOAPI void xoShutdown()
 		delete DefaultTagStyles[i];
 
 	// allow documents scheduled for deletion to be deleted
-	xoProcessDocQueue();
+	xoAddOrRemoveDocsFromGlobalList();
 
 #if XO_PLATFORM_WIN_DESKTOP
 	xoShutdown_Win32();
@@ -464,22 +464,24 @@ XOAPI xoStyle** xoDefaultTagStyles()
 
 XOAPI void xoParseFail(const char* msg, ...)
 {
-	char buff[4096] = "";
+	char buff[2048];
 	va_list va;
 	va_start(va, msg);
 	uint r = vsnprintf(buff, arraysize(buff), msg, va);
 	va_end(va);
+	buff[arraysize(buff) - 1] = 0;
 	if (r < arraysize(buff))
 		XOTRACE_WRITE(buff);
 }
 
 XOAPI void XOTRACE(const char* msg, ...)
 {
-	char buff[4096] = "";
+	char buff[2048];
 	va_list va;
 	va_start(va, msg);
 	uint r = vsnprintf(buff, arraysize(buff), msg, va);
 	va_end(va);
+	buff[arraysize(buff) - 1] = 0;
 	if (r < arraysize(buff))
 		XOTRACE_WRITE(buff);
 }
@@ -487,12 +489,13 @@ XOAPI void XOTRACE(const char* msg, ...)
 XOAPI void XOTIME(const char* msg, ...)
 {
 	const int timeChars = 16;
-	char buff[4096] = "";
+	char buff[2048];
 	sprintf(buff, "%-15.3f  ", AbcTimeAccurateRTSeconds() * 1000);
 	va_list va;
 	va_start(va, msg);
 	uint r = vsnprintf(buff + timeChars, arraysize(buff) - timeChars, msg, va);
 	va_end(va);
+	buff[arraysize(buff) - 1] = 0;
 	if (r < arraysize(buff))
 		XOTRACE_WRITE(buff);
 }

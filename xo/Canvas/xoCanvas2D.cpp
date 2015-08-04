@@ -41,6 +41,21 @@ void xoCanvas2D::FillRect(xoBox box, xoColor color)
 	InvalidRect.ExpandToFit(box);
 }
 
+void xoCanvas2D::StrokeRect(xoBox box, xoColor color, float linewidth)
+{
+	if (!IsAlive)
+		return;
+
+	float v[8] = {
+		(float) box.Left, (float) box.Top,
+		(float) box.Right, (float) box.Top,
+		(float) box.Right, (float) box.Bottom,
+		(float) box.Left, (float) box.Bottom,
+	};
+
+	StrokeLine(true, 4, v, 2 * sizeof(float), color, linewidth);
+}
+
 void xoCanvas2D::StrokeLine(bool closed, int nvx, const float* vx, int vx_stride_bytes, xoColor color, float linewidth)
 {
 	if (!IsAlive)

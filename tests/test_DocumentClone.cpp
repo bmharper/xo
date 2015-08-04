@@ -57,7 +57,7 @@ TESTFUNC(DocumentClone)
 {
 	// I need to add a null renderer for these kind of tests
 	xoSysWnd* wnd = xoSysWnd::CreateWithDoc();
-	xoProcessDocQueue();
+	xoAddOrRemoveDocsFromGlobalList();
 	xoDocGroup* g = wnd->DocGroup;
 	g->Render();
 	SetDocDims(g->Doc, 16, 16);
@@ -86,5 +86,5 @@ TESTFUNC(DocumentClone)
 	}
 
 	delete wnd;
-	xoProcessDocQueue();
+	xoAddOrRemoveDocsFromGlobalList();
 }

@@ -6,9 +6,6 @@
 
 #if XO_PLATFORM_WIN_DESKTOP
 
-//#define MSGTRACE XOTRACE
-#define MSGTRACE(...)
-
 static bool AnyDocsDirty()
 {
 	for (int i = 0; i < xoGlobal()->Docs.size(); i++)
@@ -46,27 +43,25 @@ XOAPI void xoRunWin32MessageLoop()
 		bool haveMsg = true;
 		if (renderIdle && !AnyDocsDirty() && AbcTimeAccurateRTSeconds() - lastHeatAt > HEAT_TIME_2)
 		{
-			XOTIME("Render cold\n");
-			MSGTRACE("Render cold\n");
+			XOTRACE_OS_MSG_QUEUE("Render cold\n");
 			if (!GetMessage(&msg, NULL, 0, 0))
 				break;
-			MSGTRACE("GetMessage returned\n");
+			XOTRACE_OS_MSG_QUEUE("GetMessage returned\n");
 		}
 		else
 		{
-			//XOTIME("Render hot\n");
-			MSGTRACE("Render hot\n");
+			XOTRACE_OS_MSG_QUEUE("Render hot\n");
 			haveMsg = !!PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
 		}
 
 		if (haveMsg)
 		{
-			MSGTRACE("msg start: %x\n", msg.message);
+			XOTRACE_OS_MSG_QUEUE("msg start: %x\n", msg.message);
 			if (msg.message == WM_QUIT)
 				break;
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-			MSGTRACE("msg end: %x\n", msg.message);
+			XOTRACE_OS_MSG_QUEUE("msg end: %x\n", msg.message);
 			if (msg.message != WM_TIMER)
 				lastHeatAt = AbcTimeAccurateRTSeconds();
 		}
@@ -75,7 +70,7 @@ XOAPI void xoRunWin32MessageLoop()
 		double nextFrameStart = lastFrameStart + 1.0 / xoGlobal()->TargetFPS;
 		if (now >= nextFrameStart || AnyDocsDirty())
 		{
-			MSGTRACE("Render enter\n");
+			XOTRACE_OS_MSG_QUEUE("Render enter\n");
 			renderIdle = true;
 			lastFrameStart = now;
 			for (int i = 0; i < xoGlobal()->Docs.size(); i++)
@@ -94,7 +89,7 @@ XOAPI void xoRunWin32MessageLoop()
 		}
 
 		// Add/remove items from the global list of windows. This happens only at xoDoc creation/destruction time.
-		xoProcessDocQueue();
+		xoAddOrRemoveDocsFromGlobalList();
 	}
 
 	//timeEndPeriod( 5 );
@@ -110,7 +105,7 @@ extern xoSysWnd* SingleMainWnd;
 // is absurd.
 XOAPI void xoRunXMessageLoop()
 {
-	xoProcessDocQueue();
+	xoAddOrRemoveDocsFromGlobalList();
 
 	while (1)
 	{
@@ -138,13 +133,13 @@ XOAPI void xoRunXMessageLoop()
 		}
 		else if (xev.type == KeyPress)
 		{
-			XOTRACE("key = %d\n", xev.xkey.keycode);
+			XOTRACE_OS_MSG_QUEUE("key = %d\n", xev.xkey.keycode);
 			if (xev.xkey.keycode == 24)   // 'q'
 				break;
 		}
 		else if (xev.type == MotionNotify)
 		{
-			//XOTRACE( "x,y = %d,%d\n", xev.xmotion.x, xev.xmotion.y );
+			//XOTRACE_OS_MSG_QUEUE( "x,y = %d,%d\n", xev.xmotion.x, xev.xmotion.y );
 			xoEvent nev;
 			nev.Type = xoEventMouseMove;
 			nev.Points[0].x = xev.xmotion.x;
@@ -156,12 +151,12 @@ XOAPI void xoRunXMessageLoop()
 		for (int i = 0; i < xoGlobal()->Docs.size(); i++)
 		{
 			xoRenderResult rr = xoGlobal()->Docs[i]->Render();
-			//XOTRACE( "rr = %d\n", rr );
+			//XOTRACE_OS_MSG_QUEUE( "rr = %d\n", rr );
 			//if ( rr != xoRenderResultIdle )
 			//	renderIdle = false;
 		}
 
-		xoProcessDocQueue();
+		xoAddOrRemoveDocsFromGlobalList();
 	}
 }
 

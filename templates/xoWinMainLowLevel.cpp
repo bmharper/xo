@@ -5,8 +5,8 @@
 #ifdef XO_AMALGAMATION
 #include "../amalgamation/xo-amalgamation.h"
 #else
-#include "xo.h"
-#include "xoDocGroup.h"
+#include "../xo/xo.h"
+#include "../xo/xoDocGroup.h"
 #endif
 
 // This is your "main" function, which you define in your own code

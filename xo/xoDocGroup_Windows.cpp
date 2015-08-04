@@ -127,6 +127,14 @@ LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	// Doc is owned and manipulated by the UI Thread.
 	// We are only allowed to read niche volatile stuff from Doc, such as the latest cursor.
 
+	// HACK for mvision test
+	//static bool haveTimer = false;
+	//if (!haveTimer)
+	//{
+	//	haveTimer = true;
+	//	SetTimer(hWnd, XoWindowsTimerGenericEvent, 200, nullptr);
+	//}
+
 	switch (message)
 	{
 	case WM_ERASEBKGND:
