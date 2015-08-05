@@ -52,11 +52,14 @@ xoRenderResult xoDocGroup::RenderInternal(xoImage* targetImage)
 	bool haveLock = false;
 	// I'm not quite sure how we should handle this. The idea is that you don't want to go without a UI update
 	// for too long, even if the UI thread is taking its time, and being bombarded with messages.
-	uint32 rDocAge = Doc->GetVersion() - RenderDoc->Doc.GetVersion();
-	if (rDocAge >= 1 || targetImage != NULL)
+	if (DocAge() >= 1 || targetImage != NULL)
 	{
 		// If UI thread has performed even a single update since we last rendered, then pause our thread until we can gain the DocLock
+		auto tstart = AbcTimeAccurateRTSeconds();
 		AbcCriticalSectionEnter(DocLock);
+		auto time = AbcTimeAccurateRTSeconds() - tstart;
+		if (time > 0.001)
+			XOTIME("xoDocGroup.RenderInternal took %d ms to acquire DocLock\n", (int) (time * 1000));
 		haveLock = true;
 	}
 	else
@@ -148,6 +151,11 @@ void xoDocGroup::UploadImagesToGPU(bool& beganRender)
 	}
 }
 
+uint32 xoDocGroup::DocAge() const
+{
+	return Doc->GetVersion() - RenderDoc->Doc.GetVersion();
+}
+
 struct AddOrReplaceMessage_Context
 {
 	const xoOriginalEvent*	NewEvent;
@@ -187,6 +195,21 @@ void xoDocGroup::AddOrReplaceMessage(const xoOriginalEvent& ev)
 
 void xoDocGroup::ProcessEvent(xoEvent& ev)
 {
+	// NOTE: I think the use of a Windows CRITICAL_SECTION is not great, because I get the
+	// feeling that the UI thread can starve the render thread if the UI thread is processing
+	// a ton of messages, and taking a long time to do so.
+	// My first idea was to add a check in here to see whether the document had outstanding
+	// rendering work to be done (ie rDocAge > 1 -- higher in this source file ). If so,
+	// then pause for a millisecond or two to allow the render thread to acquire the doclock.
+	// That's obviously heresy - the only correct thing is to have a fair mutex that operates
+	// like a queue instead of first-come-first-serve. I don't know what the semantics are
+	// of the Windows CRITICAL_SECTION. Also, if I recall correctly, Jeff Preshing may have
+	// had a great article on using semaphores to implement a fair queue like this.
+
+	// This is indeed a terrible solution to the above problem .I tried it out of curiosity.
+	// It merely adds a lag to the processing of all messages.
+	// if (DocAge() >= 1) AbcSleep(1);
+
 	TakeCriticalSection lock(DocLock);
 
 	if (ev.Type != xoEventTimer)

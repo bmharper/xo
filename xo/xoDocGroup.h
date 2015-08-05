@@ -40,6 +40,7 @@ protected:
 
 	xoRenderResult	RenderInternal(xoImage* targetImage);
 	void			UploadImagesToGPU(bool& beganRender);
+	uint32			DocAge() const;
 
 	static void		AddOrReplaceMessage(const xoOriginalEvent& ev);
 };

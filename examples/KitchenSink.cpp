@@ -427,7 +427,6 @@ void DoTimer(xoDoc* doc)
 		cx->Fill(xoColor::RGBA(255, 255, 255, 255));
 		cx->FillRect(xoBox(0, 0, *size, *size), xoColor::RGBA(150, 0, 0, 255));
 		canvas->ReleaseCanvas(cx);
-
 		return true;
 	};
 	canvas->OnTimer(ontimer, 30);
