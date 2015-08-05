@@ -82,6 +82,9 @@
 #ifndef CONVERT_UTF_INCLUDED
 #define CONVERT_UTF_INCLUDED
 
+// This is necessary for uint32
+#include <stdint.h>
+
 //#include <string>
 
 /// Returns true if any characters in the string are greater than 127
@@ -123,6 +126,7 @@ XStringA	PAPI ConvertHighAsciiToUTF8(const XStringA& src);
 XStringA	PAPI ConvertUTF8ToHighAscii(const XStringA& src);
 XStringW	PAPI ConvertUTF8ToWide(const XStringA& src);
 XStringA	PAPI ConvertWideToUTF8(const XStringW& src);
+XStringW	PAPI ConvertUTF16ToWide(const uint16_t* src);
 #endif
 
 #ifdef _STRING_
@@ -130,9 +134,9 @@ std::wstring	PAPI ConvertUTF8ToWide(const std::string& src);
 std::string		PAPI ConvertWideToUTF8(const std::wstring& src);
 #endif
 
-/** Convert UTF16 to UTF8.
+/** Convert wchar_t (UTF16 or UTF32) to UTF8.
 @param src Source buffer. May be NULL, which is equivalent to making srcLen = 0.
-@param srcLen Length in characters of sources. If -1, then we determine the length by looking for a null terminator.
+@param srcLen Length in characters of source. If -1, then we determine the length by looking for a null terminator.
 @param dst The destination buffer.
 @param dstLen The length in characters of the destination buffer.
 @param relaxNullTerminator If true, then we don't make sure that we can add a null terminator to dst.
@@ -141,6 +145,9 @@ bool		PAPI ConvertWideToUTF8(const wchar_t* src, size_t srcLen, char* dst, size_
 
 /// Analogue of ConvertWideToUTF8
 bool		PAPI ConvertUTF8ToWide(const char* src, size_t srcLen, wchar_t* dst, size_t& dstLen, bool relaxNullTerminator = false);
+
+bool		PAPI ConvertWideToUTF16(const wchar_t* src, size_t srcLen, uint16_t* dst, size_t& dstLen, bool relaxNullTerminator = false);
+bool		PAPI ConvertUTF16ToWide(const uint16_t* src, size_t srcLen, wchar_t* dst, size_t& dstLen, bool relaxNullTerminator = false);
 
 /** Returns the maximum number of UTF8 bytes necessary in order to represent any legal UTF16 string of the indicated number of UTF16 characters.
 
@@ -178,6 +185,11 @@ inline size_t MaximumUtf32FromUtf8(size_t utf8Len)
 	return utf8Len;
 }
 
+inline size_t MaximumUtf32FromUtf16(size_t utf16Len)
+{
+	return utf16Len;
+}
+
 inline size_t MaximumWideFromUtf8(size_t utf8Len)
 {
 	return sizeof(wchar_t) == 2 ? MaximumUtf16FromUtf8(utf8Len) : MaximumUtf32FromUtf8(utf8Len);
@@ -194,9 +206,9 @@ namespace Unicode
     bit mask & shift operations.
 ------------------------------------------------------------------------ */
 
-typedef unsigned long	UTF32;	/* at least 32 bits */
-typedef unsigned short	UTF16;	/* at least 16 bits */
-typedef unsigned char	UTF8;	/* typically 8 bits */
+typedef uint32_t	UTF32;	/* at least 32 bits */
+typedef uint16_t	UTF16;	/* at least 16 bits */
+typedef uint8_t		UTF8;	/* typically 8 bits */
 
 /* Some fundamental constants */
 #define UNI_REPLACEMENT_CHAR	(UTF32)0x0000FFFD

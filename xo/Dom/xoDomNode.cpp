@@ -208,7 +208,7 @@ void xoDomNode::RemoveClass(const char* klass)
 		Classes.erase(index);
 }
 
-void xoDomNode::AddHandler(xoEvents ev, xoEventHandlerF func, bool isLambda, void* context)
+void xoDomNode::AddHandler(xoEvents ev, xoEventHandlerF func, bool isLambda, void* context, uint timerPeriodMS)
 {
 	for (intp i = 0; i < Handlers.size(); i++)
 	{
@@ -216,6 +216,7 @@ void xoDomNode::AddHandler(xoEvents ev, xoEventHandlerF func, bool isLambda, voi
 		{
 			XOASSERT(isLambda == Handlers[i].IsLambda());
 			Handlers[i].Mask |= ev;
+			Handlers[i].TimerPeriodMS = timerPeriodMS;
 			RecalcAllEventMask();
 			return;
 		}
@@ -224,6 +225,7 @@ void xoDomNode::AddHandler(xoEvents ev, xoEventHandlerF func, bool isLambda, voi
 	h.Context = context;
 	h.Func = func;
 	h.Mask = ev;
+	h.TimerPeriodMS = timerPeriodMS;
 	if (isLambda)
 		h.SetLambda();
 	RecalcAllEventMask();
@@ -232,18 +234,48 @@ void xoDomNode::AddHandler(xoEvents ev, xoEventHandlerF func, bool isLambda, voi
 void xoDomNode::AddHandler(xoEvents ev, xoEventHandlerLambda lambda)
 {
 	xoEventHandlerLambda* copy = new xoEventHandlerLambda(lambda);
-	AddHandler(ev, xoEventHandler_LambdaStaticFunc, true, copy);
+	AddHandler(ev, xoEventHandler_LambdaStaticFunc, true, copy, 0);
+}
+
+void xoDomNode::AddTimerHandler(xoEvents ev, xoEventHandlerLambda lambda, uint periodMS)
+{
+	xoEventHandlerLambda* copy = new xoEventHandlerLambda(lambda);
+	AddHandler(ev, xoEventHandler_LambdaStaticFunc, true, copy, periodMS);
 }
 
 void xoDomNode::AddHandler(xoEvents ev, xoEventHandlerF func, void* context)
 {
-	AddHandler(ev, func, false, context);
+	AddHandler(ev, func, false, context, 0);
+}
+
+// Returns our fastest ticking timer event handler (or zero if none)
+uint xoDomNode::FastestTimerMS() const
+{
+	uint f = UINT32MAX - 1;
+	for (const auto& h : Handlers)
+	{
+		if (h.TimerPeriodMS != 0)
+		{
+			XOASSERT(!!(h.Mask & xoEventTimer));
+			f = xoMin(f, h.TimerPeriodMS);
+		}
+	}
+	return f != UINT32MAX - 1 ? f : 0;
 }
 
 void xoDomNode::RecalcAllEventMask()
 {
+	bool hadTimer = !!(AllEventMask & xoEventTimer);
+
 	uint32 m = 0;
 	for (intp i = 0; i < Handlers.size(); i++)
 		m |= Handlers[i].Mask;
 	AllEventMask = m;
+
+	bool hasTimerNow = !!(AllEventMask & xoEventTimer);
+	
+	if (!hadTimer && hasTimerNow)
+		Doc->NodeGotTimer(InternalID);
+	else if (hadTimer && !hasTimerNow)
+		Doc->NodeLostTimer(InternalID);
 }

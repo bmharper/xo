@@ -47,6 +47,7 @@ xoSysWnd::xoSysWnd()
 {
 #if XO_PLATFORM_WIN_DESKTOP
 	SysWnd = NULL;
+	TimerPeriodMS = 0;
 	QuitAppWhenWindowDestroyed = NumWindowsCreated == 0;
 #elif XO_PLATFORM_ANDROID
 	SingleMainWnd = this;

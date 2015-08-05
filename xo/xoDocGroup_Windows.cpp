@@ -112,6 +112,25 @@ static void UpdateWindowsCursor(HWND wnd, xoCursors cursor, WPARAM wParam, LPARA
 	SetCursor(LoadCursor(NULL, wc));
 }
 
+void xoDocGroup::SetSysWndTimer(uint periodMS)
+{
+	if (periodMS == Wnd->TimerPeriodMS)
+		return;
+
+	Wnd->TimerPeriodMS = periodMS;
+
+	if (periodMS == 0)
+	{
+		XOTRACE_OS_MSG_QUEUE("KillTimer\n");
+		KillTimer(Wnd->SysWnd, XoWindowsTimerGenericEvent);
+	}
+	else
+	{
+		XOTRACE_OS_MSG_QUEUE("SetTimer(%u)\n", periodMS);
+		SetTimer(Wnd->SysWnd, XoWindowsTimerGenericEvent, periodMS, nullptr);
+	}
+}
+
 LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	XOASSERT(Doc != NULL);
@@ -161,7 +180,8 @@ LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 		else if (wParam == XoWindowsTimerGenericEvent)
 		{
 			ev.Event.Type = xoEventTimer;
-			xoGlobal()->UIEventQueue.Add(ev);
+			//xoGlobal()->UIEventQueue.Add(ev);
+			AddOrReplaceMessage(ev);
 		}
 		break;
 

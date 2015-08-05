@@ -408,27 +408,53 @@ void DoQuadraticSplines(xoDoc* doc)
 	});
 }
 
+void DoTimer(xoDoc* doc)
+{
+	auto canvas = doc->Root.AddCanvas();
+	canvas->SetSize(512, 512);
+
+	int* size = new int(0);
+	int* dsize = new int(1);
+
+	auto ontimer = [size, dsize, canvas](const xoEvent& ev) -> bool
+	{
+		xoCanvas2D* cx = canvas->GetCanvas2D();
+		*size += *dsize;
+		if (*size >= 100)
+			*dsize = -1;
+		else if (*size <= 0)
+			*dsize = 1;
+		cx->Fill(xoColor::RGBA(255, 255, 255, 255));
+		cx->FillRect(xoBox(0, 0, *size, *size), xoColor::RGBA(150, 0, 0, 255));
+		canvas->ReleaseCanvas(cx);
+
+		return true;
+	};
+	canvas->OnTimer(ontimer, 30);
+}
+
 void InitDOM(xoDoc* doc)
 {
 	xoDomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
 
 	//DoBorder(doc);
-	//DoBaselineAlignment( doc );
-	//DoBaselineAlignment_rev2( doc );
-	//DoBaselineAlignment_Multiline( doc );
+	//DoBaselineAlignment(doc);
+	//DoBaselineAlignment_rev2(doc);
+	//DoBaselineAlignment_Multiline(doc);
 	//DoBaselineAlignment_DownPropagate(doc);
 	//DoCenter(doc);
 	//DoHCenter(doc);
 	//DoVCenter(doc);
-	//DoTwoTextRects( doc );
-	//DoBlockMargins( doc );
-	//DoLongText( doc );
+	//DoTwoTextRects(doc);
+	//DoBlockMargins(doc);
+	//DoLongText(doc);
 	//DoInlineFlow(doc);
-	DoBackupSettings( doc );
-	//DoPadding( doc );
-	//DoTextQuality( doc );
-	//DoQuadraticSplines( doc );
+	//DoBackupSettings(doc);
+	//DoPadding(doc);
+	//DoTextQuality(doc);
+	//DoQuadraticSplines(doc);
+	DoTimer(doc);
 
 	body->OnClick([](const xoEvent& ev) -> bool {
 		//xoGlobal()->EnableKerning = !xoGlobal()->EnableKerning;

@@ -23,6 +23,7 @@ public:
 	};
 #if XO_PLATFORM_WIN_DESKTOP
 	HWND					SysWnd;
+	uint					TimerPeriodMS;
 	bool					QuitAppWhenWindowDestroyed;		// This is here for multi-window applications. Close the first window, and the app exits.
 	enum WindowMessages
 	{

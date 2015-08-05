@@ -21,6 +21,8 @@ xoDoc::~xoDoc()
 {
 	// TODO: Ensure that all of your events in the process-wide event queue have been dealt with,
 	// because the event processor is going to try to access this doc.
+
+	// Wipe all 
 	Reset();
 }
 
@@ -169,6 +171,30 @@ xoString xoDoc::Parse(const char* src)
 	return Root.Parse(src);
 }
 
+void xoDoc::NodeGotTimer(xoInternalID node)
+{
+	NodesWithTimers.insert(node);
+}
+
+void xoDoc::NodeLostTimer(xoInternalID node)
+{
+	NodesWithTimers.erase(node);
+}
+
+// Return the interval of the fastest timer of any node. Returns zero if no timers are set.
+uint xoDoc::FastestTimerMS()
+{
+	uint fastest = UINT32MAX - 1;
+	for (xoInternalID it : NodesWithTimers)
+	{
+		const xoDomNode* node = GetNodeByInternalID(it);
+		uint t = node->FastestTimerMS();
+		if (t != 0)
+			fastest = xoMin(fastest, t);
+	}
+	return fastest != UINT32MAX - 1 ? fastest : 0;
+}
+
 void xoDoc::ChildAdded(xoDomEl* el)
 {
 	XOASSERT(el->GetDoc() == this);
@@ -201,12 +227,16 @@ void xoDoc::ChildRemoved(xoDomEl* el)
 	xoInternalID elID = el->GetInternalID();
 	XOASSERT(elID != 0);
 	XOASSERT(el->GetDoc() == this);
+	xoDomNode* node = el->ToNode();
+	if (node && node->HandlesEvent(xoEventTimer))
+		NodeLostTimer(elID);
 	IncVersion();
 	SetChildModified(elID);
 	ChildByInternalID[elID] = NULL;
 	el->SetDoc(NULL);
 	el->SetInternalID(xoInternalIDNull);
 	FreeIDs += elID;
+
 }
 
 void xoDoc::SetChildModified(xoInternalID id)
@@ -229,6 +259,7 @@ void xoDoc::Reset()
 	Root.SetInternalID(xoInternalIDNull);	// Root will be assigned xoInternalIDRoot when we call ChildAdded() on it.
 	ChildIsModified.Clear();
 	ResetInternalIDs();
+	NodesWithTimers.clear();
 }
 
 void xoDoc::ResetInternalIDs()

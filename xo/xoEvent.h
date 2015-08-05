@@ -2,7 +2,8 @@
 
 #include "xoDefs.h"
 
-// It will be good if we can keep these inside 32 bits, for easy masking of handlers. If not, just use as many 32-bit words as necessary.
+// It will be good if we can keep these inside 32 bits, for easy masking of handlers.
+// If not, just use as many 32-bit words as necessary. Probably fine by now to use 64-bit words actually...
 enum xoEvents
 {
 	xoEventWindowSize	= BIT(0),
@@ -73,15 +74,16 @@ enum xoEventHandlerFlags
 class XOAPI xoEventHandler
 {
 public:
-	uint32				Mask;
-	uint32				Flags;
-	void*				Context;
-	xoEventHandlerF		Func;
+	uint32				Mask = 0;
+	uint32				Flags = 0;
+	uint32				TimerPeriodMS = 0;		// Only applicable to Timer event handlers
+	void*				Context = nullptr;
+	xoEventHandlerF		Func = nullptr;
 
 	xoEventHandler();
 	~xoEventHandler();
 
-	bool	Handles(xoEvents ev) const	{ return !!(Mask & ev); }
+	bool	Handles(xoEvents ev) const		{ return !!(Mask & ev); }
 	bool	IsLambda() const				{ return !!(Flags & xoEventHandlerFlag_IsLambda); }
 	void	SetLambda()						{ Flags |= xoEventHandlerFlag_IsLambda; }
 };

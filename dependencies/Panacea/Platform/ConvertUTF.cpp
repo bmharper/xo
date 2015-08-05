@@ -693,6 +693,23 @@ XStringA ConvertWideToUTF8(const XStringW& src)
 	return dst;
 }
 
+XStringW ConvertUTF16ToWide(const uint16_t* src)
+{
+	if (WideIs16)
+		return (const wchar_t*) src;
+
+	size_t srcLen = 0;
+	for (; src[srcLen]; srcLen++) {}
+
+	XStringW	dst;
+	size_t		dstLen = MaximumUtf32FromUtf16(srcLen) + 1;
+	wchar_t*	dstBuf = dst.GetBuffer((int) (dstLen - 1)); // GetBuffer() adds 1 itself, for the null terminator
+	if (!ConvertUTF16ToWide(src, srcLen, dstBuf, dstLen))
+		dstBuf[0] = 0;
+	dst.ReleaseBufferSetLen((int) dstLen);
+	return dst;
+}
+
 #endif // XSTRING_DEFINED
 
 std::wstring PAPI ConvertUTF8ToWide(const std::string& src)
@@ -823,3 +840,108 @@ bool ConvertUTF8ToWide(const char* src, size_t srcLen, wchar_t* dst, size_t& dst
 	return result;
 }
 
+bool ConvertWideToUTF16(const wchar_t* src, size_t srcLen, uint16_t* dst, size_t& dstLen, bool relaxNullTerminator)
+{
+	if (dst) *dst = 0;
+
+	if (src == NULL)
+	{
+		if (!relaxNullTerminator && dstLen == 0)
+			return false;
+		dstLen = 0;
+		return true;
+	}
+
+	if (srcLen == -1)
+		srcLen = wcslen(src);
+
+	if (WideIs16)
+	{
+		wcsncpy((wchar_t*) dst, src, min(srcLen, dstLen));
+		if (dstLen > srcLen)
+			dst[srcLen] = 0;
+
+		if (relaxNullTerminator)
+			return dstLen >= srcLen;
+		else
+			return dstLen > srcLen;
+	}
+
+	const wchar_t* srcPos = src;
+	const wchar_t* srcEnd = srcPos + srcLen;
+
+	UTF16* dstPos = dst;
+	UTF16* dstEnd = dst + dstLen;
+
+	ConversionResult res = ConvertUTF32toUTF16((const UTF32**) &srcPos, (const UTF32*) srcEnd, &dstPos, dstEnd, ConversionStrict);
+
+	if (res == ConversionResultTargetExhausted)
+		return false;
+
+	bool result = res == ConversionOk;
+
+	size_t actualDstLen = dstPos - dst;
+
+	if (dstLen > actualDstLen)
+		dst[actualDstLen] = 0;
+	else if (!relaxNullTerminator)
+		return false;
+
+	dstLen = actualDstLen;
+
+	return result;
+}
+
+bool ConvertUTF16ToWide(const uint16_t* src, size_t srcLen, wchar_t* dst, size_t& dstLen, bool relaxNullTerminator)
+{
+	if (dst) *dst = 0;
+
+	if (src == NULL)
+	{
+		if (!relaxNullTerminator && dstLen == 0)
+			return false;
+		dstLen = 0;
+		return true;
+	}
+
+	if (srcLen == -1)
+	{
+		for (srcLen = 0; src[srcLen]; srcLen++) {}
+	}
+
+	if (WideIs16)
+	{
+		wcsncpy((wchar_t*) dst, (const wchar_t*) src, min(srcLen, dstLen));
+		if (dstLen > srcLen)
+			dst[srcLen] = 0;
+
+		if (relaxNullTerminator)
+			return dstLen >= srcLen;
+		else
+			return dstLen > srcLen;
+	}
+
+	const uint16_t* srcPos = src;
+	const uint16_t* srcEnd = srcPos + srcLen;
+
+	UTF32* dstPos = (UTF32*) dst;
+	UTF32* dstEnd = (UTF32*) dst + dstLen;
+
+	ConversionResult res = ConvertUTF16toUTF32(&srcPos, srcEnd, &dstPos, dstEnd, ConversionStrict);
+
+	if (res == ConversionResultTargetExhausted)
+		return false;
+
+	bool result = res == ConversionOk;
+
+	size_t actualDstLen = dstPos - (UTF32*) dst;
+
+	if (dstLen > actualDstLen)
+		dst[actualDstLen] = 0;
+	else if (!relaxNullTerminator)
+		return false;
+
+	dstLen = actualDstLen;
+
+	return result;
+}

@@ -9,7 +9,11 @@ typedef DWORD					AbcProcessID;
 typedef HANDLE					AbcForkedProcessHandle;
 #else
 typedef pid_t					AbcProcessID;
-typedef FILE*					AbcForkedProcessHandle;
+struct AbcForkedProcessHandle
+{
+	pid_t	PID;
+	bool	IsClosed;	// We can only call waitpid once, so we need to track whether it's already been called
+};
 #endif
 
 struct AbcProcessStatistics
@@ -22,10 +26,10 @@ struct AbcProcessStatistics
 };
 
 PAPI bool				AbcProcessCreate(const char* cmd, AbcForkedProcessHandle* handle, AbcProcessID* pid);
-PAPI bool				AbcProcessWait(AbcForkedProcessHandle handle, int* exitCode);
-PAPI void 				AbcProcessCloseHandle(AbcForkedProcessHandle handle);
+PAPI bool				AbcProcessWait(AbcForkedProcessHandle& handle, int* exitCode);
+PAPI void 				AbcProcessCloseHandle(AbcForkedProcessHandle& handle);
 PAPI AbcProcessID		AbcProcessGetPID();
-PAPI void				AbcProcessGetPath(char* path, size_t maxPath);		// Return full path of executing process, for example "c:\programs\notepad.exe"
+PAPI void				AbcProcessGetPath(char* path, size_t maxPath);			// Return full path of executing process, for example "c:\programs\notepad.exe"
 #ifdef XSTRING_DEFINED
 PAPI XString			AbcProcessGetPath();									// Return full path of executing process, for example "c:\programs\notepad.exe"
 #endif

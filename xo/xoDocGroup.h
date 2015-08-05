@@ -21,12 +21,13 @@ public:
 #if XO_PLATFORM_WIN_DESKTOP
 	static LRESULT CALLBACK StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	LRESULT WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	void SetSysWndTimer(uint periodMS);
 #endif
 
 	// These are the only 3 entry points into our content
 	xoRenderResult	Render();							// This is always called from the Render thread
-	xoRenderResult	RenderToImage(xoImage& image);	// This is always called from the Render thread
-	void			ProcessEvent(xoEvent& ev);		// This is always called from the UI thread
+	xoRenderResult	RenderToImage(xoImage& image);		// This is always called from the Render thread
+	void			ProcessEvent(xoEvent& ev);			// This is always called from the UI thread
 
 	bool			IsDocVersionDifferentToRenderer() const;
 

@@ -3,6 +3,7 @@
 #include "xoDocGroup.h"
 #include "xoSysWnd.h"
 #include "xoEvent.h"
+#include "xoDoc.h"
 
 #if XO_PLATFORM_WIN_DESKTOP
 
@@ -14,6 +15,12 @@ static bool AnyDocsDirty()
 			return true;
 	}
 	return false;
+}
+
+static void SetupTimerMessagesForAllDocs()
+{
+	for (xoDocGroup* dg : xoGlobal()->Docs)
+		dg->SetSysWndTimer(dg->Doc->FastestTimerMS());
 }
 
 XOAPI void xoRunWin32MessageLoop()
@@ -38,6 +45,8 @@ XOAPI void xoRunWin32MessageLoop()
 
 	while (true)
 	{
+		SetupTimerMessagesForAllDocs();
+
 		// When idle, use GetMessage so that the OS can put us into a good sleep
 		MSG msg;
 		bool haveMsg = true;

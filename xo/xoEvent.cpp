@@ -25,10 +25,6 @@ void xoEvent::MakeWindowSize(int w, int h)
 
 xoEventHandler::xoEventHandler()
 {
-	Mask = 0;
-	Flags = 0;
-	Context = NULL;
-	Func = NULL;
 }
 
 xoEventHandler::~xoEventHandler()

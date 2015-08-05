@@ -346,6 +346,38 @@ public:
 	void reserve(intp newsize) { Base::reserve(newsize); }
 
 	void resize(intp newsize) { Base::resize(newsize); }
+
+	class iterator
+	{
+	private:
+		pvect*		vec;
+		intp		pos;
+	public:
+		iterator(pvect* _vec, intp _pos) : vec(_vec), pos(_pos)		{}
+		bool		operator!=(const iterator& b) const							{ return pos != b.pos; }
+		T&			operator*() const												{ return (T&) vec->data[pos]; }
+		iterator&	operator++()													{ pos++; return *this; }
+	};
+	friend class iterator;
+
+	class const_iterator
+	{
+	private:
+		const pvect*	vec;
+		intp			pos;
+	public:
+		const_iterator(const pvect* _vec, intp _pos) : vec(_vec), pos(_pos)		{}
+		bool			operator!=(const const_iterator& b) const									{ return pos != b.pos; }
+		const T&		operator*() const															{ return (const T&) vec->data[pos]; }
+		const_iterator&	operator++()																{ pos++; return *this; }
+	};
+	friend class const_iterator;
+
+	iterator begin()				{ return iterator(this, 0); }
+	iterator end()					{ return iterator(this, count); }
+
+	const_iterator begin() const	{ return const_iterator(this, 0); }
+	const_iterator end() const		{ return const_iterator(this, count); }
 };
 
 /** erase and delete for pvect

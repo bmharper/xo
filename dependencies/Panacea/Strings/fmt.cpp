@@ -390,6 +390,8 @@ PAPI int fmt_snprintf(char* destination, size_t count, const char* format_str, .
 	return fmt_translate_snprintf_return_value(r, count);
 }
 
+// On Windows, wide version has different behaviour to narrow, requiring that we set Count+1 instead of Count characters.
+// On linux, both versions require Count+1 characters.
 PAPI int fmt_swprintf(wchar_t* destination, size_t count, const wchar_t* format_str, ...)
 {
 	va_list va;

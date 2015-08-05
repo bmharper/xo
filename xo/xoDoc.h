@@ -46,6 +46,10 @@ public:
 
 	xoString			Parse(const char* src);   // Set the entire document from a single xml-like string. Returns empty string on success, or error message.
 
+	void				NodeGotTimer(xoInternalID node);
+	void				NodeLostTimer(xoInternalID node);
+	uint				FastestTimerMS();
+
 	void				ChildAdded(xoDomEl* el);
 	//void				ChildAddedFromDocumentClone( xoDomEl* el );
 	void				ChildRemoved(xoDomEl* el);
@@ -65,6 +69,7 @@ protected:
 	BitMap						ChildIsModified;		// Bit is set if child has been modified since we last synced with the renderer
 	podvec<xoInternalID>		UsableIDs;				// When we do a render sync, then FreeIDs are moved into UsableIDs
 	podvec<xoInternalID>		FreeIDs;
+	ohash::set<xoInternalID>	NodesWithTimers;		// Set of all nodes that have an OnTimer event handler registered
 
 	void	ResetInternalIDs();
 	void	InitializeDefaultTagStyles();

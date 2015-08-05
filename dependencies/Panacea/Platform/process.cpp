@@ -2,6 +2,7 @@
 #include "process.h"
 #include "timeprims.h"
 #include "ConvertUTF.h"
+#include <vector>
 
 #ifdef _WIN32
 #include <Psapi.h>
@@ -11,6 +12,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>			// Added for Android
+#include <sys/wait.h>
 #endif
 
 #ifdef _WIN32
@@ -36,7 +38,7 @@ PAPI bool			AbcProcessCreate(const char* cmd, AbcForkedProcessHandle* handle, Ab
 	return true;
 }
 #endif
-PAPI bool			AbcProcessWait(AbcForkedProcessHandle handle, int* exitCode)
+PAPI bool			AbcProcessWait(AbcForkedProcessHandle& handle, int* exitCode)
 {
 	if (WaitForSingleObject(handle, INFINITE) == WAIT_OBJECT_0)
 	{
@@ -50,7 +52,7 @@ PAPI bool			AbcProcessWait(AbcForkedProcessHandle handle, int* exitCode)
 	}
 	return false;
 }
-PAPI void 			AbcProcessCloseHandle(AbcForkedProcessHandle handle)
+PAPI void 			AbcProcessCloseHandle(AbcForkedProcessHandle& handle)
 {
 	CloseHandle(handle);
 }
@@ -130,17 +132,97 @@ PAPI void			AbcProcessGetStatistics(AbcProcessStatistics& stats)
 #else
 // linux
 
-PAPI bool			AbcProcessCreate(const char* cmd, AbcForkedProcessHandle* handle, AbcProcessID* pid)
+PAPI bool			AbcProcessCreate(const char* cmd, AbcForkedProcessHandle* handle, AbcProcessID* _pid)
 {
-	AbcAssert(false);
+	pid_t pid = fork();
+	if (pid == 0)
+	{
+		// child
+		// parse the command line. This feels dubious. We should change the API to take exe + args instead.
+		std::vector<char> parts;
+		std::vector<size_t> ipart;	// offset into parts, where the part starts
+		bool escaped = false;
+		bool quoted = false;
+		ipart.push_back(0);
+		for (int i = 0; cmd[i]; i++)
+		{
+			if (escaped)
+			{
+				parts.push_back(cmd[i]);
+				escaped = false;
+			}
+			else
+			{
+				if (cmd[i] == '\\')
+					escaped = true;
+				else if (cmd[i] == ' ' && !quoted)
+				{
+					parts.push_back('\0');
+					ipart.push_back(parts.size());
+				}
+				else
+				{
+					if (cmd[i] == '"')
+						quoted = !quoted;
+					else
+						parts.push_back(cmd[i]);
+				}
+			}
+		}
+		if (ipart.size() == 0)
+			return false;
+		std::vector<char*> argv;
+		for (auto p : ipart)
+			argv.push_back(&parts[p]);
+		argv.push_back(nullptr);
+		execv(argv[0], &argv[0]);
+		// exec only returns if an error occurred
+		exit(1);
+		return false;
+	}
+	else
+	{
+		// parent
+		if (pid == -1)
+			return false;
+		if (_pid)
+			*_pid = pid;
+		if (handle)
+		{
+			handle->PID = pid;
+			handle->IsClosed = false;
+		}
+		return true;
+	}
 }
-PAPI bool			AbcProcessWait(AbcForkedProcessHandle handle, int* exitCode)
+PAPI bool			AbcProcessWait(AbcForkedProcessHandle& handle, int* exitCode)
 {
-	AbcAssert(false);
+	int status = 0;
+	waitpid(handle.PID, &status, 0);
+	handle.IsClosed = true;
+	if (WIFEXITED(status))
+	{
+		if (exitCode != nullptr)
+			*exitCode = WEXITSTATUS(status);
+		return true;
+	}
+	else if (WIFSIGNALED(status))
+	{
+		if (exitCode != nullptr)
+			*exitCode = WTERMSIG(status);
+		return true;
+	}
+	return false;
 }
-PAPI void			AbcProcessCloseHandle(AbcForkedProcessHandle handle)
+PAPI void			AbcProcessCloseHandle(AbcForkedProcessHandle& handle)
 {
-	AbcAssert(false);
+	// Simply calling waitpid signals to the kernel that it can destroy the zombie process
+	if (!handle.IsClosed)
+	{
+		int status = 0;
+		waitpid(handle.PID, &status, 0);
+		handle.IsClosed = true;
+	}
 }
 PAPI AbcProcessID	AbcProcessGetPID()
 {

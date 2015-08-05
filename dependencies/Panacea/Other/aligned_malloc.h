@@ -34,7 +34,7 @@ Bytes before alignment point
 			3					..#--------*			(# = 3) There is 1 byte extra at the end of the usable space
 			4					...#--------			(# = 4) Original malloc result was perfect. We had to burn 4 bytes. Zero bytes extra at the end of the usable space.
 
-We always allocate (bytes + alignment), we always waste extract "alignment" bytes.
+We always allocate (bytes + alignment), we always waste "alignment" bytes.
 */
 
 O_INLINE void* AbcAlignedMalloc(size_t bytes, size_t alignment);
@@ -51,6 +51,10 @@ O_INLINE void* AbcAlignedMalloc(size_t bytes, size_t alignment)
 		return NULL;
 	return p;
 #else
+	// Since our offset is a single byte, we don't support more than 128-byte alignment.
+	if (alignment > 128)
+		return NULL;
+
 	size_t alignment_mask = alignment - 1;
 
 	// Ensure that alignment is a power of 2
@@ -90,9 +94,12 @@ O_INLINE void AbcAlignedFree(void* block)
 #elif defined(ABC_HAVE_POSIX_MEMALIGN)
 	free(block);
 #else
-	unsigned char* usable = (unsigned char*) block;
-	unsigned char* raw = usable - usable[-1];
-	free(raw);
+	if (block != nullptr)
+	{
+		unsigned char* usable = (unsigned char*) block;
+		unsigned char* raw = usable - usable[-1];
+		free(raw);
+	}
 #endif
 }
 
