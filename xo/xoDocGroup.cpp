@@ -46,7 +46,18 @@ xoRenderResult xoDocGroup::RenderToImage(xoImage& image)
 	return res;
 }
 
-// This is always called from the Render thread
+/* This is always called from the Render thread
+You might ask: Why do we copy from Doc to RenderDoc from here, running
+in the Render thread? The only time that Doc is modified, is when an event
+has been processed, and this always happens on the UI thread. Surely then,
+immediately after processing an event, the UI thread should perform the
+copy from Doc to RenderDoc? BUT - that leaves two problems.
+Firstly, the Render thread would die, because you'd be modifying the RenderDoc
+while the Render thread was busy using it.
+Secondly, as part of the copy operation, we upload any altered textures
+to the GPU. This is obviously a can of worms that we don't want to open
+(ie multithreaded access to the GPU).
+*/
 xoRenderResult xoDocGroup::RenderInternal(xoImage* targetImage)
 {
 	bool haveLock = false;
