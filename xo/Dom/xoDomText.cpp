@@ -12,6 +12,7 @@ xoDomText::~xoDomText()
 void xoDomText::SetText(const char* txt)
 {
 	Text = txt;
+	IncVersion();
 }
 
 const char* xoDomText::GetText() const
