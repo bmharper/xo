@@ -376,6 +376,7 @@ enum xoShaders
 	xoShaderFillTex,
 	xoShaderRect,
 	xoShaderRect2,
+	xoShaderRect3,
 	xoShaderTextRGB,
 	xoShaderTextWhole,
 	xoShaderQuadraticSpline,

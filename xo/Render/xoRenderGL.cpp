@@ -74,12 +74,13 @@ xoRenderGL::xoRenderGL()
 	Have_BlendFuncExtended = false;
 	AllProgs[0] = &PRect;
 	AllProgs[1] = &PRect2;
-	AllProgs[2] = &PFill;
-	AllProgs[3] = &PFillTex;
-	AllProgs[4] = &PTextRGB;
-	AllProgs[5] = &PTextWhole;
-	AllProgs[6] = &PCurve;
-	static_assert(NumProgs == 7, "Add your new shader here");
+	AllProgs[2] = &PRect3;
+	AllProgs[3] = &PFill;
+	AllProgs[4] = &PFillTex;
+	AllProgs[5] = &PTextRGB;
+	AllProgs[6] = &PTextWhole;
+	AllProgs[7] = &PCurve;
+	static_assert(NumProgs == 8, "Add your new shader here");
 	Reset();
 }
 
@@ -355,6 +356,7 @@ xoProgBase* xoRenderGL::GetShader(xoShaders shader)
 	case xoShaderFillTex:			return &PFillTex;
 	case xoShaderRect:				return &PRect;
 	case xoShaderRect2:				return &PRect2;
+	case xoShaderRect3:				return &PRect3;
 	case xoShaderTextRGB:			return &PTextRGB;
 	case xoShaderTextWhole:			return &PTextWhole;
 	case xoShaderQuadraticSpline:	return &PCurve;
@@ -518,6 +520,7 @@ void xoRenderGL::SetShaderFrameUniforms()
 	if (SetMVProj(xoShaderRect2, PRect2, mvprojT))
 		glUniform2f(PRect2.v_vport_hsize, FBWidth / 2.0f, FBHeight / 2.0f);
 
+	SetMVProj(xoShaderRect3, PFill, mvprojT);
 	SetMVProj(xoShaderFill, PFill, mvprojT);
 	SetMVProj(xoShaderFillTex, PFillTex, mvprojT);
 	SetMVProj(xoShaderTextRGB, PTextRGB, mvprojT);
@@ -611,6 +614,17 @@ void xoRenderGL::Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v)
 		glVertexAttribPointer(PRect2.v_vborder_color, 4, GL_UNSIGNED_BYTE, true, stride, vbyte + offsetof(xoVx_PTCV4, Color2));
 		glEnableVertexAttribArray(PRect2.v_vborder_color);
 		Check();
+		break;
+	case xoShaderRect3:
+		stride = sizeof(xoVx_PTCV4);
+		varvpos = PRect3.v_vpos;
+		varvcol = PRect3.v_vcolor;
+		glVertexAttribPointer(PRect3.v_vborder_width, 1, GL_FLOAT, true, stride, vbyte + offsetof(xoVx_PTCV4, V4.x));
+		glEnableVertexAttribArray(PRect3.v_vborder_width);
+		glVertexAttribPointer(PRect3.v_vborder_color, 4, GL_UNSIGNED_BYTE, true, stride, vbyte + offsetof(xoVx_PTCV4, Color2));
+		glEnableVertexAttribArray(PRect3.v_vborder_color);
+		glVertexAttribPointer(PRect3.v_vdistance, 1, GL_FLOAT, true, stride, vbyte + offsetof(xoVx_PTCV4, V4.y));
+		glEnableVertexAttribArray(PRect3.v_vdistance);
 		break;
 	case xoShaderFill:
 		varvpos = PFill.v_vpos;

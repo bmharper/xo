@@ -472,6 +472,33 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 	of the mutability of textures. The few times when one does need a
 	runtime-defined texture, you can manage that thing's lifecycle yourself.
 	
+2015-08-19	Rendering box nodes
+	Until now, box nodes (ie everything except text and canvas) have been rendered
+	as a single quad. I want to change that, so that we render using the following
+	breakdown of primitives:
 
+	 ,--+---------------------+--,
+	/ x |                     | y \
+	+---+          A          +---+
+	|   |                     |   |
+	| C |---------------------| D |
+	|   |                     |   |
+	+---+          B          +---+
+	\ z |                     | w /
+	 '--+---------------------+--'
+
+	 The four quads A..D are rendered by the Rect3 shader.
+	 The four corners x..w are rendered by the Arc shader.
+	 The corners are actually ellipses, but computing the distance to an ellipse is
+	 hard. See:
+	 https://www.shadertoy.com/view/ldsGWX
+	 http://iquilezles.org/www/articles/ellipsedist/ellipsedist.htm
+
+	 Instead of rendering a true ellipse, we construct them by rendering a fan
+	 of circular arcs. We can determine the arc by computing a circle from 3
+	 points along the ellipse. IIRC correctly that computation is a bunch of multiplies
+	 and adds, and 3 square roots. We do this on the CPU.
+
+	 That's the plan at least...
 
 

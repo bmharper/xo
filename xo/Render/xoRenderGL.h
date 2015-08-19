@@ -8,6 +8,7 @@
 #include "../Shaders/Processed_glsl/FillTexShader.h"
 #include "../Shaders/Processed_glsl/RectShader.h"
 #include "../Shaders/Processed_glsl/Rect2Shader.h"
+#include "../Shaders/Processed_glsl/Rect3Shader.h"
 #include "../Shaders/Processed_glsl/TextRGBShader.h"
 #include "../Shaders/Processed_glsl/TextWholeShader.h"
 
@@ -21,12 +22,13 @@ public:
 
 	xoGLProg_Rect		PRect;
 	xoGLProg_Rect2		PRect2;
+	xoGLProg_Rect3		PRect3;
 	xoGLProg_Fill		PFill;
 	xoGLProg_FillTex	PFillTex;
 	xoGLProg_TextRGB	PTextRGB;
 	xoGLProg_TextWhole	PTextWhole;
 	xoGLProg_Curve		PCurve;
-	static const int	NumProgs = 7;
+	static const int	NumProgs = 8;
 	xoGLProg*			AllProgs[NumProgs];	// All of the above programs
 
 	xoRenderGL();

@@ -263,6 +263,7 @@ local xo = SharedLibrary {
 		"xo/Shaders/Processed_glsl/FillTexShader.cpp",
 		"xo/Shaders/Processed_glsl/RectShader.cpp",
 		"xo/Shaders/Processed_glsl/Rect2Shader.cpp",
+		"xo/Shaders/Processed_glsl/Rect3Shader.cpp",
 		"xo/Shaders/Processed_glsl/TextRGBShader.cpp",
 		"xo/Shaders/Processed_glsl/TextWholeShader.cpp",
 		"xo/Shaders/Processed_hlsl/FillShader.cpp",

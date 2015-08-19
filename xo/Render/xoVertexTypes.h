@@ -3,7 +3,7 @@
 // Position, UV, Color
 struct XOAPI xoVx_PTC
 {
-	// Note that xoRenderGL::DrawQuad assumes that we share our base layout with xoVx_PTCV4
+	// Note that xoRenderGL::DrawQuad assumes that xoVx_PTC and xoVx_PTCV4 share their base layout
 	xoVecBase3f		Pos;
 	xoVecBase2f		UV;
 	uint32			Color;
@@ -12,7 +12,7 @@ struct XOAPI xoVx_PTC
 // Position, UV, Color, Color2, Vec4
 struct XOAPI xoVx_PTCV4
 {
-	// Note that xoRenderGL::DrawQuad assumes that we share our base layout with xoVx_PTC
+	// Note that xoRenderGL::DrawQuad assumes that xoVx_PTC and xoVx_PTCV4 share their base layout
 	union
 	{
 		struct

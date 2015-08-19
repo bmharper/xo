@@ -437,7 +437,7 @@ void InitDOM(xoDoc* doc)
 	xoDomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
 
-	//DoBorder(doc);
+	DoBorder(doc);
 	//DoBaselineAlignment(doc);
 	//DoBaselineAlignment_rev2(doc);
 	//DoBaselineAlignment_Multiline(doc);
@@ -453,7 +453,7 @@ void InitDOM(xoDoc* doc)
 	//DoPadding(doc);
 	//DoTextQuality(doc);
 	//DoQuadraticSplines(doc);
-	DoTimer(doc);
+	//DoTimer(doc);
 
 	body->OnClick([](const xoEvent& ev) -> bool {
 		//xoGlobal()->EnableKerning = !xoGlobal()->EnableKerning;

@@ -46,6 +46,14 @@ void xoRenderer::RenderEl(xoPoint base, const xoRenderDomEl* el)
 	}
 }
 
+struct xoBoxRadiusSet
+{
+	Vec2f TopLeft;
+	Vec2f BottomLeft;
+	Vec2f BottomRight;
+	Vec2f TopRight;
+};
+
 void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 {
 	//if (node->Style.BackgroundColor == xoColor::RGBA(0xff, 0xf0, 0xf0, 0xff)) { RenderQuadratic(base, node); return; }
@@ -67,6 +75,7 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 	bool useRectShader = alwaysGoodRects || radius != 0;
 	// I only tried out rect2 shader on OpenGL, and then went ahead to try Blinn/Loop rendering.
 	bool useRect2Shader = false; // strcmp(Driver->RendererName(), "OpenGL") == 0;
+	bool useRect3Shader = true;
 
 	float width = right - left;
 	float height = bottom - top;
@@ -103,7 +112,41 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 	//auto bgImage = style.Get( xoCatBackgroundImage );
 	xoColor bg = style->BackgroundColor;
 	const char* bgImage = Strings->GetStr(style->BackgroundImageID);
-	if (bg.a != 0)
+
+	if (bg.a != 0 && useRect3Shader)
+	{
+		xoBoxRadiusSet radii = {
+			{ radius, radius },	// left, top
+			{ radius, radius }, // left, bottom
+			{ radius, radius },	// right, bottom
+			{ radius, radius }, // right, top
+		};
+		Driver->ActivateShader(xoShaderRect3);
+		xoVx_PTCV4 vx[4];
+		for (int i = 0; i < 4; i++)
+		{
+			vx[i].Color = bg.GetRGBA();
+			vx[i].Color2 = style->BorderColor.GetRGBA();
+		}
+		// top bar
+		vx[0].Pos = XOVEC3(left + radii.TopLeft.x, top, 0);
+		vx[1].Pos = XOVEC3(left + radii.TopLeft.x, top + radii.TopLeft.y, 0);
+		vx[2].Pos = XOVEC3(right - radii.TopRight.x, top + radii.TopRight.y, 0);
+		vx[3].Pos = XOVEC3(right - radii.TopRight.x, top, 0);
+		// border width
+		vx[0].V4.x = 2;
+		vx[1].V4.x = 2;
+		vx[2].V4.x = 2;
+		vx[3].V4.x = 2;
+		// distance
+		vx[0].V4.y = 1;
+		vx[1].V4.y = 0;
+		vx[2].V4.y = 0;
+		vx[3].V4.y = 1;
+		Driver->Draw(xoGPUPrimQuads, 4, vx);
+	}
+
+	if (bg.a != 0 && !useRect3Shader)
 	{
 		for (int i = 0; i < 4; i++)
 			corners[i].Color = bg.GetRGBA();
