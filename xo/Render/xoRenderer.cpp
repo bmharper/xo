@@ -75,7 +75,7 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 	bool useRectShader = alwaysGoodRects || radius != 0;
 	// I only tried out rect2 shader on OpenGL, and then went ahead to try Blinn/Loop rendering.
 	bool useRect2Shader = false; // strcmp(Driver->RendererName(), "OpenGL") == 0;
-	bool useRect3Shader = true;
+	bool useRect3Shader = false;
 
 	float width = right - left;
 	float height = bottom - top;

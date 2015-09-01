@@ -109,16 +109,16 @@ Build {
 		},
 		--]]
 		{
-			Name = "win32-msvc2013",
+			Name = "win32-msvc2015",
 			SupportedHosts = { "windows" },
 			Inherit = win_common,
-			Tools = { {"msvc-vs2013"; TargetArch = "x86"} },
+			Tools = { {"msvc-vs2015"; TargetArch = "x86"} },
 		},
 		{
-			Name = "win64-msvc2013",
+			Name = "win64-msvc2015",
 			DefaultOnHost = "windows",
 			Inherit = win_common,
-			Tools = { {"msvc-vs2013"; TargetArch = "x64"} },
+			Tools = { {"msvc-vs2015"; TargetArch = "x64"} },
 		},
 	},
 	IdeGenerationHints = {
@@ -128,9 +128,11 @@ Build {
 				['win64-msvc2010'] = 'x64',
 				['win64-msvc2012'] = 'x64',
 				['win64-msvc2013'] = 'x64',
+				['win64-msvc2015'] = 'x64',
 				['win32-msvc2010'] = 'Win32',
 				['win32-msvc2012'] = 'Win32',
 				['win32-msvc2013'] = 'Win32',
+				['win32-msvc2015'] = 'Win32',
 			},
 			-- Remap variant names to MSVC friendly names
 			VariantMappings = {

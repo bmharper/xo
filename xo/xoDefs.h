@@ -285,7 +285,7 @@ struct XOAPI xoColor
 
 	static bool		Parse(const char* s, intp len, xoColor& v);
 	static xoColor	RGBA(uint8 _r, uint8 _g, uint8 _b, uint8 _a)		{ xoColor c; c.Set(_r,_g,_b,_a); return c; }
-	static xoColor	Make(uint32 _u)									{ xoColor c; c.u = _u; return c; }
+	static xoColor	Make(uint32 _u)										{ xoColor c; c.u = _u; return c; }
 	static xoColor	Black()												{ return xoColor::RGBA(0,0,0,255); }
 	static xoColor	White()												{ return xoColor::RGBA(255,255,255,255); }
 	static xoColor	Transparent()										{ return xoColor::RGBA(0,0,0,0); }
