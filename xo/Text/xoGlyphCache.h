@@ -48,7 +48,11 @@ struct xoGlyphCacheKey
 	}
 	bool operator==(const xoGlyphCacheKey& b) const { return FontID == b.FontID && Char == b.Char && Size == b.Size && Flags == b.Flags; }
 };
-FHASH_SETUP_POD_GETHASHCODE(xoGlyphCacheKey);
+
+namespace ohash
+{
+	inline ohash::hashkey_t gethashcode(const xoGlyphCacheKey& k)		{ return (hashkey_t) k.GetHashCode(); }
+}
 
 static const int xoGlyphAtlasSize = 512; // 512 x 512 x 8bit = 256k per atlas
 
@@ -82,7 +86,7 @@ public:
 protected:
 	pvect<xoTextureAtlas*>				Atlasses;
 	podvec<xoGlyph>						Glyphs;
-	fhashmap<xoGlyphCacheKey, uint>		Table;
+	ohash::map<xoGlyphCacheKey, uint>	Table;
 	xoGlyph								NullGlyph;
 
 	void	Initialize();

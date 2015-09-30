@@ -62,7 +62,10 @@ public:
 
 };
 
-FHASH_SETUP_CLASS_GETHASHCODE(xoString, xoString);
+namespace ohash
+{
+	inline ohash::hashkey_t gethashcode(const xoString& k) { return (ohash::hashkey_t) k.GetHashCode(); }
+}
 
 XOAPI xoString operator+(const char* a, const xoStringRaw& b);
 XOAPI xoString operator+(const xoStringRaw& a, const char* b);

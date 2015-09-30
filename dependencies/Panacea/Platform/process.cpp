@@ -175,7 +175,7 @@ PAPI bool			AbcProcessCreate(const char* cmd, AbcForkedProcessHandle* handle, Ab
 		for (auto p : ipart)
 			argv.push_back(&parts[p]);
 		argv.push_back(nullptr);
-		execv(argv[0], &argv[0]);
+		execvp(argv[0], &argv[0]);
 		// exec only returns if an error occurred
 		exit(1);
 		return false;

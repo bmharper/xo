@@ -32,11 +32,11 @@ protected:
 		bool			HasHoverStyle;	// Appearance of element beneath cursor depends upon cursor location
 	};
 
-	xoDoc*					Doc;
-	xoInternalID			CurrentFocusID = xoInternalIDNull;	// Element that has the keyboard focus
-	podvec<HoverNode>		HoverNodes;
-	fhashset<xoInternalID>	HoverSet;
-	uint32					ViewportWidth, ViewportHeight;		// Device pixels
+	xoDoc*						Doc;
+	xoInternalID				CurrentFocusID = xoInternalIDNull;	// Element that has the keyboard focus
+	podvec<HoverNode>			HoverNodes;
+	ohash::set<xoInternalID>	HoverSet;
+	uint32						ViewportWidth, ViewportHeight;		// Device pixels
 
 	// Cursor computed due to most recent mouse move message. Why volatile?
 	// This is volatile so that we can read and write the cursor from any thread.

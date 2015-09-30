@@ -13,7 +13,7 @@ public:
 	xoString	Run(const char* raw);
 
 protected:
-	fhashmap<xoString, xoString>	Macros;
+	ohash::map<xoString, xoString>	Macros;
 
 	static bool	Match(const char* buf, uintp bufPos, const xoString& find);
 	static bool	IsIdentChar(char c);

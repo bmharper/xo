@@ -109,7 +109,7 @@ protected:
 	float						PtToPixel;
 	float						EpToPixel;
 	xoFontTableImmutable		Fonts;
-	fhashset<xoGlyphCacheKey>	GlyphsNeeded;
+	ohash::set<xoGlyphCacheKey>	GlyphsNeeded;
 	TextRunState				TempText;
 	bool						SnapBoxes;
 	bool						SnapSubpixelHorzText;

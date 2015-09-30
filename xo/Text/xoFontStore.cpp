@@ -168,7 +168,7 @@ const xoFont* xoFontStore::GetByFacename_Internal(const char* facename) const
 	if (FacenameToFontID.get(xoTempString(facename), id))
 		return Fonts[id];
 	else
-		return NULL;
+		return nullptr;
 }
 
 xoFontID xoFontStore::Insert_Internal(const xoFont& font)

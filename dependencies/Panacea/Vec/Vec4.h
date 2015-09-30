@@ -343,11 +343,11 @@ public:
 			}
 		}
 #else
-		if (_stscanf(str, "[ %lf %lf %lf %lf ]", &a, &b, &c, &d) != 4)
+		if (_stscanf(str, L"[ %lf %lf %lf %lf ]", &a, &b, &c, &d) != 4)
 		{
-			if (_stscanf(str, "%lf %lf %lf %lf", &a, &b, &c, &d) != 4)
+			if (_stscanf(str, L"%lf %lf %lf %lf", &a, &b, &c, &d) != 4)
 			{
-				if (_stscanf(str, "%lf, %lf, %lf, %lf", &a, &b, &c, &d) != 4)
+				if (_stscanf(str, L"%lf, %lf, %lf, %lf", &a, &b, &c, &d) != 4)
 				{
 					return false;
 				}

@@ -439,26 +439,20 @@ typedef Vec3T<double> Vec3d;
 typedef Vec3T<float> Vec3f;
 typedef Vec3d Vec3;
 
-#ifdef OHASH_DEFINED
 namespace ohash
 {
-template< class vreal >
-class ohashfunc_Vec3T
-{
-public:
-	static ohash::hashkey_t gethashcode(const VecBase3T<vreal>& elem)
+	inline int gethashcode(const VecBase3T<float>& v)
 	{
-		vreal sum = elem.x + elem.y + elem.z;
-		ohash::hashkey_t* hard = (ohash::hashkey_t*) &sum;
-		return *hard;
+		int* p = (int*) &v;
+		return p[0] ^ p[1] ^ p[2];
 	}
-};
 
-typedef ohashfunc_Vec3T<double> ohashfunc_Vec3;
-typedef ohashfunc_Vec3T<double> ohashfunc_Vec3d;
-typedef ohashfunc_Vec3T<float> ohashfunc_Vec3f;
+	inline int gethashcode(const VecBase3T<double>& v)
+	{
+		int* p = (int*) &v;
+		return p[0] ^ p[1] ^ p[2] ^ p[3] ^ p[4] ^ p[5];
+	}
 }
-#endif
 
 inline Vec3		ToVec3(Vec3f v) { return Vec3(v.x, v.y, v.z); }
 inline Vec3f	ToVec3f(Vec3 v) { return Vec3f((float) v.x, (float) v.y, (float) v.z); }

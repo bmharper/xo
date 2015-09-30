@@ -26,7 +26,7 @@ protected:
 	static const int	NullImageIndex = 0;
 
 	pvect<xoImage*>				ImageList;
-	fhashmap<xoString, int>		NameToIndex;
+	ohash::map<xoString, int>	NameToIndex;
 	podvec<int>					FreeIndices;
 	int64						NextAnon;
 };

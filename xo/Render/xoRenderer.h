@@ -21,7 +21,7 @@ protected:
 	xoRenderBase*				Driver;
 	xoImageStore*				Images;
 	xoStringTable*				Strings;
-	fhashset<xoGlyphCacheKey>	GlyphsNeeded;
+	ohash::set<xoGlyphCacheKey>	GlyphsNeeded;
 
 	void			RenderEl(xoPoint base, const xoRenderDomEl* node);
 	void			RenderNode(xoPoint base, const xoRenderDomNode* node);

@@ -162,7 +162,7 @@ void xoDocUI::UpdateCursorLocation(const pvect<const xoRenderDomNode*>& nodeChai
 {
 	// Update Hover states, send mouse leave and mouse enter events.
 	bool anyHoverChanges = false;
-	fhashset<xoInternalID> oldNodeIDs, newNodeIDs;
+	ohash::set<xoInternalID> oldNodeIDs, newNodeIDs;
 
 	for (intp i = 0; i < HoverNodes.size(); i++)
 		oldNodeIDs.insert(HoverNodes[i].InternalID);

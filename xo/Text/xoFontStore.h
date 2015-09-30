@@ -67,8 +67,8 @@ private:
 	AbcCriticalSection				Lock;
 	pvect<xoFont*>					Fonts;
 	podvec<xoString>				Directories;
-	fhashmap<xoString, xoFontID>	FacenameToFontID;
-	fhashmap<xoString, xoString>	FacenameToFilename;
+	ohash::map<xoString, xoFontID>	FacenameToFontID;
+	ohash::map<xoString, xoString>	FacenameToFilename;
 	FT_Library						FTLibrary;
 	bool							IsFontTableLoaded;
 

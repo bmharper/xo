@@ -53,7 +53,6 @@ dependencies/Panacea/Containers/queue.h
 dependencies/Panacea/Other/aligned_malloc.h
 dependencies/Panacea/Other/StackAllocators.h
 dependencies/Panacea/Bits/BitMap.h
-dependencies/Panacea/fhash/fhashtable.h
 dependencies/Panacea/Vec/VecPrim.h
 dependencies/Panacea/Vec/VecDef.h
 dependencies/Panacea/Vec/Vec2.h
@@ -61,6 +60,10 @@ dependencies/Panacea/Vec/Vec3.h
 dependencies/Panacea/Vec/Vec4.h
 dependencies/Panacea/Vec/Mat4.h
 dependencies/Panacea/Vec/VecUndef.h
+dependencies/Panacea/HashTab/ohashcommon.h
+dependencies/Panacea/HashTab/ohashtable.h
+dependencies/Panacea/HashTab/ohashset.h
+dependencies/Panacea/HashTab/ohashmap.h
 dependencies/hash/xxhash.h
 )
 

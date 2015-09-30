@@ -133,7 +133,7 @@ void xoImageStore::CloneMetadataFrom(const xoImageStore& src)
 
 	for (auto it = src.NameToIndex.begin(); it != src.NameToIndex.end(); it++)
 	{
-		if (it.val() != NullImageIndex)
-			Set(it.key().Z, cloneImage(src.ImageList[it.val()]));
+		if (it->second != NullImageIndex)
+			Set(it->first.Z, cloneImage(src.ImageList[it->second]));
 	}
 }

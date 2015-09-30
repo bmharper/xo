@@ -17,6 +17,6 @@ public:
 
 protected:
 	xoPool						Pool;
-	fhashmap<xoString, int>		NameToId;			// This could be improved dramatically, by avoiding the heap alloc for every item
+	ohash::map<xoString, int>	NameToId;			// This could be improved dramatically, by avoiding the heap alloc for every item
 	pvect<const char*>			IdToName;
 };

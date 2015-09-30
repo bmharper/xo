@@ -15,11 +15,11 @@ TESTFUNC(String)
 	}
 
 	{
-		fhashmap<xoString, int> tab1;
+		ohash::map<xoString, int> tab1;
 		tab1.insert("a", 1);
 	}
 	{
-		fhashmap<xoString, int> tab1, tab2;
+		ohash::map<xoString, int> tab1, tab2;
 		tab1.insert("a", 1);
 		tab1.insert("b", 2);
 		tab2 = tab1;

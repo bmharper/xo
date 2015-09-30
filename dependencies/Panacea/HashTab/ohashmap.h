@@ -18,7 +18,6 @@ class map : public table< TKey, std::pair<TKey, TVal>, THashFunc, TGetKeyFunc, T
 public:
 	typedef std::pair< TKey, TVal > pair_type;
 	typedef table< TKey, pair_type, THashFunc, TGetKeyFunc, TGetValFunc > base;
-	// GCC 4 requires this (note the 'typename'). it's something about 'two-phase name lookup'. I don't want to know!
 	typedef typename base::iterator iterator;
 
 	map()
@@ -41,8 +40,7 @@ public:
 		return this->insert_check_exist(pair_type(key, val), overwrite) != npos;
 	}
 
-	/** Insert, always overwriting any existing value.
-	**/
+	// Insert, always overwriting any existing value.
 	void set(const TKey& key, const TVal& val)
 	{
 		insert(key, val, true);
@@ -60,24 +58,30 @@ public:
 #endif
 
 
-	/// Get an item in the set
-	/**
-	\return The object if found, or TVal() if not found.
-	**/
-	TVal get(const TKey& Key) const
+	// Get an item in the map.
+	// Returns the object if found, or TVal() if not found.
+	TVal get(const TKey& key) const
 	{
-		hashsize_t pos = this->_find(Key);
+		hashsize_t pos = this->_find(key);
 		if (pos != npos) return base::mData[pos].second;
 		else return TVal();
 	}
 
-	/// Get a pointer to an item in the map
-	/**
-	\return A pointer to an item in the set, NULL if object is not in set.
-	**/
-	TVal* getp(const TKey& Key) const
+	// Get an item in the map.
+	// Returns true if the item is in the map, or false if not found.
+	bool get(const TKey& key, TVal& val) const
 	{
-		hashsize_t pos = this->_find(Key);
+		hashsize_t pos = this->_find(key);
+		if (pos != npos)
+			val = base::mData[pos].second;
+		return pos != npos;
+	}
+
+	// Get a pointer to an item in the map
+	// Returns a pointer to an item in the set, NULL if object is not in set.
+	TVal* getp(const TKey& key) const
+	{
+		hashsize_t pos = this->_find(key);
 		if (pos != npos) return &(base::mData[pos].second);
 		else return NULL;
 	}

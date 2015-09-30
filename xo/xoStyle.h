@@ -377,8 +377,6 @@ protected:
 	void					SetBoxInternal(xoStyleCategories catBase, xoStyleBox val);
 };
 
-FHASH_SETUP_CLASS_CTOR_DTOR(xoStyle, xoStyle);
-
 /* A bag of styles in a performant container.
 
 Analysis of storage (assuming xoCatEND = 128)
@@ -499,7 +497,7 @@ protected:
 	podvec<xoString>			Names;		// Names and Classes are parallel
 	podvec<xoStyleClass>		Classes;
 	podvec<int>					UnusedSlots;
-	fhashmap<xoString, int>		NameToIndex;
+	ohash::map<xoString, int>	NameToIndex;
 };
 
 

@@ -79,11 +79,11 @@ bool xoGlyphCache::GetGlyphFromChar( xoFontID fontID, int ch, uint8 size, uint8 
 
 const xoGlyph* xoGlyphCache::GetGlyph(const xoGlyphCacheKey& key) const
 {
-	uint pos;
-	if (Table.get(key, pos))
-		return &Glyphs[pos];
+	uint* pos = Table.getp(key);
+	if (pos != nullptr)
+		return &Glyphs[*pos];
 	else
-		return NULL;
+		return nullptr;
 }
 
 uint xoGlyphCache::RenderGlyph(const xoGlyphCacheKey& key)
