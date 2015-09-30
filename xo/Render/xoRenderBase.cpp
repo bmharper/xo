@@ -77,7 +77,7 @@ void xoRenderBase::EnsureTextureProperlyDefined(xoTexture* tex, int texUnit)
 std::string xoRenderBase::CommonShaderDefines()
 {
 	std::string s;
-	s.append(fmt("#define XO_GLYPH_ATLAS_SIZE %v\n", xoGlyphAtlasSize).Z);
+	s.append(xo::fmt("#define XO_GLYPH_ATLAS_SIZE %v\n", xoGlyphAtlasSize).Z);
 	return s;
 }
 

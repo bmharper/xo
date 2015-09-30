@@ -13,7 +13,7 @@ void xoMain(xoSysWnd* wnd)
 	{
 		xoDomNode* div = doc->Root.AddNode(xoTagDiv);
 		//div->StyleParse( "width: 90px; height: 90px; border-radius: 0px; display: inline;" );
-		div->StyleParse(fmt("width: 90px; height: 90px; border-radius: %vpx; display: inline;", 5 * i + 1).Z);
+		div->StyleParse(xo::fmt("width: 90px; height: 90px; border-radius: %vpx; display: inline;", 5 * i + 1).Z);
 		div->StyleParse("margin: 3px;");
 		blocks[i] = div;
 	}

@@ -432,7 +432,7 @@ Example:
 	// Link to xoWinMain.cpp, or copy the stub code out of that file into your own application.
 	#include "../xo/xo.h"
 
-	void xoMain( xoSysWnd* wnd )
+	void xoMain(xoSysWnd* wnd)
 	{
 		wnd->Doc()->Root.AddNode(...
 	}
@@ -440,7 +440,8 @@ Example:
 XOAPI void xoRunApp(xoMainCallback mainCallback)
 {
 	xoSysWnd* mainWnd = nullptr;
-	auto mainCallbackEv = [mainCallback, &mainWnd](xoMainEvent ev) {
+	auto mainCallbackEv = [mainCallback, &mainWnd](xoMainEvent ev)
+	{
 		switch (ev)
 		{
 		case xoMainEventInit:

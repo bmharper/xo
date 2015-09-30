@@ -97,7 +97,7 @@ XOAPI void xoRunWin32MessageLoop()
 				AbcSleep(1);
 		}
 
-		// Add/remove items from the global list of windows. This happens only at xoDoc creation/destruction time.
+		// Add/remove items from the global list of windows. This only happens at xoDoc creation/destruction time.
 		xoAddOrRemoveDocsFromGlobalList();
 	}
 

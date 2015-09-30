@@ -65,7 +65,7 @@ void DoBaselineAlignment(xoDoc* doc)
 		{
 			auto txt = root->AddNode(xoTagDiv);
 			txt->AddClass("baseline");
-			txt->StyleParse(fmt("font-size: %dpx; background: #e0e0e0", size).Z);
+			txt->StyleParse(xo::fmt("font-size: %dpx; background: #e0e0e0", size).Z);
 			txt->SetText("e");
 		}
 	}
@@ -251,7 +251,7 @@ void DoBlockMargins(xoDoc* doc)
 			xoDomNode* div = doc->Root.AddNode(xoTagDiv);
 			div->StyleParse("width: 150px; height: 80px; background: #faa8; margin: 4px; border-radius: 5px;");
 			div->StyleParse("font-size: 13px");
-			div->SetText(fmt("  block %v", i).Z);
+			div->SetText(xo::fmt("  block %v", i).Z);
 		}
 	}
 

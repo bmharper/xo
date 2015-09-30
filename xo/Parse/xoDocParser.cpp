@@ -78,7 +78,7 @@ xoString xoDocParser::Parse(const char* src, xoDomNode* target)
 		intp start = xoMax<intp>(pos - 1, 0);
 		xoString sample;
 		sample.Set(src + start, 10);
-		return fmt("Parse error at position %v (%v): %v", pos, sample.Z, msg);
+		return xo::fmt("Parse error at position %v (%v): %v", pos, sample.Z, msg);
 	};
 
 	auto newNode = [&]() -> xoString
@@ -113,7 +113,7 @@ xoString xoDocParser::Parse(const char* src, xoDomNode* target)
 					else if (len == 2 && src[escape] == 'g' && src[escape + 1] == 't') str.Add('>');
 					else if (len == 2 && src[escape] == 's' && src[escape + 1] == 'p') str.Add(' ');
 					else if (len == 3 && src[escape] == 'a' && src[escape + 1] == 'm' && src[escape + 2] == 'p') str.Add('&');
-					else return fmt("Invalid escape sequence (%v)", xoString(src + escape, len).Z);
+					else return xo::fmt("Invalid escape sequence (%v)", xoString(src + escape, len).Z);
 					escape = -1;
 				}
 			}
@@ -153,7 +153,7 @@ xoString xoDocParser::Parse(const char* src, xoDomNode* target)
 			return "Too many closing tags";
 		xoDomNode* top = stack.back();
 		if (!EqNoCase(xoTagNames[top->GetTag()], src + xStart, xEnd - xStart))
-			return fmt("Cannot close %v here. Expected %v close.", xoString(src + xStart, xEnd - xStart).Z, xoTagNames[top->GetTag()]);
+			return xo::fmt("Cannot close %v here. Expected %v close.", xoString(src + xStart, xEnd - xStart).Z, xoTagNames[top->GetTag()]);
 		stack.pop();
 		return "";
 	};

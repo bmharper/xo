@@ -3,6 +3,10 @@
 #include "../Other/StackAllocators.h"
 #include <stdarg.h>
 
+#ifdef FMT_NAMESPACE
+namespace FMT_NAMESPACE {
+#endif
+
 static inline void fmt_settype(char argbuf[128], intp pos, const char* width, char type)
 {
 	if (width != NULL)
@@ -448,3 +452,6 @@ print( body )
 
 */
 
+#ifdef FMT_NAMESPACE
+}
+#endif

@@ -17,6 +17,10 @@
 #define FMT_STRING_LEN(s)	(s).Length()
 #endif
 
+#ifdef FMT_NAMESPACE
+namespace FMT_NAMESPACE {
+#endif
+
 /*
 
 fmt: (Yet another) typesafe, cross-platform (Windows,linux) printf replacement.
@@ -176,5 +180,9 @@ PAPI int fmt_snprintf(char* destination, size_t count, const char* format_str, .
 
 // Identical in all respects to fmt_snprintf, except that we deal with wide character strings
 PAPI int fmt_swprintf(wchar_t* destination, size_t count, const wchar_t* format_str, ...);
+
+#ifdef FMT_NAMESPACE
+}
+#endif
 
 #endif // FMT_H_INCLUDED

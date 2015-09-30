@@ -109,16 +109,16 @@ Build {
 		},
 		--]]
 		{
-			Name = "win32-msvc2015",
+			Name = "win32-msvc2013",
 			SupportedHosts = { "windows" },
 			Inherit = win_common,
-			Tools = { {"msvc-vs2015"; TargetArch = "x86"} },
+			Tools = { {"msvc-vs2013"; TargetArch = "x86"} },
 		},
 		{
-			Name = "win64-msvc2015",
+			Name = "win64-msvc2013",
 			DefaultOnHost = "windows",
 			Inherit = win_common,
-			Tools = { {"msvc-vs2015"; TargetArch = "x64"} },
+			Tools = { {"msvc-vs2013"; TargetArch = "x64"} },
 		},
 	},
 	IdeGenerationHints = {
