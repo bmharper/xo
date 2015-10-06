@@ -203,7 +203,7 @@ def gen_combined(common, ext, vert, frag, name, filename_base)
 	File.open(filename_base + ".h", "w") { |file|
 		txt = CombinedBaseH_Start + ""
 		variables.each { |var|
-			txt << "\tGLint v_#{var.name}; #{' ' * (15 - var.name.length)} // #{var.nature} #{var.type}\n"
+			txt << "\tGLint v_#{var.name}; #{' ' * (30 - var.name.length)} // #{var.nature} #{var.type}\n"
 		}
 		txt << CombinedBaseH_End
 		txt = replace.call(txt)

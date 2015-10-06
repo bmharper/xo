@@ -395,6 +395,7 @@ struct xoGlobalStruct
 	bool						EnableSRGBFramebuffer;	// Enable sRGB framebuffer (implies linear blending)
 	bool						EnableKerning;			// Enable kerning on text
 	bool						RoundLineHeights;		// Round text line heights to integer amounts, so that text line separation is not subject to sub-pixel positioning differences.
+	bool						UseRect3;				// Use 3rd attempt at box shader
 	bool						SnapBoxes;				// Round certain boxes up to integer pixels.
 														// From the perspective of having the exact same layout on multiple devices, it seems desirable to operate
 														// in subpixel coordinates always. However, this ends up producing ugly visuals, for example when

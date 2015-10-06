@@ -621,10 +621,10 @@ void xoRenderGL::Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v)
 		varvcol = PRect3.v_vcolor;
 		glVertexAttribPointer(PRect3.v_vborder_width, 1, GL_FLOAT, true, stride, vbyte + offsetof(xoVx_PTCV4, V4.x));
 		glEnableVertexAttribArray(PRect3.v_vborder_width);
+		glVertexAttribPointer(PRect3.v_vborder_distance, 1, GL_FLOAT, true, stride, vbyte + offsetof(xoVx_PTCV4, V4.y));
+		glEnableVertexAttribArray(PRect3.v_vborder_distance);
 		glVertexAttribPointer(PRect3.v_vborder_color, 4, GL_UNSIGNED_BYTE, true, stride, vbyte + offsetof(xoVx_PTCV4, Color2));
 		glEnableVertexAttribArray(PRect3.v_vborder_color);
-		glVertexAttribPointer(PRect3.v_vdistance, 1, GL_FLOAT, true, stride, vbyte + offsetof(xoVx_PTCV4, V4.y));
-		glEnableVertexAttribArray(PRect3.v_vdistance);
 		break;
 	case xoShaderFill:
 		varvpos = PFill.v_vpos;

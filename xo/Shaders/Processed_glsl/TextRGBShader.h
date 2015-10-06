@@ -15,12 +15,12 @@ public:
 	virtual uint32			PlatformMask();				// Combination of xoPlatform bits.
 	virtual xoVertexType	VertexType();				// Only meaningful on DirectX
 
-	GLint v_mvproj;           // uniform mat4
-	GLint v_vpos;             // attribute vec4
-	GLint v_vcolor;           // attribute vec4
-	GLint v_vtexuv0;          // attribute vec2
-	GLint v_vtexClamp;        // attribute vec4
-	GLint v_tex0;             // uniform sampler2D
+	GLint v_mvproj;                          // uniform mat4
+	GLint v_vpos;                            // attribute vec4
+	GLint v_vcolor;                          // attribute vec4
+	GLint v_vtexuv0;                         // attribute vec2
+	GLint v_vtexClamp;                       // attribute vec4
+	GLint v_tex0;                            // uniform sampler2D
 };
 
 #endif // XO_BUILD_OPENGL

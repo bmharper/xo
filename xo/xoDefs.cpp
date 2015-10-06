@@ -290,7 +290,7 @@ XOAPI void xoInitialize(const xoInitParams* init)
 	xoGlobals->TargetFPS = 60;
 	xoGlobals->NumWorkerThreads = std::min(minf.LogicalCoreCount, MAX_WORKER_THREADS);
 	xoGlobals->MaxSubpixelGlyphSize = 60;
-	xoGlobals->PreferOpenGL = false;
+	xoGlobals->PreferOpenGL = true;
 	xoGlobals->EnableVSync = false;
 	// Freetype's output is linear coverage percentage, so if we treat our freetype texture as GL_LUMINANCE
 	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get perfect results without
@@ -317,6 +317,7 @@ XOAPI void xoInitialize(const xoInitParams* init)
 	// Do we round text line heights to whole pixels?
 	// We only render sub-pixel text on low resolution monitors that do not change orientation (ie desktop).
 	xoGlobals->RoundLineHeights = xoGlobals->EnableSubpixelText || xoGlobals->EpToPixel < 2.0f;
+	xoGlobals->UseRect3 = true;
 	xoGlobals->SnapBoxes = true;
 	xoGlobals->SnapSubpixelHorzText = true;
 	xoGlobals->EnableKerning = !xoGlobals->EnableSubpixelText || !xoGlobals->SnapSubpixelHorzText;

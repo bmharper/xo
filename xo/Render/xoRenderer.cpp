@@ -75,7 +75,7 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 	bool useRectShader = alwaysGoodRects || radius != 0;
 	// I only tried out rect2 shader on OpenGL, and then went ahead to try Blinn/Loop rendering.
 	bool useRect2Shader = false; // strcmp(Driver->RendererName(), "OpenGL") == 0;
-	bool useRect3Shader = false;
+	bool useRect3Shader = xoGlobal()->UseRect3;
 
 	float width = right - left;
 	float height = bottom - top;
@@ -122,28 +122,51 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 			{ radius, radius }, // right, top
 		};
 		Driver->ActivateShader(xoShaderRect3);
-		xoVx_PTCV4 vx[4];
-		for (int i = 0; i < 4; i++)
-		{
-			vx[i].Color = bg.GetRGBA();
-			vx[i].Color2 = style->BorderColor.GetRGBA();
-		}
-		// top bar
-		vx[0].Pos = XOVEC3(left + radii.TopLeft.x, top, 0);
-		vx[1].Pos = XOVEC3(left + radii.TopLeft.x, top + radii.TopLeft.y, 0);
-		vx[2].Pos = XOVEC3(right - radii.TopRight.x, top + radii.TopRight.y, 0);
-		vx[3].Pos = XOVEC3(right - radii.TopRight.x, top, 0);
-		// border width
-		vx[0].V4.x = 2;
-		vx[1].V4.x = 2;
-		vx[2].V4.x = 2;
-		vx[3].V4.x = 2;
-		// distance
-		vx[0].V4.y = 1;
-		vx[1].V4.y = 0;
-		vx[2].V4.y = 0;
-		vx[3].V4.y = 1;
-		Driver->Draw(xoGPUPrimQuads, 4, vx);
+		xoVx_PTCV4 vx[16];
+		float vmid = 0.5f * (top + bottom);
+		float borderPos = border.Top;
+		// If we want to work under perspective, then we'll need to make these paddings adjust to
+		// the current projection. Failing to do so will result in aliased edges of our boxes.
+		// This sounds like a thing you might want to do in a vertex or geometry shader, because you
+		// need to project a point in order to see what kind of padding is necessary to produce at
+		// least 1 pixel of rasterized border.
+		// For now, just use constants.
+		float vpad = 1;
+		float hpad = 1;
+		uint32 bgRGBA = bg.GetRGBA();
+		uint32 borderRGBA = style->BorderColor.GetRGBA();
+
+		float leftEdge = xoMax(radii.TopLeft.x, radii.BottomLeft.x);
+		leftEdge = xoMax(leftEdge, radii.BottomLeft.x);
+		
+		//                                                                                                               Border width
+		//                                                                                                               |           Distance from edge
+		//                                                                                                               |           |
+		// top                                                                                                           |           |
+		vx[0].Set(XOVEC3(left + radii.TopLeft.x - hpad, top - vpad, 0),			XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Top, -vpad, 0, 0));
+		vx[1].Set(XOVEC3(left + radii.TopLeft.x - hpad, vmid, 0),				XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Top, vmid - top, 0, 0));
+		vx[2].Set(XOVEC3(right - radii.TopRight.x + hpad, vmid, 0),				XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Top, vmid - top, 0, 0));
+		vx[3].Set(XOVEC3(right - radii.TopRight.x + hpad, top - vpad, 0),		XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Top, -vpad, 0, 0));
+
+		// bottom
+		vx[4].Set(XOVEC3(left + radii.TopLeft.x - hpad, vmid, 0),				XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Bottom, bottom - vmid, 0, 0));
+		vx[5].Set(XOVEC3(left + radii.TopLeft.x - hpad, bottom + vpad, 0),		XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Bottom, -vpad, 0, 0));
+		vx[6].Set(XOVEC3(right - radii.TopRight.x + hpad, bottom + vpad, 0),	XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Bottom, -vpad, 0, 0));
+		vx[7].Set(XOVEC3(right - radii.TopRight.x + hpad, vmid, 0),				XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Bottom, bottom - vmid, 0, 0));
+
+		// left
+		vx[8].Set(XOVEC3(left - hpad, top + radii.TopLeft.y, 0),						XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Left, -hpad, 0, 0));
+		vx[9].Set(XOVEC3(left - hpad, bottom - radii.BottomLeft.y, 0),					XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Left, -hpad, 0, 0));
+		vx[10].Set(XOVEC3(left + radii.BottomLeft.x, bottom - radii.BottomLeft.y, 0),	XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Left, radii.BottomLeft.x, 0, 0));
+		vx[11].Set(XOVEC3(left + radii.BottomLeft.x, top + radii.TopLeft.y, 0),			XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Left, radii.TopLeft.x, 0, 0));
+
+		// right
+		//vx[12].Set(XOVEC3(right - radii.TopLeft.x, top + radii.TopLeft.y, 0),						XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Left, -hpad, 0, 0));
+		//vx[13].Set(XOVEC3(right + hpad, bottom - radii.BottomLeft.y, 0), XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Left, -hpad, 0, 0));
+		//vx[14].Set(XOVEC3(right + radii.BottomLeft.x, bottom - radii.BottomLeft.y, 0),	XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Left, radii.BottomLeft.x, 0, 0));
+		//vx[15].Set(XOVEC3(right + radii.BottomLeft.x, top + radii.TopLeft.y, 0),			XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Left, radii.TopLeft.x, 0, 0));
+
+		Driver->Draw(xoGPUPrimQuads, 12, vx);
 	}
 
 	if (bg.a != 0 && !useRect3Shader)

@@ -501,4 +501,7 @@ NOTE: ASCII diagrams here were drawn with http://asciiflow.com/
 
 	 That's the plan at least...
 
+	 Nice diagrams:
+	 https://developer.mozilla.org/en/docs/Web/CSS/border-radius
+
 

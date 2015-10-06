@@ -25,6 +25,16 @@ struct XOAPI xoVx_PTCV4
 	};
 	uint32			Color2;
 	xoVecBase4f		V4;
+
+	// Set the entire vertex
+	void Set(xoVecBase3f pos, xoVecBase2f uv, uint32 color, uint32 color2, xoVecBase4f v4)
+	{
+		Pos = pos;
+		UV = uv;
+		Color = color;
+		Color2 = color2;
+		V4 = v4;
+	}
 };
 
 enum xoVertexType
