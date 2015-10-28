@@ -29,6 +29,7 @@ public:
 	xoRenderResult	RenderToImage(xoImage& image);		// This is always called from the Render thread
 	void			ProcessEvent(xoEvent& ev);			// This is always called from the UI thread
 
+	bool			IsDirty() const;
 	bool			IsDocVersionDifferentToRenderer() const;
 
 protected:

@@ -60,10 +60,16 @@ to the GPU. This is obviously a can of worms that we don't want to open
 */
 xoRenderResult xoDocGroup::RenderInternal(xoImage* targetImage)
 {
+	bool wndDirty = Wnd->GetInvalidateRect().IsAreaPositive();
 	bool haveLock = false;
+	
+	// If docAge = 0, then we do not need to make a new copy of Doc.
+	// We merely need to run animations, or repaint our window.
+	bool docModified = DocAge() >= 1;
+
 	// I'm not quite sure how we should handle this. The idea is that you don't want to go without a UI update
 	// for too long, even if the UI thread is taking its time, and being bombarded with messages.
-	if (DocAge() >= 1 || targetImage != NULL)
+	if (docModified || targetImage != NULL)
 	{
 		// If UI thread has performed even a single update since we last rendered, then pause our thread until we can gain the DocLock
 		auto tstart = AbcTimeAccurateRTSeconds();
@@ -73,24 +79,12 @@ xoRenderResult xoDocGroup::RenderInternal(xoImage* targetImage)
 			XOTIME("xoDocGroup.RenderInternal took %d ms to acquire DocLock\n", (int) (time * 1000));
 		haveLock = true;
 	}
-	else
-	{
-		// The UI thread has not made any change since we last rendered, so do not wait for the lock
-		haveLock = AbcCriticalSectionTryEnter(DocLock);
-	}
-
-	if (!haveLock)
-	{
-		XOTIME("Render: Failed to acquire DocLock\n");
-		return xoRenderResultNeedMore;
-	}
 
 	// TODO: If AnyAnimationsRunning(), then we are not idle
 	bool docValid = Doc->UI.GetViewportWidth() != 0 && Doc->UI.GetViewportHeight() != 0;
-	bool docModified = Doc->GetVersion() != RenderDoc->Doc.GetVersion();
 	bool beganRender = false;
 
-	if (docModified && docValid)
+	if (haveLock)
 	{
 		UploadImagesToGPU(beganRender);
 
@@ -102,13 +96,14 @@ xoRenderResult xoDocGroup::RenderInternal(xoImage* targetImage)
 		//XOTRACE( "MakeFreeIDsUsable\n" );
 		Doc->MakeFreeIDsUsable();
 		Doc->ResetModifiedBitmap();			// AbcBitMap has an absolutely awful implementation of this (byte-filled vs SSE or at least pointer-word-size-filled)
+
+		AbcCriticalSectionLeave(DocLock);
 	}
-	AbcCriticalSectionLeave(DocLock);
 
 	xoRenderResult rendResult = xoRenderResultIdle;
 	bool presentFrame = false;
 
-	if ((docModified || targetImage != NULL) && docValid && Wnd != NULL)
+	if (docValid && Wnd != nullptr)
 	{
 		//XOTIME( "Render start\n" );
 		if (!beganRender && !Wnd->BeginRender())
@@ -123,7 +118,7 @@ xoRenderResult xoDocGroup::RenderInternal(xoImage* targetImage)
 
 		presentFrame = true;
 
-		if (targetImage != NULL)
+		if (targetImage != nullptr)
 			Wnd->Renderer->ReadBackbuffer(*targetImage);
 	}
 
@@ -240,6 +235,11 @@ void xoDocGroup::ProcessEvent(xoEvent& ev)
 	}
 
 	RenderDoc->ReleaseLayout(layout);
+}
+
+bool xoDocGroup::IsDirty() const
+{
+	return IsDocVersionDifferentToRenderer() || Wnd->GetInvalidateRect().IsAreaPositive();
 }
 
 bool xoDocGroup::IsDocVersionDifferentToRenderer() const

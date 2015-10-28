@@ -47,7 +47,7 @@ violating any thread model principle here.
 enum XoWindowsTimers
 {
 	XoWindowsTimerRenderOutsideMainMsgPump	= 1,		// Used to force repaint events when window is being sized
-	XoWindowsTimerGenericEvent				= 2,		// A user event, such as when you call xoDomNode.OnTimer. Don't think this is used yet.
+	XoWindowsTimerGenericEvent				= 2,		// A user event, such as when you bind to xoDomNode.OnTimer
 };
 
 static xoMouseButton WM_ButtonToXo(UINT message, WPARAM wParam)
@@ -75,6 +75,8 @@ static xoMouseButton WM_ButtonToXo(UINT message, WPARAM wParam)
 	}
 	return xoMouseButtonNull;
 }
+
+static xoBox ToBox(RECT r) { return xoBox(r.left, r.top, r.right, r.bottom); }
 
 // This is called the moment xoDocUI detects a change in cursor. Because that xoDocUI processing
 // happens in a different thread to the one that responds to Windows messages, it effectively
@@ -134,8 +136,7 @@ void xoDocGroup::SetSysWndTimer(uint periodMS)
 LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	XOASSERT(Doc != NULL);
-	PAINTSTRUCT ps;
-	HDC dc;
+	RECT rect;
 	xoOriginalEvent ev;
 	ev.DocGroup = this;
 	ev.Event.Doc = Doc;
@@ -146,27 +147,18 @@ LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	// Doc is owned and manipulated by the UI Thread.
 	// We are only allowed to read niche volatile stuff from Doc, such as the latest cursor.
 
-	// HACK for mvision test
-	//static bool haveTimer = false;
-	//if (!haveTimer)
-	//{
-	//	haveTimer = true;
-	//	SetTimer(hWnd, XoWindowsTimerGenericEvent, 200, nullptr);
-	//}
-
 	switch (message)
 	{
 	case WM_ERASEBKGND:
 		return 1;
 
 	case WM_PAINT:
-		// TODO: Adjust this on the fly, using the minimum interval of all generic timer subscribers
-		// Also.. find a better place to put this
-		//SetTimer( hWnd, TimerGenericEvent, 15, NULL );
-		//SetTimer( hWnd, TimerGenericEvent, 150, NULL );
-
-		dc = BeginPaint(hWnd, &ps);
-		EndPaint(hWnd, &ps);
+		if (!!GetUpdateRect(hWnd, &rect, false))
+		{
+			// We will paint from xoRunWin32MessageLoop.
+			Wnd->InvalidateRect(ToBox(rect));
+			ValidateRect(hWnd, &rect);
+		}
 		break;
 
 	case WM_SIZE:
@@ -176,11 +168,12 @@ LRESULT xoDocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 
 	case WM_TIMER:
 		if (wParam == XoWindowsTimerRenderOutsideMainMsgPump)
+		{
 			Render();
+		}
 		else if (wParam == XoWindowsTimerGenericEvent)
 		{
 			ev.Event.Type = xoEventTimer;
-			//xoGlobal()->UIEventQueue.Add(ev);
 			AddOrReplaceMessage(ev);
 		}
 		break;

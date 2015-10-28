@@ -11,7 +11,7 @@ static bool AnyDocsDirty()
 {
 	for (int i = 0; i < xoGlobal()->Docs.size(); i++)
 	{
-		if (xoGlobal()->Docs[i]->IsDocVersionDifferentToRenderer())
+		if (xoGlobal()->Docs[i]->IsDirty())
 			return true;
 	}
 	return false;
@@ -82,11 +82,16 @@ XOAPI void xoRunWin32MessageLoop()
 			XOTRACE_OS_MSG_QUEUE("Render enter\n");
 			renderIdle = true;
 			lastFrameStart = now;
-			for (int i = 0; i < xoGlobal()->Docs.size(); i++)
+			for (xoDocGroup* dg : xoGlobal()->Docs)
 			{
-				xoRenderResult rr = xoGlobal()->Docs[i]->Render();
-				if (rr != xoRenderResultIdle)
-					renderIdle = false;
+				if (dg->IsDirty())
+				{
+					xoRenderResult rr = dg->Render();
+					if (rr != xoRenderResultIdle)
+						renderIdle = false;
+					dg->Wnd->ValidateWindow();
+				}
+
 			}
 		}
 		else

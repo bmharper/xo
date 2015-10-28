@@ -45,6 +45,8 @@ void xoSysWnd::PlatformInitialize()
 
 xoSysWnd::xoSysWnd()
 {
+	AbcCriticalSectionInitialize(InvalidRect_Lock);
+	InvalidRect.SetInverted();
 #if XO_PLATFORM_WIN_DESKTOP
 	SysWnd = NULL;
 	TimerPeriodMS = 0;
@@ -97,6 +99,7 @@ xoSysWnd::~xoSysWnd()
 #endif
 	xoGlobal()->DocRemoveQueue.Add(DocGroup);
 	DocGroup = NULL;
+	AbcCriticalSectionDestroy(InvalidRect_Lock);
 }
 
 xoSysWnd* xoSysWnd::Create(uint createFlags)
@@ -259,6 +262,24 @@ void xoSysWnd::PostCursorChangedMessage()
 #else
 	XOTODO_STATIC
 #endif
+}
+
+void xoSysWnd::InvalidateRect(xoBox box)
+{
+	TakeCriticalSection lock(InvalidRect_Lock);
+	InvalidRect.ExpandToFit(box);
+}
+
+xoBox xoSysWnd::GetInvalidateRect()
+{
+	TakeCriticalSection lock(InvalidRect_Lock);
+	return InvalidRect;
+}
+
+void xoSysWnd::ValidateWindow()
+{
+	TakeCriticalSection lock(InvalidRect_Lock);
+	InvalidRect.SetInverted();
 }
 
 bool xoSysWnd::InitializeRenderer()

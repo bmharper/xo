@@ -683,28 +683,38 @@ void xoRenderGL::Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v)
 		glEnableVertexAttribArray(varvtexClamp);
 	}
 
-	XOASSERT(nvertex < 65536);
-	uint16* indices = (uint16*) xoMallocOrDie(sizeof(uint16) * nvertex);
-
-	if (type == xoGPUPrimQuads)
+	int nindices = 0;
+	switch (type)
 	{
-		for (int i = 0; i < nvertex; i += 4)
-		{
-			indices[i + 0] = i;
-			indices[i + 1] = i + 1;
-			indices[i + 2] = i + 3;
-			indices[i + 3] = i + 2;
-		}
-		glDrawElements(GL_TRIANGLE_STRIP, nvertex, GL_UNSIGNED_SHORT, indices);
+	case xoGPUPrimQuads:		nindices = (nvertex / 2) * 3; break;
+	case xoGPUPrimTriangles:	nindices = nvertex; break;
+	default: XOTODO;
 	}
-	else if (type == xoGPUPrimTriangles)
+
+	XOASSERT(nindices < 65536);
+	uint16* indices = (uint16*) xoMallocOrDie(sizeof(uint16) * nindices);
+
+	switch (type)
 	{
+	case xoGPUPrimQuads:
+		for (int i = 0, v = 0; v < nvertex; v += 4)
+		{
+			indices[i++] = v;
+			indices[i++] = v + 1;
+			indices[i++] = v + 3;
+
+			indices[i++] = v + 1;
+			indices[i++] = v + 2;
+			indices[i++] = v + 3;
+		}
+		glDrawElements(GL_TRIANGLES, nindices, GL_UNSIGNED_SHORT, indices);
+		break;
+	case xoGPUPrimTriangles:
 		for (int i = 0; i < nvertex; i++)
 			indices[i] = i;
 		glDrawElements(GL_TRIANGLES, nvertex, GL_UNSIGNED_SHORT, indices);
-	}
-	else
-	{
+		break;
+	default:
 		XOTODO;
 	}
 	free(indices);

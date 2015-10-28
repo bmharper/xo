@@ -420,7 +420,7 @@ struct xoGlobalStruct
 	pvect<xoDocGroup*>			Docs;				// Only Main thread is allowed to touch this.
 	TAbcQueue<xoDocGroup*>		DocAddQueue;		// Documents requesting addition
 	TAbcQueue<xoDocGroup*>		DocRemoveQueue;		// Documents requesting removal
-	TAbcQueue<xoOriginalEvent>	UIEventQueue;			// Global event queue, consumed by the one-and-only UI thread
+	TAbcQueue<xoOriginalEvent>	UIEventQueue;		// Global event queue, consumed by the one-and-only UI thread
 	TAbcQueue<xoJob>			JobQueue;			// Global job queue, consumed by the worker thread pool
 	xoFontStore*				FontStore;			// All fonts known to the system.
 	xoGlyphCache*				GlyphCache;			// This might have to move into a less global domain.

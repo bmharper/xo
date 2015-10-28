@@ -63,7 +63,15 @@ public:
 	xoBox	GetRelativeClientRect();				// Returns the client rectangle (in screen coordinates), relative to the non-client window
 	void	PostCursorChangedMessage();
 
+	// Invalid rectangle management
+	void	InvalidateRect(xoBox box);
+	xoBox	GetInvalidateRect();
+	void	ValidateWindow();
+
 protected:
+	AbcCriticalSection	InvalidRect_Lock;
+	xoBox				InvalidRect;
+
 	bool	InitializeRenderer();
 
 	template<typename TRenderer>
