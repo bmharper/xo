@@ -38,7 +38,10 @@ xoFontStore::xoFontStore()
 #if XO_PLATFORM_WIN_DESKTOP
 	wchar_t* wpath;
 	if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Fonts, 0, NULL, &wpath)))
+	{
 		Directories += ConvertWideToUTF8(wpath).c_str();
+		CoTaskMemFree(wpath);
+	}
 #elif XO_PLATFORM_LINUX_DESKTOP
 	Directories += "/usr/share/fonts/truetype";
 	Directories += "/usr/share/fonts/truetype/msttcorefonts";
