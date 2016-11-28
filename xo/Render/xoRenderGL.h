@@ -11,6 +11,7 @@
 #include "../Shaders/Processed_glsl/Rect3Shader.h"
 #include "../Shaders/Processed_glsl/TextRGBShader.h"
 #include "../Shaders/Processed_glsl/TextWholeShader.h"
+#include "../Shaders/Processed_glsl/ArcShader.h"
 
 class XOAPI xoRenderGL : public xoRenderBase
 {
@@ -27,8 +28,9 @@ public:
 	xoGLProg_FillTex	PFillTex;
 	xoGLProg_TextRGB	PTextRGB;
 	xoGLProg_TextWhole	PTextWhole;
+	xoGLProg_Arc		PArc;
 	xoGLProg_Curve		PCurve;
-	static const int	NumProgs = 8;
+	static const int	NumProgs = 9;
 	xoGLProg*			AllProgs[NumProgs];	// All of the above programs
 
 	xoRenderGL();

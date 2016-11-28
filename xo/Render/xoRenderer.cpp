@@ -170,6 +170,52 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		vx[15].Set(XOVEC3(right + hpad, top + radii.TopRight.y, 0),				XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Right, -hpad, 0, 0));
 
 		Driver->Draw(xoGPUPrimQuads, 16, vx);
+
+		if (radii.TopLeft.x != 0 && radii.TopLeft.y != 0)
+		{
+			Driver->ActivateShader(xoShaderArc);
+			float maxRadius = xoMax(radii.TopLeft.x, radii.TopLeft.y);
+			float fanRadius;
+			int divs;
+			if (border.Left == border.Top && radii.TopLeft.x == radii.TopLeft.y)
+			{
+				// I haven't worked out why, but empirically 1.04 seems to be sufficient up to 200px radius.
+				fanRadius = maxRadius * 1.04 + 2.0f;
+				divs = 3;
+			}
+			else
+			{
+				fanRadius = maxRadius * 1.1 + 2.0f;
+				divs = (int) xoClamp(maxRadius * 0.4f, 5.0f, 50.0f);
+			}
+
+			float inc = (float) (XO_PI / 2) / (float) divs;
+			int slice = 0;
+			auto center = XOVEC3(left + radii.TopLeft.x, top + radii.TopLeft.y, 0);
+			float unit_inc = 1.0f / (float) divs;
+			float unit_slice = unit_inc * 0.5;
+			float th = XO_PI / 2 + inc;
+			xoVec3f pos = XOVEC3(center.x, center.y - fanRadius, 0);
+			auto v4 = XOVEC4(center.x, center.y, center.z, 0);
+			for (; slice < divs; th += inc, unit_slice += unit_inc, slice++)
+			{
+				float upos = unit_slice;
+				if (slice == 0)
+					upos = 0;
+				else if (slice == divs - 1)
+					upos = 1;
+				float borderWidth = xoLerp(upos, border.Top, border.Left);
+				float radius = xoLerp(upos, radii.TopLeft.y, radii.TopLeft.x);
+				v4.w = radius;
+				auto posNext = XOVEC3(center.x + fanRadius * cos(th), center.y - fanRadius * sin(th), center.z);
+				auto uv = XOVEC2(borderWidth, 0);
+				vx[0].Set(center, uv, bgRGBA, borderRGBA, v4);
+				vx[1].Set(pos, uv, bgRGBA, borderRGBA, v4);
+				vx[2].Set(posNext, uv, bgRGBA, borderRGBA, v4);
+				Driver->Draw(xoGPUPrimTriangles, 3, vx);
+				pos = posNext;
+			}
+		}
 	}
 
 	if (bg.a != 0 && !useRect3Shader)

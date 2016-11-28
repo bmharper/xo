@@ -319,7 +319,7 @@ XOAPI void xoInitialize(const xoInitParams* init)
 	xoGlobals->RoundLineHeights = xoGlobals->EnableSubpixelText || xoGlobals->EpToPixel < 2.0f;
 	xoGlobals->UseRect3 = true;
 	xoGlobals->SnapBoxes = true;
-	xoGlobals->SnapSubpixelHorzText = true;
+	xoGlobals->SnapSubpixelHorzText = false;
 	xoGlobals->EnableKerning = !xoGlobals->EnableSubpixelText || !xoGlobals->SnapSubpixelHorzText;
 	//xoGlobals->DebugZeroClonedChildList = true;
 	xoGlobals->MaxTextureID = ~((xoTextureID) 0);

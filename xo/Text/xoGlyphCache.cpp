@@ -144,8 +144,9 @@ uint xoGlyphCache::RenderGlyph(const xoGlyphCacheKey& key)
 	uint16 atlasY = 0;
 	xoTextureAtlas* atlas = NULL;
 
-	// Sub-pixel shader does its own clamping, but the whole pixel shader is naive, and
-	// each glyph needs 3 pixels of padding around it.
+	// The sub-pixel shader does its own clamping, but the whole-pixel shader is naive, and
+	// each glyph needs 3 pixels of padding around it. That could be fixed so that the whole-pixel
+	// shader also clamps itself.
 	int glyphPadding = isSubPixel ? 0 : 3;
 
 	for (int pass = 0; true; pass++)

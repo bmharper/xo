@@ -63,7 +63,7 @@ const char* xoGLProg_Rect3::FragSrc()
 		"	// What we're thus looking for is a line of slope = 1.0, which passes through 0.5.\n"
 		"	float edge_alpha = clamp(border_distance + 0.5, 0, 1);\n"
 		"\n"
-		"	// The -0.5 here is the same as above, just reversed\n"
+		"	// The +0.5 here is the same as above\n"
 		"	float dclamped = clamp(border_width - border_distance + 0.5, 0, 1);\n"
 		"\n"
 		"	vec4 color = mix(color, border_color, dclamped);\n"

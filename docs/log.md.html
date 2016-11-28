@@ -563,6 +563,23 @@ squares nodes `ABCD`:
 
 In the above figure, the top-left vertical radius is greater than the top-right vertical
 radius. In this example, the *A* node is rendered down to the larger... ?? hmmmmmm.....
+It doesn't matter! It's easy enough to figure our later on, and doesn't really have much
+effect on complexity.
+
+2016-11-27 Text quality, Infinality Patches
+===========================================
+For a while now I was using a Freetype fork with the "Infinality" patches applied. These
+made many Windows fonts render almost identically to the way Windows renders them with
+Cleartype, but the results were actually even better than Cleartype (at least on Windows 7),
+because we have antialiasing in both X and Y. With Freetype version 2.7, they attempted
+to distill the Infinality patches down into their essence, and retain a simpler code
+base that provided similar improvements. I've tried out a couple variations of flags,
+such as using Maxim's technique of stretching the fonts horizontally to clobber the
+vertical hinting, as well as trying out various Freetype flags. What looks reasonable
+to me now, and at least for Consolas, gives pretty similar results to Windows 10
+rendering, is to disable subpixel glyph positioning, and to use just FT_LOAD_TARGET_LCD
+to load the glyphs. Although the output is quite fuzzy for many fonts, I think this
+is acceptable, and I need to move on now, and finish the rectangle corner rendering.
 
 <!-- Markdeep: -->
 <style class="fallback">body{white-space:pre;font-family:monospace}</style>

@@ -52,6 +52,8 @@ static xoPos xoPosNULL = INT32MAX;
 static const u32 xoPosShift = 8;					// 24:8 fixed point coordinates used during layout
 static const u32 xoPosMask = (1 << xoPosShift) - 1;	// 255
 
+#define XO_PI 3.14159265358979323846264338327950288
+
 // An ID that is internal to xo - i.e. it is not controllable by external code.
 // This ID is an integer that you can use to reference a DOM element. These IDs are recycled.
 typedef int32 xoInternalID;
@@ -86,6 +88,9 @@ inline float	xoRound(float real)				{ return floor(real + 0.5f); }
 
 template<typename T>
 int xoSign(T real)							{ return (real == 0) ? 0 : (real < 0 ? -1 : 1); }
+
+template<typename T>
+T xoLerp(T pos, T a, T b)					{ return a * (1 - pos) + b * pos; }
 
 enum xoCloneFlags
 {
@@ -379,6 +384,7 @@ enum xoShaders
 	xoShaderRect3,
 	xoShaderTextRGB,
 	xoShaderTextWhole,
+	xoShaderArc,
 	xoShaderQuadraticSpline,
 	// We may someday want to have slots down here available for application-defined custom shaders
 };

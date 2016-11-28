@@ -18,7 +18,7 @@ void xoMain(xoMainEvent ev);
 
 static int __cdecl CrtAllocHook(int allocType, void *pvData, size_t size, int blockUse, long request, const unsigned char *filename, int fileLine)
 {
-	if (request == 1397)
+	if (size == 12582943)
 		int abc = 123;
 	return TRUE;
 }

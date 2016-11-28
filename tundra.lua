@@ -44,6 +44,7 @@ local win_common = {
 			{ "/RTC1"; Config = "win*-*-debug" },
 			{ "/Ox"; Config = "win*-*-release" },
 			{ "/arch:SSE2"; Config = "win32-*" },
+			{ "/openmp"; Config = "win*" },
 			-- { "/Zc:inline"; Config = "win*" },		-- This requires VC 2013 Update 2, but it's really just a compiler/linker performance improvement.
 		},
 		CPPDEFS = {
@@ -109,16 +110,16 @@ Build {
 		},
 		--]]
 		{
-			Name = "win32-msvc2013",
+			Name = "win32-msvc2015",
 			SupportedHosts = { "windows" },
 			Inherit = win_common,
-			Tools = { {"msvc-vs2013"; TargetArch = "x86"} },
+			Tools = { {"msvc-vs2015"; TargetArch = "x86"} },
 		},
 		{
-			Name = "win64-msvc2013",
+			Name = "win64-msvc2015",
 			DefaultOnHost = "windows",
 			Inherit = win_common,
-			Tools = { {"msvc-vs2013"; TargetArch = "x64"} },
+			Tools = { {"msvc-vs2015"; TargetArch = "x64"} },
 		},
 	},
 	IdeGenerationHints = {

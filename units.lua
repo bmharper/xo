@@ -258,6 +258,7 @@ local xo = SharedLibrary {
 		"xo/Text/xoFontStore.cpp",
 		"xo/Text/xoGlyphCache.cpp",
 		"xo/Text/xoTextDefs.cpp",
+		"xo/Shaders/Processed_glsl/ArcShader.cpp",
 		"xo/Shaders/Processed_glsl/CurveShader.cpp",
 		"xo/Shaders/Processed_glsl/FillShader.cpp",
 		"xo/Shaders/Processed_glsl/FillTexShader.cpp",

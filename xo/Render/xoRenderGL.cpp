@@ -79,8 +79,9 @@ xoRenderGL::xoRenderGL()
 	AllProgs[4] = &PFillTex;
 	AllProgs[5] = &PTextRGB;
 	AllProgs[6] = &PTextWhole;
-	AllProgs[7] = &PCurve;
-	static_assert(NumProgs == 8, "Add your new shader here");
+	AllProgs[7] = &PArc;
+	AllProgs[8] = &PCurve;
+	static_assert(NumProgs == 9, "Add your new shader here");
 	Reset();
 }
 
@@ -359,6 +360,7 @@ xoProgBase* xoRenderGL::GetShader(xoShaders shader)
 	case xoShaderRect3:				return &PRect3;
 	case xoShaderTextRGB:			return &PTextRGB;
 	case xoShaderTextWhole:			return &PTextWhole;
+	case xoShaderArc:				return &PArc;
 	case xoShaderQuadraticSpline:	return &PCurve;
 	default:
 		XOASSERT(false);
@@ -520,6 +522,9 @@ void xoRenderGL::SetShaderFrameUniforms()
 	if (SetMVProj(xoShaderRect2, PRect2, mvprojT))
 		glUniform2f(PRect2.v_vport_hsize, FBWidth / 2.0f, FBHeight / 2.0f);
 
+	if (SetMVProj(xoShaderArc, PArc, mvprojT))
+		glUniform2f(PArc.v_vport_hsize, FBWidth / 2.0f, FBHeight / 2.0f);
+
 	SetMVProj(xoShaderRect3, PFill, mvprojT);
 	SetMVProj(xoShaderFill, PFill, mvprojT);
 	SetMVProj(xoShaderFillTex, PFillTex, mvprojT);
@@ -650,6 +655,19 @@ void xoRenderGL::Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v)
 		varvcol = PTextWhole.v_vcolor;
 		varvtex0 = PTextWhole.v_vtexuv0;
 		vartexUnit0 = PTextWhole.v_tex0;
+		break;
+	case xoShaderArc:
+		stride = sizeof(xoVx_PTCV4);
+		varvpos = PArc.v_vpos;
+		varvcol = PArc.v_vcolor;
+		glVertexAttribPointer(PArc.v_vcenter, 3, GL_FLOAT, false, stride, vbyte + offsetof(xoVx_PTCV4, V4.x));
+		glVertexAttribPointer(PArc.v_vradius, 1, GL_FLOAT, false, stride, vbyte + offsetof(xoVx_PTCV4, V4.w));
+		glVertexAttribPointer(PArc.v_vborder_width, 1, GL_FLOAT, false, stride, vbyte + offsetof(xoVx_PTCV4, UV.x));
+		glVertexAttribPointer(PArc.v_vborder_color, 4, GL_UNSIGNED_BYTE, true, stride, vbyte + offsetof(xoVx_PTCV4, Color2));
+		glEnableVertexAttribArray(PArc.v_vcenter);
+		glEnableVertexAttribArray(PArc.v_vradius);
+		glEnableVertexAttribArray(PArc.v_vborder_width);
+		glEnableVertexAttribArray(PArc.v_vborder_color);
 		break;
 	case xoShaderQuadraticSpline:
 		stride = sizeof(xoVx_PTCV4);

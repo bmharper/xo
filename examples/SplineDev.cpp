@@ -1,5 +1,7 @@
 #include "../xo/xo.h"
 
+#include <omp.h>
+
 // This was used when developing the spline rendering code
 
 void Render(xoCanvas2D* canvas, int cx, int cy, float scale);
@@ -7,9 +9,9 @@ void Render(xoCanvas2D* canvas, int cx, int cy, float scale);
 void xoMain(xoSysWnd* wnd)
 {
 	int left = 550;
-	int width = 700;
+	int width = 1000;
 	int top = 60;
-	int height = 700;
+	int height = 1000;
 	wnd->SetPosition(xoBox(left, top, left + width, top + height), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size);
 
 	//auto magic = xoColor::RGBA(0xff, 0xf0, 0xf0, 0xff);
@@ -18,11 +20,11 @@ void xoMain(xoSysWnd* wnd)
 	canvas->StyleParsef("width: %dep; height: %dep;", width, height);
 	canvas->SetImageSizeOnly(width, height);
 
-	canvas->OnMouseMove([](const xoEvent& ev) -> bool {
+	canvas->OnMouseMove([width, height](const xoEvent& ev) -> bool {
 		xoDomCanvas* canvas = (xoDomCanvas*) ev.Target;
 		xoCanvas2D* cx = canvas->GetCanvas2D();
 		//Render(cx, (int) ev.Points[0].x, (int) ev.Points[0].y);
-		Render(cx, 350, 350, ev.Points[0].x * 0.001f);
+		Render(cx, width / 2, height / 2, FLT_EPSILON + ev.Points[0].x * 0.0001f);
 		canvas->ReleaseCanvas(cx);
 		return true;
 	});
@@ -30,8 +32,9 @@ void xoMain(xoSysWnd* wnd)
 
 float Eval(float x, float y)
 {
-	float v = x * x + y * 10.0f;
-	return v * 0.0005f;
+	//return 0.0005f * (x - sqrt(y));
+	return 0.0005f * (y - x*x);
+	//return 0.0005f * (x * x + y * 10.0f);
 }
 
 float Eval2(float x, float y)
@@ -52,26 +55,38 @@ void Render(xoCanvas2D* canvas, int cx, int cy, float scale)
 	//canvas->FillRect(box, xoColor::RGBA(200, 50, 50, 255));
 	double start = AbcTimeAccurateRTSeconds();
 
-	for (int y = 0; y < (int) canvas->Height(); y++)
+	uint8 lut[256];
+	for (int i = 0; i < 256; i++)
 	{
-		float my = (float) y - cy;
+		lut[i] = i;
+		//lut[i] = 2 * abs(127 - i);
+		//lut[i] = xoLinear2SRGB(i / 255.0f);
+	}
+	const float iscale = 255.0f / scale;
+
+	int height = canvas->Height();
+	int width = canvas->Width();
+	// This omp directive gives close to an 8x speedup on VS 2015, quad core skylake.
+	#pragma omp parallel for
+	for (int y = 0; y < height; y++)
+	{
+		float yf = scale * (float) (cy - y); // we invert Y, so that up is positive
 		xoRGBA* line = (xoRGBA*) canvas->RowPtr(y);
-		for (int x = 0; x < (int) canvas->Width(); x++)
+		for (int x = 0; x < width; x++)
 		{
-			float mx = (float) x - cx;
-			//float v = mx * mx + my * 40.0f;
-			float xf = (float) (x - cx);
-			float yf = (float) (y - cy);
-			xf *= scale;
-			yf *= scale;
-			float v = Eval2(xf, yf);
-			v /= scale;
-			uint8 r = (uint8) (xoClamp(v, 0.0f, 1.0f) * 255);
-			uint8 g = (uint8) (xoClamp(1.0f - v, 0.0f, 1.0f) * 255);
-			line[x] = xoRGBA::RGBA(r, g, 0, 255);
+			float xf = scale * (float) (x - cx);
+		
+			float v = iscale * Eval2(xf, yf);
+			
+			// This is useful for illustration - having a gradient either side of the zero line
+			//float v = 127.0f + iscale * Eval(xf, yf));
+
+			int ilut = xoClamp((int) v, 0, 255);
+			uint8 lum = lut[ilut];
+			line[x] = xoRGBA::RGBA(lum, lum, lum, 255);
 		}
 	}
 	canvas->Invalidate(xoBox(0, 0, canvas->Width(), canvas->Height()));
 
-	XOTRACE("canvas render: %.4f", AbcTimeAccurateRTSeconds() - start);
+	XOTRACE("canvas render: %.3f ms\n", 1000.0f * (AbcTimeAccurateRTSeconds() - start));
 }
