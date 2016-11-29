@@ -14,7 +14,8 @@ vec2 to_screen(vec2 unit_pt)
 
 void main()
 {
-	float distance = length(to_screen(pos.xy) - to_screen(center.xy));
+	vec2 screen_pos = to_screen(pos.xy);
+	float distance = length(screen_pos - to_screen(center.xy));
 	vec4 out_color = color;
 	float color_blend = clamp(distance - radius1 + 0.5, 0, 1);
 	float alpha_blend = clamp(radius2 - distance + 0.5, 0, 1);

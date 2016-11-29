@@ -171,51 +171,10 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 
 		Driver->Draw(xoGPUPrimQuads, 16, vx);
 
-		if (radii.TopLeft.x != 0 && radii.TopLeft.y != 0)
-		{
-			Driver->ActivateShader(xoShaderArc);
-			float maxRadius = xoMax(radii.TopLeft.x, radii.TopLeft.y);
-			float fanRadius;
-			int divs;
-			if (border.Left == border.Top && radii.TopLeft.x == radii.TopLeft.y)
-			{
-				// I haven't worked out why, but empirically 1.04 seems to be sufficient up to 200px radius.
-				fanRadius = maxRadius * 1.04 + 2.0f;
-				divs = 3;
-			}
-			else
-			{
-				fanRadius = maxRadius * 1.1 + 2.0f;
-				divs = (int) xoClamp(maxRadius * 0.4f, 5.0f, 50.0f);
-			}
-
-			float inc = (float) (XO_PI / 2) / (float) divs;
-			int slice = 0;
-			auto center = XOVEC3(left + radii.TopLeft.x, top + radii.TopLeft.y, 0);
-			float unit_inc = 1.0f / (float) divs;
-			float unit_slice = unit_inc * 0.5;
-			float th = XO_PI / 2 + inc;
-			xoVec3f pos = XOVEC3(center.x, center.y - fanRadius, 0);
-			auto v4 = XOVEC4(center.x, center.y, center.z, 0);
-			for (; slice < divs; th += inc, unit_slice += unit_inc, slice++)
-			{
-				float upos = unit_slice;
-				if (slice == 0)
-					upos = 0;
-				else if (slice == divs - 1)
-					upos = 1;
-				float borderWidth = xoLerp(upos, border.Top, border.Left);
-				float radius = xoLerp(upos, radii.TopLeft.y, radii.TopLeft.x);
-				v4.w = radius;
-				auto posNext = XOVEC3(center.x + fanRadius * cos(th), center.y - fanRadius * sin(th), center.z);
-				auto uv = XOVEC2(borderWidth, 0);
-				vx[0].Set(center, uv, bgRGBA, borderRGBA, v4);
-				vx[1].Set(pos, uv, bgRGBA, borderRGBA, v4);
-				vx[2].Set(posNext, uv, bgRGBA, borderRGBA, v4);
-				Driver->Draw(xoGPUPrimTriangles, 3, vx);
-				pos = posNext;
-			}
-		}
+		RenderCornerArcs(TopLeft, left, top, radii.TopLeft, border.Left, border.Top, bgRGBA, borderRGBA);
+		RenderCornerArcs(BottomLeft, left, bottom, radii.BottomLeft, border.Left, border.Bottom, bgRGBA, borderRGBA);
+		RenderCornerArcs(BottomRight, right, bottom, radii.BottomRight, border.Right, border.Bottom, bgRGBA, borderRGBA);
+		RenderCornerArcs(TopRight, right, top, radii.TopRight, border.Right, border.Top, bgRGBA, borderRGBA);
 	}
 
 	if (bg.a != 0 && !useRect3Shader)
@@ -322,6 +281,80 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 			if (LoadTexture(canvasImage, TexUnit0))
 				Driver->Draw(xoGPUPrimQuads, 4, corners);
 		}
+	}
+}
+
+void xoRenderer::RenderCornerArcs(Corners corner, float xEdge, float yEdge, xoVec2f radii, float borderWidthX, float borderWidthY, uint32 bgRGBA, uint32 borderRGBA)
+{
+	if (radii.x == 0 || radii.y == 0)
+		return;
+
+	Driver->ActivateShader(xoShaderArc);
+	float maxRadius = xoMax(radii.x, radii.y);
+	float fanRadius;
+	int divs;
+	if (borderWidthX == borderWidthY && radii.x == radii.y)
+	{
+		// I haven't worked out why, but empirically 1.04 seems to be sufficient up to 200px radius.
+		fanRadius = maxRadius * 1.04 + 2.0f;
+		divs = 3;
+	}
+	else
+	{
+		// with an explicit gradient function for border_width you could get away with much fewer arc subdivisions, at least for the non-elliptical case.
+		fanRadius = maxRadius * 1.1 + 2.0f;
+		divs = (int) xoClamp(maxRadius * 0.4f, 2.0f, 50.0f);
+	}
+
+	xoVx_PTCV4 vx[3];
+
+	// we always sweep our arc counter clockwise
+	float inc = (float) (XO_PI / 2) / (float) divs;
+	int slice = 0;
+	float unit_inc = 1.0f / (float) divs;
+	float unit_slice = unit_inc;
+	float th;
+	bool swapLimits = false;
+	xoVec3f center;
+	switch (corner)
+	{
+	case TopLeft:
+		th = XO_PI * 0.5;
+		center = XOVEC3(xEdge + radii.x, yEdge + radii.y, 0);
+		break;
+	case BottomLeft:
+		th = XO_PI * 1;
+		swapLimits = true;
+		center = XOVEC3(xEdge + radii.x, yEdge - radii.y, 0);
+		break;
+	case BottomRight:
+		th = XO_PI * -0.5;
+		center = XOVEC3(xEdge - radii.x, yEdge - radii.y, 0);
+		break;
+	case TopRight:
+		th = 0;
+		swapLimits = true;
+		center = XOVEC3(xEdge - radii.x, yEdge + radii.y, 0);
+		break;
+	}
+	auto borderWidthLimits = swapLimits ? XOVEC2(borderWidthX, borderWidthY) : XOVEC2(borderWidthY, borderWidthX);
+	auto radiusLimits = swapLimits ? XOVEC2(radii.x, radii.y) : XOVEC2(radii.y, radii.x);
+	auto pos = XOVEC3(center.x + fanRadius * cos(th), center.y - fanRadius * sin(th), center.z); // -y, because our coord system is Y down
+	th += inc;
+	float borderWidth = borderWidthLimits.x;
+	float radius = radiusLimits.x;
+	for (; slice < divs; th += inc, unit_slice += unit_inc, slice++)
+	{
+		float borderWidthNext = xoLerp(unit_slice, borderWidthLimits.x, borderWidthLimits.y);
+		float radiusNext = xoLerp(unit_slice, radiusLimits.x, radiusLimits.y);
+		auto posNext = XOVEC3(center.x + fanRadius * cos(th), center.y - fanRadius * sin(th), center.z);
+		vx[0].Set(center, XOVEC2(borderWidth, 0), bgRGBA, borderRGBA, XOVEC4(center.x, center.y, center.z, radius));
+		vx[1].Set(pos, XOVEC2(borderWidth, 0), bgRGBA, borderRGBA, XOVEC4(center.x, center.y, center.z, radius));
+		vx[2].Set(posNext, XOVEC2(borderWidthNext, 0), bgRGBA, borderRGBA, XOVEC4(center.x, center.y, center.z, radiusNext));
+		Driver->Draw(xoGPUPrimTriangles, 3, vx);
+		pos = posNext;
+		borderWidth = borderWidthNext;
+		radius = radiusNext;
 	}
 }
 

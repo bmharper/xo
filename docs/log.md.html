@@ -581,6 +581,34 @@ rendering, is to disable subpixel glyph positioning, and to use just FT_LOAD_TAR
 to load the glyphs. Although the output is quite fuzzy for many fonts, I think this
 is acceptable, and I need to move on now, and finish the rectangle corner rendering.
 
+2016-11-29 Rounded corners and arcs
+===================================
+In order to implement elliptical corners, and varying border widths, I've implemented
+rounded corners as arcs. This is terribly inefficient, but it works. A significant
+optimization for non-elliptical (ie circular) borders (which are by far the majority),
+is to render them with only 2 or 3 arc subdivisions, but using a gradient function
+to define the border width. At present we're at the mercy of the barycentric vertex
+attribute interpolation, which doesn't give perfect results. Instead, what would be
+better, is to send through a gradient function of the form
+`border_width = a*x + b*y + c`, so that the fragment shader gets a perfect linear
+function to compute the border width.
+One that that still needs to happen here, is that we're not dealing correctly with
+cases where the width exceeds some threshold of the radius.. ie a large border
+width and a small radius.
+Also - the BlockMargins example in KitchenSink shows bleeding of the border color
+where it shouldn't.
+
+2016-11-29 Ubershaders
+======================
+I am going to try combining all shaders into one ubershader. I don't see any way
+of reducing the driver state changes. One thought I had was that I could have just
+two ubershaders - one for text, and one for everything else. But if you go down
+this path, then you need to maintain a queue for the text objects, and make sure
+that you never paint over a text rectangle with a regular rectangle. Whenever you
+detect that condition, you need to flush your text queue. I imagine this could work
+fairly well in practice, for most UI, but I'm also pretty sure that there would
+be pathological cases that would really screw you over.
+
 <!-- Markdeep: -->
 <style class="fallback">body{white-space:pre;font-family:monospace}</style>
 <script src="markdeep.min.js"></script>

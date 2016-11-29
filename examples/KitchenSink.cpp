@@ -24,12 +24,12 @@ void DoBorder(xoDoc* doc)
 	auto root = &doc->Root;
 	root->StyleParse("background: #aaa");
 	root->Parse(
-		"<div style='border: #007; border: 2px 6px 3px 4px; border-radius: 140px 30px 20px 10px; width: 500ep; height: 500ep; background: #fff; margin: 2px'></div>"
-		//"<div style='border: #007; border: 1px 2px 3px 4px; border-radius: 5px; width: 200ep; height: 200ep; background: #fff; margin: 2px'></div>"
-		//"<div style='border: #070; border: 1px 1px 2px 3px; border-radius: 0px; width: 200ep; height: 200ep; background: #fff; margin: 2px'>aaaaa</div>"
-		//"<div style='border: 5px #070; border-radius: 8px; width: 100ep; height: 100ep; background: #fff; margin: 1px'>b</div>"
-		//"<div style='border: 1px #557; width: 150ep; height: 22ep; background: #fff; margin: 1px'>c</div>"
-		//"<div style='border: 5ep #456; width: 40ep; height: 40ep; background: #567; margin: 1px'>d</div>" // ensure border color goes through sRGB conversion
+		//"<div style='border: #007; border: 1px 2px 3px 4px; border-radius: 10px 30px 20px 10px; width: 300ep; height: 300ep; background: #fff; margin: 2px'></div>"
+		"<div style='border: #007; border: 1px 2px 3px 4px; border-radius: 5px; width: 200ep; height: 200ep; background: #fff; margin: 2px'></div>"
+		"<div style='border: #070; border: 1px 1px 2px 3px; border-radius: 0px; width: 200ep; height: 200ep; background: #fff; margin: 2px'>aaaaa</div>"
+		"<div style='border: 5px #070; border-radius: 8px; width: 100ep; height: 100ep; background: #fff; margin: 1px'>b</div>"
+		"<div style='border: 1px #557; width: 150ep; height: 22ep; background: #fff; margin: 1px'>c</div>"
+		"<div style='border: 5ep #456; width: 40ep; height: 40ep; background: #567; margin: 1px'>d</div>" // ensure border color goes through sRGB conversion
 	);
 }
 
@@ -439,7 +439,7 @@ void InitDOM(xoDoc* doc)
 	xoDomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
 
-	DoBorder(doc);
+	//DoBorder(doc);
 	//DoBaselineAlignment(doc);
 	//DoBaselineAlignment_rev2(doc);
 	//DoBaselineAlignment_Multiline(doc);
@@ -448,7 +448,7 @@ void InitDOM(xoDoc* doc)
 	//DoHCenter(doc);
 	//DoVCenter(doc);
 	//DoTwoTextRects(doc);
-	//DoBlockMargins(doc);
+	DoBlockMargins(doc);
 	//DoLongText(doc);
 	//DoInlineFlow(doc);
 	//DoBackupSettings(doc);
