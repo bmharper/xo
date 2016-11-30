@@ -1,0 +1,42 @@
+<!DOCTYPE HTML>
+<head>
+<script>
+function onload()
+{
+	draw();
+}
+function draw()
+{
+	var radx = 300;
+	var rady = 100;
+	var c1 = document.getElementById('c1');
+	var cx = c1.getContext("2d");
+	c1.width = 600;
+	c1.height = 600;
+	var xc = 100.5;
+	var yc = 100.5;
+	cx.strokeStyle = '#666';
+	cx.lineWidth = 2;
+	cx.beginPath();
+	for (var th = 0; th <= Math.PI / 2; th += 0.05) {
+		var x = xc + radx * Math.cos(th);
+		var y = yc + rady * Math.sin(th);
+		if (th == 0)
+			cx.moveTo(x, y);
+		else
+			cx.lineTo(x, y);
+	}
+	cx.stroke();
+	cx.strokeRect(xc, yc, radx, rady);
+
+	cx.lineWidth = 1;
+	cx.strokeStyle = "#c00";
+	cx.beginPath();
+	cx.ellipse(xc, yc, radx, rady, 0, 0, Math.PI * 2);
+	cx.stroke();
+}
+</script>
+</head>
+<body onload="onload()">
+<canvas id='c1' style='vertical-align: top; border: 1px solid #eee'></canvas>
+</body>
