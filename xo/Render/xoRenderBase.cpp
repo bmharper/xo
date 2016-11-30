@@ -31,6 +31,21 @@ void xoRenderBase::Ortho(xoMat4f &imat, double left, double right, double bottom
 	imat = imat * m;
 }
 
+void xoRenderBase::SetupToScreen(xoMat4f mvproj)
+{
+	MVProj = mvproj;
+	ShaderPerFrame.MVProj = mvproj.Transposed(); // DirectX needs this transposed
+	ShaderPerFrame.VPort_HSize = Vec2f(FBWidth / 2.0f, FBHeight / 2.0f);
+}
+
+xoVec2f xoRenderBase::ToScreen(xoVec2f v)
+{
+	xoVec4f r = MVProj * Vec4f(v.x, v.y, 0, 1);
+	r.x = (r.x + 1) * ShaderPerFrame.VPort_HSize.x;
+	r.y = (-r.y + 1) * ShaderPerFrame.VPort_HSize.y;
+	return r.vec2;
+}
+
 void xoRenderBase::SurfaceLost_ForgetTextures()
 {
 	TexIDOffset++;

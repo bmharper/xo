@@ -284,27 +284,36 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 	}
 }
 
-void xoRenderer::RenderCornerArcs(Corners corner, float xEdge, float yEdge, xoVec2f radii, float borderWidthX, float borderWidthY, uint32 bgRGBA, uint32 borderRGBA)
+void xoRenderer::RenderCornerArcs(Corners corner, float xEdge, float yEdge, xoVec2f outerRadii, float borderWidthX, float borderWidthY, uint32 bgRGBA, uint32 borderRGBA)
 {
-	if (radii.x == 0 || radii.y == 0)
+	if (outerRadii.x == 0 || outerRadii.y == 0)
 		return;
 
 	Driver->ActivateShader(xoShaderArc);
-	float maxRadius = xoMax(radii.x, radii.y);
+	float maxOuterRadius = xoMax(outerRadii.x, outerRadii.y);
 	float fanRadius;
 	int divs;
-	if (borderWidthX == borderWidthY && radii.x == radii.y)
+	if (borderWidthX == borderWidthY && outerRadii.x == outerRadii.y)
 	{
 		// I haven't worked out why, but empirically 1.04 seems to be sufficient up to 200px radius.
-		fanRadius = maxRadius * 1.04 + 2.0f;
+		fanRadius = maxOuterRadius * 1.04f + 2.0f;
 		divs = 3;
 	}
 	else
 	{
 		// with an explicit gradient function for border_width you could get away with much fewer arc subdivisions, at least for the non-elliptical case.
-		fanRadius = maxRadius * 1.1 + 2.0f;
-		divs = (int) xoClamp(maxRadius * 0.4f, 2.0f, 50.0f);
+		fanRadius = maxOuterRadius * 1.1f + 2.0f;
+		divs = (int) xoClamp(maxOuterRadius * 0.4f, 2.0f, 50.0f);
 	}
+
+	// It's remarkable what good results we get from approximating ellipses with just two arcs. If you make the
+	// eccentricity truly extreme, then this ain't so great, but the thing is, that at those extremities, our
+	// arc approximation has numerical problems, so we're screwed anyway. Right now, we just choose not to support
+	// those kind of extremes. One big benefit of having a low number of subvisions is that you avoid the problem
+	// where the arc's radius becomes so small that you end up seeing the opposite side of the circle within
+	// the corner. Just run the "DoBorder" example in KitchenSink, and crank divs up to 10, to see what I mean.
+	// For the majority of cases, 2 arcs actually looks just fine.
+	divs = 2;
 
 	xoVx_PTCV4 vx[3];
 
@@ -315,46 +324,97 @@ void xoRenderer::RenderCornerArcs(Corners corner, float xEdge, float yEdge, xoVe
 	float unit_slice = unit_inc;
 	float th;
 	bool swapLimits = false;
-	xoVec3f center;
+	float ellipseFlipX = 1;
+	float ellipseFlipY = 1;
+	xoVec2f center;
 	switch (corner)
 	{
 	case TopLeft:
-		th = XO_PI * 0.5;
-		center = XOVEC3(xEdge + radii.x, yEdge + radii.y, 0);
+		ellipseFlipX = -1;
+		ellipseFlipY = -1;
+		th = (float) (XO_PI * 0.5);
+		center = XOVEC2(xEdge + outerRadii.x, yEdge + outerRadii.y);
 		break;
 	case BottomLeft:
-		th = XO_PI * 1;
+		ellipseFlipX = -1;
+		th = (float) (XO_PI * 1.0f);
 		swapLimits = true;
-		center = XOVEC3(xEdge + radii.x, yEdge - radii.y, 0);
+		center = XOVEC2(xEdge + outerRadii.x, yEdge - outerRadii.y);
 		break;
 	case BottomRight:
-		th = XO_PI * -0.5;
-		center = XOVEC3(xEdge - radii.x, yEdge - radii.y, 0);
+		th = (float) (XO_PI * -0.5f);
+		center = XOVEC2(xEdge - outerRadii.x, yEdge - outerRadii.y);
 		break;
 	case TopRight:
+		ellipseFlipY = -1;
 		th = 0;
 		swapLimits = true;
-		center = XOVEC3(xEdge - radii.x, yEdge + radii.y, 0);
+		center = XOVEC2(xEdge - outerRadii.x, yEdge + outerRadii.y);
 		break;
 	}
-	auto borderWidthLimits = swapLimits ? XOVEC2(borderWidthX, borderWidthY) : XOVEC2(borderWidthY, borderWidthX);
-	auto radiusLimits = swapLimits ? XOVEC2(radii.x, radii.y) : XOVEC2(radii.y, radii.x);
-	auto pos = XOVEC3(center.x + fanRadius * cos(th), center.y - fanRadius * sin(th), center.z); // -y, because our coord system is Y down
+	//auto borderWidthLimits = swapLimits ? XOVEC2(borderWidthX, borderWidthY) : XOVEC2(borderWidthY, borderWidthX);
+	//auto outerRadiusLimits = swapLimits ? XOVEC2(radii.x, radii.y) : XOVEC2(radii.y, radii.x);
+	//auto innerRadiusLimits = XOVEC2(outerRadiusLimits.x - borderWidthLimits.x, outerRadiusLimits.y - borderWidthLimits.y);
+	//innerRadiusLimits.x = fabs(innerRadiusLimits.x);
+	//innerRadiusLimits.y = fabs(innerRadiusLimits.y);
+	auto innerRadii = outerRadii - XOVEC2(borderWidthX, borderWidthY);
+	innerRadii.x = fabs(innerRadii.x);
+	innerRadii.y = fabs(innerRadii.y);
+	auto fanPos = XOVEC2(center.x + fanRadius * cos(th), center.y - fanRadius * sin(th)); // -y, because our coord system is Y down
+	//float borderWidth = borderWidthLimits.x;
+	//float outerRadius = outerRadiusLimits.x;
+
+	auto outerPos = XOVEC2(center.x + outerRadii.x * cos(th), center.y - outerRadii.y * sin(th));
+	//auto innerPos = XOVEC2(center.x + innerRadii.x * cos(th), center.y - innerRadii.y * sin(th));
+	auto innerPos = center + PtOnEllipse(ellipseFlipX, ellipseFlipY, innerRadii.x, innerRadii.y, th);
+	//float r1 = innerPos.distance(center);
+	//float r2 = outerPos.distance(center);
 	th += inc;
-	float borderWidth = borderWidthLimits.x;
-	float radius = radiusLimits.x;
+	float hinc = inc * 0.5f;
+
+	//borderRGBA = borderRGBA | 0x0000f000;
+	
+	// TODO: dynamically pick the cheaper cos/sin for circular arcs, or tan for ellipses
+	// ie pick between two functions - PtOnEllipse, and PtOnCircle.
+
 	for (; slice < divs; th += inc, unit_slice += unit_inc, slice++)
 	{
-		float borderWidthNext = xoLerp(unit_slice, borderWidthLimits.x, borderWidthLimits.y);
-		float radiusNext = xoLerp(unit_slice, radiusLimits.x, radiusLimits.y);
-		auto posNext = XOVEC3(center.x + fanRadius * cos(th), center.y - fanRadius * sin(th), center.z);
-		vx[0].Set(center, XOVEC2(borderWidth, 0), bgRGBA, borderRGBA, XOVEC4(center.x, center.y, center.z, radius));
-		vx[1].Set(pos, XOVEC2(borderWidth, 0), bgRGBA, borderRGBA, XOVEC4(center.x, center.y, center.z, radius));
-		vx[2].Set(posNext, XOVEC2(borderWidthNext, 0), bgRGBA, borderRGBA, XOVEC4(center.x, center.y, center.z, radiusNext));
+		//float borderWidthNext = xoLerp(unit_slice, borderWidthLimits.x, borderWidthLimits.y);
+		//float outerRadiusNext = xoLerp(unit_slice, outerRadiusLimits.x, outerRadiusLimits.y);
+		auto fanPosNext = XOVEC2(center.x + fanRadius * cos(th), center.y - fanRadius * sin(th));
+		auto outerPosNext = XOVEC2(center.x + outerRadii.x * cos(th), center.y - outerRadii.y * sin(th));
+		//auto innerPosNext = XOVEC2(center.x + innerRadii.x * cos(th), center.y - innerRadii.y * sin(th));
+		auto innerPosNext = center + PtOnEllipse(ellipseFlipX, ellipseFlipY, innerRadii.x, innerRadii.y, th);
+		auto outerPosHalf = XOVEC2(center.x + outerRadii.x * cos(th - hinc), center.y - outerRadii.y * sin(th - hinc));
+		//auto innerPosHalf = XOVEC2(center.x + innerRadii.x * cos(th - hinc), center.y - innerRadii.y * sin(th - hinc));
+		auto innerPosHalf = center + PtOnEllipse(ellipseFlipX, ellipseFlipY, innerRadii.x, innerRadii.y, th - hinc);
+
+		xoVec2f innerCenter, outerCenter;
+		float innerRadius, outerRadius;
+		CircleFrom3Pt(outerPos, outerPosHalf, outerPosNext, outerCenter, outerRadius);
+		CircleFrom3Pt(innerPos, innerPosHalf, innerPosNext, innerCenter, innerRadius);
+
+		//float r1Next = innerPosNext.distance2d(center);
+		//float r2Next = outerPosNext.distance2d(center);
+		//float borderWidth = r2Next - r1Next;
+		//innerCenter = Driver->ToScreen(innerCenter);
+		//outerCenter = Driver->ToScreen(outerCenter);
+
+		auto arcCenters = XOVEC4(innerCenter.x, innerCenter.y, outerCenter.x, outerCenter.y);
+		auto arcRadii = XOVEC2(innerRadius, outerRadius);
+
+		vx[0].Set(xoVec3f(center, 0), arcRadii, bgRGBA, borderRGBA, arcCenters);
+		vx[1].Set(xoVec3f(fanPos, 0), arcRadii, bgRGBA, borderRGBA, arcCenters);
+		vx[2].Set(xoVec3f(fanPosNext, 0), arcRadii, bgRGBA, borderRGBA, arcCenters);
 		Driver->Draw(xoGPUPrimTriangles, 3, vx);
-		pos = posNext;
-		borderWidth = borderWidthNext;
-		radius = radiusNext;
+		fanPos = fanPosNext;
+		outerPos = outerPosNext;
+		innerPos = innerPosNext;
+		//borderRGBA = borderRGBA | 0x00f00000;
+		//r1 = r1Next;
+		//r2 = r2Next;
+		//borderWidth = borderWidthNext;
+		//outerRadius = outerRadiusNext;
 	}
 }
 
@@ -586,3 +646,40 @@ bool xoRenderer::LoadTexture(xoTexture* tex, TexUnits texUnit)
 	tex->TexClearInvalidRect();
 	return true;
 }
+
+float xoRenderer::CircleFrom3Pt(const xoVec2f& a, const xoVec2f& b, const xoVec2f& c, xoVec2f& center, float& radius)
+{
+	float A = b.x - a.x;
+	float B = b.y - a.y;
+	float C = c.x - a.x;
+	float D = c.y - a.y;
+
+	float E = A*(a.x + b.x) + B*(a.y + b.y);
+	float F = C*(a.x + c.x) + D*(a.y + c.y);
+
+	float G = 2 * (A*(c.y - b.y) - B * (c.x - b.x));
+
+	if (G == 0)
+	{
+		// Pick a point far away. We happen to know what an OK value for "far away" is.
+		xoVec2f line = (c - a).normalized();
+		xoVec2f perp(-line.y, line.x);
+		radius = 100.0f;
+		center = b + radius * perp;
+	}
+	else
+	{
+		center.x = (D*E - B*F) / G;
+		center.y = (A*F - C*E) / G;
+		radius = sqrt((a.x - center.x)*(a.x - center.x) + (a.y - center.y)*(a.y - center.y));
+	}
+	return G;
+}
+
+xoVec2f xoRenderer::PtOnEllipse(float flipX, float flipY, float a, float b, float theta)
+{
+	float x = (a * b) / sqrt(b * b + a * a * powf(tan(theta), 2.0f));
+	float y = (a * b) / sqrt(a * a + b * b / powf(tan(theta), 2.0f));
+	return xoVec2f(flipX * x, flipY * y);
+};
+

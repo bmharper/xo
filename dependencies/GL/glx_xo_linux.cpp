@@ -5,27 +5,16 @@
 #include "glx_xo.h"
 
 #if defined(__APPLE__)
-#include <mach-o/dyld.h>
+#include <dlfcn.h>
 
-static void* AppleGLGetProcAddress (const GLubyte *name)
+static void* AppleGLGetProcAddress (const char *name)
 {
-  static const struct mach_header* image = NULL;
-  NSSymbol symbol;
-  char* symbolName;
-  if (NULL == image)
-  {
-    image = NSAddImage("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", NSADDIMAGE_OPTION_RETURN_ON_ERROR);
-  }
-  /* prepend a '_' for the Unix C symbol mangling convention */
-  symbolName = malloc(strlen((const char*)name) + 2);
-  strcpy(symbolName+1, (const char*)name);
-  symbolName[0] = '_';
-  symbol = NULL;
-  /* if (NSIsSymbolNameDefined(symbolName))
-	 symbol = NSLookupAndBindSymbol(symbolName); */
-  symbol = image ? NSLookupSymbolInImage(image, symbolName, NSLOOKUPSYMBOLINIMAGE_OPTION_BIND | NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR) : NULL;
-  free(symbolName);
-  return symbol ? NSAddressOfSymbol(symbol) : NULL;
+	static void* image = NULL;
+	
+	if (NULL == image)
+		image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
+
+	return (image ? dlsym(image, name) : NULL);
 }
 #endif /* __APPLE__ */
 
@@ -56,6 +45,7 @@ static void* SunGetProcAddress (const GLubyte* name)
 #ifdef _MSC_VER
 #pragma warning(disable: 4055)
 #pragma warning(disable: 4054)
+#pragma warning(disable: 4996)
 #endif
 
 static int TestPointer(const PROC pTest)
@@ -109,9 +99,9 @@ int glx_ext_EXT_import_context = glx_LOAD_FAILED;
 int glx_ext_EXT_swap_control = glx_LOAD_FAILED;
 int glx_ext_EXT_swap_control_tear = glx_LOAD_FAILED;
 
-GLXContext (CODEGEN_FUNCPTR *_ptrc_glXCreateContextAttribsARB)(Display *, GLXFBConfig, GLXContext, Bool, const int *) = NULL;
+GLXContext (CODEGEN_FUNCPTR *_ptrc_glXCreateContextAttribsARB)(Display * dpy, GLXFBConfig config, GLXContext share_context, Bool direct, const int * attrib_list) = NULL;
 
-static int Load_ARB_create_context()
+static int Load_ARB_create_context(void)
 {
 	int numFailed = 0;
 	_ptrc_glXCreateContextAttribsARB = (GLXContext (CODEGEN_FUNCPTR *)(Display *, GLXFBConfig, GLXContext, Bool, const int *))IntGetProcAddress("glXCreateContextAttribsARB");
@@ -119,20 +109,20 @@ static int Load_ARB_create_context()
 	return numFailed;
 }
 
-void (CODEGEN_FUNCPTR *_ptrc_glXFreeContextEXT)(Display *, GLXContext) = NULL;
-GLXContextID (CODEGEN_FUNCPTR *_ptrc_glXGetContextIDEXT)(const GLXContext) = NULL;
-Display * (CODEGEN_FUNCPTR *_ptrc_glXGetCurrentDisplayEXT)() = NULL;
-GLXContext (CODEGEN_FUNCPTR *_ptrc_glXImportContextEXT)(Display *, GLXContextID) = NULL;
-int (CODEGEN_FUNCPTR *_ptrc_glXQueryContextInfoEXT)(Display *, GLXContext, int, int *) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glXFreeContextEXT)(Display * dpy, GLXContext context) = NULL;
+GLXContextID (CODEGEN_FUNCPTR *_ptrc_glXGetContextIDEXT)(const GLXContext context) = NULL;
+Display * (CODEGEN_FUNCPTR *_ptrc_glXGetCurrentDisplayEXT)(void) = NULL;
+GLXContext (CODEGEN_FUNCPTR *_ptrc_glXImportContextEXT)(Display * dpy, GLXContextID contextID) = NULL;
+int (CODEGEN_FUNCPTR *_ptrc_glXQueryContextInfoEXT)(Display * dpy, GLXContext context, int attribute, int * value) = NULL;
 
-static int Load_EXT_import_context()
+static int Load_EXT_import_context(void)
 {
 	int numFailed = 0;
 	_ptrc_glXFreeContextEXT = (void (CODEGEN_FUNCPTR *)(Display *, GLXContext))IntGetProcAddress("glXFreeContextEXT");
 	if(!_ptrc_glXFreeContextEXT) numFailed++;
 	_ptrc_glXGetContextIDEXT = (GLXContextID (CODEGEN_FUNCPTR *)(const GLXContext))IntGetProcAddress("glXGetContextIDEXT");
 	if(!_ptrc_glXGetContextIDEXT) numFailed++;
-	_ptrc_glXGetCurrentDisplayEXT = (Display * (CODEGEN_FUNCPTR *)())IntGetProcAddress("glXGetCurrentDisplayEXT");
+	_ptrc_glXGetCurrentDisplayEXT = (Display * (CODEGEN_FUNCPTR *)(void))IntGetProcAddress("glXGetCurrentDisplayEXT");
 	if(!_ptrc_glXGetCurrentDisplayEXT) numFailed++;
 	_ptrc_glXImportContextEXT = (GLXContext (CODEGEN_FUNCPTR *)(Display *, GLXContextID))IntGetProcAddress("glXImportContextEXT");
 	if(!_ptrc_glXImportContextEXT) numFailed++;
@@ -141,9 +131,9 @@ static int Load_EXT_import_context()
 	return numFailed;
 }
 
-void (CODEGEN_FUNCPTR *_ptrc_glXSwapIntervalEXT)(Display *, GLXDrawable, int) = NULL;
+void (CODEGEN_FUNCPTR *_ptrc_glXSwapIntervalEXT)(Display * dpy, GLXDrawable drawable, int interval) = NULL;
 
-static int Load_EXT_swap_control()
+static int Load_EXT_swap_control(void)
 {
 	int numFailed = 0;
 	_ptrc_glXSwapIntervalEXT = (void (CODEGEN_FUNCPTR *)(Display *, GLXDrawable, int))IntGetProcAddress("glXSwapIntervalEXT");
@@ -151,7 +141,7 @@ static int Load_EXT_swap_control()
 	return numFailed;
 }
 
-typedef int (*PFN_LOADFUNCPOINTERS)();
+typedef int (*PFN_LOADFUNCPOINTERS)(void);
 typedef struct glx_StrToExtMap_s
 {
 	char *extensionName;
@@ -189,7 +179,7 @@ static glx_StrToExtMap *FindExtEntry(const char *extensionName)
 	return NULL;
 }
 
-static void ClearExtensionVars()
+static void ClearExtensionVars(void)
 {
 	glx_ext_ARB_create_context = glx_LOAD_FAILED;
 	glx_ext_ARB_create_context_profile = glx_LOAD_FAILED;
@@ -274,3 +264,5 @@ int glx_LoadFunctions(Display *display, int screen)
 	ProcExtsFromExtString((const char *)glXQueryExtensionsString(display, screen));
 	return glx_LOAD_SUCCEEDED;
 }
+
+

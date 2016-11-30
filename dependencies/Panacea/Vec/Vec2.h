@@ -66,17 +66,17 @@ public:
 
 	void normalize()
 	{
-		double r = 1.0 / sqrt(x * x + y * y);
+		FT r = 1.0f / sqrt(x * x + y * y);
 		x *= r;
 		y *= r;
 	}
 
 	void normalizeIfNotZero()
 	{
-		double lenSq = x * x + y * y;
+		FT lenSq = x * x + y * y;
 		if (lenSq != 0)
 		{
-			double r = 1.0 / sqrt(lenSq);
+			FT r = 1.0 / sqrt(lenSq);
 			x *= r;
 			y *= r;
 		}

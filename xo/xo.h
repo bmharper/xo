@@ -28,7 +28,6 @@
 #include "Image/xoImage.h"
 #include "xoSysWnd.h"
 #include "xoEvent.h"
-//#include "Shaders/Helpers/xoPreprocessor.h"
 
 #ifdef _WIN32
 #pragma warning( pop )

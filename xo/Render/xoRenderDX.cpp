@@ -418,8 +418,7 @@ bool xoRenderDX::SetShaderFrameUniforms()
 	xoMat4f mvproj;
 	mvproj.Identity();
 	Ortho(mvproj, 0, FBWidth, FBHeight, 0, 0, 1);
-	ShaderPerFrame.MVProj = mvproj.Transposed();
-	ShaderPerFrame.VPort_HSize = Vec2f(FBWidth / 2.0f, FBHeight / 2.0f);
+	SetupToScreen(mvproj); // this sets up ShaderPerFrame
 
 	D3D11_MAPPED_SUBRESOURCE sub;
 	if (FAILED(D3D.Context->Map(D3D.ShaderPerFrameConstants, 0, D3D11_MAP_WRITE_DISCARD, 0, &sub)))

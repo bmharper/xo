@@ -1,7 +1,9 @@
 require 'tundra.syntax.glob'
 
+local winFilter = "win*"
 local winDebugFilter = "win*-*-debug"
 local winReleaseFilter = "win*-*-release"
+local linuxFilter = "linux*"
 local directxFilter = "win*"
 
 local winKernelLibs = { "kernel32.lib", "user32.lib", "gdi32.lib", "winspool.lib", "advapi32.lib", "shell32.lib", "comctl32.lib", 
@@ -71,6 +73,27 @@ local crtStatic = ExternalLibrary {
 		},
 	},
 }
+
+-- Return an FGlob node that has our standard filters applied
+local function makeGlob(dir, options)
+	local filters = {
+		{ Pattern = "_windows"; Config = winFilter },
+		{ Pattern = "_linux"; Config = linuxFilter },
+		{ Pattern = "_android"; Config = "ignore" },       -- Android stuff is built with a different build system
+		{ Pattern = "[/\\]_[^/\\]*$"; Config = "ignore" }, -- Any file that starts with an underscore is ignored
+	}
+	if options.Ignore ~= nil then
+		for _, ignore in ipairs(options.Ignore) do
+			filters[#filters + 1] = { Pattern = ignore; Config = "ignore" }
+		end
+	end
+
+	return FGlob {
+		Dir = dir,
+		Extensions = { ".c", ".cpp", ".h" },
+		Filters = filters,
+	}
+end
 
 -- Swapping this out will change linkage to use MSVCR120.dll and its cousins,
 -- instead of statically linking to the required MSVC runtime libraries.
@@ -199,7 +222,7 @@ local xo = SharedLibrary {
 		{ "opengl32.lib", "user32.lib", "gdi32.lib", "winmm.lib" ; Config = "win*" },
 		{ "X11", "GL", "GLU", "stdc++"; Config = "linux-*" },
 	},
-	SourceDir = ".",
+	--SourceDir = ".",
 	Includes = {
 		"xo",
 		"dependencies/freetype/include",
@@ -212,85 +235,11 @@ local xo = SharedLibrary {
 		Pass = "PchGen",
 	},
 	Sources = {
-		Glob { Extensions = { ".h" }, Dir = "xo", },
-		Glob { Extensions = { ".h" }, Dir = "dependencies", Recursive = false },
-		Glob { Extensions = { ".h" }, Dir = "dependencies/Panacea", },
-		"xo/xoDefs.cpp",
-		"xo/xoDoc.cpp",
-		"xo/xoDocUI.cpp",
-		"xo/xoDocGroup.cpp",
-		{ "xo/xoDocGroup_Windows.cpp"; Config = "win*" },
-		"xo/xoEvent.cpp",
-		"xo/xoMem.cpp",
-		"xo/xoMsgLoop.cpp",
-		"xo/xoPlatform.cpp",
-		"xo/xoString.cpp",
-		"xo/xoStringTable.cpp",
-		"xo/xoStyle.cpp",
-		"xo/xoSysWnd.cpp",
-		"xo/xoTags.cpp",
-		"xo/Canvas/xoCanvas2D.cpp",
-		"xo/Dom/xoDomEl.cpp",
-		"xo/Dom/xoDomCanvas.cpp",
-		"xo/Dom/xoDomNode.cpp",
-		"xo/Dom/xoDomText.cpp",
-		"xo/Image/xoImage.cpp",
-		"xo/Image/xoImageStore.cpp",
-		"xo/Layout/xoBoxLayout3.cpp",
-		"xo/Layout/xoLayout.cpp",
-		"xo/Layout/xoLayout2.cpp",
-		"xo/Layout/xoLayout3.cpp",
-		"xo/Layout/xoTextLayout.cpp",
-		"xo/Parse/xoDocParser.cpp",
-		"xo/Render/xoRenderBase.cpp",
-		"xo/Render/xoRenderDX.cpp",
-		"xo/Render/xoRenderDX_Defs.cpp",
-		"xo/Render/xoRenderer.cpp",
-		"xo/Render/xoRenderGL.cpp",
-		"xo/Render/xoRenderGL_Defs.cpp",
-		"xo/Render/xoRenderDoc.cpp",
-		"xo/Render/xoRenderDomEl.cpp",
-		"xo/Render/xoRenderStack.cpp",
-		"xo/Render/xoStyleResolve.cpp",
-		"xo/Render/xoTextureAtlas.cpp",
-		"xo/Render/xoVertexTypes.cpp",
-		"xo/Splines/xoSplineProcess.cpp",
-		"xo/Text/xoFontStore.cpp",
-		"xo/Text/xoGlyphCache.cpp",
-		"xo/Text/xoTextDefs.cpp",
-		"xo/Shaders/Processed_glsl/ArcShader.cpp",
-		"xo/Shaders/Processed_glsl/CurveShader.cpp",
-		"xo/Shaders/Processed_glsl/FillShader.cpp",
-		"xo/Shaders/Processed_glsl/FillTexShader.cpp",
-		"xo/Shaders/Processed_glsl/RectShader.cpp",
-		"xo/Shaders/Processed_glsl/Rect2Shader.cpp",
-		"xo/Shaders/Processed_glsl/Rect3Shader.cpp",
-		"xo/Shaders/Processed_glsl/TextRGBShader.cpp",
-		"xo/Shaders/Processed_glsl/TextWholeShader.cpp",
-		"xo/Shaders/Processed_hlsl/FillShader.cpp",
-		"xo/Shaders/Processed_hlsl/FillTexShader.cpp",
-		"xo/Shaders/Processed_hlsl/RectShader.cpp",
-		"xo/Shaders/Processed_hlsl/TextRGBShader.cpp",
-		"xo/Shaders/Processed_hlsl/TextWholeShader.cpp",
-		--"xo/Shaders/Helpers/xoPreprocessor.cpp",
-		"dependencies/agg/src/agg_vcgen_stroke.cpp",
-		"dependencies/agg/src/agg_vpgen_clip_polygon.cpp",
-		"dependencies/agg/src/agg_vpgen_clip_polyline.cpp",
-		"dependencies/hash/xxhash.cpp",
-		"dependencies/Panacea/Containers/queue.cpp",
-		"dependencies/Panacea/Platform/cpu.cpp",
-		"dependencies/Panacea/Platform/err.cpp",
-		"dependencies/Panacea/Platform/filesystem.cpp",
-		"dependencies/Panacea/Platform/process.cpp",
-		"dependencies/Panacea/Platform/syncprims.cpp",
-		"dependencies/Panacea/Platform/timeprims.cpp",
-		"dependencies/Panacea/Platform/thread.cpp",
-		"dependencies/Panacea/Platform/ConvertUTF.cpp",
-		"dependencies/Panacea/Strings/fmt.cpp",
-		"dependencies/GL/gl_xo.cpp",
-		{ "dependencies/GL/wgl_xo.cpp"; Config = "win*" },
-		{ "dependencies/GL/glx_xo.cpp"; Config = "linux-gcc-debug-default" },
-		"dependencies/stb_image.cpp",
+		makeGlob("xo", {}),
+		makeGlob("dependencies/agg", {}),
+		makeGlob("dependencies/GL", {}),
+		makeGlob("dependencies/hash", {}),
+		makeGlob("dependencies/Panacea", {}),
 	},
 }
 
@@ -341,7 +290,7 @@ local ExampleLowLevel    = XoExampleApp("xoWinMainLowLevel.cpp", "RunAppLowLevel
 
 local Test = Program {
 	Name = "Test",
-	SourceDir = ".",
+	--SourceDir = ".",
 	Depends = {
 		xo,
 		crt,
@@ -355,23 +304,11 @@ local Test = Program {
 		Pass = "PchGen",
 	},
 	Sources = {
-		Glob { Extensions = { ".h" }, Dir = "tests", },
-		-- The following platform mismatch is purely because of the mismatch of
-		-- precompiled header behaviour on linux vs windows
+		makeGlob("tests", {}),
 		{ "dependencies/stb_image.cpp"; Config = "win*" },
 		{ "dependencies/stb_image.c"; Config = "linux-*" },
 		"dependencies/stb_image_write.h",
 		"dependencies/Panacea/Platform/filesystem.cpp",
-		"tests/helpers.cpp",
-		"tests/test.cpp",
-		"tests/test_DocumentClone.cpp",
-		"tests/test_Layout.cpp",
-		"tests/test_Parser.cpp",
-		--"tests/test_Preprocessor.cpp",
-		"tests/test_Stats.cpp",
-		"tests/test_String.cpp",
-		"tests/test_Styles.cpp",
-		"tests/xoImageTester.cpp",
 	}
 }
 

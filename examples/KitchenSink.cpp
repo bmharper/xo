@@ -9,13 +9,11 @@ void InitDOM(xoDoc* doc);
 void xoMain(xoSysWnd* wnd)
 {
 	xoGlobal()->FontStore->AddFontDirectory("C:\\temp\\fonts");
-	int left = -750;
-	//int left = 750;
-	//int left = 2100; // DO NOT COMMIT ME
+	int left = 750;
 	int width = 700;
 	int top = 60;
 	int height = 500;
-	wnd->SetPosition(xoBox(left, top, left + width, top + height), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size);   // DO NOT COMMIT ME
+	wnd->SetPosition(xoBox(left, top, left + width, top + height), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size);
 	InitDOM(wnd->Doc());
 }
 
@@ -24,12 +22,12 @@ void DoBorder(xoDoc* doc)
 	auto root = &doc->Root;
 	root->StyleParse("background: #aaa");
 	root->Parse(
-		"<div style='border: #007; border: 1px 2px 3px 8px; border-radius: 10px 30px 20px 10px; width: 300ep; height: 300ep; background: #fff; margin: 2px'></div>"
-		//"<div style='border: #007; border: 1px 2px 3px 4px; border-radius: 5px; width: 200ep; height: 200ep; background: #fff; margin: 2px'></div>"
-		//"<div style='border: #070; border: 1px 1px 2px 3px; border-radius: 0px; width: 200ep; height: 200ep; background: #fff; margin: 2px'>aaaaa</div>"
-		//"<div style='border: 5px #070; border-radius: 8px; width: 100ep; height: 100ep; background: #fff; margin: 1px'>b</div>"
-		//"<div style='border: 1px #557; width: 150ep; height: 22ep; background: #fff; margin: 1px'>c</div>"
-		//"<div style='border: 5ep #456; width: 40ep; height: 40ep; background: #567; margin: 1px'>d</div>" // ensure border color goes through sRGB conversion
+		"<div style='border: #007; border: 2px 20px 5px 15px; border-radius: 100px 30px 20px 10px; width: 440ep; height: 440ep; background: #fff; margin: 2px'></div>"
+		"<div style='border: #007; border: 1px 2px 3px 4px; border-radius: 5px; width: 200ep; height: 200ep; background: #fff; margin: 2px'></div>"
+		"<div style='border: #070; border: 1px 1px 2px 3px; border-radius: 0px; width: 200ep; height: 200ep; background: #fff; margin: 2px'>aaaaa</div>"
+		"<div style='border: 5px #070; border-radius: 8px; width: 100ep; height: 100ep; background: #fff; margin: 1px'>b</div>"
+		"<div style='border: 1px #557; width: 150ep; height: 22ep; background: #fff; margin: 1px'>c</div>"
+		"<div style='border: 5ep #456; width: 40ep; height: 40ep; background: #567; margin: 1px'>d</div>" // ensure border color goes through sRGB conversion
 	);
 }
 
@@ -458,8 +456,9 @@ void InitDOM(xoDoc* doc)
 	//DoTimer(doc);
 
 	body->OnClick([](const xoEvent& ev) -> bool {
+		XOTRACE("%f %f\n", ev.Points[0].x, ev.Points[0].y);
 		//xoGlobal()->EnableKerning = !xoGlobal()->EnableKerning;
-		xoGlobal()->UseRect3 = !xoGlobal()->UseRect3;
+		//xoGlobal()->UseRect3 = !xoGlobal()->UseRect3;
 		//XOTRACE("InternalID: %d\n", ev.Target->GetInternalID());
 		// Force a re-layout. Useful to click on the document and be able to debug the layout that occurs.
 		ev.Doc->IncVersion();

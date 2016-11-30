@@ -8,7 +8,7 @@ function onload()
 function draw()
 {
 	var radx = 300;
-	var rady = 100;
+	var rady = 30;
 	var c1 = document.getElementById('c1');
 	var cx = c1.getContext("2d");
 	c1.width = 600;
@@ -32,7 +32,11 @@ function draw()
 	cx.lineWidth = 1;
 	cx.strokeStyle = "#c00";
 	cx.beginPath();
-	cx.ellipse(xc, yc, radx, rady, 0, 0, Math.PI * 2);
+	cx.ellipse(xc, yc, radx - 30, rady, 0, 0, Math.PI * 2);
+	cx.stroke();
+
+	cx.beginPath();
+	cx.ellipse(xc, yc, radx, radx, 0, 0, Math.PI * 2);
 	cx.stroke();
 }
 </script>

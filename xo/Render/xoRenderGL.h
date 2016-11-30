@@ -2,7 +2,6 @@
 
 #include "xoRenderGL_Defs.h"
 #include "xoRenderBase.h"
-#include "../Shaders/Helpers/xoPreprocessor.h"
 #include "../Shaders/Processed_glsl/CurveShader.h"
 #include "../Shaders/Processed_glsl/FillShader.h"
 #include "../Shaders/Processed_glsl/FillTexShader.h"
@@ -64,9 +63,7 @@ public:
 
 protected:
 	xoShaders		ActiveShader;
-	int				FBWidth, FBHeight;
 	GLuint			BoundTextures[xoMaxTextureUnits];
-	//xoPreprocessor	Preprocessor;
 	std::string		BaseShader;
 	bool			Have_Unpack_RowLength;
 	bool			Have_sRGB_Framebuffer;

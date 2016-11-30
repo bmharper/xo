@@ -5,27 +5,16 @@
 #include "wgl_xo.h"
 
 #if defined(__APPLE__)
-#include <mach-o/dyld.h>
+#include <dlfcn.h>
 
-static void* AppleGLGetProcAddress (const GLubyte *name)
+static void* AppleGLGetProcAddress (const char *name)
 {
-  static const struct mach_header* image = NULL;
-  NSSymbol symbol;
-  char* symbolName;
-  if (NULL == image)
-  {
-    image = NSAddImage("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", NSADDIMAGE_OPTION_RETURN_ON_ERROR);
-  }
-  /* prepend a '_' for the Unix C symbol mangling convention */
-  symbolName = malloc(strlen((const char*)name) + 2);
-  strcpy(symbolName+1, (const char*)name);
-  symbolName[0] = '_';
-  symbol = NULL;
-  /* if (NSIsSymbolNameDefined(symbolName))
-	 symbol = NSLookupAndBindSymbol(symbolName); */
-  symbol = image ? NSLookupSymbolInImage(image, symbolName, NSLOOKUPSYMBOLINIMAGE_OPTION_BIND | NSLOOKUPSYMBOLINIMAGE_OPTION_RETURN_ON_ERROR) : NULL;
-  free(symbolName);
-  return symbol ? NSAddressOfSymbol(symbol) : NULL;
+	static void* image = NULL;
+	
+	if (NULL == image)
+		image = dlopen("/System/Library/Frameworks/OpenGL.framework/Versions/Current/OpenGL", RTLD_LAZY);
+
+	return (image ? dlsym(image, name) : NULL);
 }
 #endif /* __APPLE__ */
 
@@ -56,6 +45,7 @@ static void* SunGetProcAddress (const GLubyte* name)
 #ifdef _MSC_VER
 #pragma warning(disable: 4055)
 #pragma warning(disable: 4054)
+#pragma warning(disable: 4996)
 #endif
 
 static int TestPointer(const PROC pTest)
@@ -110,9 +100,9 @@ int wgl_ext_EXT_create_context_es2_profile = wgl_LOAD_FAILED;
 int wgl_ext_EXT_swap_control_tear = wgl_LOAD_FAILED;
 int wgl_ext_NV_swap_group = wgl_LOAD_FAILED;
 
-const char * (CODEGEN_FUNCPTR *_ptrc_wglGetExtensionsStringARB)(HDC) = NULL;
+const char * (CODEGEN_FUNCPTR *_ptrc_wglGetExtensionsStringARB)(HDC hdc) = NULL;
 
-static int Load_ARB_extensions_string()
+static int Load_ARB_extensions_string(void)
 {
 	int numFailed = 0;
 	_ptrc_wglGetExtensionsStringARB = (const char * (CODEGEN_FUNCPTR *)(HDC))IntGetProcAddress("wglGetExtensionsStringARB");
@@ -120,11 +110,11 @@ static int Load_ARB_extensions_string()
 	return numFailed;
 }
 
-BOOL (CODEGEN_FUNCPTR *_ptrc_wglChoosePixelFormatARB)(HDC, const int *, const FLOAT *, UINT, int *, UINT *) = NULL;
-BOOL (CODEGEN_FUNCPTR *_ptrc_wglGetPixelFormatAttribfvARB)(HDC, int, int, UINT, const int *, FLOAT *) = NULL;
-BOOL (CODEGEN_FUNCPTR *_ptrc_wglGetPixelFormatAttribivARB)(HDC, int, int, UINT, const int *, int *) = NULL;
+BOOL (CODEGEN_FUNCPTR *_ptrc_wglChoosePixelFormatARB)(HDC hdc, const int * piAttribIList, const FLOAT * pfAttribFList, UINT nMaxFormats, int * piFormats, UINT * nNumFormats) = NULL;
+BOOL (CODEGEN_FUNCPTR *_ptrc_wglGetPixelFormatAttribfvARB)(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int * piAttributes, FLOAT * pfValues) = NULL;
+BOOL (CODEGEN_FUNCPTR *_ptrc_wglGetPixelFormatAttribivARB)(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int * piAttributes, int * piValues) = NULL;
 
-static int Load_ARB_pixel_format()
+static int Load_ARB_pixel_format(void)
 {
 	int numFailed = 0;
 	_ptrc_wglChoosePixelFormatARB = (BOOL (CODEGEN_FUNCPTR *)(HDC, const int *, const FLOAT *, UINT, int *, UINT *))IntGetProcAddress("wglChoosePixelFormatARB");
@@ -136,9 +126,9 @@ static int Load_ARB_pixel_format()
 	return numFailed;
 }
 
-HGLRC (CODEGEN_FUNCPTR *_ptrc_wglCreateContextAttribsARB)(HDC, HGLRC, const int *) = NULL;
+HGLRC (CODEGEN_FUNCPTR *_ptrc_wglCreateContextAttribsARB)(HDC hDC, HGLRC hShareContext, const int * attribList) = NULL;
 
-static int Load_ARB_create_context()
+static int Load_ARB_create_context(void)
 {
 	int numFailed = 0;
 	_ptrc_wglCreateContextAttribsARB = (HGLRC (CODEGEN_FUNCPTR *)(HDC, HGLRC, const int *))IntGetProcAddress("wglCreateContextAttribsARB");
@@ -146,27 +136,27 @@ static int Load_ARB_create_context()
 	return numFailed;
 }
 
-int (CODEGEN_FUNCPTR *_ptrc_wglGetSwapIntervalEXT)() = NULL;
-BOOL (CODEGEN_FUNCPTR *_ptrc_wglSwapIntervalEXT)(int) = NULL;
+int (CODEGEN_FUNCPTR *_ptrc_wglGetSwapIntervalEXT)(void) = NULL;
+BOOL (CODEGEN_FUNCPTR *_ptrc_wglSwapIntervalEXT)(int interval) = NULL;
 
-static int Load_EXT_swap_control()
+static int Load_EXT_swap_control(void)
 {
 	int numFailed = 0;
-	_ptrc_wglGetSwapIntervalEXT = (int (CODEGEN_FUNCPTR *)())IntGetProcAddress("wglGetSwapIntervalEXT");
+	_ptrc_wglGetSwapIntervalEXT = (int (CODEGEN_FUNCPTR *)(void))IntGetProcAddress("wglGetSwapIntervalEXT");
 	if(!_ptrc_wglGetSwapIntervalEXT) numFailed++;
 	_ptrc_wglSwapIntervalEXT = (BOOL (CODEGEN_FUNCPTR *)(int))IntGetProcAddress("wglSwapIntervalEXT");
 	if(!_ptrc_wglSwapIntervalEXT) numFailed++;
 	return numFailed;
 }
 
-BOOL (CODEGEN_FUNCPTR *_ptrc_wglBindSwapBarrierNV)(GLuint, GLuint) = NULL;
-BOOL (CODEGEN_FUNCPTR *_ptrc_wglJoinSwapGroupNV)(HDC, GLuint) = NULL;
-BOOL (CODEGEN_FUNCPTR *_ptrc_wglQueryFrameCountNV)(HDC, GLuint *) = NULL;
-BOOL (CODEGEN_FUNCPTR *_ptrc_wglQueryMaxSwapGroupsNV)(HDC, GLuint *, GLuint *) = NULL;
-BOOL (CODEGEN_FUNCPTR *_ptrc_wglQuerySwapGroupNV)(HDC, GLuint *, GLuint *) = NULL;
-BOOL (CODEGEN_FUNCPTR *_ptrc_wglResetFrameCountNV)(HDC) = NULL;
+BOOL (CODEGEN_FUNCPTR *_ptrc_wglBindSwapBarrierNV)(GLuint group, GLuint barrier) = NULL;
+BOOL (CODEGEN_FUNCPTR *_ptrc_wglJoinSwapGroupNV)(HDC hDC, GLuint group) = NULL;
+BOOL (CODEGEN_FUNCPTR *_ptrc_wglQueryFrameCountNV)(HDC hDC, GLuint * count) = NULL;
+BOOL (CODEGEN_FUNCPTR *_ptrc_wglQueryMaxSwapGroupsNV)(HDC hDC, GLuint * maxGroups, GLuint * maxBarriers) = NULL;
+BOOL (CODEGEN_FUNCPTR *_ptrc_wglQuerySwapGroupNV)(HDC hDC, GLuint * group, GLuint * barrier) = NULL;
+BOOL (CODEGEN_FUNCPTR *_ptrc_wglResetFrameCountNV)(HDC hDC) = NULL;
 
-static int Load_NV_swap_group()
+static int Load_NV_swap_group(void)
 {
 	int numFailed = 0;
 	_ptrc_wglBindSwapBarrierNV = (BOOL (CODEGEN_FUNCPTR *)(GLuint, GLuint))IntGetProcAddress("wglBindSwapBarrierNV");
@@ -184,7 +174,7 @@ static int Load_NV_swap_group()
 	return numFailed;
 }
 
-typedef int (*PFN_LOADFUNCPOINTERS)();
+typedef int (*PFN_LOADFUNCPOINTERS)(void);
 typedef struct wgl_StrToExtMap_s
 {
 	char *extensionName;
@@ -223,7 +213,7 @@ static wgl_StrToExtMap *FindExtEntry(const char *extensionName)
 	return NULL;
 }
 
-static void ClearExtensionVars()
+static void ClearExtensionVars(void)
 {
 	wgl_ext_ARB_multisample = wgl_LOAD_FAILED;
 	wgl_ext_ARB_extensions_string = wgl_LOAD_FAILED;

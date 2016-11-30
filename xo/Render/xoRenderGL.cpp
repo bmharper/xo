@@ -514,6 +514,7 @@ void xoRenderGL::SetShaderFrameUniforms()
 	xoMat4f mvproj;
 	mvproj.Identity();
 	Ortho(mvproj, 0, FBWidth, FBHeight, 0, 1, 0);
+	SetupToScreen(mvproj); // this sets up ShaderPerFrame
 	xoMat4f mvprojT = mvproj.Transposed();
 
 	if (SetMVProj(xoShaderRect, PRect, mvprojT))
@@ -660,13 +661,13 @@ void xoRenderGL::Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v)
 		stride = sizeof(xoVx_PTCV4);
 		varvpos = PArc.v_vpos;
 		varvcol = PArc.v_vcolor;
-		glVertexAttribPointer(PArc.v_vcenter, 3, GL_FLOAT, false, stride, vbyte + offsetof(xoVx_PTCV4, V4.x));
-		glVertexAttribPointer(PArc.v_vradius, 1, GL_FLOAT, false, stride, vbyte + offsetof(xoVx_PTCV4, V4.w));
-		glVertexAttribPointer(PArc.v_vborder_width, 1, GL_FLOAT, false, stride, vbyte + offsetof(xoVx_PTCV4, UV.x));
+		glVertexAttribPointer(PArc.v_vcenter, 4, GL_FLOAT, false, stride, vbyte + offsetof(xoVx_PTCV4, V4.x));
+		glVertexAttribPointer(PArc.v_vradius1, 1, GL_FLOAT, false, stride, vbyte + offsetof(xoVx_PTCV4, UV.x));
+		glVertexAttribPointer(PArc.v_vradius2, 1, GL_FLOAT, false, stride, vbyte + offsetof(xoVx_PTCV4, UV.y));
 		glVertexAttribPointer(PArc.v_vborder_color, 4, GL_UNSIGNED_BYTE, true, stride, vbyte + offsetof(xoVx_PTCV4, Color2));
 		glEnableVertexAttribArray(PArc.v_vcenter);
-		glEnableVertexAttribArray(PArc.v_vradius);
-		glEnableVertexAttribArray(PArc.v_vborder_width);
+		glEnableVertexAttribArray(PArc.v_vradius1);
+		glEnableVertexAttribArray(PArc.v_vradius2);
 		glEnableVertexAttribArray(PArc.v_vborder_color);
 		break;
 	case xoShaderQuadraticSpline:

@@ -3,10 +3,13 @@
 #include "../xoDefs.h"
 #include "xoVertexTypes.h"
 
+// This is a mess -- xoShaderPerFrame and xoShaderPerObject are actually DirectX specific.
+// We must investigate whether we can make them uniform across GL and DirectX, but that
+// would necessitate having the same matrix layout (ie column or row major).
 struct xoShaderPerFrame
 {
-	xoMat4f		MVProj;
-	xoVec2f		VPort_HSize;
+	xoMat4f		MVProj;			// Transposed for DirectX
+	xoVec2f		VPort_HSize;	// Half the size of the viewport
 	float		Padding[2];
 };
 static_assert((sizeof(xoShaderPerFrame) & 15) == 0, "xoShaderPerFrame size must be a multiple of 16 bytes (This is a DirectX constant buffer requirement)");
@@ -59,14 +62,19 @@ class XOAPI xoRenderBase
 public:
 	friend struct xoRenderBase_OnceOff;
 
-	xoShaderPerFrame		ShaderPerFrame;
-	xoShaderPerObject		ShaderPerObject;
+	xoShaderPerFrame	ShaderPerFrame; // This is a mess between DirectX and OpenGL. needs cleanup
+	xoShaderPerObject	ShaderPerObject;
+	xoMat4f				MVProj;
 
 	xoRenderBase();
 	virtual				~xoRenderBase();
 
 	// Setup a matrix equivalent to glOrtho. The matrix 'imat' is multiplied by the ortho matrix.
-	void				Ortho(xoMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar);
+	static void			Ortho(xoMat4f &imat, double left, double right, double bottom, double top, double znear, double zfar);
+
+	// Project a point 'v' through ShaderPerFrame.MVProj
+	void				SetupToScreen(xoMat4f mvproj);
+	xoVec2f				ToScreen(xoVec2f v);
 
 	void				SurfaceLost_ForgetTextures();
 	bool				IsTextureValid(xoTextureID texID) const;
@@ -102,6 +110,7 @@ protected:
 	static const xoTextureID	TEX_OFFSET_ONE = 1;	// This constant causes the xoTextureID that we expose to never be zero.
 	xoTextureID					TexIDOffset;
 	podvec<void*>				TexIDToNative;		// Maps from xoTextureID to native device texture (eg. GLuint or ID3D11Texture2D*). We're wasting 4 bytes here on OpenGL.
+	int							FBWidth, FBHeight;
 
 	void				EnsureTextureProperlyDefined(xoTexture* tex, int texUnit);
 	std::string			CommonShaderDefines();

@@ -72,7 +72,6 @@ private:
 	};
 
 	D3DState				D3D;
-	int						FBWidth, FBHeight;
 
 	xoDXProg_Fill			PFill;
 	xoDXProg_FillTex		PFillTex;

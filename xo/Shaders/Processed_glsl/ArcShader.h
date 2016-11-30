@@ -20,8 +20,8 @@ public:
 	GLint v_vcenter;                         // attribute vec4
 	GLint v_vcolor;                          // attribute vec4
 	GLint v_vborder_color;                   // attribute vec4
-	GLint v_vborder_width;                   // attribute float
-	GLint v_vradius;                         // attribute float
+	GLint v_vradius1;                        // attribute float
+	GLint v_vradius2;                        // attribute float
 	GLint v_vport_hsize;                     // uniform vec2
 };
 

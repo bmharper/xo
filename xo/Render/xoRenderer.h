@@ -32,7 +32,7 @@ protected:
 
 	void			RenderEl(xoPoint base, const xoRenderDomEl* node);
 	void			RenderNode(xoPoint base, const xoRenderDomNode* node);
-	void			RenderCornerArcs(Corners corner, float xEdge, float yEdge, xoVec2f radii, float borderWidthX, float borderWidthY, uint32 bgRGBA, uint32 borderRGBA);
+	void			RenderCornerArcs(Corners corner, float xEdge, float yEdge, xoVec2f outerRadii, float borderWidthX, float borderWidthY, uint32 bgRGBA, uint32 borderRGBA);
 	void			RenderQuadratic(xoPoint base, const xoRenderDomNode* node);
 	void			RenderText(xoPoint base, const xoRenderDomText* node);
 	void			RenderTextChar_WholePixel(xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl);
@@ -40,5 +40,7 @@ protected:
 	void			RenderGlyphsNeeded();
 
 	bool			LoadTexture(xoTexture* tex, TexUnits texUnit);		// Load a texture and reset invalid rectangle
+	static float	CircleFrom3Pt(const xoVec2f& a, const xoVec2f& b, const xoVec2f& c, xoVec2f& center, float& radius);
+	static xoVec2f	PtOnEllipse(float flipX, float flipY, float a, float b, float theta);
 
 };

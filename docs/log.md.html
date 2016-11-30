@@ -615,6 +615,18 @@ detect that condition, you need to flush your text queue. I imagine this could w
 fairly well in practice, for most UI, but I'm also pretty sure that there would
 be pathological cases that would really screw you over.
 
+2016-11-30 Better arcs
+======================
+There were many problems with my previous arc-for-ellipse approximation. I have
+sorted out a lot of them, and the results look good for what I'd say is 99% of
+the types of eccentricities that you find in real-world UI corner radii. No
+doubt there will be cases where people push it to the extreme and it falls over
+(numerical precision issues manifest in just plain broken corners). Anyway,
+it's not particularly performance, but it's probably OK. The CPU setup work for
+the arcs is embarrasing, but the fragment shader is just two square roots and
+some clamps, which I think is alright.
+
+
 <!-- Markdeep: -->
 <style class="fallback">body{white-space:pre;font-family:monospace}</style>
 <script src="markdeep.min.js"></script>
