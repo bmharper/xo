@@ -81,10 +81,10 @@ public:
 	xoTextureID			FirstTextureID() const								{ return TexIDOffset + TEX_OFFSET_ONE; }
 
 	// Register a new texture. There is no "unregister".
-	xoTextureID			RegisterTexture(void* deviceTexID);
-	xoTextureID			RegisterTextureInt(uint deviceTexID)				{ return RegisterTexture(reinterpret_cast<void*>(deviceTexID));  }
-	void*				GetTextureDeviceHandle(xoTextureID texID) const;
-	uint				GetTextureDeviceHandleInt(xoTextureID texID) const	{ return (uint) reinterpret_cast<uintptr_t>(GetTextureDeviceHandle(texID)); }
+	xoTextureID			RegisterTexture(uintptr_t deviceTexID);
+	xoTextureID			RegisterTextureInt(uint deviceTexID)				{ return RegisterTexture((uintptr_t) deviceTexID);  }
+	uintptr_t			GetTextureDeviceHandle(xoTextureID texID) const;
+	uint				GetTextureDeviceHandleInt(xoTextureID texID) const	{ return (uint)(uintptr_t)(GetTextureDeviceHandle(texID)); }
 
 	virtual const char*	RendererName() = 0;
 
@@ -109,7 +109,7 @@ public:
 protected:
 	static const xoTextureID	TEX_OFFSET_ONE = 1;	// This constant causes the xoTextureID that we expose to never be zero.
 	xoTextureID					TexIDOffset;
-	podvec<void*>				TexIDToNative;		// Maps from xoTextureID to native device texture (eg. GLuint or ID3D11Texture2D*). We're wasting 4 bytes here on OpenGL.
+	podvec<uintptr_t>			TexIDToNative;		// Maps from xoTextureID to native device texture (eg. GLuint or ID3D11Texture2D*). We're wasting 4 bytes here on OpenGL.
 	int							FBWidth, FBHeight;
 
 	void				EnsureTextureProperlyDefined(xoTexture* tex, int texUnit);

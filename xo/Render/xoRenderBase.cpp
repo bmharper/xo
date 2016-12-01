@@ -60,7 +60,7 @@ bool xoRenderBase::IsTextureValid(xoTextureID texID) const
 	return relativeID < (xoTextureID) TexIDToNative.size();
 }
 
-xoTextureID xoRenderBase::RegisterTexture(void* deviceTexID)
+xoTextureID xoRenderBase::RegisterTexture(uintptr_t deviceTexID)
 {
 	xoTextureID maxTexID = xoGlobal()->MaxTextureID;
 	xoTextureID id = TexIDOffset + (xoTextureID) TexIDToNative.size();
@@ -71,7 +71,7 @@ xoTextureID xoRenderBase::RegisterTexture(void* deviceTexID)
 	return id + TEX_OFFSET_ONE;
 }
 
-void* xoRenderBase::GetTextureDeviceHandle(xoTextureID texID) const
+uintptr_t xoRenderBase::GetTextureDeviceHandle(xoTextureID texID) const
 {
 	xoTextureID absolute = texID - TEX_OFFSET_ONE - TexIDOffset;
 	if (absolute >= (xoTextureID) TexIDToNative.size())

@@ -652,7 +652,7 @@ bool xoRenderDX::ReadBackbuffer(xoImage& image)
 	bool ok = false;
 	if (SUCCEEDED(hr))
 	{
-		D3D11_BOX srcBox = { 0, 0, 0, FBWidth, FBHeight, 1 };
+		D3D11_BOX srcBox = { 0, 0, 0, (UINT) FBWidth, (UINT) FBHeight, 1 };
 		D3D.Context->CopySubresourceRegion(tempTex, 0, 0, 0, 0, backBuffer, 0, &srcBox);
 		backBuffer->Release();
 

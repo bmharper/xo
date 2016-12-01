@@ -95,7 +95,7 @@ private:
 	bool				CreateTexture2D(xoTexture* tex);
 	void				UpdateTexture2D(ID3D11Texture2D* dxTex, xoTexture* tex);
 
-	xoTextureID			RegisterTextureDX(Texture2D* tex)			{ return RegisterTexture(tex); }
+	xoTextureID			RegisterTextureDX(Texture2D* tex)			{ return RegisterTexture((uintptr_t) tex); }
 	Texture2D*			GetTextureDX(xoTextureID texID) const		{ return (Texture2D*) GetTextureDeviceHandle(texID); }
 
 	static int			TexFilterToDX(xoTexFilter f);

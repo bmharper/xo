@@ -297,13 +297,11 @@ void xoRenderer::RenderCornerArcs(Corners corner, float xEdge, float yEdge, xoVe
 	{
 		// I haven't worked out why, but empirically 1.04 seems to be sufficient up to 200px radius.
 		fanRadius = maxOuterRadius * 1.04f + 2.0f;
-		divs = 3;
 	}
 	else
 	{
 		// with an explicit gradient function for border_width you could get away with much fewer arc subdivisions, at least for the non-elliptical case.
 		fanRadius = maxOuterRadius * 1.1f + 2.0f;
-		divs = (int) xoClamp(maxOuterRadius * 0.4f, 2.0f, 50.0f);
 	}
 
 	// It's remarkable what good results we get from approximating ellipses with just two arcs. If you make the
