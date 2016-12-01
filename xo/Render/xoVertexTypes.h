@@ -37,11 +37,32 @@ struct XOAPI xoVx_PTCV4
 	}
 };
 
+struct XOAPI xoVx_Uber
+{
+	xoVecBase2f		Pos;
+	xoVecBase4f		UV1;
+	xoVecBase4f		UV2;
+	uint32			Color1;
+	uint32			Color2;
+	uint32			Shader;
+
+	void Set(xoVecBase2f pos, xoVecBase4f uv1, xoVecBase4f uv2, uint32 color1, uint32 color2, uint32 shader)
+	{
+		Pos = pos;
+		UV1 = uv1;
+		UV2 = uv2;
+		Color1 = color1;
+		Color2 = color2;
+		Shader = shader;
+	}
+};
+
 enum xoVertexType
 {
 	xoVertexType_NULL,
 	xoVertexType_PTC,
 	xoVertexType_PTCV4,
+	xoVertexType_Uber,
 	xoVertexType_END,
 };
 

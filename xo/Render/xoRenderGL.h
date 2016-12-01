@@ -11,6 +11,7 @@
 #include "../Shaders/Processed_glsl/TextRGBShader.h"
 #include "../Shaders/Processed_glsl/TextWholeShader.h"
 #include "../Shaders/Processed_glsl/ArcShader.h"
+#include "../Shaders/Processed_glsl/UberShader.h"
 
 class XOAPI xoRenderGL : public xoRenderBase
 {
@@ -29,7 +30,8 @@ public:
 	xoGLProg_TextWhole	PTextWhole;
 	xoGLProg_Arc		PArc;
 	xoGLProg_Curve		PCurve;
-	static const int	NumProgs = 9;
+	xoGLProg_Uber		PUber;
+	static const int	NumProgs = 10;
 	xoGLProg*			AllProgs[NumProgs];	// All of the above programs
 
 	xoRenderGL();

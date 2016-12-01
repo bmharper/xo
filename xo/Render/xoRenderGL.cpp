@@ -61,6 +61,8 @@ vec4 premultiply(vec4 c)
 {
 	return vec4(c.r * c.a, c.g * c.a, c.b * c.a, c.a);
 }
+
+#define SHADER_ARC 1
 )";
 
 xoRenderGL::xoRenderGL()
@@ -81,7 +83,8 @@ xoRenderGL::xoRenderGL()
 	AllProgs[6] = &PTextWhole;
 	AllProgs[7] = &PArc;
 	AllProgs[8] = &PCurve;
-	static_assert(NumProgs == 9, "Add your new shader here");
+	AllProgs[9] = &PUber;
+	static_assert(NumProgs == 10, "Add your new shader here");
 	Reset();
 }
 
@@ -362,6 +365,7 @@ xoProgBase* xoRenderGL::GetShader(xoShaders shader)
 	case xoShaderTextWhole:			return &PTextWhole;
 	case xoShaderArc:				return &PArc;
 	case xoShaderQuadraticSpline:	return &PCurve;
+	case xoShaderUber:				return &PUber;
 	default:
 		XOASSERT(false);
 		return NULL;
@@ -526,6 +530,9 @@ void xoRenderGL::SetShaderFrameUniforms()
 	if (SetMVProj(xoShaderArc, PArc, mvprojT))
 		glUniform2f(PArc.v_vport_hsize, FBWidth / 2.0f, FBHeight / 2.0f);
 
+	if (SetMVProj(xoShaderUber, PUber, mvprojT))
+		glUniform2f(PUber.v_Frame_VPort_HSize, FBWidth / 2.0f, FBHeight / 2.0f);
+
 	SetMVProj(xoShaderRect3, PFill, mvprojT);
 	SetMVProj(xoShaderFill, PFill, mvprojT);
 	SetMVProj(xoShaderFillTex, PFillTex, mvprojT);
@@ -598,11 +605,11 @@ void xoRenderGL::Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v)
 	int stride = sizeof(xoVx_PTC);
 	const byte* vbyte = (const byte*) v;
 
-	GLint varvpos = 0;
-	GLint varvcol = 0;
-	GLint varvtex0 = 0;
-	GLint varvtexClamp = 0;
-	GLint vartexUnit0 = 0;
+	GLint varvpos = -1;
+	GLint varvcol = -1;
+	GLint varvtex0 = -1;
+	GLint varvtexClamp = -1;
+	GLint vartexUnit0 = -1;
 	switch (ActiveShader)
 	{
 	case xoShaderRect:
@@ -670,6 +677,21 @@ void xoRenderGL::Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v)
 		glEnableVertexAttribArray(PArc.v_vradius2);
 		glEnableVertexAttribArray(PArc.v_vborder_color);
 		break;
+	case xoShaderUber:
+		stride = sizeof(xoVx_Uber);
+		glVertexAttribPointer(PUber.v_v_pos, 2, GL_FLOAT, false, stride, vbyte + offsetof(xoVx_Uber, Pos.x));
+		glVertexAttribPointer(PUber.v_v_uv1, 4, GL_FLOAT, false, stride, vbyte + offsetof(xoVx_Uber, UV1.x));
+		glVertexAttribPointer(PUber.v_v_uv2, 4, GL_FLOAT, false, stride, vbyte + offsetof(xoVx_Uber, UV2.x));
+		glVertexAttribPointer(PUber.v_v_color1, 4, GL_UNSIGNED_BYTE, true, stride, vbyte + offsetof(xoVx_Uber, Color1));
+		glVertexAttribPointer(PUber.v_v_color2, 4, GL_UNSIGNED_BYTE, true, stride, vbyte + offsetof(xoVx_Uber, Color2));
+		glVertexAttribPointer(PUber.v_v_shader, 1, GL_UNSIGNED_INT, false, stride, vbyte + offsetof(xoVx_Uber, Shader));
+		glEnableVertexAttribArray(PUber.v_v_pos);
+		glEnableVertexAttribArray(PUber.v_v_uv1);
+		glEnableVertexAttribArray(PUber.v_v_uv2);
+		glEnableVertexAttribArray(PUber.v_v_color1);
+		glEnableVertexAttribArray(PUber.v_v_color2);
+		glEnableVertexAttribArray(PUber.v_v_shader);
+		break;
 	case xoShaderQuadraticSpline:
 		stride = sizeof(xoVx_PTCV4);
 		varvpos = PCurve.v_vpos;
@@ -682,21 +704,27 @@ void xoRenderGL::Draw(xoGPUPrimitiveTypes type, int nvertex, const void* v)
 	}
 
 	// We assume here that xoVx_PTC and xoVx_PTCV4 share the same base layout
-	glVertexAttribPointer(varvpos, 3, GL_FLOAT, false, stride, vbyte);
-	glEnableVertexAttribArray(varvpos);
+	if (varvpos != -1)
+	{
+		glVertexAttribPointer(varvpos, 3, GL_FLOAT, false, stride, vbyte);
+		glEnableVertexAttribArray(varvpos);
+	}
 
-	glVertexAttribPointer(varvcol, 4, GL_UNSIGNED_BYTE, true, stride, vbyte + offsetof(xoVx_PTC, Color));
-	glEnableVertexAttribArray(varvcol);
+	if (varvcol != -1)
+	{
+		glVertexAttribPointer(varvcol, 4, GL_UNSIGNED_BYTE, true, stride, vbyte + offsetof(xoVx_PTC, Color));
+		glEnableVertexAttribArray(varvcol);
+	}
 
-	if (vartexUnit0 != 0)
+	if (vartexUnit0 != -1)
 		glUniform1i(vartexUnit0, 0);
 
-	if (varvtex0 != 0)
+	if (varvtex0 != -1)
 	{
 		glVertexAttribPointer(varvtex0, 2, GL_FLOAT, true, stride, vbyte + offsetof(xoVx_PTC, UV));
 		glEnableVertexAttribArray(varvtex0);
 	}
-	if (varvtexClamp != 0)
+	if (varvtexClamp != -1)
 	{
 		glVertexAttribPointer(varvtexClamp, 4, GL_FLOAT, true, stride, vbyte + offsetof(xoVx_PTCV4, V4));
 		glEnableVertexAttribArray(varvtexClamp);

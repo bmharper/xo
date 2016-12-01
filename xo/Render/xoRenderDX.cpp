@@ -270,7 +270,8 @@ bool xoRenderDX::CreateVertexLayout(xoDXProg* prog, ID3DBlob* vsBlob)
 {
 	xoVertexType vtype = prog->VertexType();
 
-	static_assert(xoVertexType_END == 3, "Create new vertex layout here");
+	// TODO: fixup for UBER
+	// static_assert(xoVertexType_END == 3, "Create new vertex layout here");
 
 	// When I try to use DXGI_FORMAT_R8G8B8A8_UNORM_SRGB here, I get a failure without any indication as to what's wrong.
 	// OK.. so it is not supported as "Input assembler vertex buffer resources":

@@ -386,6 +386,7 @@ enum xoShaders
 	xoShaderTextWhole,
 	xoShaderArc,
 	xoShaderQuadraticSpline,
+	xoShaderUber,
 	// We may someday want to have slots down here available for application-defined custom shaders
 };
 

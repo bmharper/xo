@@ -289,7 +289,7 @@ void xoRenderer::RenderCornerArcs(Corners corner, float xEdge, float yEdge, xoVe
 	if (outerRadii.x == 0 || outerRadii.y == 0)
 		return;
 
-	Driver->ActivateShader(xoShaderArc);
+	Driver->ActivateShader(xoShaderUber);
 	float maxOuterRadius = xoMax(outerRadii.x, outerRadii.y);
 	float fanRadius;
 	int divs;
@@ -307,13 +307,13 @@ void xoRenderer::RenderCornerArcs(Corners corner, float xEdge, float yEdge, xoVe
 	// It's remarkable what good results we get from approximating ellipses with just two arcs. If you make the
 	// eccentricity truly extreme, then this ain't so great, but the thing is, that at those extremities, our
 	// arc approximation has numerical problems, so we're screwed anyway. Right now, we just choose not to support
-	// those kind of extremes. One big benefit of having a low number of subvisions is that you avoid the problem
+	// those kind of extremes. One big benefit of having a low number of subdivisions is that you avoid the problem
 	// where the arc's radius becomes so small that you end up seeing the opposite side of the circle within
 	// the corner. Just run the "DoBorder" example in KitchenSink, and crank divs up to 10, to see what I mean.
 	// For the majority of cases, 2 arcs actually looks just fine.
 	divs = 2;
 
-	xoVx_PTCV4 vx[3];
+	xoVx_Uber vx[3];
 
 	// we always sweep our arc counter clockwise
 	float inc = (float) (XO_PI / 2) / (float) divs;
@@ -399,11 +399,13 @@ void xoRenderer::RenderCornerArcs(Corners corner, float xEdge, float yEdge, xoVe
 		//outerCenter = Driver->ToScreen(outerCenter);
 
 		auto arcCenters = XOVEC4(innerCenter.x, innerCenter.y, outerCenter.x, outerCenter.y);
-		auto arcRadii = XOVEC2(innerRadius, outerRadius);
+		auto arcRadii = XOVEC4(innerRadius, outerRadius, 0, 0);
 
-		vx[0].Set(xoVec3f(center, 0), arcRadii, bgRGBA, borderRGBA, arcCenters);
-		vx[1].Set(xoVec3f(fanPos, 0), arcRadii, bgRGBA, borderRGBA, arcCenters);
-		vx[2].Set(xoVec3f(fanPosNext, 0), arcRadii, bgRGBA, borderRGBA, arcCenters);
+		const int SHADER_ARC = 1;
+
+		vx[0].Set(center, arcCenters, arcRadii, bgRGBA, borderRGBA, SHADER_ARC);
+		vx[1].Set(fanPos, arcCenters, arcRadii, bgRGBA, borderRGBA, SHADER_ARC);
+		vx[2].Set(fanPosNext, arcCenters, arcRadii, bgRGBA, borderRGBA, SHADER_ARC);
 		Driver->Draw(xoGPUPrimTriangles, 3, vx);
 		fanPos = fanPosNext;
 		outerPos = outerPosNext;
