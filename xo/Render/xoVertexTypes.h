@@ -46,7 +46,18 @@ struct XOAPI xoVx_Uber
 	uint32			Color2;
 	uint32			Shader;
 
-	void Set(xoVecBase2f pos, xoVecBase4f uv1, xoVecBase4f uv2, uint32 color1, uint32 color2, uint32 shader)
+	// Set everything except for UV2
+	void Set1(uint32 shader, xoVecBase2f pos, xoVecBase4f uv1, uint32 color1, uint32 color2)
+	{
+		Pos = pos;
+		UV1 = uv1;
+		Color1 = color1;
+		Color2 = color2;
+		Shader = shader;
+	}
+	
+	// Set everything
+	void Set(uint32 shader, xoVecBase2f pos, xoVecBase4f uv1, xoVecBase4f uv2, uint32 color1, uint32 color2)
 	{
 		Pos = pos;
 		UV1 = uv1;

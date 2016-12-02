@@ -62,7 +62,8 @@ vec4 premultiply(vec4 c)
 	return vec4(c.r * c.a, c.g * c.a, c.b * c.a, c.a);
 }
 
-#define SHADER_ARC 1
+#define SHADER_ARC  1
+#define SHADER_RECT 2
 )";
 
 xoRenderGL::xoRenderGL()

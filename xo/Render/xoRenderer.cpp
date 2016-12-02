@@ -8,6 +8,9 @@
 #include "../Image/xoImage.h"
 #include "../Dom/xoDomCanvas.h"
 
+const int SHADER_ARC = 1;
+const int SHADER_RECT = 2;
+
 xoRenderResult xoRenderer::Render(const xoDoc* doc, xoImageStore* images, xoStringTable* strings, xoRenderBase* driver, const xoRenderDomNode* root)
 {
 	Doc = doc;
@@ -121,8 +124,7 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 			{ radius, radius },	// right, bottom
 			{ radius, radius }, // right, top
 		};
-		Driver->ActivateShader(xoShaderRect3);
-		xoVx_PTCV4 vx[16];
+		xoVx_Uber v[16];
 		float vmid = 0.5f * (top + bottom);
 		float borderPos = border.Top;
 		// If we want to work under perspective, then we'll need to make these paddings adjust to
@@ -142,34 +144,36 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		float rightEdge = xoMax(radii.TopRight.x, radii.BottomRight.x);
 		rightEdge = xoMax(rightEdge, border.Right);
 
-		//                                                                                                               Border width
-		//                                                                                                               |           Distance from edge
-		//                                                                                                               |           |
-		// top                                                                                                           |           |
-		vx[0].Set(XOVEC3(left + leftEdge, top - vpad, 0),						XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Top, -vpad, 0, 0));
-		vx[1].Set(XOVEC3(left + leftEdge, vmid, 0),								XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Top, vmid - top, 0, 0));
-		vx[2].Set(XOVEC3(right - rightEdge, vmid, 0),							XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Top, vmid - top, 0, 0));
-		vx[3].Set(XOVEC3(right - rightEdge, top - vpad, 0),						XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Top, -vpad, 0, 0));
+		Driver->ActivateShader(xoShaderUber);
+
+		//                                                                                  Border width
+		//                                                                                  |           Distance from edge
+		//                                                                                  |           |
+		// top                                                                              |           |
+		v[0].Set1(SHADER_RECT, XOVEC2(left + leftEdge, top - vpad),							XOVEC4(border.Top, -vpad, 0, 0), bgRGBA, borderRGBA);
+		v[1].Set1(SHADER_RECT, XOVEC2(left + leftEdge, vmid),								XOVEC4(border.Top, vmid - top, 0, 0), bgRGBA, borderRGBA);
+		v[2].Set1(SHADER_RECT, XOVEC2(right - rightEdge, vmid),								XOVEC4(border.Top, vmid - top, 0, 0), bgRGBA, borderRGBA);
+		v[3].Set1(SHADER_RECT, XOVEC2(right - rightEdge, top - vpad),						XOVEC4(border.Top, -vpad, 0, 0), bgRGBA, borderRGBA);
 
 		// bottom
-		vx[4].Set(XOVEC3(left + leftEdge, vmid, 0),								XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Bottom, bottom - vmid, 0, 0));
-		vx[5].Set(XOVEC3(left + leftEdge, bottom + vpad, 0),					XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Bottom, -vpad, 0, 0));
-		vx[6].Set(XOVEC3(right - rightEdge, bottom + vpad, 0),					XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Bottom, -vpad, 0, 0));
-		vx[7].Set(XOVEC3(right - rightEdge, vmid, 0),							XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Bottom, bottom - vmid, 0, 0));
+		v[4].Set1(SHADER_RECT, XOVEC2(left + leftEdge, vmid),								XOVEC4(border.Bottom, bottom - vmid, 0, 0), bgRGBA, borderRGBA);
+		v[5].Set1(SHADER_RECT, XOVEC2(left + leftEdge, bottom + vpad),						XOVEC4(border.Bottom, -vpad, 0, 0), bgRGBA, borderRGBA);
+		v[6].Set1(SHADER_RECT, XOVEC2(right - rightEdge, bottom + vpad),					XOVEC4(border.Bottom, -vpad, 0, 0), bgRGBA, borderRGBA);
+		v[7].Set1(SHADER_RECT, XOVEC2(right - rightEdge, vmid),								XOVEC4(border.Bottom, bottom - vmid, 0, 0), bgRGBA, borderRGBA);
 
 		// left
-		vx[8].Set(XOVEC3(left - hpad, top + radii.TopLeft.y, 0),				XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Left, -hpad, 0, 0));
-		vx[9].Set(XOVEC3(left - hpad, bottom - radii.BottomLeft.y, 0),			XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Left, -hpad, 0, 0));
-		vx[10].Set(XOVEC3(left + leftEdge, bottom - radii.BottomLeft.y, 0),		XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Left, leftEdge, 0, 0));
-		vx[11].Set(XOVEC3(left + leftEdge, top + radii.TopLeft.y, 0),			XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Left, leftEdge, 0, 0));
+		v[8].Set1(SHADER_RECT, XOVEC2(left - hpad, top + radii.TopLeft.y),					XOVEC4(border.Left, -hpad, 0, 0), bgRGBA, borderRGBA);
+		v[9].Set1(SHADER_RECT, XOVEC2(left - hpad, bottom - radii.BottomLeft.y),			XOVEC4(border.Left, -hpad, 0, 0), bgRGBA, borderRGBA);
+		v[10].Set1(SHADER_RECT, XOVEC2(left + leftEdge, bottom - radii.BottomLeft.y),		XOVEC4(border.Left, leftEdge, 0, 0), bgRGBA, borderRGBA);
+		v[11].Set1(SHADER_RECT, XOVEC2(left + leftEdge, top + radii.TopLeft.y),				XOVEC4(border.Left, leftEdge, 0, 0), bgRGBA, borderRGBA);
 
 		// right
-		vx[12].Set(XOVEC3(right - rightEdge, top + radii.TopRight.y, 0),		XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Right, rightEdge, 0, 0));
-		vx[13].Set(XOVEC3(right - rightEdge, bottom - radii.BottomRight.y, 0),	XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Right, rightEdge, 0, 0));
-		vx[14].Set(XOVEC3(right + hpad, bottom - radii.BottomRight.y, 0),		XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Right, -hpad, 0, 0));
-		vx[15].Set(XOVEC3(right + hpad, top + radii.TopRight.y, 0),				XOVEC2(0, 0), bgRGBA, borderRGBA, XOVEC4(border.Right, -hpad, 0, 0));
+		v[12].Set1(SHADER_RECT, XOVEC2(right - rightEdge, top + radii.TopRight.y),			XOVEC4(border.Right, rightEdge, 0, 0), bgRGBA, borderRGBA);
+		v[13].Set1(SHADER_RECT, XOVEC2(right - rightEdge, bottom - radii.BottomRight.y),	XOVEC4(border.Right, rightEdge, 0, 0), bgRGBA, borderRGBA);
+		v[14].Set1(SHADER_RECT, XOVEC2(right + hpad, bottom - radii.BottomRight.y),			XOVEC4(border.Right, -hpad, 0, 0), bgRGBA, borderRGBA);
+		v[15].Set1(SHADER_RECT, XOVEC2(right + hpad, top + radii.TopRight.y),				XOVEC4(border.Right, -hpad, 0, 0), bgRGBA, borderRGBA);
 
-		Driver->Draw(xoGPUPrimQuads, 16, vx);
+		Driver->Draw(xoGPUPrimQuads, 16, v);
 
 		RenderCornerArcs(TopLeft, left, top, radii.TopLeft, border.Left, border.Top, bgRGBA, borderRGBA);
 		RenderCornerArcs(BottomLeft, left, bottom, radii.BottomLeft, border.Left, border.Bottom, bgRGBA, borderRGBA);
@@ -350,41 +354,25 @@ void xoRenderer::RenderCornerArcs(Corners corner, float xEdge, float yEdge, xoVe
 		center = XOVEC2(xEdge - outerRadii.x, yEdge + outerRadii.y);
 		break;
 	}
-	//auto borderWidthLimits = swapLimits ? XOVEC2(borderWidthX, borderWidthY) : XOVEC2(borderWidthY, borderWidthX);
-	//auto outerRadiusLimits = swapLimits ? XOVEC2(radii.x, radii.y) : XOVEC2(radii.y, radii.x);
-	//auto innerRadiusLimits = XOVEC2(outerRadiusLimits.x - borderWidthLimits.x, outerRadiusLimits.y - borderWidthLimits.y);
-	//innerRadiusLimits.x = fabs(innerRadiusLimits.x);
-	//innerRadiusLimits.y = fabs(innerRadiusLimits.y);
 	auto innerRadii = outerRadii - XOVEC2(borderWidthX, borderWidthY);
 	innerRadii.x = fabs(innerRadii.x);
 	innerRadii.y = fabs(innerRadii.y);
 	auto fanPos = XOVEC2(center.x + fanRadius * cos(th), center.y - fanRadius * sin(th)); // -y, because our coord system is Y down
-	//float borderWidth = borderWidthLimits.x;
-	//float outerRadius = outerRadiusLimits.x;
 
 	auto outerPos = XOVEC2(center.x + outerRadii.x * cos(th), center.y - outerRadii.y * sin(th));
-	//auto innerPos = XOVEC2(center.x + innerRadii.x * cos(th), center.y - innerRadii.y * sin(th));
 	auto innerPos = center + PtOnEllipse(ellipseFlipX, ellipseFlipY, innerRadii.x, innerRadii.y, th);
-	//float r1 = innerPos.distance(center);
-	//float r2 = outerPos.distance(center);
 	th += inc;
 	float hinc = inc * 0.5f;
 
-	//borderRGBA = borderRGBA | 0x0000f000;
-	
 	// TODO: dynamically pick the cheaper cos/sin for circular arcs, or tan for ellipses
 	// ie pick between two functions - PtOnEllipse, and PtOnCircle.
 
 	for (; slice < divs; th += inc, unit_slice += unit_inc, slice++)
 	{
-		//float borderWidthNext = xoLerp(unit_slice, borderWidthLimits.x, borderWidthLimits.y);
-		//float outerRadiusNext = xoLerp(unit_slice, outerRadiusLimits.x, outerRadiusLimits.y);
 		auto fanPosNext = XOVEC2(center.x + fanRadius * cos(th), center.y - fanRadius * sin(th));
 		auto outerPosNext = XOVEC2(center.x + outerRadii.x * cos(th), center.y - outerRadii.y * sin(th));
-		//auto innerPosNext = XOVEC2(center.x + innerRadii.x * cos(th), center.y - innerRadii.y * sin(th));
 		auto innerPosNext = center + PtOnEllipse(ellipseFlipX, ellipseFlipY, innerRadii.x, innerRadii.y, th);
 		auto outerPosHalf = XOVEC2(center.x + outerRadii.x * cos(th - hinc), center.y - outerRadii.y * sin(th - hinc));
-		//auto innerPosHalf = XOVEC2(center.x + innerRadii.x * cos(th - hinc), center.y - innerRadii.y * sin(th - hinc));
 		auto innerPosHalf = center + PtOnEllipse(ellipseFlipX, ellipseFlipY, innerRadii.x, innerRadii.y, th - hinc);
 
 		xoVec2f innerCenter, outerCenter;
@@ -392,29 +380,16 @@ void xoRenderer::RenderCornerArcs(Corners corner, float xEdge, float yEdge, xoVe
 		CircleFrom3Pt(outerPos, outerPosHalf, outerPosNext, outerCenter, outerRadius);
 		CircleFrom3Pt(innerPos, innerPosHalf, innerPosNext, innerCenter, innerRadius);
 
-		//float r1Next = innerPosNext.distance2d(center);
-		//float r2Next = outerPosNext.distance2d(center);
-		//float borderWidth = r2Next - r1Next;
-		//innerCenter = Driver->ToScreen(innerCenter);
-		//outerCenter = Driver->ToScreen(outerCenter);
-
 		auto arcCenters = XOVEC4(innerCenter.x, innerCenter.y, outerCenter.x, outerCenter.y);
 		auto arcRadii = XOVEC4(innerRadius, outerRadius, 0, 0);
 
-		const int SHADER_ARC = 1;
-
-		vx[0].Set(center, arcCenters, arcRadii, bgRGBA, borderRGBA, SHADER_ARC);
-		vx[1].Set(fanPos, arcCenters, arcRadii, bgRGBA, borderRGBA, SHADER_ARC);
-		vx[2].Set(fanPosNext, arcCenters, arcRadii, bgRGBA, borderRGBA, SHADER_ARC);
+		vx[0].Set(SHADER_ARC, center, arcCenters, arcRadii, bgRGBA, borderRGBA);
+		vx[1].Set(SHADER_ARC, fanPos, arcCenters, arcRadii, bgRGBA, borderRGBA);
+		vx[2].Set(SHADER_ARC, fanPosNext, arcCenters, arcRadii, bgRGBA, borderRGBA);
 		Driver->Draw(xoGPUPrimTriangles, 3, vx);
 		fanPos = fanPosNext;
 		outerPos = outerPosNext;
 		innerPos = innerPosNext;
-		//borderRGBA = borderRGBA | 0x00f00000;
-		//r1 = r1Next;
-		//r2 = r2Next;
-		//borderWidth = borderWidthNext;
-		//outerRadius = outerRadiusNext;
 	}
 }
 
