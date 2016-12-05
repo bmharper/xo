@@ -62,8 +62,9 @@ vec4 premultiply(vec4 c)
 	return vec4(c.r * c.a, c.g * c.a, c.b * c.a, c.a);
 }
 
-#define SHADER_ARC  1
-#define SHADER_RECT 2
+#define SHADER_ARC           1
+#define SHADER_RECT          2
+#define SHADER_TEXT_SUBPIXEL 3
 )";
 
 xoRenderGL::xoRenderGL()
@@ -933,6 +934,7 @@ bool xoRenderGL::LoadProgram(GLuint& vshade, GLuint& fshade, GLuint& prog, const
 	XOASSERT(glGetError() == GL_NO_ERROR);
 
 	bool isTextRGB = strcmp(name, "TextRGB") == 0;
+	bool isUber = strcmp(name, "Uber") == 0;
 
 	if (!LoadShader(GL_VERTEX_SHADER, vshade, name, vsrc)) return false;
 	if (!LoadShader(GL_FRAGMENT_SHADER, fshade, name, fsrc)) return false;
@@ -941,13 +943,13 @@ bool xoRenderGL::LoadProgram(GLuint& vshade, GLuint& fshade, GLuint& prog, const
 
 	glAttachShader(prog, vshade);
 	glAttachShader(prog, fshade);
-	if (isTextRGB)
+	if (isTextRGB || isUber)
 	{
 		// NOTE: The following DOES WORK. It is unnecessary however, on the NVidia hardware that I have tested on.
 		// BUT: It is necessary on Linux, Haswell Intel drivers
 #ifdef glBindFragDataLocationIndexed
-		glBindFragDataLocationIndexed(prog, 0, 0, "outputColor0");
-		glBindFragDataLocationIndexed(prog, 0, 1, "outputColor1");
+		glBindFragDataLocationIndexed(prog, 0, 0, "out_color0");
+		glBindFragDataLocationIndexed(prog, 0, 1, "out_color1");
 #else
 		XOPANIC("glBindFragDataLocationIndexed not defined. Necessary for subpixel RGB text");
 #endif

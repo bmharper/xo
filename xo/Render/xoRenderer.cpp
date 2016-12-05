@@ -10,6 +10,7 @@
 
 const int SHADER_ARC = 1;
 const int SHADER_RECT = 2;
+const int SHADER_TEXT_SUBPIXEL = 3;
 
 xoRenderResult xoRenderer::Render(const xoDoc* doc, xoImageStore* images, xoStringTable* strings, xoRenderBase* driver, const xoRenderDomNode* root)
 {
@@ -181,6 +182,7 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		RenderCornerArcs(TopRight, right, top, radii.TopRight, border.Right, border.Top, bgRGBA, borderRGBA);
 	}
 
+	/*
 	if (bg.a != 0 && !useRect3Shader)
 	{
 		for (int i = 0; i < 4; i++)
@@ -271,6 +273,7 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 			}
 		}
 	}
+	*/
 
 	if (node->IsCanvas())
 	{
@@ -500,21 +503,21 @@ void xoRenderer::RenderTextChar_SubPixel(xoPoint base, const xoRenderDomText* no
 	left -= overdraw;
 	right += overdraw;
 
-	xoVx_PTCV4 corners[4];
-	corners[0].Pos = XOVEC3(left, top, 0);
-	corners[1].Pos = XOVEC3(left, bottom, 0);
-	corners[2].Pos = XOVEC3(right, bottom, 0);
-	corners[3].Pos = XOVEC3(right, top, 0);
+	xoVx_Uber corners[4];
+	corners[0].Pos = XOVEC2(left, top);
+	corners[1].Pos = XOVEC2(left, bottom);
+	corners[2].Pos = XOVEC2(right, bottom);
+	corners[3].Pos = XOVEC2(right, top);
 
 	float u0 = (glyph->X + horzPad - overdraw * 3) * atlasScaleX;
 	float v0 = glyph->Y * atlasScaleY;
 	float u1 = (glyph->X + horzPad + (roundedWidth + overdraw) * 3) * atlasScaleX;
 	float v1 = (glyph->Y + glyph->Height) * atlasScaleY;
 
-	corners[0].UV = XOVEC2(u0, v0);
-	corners[1].UV = XOVEC2(u0, v1);
-	corners[2].UV = XOVEC2(u1, v1);
-	corners[3].UV = XOVEC2(u1, v0);
+	corners[0].UV1 = XOVEC4(u0, v0, 0, 0);
+	corners[1].UV1 = XOVEC4(u0, v1, 0, 0);
+	corners[2].UV1 = XOVEC4(u1, v1, 0, 0);
+	corners[3].UV1 = XOVEC4(u1, v0, 0, 0);
 
 	// Obviously our clamping is not affected by overdraw. It remains our absolute texel limits.
 	xoVec4f clamp;
@@ -527,11 +530,14 @@ void xoRenderer::RenderTextChar_SubPixel(xoPoint base, const xoRenderDomText* no
 
 	for (int i = 0; i < 4; i++)
 	{
-		corners[i].Color = color;
-		corners[i].V4 = clamp;
+		corners[i].Color1 = color;
+		corners[i].Color2 = 0;
+		corners[i].UV2 = clamp;
+		corners[i].Shader = SHADER_TEXT_SUBPIXEL;
 	}
 
-	Driver->ActivateShader(xoShaderTextRGB);
+	Driver->ActivateShader(xoShaderUber);
+	//Driver->ActivateShader(xoShaderTextRGB);
 	if (!LoadTexture(atlas, TexUnit0))
 		return;
 	Driver->Draw(xoGPUPrimQuads, 4, corners);

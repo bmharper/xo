@@ -10,13 +10,14 @@ uniform sampler2D	tex0;
 varying vec4		color;
 varying vec2		texuv0;
 varying vec4		texClamp;
-//layout(location = 0, index = 0) out vec4 outputColor0;
-//layout(location = 0, index = 1) out vec4 outputColor1;
+//layout(location = 0, index = 0) out vec4 out_color0;
+//layout(location = 0, index = 1) out vec4 out_color1;
 // On NVidia (9.18.13.3165 (10-23-2013), R331.65 (branch: r331_00-146)),
 // one doesn't need the layout qualification, nor glBindFragDataLocationIndexed. The order in which you
 // declare the output variables is sufficient to make an affinity with "color0" or "color1".
-out		vec4		outputColor0;
-out		vec4		outputColor1;
+// It is needed though, on Intel Haswell drivers on Linux
+out		vec4		out_color0;
+out		vec4		out_color1;
 void main()
 {
 	float offset = 1.0 / XO_GLYPH_ATLAS_SIZE;
@@ -36,9 +37,6 @@ void main()
 	//float w0 = 0.60;
 	//float w1 = 0.28;
 	//float w2 = 0.12;
-	//float w0 = 0.98;
-	//float w1 = 0.01;
-	//float w2 = 0.01;
 
 	float r = (w2 * tap0 + w1 * tap1 + w0 * tap2 + w1 * tap3 + w2 * tap4);
 	float g = (w2 * tap1 + w1 * tap2 + w0 * tap3 + w1 * tap4 + w2 * tap5);
@@ -47,11 +45,7 @@ void main()
 	float aG = g * color.a;
 	float aB = b * color.a;
 	float avgA = (r + g + b) / 3.0;
-	//float minA = min(r,g,min(g,b));
-	// ONE MINUS SRC COLOR
-	//float alpha = min(min(red, green), blue);
-	//gl_FragColor = vec4(aR, aG, aB, avgA);
 
-	outputColor0 = vec4(color.rgb, avgA);
-	outputColor1 = vec4(aR, aG, aB, avgA);
+	out_color0 = vec4(color.rgb, avgA);
+	out_color1 = vec4(aR, aG, aB, avgA);
 }

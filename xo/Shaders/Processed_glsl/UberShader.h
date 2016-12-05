@@ -23,6 +23,7 @@ public:
 	GLint v_v_color2;                        // attribute vec4
 	GLint v_v_shader;                        // attribute float
 	GLint v_Frame_VPort_HSize;               // uniform vec2
+	GLint v_f_tex0;                          // uniform sampler2D
 };
 
 #endif // XO_BUILD_OPENGL
