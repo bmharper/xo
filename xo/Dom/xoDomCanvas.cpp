@@ -51,12 +51,7 @@ bool xoDomCanvas::SetSize(uint width, uint height)
 {
 	if (!SetImageSizeOnly(width, height))
 		return false;
-
-	//StyleParsef( "width: %dpx; height: %dpx", width, height ); -- so much cleaner, but sigh.. we need to build some sort of DSL or something.
-
-	HackSetStyle(xoStyleAttrib::MakeWidth(xoSize::Pixels((float) width)));
-	HackSetStyle(xoStyleAttrib::MakeHeight(xoSize::Pixels((float) height)));
-
+	StyleParsef("width: %upx; height: %upx", width, height);
 	return true;
 }
 

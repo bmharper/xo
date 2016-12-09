@@ -153,6 +153,32 @@ void DoBaselineAlignment_Multiline(xoDoc* doc)
 	);
 }
 
+void DoCanvas(xoDoc* doc)
+{
+	auto root = &doc->Root;
+	xoDomCanvas* canvasEl = doc->Root.AddCanvas();
+	int w = 200;
+	int h = 200;
+	canvasEl->SetSize(w, h);
+	canvasEl->StyleParse("border-radius: 5ep");
+	canvasEl->StyleParse("border: 3ep #a00f");
+	canvasEl->StyleParse("background: #ffff");
+	canvasEl->StyleParse("sizing: content");
+	xoCanvas2D* c2d = canvasEl->GetCanvas2D();
+	for (int y = 0; y < h; y++)
+	{
+		int yb = (y & 4) == 4;
+		for (int x = 0; x < w; x++)
+		{
+			int xb = (x & 4) == 4;
+			int cb = xb ^ yb ? 255 : 0;
+			c2d->SetPixel(x, y, xoRGBA::RGBA(cb, cb, cb, 255 - x));
+		}
+	}
+	c2d->Invalidate();
+	delete c2d;
+}
+
 void DoCenter(xoDoc* doc)
 {
 	auto root = &doc->Root;
@@ -437,11 +463,12 @@ void InitDOM(xoDoc* doc)
 	xoDomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
 
-	DoBorder(doc);
+	//DoBorder(doc);
 	//DoBaselineAlignment(doc);
 	//DoBaselineAlignment_rev2(doc);
 	//DoBaselineAlignment_Multiline(doc);
 	//DoBaselineAlignment_DownPropagate(doc);
+	DoCanvas(doc);
 	//DoCenter(doc);
 	//DoHCenter(doc);
 	//DoVCenter(doc);

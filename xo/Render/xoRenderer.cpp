@@ -8,9 +8,12 @@
 #include "../Image/xoImage.h"
 #include "../Dom/xoDomCanvas.h"
 
+const int SHADER_FLAG_TEXBG = 16;
+
 const int SHADER_ARC = 1;
 const int SHADER_RECT = 2;
-const int SHADER_TEXT_SUBPIXEL = 3;
+const int SHADER_TEXT_SIMPLE = 3;
+const int SHADER_TEXT_SUBPIXEL = 4;
 
 xoRenderResult xoRenderer::Render(const xoDoc* doc, xoImageStore* images, xoStringTable* strings, xoRenderBase* driver, const xoRenderDomNode* root)
 {
@@ -60,26 +63,23 @@ struct xoBoxRadiusSet
 
 void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 {
+	// Use this to demo the quadratic curve rendering (Blinn/Loop)
 	//if (node->Style.BackgroundColor == xoColor::RGBA(0xff, 0xf0, 0xf0, 0xff)) { RenderQuadratic(base, node); return; }
-
-	// always shade rectangles well
-	const bool alwaysGoodRects = true;
 
 	const xoStyleRender* style = &node->Style;
 	xoBox pos = node->Pos;
 	pos.Offset(base);
 	xoBoxF border = style->BorderSize.ToRealBox();
 	xoBoxF padding = style->Padding.ToRealBox();
-	float top = xoPosToReal(pos.Top) - border.Top - padding.Top;
+	float top = xoPosToReal(pos.Top) - border.Top - padding.Top; // why is padding in here?
 	float bottom = xoPosToReal(pos.Bottom) + border.Bottom + padding.Bottom;
 	float left = xoPosToReal(pos.Left) - border.Left - padding.Left;
 	float right = xoPosToReal(pos.Right) + border.Right + padding.Right;
+	
+	float contentWidth = xoPosToReal(pos.Right) - xoPosToReal(pos.Left);
+	float contentHeight = xoPosToReal(pos.Bottom) - xoPosToReal(pos.Top);
 
 	float radius = style->BorderRadius;
-	bool useRectShader = alwaysGoodRects || radius != 0;
-	// I only tried out rect2 shader on OpenGL, and then went ahead to try Blinn/Loop rendering.
-	bool useRect2Shader = false; // strcmp(Driver->RendererName(), "OpenGL") == 0;
-	bool useRect3Shader = xoGlobal()->UseRect3;
 
 	float width = right - left;
 	float height = bottom - top;
@@ -90,9 +90,10 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 	if (mindim <= 0)
 		return;
 
+	/*
 	float padU = 0;
 	float padV = 0;
-	float pad = useRectShader ? 1.0f : 0.0f;
+	float pad = 1.0f;
 	if (pad != 0)
 	{
 		padU = pad / width;
@@ -111,13 +112,30 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 	corners[1].UV = XOVEC2(-padU, 1 + padV);
 	corners[2].UV = XOVEC2(1 + padU, 1 + padV);
 	corners[3].UV = XOVEC2(1 + padU, -padV);
+	*/
+
+	xoImage* bgImage = nullptr;
 
 	//auto bg = style.Get( xoCatBackground );
 	//auto bgImage = style.Get( xoCatBackgroundImage );
 	xoColor bg = style->BackgroundColor;
-	const char* bgImage = Strings->GetStr(style->BackgroundImageID);
+	//const char* bgImageName = Strings->GetStr(style->BackgroundImageID); -- todo
 
-	if (bg.a != 0 && useRect3Shader)
+	int shaderFlags = 0;
+
+	if (node->IsCanvas())
+	{
+		const xoDomCanvas* canvas = static_cast<const xoDomCanvas*>(Doc->GetChildByInternalID(node->InternalID));
+		bgImage = Images->Get(canvas->GetCanvasImageName());
+	}
+
+	if (bgImage)
+	{
+		if (LoadTexture(bgImage, TexUnit0))
+			shaderFlags |= SHADER_FLAG_TEXBG;
+	}
+
+	if (bg.a != 0 || bgImage)
 	{
 		xoBoxRadiusSet radii = {
 			{ radius, radius },	// left, top
@@ -128,12 +146,7 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		xoVx_Uber v[16];
 		float vmid = 0.5f * (top + bottom);
 		float borderPos = border.Top;
-		// If we want to work under perspective, then we'll need to make these paddings adjust to
-		// the current projection. Failing to do so will result in aliased edges of our boxes.
-		// This sounds like a thing you might want to do in a vertex or geometry shader, because you
-		// need to project a point in order to see what kind of padding is necessary to produce at
-		// least 1 pixel of rasterized border.
-		// For now, just use constants.
+		// more padding, for our smooth edges
 		float vpad = 1;
 		float hpad = 1;
 		uint32 bgRGBA = bg.GetRGBA();
@@ -145,153 +158,68 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		float rightEdge = xoMax(radii.TopRight.x, radii.BottomRight.x);
 		rightEdge = xoMax(rightEdge, border.Right);
 
-		Driver->ActivateShader(xoShaderUber);
+		int shader = SHADER_RECT | shaderFlags;
 
-		//                                                                                  Border width
-		//                                                                                  |           Distance from edge
-		//                                                                                  |           |
-		// top                                                                              |           |
-		v[0].Set1(SHADER_RECT, XOVEC2(left + leftEdge, top - vpad),							XOVEC4(border.Top, -vpad, 0, 0), bgRGBA, borderRGBA);
-		v[1].Set1(SHADER_RECT, XOVEC2(left + leftEdge, vmid),								XOVEC4(border.Top, vmid - top, 0, 0), bgRGBA, borderRGBA);
-		v[2].Set1(SHADER_RECT, XOVEC2(right - rightEdge, vmid),								XOVEC4(border.Top, vmid - top, 0, 0), bgRGBA, borderRGBA);
-		v[3].Set1(SHADER_RECT, XOVEC2(right - rightEdge, top - vpad),						XOVEC4(border.Top, -vpad, 0, 0), bgRGBA, borderRGBA);
+		float leftU = (leftEdge - border.Left) / contentWidth;
+		float rightU = (right - rightEdge - border.Right - xoPosToReal(pos.Left)) / contentWidth;
+		auto uv1 = XOVEC2(leftU, 0);
+		auto uv2 = XOVEC2(rightU, 0.5f);
+
+		//                                                                                     Border width
+		//                                                                                     |           Distance from edge
+		//                                                                                     |           |
+		// top                                                                                 |           |
+		v[0].Set1(shader, XOVEC2(left + leftEdge, top - vpad),							XOVEC4(border.Top, -vpad, uv1.x, uv1.y), bgRGBA, borderRGBA);
+		v[1].Set1(shader, XOVEC2(left + leftEdge, vmid),								XOVEC4(border.Top, vmid - top, uv1.x, uv2.y), bgRGBA, borderRGBA);
+		v[2].Set1(shader, XOVEC2(right - rightEdge, vmid),								XOVEC4(border.Top, vmid - top, uv2.x, uv2.y), bgRGBA, borderRGBA);
+		v[3].Set1(shader, XOVEC2(right - rightEdge, top - vpad),						XOVEC4(border.Top, -vpad, uv2.x, uv1.y), bgRGBA, borderRGBA);
+
+		uv1 = XOVEC2(leftU, 0.5f);
+		uv2 = XOVEC2(rightU, 1);
 
 		// bottom
-		v[4].Set1(SHADER_RECT, XOVEC2(left + leftEdge, vmid),								XOVEC4(border.Bottom, bottom - vmid, 0, 0), bgRGBA, borderRGBA);
-		v[5].Set1(SHADER_RECT, XOVEC2(left + leftEdge, bottom + vpad),						XOVEC4(border.Bottom, -vpad, 0, 0), bgRGBA, borderRGBA);
-		v[6].Set1(SHADER_RECT, XOVEC2(right - rightEdge, bottom + vpad),					XOVEC4(border.Bottom, -vpad, 0, 0), bgRGBA, borderRGBA);
-		v[7].Set1(SHADER_RECT, XOVEC2(right - rightEdge, vmid),								XOVEC4(border.Bottom, bottom - vmid, 0, 0), bgRGBA, borderRGBA);
+		v[4].Set1(shader, XOVEC2(left + leftEdge, vmid),								XOVEC4(border.Bottom, bottom - vmid, uv1.x, uv1.y), bgRGBA, borderRGBA);
+		v[5].Set1(shader, XOVEC2(left + leftEdge, bottom + vpad),						XOVEC4(border.Bottom, -vpad, uv1.x, uv2.y), bgRGBA, borderRGBA);
+		v[6].Set1(shader, XOVEC2(right - rightEdge, bottom + vpad),						XOVEC4(border.Bottom, -vpad, uv2.x, uv2.y), bgRGBA, borderRGBA);
+		v[7].Set1(shader, XOVEC2(right - rightEdge, vmid),								XOVEC4(border.Bottom, bottom - vmid, uv2.x, uv1.y), bgRGBA, borderRGBA);
+
+		std::swap(leftU, rightU);
+		leftU = -border.Left / contentWidth;
+		float t1 = top + radii.TopLeft.y;
+		float t2 = xoPosToReal(pos.Top);
+		float xx = top + radii.TopLeft.y - xoPosToReal(pos.Top);
+		float topU = (top + radii.TopLeft.y - xoPosToReal(pos.Top)) / contentHeight;
+		float bottomU = (bottom - radii.BottomLeft.y - xoPosToReal(pos.Top)) / contentHeight;
+		uv1 = XOVEC2(leftU, topU);
+		uv2 = XOVEC2(rightU, bottomU);
+		auto uv1_px = XOVEC2(uv1.x * contentWidth, uv1.y * contentHeight);
+		auto uv2_px = XOVEC2(uv2.x * contentWidth, uv2.y * contentHeight);
+		bgRGBA = 0xffaaaaff;
+		float topEdge = top + 
 
 		// left
-		v[8].Set1(SHADER_RECT, XOVEC2(left - hpad, top + radii.TopLeft.y),					XOVEC4(border.Left, -hpad, 0, 0), bgRGBA, borderRGBA);
-		v[9].Set1(SHADER_RECT, XOVEC2(left - hpad, bottom - radii.BottomLeft.y),			XOVEC4(border.Left, -hpad, 0, 0), bgRGBA, borderRGBA);
-		v[10].Set1(SHADER_RECT, XOVEC2(left + leftEdge, bottom - radii.BottomLeft.y),		XOVEC4(border.Left, leftEdge, 0, 0), bgRGBA, borderRGBA);
-		v[11].Set1(SHADER_RECT, XOVEC2(left + leftEdge, top + radii.TopLeft.y),				XOVEC4(border.Left, leftEdge, 0, 0), bgRGBA, borderRGBA);
+		v[8].Set1(shader, XOVEC2(left - hpad, top + radii.TopLeft.y),					XOVEC4(border.Left, -hpad, uv1.x, uv1.y), bgRGBA, borderRGBA);
+		v[9].Set1(shader, XOVEC2(left - hpad, bottom - radii.BottomLeft.y),				XOVEC4(border.Left, -hpad, uv1.x, uv2.y), bgRGBA, borderRGBA);
+		v[10].Set1(shader, XOVEC2(left + leftEdge, bottom - radii.BottomLeft.y),		XOVEC4(border.Left, leftEdge, uv2.x, uv2.y), bgRGBA, borderRGBA);
+		v[11].Set1(shader, XOVEC2(left + leftEdge, top + radii.TopLeft.y),				XOVEC4(border.Left, leftEdge, uv2.x, uv1.y), bgRGBA, borderRGBA);
 
 		// right
-		v[12].Set1(SHADER_RECT, XOVEC2(right - rightEdge, top + radii.TopRight.y),			XOVEC4(border.Right, rightEdge, 0, 0), bgRGBA, borderRGBA);
-		v[13].Set1(SHADER_RECT, XOVEC2(right - rightEdge, bottom - radii.BottomRight.y),	XOVEC4(border.Right, rightEdge, 0, 0), bgRGBA, borderRGBA);
-		v[14].Set1(SHADER_RECT, XOVEC2(right + hpad, bottom - radii.BottomRight.y),			XOVEC4(border.Right, -hpad, 0, 0), bgRGBA, borderRGBA);
-		v[15].Set1(SHADER_RECT, XOVEC2(right + hpad, top + radii.TopRight.y),				XOVEC4(border.Right, -hpad, 0, 0), bgRGBA, borderRGBA);
+		v[12].Set1(shader, XOVEC2(right - rightEdge, top + radii.TopRight.y),			XOVEC4(border.Right, rightEdge, uv1.x, uv1.y), bgRGBA, borderRGBA);
+		v[13].Set1(shader, XOVEC2(right - rightEdge, bottom - radii.BottomRight.y),		XOVEC4(border.Right, rightEdge, uv1.x, uv2.y), bgRGBA, borderRGBA);
+		v[14].Set1(shader, XOVEC2(right + hpad, bottom - radii.BottomRight.y),			XOVEC4(border.Right, -hpad, uv2.x, uv2.y), bgRGBA, borderRGBA);
+		v[15].Set1(shader, XOVEC2(right + hpad, top + radii.TopRight.y),				XOVEC4(border.Right, -hpad, uv2.x, uv1.y), bgRGBA, borderRGBA);
 
+		Driver->ActivateShader(xoShaderUber);
 		Driver->Draw(xoGPUPrimQuads, 16, v);
 
-		RenderCornerArcs(TopLeft, left, top, radii.TopLeft, border.Left, border.Top, bgRGBA, borderRGBA);
-		RenderCornerArcs(BottomLeft, left, bottom, radii.BottomLeft, border.Left, border.Bottom, bgRGBA, borderRGBA);
-		RenderCornerArcs(BottomRight, right, bottom, radii.BottomRight, border.Right, border.Bottom, bgRGBA, borderRGBA);
-		RenderCornerArcs(TopRight, right, top, radii.TopRight, border.Right, border.Top, bgRGBA, borderRGBA);
-	}
-
-	/*
-	if (bg.a != 0 && !useRect3Shader)
-	{
-		for (int i = 0; i < 4; i++)
-			corners[i].Color = bg.GetRGBA();
-
-		if (useRect2Shader)
-		{
-			Driver->ActivateShader(xoShaderRect2);
-			xoVec2f center = XOVEC2((left + right) / 2.0f,(top + bottom) / 2.0f);
-			xoVx_PTCV4 quads[4];
-			quads[0].PTC = corners[0];
-			quads[1].PTC = corners[1];
-			quads[2].PTC = corners[2];
-			quads[3].PTC = corners[3];
-			for (int i = 0; i < 4; i++)
-			{
-				quads[i].Color2 = style->BorderColor.GetRGBA();
-				quads[i].UV.x = radius;
-				quads[i].UV.y = border.Left;
-			}
-
-			Driver->ShaderPerObject.ShadowColor = xoVec4f(0, 0, 0, 0);
-			Driver->ShaderPerObject.ShadowOffset = xoVec2f(0, 0);
-			Driver->ShaderPerObject.ShadowSizeInv = 0;
-
-			// top-left
-			Driver->ShaderPerObject.Edges = xoVec2f(left, top);
-			Driver->ShaderPerObject.OutVector = xoVec2f(-1, -1);
-			quads[0].Pos.vec2 = corners[0].Pos.vec2;
-			quads[1].Pos.vec2 = XOVEC2(corners[1].Pos.x, center.y);
-			quads[2].Pos.vec2 = XOVEC2(center.x, center.y);
-			quads[3].Pos.vec2 = XOVEC2(center.x, corners[3].Pos.y);
-			quads[0].UV.y = border.Left;
-			quads[1].UV.y = border.Left;
-			quads[2].UV.y = border.Left;
-			quads[3].UV.y = border.Left;
-			Driver->Draw(xoGPUPrimQuads, 4, quads);
-
-			// top-right
-			Driver->ShaderPerObject.Edges = xoVec2f(right, top);
-			Driver->ShaderPerObject.OutVector = xoVec2f(1, -1);
-			quads[0].Pos.vec2 = XOVEC2(center.x, corners[0].Pos.y);
-			quads[1].Pos.vec2 = XOVEC2(center.x, center.y);
-			quads[2].Pos.vec2 = XOVEC2(corners[2].Pos.x, center.y);
-			quads[3].Pos.vec2 = XOVEC2(corners[3].Pos.x, corners[3].Pos.y);
-			Driver->Draw(xoGPUPrimQuads, 4, quads);
-
-			// bottom-left
-			Driver->ShaderPerObject.Edges = xoVec2f(left, bottom);
-			Driver->ShaderPerObject.OutVector = xoVec2f(-1, 1);
-			quads[0].Pos.vec2 = XOVEC2(corners[0].Pos.x, center.y);
-			quads[1].Pos.vec2 = XOVEC2(corners[1].Pos.x, corners[1].Pos.y);
-			quads[2].Pos.vec2 = XOVEC2(center.x, corners[2].Pos.y);
-			quads[3].Pos.vec2 = XOVEC2(center.x, center.y);
-			Driver->Draw(xoGPUPrimQuads, 4, quads);
-
-			// bottom-right
-			Driver->ShaderPerObject.Edges = xoVec2f(right, bottom);
-			Driver->ShaderPerObject.OutVector = xoVec2f(1, 1);
-			quads[0].Pos.vec2 = XOVEC2(center.x, center.y);
-			quads[1].Pos.vec2 = XOVEC2(center.x, corners[1].Pos.y);
-			quads[2].Pos.vec2 = XOVEC2(corners[2].Pos.x, corners[2].Pos.y);
-			quads[3].Pos.vec2 = XOVEC2(corners[3].Pos.x, center.y);
-			Driver->Draw(xoGPUPrimQuads, 4, quads);
-		}
-		else if (useRectShader)
-		{
-			Driver->ActivateShader(xoShaderRect);
-			Driver->ShaderPerObject.Box = xoVec4f(left, top, right, bottom);
-			Driver->ShaderPerObject.Border = xoVec4f(border.Left + 0.5f, border.Top + 0.5f, border.Right + 0.5f, border.Bottom + 0.5f);
-			Driver->ShaderPerObject.Radius = radius + 0.5f; // see the shader for an explanation of this 0.5
-			Driver->ShaderPerObject.BorderColor = style->BorderColor.GetVec4Linear();
-			Driver->Draw(xoGPUPrimQuads, 4, corners);
-		}
-		else
-		{
-			if (bgImage[0] != 0)
-			{
-				Driver->ActivateShader(xoShaderFillTex);
-				if (!LoadTexture(Images->GetOrNull(bgImage), TexUnit0))
-					return;
-				Driver->Draw(xoGPUPrimQuads, 4, corners);
-			}
-			else
-			{
-				Driver->ActivateShader(xoShaderFill);
-				Driver->Draw(xoGPUPrimQuads, 4, corners);
-			}
-		}
-	}
-	*/
-
-	if (node->IsCanvas())
-	{
-		for (int i = 0; i < 4; i++)
-			corners[i].Color = 0xffffffff; // could be used to tint the canvas
-
-		const xoDomCanvas* canvas = static_cast<const xoDomCanvas*>(Doc->GetChildByInternalID(node->InternalID));
-		xoImage* canvasImage = Images->Get(canvas->GetCanvasImageName());
-		if (canvasImage != nullptr)
-		{
-			Driver->ActivateShader(xoShaderFillTex);
-			if (LoadTexture(canvasImage, TexUnit0))
-				Driver->Draw(xoGPUPrimQuads, 4, corners);
-		}
+		RenderCornerArcs(shaderFlags, TopLeft, left, top, radii.TopLeft, border.Left, border.Top, bgRGBA, borderRGBA);
+		RenderCornerArcs(shaderFlags, BottomLeft, left, bottom, radii.BottomLeft, border.Left, border.Bottom, bgRGBA, borderRGBA);
+		RenderCornerArcs(shaderFlags, BottomRight, right, bottom, radii.BottomRight, border.Right, border.Bottom, bgRGBA, borderRGBA);
+		RenderCornerArcs(shaderFlags, TopRight, right, top, radii.TopRight, border.Right, border.Top, bgRGBA, borderRGBA);
 	}
 }
 
-void xoRenderer::RenderCornerArcs(Corners corner, float xEdge, float yEdge, xoVec2f outerRadii, float borderWidthX, float borderWidthY, uint32 bgRGBA, uint32 borderRGBA)
+void xoRenderer::RenderCornerArcs(int shaderFlags, Corners corner, float xEdge, float yEdge, xoVec2f outerRadii, float borderWidthX, float borderWidthY, uint32 bgRGBA, uint32 borderRGBA)
 {
 	if (outerRadii.x == 0 || outerRadii.y == 0)
 		return;
@@ -386,9 +314,9 @@ void xoRenderer::RenderCornerArcs(Corners corner, float xEdge, float yEdge, xoVe
 		auto arcCenters = XOVEC4(innerCenter.x, innerCenter.y, outerCenter.x, outerCenter.y);
 		auto arcRadii = XOVEC4(innerRadius, outerRadius, 0, 0);
 
-		vx[0].Set(SHADER_ARC, center, arcCenters, arcRadii, bgRGBA, borderRGBA);
-		vx[1].Set(SHADER_ARC, fanPos, arcCenters, arcRadii, bgRGBA, borderRGBA);
-		vx[2].Set(SHADER_ARC, fanPosNext, arcCenters, arcRadii, bgRGBA, borderRGBA);
+		vx[0].Set(SHADER_ARC | shaderFlags, center, arcCenters, arcRadii, bgRGBA, borderRGBA);
+		vx[1].Set(SHADER_ARC | shaderFlags, fanPos, arcCenters, arcRadii, bgRGBA, borderRGBA);
+		vx[2].Set(SHADER_ARC | shaderFlags, fanPosNext, arcCenters, arcRadii, bgRGBA, borderRGBA);
 		Driver->Draw(xoGPUPrimTriangles, 3, vx);
 		fanPos = fanPosNext;
 		outerPos = outerPosNext;
@@ -585,28 +513,33 @@ void xoRenderer::RenderTextChar_WholePixel(xoPoint base, const xoRenderDomText* 
 	float right = left + glyph->Width + pad * 2;
 	float bottom = top + glyph->Height + pad * 2;
 
-	xoVx_PTC corners[4];
-	corners[0].Pos = XOVEC3(left, top, 0);
-	corners[1].Pos = XOVEC3(left, bottom, 0);
-	corners[2].Pos = XOVEC3(right, bottom, 0);
-	corners[3].Pos = XOVEC3(right, top, 0);
+	xoVx_Uber corners[4];
+	corners[0].Pos = XOVEC2(left, top);
+	corners[1].Pos = XOVEC2(left, bottom);
+	corners[2].Pos = XOVEC2(right, bottom);
+	corners[3].Pos = XOVEC2(right, top);
 
 	float u0 = (glyph->X - pad) * atlasScaleX;
 	float v0 = (glyph->Y - pad) * atlasScaleY;
 	float u1 = (glyph->X + glyph->Width + pad) * atlasScaleX;
 	float v1 = (glyph->Y + glyph->Height + pad) * atlasScaleY;
 
-	corners[0].UV = XOVEC2(u0, v0);
-	corners[1].UV = XOVEC2(u0, v1);
-	corners[2].UV = XOVEC2(u1, v1);
-	corners[3].UV = XOVEC2(u1, v0);
+	corners[0].UV1 = XOVEC4(u0, v0, 0, 0);
+	corners[1].UV1 = XOVEC4(u0, v1, 0, 0);
+	corners[2].UV1 = XOVEC4(u1, v1, 0, 0);
+	corners[3].UV1 = XOVEC4(u1, v0, 0, 0);
 
 	uint32 color = node->Color.GetRGBA();
 
 	for (int i = 0; i < 4; i++)
-		corners[i].Color = color;
+	{
+		corners[i].UV2 = XOVEC4(0, 0, 0, 0);
+		corners[i].Color1 = color;
+		corners[i].Shader = SHADER_TEXT_SIMPLE;
+	}
 
-	Driver->ActivateShader(xoShaderTextWhole);
+	//Driver->ActivateShader(xoShaderTextWhole);
+	Driver->ActivateShader(xoShaderUber);
 	if (!LoadTexture(atlas, TexUnit0))
 		return;
 	Driver->Draw(xoGPUPrimQuads, 4, corners);

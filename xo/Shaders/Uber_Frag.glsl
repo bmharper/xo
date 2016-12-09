@@ -1,3 +1,5 @@
+#extension GL_EXT_gpu_shader4 : enable
+
 uniform		vec2	Frame_VPort_HSize;
 
 uniform sampler2D	f_tex0;
@@ -16,8 +18,8 @@ varying 	float	f_shader;
 // one doesn't need the layout qualification, nor glBindFragDataLocationIndexed. The order in which you
 // declare the output variables is sufficient to make an affinity with "color0" or "color1".
 // It is needed though, on Intel Haswell drivers on Linux
-out		vec4		out_color0;
-out		vec4		out_color1;
+varying out		vec4		out_color0;
+varying out		vec4		out_color1;
 
 void write_color(vec4 color)
 {
@@ -38,7 +40,11 @@ vec2 to_screen(vec2 pos)
 
 void main()
 {
-	if (f_shader == SHADER_ARC)
+	int shader = int(f_shader);
+	bool enableBGTex = (shader & SHADER_FLAG_TEXBG) != 0;
+	shader = shader & SHADER_TYPE_MASK;
+
+	if (shader == SHADER_ARC)
 	{
 		vec2 center1 = f_uv1.xy;
 		vec2 center2 = f_uv1.zw;
@@ -50,32 +56,43 @@ void main()
 		vec2 screen_pos = to_screen(f_pos.xy);
 		float distance1 = length(screen_pos - center1);
 		float distance2 = length(screen_pos - center2);
-		float color_blend = clamp(distance1 - radius1 + 0.5, 0, 1);
-		float alpha_blend = clamp(radius2 - distance2 + 0.5, 0, 1);
+		float color_blend = clamp(distance1 - radius1 + 0.5, 0.0, 1.0);
+		float alpha_blend = clamp(radius2 - distance2 + 0.5, 0.0, 1.0);
 		vec4 color = mix(bg_color, border_color, color_blend);
 		color *= alpha_blend;
 		write_color(color);
 	}
-	else if (f_shader == SHADER_RECT)
+	else if (shader == SHADER_RECT)
 	{
 		float border_width = f_uv1.x;
 		float border_distance = f_uv1.y;
+		vec2 uv = f_uv1.zw;
+		vec4 bg_color = f_color1;
+		vec4 border_color = f_color2;
 
 		// Distance from edge.
 		// We target fragments that are targeted at pixel centers, so if border_distance = 0.5, then alpha must be 1.0.
 		// Our alpha must drop off within a single pixel, so then at border_distance = -0.5, alpha must be 0.
 		// What we're thus looking for is a line of slope = 1.0, which passes through 0.5.
-		float edge_alpha = clamp(border_distance + 0.5, 0, 1);
+		float edge_alpha = clamp(border_distance + 0.5, 0.0, 1.0);
 
 		// The +0.5 here is the same as above
-		float dclamped = clamp(border_width - border_distance + 0.5, 0, 1);
+		float dclamped = clamp(border_width - border_distance + 0.5, 0.0, 1.0);
 
-		vec4 color = mix(f_color1, f_color2, dclamped);
+		if (enableBGTex)
+			bg_color *= texture2D(f_tex0, uv);
+
+		vec4 color = mix(bg_color, border_color, dclamped);
 		color *= edge_alpha;
 		write_color(color);
 	}
+	else if (shader == SHADER_TEXT_SIMPLE)
+	{
+		vec4 texCol = texture2D(f_tex0, f_uv1.xy);
+		write_color(texCol.rrrr * premultiply(f_color1));
+	}
 #if defined(XO_PLATFORM_WIN_DESKTOP) || defined(XO_PLATFORM_LINUX_DESKTOP)
-	else if (f_shader == SHADER_TEXT_SUBPIXEL)
+	else if (shader == SHADER_TEXT_SUBPIXEL)
 	{
 		float offset = 1.0 / XO_GLYPH_ATLAS_SIZE;
 		vec2 uv = f_uv1.xy;
