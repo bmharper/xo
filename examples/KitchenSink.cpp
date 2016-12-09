@@ -175,6 +175,17 @@ void DoCanvas(xoDoc* doc)
 			c2d->SetPixel(x, y, xoRGBA::RGBA(cb, cb, cb, 255 - x));
 		}
 	}
+	c2d->SetPixel(0, 0, xoRGBA::RGBA(255, 0, 0, 255));
+	c2d->SetPixel(1, 0, xoRGBA::RGBA(255, 0, 0, 255));
+	c2d->SetPixel(0, 1, xoRGBA::RGBA(255, 0, 0, 255));
+	c2d->SetPixel(2, 2, xoRGBA::RGBA(255, 0, 0, 255));
+	c2d->SetPixel(3, 3, xoRGBA::RGBA(255, 0, 0, 255));
+
+	c2d->SetPixel(4, 4, xoRGBA::RGBA(0, 255, 0, 255));
+	c2d->SetPixel(5, 4, xoRGBA::RGBA(0, 255, 0, 255));
+	c2d->SetPixel(4, 5, xoRGBA::RGBA(0, 255, 0, 255));
+	c2d->SetPixel(6, 6, xoRGBA::RGBA(0, 255, 0, 255));
+	c2d->SetPixel(7, 7, xoRGBA::RGBA(0, 255, 0, 255));
 	c2d->Invalidate();
 	delete c2d;
 }

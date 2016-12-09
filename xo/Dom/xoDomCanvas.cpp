@@ -36,8 +36,10 @@ bool xoDomCanvas::SetImageSizeOnly(uint width, uint height)
 			delete img;
 			return false;
 		}
-		img->TexFilterMin = xoTexFilterNearest;
-		img->TexFilterMax = xoTexFilterNearest;
+		//img->TexFilterMin = xoTexFilterNearest;
+		//img->TexFilterMax = xoTexFilterNearest;
+		img->TexFilterMin = xoTexFilterLinear;
+		img->TexFilterMax = xoTexFilterLinear;
 		ImageName = Doc->Images.SetAnonymous(img);
 		return true;
 	}

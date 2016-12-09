@@ -159,10 +159,14 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		rightEdge = xoMax(rightEdge, border.Right);
 
 		int shader = SHADER_RECT | shaderFlags;
+		if (bgImage)
+			int abc = 123;
 
 		float leftU = (leftEdge - border.Left) / contentWidth;
-		float rightU = (right - rightEdge - border.Right - xoPosToReal(pos.Left)) / contentWidth;
-		auto uv1 = XOVEC2(leftU, 0);
+		float rightU = (contentWidth - (rightEdge - border.Right)) / contentWidth;
+		float topV = -(border.Top + vpad) / contentHeight;
+		float bottomV = 1.0f + (border.Bottom + vpad) / contentHeight;
+		auto uv1 = XOVEC2(leftU, topV);
 		auto uv2 = XOVEC2(rightU, 0.5f);
 
 		//                                                                                     Border width
@@ -175,7 +179,7 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		v[3].Set1(shader, XOVEC2(right - rightEdge, top - vpad),						XOVEC4(border.Top, -vpad, uv2.x, uv1.y), bgRGBA, borderRGBA);
 
 		uv1 = XOVEC2(leftU, 0.5f);
-		uv2 = XOVEC2(rightU, 1);
+		uv2 = XOVEC2(rightU, bottomV);
 
 		// bottom
 		v[4].Set1(shader, XOVEC2(left + leftEdge, vmid),								XOVEC4(border.Bottom, bottom - vmid, uv1.x, uv1.y), bgRGBA, borderRGBA);
@@ -183,25 +187,24 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		v[6].Set1(shader, XOVEC2(right - rightEdge, bottom + vpad),						XOVEC4(border.Bottom, -vpad, uv2.x, uv2.y), bgRGBA, borderRGBA);
 		v[7].Set1(shader, XOVEC2(right - rightEdge, vmid),								XOVEC4(border.Bottom, bottom - vmid, uv2.x, uv1.y), bgRGBA, borderRGBA);
 
+		float oldRightU = rightU;
 		std::swap(leftU, rightU);
 		leftU = -border.Left / contentWidth;
-		float t1 = top + radii.TopLeft.y;
-		float t2 = xoPosToReal(pos.Top);
-		float xx = top + radii.TopLeft.y - xoPosToReal(pos.Top);
-		float topU = (top + radii.TopLeft.y - xoPosToReal(pos.Top)) / contentHeight;
-		float bottomU = (bottom - radii.BottomLeft.y - xoPosToReal(pos.Top)) / contentHeight;
-		uv1 = XOVEC2(leftU, topU);
-		uv2 = XOVEC2(rightU, bottomU);
-		auto uv1_px = XOVEC2(uv1.x * contentWidth, uv1.y * contentHeight);
-		auto uv2_px = XOVEC2(uv2.x * contentWidth, uv2.y * contentHeight);
-		bgRGBA = 0xffaaaaff;
-		float topEdge = top + 
+		topV = (top + radii.TopLeft.y - xoPosToReal(pos.Top)) / contentHeight;
+		bottomV = (bottom - radii.BottomLeft.y - xoPosToReal(pos.Top)) / contentHeight;
+		uv1 = XOVEC2(leftU, topV);
+		uv2 = XOVEC2(rightU, bottomV);
 
 		// left
 		v[8].Set1(shader, XOVEC2(left - hpad, top + radii.TopLeft.y),					XOVEC4(border.Left, -hpad, uv1.x, uv1.y), bgRGBA, borderRGBA);
 		v[9].Set1(shader, XOVEC2(left - hpad, bottom - radii.BottomLeft.y),				XOVEC4(border.Left, -hpad, uv1.x, uv2.y), bgRGBA, borderRGBA);
 		v[10].Set1(shader, XOVEC2(left + leftEdge, bottom - radii.BottomLeft.y),		XOVEC4(border.Left, leftEdge, uv2.x, uv2.y), bgRGBA, borderRGBA);
 		v[11].Set1(shader, XOVEC2(left + leftEdge, top + radii.TopLeft.y),				XOVEC4(border.Left, leftEdge, uv2.x, uv1.y), bgRGBA, borderRGBA);
+
+		leftU = oldRightU;
+		rightU = 1.0f + border.Right / contentWidth;
+		uv1.x = leftU;
+		uv2.x = rightU;
 
 		// right
 		v[12].Set1(shader, XOVEC2(right - rightEdge, top + radii.TopRight.y),			XOVEC4(border.Right, rightEdge, uv1.x, uv1.y), bgRGBA, borderRGBA);
