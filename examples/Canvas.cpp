@@ -8,7 +8,6 @@ void xoMain(xoSysWnd* wnd)
 	canvasEl->SetText("Hello blank canvas");
 	canvasEl->StyleParse("font-size: 14ep");
 	canvasEl->StyleParse("color: #080");
-	//canvasEl->StyleParse( "background: #f00" );
 	xoCanvas2D* c2d = canvasEl->GetCanvas2D();
 	Vec2f vx[] = {
 		{20,25},

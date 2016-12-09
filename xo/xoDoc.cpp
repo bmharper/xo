@@ -298,6 +298,7 @@ void xoDoc::InitializeDefaultTagStyles()
 
 	TagStyles[xoTagBody].Parse("background: #fff; width: 100%; height: 100%; box-sizing: margin; cursor: arrow", this);
 	TagStyles[xoTagBody].Set(afont);
+	TagStyles[xoTagCanvas].Parse("background: #fff", this);
 	TagStyles[xoTagDiv].Parse("baseline:baseline;", this);
 	// TagStyles[xoTagText]
 	// Setting cursor: text on <lab> is amusing, and it is the default in HTML, but not the right default for general-purpose UI.

@@ -125,6 +125,10 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 
 	if (node->IsCanvas())
 	{
+		// Currently we treat bgColor as a tint for the canvas, but we should actually
+		// splat a rectangle of that color, and then draw the canvas on top of that.
+		// although.... one can do all of that inside the pixel shader, but that might
+		// add complex branches to the common paths.
 		const xoDomCanvas* canvas = static_cast<const xoDomCanvas*>(Doc->GetChildByInternalID(node->InternalID));
 		bgImage = Images->Get(canvas->GetCanvasImageName());
 	}
