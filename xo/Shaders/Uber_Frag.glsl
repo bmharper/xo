@@ -50,8 +50,12 @@ void main()
 		vec2 center2 = f_uv1.zw;
 		float radius1 = f_uv2.x;
 		float radius2 = f_uv2.y;
+		vec2 uv = f_uv2.zw;
 		vec4 bg_color = f_color1;
 		vec4 border_color = f_color2;
+
+		if (enableBGTex)
+			bg_color *= texture2D(f_tex0, uv);
 
 		vec2 screen_pos = to_screen(f_pos.xy);
 		float distance1 = length(screen_pos - center1);

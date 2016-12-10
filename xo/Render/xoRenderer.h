@@ -32,7 +32,7 @@ protected:
 
 	void			RenderEl(xoPoint base, const xoRenderDomEl* node);
 	void			RenderNode(xoPoint base, const xoRenderDomNode* node);
-	void			RenderCornerArcs(int shaderFlags, Corners corner, float xEdge, float yEdge, xoVec2f outerRadii, float borderWidthX, float borderWidthY, uint32 bgRGBA, uint32 borderRGBA);
+	void			RenderCornerArcs(int shaderFlags, Corners corner, xoVec2f edge, xoVec2f outerRadii, xoVec2f borderWidth, xoVec2f centerUV, xoVec2f uvScale, uint32 bgRGBA, uint32 borderRGBA);
 	void			RenderQuadratic(xoPoint base, const xoRenderDomNode* node);
 	void			RenderText(xoPoint base, const xoRenderDomText* node);
 	void			RenderTextChar_WholePixel(xoPoint base, const xoRenderDomText* node, const xoRenderCharEl& txtEl);

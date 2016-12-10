@@ -160,7 +160,7 @@ void DoCanvas(xoDoc* doc)
 	int w = 200;
 	int h = 200;
 	canvasEl->SetSize(w, h);
-	canvasEl->StyleParse("border-radius: 5ep");
+	canvasEl->StyleParse("border-radius: 35ep");
 	canvasEl->StyleParse("border: 3ep #a00f");
 	canvasEl->StyleParse("background: #ffff");
 	canvasEl->StyleParse("sizing: content");
@@ -172,7 +172,7 @@ void DoCanvas(xoDoc* doc)
 		{
 			int xb = (x & 4) == 4;
 			int cb = xb ^ yb ? 255 : 0;
-			c2d->SetPixel(x, y, xoRGBA::RGBA(cb, cb, cb, 255 - x));
+			c2d->SetPixel(x, y, xoRGBA::RGBA(cb, cb, cb, 255));
 		}
 	}
 	c2d->SetPixel(0, 0, xoRGBA::RGBA(255, 0, 0, 255));

@@ -90,29 +90,8 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 	if (mindim <= 0)
 		return;
 
-	/*
-	float padU = 0;
-	float padV = 0;
-	float pad = 1.0f;
-	if (pad != 0)
-	{
-		padU = pad / width;
-		padV = pad / height;
-	}
-	 
 	// Vertex ordering: 0 3
-	//                  1 2 
-	xoVx_PTC corners[4];
-	corners[0].Pos = XOVEC3(left - pad, top - pad, 0);
-	corners[1].Pos = XOVEC3(left - pad, bottom + pad, 0);
-	corners[2].Pos = XOVEC3(right + pad, bottom + pad, 0);
-	corners[3].Pos = XOVEC3(right + pad, top - pad, 0);
-
-	corners[0].UV = XOVEC2(-padU, -padV);
-	corners[1].UV = XOVEC2(-padU, 1 + padV);
-	corners[2].UV = XOVEC2(1 + padU, 1 + padV);
-	corners[3].UV = XOVEC2(1 + padU, -padV);
-	*/
+	//                  1 2
 
 	xoImage* bgImage = nullptr;
 
@@ -139,14 +118,17 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 			shaderFlags |= SHADER_FLAG_TEXBG;
 	}
 
-	if (bg.a != 0 || bgImage)
+	xoBoxRadiusSet radii = {
+		{ radius, radius },	// left, top
+		{ radius, radius }, // left, bottom
+		{ radius, radius },	// right, bottom
+		{ radius, radius }, // right, top
+	};
+
+	bool anyArcs = radii.TopLeft != XOVEC2(0, 0) || radii.TopRight != XOVEC2(0, 0) || radii.BottomLeft != XOVEC2(0, 0) || radii.BottomRight != XOVEC2(0, 0);
+
+	if (bg.a != 0 || style->BorderColor.a != 0 || bgImage)
 	{
-		xoBoxRadiusSet radii = {
-			{ radius, radius },	// left, top
-			{ radius, radius }, // left, bottom
-			{ radius, radius },	// right, bottom
-			{ radius, radius }, // right, top
-		};
 		xoVx_Uber v[16];
 		float vmid = 0.5f * (top + bottom);
 		float borderPos = border.Top;
@@ -163,15 +145,16 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		rightEdge = xoMax(rightEdge, border.Right);
 
 		int shader = SHADER_RECT | shaderFlags;
-		if (bgImage)
-			int abc = 123;
 
-		float leftU = (leftEdge - border.Left) / contentWidth;
-		float rightU = (contentWidth - (rightEdge - border.Right)) / contentWidth;
-		float topV = -(border.Top + vpad) / contentHeight;
-		float bottomV = 1.0f + (border.Bottom + vpad) / contentHeight;
-		auto uv1 = XOVEC2(leftU, topV);
-		auto uv2 = XOVEC2(rightU, 0.5f);
+		auto uvScale = XOVEC2(1.0f / contentWidth, 1.0f / contentHeight);
+
+		// Refer to log entry from 2015-08-19 for what A,B,C,D means here.
+		float leftA = (leftEdge - border.Left) * uvScale.x;
+		float rightA = (contentWidth - (rightEdge - border.Right)) * uvScale.x;
+		float topA = -(border.Top + vpad) * uvScale.y;
+		float bottomB = 1.0f + (border.Bottom + vpad) * uvScale.y;
+		auto uv1 = XOVEC2(leftA, topA);
+		auto uv2 = XOVEC2(rightA, 0.5f);
 
 		//                                                                                     Border width
 		//                                                                                     |           Distance from edge
@@ -182,8 +165,8 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		v[2].Set1(shader, XOVEC2(right - rightEdge, vmid),								XOVEC4(border.Top, vmid - top, uv2.x, uv2.y), bgRGBA, borderRGBA);
 		v[3].Set1(shader, XOVEC2(right - rightEdge, top - vpad),						XOVEC4(border.Top, -vpad, uv2.x, uv1.y), bgRGBA, borderRGBA);
 
-		uv1 = XOVEC2(leftU, 0.5f);
-		uv2 = XOVEC2(rightU, bottomV);
+		uv1.y = 0.5f;
+		uv2.y = bottomB;
 
 		// bottom
 		v[4].Set1(shader, XOVEC2(left + leftEdge, vmid),								XOVEC4(border.Bottom, bottom - vmid, uv1.x, uv1.y), bgRGBA, borderRGBA);
@@ -191,13 +174,11 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		v[6].Set1(shader, XOVEC2(right - rightEdge, bottom + vpad),						XOVEC4(border.Bottom, -vpad, uv2.x, uv2.y), bgRGBA, borderRGBA);
 		v[7].Set1(shader, XOVEC2(right - rightEdge, vmid),								XOVEC4(border.Bottom, bottom - vmid, uv2.x, uv1.y), bgRGBA, borderRGBA);
 
-		float oldRightU = rightU;
-		std::swap(leftU, rightU);
-		leftU = -border.Left / contentWidth;
-		topV = (top + radii.TopLeft.y - xoPosToReal(pos.Top)) / contentHeight;
-		bottomV = (bottom - radii.BottomLeft.y - xoPosToReal(pos.Top)) / contentHeight;
-		uv1 = XOVEC2(leftU, topV);
-		uv2 = XOVEC2(rightU, bottomV);
+		float leftC = (-border.Left - hpad) * uvScale.x;
+		float topC = (top + radii.TopLeft.y - xoPosToReal(pos.Top)) * uvScale.y;
+		float bottomC = (bottom - radii.BottomLeft.y - xoPosToReal(pos.Top)) * uvScale.y;
+		uv1 = XOVEC2(leftC, topC);
+		uv2 = XOVEC2(leftA, bottomC);
 
 		// left
 		v[8].Set1(shader, XOVEC2(left - hpad, top + radii.TopLeft.y),					XOVEC4(border.Left, -hpad, uv1.x, uv1.y), bgRGBA, borderRGBA);
@@ -205,10 +186,11 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		v[10].Set1(shader, XOVEC2(left + leftEdge, bottom - radii.BottomLeft.y),		XOVEC4(border.Left, leftEdge, uv2.x, uv2.y), bgRGBA, borderRGBA);
 		v[11].Set1(shader, XOVEC2(left + leftEdge, top + radii.TopLeft.y),				XOVEC4(border.Left, leftEdge, uv2.x, uv1.y), bgRGBA, borderRGBA);
 
-		leftU = oldRightU;
-		rightU = 1.0f + border.Right / contentWidth;
-		uv1.x = leftU;
-		uv2.x = rightU;
+		float rightD = 1.0f + (border.Right + hpad) * uvScale.x;
+		float topD = (top + radii.TopRight.y - xoPosToReal(pos.Top)) * uvScale.y;
+		float bottomD = (bottom - radii.BottomRight.y - xoPosToReal(pos.Top)) * uvScale.y;
+		uv1 = XOVEC2(rightA, topD);
+		uv2 = XOVEC2(rightD, bottomD);
 
 		// right
 		v[12].Set1(shader, XOVEC2(right - rightEdge, top + radii.TopRight.y),			XOVEC4(border.Right, rightEdge, uv1.x, uv1.y), bgRGBA, borderRGBA);
@@ -218,15 +200,18 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 
 		Driver->ActivateShader(xoShaderUber);
 		Driver->Draw(xoGPUPrimQuads, 16, v);
-
-		RenderCornerArcs(shaderFlags, TopLeft, left, top, radii.TopLeft, border.Left, border.Top, bgRGBA, borderRGBA);
-		RenderCornerArcs(shaderFlags, BottomLeft, left, bottom, radii.BottomLeft, border.Left, border.Bottom, bgRGBA, borderRGBA);
-		RenderCornerArcs(shaderFlags, BottomRight, right, bottom, radii.BottomRight, border.Right, border.Bottom, bgRGBA, borderRGBA);
-		RenderCornerArcs(shaderFlags, TopRight, right, top, radii.TopRight, border.Right, border.Top, bgRGBA, borderRGBA);
+		
+		if (anyArcs)
+		{
+			RenderCornerArcs(shaderFlags, TopLeft, XOVEC2(left, top), radii.TopLeft, XOVEC2(border.Left, border.Top), XOVEC2(leftA, topC), uvScale, bgRGBA, borderRGBA);
+			RenderCornerArcs(shaderFlags, BottomLeft, XOVEC2(left, bottom), radii.BottomLeft, XOVEC2(border.Left, border.Bottom), XOVEC2(leftA, bottomC), uvScale, bgRGBA, borderRGBA);
+			RenderCornerArcs(shaderFlags, BottomRight, XOVEC2(right, bottom), radii.BottomRight, XOVEC2(border.Right, border.Bottom), XOVEC2(rightA, topD), uvScale, bgRGBA, borderRGBA);
+			RenderCornerArcs(shaderFlags, TopRight, XOVEC2(right, top), radii.TopRight, XOVEC2(border.Right, border.Top), XOVEC2(rightA, bottomD), uvScale, bgRGBA, borderRGBA);
+		}
 	}
 }
 
-void xoRenderer::RenderCornerArcs(int shaderFlags, Corners corner, float xEdge, float yEdge, xoVec2f outerRadii, float borderWidthX, float borderWidthY, uint32 bgRGBA, uint32 borderRGBA)
+void xoRenderer::RenderCornerArcs(int shaderFlags, Corners corner, xoVec2f edge, xoVec2f outerRadii, xoVec2f borderWidth, xoVec2f centerUV, xoVec2f uvScale, uint32 bgRGBA, uint32 borderRGBA)
 {
 	if (outerRadii.x == 0 || outerRadii.y == 0)
 		return;
@@ -235,16 +220,10 @@ void xoRenderer::RenderCornerArcs(int shaderFlags, Corners corner, float xEdge, 
 	float maxOuterRadius = xoMax(outerRadii.x, outerRadii.y);
 	float fanRadius;
 	int divs;
-	if (borderWidthX == borderWidthY && outerRadii.x == outerRadii.y)
-	{
-		// I haven't worked out why, but empirically 1.04 seems to be sufficient up to 200px radius.
-		fanRadius = maxOuterRadius * 1.04f + 2.0f;
-	}
+	if (borderWidth.x == borderWidth.y && outerRadii.x == outerRadii.y)
+		fanRadius = maxOuterRadius * 1.04f + 2.0f; // I haven't worked out why, but empirically 1.04 seems to be sufficient up to 200px radius.
 	else
-	{
-		// with an explicit gradient function for border_width you could get away with much fewer arc subdivisions, at least for the non-elliptical case.
 		fanRadius = maxOuterRadius * 1.1f + 2.0f;
-	}
 
 	// It's remarkable what good results we get from approximating ellipses with just two arcs. If you make the
 	// eccentricity truly extreme, then this ain't so great, but the thing is, that at those extremities, our
@@ -273,29 +252,30 @@ void xoRenderer::RenderCornerArcs(int shaderFlags, Corners corner, float xEdge, 
 		ellipseFlipX = -1;
 		ellipseFlipY = -1;
 		th = (float) (XO_PI * 0.5);
-		center = XOVEC2(xEdge + outerRadii.x, yEdge + outerRadii.y);
+		center = XOVEC2(edge.x + outerRadii.x, edge.y + outerRadii.y);
 		break;
 	case BottomLeft:
 		ellipseFlipX = -1;
 		th = (float) (XO_PI * 1.0f);
 		swapLimits = true;
-		center = XOVEC2(xEdge + outerRadii.x, yEdge - outerRadii.y);
+		center = XOVEC2(edge.x + outerRadii.x, edge.y - outerRadii.y);
 		break;
 	case BottomRight:
 		th = (float) (XO_PI * -0.5f);
-		center = XOVEC2(xEdge - outerRadii.x, yEdge - outerRadii.y);
+		center = XOVEC2(edge.x - outerRadii.x, edge.y - outerRadii.y);
 		break;
 	case TopRight:
 		ellipseFlipY = -1;
 		th = 0;
 		swapLimits = true;
-		center = XOVEC2(xEdge - outerRadii.x, yEdge + outerRadii.y);
+		center = XOVEC2(edge.x - outerRadii.x, edge.y + outerRadii.y);
 		break;
 	}
-	auto innerRadii = outerRadii - XOVEC2(borderWidthX, borderWidthY);
+	auto innerRadii = outerRadii - XOVEC2(borderWidth.x, borderWidth.y);
 	innerRadii.x = fabs(innerRadii.x);
 	innerRadii.y = fabs(innerRadii.y);
 	auto fanPos = XOVEC2(center.x + fanRadius * cos(th), center.y - fanRadius * sin(th)); // -y, because our coord system is Y down
+	auto fanUV = centerUV + uvScale * (fanPos - center);
 
 	auto outerPos = XOVEC2(center.x + outerRadii.x * cos(th), center.y - outerRadii.y * sin(th));
 	auto innerPos = center + PtOnEllipse(ellipseFlipX, ellipseFlipY, innerRadii.x, innerRadii.y, th);
@@ -312,6 +292,7 @@ void xoRenderer::RenderCornerArcs(int shaderFlags, Corners corner, float xEdge, 
 		auto innerPosNext = center + PtOnEllipse(ellipseFlipX, ellipseFlipY, innerRadii.x, innerRadii.y, th);
 		auto outerPosHalf = XOVEC2(center.x + outerRadii.x * cos(th - hinc), center.y - outerRadii.y * sin(th - hinc));
 		auto innerPosHalf = center + PtOnEllipse(ellipseFlipX, ellipseFlipY, innerRadii.x, innerRadii.y, th - hinc);
+		auto fanUVNext = centerUV + uvScale * (fanPosNext - center);
 
 		xoVec2f innerCenter, outerCenter;
 		float innerRadius, outerRadius;
@@ -319,15 +300,16 @@ void xoRenderer::RenderCornerArcs(int shaderFlags, Corners corner, float xEdge, 
 		CircleFrom3Pt(innerPos, innerPosHalf, innerPosNext, innerCenter, innerRadius);
 
 		auto arcCenters = XOVEC4(innerCenter.x, innerCenter.y, outerCenter.x, outerCenter.y);
-		auto arcRadii = XOVEC4(innerRadius, outerRadius, 0, 0);
+		auto arcRadii = XOVEC2(innerRadius, outerRadius);
 
-		vx[0].Set(SHADER_ARC | shaderFlags, center, arcCenters, arcRadii, bgRGBA, borderRGBA);
-		vx[1].Set(SHADER_ARC | shaderFlags, fanPos, arcCenters, arcRadii, bgRGBA, borderRGBA);
-		vx[2].Set(SHADER_ARC | shaderFlags, fanPosNext, arcCenters, arcRadii, bgRGBA, borderRGBA);
+		vx[0].Set(SHADER_ARC | shaderFlags, center, arcCenters, XOVEC4(arcRadii.x, arcRadii.y, centerUV.x, centerUV.y), bgRGBA, borderRGBA);
+		vx[1].Set(SHADER_ARC | shaderFlags, fanPos, arcCenters, XOVEC4(arcRadii.x, arcRadii.y, fanUV.x, fanUV.y), bgRGBA, borderRGBA);
+		vx[2].Set(SHADER_ARC | shaderFlags, fanPosNext, arcCenters, XOVEC4(arcRadii.x, arcRadii.y, fanUVNext.x, fanUVNext.y), bgRGBA, borderRGBA);
 		Driver->Draw(xoGPUPrimTriangles, 3, vx);
 		fanPos = fanPosNext;
 		outerPos = outerPosNext;
 		innerPos = innerPosNext;
+		fanUV = fanUVNext;
 	}
 }
 
