@@ -1,6 +1,6 @@
 #XO_PLATFORM_WIN_DESKTOP
 #XO_PLATFORM_LINUX_DESKTOP
-#version 130
+//#version 130 - added by preprocessor now
 
 // This looks absolutely terrible without sRGB blending, so we simply don't even try subpixel text
 // on those platforms. As it turns out, there is great correlation between low res screen (Windows)

@@ -159,10 +159,19 @@ xoBoxLayout3::FlowResult xoBoxLayout3::EndNodeInternal(xoBox& marginBox, bool in
 	FlowState* flow = &FlowStates.Back();
 
 	if (ns->Input.ContentWidth == xoPosNULL)
+	{
 		ns->Input.ContentWidth = xoMax(flow->HighMinor, flow->PosMinor);
+		// If you don't round up here, then subpixel glyph positioning ends up producing boxes that have non-integer widths, which ends up producing ugly borders.
+		if (xoGlobal()->SnapBoxes)
+			ns->Input.ContentWidth = xoPosRoundUp(ns->Input.ContentWidth);
+	}
 
 	if (ns->Input.ContentHeight == xoPosNULL)
+	{
 		ns->Input.ContentHeight = flow->HighMajor;
+		if (xoGlobal()->SnapBoxes)
+			ns->Input.ContentHeight = xoPosRoundUp(ns->Input.ContentHeight);
+	}
 
 	// We are done with the flow state of the node that's ending (ie the flow of objects inside this node).
 	FlowStates.Pop();

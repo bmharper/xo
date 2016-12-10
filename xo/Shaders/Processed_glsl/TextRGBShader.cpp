@@ -42,7 +42,7 @@ const char* xoGLProg_TextRGB::VertSrc()
 const char* xoGLProg_TextRGB::FragSrc()
 {
 	return
-		"#version 130\n"
+		"//#version 130 - added by preprocessor now\n"
 		"\n"
 		"// This looks absolutely terrible without sRGB blending, so we simply don't even try subpixel text\n"
 		"// on those platforms. As it turns out, there is great correlation between low res screen (Windows)\n"

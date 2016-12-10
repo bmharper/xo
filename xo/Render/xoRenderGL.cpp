@@ -388,7 +388,7 @@ void xoRenderGL::ActivateShader(xoShaders shader)
 	XOASSERT(p->Prog != 0);
 	XOTRACE_RENDER("Activate shader %s\n", p->Name());
 	glUseProgram(p->Prog);
-	if (ActiveShader == xoShaderTextRGB)
+	if (ActiveShader == xoShaderTextRGB || ActiveShader == xoShaderUber)
 	{
 		// outputColor0 = vec4(color.r, color.g, color.b, avgA);
 		// outputColor1 = vec4(aR, aG, aB, avgA);
@@ -940,6 +940,8 @@ bool xoRenderGL::LoadProgram(GLuint& vshade, GLuint& fshade, GLuint& prog, const
 
 	bool isTextRGB = strcmp(name, "TextRGB") == 0;
 	bool isUber = strcmp(name, "Uber") == 0;
+	if (isUber)
+		int abc = 123;
 
 	if (!LoadShader(GL_VERTEX_SHADER, vshade, name, vsrc)) return false;
 	if (!LoadShader(GL_FRAGMENT_SHADER, fshade, name, fsrc)) return false;
@@ -955,6 +957,7 @@ bool xoRenderGL::LoadProgram(GLuint& vshade, GLuint& fshade, GLuint& prog, const
 #ifdef glBindFragDataLocationIndexed
 		glBindFragDataLocationIndexed(prog, 0, 0, "out_color0");
 		glBindFragDataLocationIndexed(prog, 0, 1, "out_color1");
+		Check();
 #else
 		XOPANIC("glBindFragDataLocationIndexed not defined. Necessary for subpixel RGB text");
 #endif
@@ -997,8 +1000,11 @@ bool xoRenderGL::LoadShader(GLenum shaderType, GLuint& shader, const char* name,
 	}
 
 #if XO_PLATFORM_ANDROID
-	if ( shaderType == GL_FRAGMENT_SHADER )
+	if (shaderType == GL_FRAGMENT_SHADER)
 		raw_prefix += "precision mediump float;\n";
+#elif XO_PLATFORM_WIN_DESKTOP || XO_PLATFORM_LINUX_DESKTOP
+	raw_prefix += "#version 130\n"; // necessary for dual color blending
+	raw_prefix += "#extension GL_EXT_gpu_shader4 : enable\n"; // for "bool"
 #endif
 
 	PreparePreprocessor();

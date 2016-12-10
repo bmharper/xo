@@ -479,12 +479,12 @@ void InitDOM(xoDoc* doc)
 	//DoBaselineAlignment_rev2(doc);
 	//DoBaselineAlignment_Multiline(doc);
 	//DoBaselineAlignment_DownPropagate(doc);
-	DoCanvas(doc);
+	//DoCanvas(doc);
 	//DoCenter(doc);
 	//DoHCenter(doc);
 	//DoVCenter(doc);
 	//DoTwoTextRects(doc);
-	//DoBlockMargins(doc);
+	DoBlockMargins(doc);
 	//DoLongText(doc);
 	//DoInlineFlow(doc);
 	//DoBackupSettings(doc);

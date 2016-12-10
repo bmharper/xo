@@ -1,5 +1,3 @@
-#extension GL_EXT_gpu_shader4 : enable
-
 uniform		vec2	Frame_VPort_HSize;
 
 uniform sampler2D	f_tex0;
@@ -12,19 +10,20 @@ varying		vec4	f_color2;
 varying 	float	f_shader;
 
 #if defined(XO_PLATFORM_WIN_DESKTOP) || defined(XO_PLATFORM_LINUX_DESKTOP)
+// This needs at least #version 130
 //layout(location = 0, index = 0) out vec4 outputColor0;
 //layout(location = 0, index = 1) out vec4 outputColor1;
 // On NVidia (9.18.13.3165 (10-23-2013), R331.65 (branch: r331_00-146)),
 // one doesn't need the layout qualification, nor glBindFragDataLocationIndexed. The order in which you
 // declare the output variables is sufficient to make an affinity with "color0" or "color1".
 // It is needed though, on Intel Haswell drivers on Linux
-varying out		vec4		out_color0;
-varying out		vec4		out_color1;
+out		vec4		out_color0;
+out		vec4		out_color1;
 
 void write_color(vec4 color)
 {
 	out_color0 = color;
-	out_color1 = color;
+	out_color1 = color.aaaa;
 }
 #else
 void write_color(vec4 color)
@@ -130,13 +129,13 @@ void main()
 		//float w1 = 0.28;
 		//float w2 = 0.12;
 
-		float r_mask = (w2 * tap0 + w1 * tap1 + w0 * tap2 + w1 * tap3 + w2 * tap4);
-		float g_mask = (w2 * tap1 + w1 * tap2 + w0 * tap3 + w1 * tap4 + w2 * tap5);
-		float b_mask = (w2 * tap2 + w1 * tap3 + w0 * tap4 + w1 * tap5 + w2 * tap6);
-		float aR = r_mask * f_color1.a;
-		float aG = g_mask * f_color1.a;
-		float aB = b_mask * f_color1.a;
-		float avgA = (r_mask + g_mask + b_mask) / 3.0;
+		float r = (w2 * tap0 + w1 * tap1 + w0 * tap2 + w1 * tap3 + w2 * tap4);
+		float g = (w2 * tap1 + w1 * tap2 + w0 * tap3 + w1 * tap4 + w2 * tap5);
+		float b = (w2 * tap2 + w1 * tap3 + w0 * tap4 + w1 * tap5 + w2 * tap6);
+		float aR = r * f_color1.a;
+		float aG = g * f_color1.a;
+		float aB = b * f_color1.a;
+		float avgA = (r + g + b) / 3.0;
 
 		out_color0 = vec4(f_color1.rgb, avgA);
 		out_color1 = vec4(aR, aG, aB, avgA);

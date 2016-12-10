@@ -243,6 +243,9 @@ public:
 
 	xoBoxF() : Left(0), Right(0), Top(0), Bottom(0) {}
 	xoBoxF(float left, float top, float right, float bottom) : Left(left), Right(right), Top(top), Bottom(bottom) {}
+
+	bool operator==(const xoBoxF& b) { return Left == b.Left && Right == b.Right && Top == b.Top && Bottom == b.Bottom; }
+	bool operator!=(const xoBoxF& b) { return !(*this == b); }
 };
 
 struct XOAPI xoRGBA

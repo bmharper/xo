@@ -122,8 +122,9 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 	};
 
 	bool anyArcs = radii.TopLeft != XOVEC2(0, 0) || radii.TopRight != XOVEC2(0, 0) || radii.BottomLeft != XOVEC2(0, 0) || radii.BottomRight != XOVEC2(0, 0);
+	bool anyBorders = border != xoBoxF(0, 0, 0, 0);
 
-	if (bg.a != 0 || style->BorderColor.a != 0 || bgImage)
+	if (bg.a != 0 || bgImage || (style->BorderColor.a != 0 && anyBorders))
 	{
 		xoVx_Uber v[16];
 		float vmid = 0.5f * (top + bottom);
@@ -133,6 +134,10 @@ void xoRenderer::RenderNode(xoPoint base, const xoRenderDomNode* node)
 		float hpad = 1;
 		uint32 bgRGBA = bg.GetRGBA();
 		uint32 borderRGBA = style->BorderColor.GetRGBA();
+
+		// This is a little hack for rounded corners, to prevent bleeding of the border color. Ideally, we should be applying this logic to each corner individually.
+		if (!anyBorders)
+			borderRGBA = bgRGBA;
 
 		float leftEdge = xoMax(radii.TopLeft.x, radii.BottomLeft.x);
 		leftEdge = xoMax(leftEdge, border.Left);
