@@ -33,6 +33,11 @@ void write_color(vec4 color)
 }
 #endif
 
+vec4 blend_over(vec4 a, vec4 b)
+{
+	return (1.0 - b.a) * a + b;
+}
+
 vec2 to_screen(vec2 pos)
 {
 	return (vec2(pos.x, -pos.y) + vec2(1,1)) * Frame_VPort_HSize;
@@ -54,8 +59,12 @@ void main()
 		vec4 bg_color = f_color1;
 		vec4 border_color = f_color2;
 
+		vec4 bg_tex = vec4(0, 0, 0, 0);
 		if (enableBGTex)
-			bg_color *= texture2D(f_tex0, uv);
+		{
+			bg_tex = premultiply(texture2D(f_tex0, uv));
+			bg_color = blend_over(bg_color, bg_tex);
+		}
 
 		vec2 screen_pos = to_screen(f_pos.xy);
 		float distance1 = length(screen_pos - center1);
@@ -83,8 +92,12 @@ void main()
 		// The +0.5 here is the same as above
 		float dclamped = clamp(border_width - border_distance + 0.5, 0.0, 1.0);
 
+		vec4 bg_tex = vec4(0, 0, 0, 0);
 		if (enableBGTex)
-			bg_color *= texture2D(f_tex0, uv);
+		{
+			bg_tex = premultiply(texture2D(f_tex0, uv));
+			bg_color = blend_over(bg_color, bg_tex);
+		}
 
 		vec4 color = mix(bg_color, border_color, dclamped);
 		color *= edge_alpha;

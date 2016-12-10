@@ -300,12 +300,10 @@ void xoDoc::InitializeDefaultTagStyles()
 	TagStyles[xoTagBody].Set(afont);
 	TagStyles[xoTagCanvas].Parse("background: #fff", this);
 	TagStyles[xoTagDiv].Parse("baseline:baseline;", this);
-	// TagStyles[xoTagText]
 	// Setting cursor: text on <lab> is amusing, and it is the default in HTML, but not the right default for general-purpose UI.
 	// If this were true here also, then it would imply that all text on a page is selectable.
 	TagStyles[xoTagLab].Parse("baseline:baseline", this);
 	TagStyles[xoTagSpan].Parse("flow-context: inject; baseline: baseline; bump: horizontal", this);
-	//TagStyles[xoTagCanvas]
 
 	static_assert(xoTagCanvas == xoTagEND - 1, "add default style for new tag");
 }
