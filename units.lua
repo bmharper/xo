@@ -237,9 +237,10 @@ local xo = SharedLibrary {
 	Sources = {
 		makeGlob("xo", {}),
 		makeGlob("dependencies/agg", {}),
+		makeGlob("dependencies/ConvertUTF", {}),
 		makeGlob("dependencies/GL", {}),
 		makeGlob("dependencies/hash", {}),
-		makeGlob("dependencies/Panacea", {}),
+		"dependencies/tsf/xo_tsf_wrapper.cpp",
 	},
 }
 
@@ -276,6 +277,7 @@ local function XoExampleApp(template, example)
 		Sources = {
 			"templates/" .. template,
 			"examples/" .. example .. ".cpp",
+			"dependencies/tsf/tsf.cpp",
 		}
 	}
 end

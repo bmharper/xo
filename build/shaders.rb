@@ -15,24 +15,28 @@ CombinedBaseH_Start = <<-END
 #pragma once
 #if IF_BUILD
 
-#include "../../Render/xoRenderGLDX_Defs.h"
+#include "../../Render/RenderGLDX_Defs.h"
 
-class xoGLDXProg_NAME : public xoGLDXProg
+namespace xo {
+
+class GLDXProg_NAME : public GLDXProg
 {
 public:
-	xoGLDXProg_NAME();
-	virtual void			Reset();
-	virtual const char*		VertSrc();
-	virtual const char*		FragSrc();
-	virtual const char*		Name();
-	virtual bool			LoadVariablePositions();	// Performs glGet[Uniform|Attrib]Location for all variables. Returns true if all variables are found.
-	virtual uint32			PlatformMask();				// Combination of xoPlatform bits.
-	virtual xoVertexType	VertexType();				// Only meaningful on DirectX
+	GLDXProg_NAME();
+	virtual void            Reset();
+	virtual const char*     VertSrc();
+	virtual const char*     FragSrc();
+	virtual const char*     Name();
+	virtual bool            LoadVariablePositions();  // Performs glGet[Uniform|Attrib]Location for all variables. Returns true if all variables are found.
+	virtual uint32_t        PlatformMask();           // Combination of Platform bits.
+	virtual xo::VertexType  VertexType();             // Only meaningful on DirectX
 
 END
 
 CombinedBaseH_End = <<-END
 };
+
+} // namespace xo
 
 #endif // IF_BUILD
 END
@@ -42,36 +46,38 @@ CombinedBaseCpp = <<-END
 #if IF_BUILD
 #include "NAMEShader.h"
 
-xoGLDXProg_NAME::xoGLDXProg_NAME()
+namespace xo {
+
+GLDXProg_NAME::GLDXProg_NAME()
 {
 	Reset();
 }
 
-void xoGLDXProg_NAME::Reset()
+void GLDXProg_NAME::Reset()
 {
 	ResetBase();
 RESET
 }
 
-const char* xoGLDXProg_NAME::VertSrc()
+const char* GLDXProg_NAME::VertSrc()
 {
 	return
 VERT_SRC;
 }
 
-const char* xoGLDXProg_NAME::FragSrc()
+const char* GLDXProg_NAME::FragSrc()
 {
 	return
 FRAG_SRC;
 }
 
-const char* xoGLDXProg_NAME::Name()
+const char* GLDXProg_NAME::Name()
 {
 	return "NAME";
 }
 
 
-bool xoGLDXProg_NAME::LoadVariablePositions()
+bool GLDXProg_NAME::LoadVariablePositions()
 {
 	int nfail = 0;
 
@@ -79,15 +85,17 @@ LOAD_FUNC_BODY
 	return nfail == 0;
 }
 
-uint32 xoGLDXProg_NAME::PlatformMask()
+uint32_t GLDXProg_NAME::PlatformMask()
 {
 	return PLATFORM_MASK;
 }
 
-xoVertexType xoGLDXProg_NAME::VertexType()
+xo::VertexType GLDXProg_NAME::VertexType()
 {
 	return VERTEX_TYPE;
 }
+
+} // namespace xo
 
 #endif // IF_BUILD
 END
@@ -140,7 +148,7 @@ def extract_vertex_type(vert_src, name)
 	# VSOutput main(VertexType_PTCV4 vertex)
 	vert_src.each_line{ |line|
 		if line =~ /main\(VertexType_(\w+)/
-			return "xoVertexType_" + $1
+			return "VertexType_" + $1
 		end
 	}
 	die("Couldn't find vertex type for shader #{name}")
@@ -167,9 +175,9 @@ def gen_combined(common, ext, vert, frag, name, filename_base)
 				use_line = false
 				platform = $1
 				case platform
-				when "WIN_DESKTOP" then platforms[:xoPlatform_WinDesktop] = 1
-				when "LINUX_DESKTOP" then platforms[:xoPlatform_LinuxDesktop] = 1
-				when "ANDROID" then platforms[:xoPlatform_Android] = 1
+				when "WIN_DESKTOP" then platforms[:Platform_WinDesktop] = 1
+				when "LINUX_DESKTOP" then platforms[:Platform_LinuxDesktop] = 1
+				when "ANDROID" then platforms[:Platform_Android] = 1
 				else raise "Unrecognized platform #{platform}"
 				end
 			end
@@ -182,10 +190,10 @@ def gen_combined(common, ext, vert, frag, name, filename_base)
 	vert_src = common + vert_src
 	frag_src = common + frag_src
 
-	vertex_type = "xoVertexType_NULL"
+	vertex_type = "VertexType_NULL"
 	vertex_type = extract_vertex_type(vert_src, name) if ext2name(ext) == "DX"
 
-	platforms[:xoPlatform_All] = 1 if platforms.length == 0
+	platforms[:Platform_All] = 1 if platforms.length == 0
 
 	replace = lambda { |txt|
 		rep = txt

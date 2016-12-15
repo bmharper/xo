@@ -2,11 +2,11 @@
 
 void xoMain(xoSysWnd* wnd)
 {
-	XOTRACE("Hello 1\n");
+	Trace("Hello 1\n");
 	xoDoc* doc = wnd->Doc();
 	//doc->Root.StyleParse( "margin: 20px;" );
 	//doc->Root.StyleParse( "border-radius: 55px;" );
-	XOTRACE("Hello 2\n");
+	Trace("Hello 2\n");
 
 	xoDomNode* blocks[4];
 	for (int i = 0; i < 4; i++)
@@ -27,7 +27,7 @@ void xoMain(xoSysWnd* wnd)
 	blocks[1]->StyleParse("background: #ff000080");
 	blocks[2]->StyleParse("background: #ff0000ff");
 
-	XOTRACE("Hello 3\n");
+	Trace("Hello 3\n");
 
 	xoDomNode* greybox = blocks[3];
 	greybox->StyleParse("background: #aaaa; position: absolute; left: 90px; top: 90px;");
@@ -40,12 +40,12 @@ void xoMain(xoSysWnd* wnd)
 	doc->Root.OnMouseMove(onMoveOrTouch);
 	doc->Root.OnTouch(onMoveOrTouch);
 
-	XOTRACE("Hello 4\n");
+	Trace("Hello 4\n");
 
 	xoEvent inject;
 	inject.PointCount = 1;
 	inject.Points[0] = XOVEC2(100,100);
 	onMoveOrTouch(inject);
 
-	XOTRACE("Hello 5\n");
+	Trace("Hello 5\n");
 }

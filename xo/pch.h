@@ -2,7 +2,7 @@
 
 #define PROJECT_XO 1
 
-#include "xoPlatformDefine.h"
+#include "Base/PlatformDefine.h"
 
 #if XO_PLATFORM_WIN_DESKTOP && !defined(XO_EXCLUDE_DIRECTX)
 #define XO_BUILD_DIRECTX 1
@@ -18,7 +18,7 @@
 #define _CRT_SECURE_NO_WARNINGS 1
 #endif
 
-// We keep these includes outside of xoBase_SystemIncludes, because we
+// We keep these includes outside of Base_SystemIncludes, because we
 // do not need to pollute the xo client with the OpenGL symbols.
 #if defined(XO_BUILD_OPENGL)
 #if XO_PLATFORM_WIN_DESKTOP
@@ -35,18 +35,12 @@
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 #else
-XOTODO_STATIC
+XO_TODO_STATIC
 #endif
 #endif
 
-#include "warnings.h"
-#include "xoBase_SystemIncludes.h"
-#include "xoBase.h"
-#include "xoBase_LocalIncludes.h"
-#include "xoBase_Vector.h"
-#include "xoBase_Fmt.h"
-#include "xoString.h"
-#include "../dependencies/Panacea/Strings/fmt.h"
+#include "Base/warnings.h"
+#include "Base/Base.h"
 
 // We do not leak the Freetype definitions to our consumer
 #include "../dependencies/freetype/include/ft2build.h"
@@ -57,10 +51,10 @@ XOTODO_STATIC
 #undef STBI_HEADER_FILE_ONLY
 
 #ifdef _WIN32
-#pragma warning( disable: 4345 ) // POD initialized with ()
+#pragma warning(disable : 4345) // POD initialized with ()
 #endif
 
 using namespace std;
 
-#include "xoPlatform.h"
-#include "xoMem.h"
+#include "Base/MemPoolsAndContainers.h"
+#include "Base/OS_IO.h"
