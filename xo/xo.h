@@ -1,34 +1,28 @@
 #pragma once
+namespace xo {
 
-#include "xoPlatformDefine.h"
-#include "xoBase_SystemIncludes.h"
-#include "xoBase.h"
-#include "xoBase_LocalIncludes.h"
-#include "xoBase_Vector.h"
-#include "xoBase_Fmt.h"
-#include "xoString.h"
-#include "../dependencies/Panacea/Strings/fmt.h"
+#include "Base/PlatformDefine.h"
+#include "Base/Base.h"
 
 #ifdef _WIN32
-#pragma warning( push )
-#pragma warning( disable: 4345 ) // POD initialized with ()
+#pragma warning(push)
+#pragma warning(disable : 4345) // POD initialized with ()
 #endif
 
-#include "xoDefs.h"
-#include "xoDoc.h"
-#include "xoDocGroup.h"
-#include "Dom/xoDomCanvas.h"
-#include "Canvas/xoCanvas2D.h"
-#include "Layout/xoLayout.h"
-#include "Layout/xoLayout2.h"
-#include "Layout/xoLayout3.h"
-#include "Render/xoRenderer.h"
-#include "Render/xoRenderDoc.h"
-#include "Image/xoImageStore.h"
-#include "Image/xoImage.h"
-#include "xoSysWnd.h"
-#include "xoEvent.h"
+#include "Defs.h"
+#include "Doc.h"
+#include "DocGroup.h"
+#include "Dom/DomCanvas.h"
+#include "Canvas/Canvas2D.h"
+#include "Layout/Layout3.h"
+#include "Render/Renderer.h"
+#include "Render/RenderDoc.h"
+#include "Image/ImageStore.h"
+#include "Image/Image.h"
+#include "SysWnd.h"
+#include "Event.h"
 
 #ifdef _WIN32
-#pragma warning( pop )
+#pragma warning(pop)
 #endif
+}
