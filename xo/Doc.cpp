@@ -216,7 +216,7 @@ void Doc::ChildRemoved(DomEl* el) {
 
 void Doc::SetChildModified(InternalID id) {
 	size_t index = id;
-	while (ChildIsModified.size() < index)
+	while (ChildIsModified.size() <= index)
 		ChildIsModified.push_back(false);
 	ChildIsModified[index] = true;
 	IncVersion();

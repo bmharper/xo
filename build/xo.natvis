@@ -4,11 +4,11 @@
 	<!-- One UIVisualizer per file -->
 	<UIVisualizer ServiceId="{A452AFEA-3DF6-46BB-9177-C0B08F318025}" Id="1" MenuName="Add to Image Watch"/>
 
-	<Type Name="xoImage">
+	<Type Name="xo::Image">
 		<UIVisualizer ServiceId="{A452AFEA-3DF6-46BB-9177-C0B08F318025}" Id="1" />
 	</Type>
 
-	<Type Name="xoImage">
+	<Type Name="xo::Image">
 		<Expand>
 			<Synthetic Name="[type]">
 				<DisplayString>UINT8</DisplayString>
@@ -26,11 +26,11 @@
 		</Expand>
 	</Type>
 
-	<Type Name="xoTexture">
+	<Type Name="xo::Texture">
 		<UIVisualizer ServiceId="{A452AFEA-3DF6-46BB-9177-C0B08F318025}" Id="1" />
 	</Type>
 
-	<Type Name="xoTexture">
+	<Type Name="xo::Texture">
 		<Expand>
 			<Synthetic Name="[type]">
 				<DisplayString>UINT8</DisplayString>
@@ -48,7 +48,7 @@
 		</Expand>
 	</Type>
 
-	<Type Name="xoBox">
+	<Type Name="xo::Box">
 		<DisplayString>{Left},{Top},{Right},{Bottom}</DisplayString>
 		<Expand> 
 			<Item Name="Left">Left</Item> 
@@ -65,14 +65,14 @@
 			<Item Name="(px:Height)">(Bottom-Top)/256</Item> 
 		</Expand>         
 	</Type>
-	<Type Name="xoColor">
+	<Type Name="xo::Color">
 		<DisplayString>RGBA={(int)r} {(int)g} {(int)b} {(int)a}</DisplayString>
 	</Type>
-	<Type Name="xoStringRaw">
+	<Type Name="xo::StringRaw">
 		<DisplayString>{Z}</DisplayString>
 		<StringView>Z,s</StringView>
 	</Type>
-	<Type Name="podvec&lt;*&gt;">
+	<Type Name="cheapvec&lt;*&gt;">
 		<DisplayString>{count}/{capacity}</DisplayString>
 		<Expand> 
 			<Item Name="count">count</Item> 
@@ -83,18 +83,7 @@
 			</ArrayItems> 
 		</Expand>         
 	</Type>
-	<Type Name="pvect&lt;*&gt;">
-		<DisplayString>{count}/{capacity}</DisplayString>
-		<Expand> 
-			<Item Name="count">count</Item> 
-			<Item Name="capacity">capacity</Item> 
-			<ArrayItems> 
-				<Size>count</Size> 
-				<ValuePointer>(TElem*)data</ValuePointer> 
-			</ArrayItems> 
-		</Expand>
-	</Type>
-	<Type Name="xoPoolArray&lt;*&gt;">
+	<Type Name="xo::PoolArray&lt;*&gt;">
 		<DisplayString>{Count}/{Capacity}</DisplayString>
 		<Expand> 
 			<Item Name="Count">Count</Item> 
@@ -105,7 +94,7 @@
 			</ArrayItems> 
 		</Expand>
 	</Type>
-	<Type Name="xoStack&lt;*&gt;">
+	<Type Name="xo::Stack&lt;*&gt;">
 		<DisplayString>{Count}/{Capacity}</DisplayString>
 		<Expand> 
 			<Item Name="Count">Count</Item> 
@@ -117,7 +106,7 @@
 			</ArrayItems> 
 		</Expand>         
 	</Type>
-	<Type Name="xoFixedVector&lt;*&gt;">
+	<Type Name="xo::FixedVector&lt;*&gt;">
 		<DisplayString>{Count}/{Capacity}</DisplayString>
 		<Expand>
 			<Item Name="Count">Count</Item>
@@ -128,7 +117,7 @@
 			</ArrayItems>
 		</Expand>
 	</Type>
-	<Type Name="xoRingBuf&lt;*&gt;">
+	<Type Name="xo::RingBuf&lt;*&gt;">
 		<DisplayString>{Tail} >> {Head}</DisplayString>
 		<Expand> 
 			<Item Name="Tail">Tail</Item> 

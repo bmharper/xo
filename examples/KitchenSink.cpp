@@ -474,7 +474,7 @@ void InitDOM(xo::Doc* doc)
 	xo::DomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
 
-	//DoBorder(doc);
+	DoBorder(doc);
 	//DoBaselineAlignment(doc);
 	//DoBaselineAlignment_rev2(doc);
 	//DoBaselineAlignment_Multiline(doc);
@@ -484,7 +484,7 @@ void InitDOM(xo::Doc* doc)
 	//DoHCenter(doc);
 	//DoVCenter(doc);
 	//DoTwoTextRects(doc);
-	DoBlockMargins(doc);
+	//DoBlockMargins(doc);
 	//DoLongText(doc);
 	//DoInlineFlow(doc);
 	//DoBackupSettings(doc);
