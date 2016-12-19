@@ -1,7 +1,7 @@
 #pragma once
 #include "Dom/DomNode.h"
 #include "Dom/DomText.h"
-#include "Mem.h"
+#include "Base/MemPoolsAndContainers.h"
 #include "StringTable.h"
 #include "Image/ImageStore.h"
 #include "DocUI.h"
@@ -19,7 +19,7 @@ and if the two differ, it knows that it needs to update.
 
 */
 class XO_API Doc {
-	DISALLOW_COPY_AND_ASSIGN(Doc);
+	XO_DISALLOW_COPY_AND_ASSIGN(Doc);
 
 public:
 	DomNode     Root;              // Root element of the document tree
@@ -31,12 +31,12 @@ public:
 
 	Doc();
 	~Doc();
-	void   Reset();
-	void   IncVersion();
-	uint32_t GetVersion() { return Version; }                                  // Renderers use purposefully loose thread semantics on this.
-	void   ResetModifiedBitmap();                                            // Reset the 'ismodified' bitmap of all DOM elements.
-	void   MakeFreeIDsUsable();                                              // All of our dependent renderers have been updated, we can move FreeIDs over to UsableIDs.
-	void   CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const; // Used to make a read-only clone for the renderer. Preserves existing.
+	void     Reset();
+	void     IncVersion();
+	uint32_t GetVersion() { return Version; }                                      // Renderers use purposefully loose thread semantics on this.
+	void     ResetModifiedBitmap();                                                // Reset the 'ismodified' bitmap of all DOM elements.
+	void     MakeFreeIDsUsable();                                                  // All of our dependent renderers have been updated, we can move FreeIDs over to UsableIDs.
+	void     CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const; // Used to make a read-only clone for the renderer. Preserves existing.
 	//void				CloneFastInto( Doc& c, uint32_t cloneFlags, RenderStats& stats ) const;	// Used to make a read-only clone for the renderer. Starts from scratch.
 
 	// Style Classes
@@ -47,8 +47,8 @@ public:
 
 	String Parse(const char* src); // Set the entire document from a single xml-like string. Returns empty string on success, or error message.
 
-	void NodeGotTimer(InternalID node);
-	void NodeLostTimer(InternalID node);
+	void     NodeGotTimer(InternalID node);
+	void     NodeLostTimer(InternalID node);
 	uint32_t FastestTimerMS();
 
 	void ChildAdded(DomEl* el);
@@ -63,13 +63,13 @@ public:
 	DomNode*       GetNodeByInternalIDMutable(InternalID id) { return ChildByInternalID[id] ? ChildByInternalID[id]->ToNode() : nullptr; }
 
 protected:
-	volatile uint32_t        Version;
+	volatile uint32_t      Version;
 	Pool                   Pool;       // Used only when making a clone via CloneFast()
 	bool                   IsReadOnly; // Read-only clone used for rendering
-	cheapvec<DomEl*>          ChildByInternalID;
-	BitMap                 ChildIsModified; // Bit is set if child has been modified since we last synced with the renderer
-	cheapvec<InternalID>     UsableIDs;       // When we do a render sync, then FreeIDs are moved into UsableIDs
-	cheapvec<InternalID>     FreeIDs;
+	cheapvec<DomEl*>       ChildByInternalID;
+	cheapvec<bool>         ChildIsModified; // Bit is set if child has been modified since we last synced with the renderer -- TODO - change to proper bitmap
+	cheapvec<InternalID>   UsableIDs;       // When we do a render sync, then FreeIDs are moved into UsableIDs
+	cheapvec<InternalID>   FreeIDs;
 	ohash::set<InternalID> NodesWithTimers; // Set of all nodes that have an OnTimer event handler registered
 
 	void ResetInternalIDs();

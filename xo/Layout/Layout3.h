@@ -4,7 +4,7 @@
 #include "../Render/RenderStack.h"
 #include "../Text/GlyphCache.h"
 #include "../Text/FontStore.h"
-#include "../Mem.h"
+#include "../Base/MemPoolsAndContainers.h"
 #include "BoxLayout3.h"
 
 namespace xo {
@@ -40,9 +40,9 @@ protected:
 
 	struct LayoutInput3 {
 		cheapvec<int32_t>* RestartPoints; // This is IN/OUT
-		RenderDomNode* ParentRNode;
-		Pos            ParentWidth;
-		Pos            ParentHeight;
+		RenderDomNode*     ParentRNode;
+		Pos                ParentWidth;
+		Pos                ParentHeight;
 	};
 
 	struct LayoutOutput3 {
@@ -62,8 +62,8 @@ protected:
 	};
 
 	struct Chunk {
-		int32_t     Start;
-		int32_t     End;
+		int32_t   Start;
+		int32_t   End;
 		ChunkType Type;
 	};
 
@@ -74,7 +74,7 @@ protected:
 		RingBuf<RenderCharEl> Chars;
 		bool                  GlyphsNeeded;
 		bool                  IsSubPixel;
-		cheapvec<int32_t>*        RestartPoints;
+		cheapvec<int32_t>*    RestartPoints;
 		float                 FontWidthScale;
 		int                   FontSizePx;
 		Pos                   FontAscender;
@@ -151,7 +151,7 @@ protected:
 
 	private:
 		const char* Txt;
-		int32_t       Pos;
+		int32_t     Pos;
 	};
 
 	// These helpers make the binding code a lot less repetitive.

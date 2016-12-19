@@ -6,11 +6,10 @@
 #include "../amalgamation/xo-amalgamation.h"
 #else
 #include "../xo/xo.h"
-#include "../xo/xoDocGroup.h"
 #endif
 
 // This is your "main" function, which you define in your own code
-void xoMain(xoSysWnd* wnd);
+void xoMain(xo::SysWnd* wnd);
 
 #if XO_PLATFORM_WIN_DESKTOP
 
@@ -24,7 +23,7 @@ static int __cdecl CrtAllocHook(int allocType, void *pvData, size_t size, int bl
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	_CrtSetAllocHook(CrtAllocHook);
-	xoRunApp(xoMain);
+	xo::RunApp(xoMain);
 	_CrtDumpMemoryLeaks();
 	return 0;
 }
@@ -33,10 +32,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 int main(int argc, char** argv)
 {
-	xoRunApp(xoMain);
+	xo::RunApp(xoMain);
 	return 0;
 }
 
 #else
-XOTODO_STATIC;
+XO_TODO_STATIC;
 #endif

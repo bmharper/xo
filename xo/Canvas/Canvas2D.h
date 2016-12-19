@@ -23,10 +23,10 @@ public:
 	const void* Buffer() const { return RenderBuff.buf(); }
 	void*       RowPtr(int line) { return RenderBuff.row_ptr(line); }
 	const void* RowPtr(int line) const { return RenderBuff.row_ptr(line); }
-	int32_t       Stride() const { return RenderBuff.stride(); }
-	uint32_t      StrideAbs() const { return RenderBuff.stride_abs(); }
-	uint32_t      Width() const { return RenderBuff.width(); }
-	uint32_t      Height() const { return RenderBuff.height(); }
+	int32_t     Stride() const { return RenderBuff.stride(); }
+	uint32_t    StrideAbs() const { return RenderBuff.stride_abs(); }
+	uint32_t    Width() const { return RenderBuff.width(); }
+	uint32_t    Height() const { return RenderBuff.height(); }
 	Box         GetInvalidRect() const { return InvalidRect; }               // Retrieve the bounding rectangle of all pixels that have been modified
 	void        Invalidate(Box box) { InvalidRect.ExpandToFit(box); }        // Call this if you modify the buffer by directly accessing its memory
 	void        Invalidate() { InvalidRect = Box(0, 0, Width(), Height()); } // Call this if you modify the buffer by directly accessing its memory

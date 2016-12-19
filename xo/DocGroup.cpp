@@ -14,11 +14,10 @@
 namespace xo {
 
 DocGroup::DocGroup() {
-	AbcCriticalSectionInitialize(DocLock);
 	DestroyDocWithGroup = false;
 	Doc                 = NULL;
 	Wnd                 = NULL;
-	RenderDoc           = new RenderDoc();
+	RenderDoc           = new xo::RenderDoc();
 	RenderStats.Reset();
 }
 
@@ -26,7 +25,6 @@ DocGroup::~DocGroup() {
 	delete RenderDoc;
 	if (DestroyDocWithGroup)
 		delete Doc;
-	AbcCriticalSectionDestroy(DocLock);
 }
 
 RenderResult DocGroup::Render() {
@@ -66,11 +64,11 @@ RenderResult DocGroup::RenderInternal(Image* targetImage) {
 	// for too long, even if the UI thread is taking its time, and being bombarded with messages.
 	if (docModified || targetImage != NULL) {
 		// If UI thread has performed even a single update since we last rendered, then pause our thread until we can gain the DocLock
-		auto tstart = AbcTimeAccurateRTSeconds();
-		AbcCriticalSectionEnter(DocLock);
-		auto time = AbcTimeAccurateRTSeconds() - tstart;
+		auto tstart = TimeAccurateSeconds();
+		DocLock.lock();
+		auto time = TimeAccurateSeconds() - tstart;
 		if (time > 0.001)
-			XOTIME("DocGroup.RenderInternal took %d ms to acquire DocLock\n", (int) (time * 1000));
+			TimeTrace("DocGroup.RenderInternal took %d ms to acquire DocLock\n", (int) (time * 1000));
 		haveLock = true;
 	}
 
@@ -81,30 +79,30 @@ RenderResult DocGroup::RenderInternal(Image* targetImage) {
 	if (haveLock) {
 		UploadImagesToGPU(beganRender);
 
-		//XOTRACE( "Render Version %u\n", Doc->GetVersion() );
+		//Trace( "Render Version %u\n", Doc->GetVersion() );
 		RenderDoc->CopyFromCanonical(*Doc, RenderStats);
 
 		// Assume we are the only renderer of 'Doc'. If this assumption were not true, then you would need to update
 		// all renderers simultaneously, so that you can guarantee that UsableIDs all go to FreeIDs atomically.
-		//XOTRACE( "MakeFreeIDsUsable\n" );
+		//Trace( "MakeFreeIDsUsable\n" );
 		Doc->MakeFreeIDsUsable();
 		Doc->ResetModifiedBitmap(); // AbcBitMap has an absolutely awful implementation of this (uint8_t-filled vs SSE or at least pointer-word-size-filled)
 
-		AbcCriticalSectionLeave(DocLock);
+		DocLock.unlock();
 	}
 
 	RenderResult rendResult   = RenderResultIdle;
 	bool         presentFrame = false;
 
 	if (docValid && Wnd != nullptr) {
-		//XOTIME( "Render start\n" );
+		//TimeTrace( "Render start\n" );
 		if (!beganRender && !Wnd->BeginRender()) {
-			XOTIME("BeginRender failed\n");
+			TimeTrace("BeginRender failed\n");
 			return RenderResultNeedMore;
 		}
 		beganRender = true;
 
-		//XOTIME( "Render DO\n" );
+		//TimeTrace( "Render DO\n" );
 		rendResult = RenderDoc->Render(Wnd->Renderer);
 
 		presentFrame = true;
@@ -115,7 +113,7 @@ RenderResult DocGroup::RenderInternal(Image* targetImage) {
 
 	if (beganRender) {
 		// presentFrame will be false when the only action we've taken on the GPU is uploading textures.
-		//XOTIME( "Render Finish\n" );
+		//TimeTrace( "Render Finish\n" );
 		Wnd->EndRender(presentFrame ? 0 : EndRenderNoSwap);
 	}
 
@@ -123,7 +121,7 @@ RenderResult DocGroup::RenderInternal(Image* targetImage) {
 }
 
 void DocGroup::UploadImagesToGPU(bool& beganRender) {
-	beganRender                 = false;
+	beganRender                    = false;
 	cheapvec<Image*> invalidImages = Doc->Images.InvalidList();
 	if (invalidImages.size() != 0) {
 		if (!Wnd->BeginRender())
@@ -191,9 +189,9 @@ void DocGroup::ProcessEvent(Event& ev) {
 
 	// This is indeed a terrible solution to the above problem .I tried it out of curiosity.
 	// It merely adds a lag to the processing of all messages.
-	// if (DocAge() >= 1) AbcSleep(1);
+	// if (DocAge() >= 1) SleepMS(1);
 
-	TakeCriticalSection lock(DocLock);
+	std::lock_guard<std::mutex> lock(DocLock);
 
 	if (ev.Type != EventTimer)
 		XOTRACE_LATENCY("ProcessEvent (not a timer)\n");

@@ -21,7 +21,7 @@ void        DXProg::ResetBase() {
     VertLayout = NULL;
 }
 bool       DXProg::LoadVariablePositions() { return false; }
-uint32_t     DXProg::PlatformMask() { return Platform_All; }
+uint32_t   DXProg::PlatformMask() { return Platform_All; }
 VertexType DXProg::VertexType() { return VertexType_NULL; }
 }
 #endif

@@ -2,6 +2,8 @@
 #if XO_BUILD_OPENGL
 #include "TextRGBShader.h"
 
+namespace xo {
+
 GLProg_TextRGB::GLProg_TextRGB() {
 	Reset();
 }
@@ -100,7 +102,7 @@ bool GLProg_TextRGB::LoadVariablePositions() {
 	nfail += (v_vtexClamp = glGetAttribLocation(Prog, "vtexClamp")) == -1;
 	nfail += (v_tex0 = glGetUniformLocation(Prog, "tex0")) == -1;
 	if (nfail != 0)
-		XOTRACE("Failed to bind %d variables of shader TextRGB\n", nfail);
+		Trace("Failed to bind %d variables of shader TextRGB\n", nfail);
 
 	return nfail == 0;
 }
@@ -109,8 +111,10 @@ uint32_t GLProg_TextRGB::PlatformMask() {
 	return Platform_WinDesktop | Platform_LinuxDesktop;
 }
 
-VertexType GLProg_TextRGB::VertexType() {
+xo::VertexType GLProg_TextRGB::VertexType() {
 	return VertexType_NULL;
 }
+
+} // namespace xo
 
 #endif // XO_BUILD_OPENGL

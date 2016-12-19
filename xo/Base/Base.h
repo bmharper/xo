@@ -42,6 +42,7 @@
 #include <string.h>
 #include <float.h>
 
+#include <atomic>
 #include <string>
 #include <algorithm>
 #include <limits>
@@ -62,6 +63,15 @@ T Min(T a, T b) { return a < b ? a : b; }
 template <typename T>
 T Max(T a, T b) { return a < b ? b : a; }
 }
+
+// Found this in the Chrome sources, via a PVS studio blog post
+template <typename T, size_t N>
+char (&ArraySizeHelper(T (&array)[N]))[N];
+#define arraysize(array) (sizeof(ArraySizeHelper(array)))
+
+#define XO_DISALLOW_COPY_AND_ASSIGN(TypeName) \
+	TypeName(const TypeName&) = delete;       \
+	TypeName& operator=(const TypeName&) = delete
 
 //#ifndef ASSERT
 //#define TEMP_ASSERT
@@ -103,7 +113,7 @@ T Max(T a, T b) { return a < b ? b : a; }
 */
 
 #include "../dependencies/sema.h"
-#include "../dependencies/ConvertUTF.h"
+#include "../dependencies/ConvertUTF/ConvertUTF.h"
 #include "../dependencies/tsf/tsf.h"
 
 #include "../dependencies/ohash/ohashtable.h"
@@ -134,9 +144,12 @@ typedef Mat4T<float> Mat4f;
 
 #include "../dependencies/hash/xxhash.h"
 
+#include "Base/Alloc.h"
 #include "Base/cheapvec.h"
+#include "Base/CPU.h"
 #include "Base/Queue.h"
 #include "Base/xoString.h"
+#include "Base/OS_Time.h"
 
 //#ifdef TEMP_ASSERT
 //#undef TEMP_ASSERT

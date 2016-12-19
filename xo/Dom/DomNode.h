@@ -8,10 +8,10 @@ It is vital that this data structure does not grow much bigger than this.
 Right now it's 136 bytes on Windows x64.
 */
 class XO_API DomNode : public DomEl {
-	DISALLOW_COPY_AND_ASSIGN(DomNode);
+	XO_DISALLOW_COPY_AND_ASSIGN(DomNode);
 
 public:
-	DomNode(Doc* doc, Tag tag, InternalID parentID);
+	DomNode(xo::Doc* doc, xo::Tag tag, xo::InternalID parentID);
 	virtual ~DomNode();
 
 	virtual void        SetText(const char* txt) override;
@@ -19,26 +19,26 @@ public:
 	virtual void        CloneSlowInto(DomEl& c, uint32_t cloneFlags) const override;
 	virtual void        ForgetChildren() override;
 
-	const cheapvec<DomEl*>&  GetChildren() const { return Children; }
+	const cheapvec<DomEl*>& GetChildren() const { return Children; }
 	cheapvec<StyleClassID>& GetClassesMutable() {
 		IncVersion();
 		return Classes;
 	}
 	const cheapvec<StyleClassID>& GetClasses() const { return Classes; }
-	const Style&                GetStyle() const { return Style; }
+	const Style&                  GetStyle() const { return Style; }
 	const cheapvec<EventHandler>& GetHandlers() const { return Handlers; }
-	void                        GetHandlers(const EventHandler*& handlers, size_t& count) const {
+	void                          GetHandlers(const EventHandler*& handlers, size_t& count) const {
         handlers = &Handlers[0];
         count    = Handlers.size();
 	}
 
-	DomEl*       AddChild(Tag tag);
-	DomNode*     AddNode(Tag tag);
+	DomEl*       AddChild(xo::Tag tag);
+	DomNode*     AddNode(xo::Tag tag);
 	DomCanvas*   AddCanvas();
 	DomText*     AddText(const char* txt = nullptr);
 	void         RemoveChild(DomEl* c);
 	void         RemoveAllChildren();
-	size_t         ChildCount() const { return Children.size(); }
+	size_t       ChildCount() const { return Children.size(); }
 	DomEl*       ChildByIndex(size_t index);
 	const DomEl* ChildByIndex(size_t index) const;
 	void         Discard();
@@ -59,9 +59,9 @@ public:
 	void RemoveClass(const char* klass);
 
 	// Events
-	void AddHandler(Events ev, EventHandlerF func, void* context = NULL);
-	void AddHandler(Events ev, EventHandlerLambda lambda);
-	bool HandlesEvent(Events ev) const { return !!(AllEventMask & ev); }
+	void     AddHandler(Events ev, EventHandlerF func, void* context = NULL);
+	void     AddHandler(Events ev, EventHandlerLambda lambda);
+	bool     HandlesEvent(Events ev) const { return !!(AllEventMask & ev); }
 	uint32_t FastestTimerMS() const;
 
 	// It is tempting to use macros to generate these event handler functions,
@@ -97,9 +97,9 @@ public:
 
 protected:
 	uint32_t               AllEventMask;
-	Style                Style; // Styles that override those referenced by the Tag and the Classes.
+	Style                  Style; // Styles that override those referenced by the Tag and the Classes.
 	cheapvec<EventHandler> Handlers;
-	cheapvec<DomEl*>        Children;
+	cheapvec<DomEl*>       Children;
 	cheapvec<StyleClassID> Classes; // Classes of styles
 
 	void RecalcAllEventMask();

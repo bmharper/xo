@@ -4,6 +4,10 @@ Dir.glob("**/*.cpp").each { |f|
 	`c:/dev/tools/clang-format -i -style=file #{f}`
 }
 
+Dir.glob("**/*.h").each { |f|
+	`c:/dev/tools/clang-format -i -style=file #{f}`
+}
+
 =begin
 Dir.glob("**/xo*.h").each { |f|
 	dir = File.dirname(f)

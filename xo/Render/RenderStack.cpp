@@ -24,10 +24,10 @@ RenderStack::RenderStack() {
 }
 
 RenderStack::~RenderStack() {
-	delete_all(Stack_Pools);
+	DeleteAll(Stack_Pools);
 }
 
-void RenderStack::Initialize(const Doc* doc, Pool* pool) {
+void RenderStack::Initialize(const xo::Doc* doc, xo::Pool* pool) {
 	Doc        = doc;
 	Pool       = pool;
 	Stack.Pool = pool;
@@ -81,7 +81,7 @@ void RenderStack::Initialize(const Doc* doc, Pool* pool) {
 }
 
 void RenderStack::Reset() {
-	delete_all(Stack_Pools);
+	DeleteAll(Stack_Pools);
 	Stack.clear();
 }
 
@@ -118,7 +118,7 @@ void RenderStack::StackPop() {
 RenderStackEl& RenderStack::StackPush() {
 	RenderStackEl& el = Stack.add();
 	while (Stack_Pools.size() < Stack.size()) {
-		Stack_Pools += new Pool();
+		Stack_Pools += new xo::Pool();
 		Stack_Pools.back()->SetChunkSize(8 * 1024); // this is mentioned in RenderStack docs, so keep that up to date if you change this
 	}
 	el.Pool = Stack_Pools[Stack.size() - 1];

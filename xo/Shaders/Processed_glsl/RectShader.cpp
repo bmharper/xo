@@ -2,6 +2,8 @@
 #if XO_BUILD_OPENGL
 #include "RectShader.h"
 
+namespace xo {
+
 GLProg_Rect::GLProg_Rect() {
 	Reset();
 }
@@ -115,7 +117,7 @@ bool GLProg_Rect::LoadVariablePositions() {
 	nfail += (v_border_color = glGetUniformLocation(Prog, "border_color")) == -1;
 	nfail += (v_vport_hsize = glGetUniformLocation(Prog, "vport_hsize")) == -1;
 	if (nfail != 0)
-		XOTRACE("Failed to bind %d variables of shader Rect\n", nfail);
+		Trace("Failed to bind %d variables of shader Rect\n", nfail);
 
 	return nfail == 0;
 }
@@ -124,8 +126,10 @@ uint32_t GLProg_Rect::PlatformMask() {
 	return Platform_All;
 }
 
-VertexType GLProg_Rect::VertexType() {
+xo::VertexType GLProg_Rect::VertexType() {
 	return VertexType_NULL;
 }
+
+} // namespace xo
 
 #endif // XO_BUILD_OPENGL

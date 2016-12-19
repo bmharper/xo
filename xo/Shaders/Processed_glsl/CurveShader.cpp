@@ -2,6 +2,8 @@
 #if XO_BUILD_OPENGL
 #include "CurveShader.h"
 
+namespace xo {
+
 GLProg_Curve::GLProg_Curve() {
 	Reset();
 }
@@ -82,7 +84,7 @@ bool GLProg_Curve::LoadVariablePositions() {
 	nfail += (v_vflip = glGetAttribLocation(Prog, "vflip")) == -1;
 	nfail += (v_vtexuv0 = glGetAttribLocation(Prog, "vtexuv0")) == -1;
 	if (nfail != 0)
-		XOTRACE("Failed to bind %d variables of shader Curve\n", nfail);
+		Trace("Failed to bind %d variables of shader Curve\n", nfail);
 
 	return nfail == 0;
 }
@@ -91,8 +93,10 @@ uint32_t GLProg_Curve::PlatformMask() {
 	return Platform_WinDesktop | Platform_LinuxDesktop;
 }
 
-VertexType GLProg_Curve::VertexType() {
+xo::VertexType GLProg_Curve::VertexType() {
 	return VertexType_NULL;
 }
+
+} // namespace xo
 
 #endif // XO_BUILD_OPENGL

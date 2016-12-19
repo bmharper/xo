@@ -2,6 +2,8 @@
 #if XO_BUILD_OPENGL
 #include "FillTexShader.h"
 
+namespace xo {
+
 GLProg_FillTex::GLProg_FillTex() {
 	Reset();
 }
@@ -53,7 +55,7 @@ bool GLProg_FillTex::LoadVariablePositions() {
 	nfail += (v_vtexuv0 = glGetAttribLocation(Prog, "vtexuv0")) == -1;
 	nfail += (v_tex0 = glGetUniformLocation(Prog, "tex0")) == -1;
 	if (nfail != 0)
-		XOTRACE("Failed to bind %d variables of shader FillTex\n", nfail);
+		Trace("Failed to bind %d variables of shader FillTex\n", nfail);
 
 	return nfail == 0;
 }
@@ -62,8 +64,10 @@ uint32_t GLProg_FillTex::PlatformMask() {
 	return Platform_All;
 }
 
-VertexType GLProg_FillTex::VertexType() {
+xo::VertexType GLProg_FillTex::VertexType() {
 	return VertexType_NULL;
 }
+
+} // namespace xo
 
 #endif // XO_BUILD_OPENGL

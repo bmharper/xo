@@ -50,7 +50,7 @@ public:
 	virtual void DestroyDevice(SysWnd& wnd);
 	virtual void SurfaceLost();
 
-	virtual bool BeginRender(SysWnd& wnd);                    // Gets DC and does a MakeCurrent
+	virtual bool BeginRender(SysWnd& wnd);                        // Gets DC and does a MakeCurrent
 	virtual void EndRender(SysWnd& wnd, uint32_t endRenderFlags); // Releases DC and does a SwapBuffers (unless flags inhibit Swap)
 
 	virtual void PreRender();

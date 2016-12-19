@@ -3,7 +3,7 @@
 
 namespace xo {
 
-DomText::DomText(Doc* doc, Tag tag, InternalID parentID) : DomEl(doc, tag, parentID) {
+DomText::DomText(xo::Doc* doc, xo::Tag tag, xo::InternalID parentID) : DomEl(doc, tag, parentID) {
 }
 
 DomText::~DomText() {

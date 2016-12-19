@@ -33,9 +33,9 @@ protected:
 
 	Doc*                   Doc;
 	InternalID             CurrentFocusID = InternalIDNull; // Element that has the keyboard focus
-	cheapvec<HoverNode>      HoverNodes;
+	cheapvec<HoverNode>    HoverNodes;
 	ohash::set<InternalID> HoverSet;
-	uint32_t                 ViewportWidth, ViewportHeight; // Device pixels
+	uint32_t               ViewportWidth, ViewportHeight; // Device pixels
 
 	// Cursor computed due to most recent mouse move message. Why volatile?
 	// This is volatile so that we can read and write the cursor from any thread.

@@ -4,10 +4,10 @@
 namespace xo {
 
 class XO_API DomText : public DomEl {
-	DISALLOW_COPY_AND_ASSIGN(DomText);
+	XO_DISALLOW_COPY_AND_ASSIGN(DomText);
 
 public:
-	DomText(Doc* doc, Tag tag, InternalID parentID);
+	DomText(xo::Doc* doc, xo::Tag tag, xo::InternalID parentID);
 	virtual ~DomText();
 
 	virtual void        SetText(const char* txt) override;

@@ -1,5 +1,5 @@
 #pragma once
-#include "../xoString.h"
+#include "../Base/xoString.h"
 
 namespace xo {
 

@@ -6,7 +6,7 @@
 
 namespace xo {
 
-DomNode::DomNode(Doc* doc, Tag tag, InternalID parentID) : DomEl(doc, tag, parentID) {
+DomNode::DomNode(xo::Doc* doc, xo::Tag tag, xo::InternalID parentID) : DomEl(doc, tag, parentID) {
 	AllEventMask = 0;
 }
 
@@ -35,7 +35,7 @@ const char* DomNode::GetText() const {
 void DomNode::CloneSlowInto(DomEl& c, uint32_t cloneFlags) const {
 	CloneSlowIntoBase(c, cloneFlags);
 	DomNode& cnode = static_cast<DomNode&>(c);
-	Doc*     cDoc  = c.GetDoc();
+	xo::Doc* cDoc  = c.GetDoc();
 
 	Style.CloneSlowInto(cnode.Style);
 	cnode.Classes = Classes;
@@ -54,7 +54,7 @@ void DomNode::ForgetChildren() {
 	Children.clear_noalloc();
 }
 
-DomEl* DomNode::AddChild(Tag tag) {
+DomEl* DomNode::AddChild(xo::Tag tag) {
 	IncVersion();
 	DomEl* c = Doc->AllocChild(tag, InternalID);
 	Children += c;
@@ -62,8 +62,8 @@ DomEl* DomNode::AddChild(Tag tag) {
 	return c;
 }
 
-DomNode* DomNode::AddNode(Tag tag) {
-	AbcAssert(tag != TagText);
+DomNode* DomNode::AddNode(xo::Tag tag) {
+	XO_ASSERT(tag != TagText);
 	return static_cast<DomNode*>(AddChild(tag));
 }
 
@@ -112,9 +112,9 @@ void DomNode::Discard() {
 	AllEventMask = 0;
 	Version      = 0;
 	Style.Discard();
-	Classes.hack(0, 0, NULL);
-	Children.hack(0, 0, NULL);
-	Handlers.hack(0, 0, NULL);
+	Classes.discard();
+	Children.discard();
+	Handlers.discard();
 }
 
 String DomNode::Parse(const char* src) {
@@ -154,7 +154,7 @@ bool DomNode::StyleParsef(const char* t, ...) {
 	}
 }
 
-void DomNode::HackSetStyle(const Style& style) {
+void DomNode::HackSetStyle(const xo::Style& style) {
 	IncVersion();
 	Style = style;
 }
@@ -215,14 +215,14 @@ void DomNode::AddHandler(Events ev, EventHandlerF func, void* context) {
 
 // Returns our fastest ticking timer event handler (or zero if none)
 uint32_t DomNode::FastestTimerMS() const {
-	uint32_t f = UINT32MAX - 1;
+	uint32_t f = UINT32_MAX - 1;
 	for (const auto& h : Handlers) {
 		if (h.TimerPeriodMS != 0) {
 			XO_ASSERT(!!(h.Mask & EventTimer));
 			f = Min(f, h.TimerPeriodMS);
 		}
 	}
-	return f != UINT32MAX - 1 ? f : 0;
+	return f != UINT32_MAX - 1 ? f : 0;
 }
 
 void DomNode::RecalcAllEventMask() {

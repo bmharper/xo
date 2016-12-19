@@ -1,5 +1,5 @@
 #pragma once
-#include "xoString.h"
+#include "Base/xoString.h"
 
 namespace xo {
 
@@ -18,6 +18,6 @@ public:
 protected:
 	Pool                    Pool;
 	ohash::map<String, int> NameToId; // This could be improved dramatically, by avoiding the heap alloc for every item
-	cheapvec<const char*>      IdToName;
+	cheapvec<const char*>   IdToName;
 };
 }

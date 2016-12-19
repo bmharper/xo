@@ -2,6 +2,8 @@
 #if XO_BUILD_OPENGL
 #include "Rect2Shader.h"
 
+namespace xo {
+
 GLProg_Rect2::GLProg_Rect2() {
 	Reset();
 }
@@ -227,7 +229,7 @@ bool GLProg_Rect2::LoadVariablePositions() {
 	nfail += (v_shadow_size_inv = glGetUniformLocation(Prog, "shadow_size_inv")) == -1;
 	nfail += (v_edges = glGetUniformLocation(Prog, "edges")) == -1;
 	if (nfail != 0)
-		XOTRACE("Failed to bind %d variables of shader Rect2\n", nfail);
+		Trace("Failed to bind %d variables of shader Rect2\n", nfail);
 
 	return nfail == 0;
 }
@@ -236,8 +238,10 @@ uint32_t GLProg_Rect2::PlatformMask() {
 	return Platform_All;
 }
 
-VertexType GLProg_Rect2::VertexType() {
+xo::VertexType GLProg_Rect2::VertexType() {
 	return VertexType_NULL;
 }
+
+} // namespace xo
 
 #endif // XO_BUILD_OPENGL

@@ -2,6 +2,8 @@
 #if XO_BUILD_DIRECTX
 #include "RectShader.h"
 
+namespace xo {
+
 DXProg_Rect::DXProg_Rect() {
 	Reset();
 }
@@ -225,7 +227,7 @@ bool DXProg_Rect::LoadVariablePositions() {
 	int nfail = 0;
 
 	if (nfail != 0)
-		XOTRACE("Failed to bind %d variables of shader Rect\n", nfail);
+		Trace("Failed to bind %d variables of shader Rect\n", nfail);
 
 	return nfail == 0;
 }
@@ -234,8 +236,10 @@ uint32_t DXProg_Rect::PlatformMask() {
 	return Platform_All;
 }
 
-VertexType DXProg_Rect::VertexType() {
+xo::VertexType DXProg_Rect::VertexType() {
 	return VertexType_PTC;
 }
+
+} // namespace xo
 
 #endif // XO_BUILD_DIRECTX

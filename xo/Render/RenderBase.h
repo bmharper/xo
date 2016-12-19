@@ -81,7 +81,7 @@ public:
 	TextureID RegisterTexture(uintptr_t deviceTexID);
 	TextureID RegisterTextureInt(uint32_t deviceTexID) { return RegisterTexture((uintptr_t) deviceTexID); }
 	uintptr_t GetTextureDeviceHandle(TextureID texID) const;
-	uint32_t      GetTextureDeviceHandleInt(TextureID texID) const { return (uint32_t)(uintptr_t)(GetTextureDeviceHandle(texID)); }
+	uint32_t  GetTextureDeviceHandleInt(TextureID texID) const { return (uint32_t)(uintptr_t)(GetTextureDeviceHandle(texID)); }
 
 	virtual const char* RendererName() = 0;
 
@@ -89,7 +89,7 @@ public:
 	virtual void DestroyDevice(SysWnd& wnd)    = 0; // Destroy this device and all associated textures, etc
 	virtual void SurfaceLost()                 = 0;
 
-	virtual bool BeginRender(SysWnd& wnd)                    = 0; // Start of a frame
+	virtual bool BeginRender(SysWnd& wnd)                        = 0; // Start of a frame
 	virtual void EndRender(SysWnd& wnd, uint32_t endRenderFlags) = 0; // Frame is finished. Present it (or possibly not, depending on flags).
 
 	virtual void PreRender()         = 0;
@@ -106,7 +106,7 @@ public:
 protected:
 	static const TextureID TEX_OFFSET_ONE = 1; // This constant causes the TextureID that we expose to never be zero.
 	TextureID              TexIDOffset;
-	cheapvec<uintptr_t>      TexIDToNative; // Maps from TextureID to native device texture (eg. GLuint or ID3D11Texture2D*). We're wasting 4 bytes here on OpenGL.
+	cheapvec<uintptr_t>    TexIDToNative; // Maps from TextureID to native device texture (eg. GLuint or ID3D11Texture2D*). We're wasting 4 bytes here on OpenGL.
 	int                    FBWidth, FBHeight;
 
 	void        EnsureTextureProperlyDefined(Texture* tex, int texUnit);

@@ -29,8 +29,8 @@ XO_API void RunWin32MessageLoop() {
 	const double HEAT_TIME_1 = 0.020;
 	const double HEAT_TIME_2 = 0.300;
 
-	double lastFrameStart = AbcTimeAccurateRTSeconds();
-	double lastHeatAt     = AbcTimeAccurateRTSeconds();
+	double lastFrameStart = TimeAccurateSeconds();
+	double lastHeatAt     = TimeAccurateSeconds();
 
 	// Toggled when all renderers report that they have no further work to do (ie no animations playing, now or any time in the future)
 	// In that case, the only way we can have something happen is if we have an incoming message.
@@ -47,7 +47,7 @@ XO_API void RunWin32MessageLoop() {
 		// When idle, use GetMessage so that the OS can put us into a good sleep
 		MSG  msg;
 		bool haveMsg = true;
-		if (renderIdle && !AnyDocsDirty() && AbcTimeAccurateRTSeconds() - lastHeatAt > HEAT_TIME_2) {
+		if (renderIdle && !AnyDocsDirty() && TimeAccurateSeconds() - lastHeatAt > HEAT_TIME_2) {
 			XOTRACE_OS_MSG_QUEUE("Render cold\n");
 			if (!GetMessage(&msg, NULL, 0, 0))
 				break;
@@ -65,10 +65,10 @@ XO_API void RunWin32MessageLoop() {
 			DispatchMessage(&msg);
 			XOTRACE_OS_MSG_QUEUE("msg end: %x\n", msg.message);
 			if (msg.message != WM_TIMER)
-				lastHeatAt = AbcTimeAccurateRTSeconds();
+				lastHeatAt = TimeAccurateSeconds();
 		}
 
-		double now            = AbcTimeAccurateRTSeconds();
+		double now            = TimeAccurateSeconds();
 		double nextFrameStart = lastFrameStart + 1.0 / Global()->TargetFPS;
 		if (now >= nextFrameStart || AnyDocsDirty()) {
 			XOTRACE_OS_MSG_QUEUE("Render enter\n");
@@ -83,10 +83,10 @@ XO_API void RunWin32MessageLoop() {
 				}
 			}
 		} else {
-			if (AbcTimeAccurateRTSeconds() - lastHeatAt > HEAT_TIME_1)
-				AbcSleep(5);
+			if (TimeAccurateSeconds() - lastHeatAt > HEAT_TIME_1)
+				SleepMS(5);
 			else
-				AbcSleep(1);
+				SleepMS(1);
 		}
 
 		// Add/remove items from the global list of windows. This only happens at Doc creation/destruction time.

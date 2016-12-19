@@ -2,6 +2,8 @@
 #if XO_BUILD_OPENGL
 #include "Rect3Shader.h"
 
+namespace xo {
+
 GLProg_Rect3::GLProg_Rect3() {
 	Reset();
 }
@@ -79,7 +81,7 @@ bool GLProg_Rect3::LoadVariablePositions() {
 	nfail += (v_vborder_distance = glGetAttribLocation(Prog, "vborder_distance")) == -1;
 	nfail += (v_vborder_color = glGetAttribLocation(Prog, "vborder_color")) == -1;
 	if (nfail != 0)
-		XOTRACE("Failed to bind %d variables of shader Rect3\n", nfail);
+		Trace("Failed to bind %d variables of shader Rect3\n", nfail);
 
 	return nfail == 0;
 }
@@ -88,8 +90,10 @@ uint32_t GLProg_Rect3::PlatformMask() {
 	return Platform_All;
 }
 
-VertexType GLProg_Rect3::VertexType() {
+xo::VertexType GLProg_Rect3::VertexType() {
 	return VertexType_NULL;
 }
+
+} // namespace xo
 
 #endif // XO_BUILD_OPENGL

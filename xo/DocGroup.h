@@ -7,7 +7,7 @@ namespace xo {
 // The umbrella class that houses a DOM tree, as well as its rendered representation.
 // TODO: Pull the platform-specific stuff (ie WndProc, StaticWndProc, IsMouseTracking) out of this class.
 class XO_API DocGroup {
-	DISALLOW_COPY_AND_ASSIGN(DocGroup);
+	XO_DISALLOW_COPY_AND_ASSIGN(DocGroup);
 
 public:
 	Doc*       Doc; // Canonical Document, which the UI thread manipulates. Guarded by DocLock.
@@ -35,7 +35,7 @@ public:
 	bool IsDocVersionDifferentToRenderer() const;
 
 protected:
-	AbcCriticalSection DocLock; // Mutation of 'Doc', or cloning of 'Doc' for the renderer
+	std::mutex DocLock; // Mutation of 'Doc', or cloning of 'Doc' for the renderer
 
 #if XO_PLATFORM_WIN_DESKTOP
 	bool IsMouseTracking = false; // True if we called TrackMouseEvent when we first saw a WM_MOUSEMOVE message, and are waiting for a WM_MOUSELEAVE event.
@@ -43,7 +43,7 @@ protected:
 
 	RenderResult RenderInternal(Image* targetImage);
 	void         UploadImagesToGPU(bool& beganRender);
-	uint32_t       DocAge() const;
+	uint32_t     DocAge() const;
 
 	static void AddOrReplaceMessage(const OriginalEvent& ev);
 };

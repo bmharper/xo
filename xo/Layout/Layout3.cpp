@@ -19,7 +19,7 @@ Missing glyphs are a once-off cost (ie once per application instance),
 so it's not worth trying to use a mutable glyph cache.
 
 */
-void Layout3::Layout(const Doc& doc, RenderDomNode& root, Pool* pool) {
+void Layout3::Layout(const xo::Doc& doc, RenderDomNode& root, xo::Pool* pool) {
 	Doc        = &doc;
 	Pool       = pool;
 	Boxer.Pool = pool;
@@ -361,7 +361,7 @@ void Layout3::GenerateTextWords(TextRunState& ts) {
 	XO_DEBUG_ASSERT(ts.Chars.Size() == 0);
 
 	const char* txt        = ts.Node->GetText();
-	int32_t       txt_offset = 0;
+	int32_t     txt_offset = 0;
 	if (ts.RestartPoints->size() != 0) {
 		txt_offset = ts.RestartPoints->rpop();
 		txt += txt_offset;
@@ -401,7 +401,7 @@ void Layout3::GenerateTextWords(TextRunState& ts) {
 		switch (chunk.Type) {
 		case ChunkWord: {
 			int32_t chunkLen  = chunk.End - chunk.Start;
-			Pos   wordWidth = MeasureWord(txt, font, fontAscender, chunk, ts);
+			Pos     wordWidth = MeasureWord(txt, font, fontAscender, chunk, ts);
 
 			if (ts.GlyphsNeeded)
 				continue;
@@ -471,8 +471,8 @@ void Layout3::FinishTextRNode(TextRunState& ts, RenderDomText* rnode, size_t num
 }
 
 void Layout3::OffsetTextHorz(TextRunState& ts, Pos offsetHorz, size_t numChars) {
-	for (ssize_t i = 0; i < numChars; i++)
-		ts.Chars.FromHead(i).X += offsetHorz;
+	for (size_t i = 0; i < numChars; i++)
+		ts.Chars.FromHead((int) i).X += offsetHorz;
 }
 
 // While measuring the length of the word, we are also recording its character placements.

@@ -12,12 +12,12 @@ public:
 	ImageStore();
 	~ImageStore();
 
-	void          Set(const char* name, Image* img);
-	String        SetAnonymous(Image* img); // Creates a unique name for the image, inserts the image, and returns the name
-	Image*        Get(const char* name) const;
-	Image*        GetOrNull(const char* name) const;
-	const Image*  GetNull() const; // Get the 'null' image, which is a 2x2 checkerboard
-	void          Delete(const char* name);
+	void             Set(const char* name, Image* img);
+	String           SetAnonymous(Image* img); // Creates a unique name for the image, inserts the image, and returns the name
+	Image*           Get(const char* name) const;
+	Image*           GetOrNull(const char* name) const;
+	const Image*     GetNull() const; // Get the 'null' image, which is a 2x2 checkerboard
+	void             Delete(const char* name);
 	cheapvec<Image*> InvalidList() const;
 
 	void CloneMetadataFrom(const ImageStore& src);
@@ -25,9 +25,9 @@ public:
 protected:
 	static const int NullImageIndex = 0;
 
-	cheapvec<Image*>           ImageList;
+	cheapvec<Image*>        ImageList;
 	ohash::map<String, int> NameToIndex;
-	cheapvec<int>             FreeIndices;
-	int64_t                   NextAnon;
+	cheapvec<int>           FreeIndices;
+	int64_t                 NextAnon;
 };
 }

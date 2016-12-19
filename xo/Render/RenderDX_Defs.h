@@ -20,7 +20,7 @@ public:
 	virtual const char* FragSrc();
 	virtual const char* Name();
 	virtual bool        LoadVariablePositions();
-	virtual uint32_t      PlatformMask(); // Combination of PlatformMask bits.
+	virtual uint32_t    PlatformMask(); // Combination of PlatformMask bits.
 	virtual VertexType  VertexType();
 
 	bool UseOnThisPlatform() { return !!(PlatformMask() & XO_PLATFORM); }
@@ -29,4 +29,4 @@ protected:
 	void ResetBase();
 };
 }
-#endif 
+#endif

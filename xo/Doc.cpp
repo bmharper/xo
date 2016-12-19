@@ -31,8 +31,8 @@ void Doc::IncVersion() {
 }
 
 void Doc::ResetModifiedBitmap() {
-	if (ChildIsModified.Size() > 0)
-		ChildIsModified.Fill(0, ChildIsModified.Size() - 1, false);
+	if (ChildIsModified.size() != 0)
+		ChildIsModified.fill(false);
 }
 
 void Doc::MakeFreeIDsUsable() {
@@ -70,11 +70,11 @@ void Doc::CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const {
 	// since I suspect these passes will be bandwidth limited.
 
 	// Pass 1: Ensure that all objects that are present in the source document have a valid pointer in the target document
-	for (int i = 0; i < ChildIsModified.Size(); i++) {
-		if (ChildIsModified.Get(i)) {
+	for (size_t i = 0; i < ChildIsModified.size(); i++) {
+		if (ChildIsModified[i]) {
 			stats.Clone_NumEls++;
-			const DomEl* src = GetChildByInternalID(i);
-			DomEl*       dst = c.GetChildByInternalIDMutable(i);
+			const DomEl* src = GetChildByInternalID((xo::InternalID) i);
+			DomEl*       dst = c.GetChildByInternalIDMutable((xo::InternalID) i);
 			if (src && !dst) {
 				// create in destination
 				c.ChildByInternalID[i] = c.AllocChild(src->GetTag(), src->GetParentID());
@@ -88,10 +88,10 @@ void Doc::CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const {
 	}
 
 	// Pass 2: Clone the contents of all our modified objects into our target
-	for (int i = 0; i < ChildIsModified.Size(); i++) {
-		if (ChildIsModified.Get(i)) {
-			const DomEl* src = GetChildByInternalID(i);
-			DomEl*       dst = c.GetChildByInternalIDMutable(i);
+	for (size_t i = 0; i < ChildIsModified.size(); i++) {
+		if (ChildIsModified[i]) {
+			const DomEl* src = GetChildByInternalID((xo::InternalID) i);
+			DomEl*       dst = c.GetChildByInternalIDMutable((xo::InternalID) i);
 			if (src)
 				src->CloneSlowInto(*dst, cloneFlags);
 		}
@@ -166,14 +166,14 @@ void Doc::NodeLostTimer(InternalID node) {
 
 // Return the interval of the fastest timer of any node. Returns zero if no timers are set.
 uint32_t Doc::FastestTimerMS() {
-	uint32_t fastest = UINT32MAX - 1;
+	uint32_t fastest = UINT32_MAX - 1;
 	for (InternalID it : NodesWithTimers) {
 		const DomNode* node = GetNodeByInternalID(it);
-		uint32_t           t    = node->FastestTimerMS();
+		uint32_t       t    = node->FastestTimerMS();
 		if (t != 0)
 			fastest = Min(fastest, t);
 	}
-	return fastest != UINT32MAX - 1 ? fastest : 0;
+	return fastest != UINT32_MAX - 1 ? fastest : 0;
 }
 
 void Doc::ChildAdded(DomEl* el) {
@@ -215,7 +215,10 @@ void Doc::ChildRemoved(DomEl* el) {
 }
 
 void Doc::SetChildModified(InternalID id) {
-	ChildIsModified.SetAutoGrow(id, true, false);
+	size_t index = id;
+	while (ChildIsModified.size() < index)
+		ChildIsModified.push_back(false);
+	ChildIsModified[index] = true;
 	IncVersion();
 }
 
@@ -230,7 +233,7 @@ void Doc::Reset() {
 	IncVersion();
 	Pool.FreeAll();
 	Root.SetInternalID(InternalIDNull); // Root will be assigned InternalIDRoot when we call ChildAdded() on it.
-	ChildIsModified.Clear();
+	ChildIsModified.clear();
 	ResetInternalIDs();
 	NodesWithTimers.clear();
 }

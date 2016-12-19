@@ -25,11 +25,11 @@ void Queue::Initialize(bool useSemaphore, size_t itemSize) {
 void Queue::Add(const void* item) {
 	std::lock_guard<std::mutex> lock(Lock);
 
-	if (SizeInternal() >= (int32_t) RingSize - 1)
+	if (SizeInternal() == (int32_t) RingSize)
 		Grow();
 
 	memcpy(Slot(Head), item, ItemSize);
-	Increment(Head);
+	Head++;
 
 	if (UseSemaphore)
 		Sem.signal();
@@ -40,7 +40,7 @@ bool Queue::PopTail(void* item) {
 	if (SizeInternal() == 0)
 		return false;
 	memcpy(item, Slot(Tail), ItemSize);
-	Increment(Tail);
+	Tail++;
 	return true;
 }
 
@@ -58,10 +58,8 @@ void Queue::Grow() {
 	XO_ASSERT(nb != NULL);
 	Buffer = nb;
 	// If head is behind tail, then we need to copy the later items in front of the earlier ones.
-	if (Head < Tail) {
-		memcpy(Slot(RingSize), Slot(0), (size_t) ItemSize * Head);
-		Head = RingSize + Head;
-	}
+	if ((Head & Mask()) <= (Tail & Mask()) && SizeInternal() != 0)
+		memcpy(Slot(RingSize), Slot(0), (size_t) ItemSize * (Head & Mask()));
 	RingSize = newsize;
 }
 
@@ -73,12 +71,12 @@ int32_t Queue::Size() {
 void Queue::Scan(bool forwards, void* context, ScanCallback cb) {
 	std::lock_guard<std::mutex> lock(Lock);
 	if (forwards) {
-		for (uint32_t i = Head; i != Tail; i = (i - 1) & Mask()) {
+		for (uint32_t i = Tail; i - Tail != SizeInternal(); i++) {
 			if (!cb(context, Slot(i)))
 				return;
 		}
 	} else {
-		for (uint32_t i = Tail; i != Head; i = (i + 1) & Mask()) {
+		for (uint32_t i = Head - 1; i - Tail != -1; i--) {
 			if (!cb(context, Slot(i)))
 				return;
 		}

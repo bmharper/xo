@@ -9,15 +9,8 @@
 
 namespace xo {
 
-static const int       MAX_WORKER_THREADS = 32;
-static volatile uint32_t ExitSignalled      = 0;
-static int             InitializeCount    = 0;
-static Style*          DefaultTagStyles[TagEND];
-static AbcThreadHandle WorkerThreads[MAX_WORKER_THREADS];
-
-#if XO_PLATFORM_WIN_DESKTOP
-static AbcThreadHandle UIThread = NULL;
-#endif
+static int    InitializeCount = 0;
+static Style* StaticDefaultTagStyles[TagEND];
 
 // Single globally accessible data
 static GlobalStruct* Globals = NULL;
@@ -25,11 +18,11 @@ static GlobalStruct* Globals = NULL;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Texture::FlipVertical() {
-	uint8_t   sline[4096];
-	uint8_t*  line    = sline;
-	size_t astride = std::abs(TexStride);
+	uint8_t  sline[4096];
+	uint8_t* line    = sline;
+	size_t   astride = std::abs(TexStride);
 	if (astride > sizeof(sline))
-		line = (uint8_t*) AbcMallocOrDie(astride);
+		line = (uint8_t*) MallocOrDie(astride);
 	for (uint32_t i = 0; i < TexHeight / 2; i++) {
 		memcpy(line, TexDataAtLine(TexHeight - i - 1), astride);
 		memcpy(TexDataAtLine(TexHeight - i - 1), TexDataAtLine(i), astride);
@@ -145,52 +138,48 @@ void RenderStats::Reset() {
 XO_API void AddOrRemoveDocsFromGlobalList() {
 	DocGroup* p = NULL;
 
-	while (p = Global()->DocRemoveQueue.PopTailR())
-		erase_delete(Global()->Docs, Global()->Docs.find(p));
+	while (p = Global()->DocRemoveQueue.PopTailR()) {
+		size_t pos = Global()->Docs.find(p);
+		delete Global()->Docs[pos];
+		Global()->Docs.erase(pos);
+	}
 
 	while (p = Global()->DocAddQueue.PopTailR())
 		Global()->Docs += p;
 }
 
-AbcThreadReturnType AbcKernelCallbackDecl WorkerThreadFunc(void* threadContext) {
+void WorkerThreadFunc() {
 	while (true) {
-		AbcSemaphoreWait(Global()->JobQueue.SemaphoreObj(), AbcINFINITE);
-		if (ExitSignalled)
+		Global()->JobQueue.SemObj().wait();
+		if (Global()->ExitSignalled)
 			break;
 		Job job;
 		XO_VERIFY(Global()->JobQueue.PopTail(job));
 		job.JobFunc(job.JobData);
 	}
-
-	return 0;
 }
 
-AbcThreadReturnType AbcKernelCallbackDecl UIThread(void* threadContext) {
+void UIThread() {
 	while (true) {
-		AbcSemaphoreWait(Global()->UIEventQueue.SemaphoreObj(), AbcINFINITE);
-		if (ExitSignalled)
+		Global()->UIEventQueue.SemObj().wait();
+		if (Global()->ExitSignalled)
 			break;
 		OriginalEvent ev;
 		XO_VERIFY(Global()->UIEventQueue.PopTail(ev));
 		ev.DocGroup->ProcessEvent(ev.Event);
 	}
-	return 0;
 }
 
 #if XO_PLATFORM_WIN_DESKTOP
 
 static void Initialize_Win32() {
-	XO_VERIFY(AbcThreadCreate(&UIThread, NULL, UIThread));
+	Global()->UIThread = std::thread(UIThread);
 }
 
 static void Shutdown_Win32() {
-	if (UIThread != NULL) {
+	if (Global()->UIThread.joinable()) {
 		Global()->UIEventQueue.Add(OriginalEvent());
-		for (uint32_t waitNum = 0; true; waitNum++) {
-			if (WaitForSingleObject(UIThread, waitNum) == WAIT_OBJECT_0)
-				break;
-		}
-		UIThread = NULL;
+		Global()->UIThread.join();
 	}
 }
 
@@ -244,10 +233,10 @@ XO_API void Initialize(const InitParams* init) {
 
 	InitializePlatform();
 
-	AbcMachineInformation minf;
-	AbcMachineInformationGet(minf);
+	int numCPUCores = GetNumberOfCores();
 
-	Globals = new GlobalStruct();
+	Globals                = new GlobalStruct();
+	Globals->ExitSignalled = false;
 
 	if (init && init->EpToPixel != 0)
 		Globals->EpToPixel = init->EpToPixel;
@@ -260,7 +249,7 @@ XO_API void Initialize(const InitParams* init) {
 		Globals->CacheDir = DefaultCacheDir();
 
 	Globals->TargetFPS            = 60;
-	Globals->NumWorkerThreads     = std::min(minf.LogicalCoreCount, MAX_WORKER_THREADS);
+	Globals->NumWorkerThreads     = numCPUCores;
 	Globals->MaxSubpixelGlyphSize = 60;
 	Globals->PreferOpenGL         = true;
 	Globals->EnableVSync          = false;
@@ -308,10 +297,9 @@ XO_API void Initialize(const InitParams* init) {
 #if XO_PLATFORM_WIN_DESKTOP
 	Initialize_Win32();
 #endif
-	XOTRACE("xo using %d/%d processors.\n", (int) Globals->NumWorkerThreads, (int) minf.LogicalCoreCount);
-	for (int i = 0; i < Globals->NumWorkerThreads; i++) {
-		XO_VERIFY(AbcThreadCreate(WorkerThreadFunc, NULL, WorkerThreads[i]));
-	}
+	Trace("xo using %d/%d processors.\n", (int) Globals->NumWorkerThreads, (int) numCPUCores);
+	for (int i = 0; i < Globals->NumWorkerThreads; i++)
+		Globals->WorkerThreads.push_back(std::thread(WorkerThreadFunc));
 }
 
 XO_API void SurfaceLost() {
@@ -324,10 +312,10 @@ XO_API void Shutdown() {
 	if (InitializeCount != 0)
 		return;
 
-	AbcInterlockedSet(&ExitSignalled, 1);
+	Globals->ExitSignalled = true;
 
 	for (int i = 0; i < TagEND; i++)
-		delete DefaultTagStyles[i];
+		delete StaticDefaultTagStyles[i];
 
 	// allow documents scheduled for deletion to be deleted
 	AddOrRemoveDocsFromGlobalList();
@@ -338,12 +326,12 @@ XO_API void Shutdown() {
 
 	// signal all threads to exit
 	Job nullJob = Job();
-	for (int i = 0; i < Global()->NumWorkerThreads; i++)
-		Global()->JobQueue.Add(nullJob);
+	for (int i = 0; i < Globals->WorkerThreads.size(); i++)
+		Globals->JobQueue.Add(nullJob);
 
 	// wait for each thread in turn
-	for (int i = 0; i < Global()->NumWorkerThreads; i++)
-		XO_VERIFY(AbcThreadJoin(WorkerThreads[i]));
+	for (int i = 0; i < Globals->WorkerThreads.size(); i++)
+		Globals->WorkerThreads[i].join();
 
 	Globals->GlyphCache->Clear();
 	delete Globals->GlyphCache;
@@ -425,7 +413,7 @@ XO_API void RunApp(MainCallback mainCallback) {
 }
 
 XO_API Style** DefaultTagStyles() {
-	return DefaultTagStyles;
+	return StaticDefaultTagStyles;
 }
 
 XO_API void ParseFail(const char* msg, ...) {
@@ -439,7 +427,7 @@ XO_API void ParseFail(const char* msg, ...) {
 		XO_TRACE_WRITE(buff);
 }
 
-XO_API void XOTRACE(const char* msg, ...) {
+XO_API void Trace(const char* msg, ...) {
 	char    buff[2048];
 	va_list va;
 	va_start(va, msg);
@@ -450,10 +438,10 @@ XO_API void XOTRACE(const char* msg, ...) {
 		XO_TRACE_WRITE(buff);
 }
 
-XO_API void XOTIME(const char* msg, ...) {
+XO_API void TimeTrace(const char* msg, ...) {
 	const int timeChars = 16;
 	char      buff[2048];
-	sprintf(buff, "%-15.3f  ", AbcTimeAccurateRTSeconds() * 1000);
+	sprintf(buff, "%-15.3f  ", TimeAccurateSeconds() * 1000);
 	va_list va;
 	va_start(va, msg);
 	uint32_t r = vsnprintf(buff + timeChars, arraysize(buff) - timeChars, msg, va);

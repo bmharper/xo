@@ -27,7 +27,7 @@ GlyphCache::~GlyphCache() {
 void GlyphCache::Clear() {
 	for (size_t i = 0; i < Atlasses.size(); i++)
 		Atlasses[i]->Free();
-	delete_all(Atlasses);
+	DeleteAll(Atlasses);
 	Glyphs.clear();
 	Table.clear();
 	Initialize();
@@ -112,7 +112,7 @@ uint32_t GlyphCache::RenderGlyph(const GlyphCacheKey& key) {
 
 	e = FT_Load_Glyph(font->FTFace, iFTGlyph, ftflags);
 	if (e != 0) {
-		XOTRACE("Failed to load glyph for character %d (%d)\n", key.Char, iFTGlyph);
+		Trace("Failed to load glyph for character %d (%d)\n", key.Char, iFTGlyph);
 		Table.insert(key, NullGlyphIndex);
 		return NullGlyphIndex;
 	}
@@ -134,8 +134,8 @@ uint32_t GlyphCache::RenderGlyph(const GlyphCacheKey& key) {
 		// of our absolute texel bounds, and when it does so, it must read pure black.
 		horzPad = 1;
 	}
-	uint16_t        atlasX = 0;
-	uint16_t        atlasY = 0;
+	uint16_t      atlasX = 0;
+	uint16_t      atlasY = 0;
 	TextureAtlas* atlas  = NULL;
 
 	// The sub-pixel shader does its own clamping, but the whole-pixel shader is naive, and

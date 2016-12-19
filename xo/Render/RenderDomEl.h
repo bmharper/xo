@@ -1,6 +1,6 @@
 #pragma once
 #include "../Style.h"
-#include "../Mem.h"
+#include "../Base/MemPoolsAndContainers.h"
 
 namespace xo {
 
@@ -36,14 +36,14 @@ public:
 
 class XO_API RenderDomNode : public RenderDomEl {
 public:
-	RenderDomNode(InternalID id = InternalIDNull, Tag tag = TagBody, Pool* pool = NULL);
+	RenderDomNode(xo::InternalID id = InternalIDNull, xo::Tag tag = TagBody, xo::Pool* pool = NULL);
 
-	void Discard();
-	void SetStyle(RenderStack& stack);
-	void SetPool(Pool* pool);
-	Box  BorderBox() const;
-	Pos  BorderBoxRight() const { return Pos.Right + Style.BorderSize.Right; }
-	Pos  BorderBoxBottom() const { return Pos.Bottom + Style.BorderSize.Bottom; }
+	void    Discard();
+	void    SetStyle(RenderStack& stack);
+	void    SetPool(Pool* pool);
+	Box     BorderBox() const;
+	xo::Pos BorderBoxRight() const { return Pos.Right + Style.BorderSize.Right; }
+	xo::Pos BorderBoxBottom() const { return Pos.Bottom + Style.BorderSize.Bottom; }
 
 	StyleRender             Style;
 	PoolArray<RenderDomEl*> Children;
@@ -62,7 +62,7 @@ public:
 	enum Flag {
 		FlagSubPixelGlyphs = 1,
 	};
-	RenderDomText(InternalID id, Pool* pool);
+	RenderDomText(xo::InternalID id, Pool* pool);
 
 	void SetStyle(RenderStack& stack); // get rid of me. Instead just set color manually, the way it's done from Layout3
 
@@ -71,7 +71,7 @@ public:
 	FontID                  FontID;
 	PoolArray<RenderCharEl> Text;
 	Color                   Color;
-	uint8_t                   FontSizePx;
-	uint8_t                   Flags;
+	uint8_t                 FontSizePx;
+	uint8_t                 Flags;
 };
 }

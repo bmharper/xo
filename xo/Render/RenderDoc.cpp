@@ -28,12 +28,11 @@ const RenderDomNode* LayoutResult::Body() const {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 RenderDoc::RenderDoc() {
-	AbcCriticalSectionInitialize(LayoutLock);
 }
 
 RenderDoc::~RenderDoc() {
 	for (uint32_t iter = 0; true; iter++) {
-		TakeCriticalSection lock(LayoutLock);
+		std::lock_guard<std::mutex> lock(LayoutLock);
 		if (LatestLayout != nullptr && !LatestLayout->IsLocked) {
 			delete LatestLayout;
 			LatestLayout = nullptr;
@@ -42,10 +41,9 @@ RenderDoc::~RenderDoc() {
 		if (LatestLayout == nullptr && OldLayouts.size() == 0)
 			break;
 		if (iter % 500 == 0)
-			XOTRACE("RenderDoc waiting for layouts to be released\n");
-		AbcSleep(1);
+			Trace("RenderDoc waiting for layouts to be released\n");
+		SleepMS(1);
 	}
-	AbcCriticalSectionDestroy(LayoutLock);
 }
 
 RenderResult RenderDoc::Render(RenderBase* driver) {
@@ -63,7 +61,7 @@ RenderResult RenderDoc::Render(RenderBase* driver) {
 
 	// Atomically publish the new layout
 	{
-		TakeCriticalSection lock(LayoutLock);
+		std::lock_guard<std::mutex> lock(LayoutLock);
 		PurgeOldLayouts();
 		if (LatestLayout != nullptr) {
 			if (LatestLayout->IsLocked)
@@ -77,7 +75,7 @@ RenderResult RenderDoc::Render(RenderBase* driver) {
 	return res;
 }
 
-void RenderDoc::CopyFromCanonical(const Doc& canonical, RenderStats& stats) {
+void RenderDoc::CopyFromCanonical(const xo::Doc& canonical, RenderStats& stats) {
 	canonical.CloneSlowInto(Doc, 0, stats);
 
 	// This must happen after textures are uploaded to the GPU. DocGroup ensures that.
@@ -85,7 +83,7 @@ void RenderDoc::CopyFromCanonical(const Doc& canonical, RenderStats& stats) {
 }
 
 LayoutResult* RenderDoc::AcquireLatestLayout() {
-	TakeCriticalSection lock(LayoutLock);
+	std::lock_guard<std::mutex> lock(LayoutLock);
 
 	if (LatestLayout == nullptr)
 		return nullptr;
@@ -99,7 +97,7 @@ LayoutResult* RenderDoc::AcquireLatestLayout() {
 void RenderDoc::ReleaseLayout(LayoutResult* layout) {
 	if (layout == nullptr)
 		return;
-	TakeCriticalSection lock(LayoutLock);
+	std::lock_guard<std::mutex> lock(LayoutLock);
 	XO_ASSERT(layout->IsLocked);
 	layout->IsLocked = false;
 	PurgeOldLayouts();

@@ -10,7 +10,7 @@ TextureAtlas::TextureAtlas() {
 TextureAtlas::~TextureAtlas() {
 }
 
-void TextureAtlas::Initialize(uint32_t width, uint32_t height, TexFormat format, uint32_t padding) {
+void TextureAtlas::Initialize(uint32_t width, uint32_t height, xo::TexFormat format, uint32_t padding) {
 	TexWidth      = width;
 	TexHeight     = height;
 	Padding       = padding;

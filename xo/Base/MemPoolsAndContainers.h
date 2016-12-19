@@ -21,8 +21,8 @@ public:
 	void FreeAllExceptOne();
 
 protected:
-	size_t        ChunkSize;
-	size_t        TopRemain;
+	size_t          ChunkSize;
+	size_t          TopRemain;
 	cheapvec<void*> Chunks;
 	cheapvec<void*> BigBlocks;
 };
@@ -31,8 +31,8 @@ protected:
 template <typename T>
 class PoolArray {
 public:
-	Pool* Pool;
-	T*    Data;
+	Pool*  Pool;
+	T*     Data;
 	size_t Count;
 	size_t Capacity;
 
@@ -137,7 +137,7 @@ you grow the container, and then your reference is invalid.
 template <typename T>
 class Stack {
 public:
-	T*   Items         = nullptr;
+	T*     Items         = nullptr;
 	size_t Count         = 0;
 	size_t Capacity      = 0;
 	size_t HighwaterMark = 0; // The maximum that Count has ever been
@@ -228,7 +228,7 @@ public:
 	size_t Size() const { return (size_t)((Head - Tail) & Mask); }
 
 private:
-	T*     Ring = nullptr;
+	T*       Ring = nullptr;
 	uint32_t Mask = 0;
 	uint32_t Head = 0;
 	uint32_t Tail = 0;
@@ -241,7 +241,7 @@ private:
 			Mask = DefaultInitialSize - 1;
 		} else {
 			uint32_t orgSize = RingSize();
-			Ring           = (T*) ReallocOrDie(Ring, orgSize * 2 * sizeof(T));
+			Ring             = (T*) ReallocOrDie(Ring, orgSize * 2 * sizeof(T));
 			if (Head < Tail) {
 				// Handle the scenario where the head is behind the tail (numerically)
 				// [  H T  ]   =>  [    T     H    ]
@@ -294,10 +294,10 @@ public:
 	void  Free(void* buf);
 
 protected:
-	void*          Heap            = nullptr;
-	uint32_t*        Used            = nullptr; // Bitmap indicating whether a slot is used
-	uint32_t         MaxAllocations  = 0;
-	uint32_t         AllocationShift = 0;
+	void*              Heap            = nullptr;
+	uint32_t*          Used            = nullptr; // Bitmap indicating whether a slot is used
+	uint32_t           MaxAllocations  = 0;
+	uint32_t           AllocationShift = 0;
 	cheapvec<uint32_t> FreeList;
 
 	uint32_t SlotFromPtr(void* p) const;
@@ -336,8 +336,8 @@ public:
 
 protected:
 	FixedSizeHeap* Heap;
-	uint32_t         Capacity = 0;
-	uint32_t         Count    = 0;
+	uint32_t       Capacity = 0;
+	uint32_t       Count    = 0;
 	T*             Items    = nullptr;
 };
 }

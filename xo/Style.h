@@ -1,6 +1,6 @@
 #pragma once
 #include "Defs.h"
-#include "xoString.h"
+#include "Base/xoString.h"
 
 namespace xo {
 
@@ -255,12 +255,12 @@ public:
 	};
 
 	StyleCategories Category : 8;
-	uint32_t            SubType : 8;
-	uint32_t            Flags : 8;
-	uint32_t            Unused2 : 8;
+	uint32_t        SubType : 8;
+	uint32_t        Flags : 8;
+	uint32_t        Unused2 : 8;
 	union {
 		uint32_t ValU32;
-		float  ValF;
+		float    ValF;
 	};
 
 	StyleAttrib();
@@ -450,16 +450,16 @@ protected:
 
 	void*        Lookup;      // Variable bit-width table that indexes into Attribs. Size is always CatEND.
 	StyleAttrib* Attribs;     // The Category field in here is wasted.
-	int32_t        Count;       // Size of Attribs
-	int32_t        Capacity;    // Capacity of Attribs
-	uint32_t       BitsPerSlot; // Number of bits in each slot of Lookup. Our possible sizes are 2,4,8.
+	int32_t      Count;       // Size of Attribs
+	int32_t      Capacity;    // Capacity of Attribs
+	uint32_t     BitsPerSlot; // Number of bits in each slot of Lookup. Our possible sizes are 2,4,8.
 	//SetSlotFunc		SetSlotF;
 	//GetSlotFunc		GetSlotF;
 
-	void  Grow(Pool* pool);
+	void    Grow(Pool* pool);
 	int32_t GetSlot(StyleCategories cat) const;
-	void  SetSlot(StyleCategories cat, int32_t slot);
-	void  DebugCheckSanity() const;
+	void    SetSlot(StyleCategories cat, int32_t slot);
+	void    DebugCheckSanity() const;
 
 	static void MigrateLookup(const void* lutsrc, void* lutdst, GetSlotFunc getter, SetSlotFunc setter);
 
@@ -472,9 +472,9 @@ protected:
 	static int32_t GetSlot2(const void* lookup, StyleCategories cat);
 	static int32_t GetSlot4(const void* lookup, StyleCategories cat);
 	static int32_t GetSlot8(const void* lookup, StyleCategories cat);
-	static void  SetSlot2(void* lookup, StyleCategories cat, int32_t slot);
-	static void  SetSlot4(void* lookup, StyleCategories cat, int32_t slot);
-	static void  SetSlot8(void* lookup, StyleCategories cat, int32_t slot);
+	static void    SetSlot2(void* lookup, StyleCategories cat, int32_t slot);
+	static void    SetSlot4(void* lookup, StyleCategories cat, int32_t slot);
+	static void    SetSlot8(void* lookup, StyleCategories cat, int32_t slot);
 
 	// The -1 here is for SlotOffset
 	static int32_t CapacityAt(uint32_t bitsPerSlot) { return (1 << bitsPerSlot) - 1; }
@@ -522,9 +522,9 @@ public:
 	void              CloneFastInto(StyleTable& c, Pool* pool) const; // Does not clone NameToIndex
 
 protected:
-	cheapvec<String>          Names; // Names and Classes are parallel
-	cheapvec<StyleClass>      Classes;
-	cheapvec<int>             UnusedSlots;
+	cheapvec<String>        Names; // Names and Classes are parallel
+	cheapvec<StyleClass>    Classes;
+	cheapvec<int>           UnusedSlots;
 	ohash::map<String, int> NameToIndex;
 };
 

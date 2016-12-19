@@ -6,7 +6,7 @@
 
 namespace xo {
 
-DomCanvas::DomCanvas(Doc* doc, InternalID parentID) : DomNode(doc, TagCanvas, parentID) {
+DomCanvas::DomCanvas(xo::Doc* doc, xo::InternalID parentID) : DomNode(doc, TagCanvas, parentID) {
 }
 
 DomCanvas::~DomCanvas() {

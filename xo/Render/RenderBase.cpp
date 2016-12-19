@@ -82,7 +82,7 @@ void RenderBase::EnsureTextureProperlyDefined(Texture* tex, int texUnit) {
 
 std::string RenderBase::CommonShaderDefines() {
 	std::string s;
-	s.append(xo::fmt("#define XO_GLYPH_ATLAS_SIZE %d.0\n", GlyphAtlasSize).Z);
+	s += tsf::fmt("#define XO_GLYPH_ATLAS_SIZE %d.0\n", GlyphAtlasSize);
 	return s;
 }
 

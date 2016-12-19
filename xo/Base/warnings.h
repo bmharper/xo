@@ -2,7 +2,7 @@
 #ifdef _MSC_VER
 
 #define XO_DISABLE_CODE_ANALYSIS_WARNINGS_PUSH_USING_FAILED_CALL_VALUE \
-	__pragma(warning(push))                                         \
+	__pragma(warning(push))                                            \
 	    __pragma(warning(disable : 6102))
 
 #define XO_DISABLE_CODE_ANALYSIS_WARNINGS_POP \

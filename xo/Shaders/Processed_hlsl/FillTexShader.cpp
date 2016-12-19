@@ -2,6 +2,8 @@
 #if XO_BUILD_DIRECTX
 #include "FillTexShader.h"
 
+namespace xo {
+
 DXProg_FillTex::DXProg_FillTex() {
 	Reset();
 }
@@ -182,7 +184,7 @@ bool DXProg_FillTex::LoadVariablePositions() {
 	int nfail = 0;
 
 	if (nfail != 0)
-		XOTRACE("Failed to bind %d variables of shader FillTex\n", nfail);
+		Trace("Failed to bind %d variables of shader FillTex\n", nfail);
 
 	return nfail == 0;
 }
@@ -191,8 +193,10 @@ uint32_t DXProg_FillTex::PlatformMask() {
 	return Platform_All;
 }
 
-VertexType DXProg_FillTex::VertexType() {
+xo::VertexType DXProg_FillTex::VertexType() {
 	return VertexType_PTC;
 }
+
+} // namespace xo
 
 #endif // XO_BUILD_DIRECTX

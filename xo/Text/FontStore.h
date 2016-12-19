@@ -63,9 +63,9 @@ public:
 	void AddFontDirectory(const char* dir);
 
 private:
-	AbcCriticalSection         Lock;
-	cheapvec<Font*>               Fonts;
-	cheapvec<String>             Directories;
+	std::mutex                 Lock;
+	cheapvec<Font*>            Fonts;
+	cheapvec<String>           Directories;
 	ohash::map<String, FontID> FacenameToFontID;
 	ohash::map<String, String> FacenameToFilename;
 	FT_Library                 FTLibrary;
@@ -78,7 +78,7 @@ private:
 	const char* GetFilenameFromFacename(const char* facename);
 	void        BuildAndSaveFontTable();
 	bool        LoadFontTable();
-	uint64_t      ComputeFontDirHash();
+	uint64_t    ComputeFontDirHash();
 
 	static bool IsFontFilename(const char* filename);
 };

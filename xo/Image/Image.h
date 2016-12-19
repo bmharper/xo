@@ -13,8 +13,8 @@ public:
 	void        Free();
 	bool        Set(xo::TexFormat format, uint32_t width, uint32_t height, const void* bytes); // Returns false if memory allocation fails
 	bool        Alloc(xo::TexFormat format, uint32_t width, uint32_t height);                  // Returns false if memory allocation fails
-	uint32_t         GetWidth() const { return TexWidth; }
-	uint32_t         GetHeight() const { return TexHeight; }
+	uint32_t    GetWidth() const { return TexWidth; }
+	uint32_t    GetHeight() const { return TexHeight; }
 	const void* GetData() const { return TexData; }
 };
 }

@@ -8,7 +8,7 @@
 
 namespace xo {
 
-DocUI::DocUI(Doc* doc) {
+DocUI::DocUI(xo::Doc* doc) {
 	Doc            = doc;
 	ViewportWidth  = 0;
 	ViewportHeight = 0;
@@ -26,7 +26,7 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 		ViewportWidth  = (uint32_t) ev.Points[0].x;
 		ViewportHeight = (uint32_t) ev.Points[0].y;
 		Doc->IncVersion();
-		//XOTIME( "Processed WindowSize event. Document at version %d\n", Doc->GetVersion() );
+		//TimeTrace( "Processed WindowSize event. Document at version %d\n", Doc->GetVersion() );
 		break;
 	}
 
@@ -86,7 +86,7 @@ bool DocUI::BubbleEvent(Event& ev, const LayoutResult* layout) {
 	//XOTRACE_EVENTS( "FindTarget chainlen = %d\n", (int) nodeChain.size() );
 
 	// start at the inner-most node first
-	for (size_t inode = nodeChain.size() - 1; inode >= 0; inode--) {
+	for (size_t inode = nodeChain.size() - 1; inode != -1; inode--) {
 		const RenderDomNode* rnode = nodeChain[inode];
 		const DomNode*       node  = Doc->GetNodeByInternalID(rnode->InternalID);
 		if (node != nullptr) {
@@ -119,7 +119,7 @@ void DocUI::FindTarget(Vec2f p, cheapvec<const RenderDomNode*>& nodeChain, const
 	if (!body->BorderBox().IsInsideMe(pos))
 		return;
 	cheapvec<Point> posChain;
-	size_t        stackPos = 0;
+	size_t          stackPos = 0;
 	nodeChain += body;
 	posChain += pos - body->Pos.TopLeft();
 	while (stackPos < nodeChain.size()) {
@@ -127,7 +127,7 @@ void DocUI::FindTarget(Vec2f p, cheapvec<const RenderDomNode*>& nodeChain, const
 		Point                relPos = posChain[stackPos];
 		stackPos++;
 		// walk backwards, yielding implicit z-order from child order
-		for (size_t i = top->Children.size() - 1; i != 0; i--) {
+		for (size_t i = top->Children.size() - 1; i != -1; i--) {
 			if (top->Children[i]->IsNode()) {
 				const RenderDomNode* childNode = static_cast<const RenderDomNode*>(top->Children[i]);
 				if (childNode->BorderBox().IsInsideMe(relPos)) {

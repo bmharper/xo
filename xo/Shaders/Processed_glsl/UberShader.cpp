@@ -2,6 +2,8 @@
 #if XO_BUILD_OPENGL
 #include "UberShader.h"
 
+namespace xo {
+
 GLProg_Uber::GLProg_Uber() {
 	Reset();
 }
@@ -220,7 +222,7 @@ bool GLProg_Uber::LoadVariablePositions() {
 	nfail += (v_Frame_VPort_HSize = glGetUniformLocation(Prog, "Frame_VPort_HSize")) == -1;
 	nfail += (v_f_tex0 = glGetUniformLocation(Prog, "f_tex0")) == -1;
 	if (nfail != 0)
-		XOTRACE("Failed to bind %d variables of shader Uber\n", nfail);
+		Trace("Failed to bind %d variables of shader Uber\n", nfail);
 
 	return nfail == 0;
 }
@@ -229,8 +231,10 @@ uint32_t GLProg_Uber::PlatformMask() {
 	return Platform_All;
 }
 
-VertexType GLProg_Uber::VertexType() {
+xo::VertexType GLProg_Uber::VertexType() {
 	return VertexType_NULL;
 }
+
+} // namespace xo
 
 #endif // XO_BUILD_OPENGL

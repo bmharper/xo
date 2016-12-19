@@ -24,7 +24,7 @@ enum Platform {
 #define XO_PLATFORM Platform_Android
 #define XO_TRACE_WRITE(msg) __android_log_write(ANDROID_LOG_INFO, "xo", msg)
 #define XO_ANALYSIS_ASSUME(x) ((void) 0)
-#define XO_NORETURN __attribute__ ((noreturn)) __attribute__((analyzer_noreturn))
+#define XO_NORETURN __attribute__((noreturn)) __attribute__((analyzer_noreturn))
 #define XO_DEBUG_BREAK() __builtin_trap()
 #elif defined(__linux__)
 #define XO_PLATFORM_ANDROID 0
@@ -33,7 +33,7 @@ enum Platform {
 #define XO_PLATFORM Platform_LinuxDesktop
 #define XO_TRACE_WRITE(msg) fputs(msg, stderr)
 #define XO_ANALYSIS_ASSUME(x) ((void) 0)
-#define XO_NORETURN __attribute__ ((noreturn)) __attribute__((analyzer_noreturn))
+#define XO_NORETURN __attribute__((noreturn)) __attribute__((analyzer_noreturn))
 #define XO_DEBUG_BREAK() __builtin_trap()
 #else
 #ifdef _MSC_VER

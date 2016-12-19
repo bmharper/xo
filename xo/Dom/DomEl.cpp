@@ -7,7 +7,7 @@
 
 namespace xo {
 
-DomEl::DomEl(Doc* doc, Tag tag, InternalID parentID)
+DomEl::DomEl(xo::Doc* doc, xo::Tag tag, xo::InternalID parentID)
     : Doc(doc), Tag(tag), ParentID(parentID) {
 }
 

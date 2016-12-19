@@ -26,7 +26,7 @@ Image* Image::CloneMetadata() const {
 
 void Image::Free() {
 	if (TexData) {
-		aligned_free(TexData);
+		AlignedFree(TexData);
 		TexData = NULL;
 	}
 	TexID = TextureIDNull;
@@ -60,7 +60,7 @@ bool Image::Alloc(xo::TexFormat format, uint32_t width, uint32_t height) {
 		TexInvalidateWholeSurface();
 		TexStride   = TexWidth * (uint32_t) TexBytesPerPixel();
 		size_t size = TexHeight * TexStride;
-		TexData     = aligned_alloc(size, 16);
+		TexData     = AlignedAlloc(size, 16);
 		return TexData != nullptr;
 	} else {
 		return true;

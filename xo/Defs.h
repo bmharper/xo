@@ -46,8 +46,8 @@ class TextureAtlas;
 class Mat4f;
 #endif
 
-typedef int32_t    Pos; // fixed-point position
-static Pos       PosNULL  = INT32_MAX;
+typedef int32_t       Pos; // fixed-point position
+static Pos            PosNULL  = INT32_MAX;
 static const uint32_t PosShift = 8;                   // 24:8 fixed point coordinates used during layout
 static const uint32_t PosMask  = (1 << PosShift) - 1; // 255
 
@@ -55,11 +55,11 @@ static const uint32_t PosMask  = (1 << PosShift) - 1; // 255
 
 // An ID that is internal to xo - i.e. it is not controllable by external code.
 // This ID is an integer that you can use to reference a DOM element. These IDs are recycled.
-typedef int32_t           InternalID;
+typedef int32_t         InternalID;
 static const InternalID InternalIDNull = 0; // Zero is always an invalid DOM element ID
 static const InternalID InternalIDRoot = 1; // The root of the DOM tree always has ID = 1
 
-typedef int32_t       FontID;
+typedef int32_t     FontID;
 static const FontID FontIDNull = 0; // Zero is always an invalid Font ID
 
 // Handle to a texture that is (maybe) resident in the graphics driver.
@@ -68,22 +68,22 @@ static const FontID FontIDNull = 0; // Zero is always an invalid Font ID
 // the texture loading functions must check whether the ID is still valid or not.
 // Note that there is a lot of unsigned arithmetic used by the texture management facilities,
 // so this data type must remain unsigned.
-typedef uint32_t         TextureID;
+typedef uint32_t       TextureID;
 static const TextureID TextureIDNull = 0; // Zero is always an invalid Texture ID
 
 // Maximum number of texture units that we will try to use
 static const uint32_t MaxTextureUnits = 8;
 
-inline int32_t  IntToPos(int real) { return real << PosShift; }
-inline int32_t  Realx256ToPos(int32_t real) { return int32_t(real * ((1 << PosShift) / 256)); } // Since PosShift = 256, Realx256ToPos simplifies out to identity
-inline int32_t  RealToPos(float real) { return int32_t(real * (1 << PosShift)); }
-inline int32_t  DoubleToPos(double real) { return int32_t(real * (1 << PosShift)); }
-inline float  PosToReal(int32_t pos) { return pos * (1.0f / (1 << PosShift)); }
-inline double PosToDouble(int32_t pos) { return pos * (1.0 / (1 << PosShift)); }
-inline int32_t  PosRound(int32_t pos) { return pos + (1 << (PosShift - 1)) & ~PosMask; }
-inline int32_t  PosRoundDown(int32_t pos) { return pos & ~PosMask; }
-inline int32_t  PosRoundUp(int32_t pos) { return pos + ((1 << PosShift) - 1) & ~PosMask; }
-inline float  Round(float real) { return floor(real + 0.5f); }
+inline int32_t IntToPos(int real) { return real << PosShift; }
+inline int32_t Realx256ToPos(int32_t real) { return int32_t(real * ((1 << PosShift) / 256)); } // Since PosShift = 256, Realx256ToPos simplifies out to identity
+inline int32_t RealToPos(float real) { return int32_t(real * (1 << PosShift)); }
+inline int32_t DoubleToPos(double real) { return int32_t(real * (1 << PosShift)); }
+inline float   PosToReal(int32_t pos) { return pos * (1.0f / (1 << PosShift)); }
+inline double  PosToDouble(int32_t pos) { return pos * (1.0 / (1 << PosShift)); }
+inline int32_t PosRound(int32_t pos) { return pos + (1 << (PosShift - 1)) & ~PosMask; }
+inline int32_t PosRoundDown(int32_t pos) { return pos & ~PosMask; }
+inline int32_t PosRoundUp(int32_t pos) { return pos + ((1 << PosShift) - 1) & ~PosMask; }
+inline float   Round(float real) { return floor(real + 0.5f); }
 template <typename T>
 int Sign(T real) {
 	return (real == 0) ? 0 : (real < 0 ? -1 : 1);
@@ -373,8 +373,8 @@ Once a texture has been uploaded, you may not change width, height, channel coun
 */
 class XO_API Texture {
 public:
-	uint32_t    TexWidth       = 0;
-	uint32_t    TexHeight      = 0;
+	uint32_t  TexWidth       = 0;
+	uint32_t  TexHeight      = 0;
 	Box       TexInvalidRect = Box::Inverted(); // Invalid rectangle, in integer texel coordinates.
 	TextureID TexID          = InternalIDNull;  // ID of texture in renderer.
 	TexFormat TexFormat      = TexFormatInvalid;
@@ -444,13 +444,17 @@ struct GlobalStruct {
 	// NOPE.. it's just too confusing to have this optional. It's always on.
 	//bool						DebugZeroClonedChildList;	// During a document clone, zero out ChildByInternalID before populating. This will ensure that gaps are NULL instead of random memory.
 
-	cheapvec<DocGroup*>         Docs;           // Only Main thread is allowed to touch this.
+	cheapvec<DocGroup*>   Docs;           // Only Main thread is allowed to touch this.
 	TQueue<DocGroup*>     DocAddQueue;    // Documents requesting addition
 	TQueue<DocGroup*>     DocRemoveQueue; // Documents requesting removal
 	TQueue<OriginalEvent> UIEventQueue;   // Global event queue, consumed by the one-and-only UI thread
 	TQueue<Job>           JobQueue;       // Global job queue, consumed by the worker thread pool
-	FontStore*               FontStore;      // All fonts known to the system.
-	GlyphCache*              GlyphCache;     // This might have to move into a less global domain.
+	FontStore*            FontStore;      // All fonts known to the system.
+	GlyphCache*           GlyphCache;     // This might have to move into a less global domain.
+
+	std::atomic<bool>        ExitSignalled;
+	std::vector<std::thread> WorkerThreads;
+	std::thread              UIThread; // Only used on Windows desktop
 };
 
 // Optional initialization parameters
@@ -469,8 +473,8 @@ XO_API void          RunAppLowLevel(MainCallbackLowLevel mainCallback);
 XO_API void          RunApp(MainCallback mainCallback);
 XO_API void          AddOrRemoveDocsFromGlobalList();
 XO_API void          ParseFail(const char* msg, ...);
-XO_API void          XOTRACE(const char* msg, ...);
-XO_API void          XOTIME(const char* msg, ...);
+XO_API void          Trace(const char* msg, ...);
+XO_API void          TimeTrace(const char* msg, ...);
 #if XO_PLATFORM_WIN_DESKTOP
 XO_API void RunWin32MessageLoop();
 #elif XO_PLATFORM_LINUX_DESKTOP
@@ -489,49 +493,49 @@ XO_API void RunXMessageLoop();
 #define XOTRACE_LAYOUT_WARNINGS_ENABLE
 
 #ifdef XOTRACE_RENDER_ENABLE
-#define XOTRACE_RENDER(msg, ...) XOTIME(msg, ##__VA_ARGS__)
+#define XOTRACE_RENDER(msg, ...) TimeTrace(msg, ##__VA_ARGS__)
 #else
 #define XOTRACE_RENDER(msg, ...) ((void) 0)
 #endif
 
 #ifdef XOTRACE_LAYOUT_WARNINGS_ENABLE
-#define XOTRACE_LAYOUT_WARNING(msg, ...) XOTIME(msg, ##__VA_ARGS__)
+#define XOTRACE_LAYOUT_WARNING(msg, ...) TimeTrace(msg, ##__VA_ARGS__)
 #else
 #define XOTRACE_LAYOUT_WARNING(msg, ...) ((void) 0)
 #endif
 
 #ifdef XOTRACE_LAYOUT_VERBOSE_ENABLE
-#define XOTRACE_LAYOUT_VERBOSE(msg, ...) XOTIME(msg, ##__VA_ARGS__)
+#define XOTRACE_LAYOUT_VERBOSE(msg, ...) TimeTrace(msg, ##__VA_ARGS__)
 #else
 #define XOTRACE_LAYOUT_VERBOSE(msg, ...) ((void) 0)
 #endif
 
 #ifdef XOTRACE_EVENTS_ENABLE
-#define XOTRACE_EVENTS(msg, ...) XOTIME(msg, ##__VA_ARGS__)
+#define XOTRACE_EVENTS(msg, ...) TimeTrace(msg, ##__VA_ARGS__)
 #else
 #define XOTRACE_EVENTS(msg, ...) ((void) 0)
 #endif
 
 #ifdef XOTRACE_LATENCY_ENABLE
-#define XOTRACE_LATENCY(msg, ...) XOTIME(msg, ##__VA_ARGS__)
+#define XOTRACE_LATENCY(msg, ...) TimeTrace(msg, ##__VA_ARGS__)
 #else
 #define XOTRACE_LATENCY(msg, ...) ((void) 0)
 #endif
 
 #ifdef XOTRACE_FONTS_ENABLE
-#define XOTRACE_FONTS(msg, ...) XOTIME(msg, ##__VA_ARGS__)
+#define XOTRACE_FONTS(msg, ...) TimeTrace(msg, ##__VA_ARGS__)
 #else
 #define XOTRACE_FONTS(msg, ...) ((void) 0)
 #endif
 
 #ifdef XOTRACE_OS_MSG_QUEUE_ENABLE
-#define XOTRACE_OS_MSG_QUEUE(msg, ...) XOTIME(msg, ##__VA_ARGS__)
+#define XOTRACE_OS_MSG_QUEUE(msg, ...) TimeTrace(msg, ##__VA_ARGS__)
 #else
 #define XOTRACE_OS_MSG_QUEUE(msg, ...) ((void) 0)
 #endif
 
 #ifdef XOTRACE_WARNING_ENABLE
-#define XOTRACE_WARNING(msg, ...) XOTIME(msg, ##__VA_ARGS__)
+#define XOTRACE_WARNING(msg, ...) TimeTrace(msg, ##__VA_ARGS__)
 #else
 #define XOTRACE_WARNING(msg, ...) ((void) 0)
 #endif

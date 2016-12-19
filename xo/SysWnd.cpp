@@ -45,10 +45,9 @@ void SysWnd::PlatformInitialize() {
 }
 
 SysWnd::SysWnd() {
-	AbcCriticalSectionInitialize(InvalidRect_Lock);
 	InvalidRect.SetInverted();
 #if XO_PLATFORM_WIN_DESKTOP
-	SysWnd                     = NULL;
+	Wnd                        = NULL;
 	TimerPeriodMS              = 0;
 	QuitAppWhenWindowDestroyed = NumWindowsCreated == 0;
 #elif XO_PLATFORM_ANDROID
@@ -68,7 +67,7 @@ SysWnd::SysWnd() {
 	XO_TODO_STATIC
 #endif
 	NumWindowsCreated++;
-	DocGroup      = new DocGroup();
+	DocGroup      = new xo::DocGroup();
 	DocGroup->Wnd = this;
 	Renderer      = NULL;
 }
@@ -80,7 +79,7 @@ SysWnd::~SysWnd() {
 		delete Renderer;
 		Renderer = NULL;
 	}
-	DestroyWindow(SysWnd);
+	DestroyWindow(Wnd);
 #elif XO_PLATFORM_ANDROID
 	SingleMainWnd      = NULL;
 #elif XO_PLATFORM_LINUX_DESKTOP
@@ -96,14 +95,13 @@ SysWnd::~SysWnd() {
 #endif
 	Global()->DocRemoveQueue.Add(DocGroup);
 	DocGroup = NULL;
-	AbcCriticalSectionDestroy(InvalidRect_Lock);
 }
 
 SysWnd* SysWnd::Create(uint32_t createFlags) {
 #if XO_PLATFORM_WIN_DESKTOP
 	bool    ok = false;
 	SysWnd* w  = new SysWnd();
-	XOTRACE("DocGroup = %p\n", w->DocGroup);
+	Trace("DocGroup = %p\n", w->DocGroup);
 	uint32_t ws = 0;
 	if (!!(createFlags & CreateMinimizeButton))
 		ws |= WS_CAPTION | WS_MINIMIZEBOX;
@@ -116,9 +114,9 @@ SysWnd* SysWnd::Create(uint32_t createFlags) {
 	else
 		ws |= WS_POPUP;
 	uint32_t wsx = 0;
-	//w->SysWnd = CreateWindow(WClass, _T("xo"), ws, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup);
-	w->SysWnd = CreateWindowEx(wsx, WClass, _T("xo"), ws, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup);
-	if (w->SysWnd) {
+	//w->Wnd = CreateWindow(WClass, _T("xo"), ws, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup);
+	w->Wnd = CreateWindowEx(wsx, WClass, _T("xo"), ws, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup);
+	if (w->Wnd) {
 		if (w->InitializeRenderer())
 			ok = true;
 	}
@@ -136,18 +134,18 @@ SysWnd* SysWnd::Create(uint32_t createFlags) {
 	SysWnd* w = new SysWnd();
 	w->XDisplay = XOpenDisplay(NULL);
 	if (w->XDisplay == NULL) {
-		XOTRACE("Cannot connect to X server\n");
+		Trace("Cannot connect to X server\n");
 		delete w;
 		return nullptr;
 	}
 	w->XWindowRoot = DefaultRootWindow(w->XDisplay);
 	w->VisualInfo = glXChooseVisual(w->XDisplay, 0, att);
 	if (w->VisualInfo == NULL) {
-		XOTRACE("no appropriate visual found\n");
+		Trace("no appropriate visual found\n");
 		delete w;
 		return nullptr;
 	}
-	XOTRACE("visual %p selected\n", (void*) w->VisualInfo->visualid);
+	Trace("visual %p selected\n", (void*) w->VisualInfo->visualid);
 	w->ColorMap = XCreateColormap(w->XDisplay, w->XWindowRoot, w->VisualInfo->visual, AllocNone);
 	XSetWindowAttributes swa;
 	swa.colormap = w->ColorMap;
@@ -170,14 +168,14 @@ SysWnd* SysWnd::CreateWithDoc(uint32_t createFlags) {
 	SysWnd* w = Create(createFlags);
 	if (!w)
 		return NULL;
-	w->Attach(new Doc(), true);
+	w->Attach(new xo::Doc(), true);
 	Global()->DocAddQueue.Add(w->DocGroup);
 	return w;
 }
 
 void SysWnd::Show() {
 #if XO_PLATFORM_WIN_DESKTOP
-	ShowWindow(SysWnd, SW_SHOW);
+	ShowWindow(Wnd, SW_SHOW);
 #elif XO_PLATFORM_ANDROID
 #elif XO_PLATFORM_LINUX_DESKTOP
 #else
@@ -189,7 +187,7 @@ Doc* SysWnd::Doc() {
 	return DocGroup->Doc;
 }
 
-void SysWnd::Attach(Doc* doc, bool destroyDocWithGroup) {
+void SysWnd::Attach(xo::Doc* doc, bool destroyDocWithGroup) {
 	DocGroup->Doc                 = doc;
 	DocGroup->DestroyDocWithGroup = destroyDocWithGroup;
 }
@@ -221,10 +219,10 @@ void SysWnd::SetPosition(Box box, uint32_t setPosFlags) {
 		wflags = wflags & ~SWP_NOMOVE;
 	if (!!(setPosFlags & SetPosition_Size))
 		wflags = wflags & ~SWP_NOSIZE;
-	SetWindowPos(SysWnd, NULL, box.Left, box.Top, box.Width(), box.Height(), wflags);
+	SetWindowPos(Wnd, NULL, box.Left, box.Top, box.Width(), box.Height(), wflags);
 #elif XO_PLATFORM_ANDROID
 #elif XO_PLATFORM_LINUX_DESKTOP
-	XOTRACE("SysWnd.SetPosition is not implemented\n");
+	Trace("SysWnd.SetPosition is not implemented\n");
 #else
 	XO_TODO_STATIC
 #endif
@@ -234,8 +232,8 @@ Box SysWnd::GetRelativeClientRect() {
 #if XO_PLATFORM_WIN_DESKTOP
 	RECT  r;
 	POINT p0 = {0, 0};
-	ClientToScreen(SysWnd, &p0);
-	GetClientRect(SysWnd, &r);
+	ClientToScreen(Wnd, &p0);
+	GetClientRect(Wnd, &r);
 	Box box = r;
 	box.Offset(p0.x, p0.y);
 	return box;
@@ -252,7 +250,7 @@ Box SysWnd::GetRelativeClientRect() {
 
 void SysWnd::PostCursorChangedMessage() {
 #if XO_PLATFORM_WIN_DESKTOP
-	PostMessage(SysWnd, WM_XO_CURSOR_CHANGED, 0, 0);
+	PostMessage(Wnd, WM_XO_CURSOR_CHANGED, 0, 0);
 #elif XO_PLATFORM_ANDROID
 #elif XO_PLATFORM_LINUX_DESKTOP
 // See this thread for help on injecting a dummy message into the X queue
@@ -263,17 +261,17 @@ void SysWnd::PostCursorChangedMessage() {
 }
 
 void SysWnd::InvalidateRect(Box box) {
-	TakeCriticalSection lock(InvalidRect_Lock);
+	std::lock_guard<std::mutex> lock(InvalidRect_Lock);
 	InvalidRect.ExpandToFit(box);
 }
 
 Box SysWnd::GetInvalidateRect() {
-	TakeCriticalSection lock(InvalidRect_Lock);
+	std::lock_guard<std::mutex> lock(InvalidRect_Lock);
 	return InvalidRect;
 }
 
 void SysWnd::ValidateWindow() {
-	TakeCriticalSection lock(InvalidRect_Lock);
+	std::lock_guard<std::mutex> lock(InvalidRect_Lock);
 	InvalidRect.SetInverted();
 }
 
@@ -300,10 +298,10 @@ template <typename TRenderer>
 bool SysWnd::InitializeRenderer_Any(RenderBase*& renderer) {
 	renderer = new TRenderer();
 	if (renderer->InitializeDevice(*this)) {
-		XOTRACE("Successfully initialized %s renderer\n", renderer->RendererName());
+		Trace("Successfully initialized %s renderer\n", renderer->RendererName());
 		return true;
 	} else {
-		XOTRACE("Failed to initialize %s renderer\n", renderer->RendererName());
+		Trace("Failed to initialize %s renderer\n", renderer->RendererName());
 		delete renderer;
 		renderer = NULL;
 		return false;

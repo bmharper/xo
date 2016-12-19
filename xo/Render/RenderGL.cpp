@@ -158,8 +158,8 @@ static bool BootGL(HWND wnd) {
 		wglMakeCurrent(dc, rc);
 		int wglLoad = wgl_LoadFunctions(dc);
 		int oglLoad = ogl_LoadFunctions();
-		XOTRACE("wgl_Load: %d\n", wglLoad);
-		XOTRACE("ogl_Load: %d\n", oglLoad);
+		Trace("wgl_Load: %d\n", wglLoad);
+		Trace("ogl_Load: %d\n", oglLoad);
 		GLIsBooted = true;
 		wglMakeCurrent(NULL, NULL);
 		wglDeleteContext(rc);
@@ -174,13 +174,13 @@ static bool BootGL(HWND wnd) {
 #if XO_PLATFORM_WIN_DESKTOP
 bool RenderGL::InitializeDevice(SysWnd& wnd) {
 	if (!GLIsBooted) {
-		if (!BootGL(wnd.SysWnd))
+		if (!BootGL(wnd.Wnd))
 			return false;
 	}
 
 	bool  allGood = false;
 	HGLRC rc      = NULL;
-	HDC   dc      = GetDC(wnd.SysWnd);
+	HDC   dc      = GetDC(wnd.Wnd);
 	if (!dc)
 		return false;
 
@@ -198,9 +198,9 @@ bool RenderGL::InitializeDevice(SysWnd& wnd) {
 	        0};
 	PIXELFORMATDESCRIPTOR pfd;
 	BootGL_FillPFD(pfd);
-	int  formats[20];
+	int      formats[20];
 	uint32_t numformats = 0;
-	BOOL chooseOK   = wglChoosePixelFormatARB(dc, attribs, NULL, arraysize(formats), formats, &numformats);
+	BOOL     chooseOK   = wglChoosePixelFormatARB(dc, attribs, NULL, arraysize(formats), formats, &numformats);
 	if (chooseOK && numformats != 0) {
 		if (SetPixelFormat(dc, formats[0], &pfd)) {
 			rc = wglCreateContext(dc);
@@ -210,11 +210,11 @@ bool RenderGL::InitializeDevice(SysWnd& wnd) {
 			allGood = CreateShaders();
 			wglMakeCurrent(NULL, NULL);
 		} else {
-			XOTRACE("SetPixelFormat failed: %d\n", GetLastError());
+			Trace("SetPixelFormat failed: %d\n", GetLastError());
 		}
 	}
 
-	ReleaseDC(wnd.SysWnd, dc);
+	ReleaseDC(wnd.Wnd, dc);
 
 	if (!allGood) {
 		if (rc)
@@ -235,11 +235,11 @@ bool RenderGL::InitializeDevice(SysWnd& wnd) {
 bool RenderGL::InitializeDevice(SysWnd& wnd) {
 	int oglLoad = ogl_LoadFunctions();
 	int glxLoad = glx_LoadFunctions(wnd.XDisplay, 0);
-	XOTRACE("oglload: %d\n", oglLoad);
-	XOTRACE("glxload: %d\n", glxLoad);
+	Trace("oglload: %d\n", oglLoad);
+	Trace("glxload: %d\n", glxLoad);
 	if (!CreateShaders())
 		return false;
-	XOTRACE("Shaders created\n");
+	Trace("Shaders created\n");
 	return true;
 }
 #else
@@ -261,7 +261,7 @@ void RenderGL::CheckExtensions() {
         }
     };
 
-	XOTRACE("Checking OpenGL extensions\n");
+	Trace("Checking OpenGL extensions\n");
 	// On my desktop Nvidia I get "4.3.0"
 
 	int dot     = (int) (strstr(ver, ".") - ver);
@@ -269,21 +269,21 @@ void RenderGL::CheckExtensions() {
 	int minor   = ver[dot + 1] - '0';
 	int version = major * 10 + minor;
 
-	XOTRACE("OpenGL version: %s\n", ver);
-	XOTRACE("OpenGL extensions: %s\n", ext);
+	Trace("OpenGL version: %s\n", ver);
+	Trace("OpenGL extensions: %s\n", ext);
 
 	if (strstr(ver, "OpenGL ES")) {
-		XOTRACE("OpenGL ES\n");
+		Trace("OpenGL ES\n");
 		Have_Unpack_RowLength = version >= 30 || hasExtension("GL_EXT_unpack_subimage");
 		Have_sRGB_Framebuffer = version >= 30 || hasExtension("GL_EXT_sRGB");
 	} else {
-		XOTRACE("OpenGL Regular (non-ES)\n");
+		Trace("OpenGL Regular (non-ES)\n");
 		Have_Unpack_RowLength = true;
 		Have_sRGB_Framebuffer = version >= 40 || hasExtension("ARB_framebuffer_sRGB") || hasExtension("GL_EXT_framebuffer_sRGB");
 	}
 
 	Have_BlendFuncExtended = hasExtension("GL_ARB_blend_func_extended");
-	XOTRACE(
+	Trace(
 	    "OpenGL Extensions ("
 	    "UNPACK_SUBIMAGE=%d, "
 	    "sRGB_FrameBuffer=%d, "
@@ -382,12 +382,12 @@ void RenderGL::ActivateShader(Shaders shader) {
 void RenderGL::DestroyDevice(SysWnd& wnd) {
 #if XO_PLATFORM_WIN_DESKTOP
 	if (GLRC != NULL) {
-		DC = GetDC(wnd.SysWnd);
+		DC = GetDC(wnd.Wnd);
 		wglMakeCurrent(DC, GLRC);
 		DeleteShadersAndTextures();
 		wglMakeCurrent(NULL, NULL);
 		wglDeleteContext(GLRC);
-		ReleaseDC(wnd.SysWnd, DC);
+		ReleaseDC(wnd.Wnd, DC);
 		DC   = NULL;
 		GLRC = NULL;
 	}
@@ -407,7 +407,7 @@ bool RenderGL::BeginRender(SysWnd& wnd) {
 	XOTRACE_RENDER("BeginRender %d x %d\n", FBWidth, FBHeight);
 #if XO_PLATFORM_WIN_DESKTOP
 	if (GLRC) {
-		DC = GetDC(wnd.SysWnd);
+		DC = GetDC(wnd.Wnd);
 		if (DC) {
 			wglMakeCurrent(DC, GLRC);
 			return true;
@@ -428,7 +428,7 @@ void RenderGL::EndRender(SysWnd& wnd, uint32_t endRenderFlags) {
 	if (!(endRenderFlags & EndRenderNoSwap))
 		SwapBuffers(DC);
 	wglMakeCurrent(NULL, NULL);
-	ReleaseDC(wnd.SysWnd, DC);
+	ReleaseDC(wnd.Wnd, DC);
 	DC = NULL;
 #elif XO_PLATFORM_ANDROID
 #elif XO_PLATFORM_LINUX_DESKTOP
@@ -553,7 +553,7 @@ void RenderGL::Draw(GPUPrimitiveTypes type, int nvertex, const void* v) {
 
 	SetShaderObjectUniforms();
 
-	int         stride = sizeof(Vx_PTC);
+	int            stride = sizeof(Vx_PTC);
 	const uint8_t* vbyte  = (const uint8_t*) v;
 
 	GLint varvpos      = -1;
@@ -863,7 +863,7 @@ bool RenderGL::LoadProgram(GLProg& prog, const char* name, const char* vsrc, con
 }
 
 bool RenderGL::LoadProgram(GLuint& vshade, GLuint& fshade, GLuint& prog, const char* name, const char* vsrc, const char* fsrc) {
-	XOTRACE("Loading shader %s\n", name);
+	Trace("Loading shader %s\n", name);
 	XO_ASSERT(glGetError() == GL_NO_ERROR);
 
 	bool isTextRGB = strcmp(name, "TextRGB") == 0;
@@ -901,13 +901,13 @@ bool RenderGL::LoadProgram(GLuint& vshade, GLuint& fshade, GLuint& prog, const c
 	glGetProgramiv(prog, GL_LINK_STATUS, &linkStat);
 	glGetProgramInfoLog(prog, maxBuff, &ilen, ibuff);
 	if (ibuff[0] != 0) {
-		XOTRACE("Shader: %s\n", name);
-		XOTRACE(ibuff);
-		XOTRACE("\n");
+		Trace("Shader: %s\n", name);
+		Trace(ibuff);
+		Trace("\n");
 	}
 	bool ok = linkStat != 0 && glGetError() == GL_NO_ERROR;
 	if (!ok)
-		XOTRACE("Failed to load shader %s: glGetError = %d, linkStat = %d\n", name, glGetError(), linkStat);
+		Trace("Failed to load shader %s: glGetError = %d, linkStat = %d\n", name, glGetError(), linkStat);
 	return ok;
 }
 
@@ -955,8 +955,8 @@ bool RenderGL::LoadShader(GLenum shaderType, GLuint& shader, const char* name, c
 	glGetShaderInfoLog(shader, maxBuff, &ilen, ibuff);
 	//glGetInfoLogARB( shader, maxBuff, &ilen, ibuff );
 	if (ibuff[0] != 0) {
-		XOTRACE("Shader %s (%s)\n", name, shaderType == GL_FRAGMENT_SHADER ? "frag" : "vert");
-		XOTRACE(ibuff);
+		Trace("Shader %s (%s)\n", name, shaderType == GL_FRAGMENT_SHADER ? "frag" : "vert");
+		Trace(ibuff);
 	}
 	if (compileStat == 0)
 		return false;
@@ -967,7 +967,7 @@ bool RenderGL::LoadShader(GLenum shaderType, GLuint& shader, const char* name, c
 void RenderGL::Check() {
 	int e = glGetError();
 	if (e != GL_NO_ERROR) {
-		XOTRACE("glError = %d\n", e);
+		Trace("glError = %d\n", e);
 	}
 	//XO_ASSERT( glGetError() == GL_NO_ERROR );
 }

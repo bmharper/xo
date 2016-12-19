@@ -5,19 +5,19 @@
 
 namespace xo {
 
-struct TempString {
+struct StringBuf {
 	size_t Capacity;
 	size_t Len;
 	char*  Buf;
 	char   StaticBuf[256];
 
-	TempString() {
+	StringBuf() {
 		Capacity = arraysize(StaticBuf);
 		Len      = 0;
 		Buf      = StaticBuf;
 		Buf[0]   = 0;
 	}
-	~TempString() {
+	~StringBuf() {
 		if (Buf != StaticBuf)
 			free(Buf);
 	}
@@ -56,11 +56,11 @@ String DocParser::Parse(const char* src, DomNode* target) {
 		SAttribBodyDoubleQuote,
 	};
 
-	States          s        = SText;
-	ssize_t         pos      = 0;
-	ssize_t         xStart   = 0;
-	ssize_t         xEnd     = 0;
-	ssize_t         txtStart = 0;
+	States             s        = SText;
+	ssize_t            pos      = 0;
+	ssize_t            xStart   = 0;
+	ssize_t            xEnd     = 0;
+	ssize_t            txtStart = 0;
 	cheapvec<DomNode*> stack;
 	stack += target;
 
@@ -68,7 +68,7 @@ String DocParser::Parse(const char* src, DomNode* target) {
 		ssize_t start = Max<ssize_t>(pos - 1, 0);
 		String  sample;
 		sample.Set(src + start, 10);
-		return xo::fmt("Parse error at position %v (%v): %v", pos, sample.Z, msg);
+		return tsf::fmt("Parse error at position %v (%v): %v", pos, sample.Z, msg).c_str();
 	};
 
 	auto newNode = [&]() -> String {
@@ -86,9 +86,9 @@ String DocParser::Parse(const char* src, DomNode* target) {
 	};
 
 	auto newText = [&]() -> String {
-		bool       white  = true; // True if the entire string is whitespace or empty
-		ssize_t    escape = -1;
-		TempString str;
+		bool      white  = true; // True if the entire string is whitespace or empty
+		ssize_t   escape = -1;
+		StringBuf str;
 		for (ssize_t i = txtStart; i < pos; i++) {
 			int c = src[i];
 			if (escape != -1) {
@@ -103,7 +103,7 @@ String DocParser::Parse(const char* src, DomNode* target) {
 					else if (len == 3 && src[escape] == 'a' && src[escape + 1] == 'm' && src[escape + 2] == 'p')
 						str.Add('&');
 					else
-						return xo::fmt("Invalid escape sequence (%v)", String(src + escape, len).Z);
+						return tsf::fmt("Invalid escape sequence (%v)", String(src + escape, len).Z).c_str();
 					escape = -1;
 				}
 			} else {
@@ -141,7 +141,7 @@ String DocParser::Parse(const char* src, DomNode* target) {
 			return "Too many closing tags";
 		DomNode* top = stack.back();
 		if (!EqNoCase(TagNames[top->GetTag()], src + xStart, xEnd - xStart))
-			return xo::fmt("Cannot close %v here. Expected %v close.", String(src + xStart, xEnd - xStart).Z, TagNames[top->GetTag()]);
+			return tsf::fmt("Cannot close %v here. Expected %v close.", String(src + xStart, xEnd - xStart).Z, TagNames[top->GetTag()]).c_str();
 		stack.pop();
 		return "";
 	};

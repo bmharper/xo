@@ -87,7 +87,7 @@ void StyleResolver::SetFinal(RenderStackEl& result, StyleAttrib attrib) {
 
 StyleResolveOnceOff::StyleResolveOnceOff(const DomNode* node) {
 	RS   = new RenderStack();
-	Pool = new Pool();
+	Pool = new xo::Pool();
 	RS->Initialize(node->GetDoc(), Pool);
 
 	cheapvec<const DomNode*> chain;

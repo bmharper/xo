@@ -30,7 +30,6 @@ FontStore::FontStore() {
 	Fonts += NULL;
 	XO_ASSERT(Fonts[FontIDNull] == NULL);
 	IsFontTableLoaded = false;
-	AbcCriticalSectionInitialize(Lock);
 
 #if XO_PLATFORM_WIN_DESKTOP
 	wchar_t* wpath;
@@ -49,16 +48,15 @@ FontStore::FontStore() {
 }
 
 FontStore::~FontStore() {
-	AbcCriticalSectionDestroy(Lock);
 }
 
 void FontStore::Clear() {
-	TakeCriticalSection lock(Lock);
+	std::lock_guard<std::mutex> lock(Lock);
 	for (size_t i = FontIDNull + 1; i < Fonts.size(); i++) {
 		FT_Done_Face(Fonts[i]->FTFace);
 		Fonts[i]->FTFace = NULL;
 	}
-	delete_all(Fonts);
+	DeleteAll(Fonts);
 	FacenameToFontID.clear();
 }
 
@@ -73,19 +71,19 @@ void FontStore::ShutdownFreetype() {
 
 const Font* FontStore::GetByFontID(FontID fontID) {
 	XO_ASSERT(fontID != FontIDNull && fontID < Fonts.size());
-	TakeCriticalSection lock(Lock);
+	std::lock_guard<std::mutex> lock(Lock);
 	return Fonts[fontID];
 }
 
 const Font* FontStore::GetByFacename(const char* facename) {
-	TakeCriticalSection lock(Lock);
+	std::lock_guard<std::mutex> lock(Lock);
 	return GetByFacename_Internal(facename);
 }
 
 FontID FontStore::Insert(const Font& font) {
 	XO_ASSERT(font.ID == FontIDNull);
 	XO_ASSERT(font.Facename.Length() != 0);
-	TakeCriticalSection lock(Lock);
+	std::lock_guard<std::mutex> lock(Lock);
 
 	const Font* existing = GetByFacename_Internal(font.Facename.Z);
 	if (existing)
@@ -95,7 +93,7 @@ FontID FontStore::Insert(const Font& font) {
 }
 
 FontID FontStore::InsertByFacename(const char* facename) {
-	TakeCriticalSection lock(Lock);
+	std::lock_guard<std::mutex> lock(Lock);
 
 	const Font* existing = GetByFacename_Internal(facename);
 	if (existing)
@@ -106,13 +104,13 @@ FontID FontStore::InsertByFacename(const char* facename) {
 	const char* filename = GetFilenameFromFacename(facename);
 
 	if (filename == nullptr) {
-		XOTRACE("Failed to load font (facename=%s) (font not found)\n", facename);
+		Trace("Failed to load font (facename=%s) (font not found)\n", facename);
 		return FontIDNull;
 	}
 
 	FT_Error e = FT_New_Face(FTLibrary, filename, 0, &font.FTFace);
 	if (e != 0) {
-		XOTRACE("Failed to load font (facename=%s) (filename=%s)\n", facename, filename);
+		Trace("Failed to load font (facename=%s) (filename=%s)\n", facename, filename);
 		return FontIDNull;
 	}
 
@@ -135,14 +133,14 @@ FontID FontStore::GetFallbackFontID() {
 }
 
 FontTableImmutable FontStore::GetImmutableTable() {
-	TakeCriticalSection lock(Lock);
-	FontTableImmutable  t;
+	std::lock_guard<std::mutex> lock(Lock);
+	FontTableImmutable          t;
 	t.Initialize(Fonts);
 	return t;
 }
 
 void FontStore::AddFontDirectory(const char* dir) {
-	TakeCriticalSection lock(Lock);
+	std::lock_guard<std::mutex> lock(Lock);
 	Directories += dir;
 	IsFontTableLoaded = false;
 }
@@ -169,13 +167,13 @@ FontID FontStore::Insert_Internal(const Font& font) {
 #define EM_TO_256(x) ((int32_t)((x) *256 / font.FTFace->units_per_EM))
 
 void FontStore::LoadFontConstants(Font& font) {
-	uint32_t     ftflags  = FT_LOAD_LINEAR_DESIGN;
+	uint32_t ftflags  = FT_LOAD_LINEAR_DESIGN;
 	FT_UInt  iFTGlyph = FT_Get_Char_Index(font.FTFace, 32);
 	FT_Error e        = FT_Set_Pixel_Sizes(font.FTFace, 100, 100);
 	XO_ASSERT(e == 0);
 	e = FT_Load_Glyph(font.FTFace, iFTGlyph, ftflags);
 	if (e != 0) {
-		XOTRACE("Failed to load glyph for character %d (%d)\n", 32, iFTGlyph);
+		Trace("Failed to load glyph for character %d (%d)\n", 32, iFTGlyph);
 		font.LinearHoriAdvance_Space_x256 = 0;
 	} else {
 		font.LinearHoriAdvance_Space_x256 = EM_TO_256(font.FTFace->glyph->linearHoriAdvance);
@@ -249,23 +247,23 @@ const char* FontStore::GetFilenameFromFacename(const char* facename) {
 }
 
 void FontStore::BuildAndSaveFontTable() {
-	XOTRACE("Building font table on %d directories\n", (int) Directories.size());
+	Trace("Building font table on %d directories\n", (int) Directories.size());
 
 	cheapvec<String> files;
 	for (size_t i = 0; i < Directories.size(); i++) {
-		auto cb = [&](const AbcFilesystemItem& item) -> bool {
+		auto cb = [&](const FilesystemItem& item) -> bool {
 			if (IsFontFilename(item.Name))
-				files += String(item.Root) + ABC_DIR_SEP_STR + item.Name;
+				files += String(item.Root) + XO_DIR_SEP_STR + item.Name;
 			return true;
 		};
 
-		AbcFilesystemFindFiles(Directories[i].Z, cb);
+		FindFiles(Directories[i].Z, cb);
 	}
 
-	String cacheFile = Global()->CacheDir + ABC_DIR_SEP_STR + "fonts";
+	String cacheFile = Global()->CacheDir + XO_DIR_SEP_STR + "fonts";
 	FILE*  manifest  = fopen(cacheFile.Z, "wb");
 	if (manifest == nullptr) {
-		XOTRACE("Failed to open font cache file %s. Aborting.\n", cacheFile.Z);
+		Trace("Failed to open font cache file %s. Aborting.\n", cacheFile.Z);
 		XO_DIE_MSG("Failed to open font cache file");
 	}
 	fprintf(manifest, "%d\n", ManifestVersion);
@@ -281,7 +279,7 @@ void FontStore::BuildAndSaveFontTable() {
 			fprintf(manifest, "%s%c%s\n", files[i].Z, UnitSeparator, fullFacename.Z);
 			FT_Done_Face(face);
 		} else {
-			XOTRACE("Failed to load font (filename=%s)\n", files[i].Z);
+			Trace("Failed to load font (filename=%s)\n", files[i].Z);
 		}
 	}
 
@@ -294,17 +292,17 @@ bool FontStore::LoadFontTable() {
 	XOTRACE_FONTS("LoadFontTable enter\n");
 
 	FacenameToFilename.clear();
-	FILE* manifest = fopen((Global()->CacheDir + ABC_DIR_SEP_STR + "fonts").Z, "rb");
+	FILE* manifest = fopen((Global()->CacheDir + XO_DIR_SEP_STR + "fonts").Z, "rb");
 	if (manifest == nullptr)
 		return false;
 
 	XOTRACE_FONTS("LoadFontTable file loaded\n");
 
-	int    version = 0;
+	int      version = 0;
 	uint64_t hash    = 0;
-	bool   ok      = true;
-	ok             = ok && 1 == fscanf(manifest, "%d\n", &version);
-	ok             = ok && 1 == fscanf(manifest, "%llu\n", (long long unsigned*) &hash);
+	bool     ok      = true;
+	ok               = ok && 1 == fscanf(manifest, "%d\n", &version);
+	ok               = ok && 1 == fscanf(manifest, "%llu\n", (long long unsigned*) &hash);
 	if (version != ManifestVersion || hash != ComputeFontDirHash()) {
 		fclose(manifest);
 		return false;
@@ -355,7 +353,7 @@ bool FontStore::LoadFontTable() {
 uint64_t FontStore::ComputeFontDirHash() {
 	void* hstate = XXH64_init(0);
 
-	auto cb = [&](const AbcFilesystemItem& item) -> bool {
+	auto cb = [&](const FilesystemItem& item) -> bool {
 		if (IsFontFilename(item.Name)) {
 			XXH64_update(hstate, item.Root, (int) strlen(item.Root));
 			XXH64_update(hstate, item.Name, (int) strlen(item.Name));
@@ -365,7 +363,7 @@ uint64_t FontStore::ComputeFontDirHash() {
 	};
 
 	for (size_t i = 0; i < Directories.size(); i++)
-		AbcFilesystemFindFiles(Directories[i].Z, cb);
+		FindFiles(Directories[i].Z, cb);
 
 	return (uint64_t) XXH64_digest(hstate);
 }

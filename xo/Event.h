@@ -69,9 +69,9 @@ enum EventHandlerFlags {
 
 class XO_API EventHandler {
 public:
-	uint32_t        Mask          = 0;
-	uint32_t        Flags         = 0;
-	uint32_t        TimerPeriodMS = 0; // Only applicable to Timer event handlers
+	uint32_t      Mask          = 0;
+	uint32_t      Flags         = 0;
+	uint32_t      TimerPeriodMS = 0; // Only applicable to Timer event handlers
 	void*         Context       = nullptr;
 	EventHandlerF Func          = nullptr;
 

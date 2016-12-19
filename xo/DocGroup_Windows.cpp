@@ -110,10 +110,10 @@ void DocGroup::SetSysWndTimer(uint32_t periodMS) {
 
 	if (periodMS == 0) {
 		XOTRACE_OS_MSG_QUEUE("KillTimer\n");
-		KillTimer(Wnd->SysWnd, XoWindowsTimerGenericEvent);
+		KillTimer(Wnd->Wnd, XoWindowsTimerGenericEvent);
 	} else {
 		XOTRACE_OS_MSG_QUEUE("SetTimer(%u)\n", periodMS);
-		SetTimer(Wnd->SysWnd, XoWindowsTimerGenericEvent, periodMS, nullptr);
+		SetTimer(Wnd->Wnd, XoWindowsTimerGenericEvent, periodMS, nullptr);
 	}
 }
 

@@ -1,5 +1,4 @@
 #pragma once
-namespace xo {
 
 #include "Base/PlatformDefine.h"
 #include "Base/Base.h"
@@ -25,4 +24,3 @@ namespace xo {
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
-}

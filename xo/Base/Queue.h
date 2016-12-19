@@ -10,9 +10,7 @@ Work/job queue
 * Simple FIFO
 * Ring buffer
 
-We follow ryg's recommendations here from http://fgiesen.wordpress.com/2010/12/14/ring-buffers-and-queues/
-Particularly, ring size is always a power of 2, and we use at most N-1 slots. This removes the ambiguity caused
-by a full buffer, wherein Head = Tail, which is the same as an empty buffer.
+We follow ryg's recommendations from http://fgiesen.wordpress.com/2010/12/14/ring-buffers-and-queues/
 
 CAVEAT!
 
@@ -38,25 +36,26 @@ public:
 	bool    PeekTail(void* item);                           // Get the tail of the queue, but do not pop it. Obviously useless for multithreaded scenarios, unless you have acquired the lock.
 	int32_t Size();
 
-	// Scan through the queue, allowing you to mutate items inside the queue.
+	// Scan through the queue, allowing you to manipulate items inside the queue.
 	// The callback function 'cb' is called once for every item in the queue.
 	// If forwards is true, then we iterate from Tail to Head.
 	// If forwards is false, then we iterate from Head to Tail.
 	// Return false from your iterator function to end the scan prematurely.
+	// Note that the mutex lock is held during iteration, so you cannot add
+	// or remove items from the queue while scanning.
 	void Scan(bool forwards, void* context, ScanCallback cb);
 
 private:
 	bool     UseSemaphore = false;
-	uint32_t Tail = 0;
-	uint32_t Head = 0;
-	uint32_t RingSize = 0; // Size of the ring buffer. Always a power of 2.
-	uint32_t ItemSize = 0;
-	void*    Buffer = nullptr;
+	uint32_t Tail         = 0;
+	uint32_t Head         = 0;
+	uint32_t RingSize     = 0; // Size of the ring buffer. Always a power of 2.
+	uint32_t ItemSize     = 0;
+	void*    Buffer       = nullptr;
 
 	uint32_t Mask() const { return RingSize - 1; }
-	void*    Slot(uint32_t pos) const { return (byte*) Buffer + (pos * ItemSize); }
-	void     Increment(uint32_t& i) const { i = (i + 1) & Mask(); }
-	int32_t  SizeInternal() const { return (Head - Tail) & Mask(); }
+	void*    Slot(uint32_t pos) const { return (byte*) Buffer + ((pos & Mask()) * ItemSize); }
+	int32_t  SizeInternal() const { return Head - Tail; }
 
 	void Grow();
 };

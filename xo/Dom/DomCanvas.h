@@ -9,7 +9,7 @@ namespace xo {
 // is binding the lifetime of the canvas image to the DOM node.
 class XO_API DomCanvas : public DomNode {
 public:
-	DomCanvas(Doc* doc, InternalID parentID);
+	DomCanvas(xo::Doc* doc, xo::InternalID parentID);
 	virtual ~DomCanvas();
 
 	virtual void CloneSlowInto(DomEl& c, uint32_t cloneFlags) const override;

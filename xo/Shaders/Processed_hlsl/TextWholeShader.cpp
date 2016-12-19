@@ -2,6 +2,8 @@
 #if XO_BUILD_DIRECTX
 #include "TextWholeShader.h"
 
+namespace xo {
+
 DXProg_TextWhole::DXProg_TextWhole() {
 	Reset();
 }
@@ -182,7 +184,7 @@ bool DXProg_TextWhole::LoadVariablePositions() {
 	int nfail = 0;
 
 	if (nfail != 0)
-		XOTRACE("Failed to bind %d variables of shader TextWhole\n", nfail);
+		Trace("Failed to bind %d variables of shader TextWhole\n", nfail);
 
 	return nfail == 0;
 }
@@ -191,8 +193,10 @@ uint32_t DXProg_TextWhole::PlatformMask() {
 	return Platform_All;
 }
 
-VertexType DXProg_TextWhole::VertexType() {
+xo::VertexType DXProg_TextWhole::VertexType() {
 	return VertexType_PTC;
 }
+
+} // namespace xo
 
 #endif // XO_BUILD_DIRECTX

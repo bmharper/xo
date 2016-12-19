@@ -8,12 +8,12 @@ class XO_API TextureAtlas : public Texture {
 public:
 	TextureAtlas();
 	~TextureAtlas();
-	void Initialize(uint32_t width, uint32_t height, TexFormat format, uint32_t padding);
+	void Initialize(uint32_t width, uint32_t height, xo::TexFormat format, uint32_t padding);
 	void Zero();
 	void Free();
 	bool Alloc(uint16_t width, uint16_t height, uint16_t& x, uint16_t& y);
 
-	int  GetStride() const { return TexStride; }
+	int      GetStride() const { return TexStride; }
 	uint32_t GetWidth() const { return TexWidth; }
 	uint32_t GetHeight() const { return TexHeight; }
 

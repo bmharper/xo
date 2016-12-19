@@ -7,11 +7,11 @@ namespace xo {
 const char* ImageStore::NullImageName = "NULL";
 
 ImageStore::ImageStore() {
-	Image* nimg        = new Image();
-	uint32_t    ndata[2][2] = {
-        {0xffffffff, 0xff000000},
-        {0xff000000, 0xffffffff},
-    };
+	Image*   nimg        = new Image();
+	uint32_t ndata[2][2] = {
+	    {0xffffffff, 0xff000000},
+	    {0xff000000, 0xffffffff},
+	};
 	nimg->Set(TexFormatRGBA8, 2, 2, ndata);
 	XO_ASSERT(NullImageIndex == ImageList.size());
 	Set(NullImageName, nimg);
@@ -19,7 +19,7 @@ ImageStore::ImageStore() {
 }
 
 ImageStore::~ImageStore() {
-	delete_all(ImageList);
+	DeleteAll(ImageList);
 	NameToIndex.clear();
 }
 
@@ -99,7 +99,7 @@ void ImageStore::CloneMetadataFrom(const ImageStore& src) {
 	// A very simple optimization would be to simply detect if the two ImageStores are parallel. If so,
 	// one can avoid recreating all of them.
 
-	delete_all(ImageList);
+	DeleteAll(ImageList);
 	NameToIndex.clear();
 	FreeIndices.clear();
 

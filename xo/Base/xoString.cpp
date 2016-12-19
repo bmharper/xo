@@ -175,9 +175,9 @@ void String::ReplaceAll(const char* find, const char* replace) {
 
 cheapvec<String> String::Split(const char* splitter) const {
 	cheapvec<String> v;
-	size_t         splitLen = strlen(splitter);
-	size_t         pos      = 0;
-	size_t         len      = Length();
+	size_t           splitLen = strlen(splitter);
+	size_t           pos      = 0;
+	size_t           len      = Length();
 	while (true) {
 		const char* next = strstr(Z + pos, splitter);
 		if (next == nullptr) {

@@ -2,6 +2,8 @@
 #if XO_BUILD_DIRECTX
 #include "TextRGBShader.h"
 
+namespace xo {
+
 DXProg_TextRGB::DXProg_TextRGB() {
 	Reset();
 }
@@ -230,7 +232,7 @@ bool DXProg_TextRGB::LoadVariablePositions() {
 	int nfail = 0;
 
 	if (nfail != 0)
-		XOTRACE("Failed to bind %d variables of shader TextRGB\n", nfail);
+		Trace("Failed to bind %d variables of shader TextRGB\n", nfail);
 
 	return nfail == 0;
 }
@@ -239,8 +241,10 @@ uint32_t DXProg_TextRGB::PlatformMask() {
 	return Platform_All;
 }
 
-VertexType DXProg_TextRGB::VertexType() {
+xo::VertexType DXProg_TextRGB::VertexType() {
 	return VertexType_PTCV4;
 }
+
+} // namespace xo
 
 #endif // XO_BUILD_DIRECTX

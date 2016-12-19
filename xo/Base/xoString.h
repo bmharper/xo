@@ -15,13 +15,13 @@ class XO_API StringRaw {
 public:
 	char* Z;
 
-	size_t Length() const;
-	void CloneFastInto(StringRaw& b, Pool* pool) const;
-	void Discard();
-	uint32_t  GetHashCode() const;
-	size_t Index(const char* find) const;      // Find the first occurrence of 'find', or -1 if none
-	size_t RIndex(const char* find) const;     // Find the last occurrence of 'find', or -1 if none
-	bool EndsWith(const char* suffix) const; // Returns true if the string ends with 'suffix'
+	size_t   Length() const;
+	void     CloneFastInto(StringRaw& b, Pool* pool) const;
+	void     Discard();
+	uint32_t GetHashCode() const;
+	size_t   Index(const char* find) const;      // Find the first occurrence of 'find', or -1 if none
+	size_t   RIndex(const char* find) const;     // Find the last occurrence of 'find', or -1 if none
+	bool     EndsWith(const char* suffix) const; // Returns true if the string ends with 'suffix'
 
 	bool operator==(const char* b) const;
 	bool operator!=(const char* b) const { return !(*this == b); }
@@ -46,11 +46,11 @@ public:
 	String(const char* z, size_t maxLength = -1); // Calls Set()
 	~String();
 
-	void           Set(const char* z, size_t maxLength = -1); // checks maxLength against strlen(z) and clamps automatically
-	void           Resize(size_t newLength);
-	void           ReplaceAll(const char* find, const char* replace);
+	void             Set(const char* z, size_t maxLength = -1); // checks maxLength against strlen(z) and clamps automatically
+	void             Resize(size_t newLength);
+	void             ReplaceAll(const char* find, const char* replace);
 	cheapvec<String> Split(const char* splitter) const;
-	String         SubStr(size_t start, size_t end) const; // Returns [start .. end - 1]
+	String           SubStr(size_t start, size_t end) const; // Returns [start .. end - 1]
 
 	String& operator=(const String& b);
 	String& operator=(const StringRaw& b);
@@ -73,7 +73,6 @@ public:
 };
 
 void XO_API Itoa(int64_t value, char* buf, int base);
-
 }
 
 namespace ohash {
@@ -83,4 +82,3 @@ inline ohash::hashkey_t gethashcode(const xo::String& k) { return (ohash::hashke
 #ifdef _WIN32
 #pragma warning(pop)
 #endif
-

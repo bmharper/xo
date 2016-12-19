@@ -4,20 +4,20 @@
 This sample was created when developing the layout concepts
 */
 
-void InitDOM(xoDoc* doc);
+void InitDOM(xo::Doc* doc);
 
-void xoMain(xoSysWnd* wnd)
+void xoMain(xo::SysWnd* wnd)
 {
-	xoGlobal()->FontStore->AddFontDirectory("C:\\temp\\fonts");
+	xo::Global()->FontStore->AddFontDirectory("C:\\temp\\fonts");
 	int left = 750;
 	int width = 700;
 	int top = 60;
 	int height = 500;
-	wnd->SetPosition(xoBox(left, top, left + width, top + height), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size);
+	wnd->SetPosition(xo::Box(left, top, left + width, top + height), xo::SysWnd::SetPosition_Move | xo::SysWnd::SetPosition_Size);
 	InitDOM(wnd->Doc());
 }
 
-void DoBorder(xoDoc* doc)
+void DoBorder(xo::Doc* doc)
 {
 	auto root = &doc->Root;
 	root->StyleParse("background: #aaa");
@@ -31,7 +31,7 @@ void DoBorder(xoDoc* doc)
 	);
 }
 
-void DoBaselineAlignment(xoDoc* doc)
+void DoBaselineAlignment(xo::Doc* doc)
 {
 	// Text DOM elements cannot define styles on themselves - they MUST inherit all of their styling from
 	// their parents. Therefore, if you want different font styles on the same line, then you must wrap
@@ -63,18 +63,18 @@ void DoBaselineAlignment(xoDoc* doc)
 
 		for (int size = 8; size < 30; size++)
 		{
-			auto txt = root->AddNode(xoTagDiv);
+			auto txt = root->AddNode(xo::TagDiv);
 			txt->AddClass("baseline");
-			txt->StyleParse(xo::fmt("font-size: %dpx; background: #e0e0e0", size).Z);
+			txt->StyleParse(tsf::fmt("font-size: %dpx; background: #e0e0e0", size).c_str());
 			txt->SetText("e");
 		}
 	}
 }
 
-void DoBaselineAlignment_rev2(xoDoc* doc)
+void DoBaselineAlignment_rev2(xo::Doc* doc)
 {
 	auto root = &doc->Root;
-	xoString e;
+	xo::String e;
 	int v = 3;
 	if (v == 1)
 	{
@@ -121,10 +121,10 @@ void DoBaselineAlignment_rev2(xoDoc* doc)
 			);
 	}
 
-	XOASSERT(e == "");
+	XO_ASSERT(e == "");
 }
 
-void DoBaselineAlignment_DownPropagate(xoDoc* doc)
+void DoBaselineAlignment_DownPropagate(xo::Doc* doc)
 {
 	// These examples were used when trying out downward baseline propagation with layout3.
 	// AHEM. I have abandoned downward baseline propagation, hopefully for the last time.
@@ -134,7 +134,7 @@ void DoBaselineAlignment_DownPropagate(xoDoc* doc)
 	)");
 }
 
-void DoBaselineAlignment_Multiline(xoDoc* doc)
+void DoBaselineAlignment_Multiline(xo::Doc* doc)
 {
 	auto root = &doc->Root;
 	doc->ClassParse("baseline", "baseline: baseline");
@@ -153,10 +153,10 @@ void DoBaselineAlignment_Multiline(xoDoc* doc)
 	);
 }
 
-void DoCanvas(xoDoc* doc)
+void DoCanvas(xo::Doc* doc)
 {
 	auto root = &doc->Root;
-	xoDomCanvas* canvasEl = doc->Root.AddCanvas();
+	xo::DomCanvas* canvasEl = doc->Root.AddCanvas();
 	int w = 200;
 	int h = 200;
 	canvasEl->SetSize(w, h);
@@ -164,7 +164,7 @@ void DoCanvas(xoDoc* doc)
 	canvasEl->StyleParse("border: 3ep #a00f");
 	canvasEl->StyleParse("background: #0f0");
 	canvasEl->StyleParse("sizing: content");
-	xoCanvas2D* c2d = canvasEl->GetCanvas2D();
+	xo::Canvas2D* c2d = canvasEl->GetCanvas2D();
 	for (int y = 0; y < h; y++)
 	{
 		int yb = (y & 4) == 4;
@@ -172,28 +172,28 @@ void DoCanvas(xoDoc* doc)
 		{
 			int xb = (x & 4) == 4;
 			int cb = xb ^ yb ? 255 : 0;
-			c2d->SetPixel(x, y, xoRGBA::RGBA(cb, cb, cb, 255 - x / 2));
+			c2d->SetPixel(x, y, xo::RGBA::Make(cb, cb, cb, 255 - x / 2));
 		}
 	}
-	c2d->SetPixel(0, 0, xoRGBA::RGBA(255, 0, 0, 255));
-	c2d->SetPixel(1, 0, xoRGBA::RGBA(255, 0, 0, 255));
-	c2d->SetPixel(0, 1, xoRGBA::RGBA(255, 0, 0, 255));
-	c2d->SetPixel(2, 2, xoRGBA::RGBA(255, 0, 0, 255));
-	c2d->SetPixel(3, 3, xoRGBA::RGBA(255, 0, 0, 255));
+	c2d->SetPixel(0, 0, xo::RGBA::Make(255, 0, 0, 255));
+	c2d->SetPixel(1, 0, xo::RGBA::Make(255, 0, 0, 255));
+	c2d->SetPixel(0, 1, xo::RGBA::Make(255, 0, 0, 255));
+	c2d->SetPixel(2, 2, xo::RGBA::Make(255, 0, 0, 255));
+	c2d->SetPixel(3, 3, xo::RGBA::Make(255, 0, 0, 255));
 
-	c2d->SetPixel(4, 4, xoRGBA::RGBA(0, 255, 0, 255));
-	c2d->SetPixel(5, 4, xoRGBA::RGBA(0, 255, 0, 255));
-	c2d->SetPixel(4, 5, xoRGBA::RGBA(0, 255, 0, 255));
-	c2d->SetPixel(6, 6, xoRGBA::RGBA(0, 255, 0, 255));
-	c2d->SetPixel(7, 7, xoRGBA::RGBA(0, 255, 0, 255));
+	c2d->SetPixel(4, 4, xo::RGBA::Make(0, 255, 0, 255));
+	c2d->SetPixel(5, 4, xo::RGBA::Make(0, 255, 0, 255));
+	c2d->SetPixel(4, 5, xo::RGBA::Make(0, 255, 0, 255));
+	c2d->SetPixel(6, 6, xo::RGBA::Make(0, 255, 0, 255));
+	c2d->SetPixel(7, 7, xo::RGBA::Make(0, 255, 0, 255));
 	c2d->Invalidate();
 	delete c2d;
 }
 
-void DoCenter(xoDoc* doc)
+void DoCenter(xo::Doc* doc)
 {
 	auto root = &doc->Root;
-	xoString e;
+	xo::String e;
 	int v = 3;
 	if (v == 1)
 	{
@@ -230,7 +230,7 @@ void DoCenter(xoDoc* doc)
 	}
 }
 
-void DoHCenter(xoDoc* doc)
+void DoHCenter(xo::Doc* doc)
 {
 	doc->ClassParse("h-outer", "width: 140ep; height: 70ep; background: #fef; border: 1px #0008; margin: 1ep");
 	doc->ClassParse("v-outer", "width: 140ep; height: 70ep; background: #ffe; border: 1px #0008; margin: 1ep");
@@ -254,11 +254,11 @@ void DoHCenter(xoDoc* doc)
 		);
 }
 
-void DoTwoTextRects(xoDoc* doc)
+void DoTwoTextRects(xo::Doc* doc)
 {
 	if (1)
 	{
-		xoDomNode* div = doc->Root.AddNode(xoTagDiv);
+		xo::DomNode* div = doc->Root.AddNode(xo::TagDiv);
 		div->StyleParse("width: 90px; height: 90px; background: #faa; margin: 4px");
 		div->StyleParse("font-size: 13px");
 		div->SetText("Ave quick brown fox jumps over the lazy dog.\nText wrap and kerning. >>");
@@ -268,14 +268,14 @@ void DoTwoTextRects(xoDoc* doc)
 	{
 		// This block has width=height=unspecified, so it gets its size from its children
 		// We expect to see the green background behind this text
-		xoDomNode* div = doc->Root.AddNode(xoTagDiv);
+		xo::DomNode* div = doc->Root.AddNode(xo::TagDiv);
 		div->StyleParse("background: #afa8; margin: 4px; padding: 5px");
 		div->StyleParse("font-size: 13px");
 		div->SetText("Parent has no size, but this text gives it size. Expect green background behind this text.\nPpPp\npPpP\n\naaa\naaapq");
 	}
 }
 
-void DoBlockMargins(xoDoc* doc)
+void DoBlockMargins(xo::Doc* doc)
 {
 	doc->Root.StyleParse("padding: 4px");
 
@@ -285,10 +285,10 @@ void DoBlockMargins(xoDoc* doc)
 	{
 		for (int i = 0; i < 20; i++)
 		{
-			xoDomNode* div = doc->Root.AddNode(xoTagDiv);
+			xo::DomNode* div = doc->Root.AddNode(xo::TagDiv);
 			div->StyleParse("width: 150px; height: 80px; background: #faa8; margin: 4px; border-radius: 5px;");
 			div->StyleParse("font-size: 13px");
-			div->SetText(xo::fmt("  block %v", i).Z);
+			div->SetText(tsf::fmt("  block %v", i).c_str());
 		}
 	}
 
@@ -296,15 +296,15 @@ void DoBlockMargins(xoDoc* doc)
 	// We expect to see a 4 pixel margin around the first block, regardless of the second block's settings
 	if (0)
 	{
-		doc->Root.AddNode(xoTagDiv)->StyleParse("width: 90px; height: 90px; background: #faa8; margin: 4px; border-radius: 5px;");
-		doc->Root.AddNode(xoTagDiv)->StyleParse("width: 90px; height: 90px; background: #faa8; margin: 0px; border-radius: 5px;");
-		doc->Root.AddNode(xoTagDiv)->StyleParse("width: 90px; height: 90px; background: #faa8; margin: 0px; border-radius: 5px;");
+		doc->Root.AddNode(xo::TagDiv)->StyleParse("width: 90px; height: 90px; background: #faa8; margin: 4px; border-radius: 5px;");
+		doc->Root.AddNode(xo::TagDiv)->StyleParse("width: 90px; height: 90px; background: #faa8; margin: 0px; border-radius: 5px;");
+		doc->Root.AddNode(xo::TagDiv)->StyleParse("width: 90px; height: 90px; background: #faa8; margin: 0px; border-radius: 5px;");
 	}
 }
 
-void DoLongText(xoDoc* doc)
+void DoLongText(xo::Doc* doc)
 {
-	auto div = doc->Root.AddNode(xoTagDiv);
+	auto div = doc->Root.AddNode(xo::TagDiv);
 	div->StyleParse("padding: 10px; width: 500px; font-family: Times New Roman; font-size: 19px; color: #333;");
 	div->SetText(
 		"It is an ancient Mariner,\n"
@@ -325,9 +325,9 @@ void DoLongText(xoDoc* doc)
 }
 
 // This was used when developing Layout3
-void DoInlineFlow(xoDoc* doc)
+void DoInlineFlow(xo::Doc* doc)
 {
-	auto create = [doc](const xoEvent& ev) -> bool
+	auto create = [doc](const xo::Event& ev) -> bool
 	{
 		static bool doSpan = false;
 		doSpan = !doSpan;
@@ -361,13 +361,13 @@ void DoInlineFlow(xoDoc* doc)
 		return true;
 	};
 	doc->Root.OnClick(create);
-	create(xoEvent());
+	create(xo::Event());
 }
 
-void DoBackupSettings(xoDoc* doc)
+void DoBackupSettings(xo::Doc* doc)
 {
 	// The goal here is to replicate part of bvckup2's UI
-	xoDomNode* root = &doc->Root;
+	xo::DomNode* root = &doc->Root;
 	root->StyleParse("font-family: Segoe UI; font-size: 12px;");
 	//root->StyleParse( "font-family: Audiowide; font-size: 12px;" );
 	doc->ClassParse("pad-light",		"box-sizing: border; background: #f8f8f8; width: 140ep; height: 10ep;");
@@ -389,7 +389,7 @@ void DoBackupSettings(xoDoc* doc)
 
 	root->ParseAppend(horzPadder);
 
-	auto addLine = [&](xoString title)
+	auto addLine = [&](xo::String title)
 	{
 		root->ParseAppend(
 			"<div style='break:after'>"
@@ -409,13 +409,13 @@ void DoBackupSettings(xoDoc* doc)
 	root->ParseAppend(horzPadder);
 }
 
-void DoPadding(xoDoc* doc)
+void DoPadding(xo::Doc* doc)
 {
-	xoDomNode* root = &doc->Root;
+	xo::DomNode* root = &doc->Root;
 	root->ParseAppend("<div style='padding: 8ep; background: #ddd'><lab>8ep padding</lab></div>");
 }
 
-void DoTextQuality(xoDoc* doc)
+void DoTextQuality(xo::Doc* doc)
 {
 	doc->Root.StyleParse("background: #f0f0f0");
 	doc->Root.StyleParse("padding: 20px");
@@ -427,7 +427,7 @@ void DoTextQuality(xoDoc* doc)
 	doc->Root.ParseAppend( "<div style='break:after; font-family: Consolas; font-size: 12px; color: #383'>DoBaselineAlignment_Multiline(doc)<div>" );
 }
 
-void DoQuadraticSplines(xoDoc* doc)
+void DoQuadraticSplines(xo::Doc* doc)
 {
 	// In order for this example to be meaningful, you must uncomment the magic color detection at the top line of xoRenderer::RenderNode(),
 	// and it was only implemented on OpenGL.
@@ -438,14 +438,14 @@ void DoQuadraticSplines(xoDoc* doc)
 	doc->Root.ParseAppend("<div style='background: #fff0f0ff; width: 100ep; height: 100ep'><div>");
 	auto top_pad = doc->Root.ChildByIndex(0)->GetInternalID();
 	auto left_pad = doc->Root.ChildByIndex(1)->GetInternalID();
-	doc->Root.OnMouseMove([top_pad, left_pad](const xoEvent& ev) -> bool {
+	doc->Root.OnMouseMove([top_pad, left_pad](const xo::Event& ev) -> bool {
 		ev.Doc->GetNodeByInternalIDMutable(top_pad)->StyleParsef("height: %dep", (int) ev.Points[0].y);
 		ev.Doc->GetNodeByInternalIDMutable(left_pad)->StyleParsef("width: %dep", (int) ev.Points[0].x);
 		return true;
 	});
 }
 
-void DoTimer(xoDoc* doc)
+void DoTimer(xo::Doc* doc)
 {
 	auto canvas = doc->Root.AddCanvas();
 	canvas->SetSize(512, 512);
@@ -453,25 +453,25 @@ void DoTimer(xoDoc* doc)
 	int* size = new int(0);
 	int* dsize = new int(1);
 
-	auto ontimer = [size, dsize, canvas](const xoEvent& ev) -> bool
+	auto ontimer = [size, dsize, canvas](const xo::Event& ev) -> bool
 	{
-		xoCanvas2D* cx = canvas->GetCanvas2D();
+		xo::Canvas2D* cx = canvas->GetCanvas2D();
 		*size += *dsize;
 		if (*size >= 100)
 			*dsize = -1;
 		else if (*size <= 0)
 			*dsize = 1;
-		cx->Fill(xoColor::RGBA(255, 255, 255, 255));
-		cx->FillRect(xoBox(0, 0, *size, *size), xoColor::RGBA(150, 0, 0, 255));
+		cx->Fill(xo::Color::RGBA(255, 255, 255, 255));
+		cx->FillRect(xo::Box(0, 0, *size, *size), xo::Color::RGBA(150, 0, 0, 255));
 		canvas->ReleaseCanvas(cx);
 		return true;
 	};
 	canvas->OnTimer(ontimer, 10);
 }
 
-void InitDOM(xoDoc* doc)
+void InitDOM(xo::Doc* doc)
 {
-	xoDomNode* body = &doc->Root;
+	xo::DomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
 
 	//DoBorder(doc);
@@ -493,11 +493,11 @@ void InitDOM(xoDoc* doc)
 	//DoQuadraticSplines(doc);
 	//DoTimer(doc);
 
-	body->OnClick([](const xoEvent& ev) -> bool {
-		XOTRACE("%f %f\n", ev.Points[0].x, ev.Points[0].y);
+	body->OnClick([](const xo::Event& ev) -> bool {
+		xo::Trace("%f %f\n", ev.Points[0].x, ev.Points[0].y);
 		//xoGlobal()->EnableKerning = !xoGlobal()->EnableKerning;
 		//xoGlobal()->UseRect3 = !xoGlobal()->UseRect3;
-		//XOTRACE("InternalID: %d\n", ev.Target->GetInternalID());
+		//Trace("InternalID: %d\n", ev.Target->GetInternalID());
 		// Force a re-layout. Useful to click on the document and be able to debug the layout that occurs.
 		ev.Doc->IncVersion();
 		return true;

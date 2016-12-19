@@ -20,9 +20,9 @@ public:
 		CreateDefault        = CreateMinimizeButton | CreateMaximizeButton | CreateCloseButton | CreateBorder,
 	};
 #if XO_PLATFORM_WIN_DESKTOP
-	HWND SysWnd;
+	HWND     Wnd;
 	uint32_t TimerPeriodMS;
-	bool QuitAppWhenWindowDestroyed; // This is here for multi-window applications. Close the first window, and the app exits.
+	bool     QuitAppWhenWindowDestroyed; // This is here for multi-window applications. Close the first window, and the app exits.
 	enum WindowMessages {
 		WM_XO_CURSOR_CHANGED = WM_USER,
 	};
@@ -53,9 +53,9 @@ public:
 	void Attach(Doc* doc, bool destroyDocWithProcessor);
 	void Show();
 	Doc* Doc();
-	bool BeginRender();                  // Basically wglMakeCurrent()
+	bool BeginRender();                      // Basically wglMakeCurrent()
 	void EndRender(uint32_t endRenderFlags); // SwapBuffers followed by wglMakeCurrent(NULL). Flags are EndRenderFlags
-	void SurfaceLost();                  // Surface lost, and now regained. Reinitialize GL state (textures, shaders, etc).
+	void SurfaceLost();                      // Surface lost, and now regained. Reinitialize GL state (textures, shaders, etc).
 	void SetPosition(Box box, uint32_t setPosFlags);
 	Box  GetRelativeClientRect(); // Returns the client rectangle (in screen coordinates), relative to the non-client window
 	void PostCursorChangedMessage();
@@ -66,8 +66,8 @@ public:
 	void ValidateWindow();
 
 protected:
-	AbcCriticalSection InvalidRect_Lock;
-	Box                InvalidRect;
+	std::mutex InvalidRect_Lock;
+	Box        InvalidRect;
 
 	bool InitializeRenderer();
 

@@ -150,7 +150,7 @@ bool Color::Parse(const char* s, size_t len, Color& v) {
 		c.g = ParseHexCharSingle(s + 1);
 		c.b = ParseHexCharSingle(s + 2);
 		c.a = 255;
-		//XOTRACE( "color %s -> %d\n", s, (int) c.r );
+		//Trace( "color %s -> %d\n", s, (int) c.r );
 	} else if (len == 5) {
 		c.r = ParseHexCharSingle(s + 0);
 		c.g = ParseHexCharSingle(s + 1);
@@ -325,7 +325,7 @@ static bool ParseFontFamily(const char* s, size_t len, FontID& v) {
 }
 
 bool Style::Parse(const char* t, Doc* doc) {
-	return Parse(t, INT32MAX, doc);
+	return Parse(t, INT32_MAX, doc);
 }
 
 bool Style::Parse(const char* t, size_t maxLen, Doc* doc) {
@@ -535,8 +535,8 @@ void StyleSet::Reset() {
 
 void StyleSet::Grow(Pool* pool) {
 	XO_ASSERT(BitsPerSlot != 8);
-	uint32_t       newbits    = BitsPerSlot == 0 ? InitialBitsPerSlot : BitsPerSlot * 2;
-	uint32_t       totalBits  = newbits * CatEND;
+	uint32_t     newbits    = BitsPerSlot == 0 ? InitialBitsPerSlot : BitsPerSlot * 2;
+	uint32_t     totalBits  = newbits * CatEND;
 	void*        newlookup  = pool->Alloc((totalBits + 7) / 8, true);
 	StyleAttrib* newattribs = pool->AllocNT<StyleAttrib>(CapacityAt(newbits), false);
 	if (BitsPerSlot) {
@@ -642,9 +642,9 @@ void StyleSet::TSetSlot(void* lookup, StyleCategories cat, int32_t slot) {
 		uint8_t islotinbyte = ((uint32_t) cat) & intra_byte_mask;
 		uint8_t ishift      = islotinbyte * BITS_PER_SLOT;
 		uint8_t shiftedmask = mask << ishift;
-		v                 = v & ~shiftedmask;
-		v                 = v | (((uint32_t) slot) << ishift);
-		lookup8[ibyte]    = v;
+		v                   = v & ~shiftedmask;
+		v                   = v | (((uint32_t) slot) << ishift);
+		lookup8[ibyte]      = v;
 	}
 }
 
@@ -670,7 +670,7 @@ int32_t StyleSet::TGetSlot(const void* lookup, StyleCategories cat) {
 		uint8_t islotinbyte = ((uint32_t) cat) & intra_byte_mask;
 		uint8_t ishift      = islotinbyte * BITS_PER_SLOT;
 		uint8_t shiftedmask = mask << ishift;
-		v                 = (v & shiftedmask) >> ishift;
+		v                   = (v & shiftedmask) >> ishift;
 		return v;
 	}
 }
@@ -696,8 +696,8 @@ void StyleTable::AddDummyStyleZero() {
 }
 
 void StyleTable::Discard() {
-	Classes.hack(0, 0, NULL);
-	Names.hack(0, 0, NULL);
+	Classes.discard();
+	Names.discard();
 }
 
 const StyleClass* StyleTable::GetByID(StyleClassID id) const {

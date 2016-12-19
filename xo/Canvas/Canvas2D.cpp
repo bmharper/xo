@@ -4,7 +4,7 @@
 
 namespace xo {
 
-Canvas2D::Canvas2D(Image* backingImage)
+Canvas2D::Canvas2D(xo::Image* backingImage)
     : Image(backingImage) {
 	if (Image != nullptr && Image->TexFormat == TexFormatRGBA8) {
 		RenderBuff.attach((uint8_t*) Image->GetData(), Image->GetWidth(), Image->GetHeight(), Image->TexStride);

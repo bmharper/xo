@@ -17,7 +17,7 @@ const int SHADER_RECT          = 2;
 const int SHADER_TEXT_SIMPLE   = 3;
 const int SHADER_TEXT_SUBPIXEL = 4;
 
-RenderResult Renderer::Render(const Doc* doc, ImageStore* images, StringTable* strings, RenderBase* driver, const RenderDomNode* root) {
+RenderResult Renderer::Render(const xo::Doc* doc, ImageStore* images, StringTable* strings, RenderBase* driver, const RenderDomNode* root) {
 	Doc     = doc;
 	Driver  = driver;
 	Images  = images;
@@ -122,8 +122,8 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 		float   vmid      = 0.5f * (top + bottom);
 		float   borderPos = border.Top;
 		// more padding, for our smooth edges
-		float  vpad       = 1;
-		float  hpad       = 1;
+		float    vpad       = 1;
+		float    hpad       = 1;
 		uint32_t bgRGBA     = bg.GetRGBA();
 		uint32_t borderRGBA = style->BorderColor.GetRGBA();
 

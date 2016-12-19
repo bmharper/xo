@@ -88,5 +88,5 @@ void Render(xoCanvas2D* canvas, int cx, int cy, float scale)
 	}
 	canvas->Invalidate(xoBox(0, 0, canvas->Width(), canvas->Height()));
 
-	XOTRACE("canvas render: %.3f ms\n", 1000.0f * (AbcTimeAccurateRTSeconds() - start));
+	Trace("canvas render: %.3f ms\n", 1000.0f * (AbcTimeAccurateRTSeconds() - start));
 }

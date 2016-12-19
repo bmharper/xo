@@ -79,6 +79,12 @@ public:
 		clear();
 	}
 
+	void discard() {
+		count    = 0;
+		capacity = 0;
+		data     = nullptr;
+	}
+
 	size_t size() const { return count; }
 	// We are consistent here with the stl's erase, which takes [start,last), where last is one beyond the last element to erase.
 	void erase(size_t start, size_t end = -1) {

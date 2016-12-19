@@ -2,6 +2,8 @@
 #if XO_BUILD_OPENGL
 #include "FillShader.h"
 
+namespace xo {
+
 GLProg_Fill::GLProg_Fill() {
 	Reset();
 }
@@ -44,7 +46,7 @@ bool GLProg_Fill::LoadVariablePositions() {
 	nfail += (v_vpos = glGetAttribLocation(Prog, "vpos")) == -1;
 	nfail += (v_vcolor = glGetAttribLocation(Prog, "vcolor")) == -1;
 	if (nfail != 0)
-		XOTRACE("Failed to bind %d variables of shader Fill\n", nfail);
+		Trace("Failed to bind %d variables of shader Fill\n", nfail);
 
 	return nfail == 0;
 }
@@ -53,8 +55,10 @@ uint32_t GLProg_Fill::PlatformMask() {
 	return Platform_All;
 }
 
-VertexType GLProg_Fill::VertexType() {
+xo::VertexType GLProg_Fill::VertexType() {
 	return VertexType_NULL;
 }
+
+} // namespace xo
 
 #endif // XO_BUILD_OPENGL

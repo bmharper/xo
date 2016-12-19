@@ -1,6 +1,6 @@
 #pragma once
 #include "../Style.h"
-#include "../Mem.h"
+#include "../Base/MemPoolsAndContainers.h"
 
 namespace xo {
 
@@ -42,7 +42,7 @@ public:
 	RenderStack();
 	~RenderStack();
 
-	void        Initialize(const Doc* doc, Pool* pool);
+	void        Initialize(const xo::Doc* doc, xo::Pool* pool);
 	void        Reset();
 	StyleAttrib Get(StyleCategories cat) const;
 	void        GetBox(StyleCategories cat, StyleBox& box) const;
@@ -60,10 +60,10 @@ public:
 	RenderStackEl& StackPush();
 	RenderStackEl& StackBack() { return Stack.back(); }
 	RenderStackEl& StackAt(size_t pos) { return Stack[pos]; }
-	size_t           StackSize() const { return Stack.size(); }
+	size_t         StackSize() const { return Stack.size(); }
 
 protected:
 	PoolArray<RenderStackEl> Stack;
-	cheapvec<Pool*>             Stack_Pools; // Every position on the stack gets its own pool
+	cheapvec<xo::Pool*>      Stack_Pools; // Every position on the stack gets its own pool
 };
 }

@@ -2,6 +2,6 @@
 
 void xoMain(xoSysWnd* wnd)
 {
-	XOTRACE("Hello 1\n");
+	Trace("Hello 1\n");
 	wnd->Doc()->Root.SetText("Hello amalgamation");
 }

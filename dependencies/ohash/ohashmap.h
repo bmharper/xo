@@ -74,6 +74,22 @@ public:
 		else return TVal();
 	}
 
+	// Get an item in the set
+	// return true if found
+	bool get(const TKey& Key, TVal& val) const
+	{
+		hashsize_t pos = this->_find(Key);
+		if (pos != npos)
+		{
+			val = base::mData[pos].second;
+			return true;
+		}
+		else 
+		{
+			return false;
+		}
+	}
+
 	/// Get a pointer to an item in the map
 	/**
 	\return A pointer to an item in the set, NULL if object is not in set.

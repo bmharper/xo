@@ -5,7 +5,7 @@
 #include "../Render/RenderStack.h"
 #include "../Text/GlyphCache.h"
 #include "../Text/FontStore.h"
-#include "../Mem.h"
+#include "../Base/MemPoolsAndContainers.h"
 
 namespace xo {
 
@@ -62,7 +62,7 @@ public:
 		int            InnerBaselineDefinedBy;
 		int            LastChild; // This is used to keep track of which line each child is on.
 		static LineBox Make(Pos innerBaseline, int innerBaselineDefinedBy, int lastChild) { return {innerBaseline, innerBaselineDefinedBy, lastChild}; }
-		static LineBox MakeFresh() { return {PosNULL, 0, INT32MAX}; }
+		static LineBox MakeFresh() { return {PosNULL, 0, INT32_MAX}; }
 	};
 
 	Pool* Pool = nullptr;
@@ -107,7 +107,7 @@ protected:
 		// bool	ReverseMajor;	// Major goes from high to low numbers (right to left, or bottom to top)
 		// bool	ReverseMinor;	// Minor goes from high to low numbers (right to left, or bottom to top)
 		cheapvec<LineBox> Lines;
-		void            Reset();
+		void              Reset();
 	};
 	struct NodeState {
 		NodeInput Input;
@@ -122,6 +122,6 @@ protected:
 	bool       MustFlow(const FlowState& flow, Pos size);
 	void       Flow(const NodeState& ns, FlowState& flow, Box& marginBox);
 	void       NewLine(FlowState& flow);
-	size_t       MostRecentUniqueFlowAncestor();
+	size_t     MostRecentUniqueFlowAncestor();
 };
 }

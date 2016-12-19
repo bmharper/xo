@@ -29,7 +29,7 @@ public:
 	~RenderDoc();
 
 	RenderResult Render(RenderBase* driver);
-	void         CopyFromCanonical(const Doc& canonical, RenderStats& stats);
+	void         CopyFromCanonical(const xo::Doc& canonical, RenderStats& stats);
 
 	// Acquire the latest layout object. Call ReleaseLayout when you are done using it. Returns nullptr if no layouts exist.
 	// Panics if the latest layout has already been acquired.
@@ -41,8 +41,8 @@ protected:
 	ImageStore ClonedImages;
 
 	// Rendered state
-	AbcCriticalSection   LayoutLock;             // This guards the pointers LayoutResult and OldLayouts (but not necessarily the content that is pointed to)
-	LayoutResult*        LatestLayout = nullptr; // Most recent layout performed
+	std::mutex              LayoutLock;             // This guards the pointers LayoutResult and OldLayouts (but not necessarily the content that is pointed to)
+	LayoutResult*           LatestLayout = nullptr; // Most recent layout performed
 	cheapvec<LayoutResult*> OldLayouts;             // Layouts there were busy being used by the UI thread while the rendering thread progressed onto doing another layout
 
 	void PurgeOldLayouts();

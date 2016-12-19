@@ -2,6 +2,8 @@
 #if XO_BUILD_OPENGL
 #include "ArcShader.h"
 
+namespace xo {
+
 GLProg_Arc::GLProg_Arc() {
 	Reset();
 }
@@ -96,7 +98,7 @@ bool GLProg_Arc::LoadVariablePositions() {
 	nfail += (v_vradius2 = glGetAttribLocation(Prog, "vradius2")) == -1;
 	nfail += (v_vport_hsize = glGetUniformLocation(Prog, "vport_hsize")) == -1;
 	if (nfail != 0)
-		XOTRACE("Failed to bind %d variables of shader Arc\n", nfail);
+		Trace("Failed to bind %d variables of shader Arc\n", nfail);
 
 	return nfail == 0;
 }
@@ -105,8 +107,10 @@ uint32_t GLProg_Arc::PlatformMask() {
 	return Platform_All;
 }
 
-VertexType GLProg_Arc::VertexType() {
+xo::VertexType GLProg_Arc::VertexType() {
 	return VertexType_NULL;
 }
+
+} // namespace xo
 
 #endif // XO_BUILD_OPENGL

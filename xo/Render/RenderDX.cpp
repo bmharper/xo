@@ -7,10 +7,10 @@ namespace xo {
 
 #if XO_BUILD_DIRECTX
 
-#define CHECK_HR(hresult, msg)                        \
-	if (FAILED(hresult)) {                            \
-		XOTRACE("%s failed: 0x%08x\n", msg, hresult); \
-		return false;                                 \
+#define CHECK_HR(hresult, msg)                      \
+	if (FAILED(hresult)) {                          \
+		Trace("%s failed: 0x%08x\n", msg, hresult); \
+		return false;                               \
 	}
 
 RenderDX::RenderDX() {
@@ -58,7 +58,7 @@ bool RenderDX::InitializeDXDevice(SysWnd& wnd) {
 	swap.SampleDesc.Quality = 0;
 	swap.BufferUsage        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swap.BufferCount        = 1;
-	swap.OutputWindow       = wnd.SysWnd;
+	swap.OutputWindow       = wnd.Wnd;
 	swap.Windowed           = true;
 	swap.SwapEffect         = DXGI_SWAP_EFFECT_DISCARD;
 	swap.Flags              = 0;
@@ -232,7 +232,7 @@ bool RenderDX::CreateShader(DXProg* prog) {
 
 	HRESULT hr = D3D.Device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), NULL, &prog->Vert);
 	if (FAILED(hr)) {
-		XOTRACE("CreateVertexShader failed (0x%08x) for %s", hr, (const char*) prog->Name());
+		Trace("CreateVertexShader failed (0x%08x) for %s", hr, (const char*) prog->Name());
 		vsBlob->Release();
 		return false;
 	}
@@ -250,7 +250,7 @@ bool RenderDX::CreateShader(DXProg* prog) {
 	hr = D3D.Device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), NULL, &prog->Frag);
 	psBlob->Release();
 	if (FAILED(hr)) {
-		XOTRACE("CreatePixelShader failed (0x%08x) for %s", hr, (const char*) prog->Name());
+		Trace("CreatePixelShader failed (0x%08x) for %s", hr, (const char*) prog->Name());
 		return false;
 	}
 
@@ -294,14 +294,14 @@ bool RenderDX::CreateVertexLayout(DXProg* prog, ID3DBlob* vsBlob) {
 
 	HRESULT hr = D3D.Device->CreateInputLayout(layouts[index], layoutSizes[index], vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &prog->VertLayout);
 	if (FAILED(hr)) {
-		XOTRACE("Vertex layout for %s invalid (0x%08x)", (const char*) prog->Name(), hr);
+		Trace("Vertex layout for %s invalid (0x%08x)", (const char*) prog->Name(), hr);
 		return false;
 	}
 
 	return true;
 }
 
-DISABLE_CODE_ANALYSIS_WARNINGS_PUSH_USING_FAILED_CALL_VALUE
+XO_DISABLE_CODE_ANALYSIS_WARNINGS_PUSH_USING_FAILED_CALL_VALUE
 
 bool RenderDX::CompileShader(const char* name, const char* source, const char* shaderTarget, ID3DBlob** blob) {
 	//D3D_SHADER_MACRO macros[1] = {
@@ -314,17 +314,17 @@ bool RenderDX::CompileShader(const char* name, const char* source, const char* s
 	HRESULT   hr  = D3DCompile(source, strlen(source), name, NULL, NULL, "main", shaderTarget, flags1, 0, blob, &err);
 	if (FAILED(hr)) {
 		if (err != NULL) {
-			XOTRACE("Shader %s compilation failed (0x%08x): %s\n", name, hr, (const char*) err->GetBufferPointer());
+			Trace("Shader %s compilation failed (0x%08x): %s\n", name, hr, (const char*) err->GetBufferPointer());
 			err->Release();
 		} else
-			XOTRACE("Shader %s compilation failed (0x%08x)\n", name, hr);
+			Trace("Shader %s compilation failed (0x%08x)\n", name, hr);
 		return false;
 	}
 
 	return true;
 }
 
-DISABLE_CODE_ANALYSIS_WARNINGS_POP
+XO_DISABLE_CODE_ANALYSIS_WARNINGS_POP
 
 bool RenderDX::SetupBuffers() {
 	if (NULL == (D3D.VertBuffer = CreateBuffer(sizeof(Vx_PTCV4) * 4, D3D11_USAGE_DYNAMIC, D3D11_BIND_VERTEX_BUFFER, D3D11_CPU_ACCESS_WRITE, NULL)))
@@ -366,7 +366,7 @@ void RenderDX::EndRender(SysWnd& wnd, uint32_t endRenderFlags) {
 	if (!(endRenderFlags & EndRenderNoSwap)) {
 		HRESULT hr = D3D.SwapChain->Present(0, 0);
 		if (!SUCCEEDED(hr))
-			XOTRACE("DirectX Present failed: 0x%08x", hr);
+			Trace("DirectX Present failed: 0x%08x", hr);
 	}
 
 	D3D.ActiveProgram = nullptr;
@@ -432,7 +432,7 @@ ID3D11Buffer* RenderDX::CreateBuffer(size_t sizeBytes, D3D11_USAGE usage, D3D11_
 	HRESULT hr           = D3D.Device->CreateBuffer(&bd, initialContent != NULL ? &sub : NULL, &buffer);
 	if (!SUCCEEDED(hr)) {
 		buffer = nullptr;
-		XOTRACE("CreateBuffer failed: %08x", hr);
+		Trace("CreateBuffer failed: %08x", hr);
 	}
 	return buffer;
 }
@@ -457,14 +457,14 @@ bool RenderDX::CreateTexture2D(Texture* tex) {
 	ID3D11Texture2D* dxTex = NULL;
 	HRESULT          hr    = D3D.Device->CreateTexture2D(&desc, NULL, &dxTex);
 	if (!SUCCEEDED(hr)) {
-		XOTRACE("CreateTexture2D failed: %08x", hr);
+		Trace("CreateTexture2D failed: %08x", hr);
 		return false;
 	}
 	Texture2D* t = new Texture2D();
 	t->Tex       = dxTex;
 	hr           = D3D.Device->CreateShaderResourceView(dxTex, NULL, &t->View);
 	if (!SUCCEEDED(hr)) {
-		XOTRACE("CreateTexture2D.CreateShaderResourceView failed: %08x", hr);
+		Trace("CreateTexture2D.CreateShaderResourceView failed: %08x", hr);
 		delete t;
 		dxTex->Release();
 		return false;
@@ -523,8 +523,8 @@ void RenderDX::ActivateShader(Shaders shader) {
 	D3D.Context->PSSetConstantBuffers(ConstantSlotPerFrame, 1, &D3D.ShaderPerFrameConstants);
 	D3D.ActiveProgram = p;
 
-	float blendFactors[4] = {0, 0, 0, 0};
-	uint32_t  sampleMask      = 0xffffffff;
+	float    blendFactors[4] = {0, 0, 0, 0};
+	uint32_t sampleMask      = 0xffffffff;
 
 	if (shader == ShaderTextRGB)
 		D3D.Context->OMSetBlendState(D3D.BlendDual, blendFactors, sampleMask);
@@ -538,7 +538,7 @@ void RenderDX::ActivateShader(Shaders shader) {
 void RenderDX::Draw(GPUPrimitiveTypes type, int nvertex, const void* v) {
 	SetShaderObjectUniforms();
 
-	const int   nvert = 4;
+	const int      nvert = 4;
 	const uint8_t* vbyte = (const uint8_t*) v;
 
 	// map vertex buffer with DISCARD
@@ -602,7 +602,7 @@ bool RenderDX::ReadBackbuffer(Image& image) {
 	ID3D11Texture2D* tempTex = NULL;
 	HRESULT          hr      = D3D.Device->CreateTexture2D(&desc, NULL, &tempTex);
 	if (!SUCCEEDED(hr)) {
-		XOTRACE("CreateTexture2D for ReadBackBuffer failed: %08x", hr);
+		Trace("CreateTexture2D for ReadBackBuffer failed: %08x", hr);
 		return false;
 	}
 
@@ -622,7 +622,7 @@ bool RenderDX::ReadBackbuffer(Image& image) {
 				D3D.Context->Unmap(tempTex, 0);
 				ok = true;
 			} else {
-				XOTRACE("Failed to allocate target memory for back buffer read");
+				Trace("Failed to allocate target memory for back buffer read");
 			}
 		}
 	}
