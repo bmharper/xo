@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "BoxLayout3.h"
+#include "BoxLayout.h"
 #include "Doc.h"
 #include "Dom/DomNode.h"
 #include "Dom/DomText.h"
@@ -10,7 +10,7 @@
 
 namespace xo {
 
-BoxLayout3::BoxLayout3() {
+BoxLayout::BoxLayout() {
 	// This constant is arbitrarily chosen. The program will panic if the limit is exceeded.
 	int maxDomTreeDepth = 100;
 
@@ -20,14 +20,14 @@ BoxLayout3::BoxLayout3() {
 	WaitingForRestart = false;
 }
 
-BoxLayout3::~BoxLayout3() {
+BoxLayout::~BoxLayout() {
 }
 
-void BoxLayout3::BeginDocument() {
-	// Add a dummy root node. This root node has no limits. This does not house the
-	// top-level <body> tag; it is the parent of the <body> tag.
-	// This is really just a dummy so that <body> can go through the same code paths as all of its children,
-	// and so that we never have an empty NodeStates stack.
+void BoxLayout::BeginDocument() {
+	// Add a dummy root node. This root node has no limits. This is not the <body> tag,
+	// it is the parent of the <body> tag. This is really just a dummy so that <body>
+	// can go through the same code paths as all of its children, and so that we never
+	// have an empty NodeStates stack.
 	NodeState& s           = NodeStates.Add();
 	s.Input.NewFlowContext = false;
 	s.Input.Tag            = Tag_DummyRoot;
@@ -36,14 +36,14 @@ void BoxLayout3::BeginDocument() {
 	WaitingForRestart = false;
 }
 
-void BoxLayout3::EndDocument() {
+void BoxLayout::EndDocument() {
 	XO_ASSERT(NodeStates.Count == 1);
 	XO_ASSERT(FlowStates.Count == 1);
 	NodeStates.Pop();
 	FlowStates.Pop();
 }
 
-void BoxLayout3::BeginNode(const NodeInput& in) {
+void BoxLayout::BeginNode(const NodeInput& in) {
 	NodeState& parentNode = NodeStates.Back();
 	NodeState& ns         = NodeStates.Add();
 	ns.Input              = in;
@@ -69,12 +69,12 @@ void BoxLayout3::BeginNode(const NodeInput& in) {
 	}
 }
 
-BoxLayout3::FlowResult BoxLayout3::EndNode(Box& marginBox) {
+BoxLayout::FlowResult BoxLayout::EndNode(Box& marginBox) {
 	bool insideInjectedFlow = !NodeStates[NodeStates.Count - 2].Input.NewFlowContext;
 	return EndNodeInternal(marginBox, insideInjectedFlow);
 }
 
-BoxLayout3::FlowResult BoxLayout3::AddWord(const WordInput& in, Box& marginBox) {
+BoxLayout::FlowResult BoxLayout::AddWord(const WordInput& in, Box& marginBox) {
 	NodeInput nin;
 	nin.ContentWidth        = in.Width;
 	nin.ContentHeight       = in.Height;
@@ -92,15 +92,24 @@ BoxLayout3::FlowResult BoxLayout3::AddWord(const WordInput& in, Box& marginBox) 
 	return EndNodeInternal(marginBox, true);
 }
 
-void BoxLayout3::AddSpace(Pos size) {
+void BoxLayout::AddSpace(Pos size) {
 	FlowStates.Back().PosMinor += size;
 }
 
-void BoxLayout3::AddLinebreak() {
+// This is needed for the case where you have a \n\n sequence in a text object.
+// In other words, a blank line. Without this explicit call, HighMajor ends up
+// being equal to PosMajor, and so the line box has zero height, and the subsequent
+// Linebreak call ends up doing nothing.
+void BoxLayout::AddNewLineCharacter(Pos height) {
+	auto& flow     = FlowStates.Back();
+	flow.HighMajor = Max(flow.HighMajor, flow.PosMajor + height);
+}
+
+void BoxLayout::Linebreak() {
 	NewLine(FlowStates.Back());
 }
 
-void BoxLayout3::SetBaseline(Pos baseline, int child) {
+void BoxLayout::NotifyNodeEmitted(Pos baseline, int child) {
 	auto& line = FlowStates.Back().Lines.back();
 	if (line.InnerBaseline == PosNULL) {
 		line.InnerBaseline          = baseline;
@@ -109,33 +118,22 @@ void BoxLayout3::SetBaseline(Pos baseline, int child) {
 	line.LastChild = child;
 }
 
-Pos BoxLayout3::GetBaseline() {
-	auto& line = FlowStates.Back().Lines.back();
-	return line.InnerBaseline;
-}
-
-Pos BoxLayout3::GetFirstBaseline() {
-	if (FlowStates.Back().Lines.size() != 0)
-		return FlowStates.Back().Lines[0].InnerBaseline;
-	return PosNULL;
-}
-
-BoxLayout3::LineBox* BoxLayout3::GetLineFromPreviousNode(int line_index) {
+BoxLayout::LineBox* BoxLayout::GetLineFromPreviousNode(int line_index) {
 	// If FlowStates did bounds checking, then the following call would fail that check.
 	// We explicitly choose a container for FlowStates that leaves items intact when
 	// popping off the end.
 	return &FlowStates[FlowStates.Count].Lines[line_index];
 }
 
-void BoxLayout3::Restart() {
+void BoxLayout::Restart() {
 	WaitingForRestart = false;
 }
 
-bool BoxLayout3::WouldFlow(Pos size) {
+bool BoxLayout::WouldFlow(Pos size) {
 	return MustFlow(FlowStates.Back(), size);
 }
 
-BoxLayout3::FlowResult BoxLayout3::EndNodeInternal(Box& marginBox, bool insideInjectedFlow) {
+BoxLayout::FlowResult BoxLayout::EndNodeInternal(Box& marginBox, bool insideInjectedFlow) {
 	// If the node being finished did not define its content width or content height,
 	// then read them now from its flow state. Once that's done, we can throw away
 	// the flow state of the node that's ending.
@@ -144,13 +142,15 @@ BoxLayout3::FlowResult BoxLayout3::EndNodeInternal(Box& marginBox, bool insideIn
 
 	if (ns->Input.ContentWidth == PosNULL) {
 		ns->Input.ContentWidth = Max(flow->HighMinor, flow->PosMinor);
-		// If you don't round up here, then subpixel glyph positioning ends up producing boxes that have non-integer widths, which ends up producing ugly borders.
+		// If you don't round up here, then subpixel glyph positioning ends up producing boxes
+		// that have non-integer widths, which ends up producing smudged borders.
 		if (Global()->SnapBoxes)
 			ns->Input.ContentWidth = PosRoundUp(ns->Input.ContentWidth);
 	}
 
 	if (ns->Input.ContentHeight == PosNULL) {
 		ns->Input.ContentHeight = flow->HighMajor;
+		// Same thing here as the horizontal case above
 		if (Global()->SnapBoxes)
 			ns->Input.ContentHeight = PosRoundUp(ns->Input.ContentHeight);
 	}
@@ -184,13 +184,13 @@ BoxLayout3::FlowResult BoxLayout3::EndNodeInternal(Box& marginBox, bool insideIn
 	return FlowNormal;
 }
 
-bool BoxLayout3::MustFlow(const FlowState& flow, Pos size) {
+bool BoxLayout::MustFlow(const FlowState& flow, Pos size) {
 	bool onNewLine = flow.PosMinor == 0;
 	bool overflow  = (flow.MaxMinor != PosNULL) && (flow.PosMinor + size > flow.MaxMinor);
 	return (!onNewLine || flow.FlowOnZeroMinor) && overflow;
 }
 
-void BoxLayout3::Flow(const NodeState& ns, FlowState& flow, Box& marginBox) {
+void BoxLayout::Flow(const NodeState& ns, FlowState& flow, Box& marginBox) {
 	bool doVertBump = ns.Input.Bump == BumpRegular || ns.Input.Bump == BumpVertOnly;
 	bool doHorzBump = ns.Input.Bump == BumpRegular || ns.Input.Bump == BumpHorzOnly;
 
@@ -231,14 +231,14 @@ void BoxLayout3::Flow(const NodeState& ns, FlowState& flow, Box& marginBox) {
 	flow.HighMajor = Max(flow.HighMajor, bottom);
 }
 
-void BoxLayout3::NewLine(FlowState& flow) {
+void BoxLayout::NewLine(FlowState& flow) {
 	flow.Lines += LineBox::MakeFresh();
 	flow.PosMajor  = flow.HighMajor;
 	flow.HighMinor = Max(flow.HighMinor, flow.PosMinor);
 	flow.PosMinor  = 0;
 }
 
-size_t BoxLayout3::MostRecentUniqueFlowAncestor() {
+size_t BoxLayout::MostRecentUniqueFlowAncestor() {
 	for (size_t i = FlowStates.Count - 1; i != -1; i--) {
 		if (NodeStates[i].Input.NewFlowContext)
 			return i;
@@ -247,7 +247,7 @@ size_t BoxLayout3::MostRecentUniqueFlowAncestor() {
 	return 0;
 }
 
-void BoxLayout3::FlowState::Reset() {
+void BoxLayout::FlowState::Reset() {
 	FlowOnZeroMinor = false;
 	PosMinor        = 0;
 	PosMajor        = 0;

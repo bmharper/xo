@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "Layout3.h"
+#include "Layout.h"
 #include "Doc.h"
 #include "Dom/DomNode.h"
 #include "Dom/DomText.h"
@@ -19,7 +19,7 @@ Missing glyphs are a once-off cost (ie once per application instance),
 so it's not worth trying to use a mutable glyph cache.
 
 */
-void Layout3::Layout(const xo::Doc& doc, RenderDomNode& root, xo::Pool* pool) {
+void Layout::PerformLayout(const xo::Doc& doc, RenderDomNode& root, xo::Pool* pool) {
 	Doc        = &doc;
 	Pool       = pool;
 	Boxer.Pool = pool;
@@ -27,8 +27,8 @@ void Layout3::Layout(const xo::Doc& doc, RenderDomNode& root, xo::Pool* pool) {
 
 	// These are thumbsuck numbers.
 	// 100 is max expected tree depth.
-	// 64 is related to size of LayoutOutput3, and number of expected objects
-	// inside the vectors that store LayoutOutput3 inside RunNode3
+	// 64 is related to size of LayoutOutput, and number of expected objects
+	// inside the vectors that store LayoutOutput inside RunNode
 	FHeap.Initialize(100, 64);
 
 	Fonts                = Global()->FontStore->GetImmutableTable();
@@ -49,13 +49,13 @@ void Layout3::Layout(const xo::Doc& doc, RenderDomNode& root, xo::Pool* pool) {
 	}
 }
 
-void Layout3::RenderGlyphsNeeded() {
+void Layout::RenderGlyphsNeeded() {
 	for (auto it = GlyphsNeeded.begin(); it != GlyphsNeeded.end(); it++)
 		Global()->GlyphCache->RenderGlyph(*it);
 	GlyphsNeeded.clear();
 }
 
-void Layout3::LayoutInternal(RenderDomNode& root) {
+void Layout::LayoutInternal(RenderDomNode& root) {
 	PtToPixel = 1.0; // TODO
 	EpToPixel = Global()->EpToPixel;
 
@@ -67,24 +67,24 @@ void Layout3::LayoutInternal(RenderDomNode& root) {
 
 	XOTRACE_LAYOUT_VERBOSE("Layout 2\n");
 
-	LayoutInput3 in;
+	LayoutInput in;
 	in.ParentWidth   = IntToPos(Doc->UI.GetViewportWidth());
 	in.ParentHeight  = IntToPos(Doc->UI.GetViewportHeight());
 	in.ParentRNode   = &root;
 	in.RestartPoints = nullptr;
 
-	LayoutOutput3 out;
+	LayoutOutput out;
 
 	Boxer.BeginDocument();
-	RunNode3(&Doc->Root, in, out);
+	RunNode(&Doc->Root, in, out);
 	Boxer.EndDocument();
 }
 
-void Layout3::RunNode3(const DomNode* node, const LayoutInput3& in, LayoutOutput3& out) {
+void Layout::RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& out) {
 	static int debug_num_run;
 	debug_num_run++;
 
-	BoxLayout3::NodeInput boxIn;
+	BoxLayout::NodeInput boxIn;
 
 	StyleResolver::ResolveAndPush(Stack, node);
 
@@ -109,7 +109,7 @@ void Layout3::RunNode3(const DomNode* node, const LayoutInput3& in, LayoutOutput
 
 	BreakType myBreak = Stack.Get(CatBreak).GetBreakType();
 	if (myBreak == BreakBefore && in.RestartPoints->size() == 0)
-		Boxer.AddLinebreak();
+		Boxer.Linebreak();
 
 	if (SnapBoxes) {
 		if (IsDefined(contentWidth))
@@ -117,9 +117,6 @@ void Layout3::RunNode3(const DomNode* node, const LayoutInput3& in, LayoutOutput
 		if (IsDefined(contentHeight))
 			contentHeight = PosRoundUp(contentHeight);
 	}
-
-	if (node->GetInternalID() == 5)
-		int abcd = 123;
 
 	RenderDomNode* rnode = new (Pool->AllocT<RenderDomNode>(false)) RenderDomNode(node->GetInternalID(), node->GetTag(), Pool);
 	in.ParentRNode->Children += rnode;
@@ -134,7 +131,7 @@ void Layout3::RunNode3(const DomNode* node, const LayoutInput3& in, LayoutOutput
 
 	cheapvec<int32_t> myRestartPoints;
 
-	LayoutInput3 childIn;
+	LayoutInput childIn;
 	childIn.ParentWidth  = contentWidth;
 	childIn.ParentHeight = contentHeight;
 	childIn.ParentRNode  = rnode;
@@ -151,35 +148,37 @@ void Layout3::RunNode3(const DomNode* node, const LayoutInput3& in, LayoutOutput
 
 	// Remember that childOuts can be larger than node->ChildCount(), due to restarts.
 	// childOuts contains a unique entry for every generated render-node.
-	FixedVector<LayoutOutput3> childOuts(FHeap);
+	FixedVector<LayoutOutput> childOuts(FHeap);
 
 	// Understanding RestartPoints
 	// RestartPoints can be difficult to understand because they are an in/out parameter
 	// that is carried inside childIn. Combine the in/out with recursion, and it is easy
 	// to lose track of what is going on. It turns out it's simple enough to understand:
-	// If RestartPoints are not empty, then calling RunNode3 or RunText3 should "use up"
-	// the entire RestartPoints array. It gets used up deep, not wide. If RunNode3 or
-	// RunText3 returns with a non-empty RestartPoints, it means a node inside that child
+	// If RestartPoints are not empty, then calling RunNode or RunText should "use up"
+	// the entire RestartPoints array. It gets used up deep, not wide. If RunNode or
+	// RunText returns with a non-empty RestartPoints, it means a node inside that child
 	// has begun a new restart.
 
 	for (size_t i = istart; i < node->ChildCount(); i++) {
-		LayoutOutput3 childOut;
-		const DomEl*  c = node->ChildByIndex(i);
+		LayoutOutput childOut;
+		const DomEl* c = node->ChildByIndex(i);
 		if (c->IsNode()) {
-			RunNode3(static_cast<const DomNode*>(c), childIn, childOut);
+			RunNode(static_cast<const DomNode*>(c), childIn, childOut);
 		} else {
-			RunText3(static_cast<const DomText*>(c), childIn, childOut);
+			RunText(static_cast<const DomText*>(c), childIn, childOut);
 		}
 
 		bool isRestarting       = childIn.RestartPoints->size() != 0;
 		bool isRestartAllZeroes = IsAllZeros(*childIn.RestartPoints);
 
-		if (!isRestarting || !isRestartAllZeroes) {
-			Boxer.SetBaseline(childOut.BaselineInParent(), (int) childOuts.Size());
+		if (!(isRestarting && isRestartAllZeroes)) {
+			// Notify the boxer of this new node's baseline and index
+			Boxer.NotifyNodeEmitted(childOut.BaselinePlusRNodeTop(), (int) childOuts.Size());
+			//Boxer.NotifyNodeEmitted(childOut.Baseline, (int) childOuts.Size());
 			childOuts.Push(childOut);
 
 			if (childOut.Break == BreakAfter)
-				Boxer.AddLinebreak();
+				Boxer.Linebreak();
 		}
 
 		if (isRestarting) {
@@ -187,12 +186,11 @@ void Layout3::RunNode3(const DomNode* node, const LayoutInput3& in, LayoutOutput
 			if (boxIn.NewFlowContext) {
 				// We are the final stop on a restart. So restart at our current child.
 				i--;
-				Boxer.AddLinebreak();
+				Boxer.Linebreak();
 				Boxer.Restart();
 				// If all children are going to restart at zero, then delete the rnode that we already
 				// created, because it will consist purely of empty husks. Unfortunately the empty children
-				// end up as garbage memory in our render pool. One could probably reclaim the memory from
-				// the pool in most cases, but I'm not convinced it's worth the effort.
+				// end up as garbage memory in our render pool, but hopefully that's not a significant waste.
 				if (IsAllZeros(*childIn.RestartPoints))
 					rnode->Children.Count--;
 			} else {
@@ -207,7 +205,7 @@ void Layout3::RunNode3(const DomNode* node, const LayoutInput3& in, LayoutOutput
 	// I have only thought about the case where a restart is initiated from a word
 	// emitted by a text object.
 	Box  marginBox;
-	bool restart = Boxer.EndNode(marginBox) == BoxLayout3::FlowRestart;
+	bool restart = Boxer.EndNode(marginBox) == BoxLayout::FlowRestart;
 	if (restart) {
 		XO_DIE_MSG("Untested layout restart position");
 		in.RestartPoints->push(0);
@@ -264,7 +262,7 @@ void Layout3::RunNode3(const DomNode* node, const LayoutInput3& in, LayoutOutput
 	Stack.StackPop();
 }
 
-void Layout3::RunText3(const DomText* node, const LayoutInput3& in, LayoutOutput3& out) {
+void Layout::RunText(const DomText* node, const LayoutInput& in, LayoutOutput& out) {
 	//XOTRACE_LAYOUT_VERBOSE( "Layout text (%d) Run 1\n", node.GetInternalID() );
 
 	FontID fontID = Stack.Get(CatFontFamily).GetFont();
@@ -357,7 +355,7 @@ descender   X  |                    X              |             X
                +–––––––––––––––––––––––––––––––––––+  XXXXXXXXXXXX
 
 */
-void Layout3::GenerateTextWords(TextRunState& ts) {
+void Layout::GenerateTextWords(TextRunState& ts) {
 	XO_DEBUG_ASSERT(ts.Chars.Size() == 0);
 
 	const char* txt        = ts.Node->GetText();
@@ -385,9 +383,6 @@ void Layout3::GenerateTextWords(TextRunState& ts) {
 	if (Global()->RoundLineHeights)
 		lineHeight = PosRoundUp(lineHeight);
 
-	if (strcmp(txt, "brown fox jumps") == 0)
-		int abc = 123;
-
 	ts.GlyphsNeeded                = false;
 	const Glyph*   prevGlyph       = nullptr;
 	RenderDomText* rtxt            = nullptr;
@@ -406,15 +401,12 @@ void Layout3::GenerateTextWords(TextRunState& ts) {
 			if (ts.GlyphsNeeded)
 				continue;
 
-			if (strncmp(txt + chunk.Start, "and", 3) == 0)
-				int abcd = 123;
-
 			// output word
-			BoxLayout3::WordInput wordin;
+			BoxLayout::WordInput wordin;
 			wordin.Width  = wordWidth;
 			wordin.Height = lineHeight;
 			Box marginBox;
-			if (Boxer.AddWord(wordin, marginBox) == BoxLayout3::FlowRestart) {
+			if (Boxer.AddWord(wordin, marginBox) == BoxLayout::FlowRestart) {
 				aborted = true;
 				ts.RestartPoints->push(chunk.Start + txt_offset);
 				break;
@@ -445,6 +437,7 @@ void Layout3::GenerateTextWords(TextRunState& ts) {
 			break;
 		case ChunkLineBreak: {
 			aborted = true;
+			Boxer.AddNewLineCharacter(lineHeight);
 			ts.RestartPoints->push(chunk.Start + txt_offset + 1);
 			break;
 		}
@@ -456,7 +449,7 @@ void Layout3::GenerateTextWords(TextRunState& ts) {
 	ts.RNodeTxt = rtxt;
 }
 
-void Layout3::FinishTextRNode(TextRunState& ts, RenderDomText* rnode, size_t numChars) {
+void Layout::FinishTextRNode(TextRunState& ts, RenderDomText* rnode, size_t numChars) {
 	rnode->FontID     = ts.FontID;
 	rnode->Color      = ts.Color;
 	rnode->FontSizePx = ts.FontSizePx;
@@ -470,7 +463,7 @@ void Layout3::FinishTextRNode(TextRunState& ts, RenderDomText* rnode, size_t num
 		rnode->Text[i] = ts.Chars.PopTail();
 }
 
-void Layout3::OffsetTextHorz(TextRunState& ts, Pos offsetHorz, size_t numChars) {
+void Layout::OffsetTextHorz(TextRunState& ts, Pos offsetHorz, size_t numChars) {
 	for (size_t i = 0; i < numChars; i++)
 		ts.Chars.FromHead((int) i).X += offsetHorz;
 }
@@ -478,7 +471,7 @@ void Layout3::OffsetTextHorz(TextRunState& ts, Pos offsetHorz, size_t numChars) 
 // While measuring the length of the word, we are also recording its character placements.
 // All characters go into a queue, which gets flushed whenever we flow onto a new line.
 // Returns the width of the word
-Pos Layout3::MeasureWord(const char* txt, const Font* font, Pos fontAscender, Chunk chunk, TextRunState& ts) {
+Pos Layout::MeasureWord(const char* txt, const Font* font, Pos fontAscender, Chunk chunk, TextRunState& ts) {
 	// I find it easier to understand when referring to this value as "baseline" instead of "ascender"
 	Pos baseline = fontAscender;
 
@@ -522,7 +515,7 @@ Pos Layout3::MeasureWord(const char* txt, const Font* font, Pos fontAscender, Ch
 	return posX;
 }
 
-Point Layout3::PositionChildFromBindings(const LayoutInput3& cin, Pos parentBaseline, LayoutOutput3& cout) {
+Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseline, LayoutOutput& cout) {
 	Point retval(0, 0);
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -612,11 +605,11 @@ Point Layout3::PositionChildFromBindings(const LayoutInput3& cin, Pos parentBase
 	return retval;
 }
 
-Pos Layout3::ComputeDimension(Pos container, StyleCategories cat) {
+Pos Layout::ComputeDimension(Pos container, StyleCategories cat) {
 	return ComputeDimension(container, Stack.Get(cat).GetSize());
 }
 
-Pos Layout3::ComputeDimension(Pos container, Size size) {
+Pos Layout::ComputeDimension(Pos container, Size size) {
 	switch (size.Type) {
 	case Size::NONE: return PosNULL;
 	case Size::PX: return RealToPos(size.Val);
@@ -631,11 +624,11 @@ Pos Layout3::ComputeDimension(Pos container, Size size) {
 	}
 }
 
-Box Layout3::ComputeBox(Pos containerWidth, Pos containerHeight, StyleCategories cat) {
+Box Layout::ComputeBox(Pos containerWidth, Pos containerHeight, StyleCategories cat) {
 	return ComputeBox(containerWidth, containerHeight, Stack.GetBox(cat));
 }
 
-Box Layout3::ComputeBox(Pos containerWidth, Pos containerHeight, StyleBox box) {
+Box Layout::ComputeBox(Pos containerWidth, Pos containerHeight, StyleBox box) {
 	Box b;
 	b.Left   = ComputeDimension(containerWidth, box.Left);
 	b.Right  = ComputeDimension(containerWidth, box.Right);
@@ -644,7 +637,7 @@ Box Layout3::ComputeBox(Pos containerWidth, Pos containerHeight, StyleBox box) {
 	return b;
 }
 
-Layout3::BindingSet Layout3::ComputeBinds() {
+Layout::BindingSet Layout::ComputeBinds() {
 	BindingSet binds;
 
 	binds.HChildLeft   = Stack.Get(CatLeft).GetHorizontalBinding();
@@ -659,14 +652,14 @@ Layout3::BindingSet Layout3::ComputeBinds() {
 	return binds;
 }
 
-Pos Layout3::HoriAdvance(const Glyph* glyph, const TextRunState& ts) {
+Pos Layout::HoriAdvance(const Glyph* glyph, const TextRunState& ts) {
 	if (SnapSubpixelHorzText)
 		return IntToPos(glyph->MetricHoriAdvance);
 	else
 		return RealToPos(glyph->MetricLinearHoriAdvance * ts.FontWidthScale);
 }
 
-Pos Layout3::HBindOffset(HorizontalBindings bind, Pos left, Pos width) {
+Pos Layout::HBindOffset(HorizontalBindings bind, Pos left, Pos width) {
 	switch (bind) {
 	case HorizontalBindingNULL:
 	case HorizontalBindingLeft: return left;
@@ -678,7 +671,7 @@ Pos Layout3::HBindOffset(HorizontalBindings bind, Pos left, Pos width) {
 	}
 }
 
-Pos Layout3::VBindOffset(VerticalBindings bind, Pos top, Pos baseline, Pos height) {
+Pos Layout::VBindOffset(VerticalBindings bind, Pos top, Pos baseline, Pos height) {
 	switch (bind) {
 	case VerticalBindingNULL:
 	case VerticalBindingTop: return top;
@@ -698,29 +691,29 @@ Pos Layout3::VBindOffset(VerticalBindings bind, Pos top, Pos baseline, Pos heigh
 	}
 }
 
-bool Layout3::IsSpace(int ch) {
+bool Layout::IsSpace(int ch) {
 	return ch == 32;
 }
 
-bool Layout3::IsLinebreak(int ch) {
+bool Layout::IsLinebreak(int ch) {
 	return ch == '\r' || ch == '\n';
 }
 
-GlyphCacheKey Layout3::MakeGlyphCacheKey(RenderDomText* rnode) {
+GlyphCacheKey Layout::MakeGlyphCacheKey(RenderDomText* rnode) {
 	uint8_t glyphFlags = rnode->IsSubPixel() ? GlyphFlag_SubPixel_RGB : 0;
 	return GlyphCacheKey(rnode->FontID, 0, rnode->FontSizePx, glyphFlags);
 }
 
-GlyphCacheKey Layout3::MakeGlyphCacheKey(const TextRunState& ts) {
+GlyphCacheKey Layout::MakeGlyphCacheKey(const TextRunState& ts) {
 	return MakeGlyphCacheKey(ts.IsSubPixel, ts.FontID, ts.FontSizePx);
 }
 
-GlyphCacheKey Layout3::MakeGlyphCacheKey(bool isSubPixel, FontID fontID, int fontSizePx) {
+GlyphCacheKey Layout::MakeGlyphCacheKey(bool isSubPixel, FontID fontID, int fontSizePx) {
 	uint8_t glyphFlags = isSubPixel ? GlyphFlag_SubPixel_RGB : 0;
 	return GlyphCacheKey(fontID, 0, fontSizePx, glyphFlags);
 }
 
-bool Layout3::IsAllZeros(const cheapvec<int32_t>& list) {
+bool Layout::IsAllZeros(const cheapvec<int32_t>& list) {
 	for (size_t i = 0; i < list.size(); i++) {
 		if (list[i] != 0)
 			return false;
@@ -728,7 +721,7 @@ bool Layout3::IsAllZeros(const cheapvec<int32_t>& list) {
 	return true;
 }
 
-void Layout3::MoveLeftTop(RenderDomEl* relem, Point delta) {
+void Layout::MoveLeftTop(RenderDomEl* relem, Point delta) {
 	relem->Pos.Left += delta.X;
 	relem->Pos.Top += delta.Y;
 
@@ -742,15 +735,15 @@ void Layout3::MoveLeftTop(RenderDomEl* relem, Point delta) {
 	}
 }
 
-Pos Layout3::LayoutOutput3::BaselineInParent() const {
+Pos Layout::LayoutOutput::BaselinePlusRNodeTop() const {
 	return Baseline == PosNULL ? PosNULL : Baseline + RNode->Pos.Top;
 }
 
-Layout3::Chunker::Chunker(const char* txt) : Txt(txt),
-                                             Pos(0) {
+Layout::Chunker::Chunker(const char* txt) : Txt(txt),
+                                            Pos(0) {
 }
 
-bool Layout3::Chunker::Next(Chunk& c) {
+bool Layout::Chunker::Next(Chunk& c) {
 	if (Txt[Pos] == 0)
 		return false;
 
@@ -787,15 +780,15 @@ bool Layout3::Chunker::Next(Chunk& c) {
 	return true;
 }
 
-Pos Layout3::VBindHelper::Parent(VerticalBindings bind) {
-	return Layout3::VBindOffset(bind, 0, ParentBaseline, ParentHeight);
+Pos Layout::VBindHelper::Parent(VerticalBindings bind) {
+	return Layout::VBindOffset(bind, 0, ParentBaseline, ParentHeight);
 }
 
-Pos Layout3::VBindHelper::Child(VerticalBindings bind) {
-	return Layout3::VBindOffset(bind, ChildTop, ChildBaseline, ChildHeight);
+Pos Layout::VBindHelper::Child(VerticalBindings bind) {
+	return Layout::VBindOffset(bind, ChildTop, ChildBaseline, ChildHeight);
 }
 
-Pos Layout3::VBindHelper::Delta(VerticalBindings parent, VerticalBindings child) {
+Pos Layout::VBindHelper::Delta(VerticalBindings parent, VerticalBindings child) {
 	if (parent == VerticalBindingNULL || child == VerticalBindingNULL)
 		return PosNULL;
 	Pos p = Parent(parent);
@@ -805,15 +798,15 @@ Pos Layout3::VBindHelper::Delta(VerticalBindings parent, VerticalBindings child)
 	return PosNULL;
 }
 
-Pos Layout3::HBindHelper::Parent(HorizontalBindings bind) {
-	return Layout3::HBindOffset(bind, 0, ParentWidth);
+Pos Layout::HBindHelper::Parent(HorizontalBindings bind) {
+	return Layout::HBindOffset(bind, 0, ParentWidth);
 }
 
-Pos Layout3::HBindHelper::Child(HorizontalBindings bind) {
-	return Layout3::HBindOffset(bind, ChildLeft, ChildWidth);
+Pos Layout::HBindHelper::Child(HorizontalBindings bind) {
+	return Layout::HBindOffset(bind, ChildLeft, ChildWidth);
 }
 
-Pos Layout3::HBindHelper::Delta(HorizontalBindings parent, HorizontalBindings child) {
+Pos Layout::HBindHelper::Delta(HorizontalBindings parent, HorizontalBindings child) {
 	if (parent == HorizontalBindingNULL || child == HorizontalBindingNULL)
 		return PosNULL;
 	Pos p = Parent(parent);

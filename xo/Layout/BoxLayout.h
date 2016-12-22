@@ -13,31 +13,32 @@ namespace xo {
 This system receives abstract boxes, and spits out their positions.
 We make the conscious decision to let this class deal only with
 "boxy" decisions. In other words, this does not walk the DOM tree,
-or understand how to resolve styles, etc. This only job of this
+or understand how to resolve styles, etc. The only job of this
 class is to execute the layout algorithm.
 
 Inputs are given via BeginNode()/EndNode().
 Outputs are sent into RenderDomNode objects that enter via BeginNode().
 
-Actually, now I'm thinking that output shouldn't be RenderDomNode. After all,
-this thing is supposed to be concerned with boxes. It's input is boxes, and
-it's output is boxes. Why complicate it?
-But then again - if we don't use RenderDomNode, then it means ANOTHER stage
-where we need to build up a full tree of objects. So I'm going back on that
-decision, and rather having this class write its results directly into
-RenderDomNode objects, but only concern itself with the spatial stuff there.
+I initially thought that output of the boxer should be some abstract data
+structure, and not RenderDomNode. After all, this thing is supposed to be
+concerned only with boxes, not the final render representation.
+But if we don't use RenderDomNode, then it means ANOTHER stage
+where we need to build up a full tree of objects. So that's why we write
+our results directly into RenderDomNode objects. Of course, we don't populate
+fields such as colors - we only populate the positional fields.
 
 Note that we have an AddWord() function, but that doesn't mean that words
-are a particularly special type of object. Words are flowed like any other
+are a particularly special type of box. Words are flowed like any other
 box. The reason they have their own function is for efficiency.
 
-Coordinate Space of parent-flow nodes
+Coordinate Space Of Injected-Flow Nodes
+
 It's not obvious what the coordinate system should be of nodes that
 do not define their own flow context. The route we take here is to say that
 nodes without their own flow context are defined in the coordinate space
 of their most recent ancestor with a flow context.
 */
-class XO_API BoxLayout3 {
+class XO_API BoxLayout {
 public:
 	enum FlowResult {
 		FlowNormal,
@@ -62,13 +63,13 @@ public:
 		int            InnerBaselineDefinedBy;
 		int            LastChild; // This is used to keep track of which line each child is on.
 		static LineBox Make(Pos innerBaseline, int innerBaselineDefinedBy, int lastChild) { return {innerBaseline, innerBaselineDefinedBy, lastChild}; }
-		static LineBox MakeFresh() { return {PosNULL, 0, INT32_MAX}; }
+		static LineBox MakeFresh() { return Make(PosNULL, 0, INT32_MAX); }
 	};
 
 	Pool* Pool = nullptr;
 
-	BoxLayout3();
-	~BoxLayout3();
+	BoxLayout();
+	~BoxLayout();
 
 	void BeginDocument();
 	void EndDocument();
@@ -78,12 +79,12 @@ public:
 
 	FlowResult AddWord(const WordInput& in, Box& marginBox);
 	void       AddSpace(Pos size);
-	void       AddLinebreak();
-	void       SetBaseline(Pos baseline, int child); // Set the baseline of the current line box, but only if it's null
-	Pos        GetBaseline();                        // Retrieve the baseline of the current line box
-	Pos        GetFirstBaseline();                   // Retrieve the baseline of the first line box. This is the outer baseline of a node.
+	void       AddNewLineCharacter(Pos height); // Doesn't call Linebreak. Just makes sure that PosMajor is bumped down.
 
-	// Retrieve the linebox 'line_index', from the node that has most recently been finished with EndNode
+	void Linebreak();
+	void NotifyNodeEmitted(Pos baseline, int child); // Notify the boxer of a new node. Set the baseline of the current line box, but only if it's null
+
+	// Retrieve the linebox at line_index, from the node that has most recently been finished with EndNode.
 	// It may seem strange that we can retrieve linebox data from a node that has already ended,
 	// because surely we have popped that data structure off it's stack? Yes, we have, but we
 	// operate our stack in such a way that we don't wipe the data, we simply decrement a counter.

@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Doc.h"
 #include "DocGroup.h"
-#include "Layout/Layout3.h"
+#include "Layout/Layout.h"
 #include "SysWnd.h"
 #include "Render/Renderer.h"
 #include "Render/RenderDoc.h"

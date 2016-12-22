@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "../Layout/Layout3.h"
+#include "../Layout/Layout.h"
 #include "RenderDoc.h"
 #include "Renderer.h"
 #include "RenderDX.h"
@@ -52,8 +52,8 @@ RenderResult RenderDoc::Render(RenderBase* driver) {
 	LayoutResult* layout = new LayoutResult(Doc);
 
 	XOTRACE_RENDER("RenderDoc: Layout\n");
-	Layout3 lay;
-	lay.Layout(Doc, layout->Root, &layout->Pool);
+	Layout lay;
+	lay.PerformLayout(Doc, layout->Root, &layout->Pool);
 
 	XOTRACE_RENDER("RenderDoc: Render\n");
 	Renderer     rend;

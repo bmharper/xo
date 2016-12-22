@@ -75,7 +75,8 @@ void RenderStack::Initialize(const xo::Doc* doc, xo::Pool* pool) {
 	Defaults[CatFlowContext].SetFlowContext(FlowContextNew);
 
 	// HTML default is Content. At first I was thinking that our default should be
-	// BorderBox, but now I'm not so sure anymore.
+	// BorderBox, but now I'm not so sure anymore. For example, when you alter your border
+	// widths, you don't typically expect your content to be shuffled around.
 	//Defaults[CatBoxSizing].SetBoxSizing(BoxSizeBorder);
 	Defaults[CatBoxSizing].SetBoxSizing(BoxSizeContent);
 }

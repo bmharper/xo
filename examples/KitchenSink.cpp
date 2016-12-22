@@ -9,8 +9,8 @@ void InitDOM(xo::Doc* doc);
 void xoMain(xo::SysWnd* wnd)
 {
 	xo::Global()->FontStore->AddFontDirectory("C:\\temp\\fonts");
-	int left = 750;
-	int width = 700;
+	int left = -500;
+	int width = 400;
 	int top = 60;
 	int height = 500;
 	wnd->SetPosition(xo::Box(left, top, left + width, top + height), xo::SysWnd::SetPosition_Move | xo::SysWnd::SetPosition_Size);
@@ -305,7 +305,7 @@ void DoBlockMargins(xo::Doc* doc)
 void DoLongText(xo::Doc* doc)
 {
 	auto div = doc->Root.AddNode(xo::TagDiv);
-	div->StyleParse("padding: 10px; width: 500px; font-family: Times New Roman; font-size: 19px; color: #333;");
+	div->StyleParse("padding: 10px; width: 500px; font-family: Times New Roman; font-size: 19px; color: #333; background: #eee;");
 	div->SetText(
 		"It is an ancient Mariner,\n"
 		"And he stoppeth one of three.\n"
@@ -333,7 +333,7 @@ void DoInlineFlow(xo::Doc* doc)
 		doSpan = !doSpan;
 		doc->Root.RemoveAllChildren();
 		doc->Root.StyleParse("font-size: 26px");
-		//doc->Root.StyleParse("margin: 5px");
+		doc->Root.StyleParse("margin: 5px");
 		doc->ClassParse("red", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #d00b; background: #fddb");
 		doc->ClassParse("blue", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #00d; background: #ddf");
 		//doc->Root.ParseAppend(R"(<div style='cursor: hand'>The dogge</div>)");
@@ -352,7 +352,13 @@ void DoInlineFlow(xo::Doc* doc)
 		//	doc->Root.ParseAppend(R"(The slow quick fast brown Fox jumps over)");
 		//doc->Root.ParseAppend(R"(<span class='red'>brown</span> over)");
 		//doc->Root.ParseAppend(R"(<span class='red'>brown fox jumps</span> over)");
+		
 		doc->Root.ParseAppend(R"(Once upon a time, The quick <span class='red'><span class='blue'>brown fox jumps</span></span> over)");
+		//doc->Root.ParseAppend(R"(Once upon a time, The quick <span class='red'>brown fox jumps</span> over)");
+		//doc->Root.ParseAppend(R"(Once upon a time, The quick <span class='red'>brown</span>)");
+		//doc->Root.ParseAppend(R"(Once upon a time, The quick)");
+
+		//doc->Root.ParseAppend(R"(one one <span class='red'>two two</span> three three)");
 		//doc->Root.ParseAppend(R"(The <span class='red'>brown</span>)");
 		//doc->Root.ParseAppend(R"(The <span class='red'><span class='blue'>brown</span></span>)");
 		//doc->Root.ParseAppend(R"(<div style='cursor: hand'>blah!</div>)");
@@ -376,7 +382,7 @@ void DoBackupSettings(xo::Doc* doc)
 	doc->ClassParse("bg-dark",			"box-sizing: border; color: #000; background: #efefef; width: 470ep; top: top; bottom: bottom");
 	doc->ClassParse("textbox",			"color: #000; background: #fff; padding: 5ep 3ep 5ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd; canfocus: true; cursor: text");
 	doc->ClassParse("textbox:focus",	"border: 1px #8888ee");
-	doc->ClassParse("button",			"color: #000; background: #ececec; margin: 6ep 0ep 6ep 0ep; padding: 14ep 3ep 14ep 3ep; border: 1px #bdbdbd; canfocus: true");
+	doc->ClassParse("button",			"color: #000; background: #ececec; margin: 6ep 0ep 6ep 0ep; padding: 14ep 3ep 14ep 3ep; border: 1px #bdbdbd; border-radius: 2.5ep; canfocus: true");
 	doc->ClassParse("button:focus",		"border: 1px #8888ee");
 	doc->ClassParse("button:hover",		"background: #ddd");
 	doc->ClassParse("baseline",			"baseline:baseline");
@@ -474,7 +480,7 @@ void InitDOM(xo::Doc* doc)
 	xo::DomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
 
-	DoBorder(doc);
+	//DoBorder(doc);
 	//DoBaselineAlignment(doc);
 	//DoBaselineAlignment_rev2(doc);
 	//DoBaselineAlignment_Multiline(doc);
@@ -485,7 +491,7 @@ void InitDOM(xo::Doc* doc)
 	//DoVCenter(doc);
 	//DoTwoTextRects(doc);
 	//DoBlockMargins(doc);
-	//DoLongText(doc);
+	DoLongText(doc);
 	//DoInlineFlow(doc);
 	//DoBackupSettings(doc);
 	//DoPadding(doc);
