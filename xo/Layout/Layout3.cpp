@@ -302,7 +302,7 @@ void Layout3::RunText3(const DomText* node, const LayoutInput3& in, LayoutOutput
 	// to 'something' if we didn't align words to baseline.
 	// Since we only bind on baseline, we don't need to populate width and height
 	if (TempText.RNodeTxt != nullptr)
-		out.Baseline = TempText.RNodeTxt->Pos.Top + TempText.FontAscender;
+		out.Baseline = TempText.FontAscender;
 	else
 		out.Baseline = PosNULL;
 	out.MarginBoxHeight      = 0;
