@@ -1,6 +1,6 @@
 #pragma once
 
 namespace xo {
-void   SleepMS(int milliseconds);
-double TimeAccurateSeconds();
+XO_API void   SleepMS(int milliseconds);
+XO_API double TimeAccurateSeconds();
 }

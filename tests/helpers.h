@@ -1,3 +1,3 @@
 #pragma once
 
-xoString LoadFileAsString(const char* file);
+xo::String LoadFileAsString(const char* file);

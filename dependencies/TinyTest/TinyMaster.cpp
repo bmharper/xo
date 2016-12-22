@@ -9,9 +9,19 @@ while obeying the flags that the tests specify.
 // You can see that from TinyTestBuild.h
 
 #include <algorithm>
+#include <atomic>
+#include <vector>
+#include <thread>
+#include <mutex>
+#include <chrono>
 
 #ifdef _WIN32
+#include <windows.h>
 #include <direct.h>
+#include <io.h>
+#include <sys/locking.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #define DIR_SEP '\\'
 #define DIR_SEP_STR "\\"
 #define TT_TEST_DIR "c:\\temp\\tinytest\\"
@@ -19,6 +29,9 @@ while obeying the flags that the tests specify.
 typedef HANDLE TT_PROCESS_HANDLE;
 #define popen _popen
 #define pclose _pclose
+#define open _open
+#define close _close
+#define lseek _lseek
 #else
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -32,6 +45,8 @@ typedef uint TT_PROCESS_HANDLE;
 #define _Printf_format_string_
 #endif
 
+#include <stdint.h>
+
 static const int TTGlobalLockTimeoutSeconds = 15 * 60;
 
 // Uncomment the following two macros when debugging threading issues
@@ -40,24 +55,13 @@ static const int TTGlobalLockTimeoutSeconds = 15 * 60;
 #define DEBUG_THREADS_CX(fmt, ...)	(void) 0
 #define DEBUG_THREADS(fmt, ...)		(void) 0
 
-#ifdef _MSC_VER
-#	if _M_X64
-#		define ARCH_64 1
-typedef long long intp;
-#	else
-typedef int intp;
-#	endif
-#else
-#	if __SIZEOF_POINTER__ == 8
-#		define ARCH_64 1
-typedef long intp;
-#	else
-typedef int intp;
-#	endif
-#endif
+template <typename T, size_t N>
+char (&ArraySizeHelper(T(&array)[N]))[N];
+#define arraysize(array) (sizeof(ArraySizeHelper(array)))
 
 struct Test;
 struct TestContext;
+struct ThreadContext;
 struct OutputDev;
 struct Process;
 
@@ -76,8 +80,8 @@ static void				TTRun_PrepareExecutionEnvironment();
 
 static string			EscapeHtml(const string& s);
 static string			EscapeXml(const string& s);
-static podvec<string>	DiscardEmpties(const podvec<string>& s);
-static podvec<string>	Split(const string& s, char delim);
+static vector<string>	DiscardEmpties(const vector<string>& s);
+static vector<string>	Split(const string& s, char delim);
 static string			Trim(const string& s);
 static string			Directory(const string& s);
 static string			FilenameOnly(const string& s);
@@ -85,7 +89,7 @@ static string			SPrintf(_In_z_ _Printf_format_string_ const char* format, ...);
 static bool				MatchWildcardNocase(const string& s, const string& p);
 static bool				MatchWildcardNocase(const char* s, const char* p);
 static bool				WriteWholeFile(const string& filename, const string& s);
-static string			IntToStr(int64 i);
+static string			IntToStr(int64_t i);
 static double			TimeSeconds();
 static TTParallel		ParseParallel(const char* s);
 static bool				MyCreateDirectory(const string& path);
@@ -93,7 +97,8 @@ static bool				DeleteDirectoryRecursive(const string& path);
 static bool				DirectoryExists(const string& s);
 static int				OpenLockFile(const string& path);		// Return <= 0 on failure
 static void				CloseLockFile(int file);
-static bool				POpenReadAll(string exec, double timeoutSeconds, string& rStdOut, int& pExit);
+static void				MySleep(unsigned ms);
+static void				GetNumCPUCores(int& physicalCores, int& logicalCores);
 #ifdef _WIN32
 static BOOL				CloseHandleAndZero(HANDLE& h);
 #endif
@@ -141,21 +146,22 @@ struct Test
 		default: return 100;
 		}
 	}
-	static int CompareByParallel(const Test& a, const Test& b)
+	static bool CompareByParallel(const Test& a, const Test& b)
 	{
 		int pdiff = ParallelSort(a.Parallel) - ParallelSort(b.Parallel);
 		if (pdiff != 0)
-			return pdiff;
-		return strcmp(a.Name.c_str(), b.Name.c_str());
+			return pdiff < 0;
+		return strcmp(a.Name.c_str(), b.Name.c_str()) < 0;
 	}
-	static int CompareByName(const Test& a, const Test& b)
+	static bool CompareByName(const Test& a, const Test& b)
 	{
-		return strcmp(a.Name.c_str(), b.Name.c_str());
+		return strcmp(a.Name.c_str(), b.Name.c_str()) < 0;
 	}
 };
 
 struct OutputDev
 {
+	virtual             ~OutputDev() {}
 	virtual bool		ImmediateOut() { return false; }
 	virtual string		OutputFilename(string base) { return ""; }
 	virtual string		HeadPre(TestContext& c) { return ""; }
@@ -170,42 +176,42 @@ struct TestContext
 {
 	string					Name;
 	string					Ident;
-	string					Options;
+	vector<string>			Options;
 	string					OutDir;
 	string					OutText;
 	OutputDev*				Out;
 	bool					OutputBare;
 	bool					RunLargeTests;
 	int						NumThreads;
-	podvec<Test>			Tests;
-	podvec<string>			Include;
-	podvec<string>			Exclude;
+	vector<Test>			Tests;
+	vector<string>			Include;
+	vector<string>			Exclude;
 
 	TestContext();
 	~TestContext();
 
 	int			ParseAndRun(int argc, char** argv);		// return value is process exit code
 
-	int			CountPass()	const		{ int c = 0; for (intp i = 0; i < Tests.size(); i++) c += Tests[i].Pass ? 1 : 0; return c; }
-	int			CountIgnored() const	{ int c = 0; for (intp i = 0; i < Tests.size(); i++) c += Tests[i].Ignored ? 1 : 0; return c; }
+	int			CountPass()	const		{ int c = 0; for (size_t i = 0; i < Tests.size(); i++) c += Tests[i].Pass ? 1 : 0; return c; }
+	int			CountIgnored() const	{ int c = 0; for (size_t i = 0; i < Tests.size(); i++) c += Tests[i].Ignored ? 1 : 0; return c; }
 	int			CountFail() const		{ return (int) Tests.size() - CountPass() - CountIgnored(); }
 	int			CountRun() const		{ return (int) Tests.size() - CountIgnored(); }
-	double		TotalTime() const		{ double t = 0; for (intp i = 0; i < Tests.size(); i++) t += Tests[i].Time; return t; }
+	double		TotalTime() const		{ double t = 0; for (size_t i = 0; i < Tests.size(); i++) t += Tests[i].Time; return t; }
 	string		FullName() const		{ return Name + "-" + Ident; }
 
 	void		SetOutText();
 	void		SetOutJUnit();
 	void		SetOutHtml();
 
-	static AbcThreadReturnType AbcKernelCallbackDecl ExecuteThread(void* threadContext);
+	static void ExecuteThread(ThreadContext* context);
 
 protected:
-	podvec<AbcThreadHandle>		Threads;
-	volatile unsigned int		ExecTotal;		// Counts total number of executing threads
-	volatile unsigned int		ExecWholeCore;	// Counts the number of 'wholecore' jobs executing (or wanting to execute)
-	unsigned int				SysNumCores;	// Number of physical (aka whole) cores in this machine
-	AbcCriticalSection			QueueLock;		// Guards access to TestPos, as well as OutText
-	intp						TestPos;		// Queue position in 'Tests'. Starts at zero and ends at Tests.size(). Guarded by QueueLock.
+	vector<thread>		Threads;
+	atomic<unsigned>	ExecTotal;		// Counts total number of executing threads
+	atomic<unsigned>	ExecWholeCore;	// Counts the number of 'wholecore' jobs executing (or wanting to execute)
+	int					SysNumCores;	// Number of physical (aka whole) cores in this machine
+	mutex				QueueLock;		// Guards access to TestPos, as well as OutText
+	size_t				TestPos;		// Queue position in 'Tests'. Starts at zero and ends at Tests.size(). Guarded by QueueLock.
 
 	bool		CreateThreads();
 	int			RunMaster();
@@ -229,24 +235,24 @@ struct Process
 	// Launch a process and wait for it to complete.
 	// The return value contains the error if the process failed to launch.
 	// If the return value is empty, then the process execution succeeded.
-	string			ExecuteAndWait(string exec, double timeoutSeconds, string& childStdOut, int& processExitCode);
+	string			ExecuteAndWait(string exec, const vector<string>& args, double timeoutSeconds, string& childStdOut, int& processExitCode);
 
 private:
 	unsigned int				ProcessID;			// Process ID of currently executing process
-	podvec<TT_PROCESS_HANDLE>	SubProcesses;		// Sub processes launched by the currently executing test
+	vector<TT_PROCESS_HANDLE>	SubProcesses;		// Sub processes launched by the currently executing test
 
-	void			ReadIPC(uint waitMS);
+	void			ReadIPC(unsigned waitMS);
 	void			CloseZombieProcesses();
-	string			ExecuteAndWaitOnce(string exec, double timeoutSeconds, string& childStdOut, int& processExitCode);
+	string			ExecuteAndWaitOnce(string exec, const vector<string>& args, double timeoutSeconds, string& childStdOut, int& processExitCode);
 };
 
 struct OutputDevText : public OutputDev
 {
 	virtual bool		ImmediateOut()					{ return true; }
-	virtual string		HeadPre(TestContext& c)		{ return SPrintf("%s %s\n", c.Name.c_str(), c.Ident.c_str()); }
+	virtual string		HeadPre(TestContext& c)			{ return SPrintf("%s %s\n", c.Name.c_str(), c.Ident.c_str()); }
 	virtual string		HeadPost(TestContext& c)		{ return SPrintf("%d/%d passed\n", (int) c.CountPass(), (int) c.CountRun()); }
 	virtual string		Tail()							{ return ""; }
-	virtual string		ItemPre(const Test& t)		{ return SPrintf("%-35s", t.Name.c_str()); }
+	virtual string		ItemPre(const Test& t)			{ return SPrintf("%-35s", t.Name.c_str()); }
 	virtual string		ItemPost(const Test& t)
 	{
 		string r = SPrintf("%s", t.Pass ? "PASS" : "FAIL");
@@ -261,7 +267,7 @@ struct OutputDevHtml : public OutputDev
 {
 	virtual string		OutputFilename(string base)	{ return base + ".html"; }
 	virtual string		HeadPre(TestContext& c)		{ return HtmlHeadTxt; }
-	virtual string		Tail()							{ return HtmlTailTxt; }
+	virtual string		Tail()						{ return HtmlTailTxt; }
 	virtual string		ItemPost(const Test& t)
 	{
 		if (t.Pass)	return SPrintf("<div class='test pass'>%s</div>\n", EscapeHtml(t.Name).c_str());
@@ -280,21 +286,23 @@ struct OutputDevJUnit : public OutputDev
 	virtual string		ItemPost(const Test& t)
 	{
 		if (t.Pass)	return SPrintf("\t\t<testcase name=\"%s\" classname=\"%s\" time=\"%f\"/>\n", EscapeHtml(t.Name).c_str(), t.Context->FullName().c_str(), (double) t.Time);
-		else			return SPrintf("\t\t<testcase name=\"%s\" classname=\"%s\" time=\"%f\">\n"
-										   "\t\t\t<failure>%s</failure>\n"
-										   "\t\t</testcase>\n",
-										   EscapeHtml(t.Name).c_str(), t.Context->FullName().c_str(), (double) t.Time, EscapeXml(t.TrimmedOutput).c_str());
+		else		return SPrintf("\t\t<testcase name=\"%s\" classname=\"%s\" time=\"%f\">\n"
+								   "\t\t\t<failure>%s</failure>\n"
+								   "\t\t</testcase>\n",
+									EscapeHtml(t.Name).c_str(), t.Context->FullName().c_str(), (double) t.Time, EscapeXml(t.TrimmedOutput).c_str());
 	}
 };
 
 void TTShowHelp()
 {
 	std::string msg =
-		//" " TT_TOKEN_INVOKE " [options] testname1 testname2...\n"
-		//"  " TT_TOKEN_INVOKE "                This parameter must be here\n"
 		" [options] testname1 testname2...\n"
 		"  testname(s)         Wildcards of the tests that you want to run, or '" TT_TOKEN_ALL_TESTS "' to run all.\n"
 		"                      If you specify no tests, then all tests are listed.\n"
+		"                      If you prefix the name of a test with a colon, for example :testname1, then the\n"
+		"                      test harness assumes you are debugging that test. In this case, the test app does\n"
+		"                      not launch a sub-process for each test, and issues a debug break intrinsic if an\n"
+		"                      assertion fails.\n"
 		"\n"
 		"  -xEXCLUDE           Exclude any tests that match the wildcard EXCLUDE. Excludes override includes.\n"
 		"  -tt-small           Run only small tests\n"
@@ -354,12 +362,10 @@ TestContext::TestContext()
 	if (size > 0 && size < 10)
 		NumThreads = atoi(buf);
 #endif
-	AbcCriticalSectionInitialize(QueueLock);
 }
 
 TestContext::~TestContext()
 {
-	AbcCriticalSectionDestroy(QueueLock);
 	delete Out;
 }
 
@@ -376,17 +382,17 @@ int TestContext::ParseAndRun(int argc, char** argv)
 
 		if (opt[0] == '-')
 		{
-			if (opt == "-tt-html")									{ SetOutHtml(); }
+			if (opt == "-tt-html")										{ SetOutHtml(); }
 			else if (opt == "-tt-junit")								{ SetOutJUnit(); }
 			else if (opt == "-tt-small")								{ RunLargeTests = false; }
-			else if (opt == "-tt-bare")								{ OutputBare = true; }
-			else if (opt == "-tt-head")								{ fputs(HtmlHeadTxt, stdout); return 0; }
-			else if (opt == "-tt-tail")								{ fputs(HtmlTailTxt, stdout); return 0; }
-			else if (opt == "-tt-out")								{ OutDir = argv[i + 1]; i++; }
+			else if (opt == "-tt-bare")									{ OutputBare = true; }
+			else if (opt == "-tt-head")									{ fputs(HtmlHeadTxt, stdout); return 0; }
+			else if (opt == "-tt-tail")									{ fputs(HtmlTailTxt, stdout); return 0; }
+			else if (opt == "-tt-out")									{ OutDir = argv[i + 1]; i++; }
 			else if (opt == "-tt-ident")								{ Ident = argv[i + 1]; i++; }
-			else if (opt == "-?" || opt == "-help" || opt == "--help") { TTShowHelp(); return 1; }
-			else if (opt.substr(0, 2) == "-x")						{ Exclude += opt.substr(2); }
-			else														{ Options += opt + " "; }
+			else if (opt == "-?" || opt == "-help" || opt == "--help")	{ TTShowHelp(); return 1; }
+			else if (opt.substr(0, 2) == "-x")							{ Exclude.push_back(opt.substr(2)); }
+			else														{ Options.push_back(opt); }
 		}
 		else if (strstr(optc, TT_PREFIX_RUNNER_PID) == optc)			{ MasterPID = atoi(argv[i] + strlen(TT_PREFIX_RUNNER_PID)); }
 		else if (strstr(optc, TT_PREFIX_TESTDIR) == optc)				{ TTSetTempDir(argv[i]); }
@@ -409,11 +415,9 @@ int TestContext::ParseAndRun(int argc, char** argv)
 			if (singleTestName != "")
 				TestCmdLineArgs[nTestCmdlineArgs++] = argv[i];
 			else
-				Include += opt;
+				Include.push_back(opt);
 		}
 	}
-	if (Options.size() != 0)
-		Options.pop_back();
 
 	// This is useful when running under the IDE
 	if (TTGetTempDir().length() == 0)
@@ -438,7 +442,7 @@ int TestContext::ParseAndRun(int argc, char** argv)
 
 void TestContext::ListTests()
 {
-	sort(Tests, Test::CompareByName);
+	sort(Tests.begin(), Tests.end(), Test::CompareByName);
 	printf("%s\n", TT_LIST_LINE_1);
 	printf("%s\n", TT_LIST_LINE_2);
 	for (int i = 0; i < Tests.size(); i++)
@@ -476,14 +480,14 @@ bool TestContext::TestMatchesFilter(const Test& t) const
 		return false;
 
 	bool pass = false;
-	for (intp i = 0; i < Include.size(); i++)
+	for (size_t i = 0; i < Include.size(); i++)
 	{
 		if (Include[i] == TT_TOKEN_ALL_TESTS)
 			pass = true;
 		else if (MatchWildcardNocase(t.Name, Include[i]))
 			pass = true;
 	}
-	for (intp i = 0; i < Exclude.size(); i++)
+	for (size_t i = 0; i < Exclude.size(); i++)
 	{
 		if (MatchWildcardNocase(t.Name, Exclude[i]))
 			pass = false;
@@ -494,7 +498,7 @@ bool TestContext::TestMatchesFilter(const Test& t) const
 Test* TestContext::NextFilteredTest(int threadNum)
 {
 	// Find the next test that matches the filter
-	TakeCriticalSection lock(QueueLock);
+	lock_guard<mutex> lock(QueueLock);
 	while (TestPos < Tests.size())
 	{
 		Test* t = &Tests[TestPos];
@@ -523,7 +527,7 @@ void TestContext::RunTestOuter(int threadNum, Test* t)
 	// If there are 4 physical CPU cores, and 8 threads, then the blessed threads
 	// are the first 4. Whenever a 'whole core' job is running, then all non-blessed threads
 	// go to sleep.
-	bool isBlessedThread = threadNum < (int) SysNumCores;
+	bool isBlessedThread = threadNum < SysNumCores;
 
 	const int sleepMS = 20;
 
@@ -538,18 +542,18 @@ void TestContext::RunTestOuter(int threadNum, Test* t)
 	};
 
 	// Hold off if our computational device is being requested
-	for (int iwait = 0; ExecWholeCore != 0 && !isBlessedThread; iwait++)
+	for (int iwait = 0; ExecWholeCore.load() != 0 && !isBlessedThread; iwait++)
 	{
 		if (iwait == 0)
-			DEBUG_THREADS("Thread %d pausing because not blessed and ExecWholeCore = %d\n", threadNum, ExecWholeCore);
-		AbcSleep(sleepMS);
+			DEBUG_THREADS("Thread %d pausing because not blessed and ExecWholeCore = %d\n", threadNum, ExecWholeCore.load());
+		MySleep(sleepMS);
 	}
 
-	for (int iwait = 0; t->Parallel == TTParallelSolo && ExecTotal != 0; iwait++)
+	for (int iwait = 0; t->Parallel == TTParallelSolo && ExecTotal.load() != 0; iwait++)
 	{
 		if (iwait == 0)
 			DEBUG_THREADS("Thread %d pausing, waiting for all other threads to go quiet before executing solo job\n", threadNum);
-		AbcSleep(sleepMS);
+		MySleep(sleepMS);
 	}
 
 	outText += Out->ItemPre(*t);
@@ -570,7 +574,7 @@ void TestContext::RunTestOuter(int threadNum, Test* t)
 			{
 				lockfile = OpenLockFile(TT_TEST_GLOBAL_LOCK_FILE);
 				if (lockfile == -1)
-					AbcSleep(1000);
+					MySleep(1000);
 			}
 			if (lockfile == -1)
 			{
@@ -603,7 +607,7 @@ void TestContext::RunTestOuter(int threadNum, Test* t)
 	DEBUG_THREADS("Thread %d executing test %s (retire)\n", threadNum, t->Name.c_str());
 
 	{
-		TakeCriticalSection lock(QueueLock);
+		lock_guard<mutex> lock(QueueLock);
 		OutText += outText;
 	}
 }
@@ -612,28 +616,35 @@ void TestContext::RunTestExec(string tempDir, Test* t)
 {
 	// Warning: Take care when changing this command line. The function TTIsRunningUnderMaster() uses it's layout quite specifically.
 	string tempDirSlash = tempDir; // + DIR_SEP_STR;  --- never end a quoted string with a backslash. The backslash before the quote causes the quote to be escaped.
-	string exec = TTGetProcessPath() + " " + TT_TOKEN_INVOKE + " =" + t->Name + " " + TT_PREFIX_RUNNER_PID + IntToStr(TTGetProcessID()) + " \"" + TT_PREFIX_TESTDIR + tempDirSlash + "\"" + " " + Options;
+	//string exec = TTGetProcessPath() + " " + TT_TOKEN_INVOKE + " =" + t->Name + " " + TT_PREFIX_RUNNER_PID + IntToStr(TTGetProcessID()) + " \"" + TT_PREFIX_TESTDIR + tempDirSlash + "\"" + " " + Options;
+	vector<string> args;
+	args.push_back(TT_TOKEN_INVOKE);
+	args.push_back("=" + t->Name);
+	args.push_back(TT_PREFIX_RUNNER_PID + IntToStr(TTGetProcessID()));
+	args.push_back(TT_PREFIX_TESTDIR + tempDirSlash);
+	for (const auto& opt : Options)
+		args.push_back(opt);
 
 	if (t->Parallel == TTParallelWholeCore)
-		AbcInterlockedIncrement(&ExecWholeCore);
+		ExecWholeCore++;
 
-	AbcInterlockedIncrement(&ExecTotal);
+	ExecTotal++;
 
 	string pstdOut;
 	int pstatus = 0;
 	double tstart = TimeSeconds();
 	Process proc(this);
-	string execError = proc.ExecuteAndWait(exec, t->TimeoutSeconds(), pstdOut, pstatus);
+	string execError = proc.ExecuteAndWait(TTGetProcessPath(), args, t->TimeoutSeconds(), pstdOut, pstatus);
 	if (execError != "")
 	{
 		pstatus = 1;
 		pstdOut = "TinyTest ExecProcess Error: " + execError;
 	}
 
-	AbcInterlockedDecrement(&ExecTotal);
+	ExecTotal--;
 
 	if (t->Parallel == TTParallelWholeCore)
-		AbcInterlockedDecrement(&ExecWholeCore);
+		ExecWholeCore--;
 
 	t->Time = TimeSeconds() - tstart;
 	t->Output = pstdOut;
@@ -675,18 +686,22 @@ void TestContext::SetOutHtml()	{ delete Out; Out = new OutputDevHtml; }
 
 struct ThreadContext
 {
-	volatile int	Consumed;
+	atomic<int>		Consumed;
 	TestContext*	TestCX;
 	int				ThreadNumber;
 };
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 6001) // Using uninitialized memory 'tx' --- looks like a false positive on VS 2015 Update 3
+#endif
+
 bool TestContext::CreateThreads()
 {
-	AbcMachineInformation inf;
-	AbcMachineInformationGet(inf);
-	SysNumCores = inf.PhysicalCoreCount;
+	int logicalCores = 0;
+	GetNumCPUCores(SysNumCores, logicalCores);
 
-	int nThreads = inf.LogicalCoreCount;
+	int nThreads = logicalCores;
 	if (NumThreads > 0)
 		nThreads = NumThreads;
 
@@ -694,24 +709,28 @@ bool TestContext::CreateThreads()
 
 	for (int i = 0; i < nThreads; i++)
 	{
-		ThreadContext thread;
-		thread.Consumed = 0;
-		thread.TestCX = this;
-		thread.ThreadNumber = i;
-		if (!AbcThreadCreate(ExecuteThread, &thread, Threads.add()))
-			return false;
-		while (thread.Consumed == 0)
-			AbcSleep(0);
+		ThreadContext tx;
+		tx.Consumed = 0;
+		tx.TestCX = this;
+		tx.ThreadNumber = i;
+		Threads.push_back(thread(ExecuteThread, &tx));
+		// ExecuteThread knows that once it sets Consumed to non-zero, it is not allowed to touch 'tx' again.
+		while (tx.Consumed == 0)
+			MySleep(0);
 	}
 
 	return true;
 }
 
-AbcThreadReturnType AbcKernelCallbackDecl TestContext::ExecuteThread(void* context)
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
+void TestContext::ExecuteThread(ThreadContext* context)
 {
-	TestContext* cx = ((ThreadContext*) context)->TestCX;
-	int threadNum = ((ThreadContext*) context)->ThreadNumber;
-	((ThreadContext*) context)->Consumed = 1;
+	TestContext* cx = context->TestCX;
+	int threadNum = context->ThreadNumber;
+	context->Consumed = 1;
 	// context is now invalid, since we set Consumed to 1.
 
 	DEBUG_THREADS_CX("Thread %d start\n", threadNum);
@@ -719,14 +738,12 @@ AbcThreadReturnType AbcKernelCallbackDecl TestContext::ExecuteThread(void* conte
 	while (true)
 	{
 		Test* t = cx->NextFilteredTest(threadNum);
-		if (t == NULL)
+		if (t == nullptr)
 			break;
 		cx->RunTestOuter(threadNum, t);
 	}
 
 	DEBUG_THREADS_CX("Thread %d exit\n", threadNum);
-
-	return 0;
 }
 
 int TestContext::RunMaster()
@@ -740,7 +757,7 @@ int TestContext::RunMaster()
 
 	// Get all solo tests to run at the end
 	// Only thread 0 runs solo tests.
-	sort(Tests, Test::CompareByParallel);
+	sort(Tests.begin(), Tests.end(), Test::CompareByParallel);
 
 	bool ok = CreateThreads();
 	if (!ok)
@@ -752,15 +769,15 @@ int TestContext::RunMaster()
 	if (ok)
 	{
 		DEBUG_THREADS("Waiting for all %d threads to join\n", (int) Threads.size());
-		for (intp i = 0; i < Threads.size(); i++)
-			AbcThreadJoinAndCloseHandle(Threads[i]);
+		for (size_t i = 0; i < Threads.size(); i++)
+			Threads[i].join();
 		DEBUG_THREADS("Threads joined\n");
 		Threads.clear();
 	}
 
 	int nrun = 0;
 	int npass = 0;
-	for (intp i = 0; i < Tests.size() && ok; i++)
+	for (size_t i = 0; i < Tests.size() && ok; i++)
 	{
 		nrun += Tests[i].Ignored ? 0 : 1;
 		npass += Tests[i].Pass ? 1 : 0;
@@ -782,7 +799,7 @@ int TestContext::RunMaster()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-string Process::ExecuteAndWait(string exec, double timeoutSeconds, string& childStdOut, int& processExitCode)
+string Process::ExecuteAndWait(string exec, const vector<string>& args, double timeoutSeconds, string& childStdOut, int& processExitCode)
 {
 	// This is a very blind guess that attempts to resolve an issue that I have been seeing on our CI machines
 	// after enabling parallel tests. The symptom is that the process exits with code 0xC0000142, and produces
@@ -790,7 +807,8 @@ string Process::ExecuteAndWait(string exec, double timeoutSeconds, string& child
 	string res;
 	for (int attempt = 0; attempt < 5; attempt++)
 	{
-		res = ExecuteAndWaitOnce(exec, timeoutSeconds, childStdOut, processExitCode);
+		res = ExecuteAndWaitOnce(exec, args, timeoutSeconds, childStdOut, processExitCode);
+		CloseZombieProcesses();
 		if (processExitCode != 0xC0000142 && processExitCode != 0xC0000005)
 			break;
 	}
@@ -798,7 +816,27 @@ string Process::ExecuteAndWait(string exec, double timeoutSeconds, string& child
 }
 
 #ifdef _WIN32
-string Process::ExecuteAndWaitOnce(string exec, double timeoutSeconds, string& childStdOut, int& processExitCode)
+
+static string MakeCommandLine(string exec, const vector<string>& args)
+{
+	for (const auto& arg : args)
+	{
+		exec += " ";
+		if (arg.find(' ') != string::npos)
+		{
+			exec += " \"";
+			exec += arg;
+			exec += " \"";
+		}
+		else
+		{
+			exec += arg;
+		}
+	}
+	return exec;
+}
+
+string Process::ExecuteAndWaitOnce(string exec, const vector<string>& args, double timeoutSeconds, string& childStdOut, int& processExitCode)
 {
 	TestContext* cx = Context;
 	ProcessID = 0;
@@ -853,8 +891,11 @@ string Process::ExecuteAndWaitOnce(string exec, double timeoutSeconds, string& c
 	si.hStdOutput = hChildStd_OUT_Wr;
 	si.dwFlags = STARTF_USESTDHANDLES;
 
-	char execPath[2048];
-	strcpy(execPath, exec.c_str());
+	char execPath[4096];
+	string cmdLine = MakeCommandLine(exec, args).c_str();
+	if (cmdLine.length() > 4095)
+		return SPrintf("Command-line too long (%s)\n", cmdLine.c_str());
+	strcpy(execPath, cmdLine.c_str());
 
 	if (!CreateProcessA(NULL, execPath, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
 	{
@@ -883,10 +924,10 @@ string Process::ExecuteAndWaitOnce(string exec, double timeoutSeconds, string& c
 	// Read from the standard output of the child process.
 	char buf[1024];
 	DWORD nread = 0;
-	int64 nIdle = 0;
+	int64_t nIdle = 0;
 	bool processWasDead = false;
 	double start = TimeSeconds();
-	for (int64 tick = 0; true; tick++)
+	for (int64_t tick = 0; true; tick++)
 	{
 		if (tick % 500 == 0)
 			DEBUG_THREADS_CX("Waiting for %s to finish\n", exec.c_str());
@@ -900,7 +941,7 @@ string Process::ExecuteAndWaitOnce(string exec, double timeoutSeconds, string& c
 		}
 
 		// Try waiting extra long if we have no output yet from child
-		int64 nIdleThreshold = childStdOut.length() == 0 ? 10 : 5;
+		int64_t nIdleThreshold = childStdOut.length() == 0 ? 10 : 5;
 		if (nIdle > nIdleThreshold && processDead)
 		{
 			DEBUG_THREADS_CX("nIdle > nIdleThreshold\n");
@@ -963,22 +1004,216 @@ string Process::ExecuteAndWaitOnce(string exec, double timeoutSeconds, string& c
 	//CloseHandleAndZero( hChildStd_IN_Rd );
 	CloseHandleAndZero(hChildStd_OUT_Rd);
 
-	CloseZombieProcesses();
-
 	return "";
 }
+
 #else
-string Process::ExecuteAndWaitOnce(string exec, double timeoutSeconds, string& childStdOut, int& processExitCode)
+
+static void SetNonBlocking(int fd)
 {
-	if (!POpenReadAll(exec, timeoutSeconds, childStdOut, processExitCode))
-		return "Error executing test sub-process";
-	return "";
-	//DEBUG_THREADS_CX( "<<%s>> %f\n", exec.c_str(), timeoutSeconds );
-	//return "not implemented on unix";
+	int flags = fcntl(fd, F_GETFL) | O_NONBLOCK;
+	if (-1 == fcntl(fd, F_SETFL, flags))
+		fprintf(stderr, "couldn't unblock fd %d\n", fd);
+}
+
+static bool ReadFromFile(int fd, vector<char>& out)
+{
+	while (true)
+	{
+		char buf[4096];
+		auto nbytes = read(fd, buf, sizeof(buf));
+		if (nbytes <= 0)
+		{
+			if (errno == EAGAIN)
+				return true;
+			else
+				return false;
+		}
+		for (decltype(nbytes) i = 0; i < nbytes; i++)
+			out.push_back(buf[i]);
+	}
+	// practically unreachable
+	return false;
+}
+
+// NOTE: We discard stderr, although we go through all the motions to save it.
+// Should you need it at some point, add it as a parameter to this function
+string Process::ExecuteAndWaitOnce(string exec, const vector<string>& args, double timeoutSeconds, string& rStdOut, int& pExit)
+{
+	ProcessID = 0;
+	const int pipe_read = 0;
+	const int pipe_write = 1;
+
+	int pipe_stdout[2];
+	int pipe_stderr[2];
+
+	if (pipe(pipe_stdout) != 0 || pipe(pipe_stderr) != 0)
+		return "Error executing test sub-process (pipe open)";
+
+	vector<char> rStdOutBuf;
+	vector<char> rStdErrBuf;
+
+	pid_t pid = fork();
+	if (pid == 0)
+	{
+		// child
+		//const char *args[] = { "/bin/sh", "-c", exec.c_str(), nullptr };
+
+		//sigset_t sigs;
+		//sigfillset(&sigs);
+		//if ( 0 != sigprocmask(SIG_UNBLOCK, &sigs, 0) )
+		//	printf( "sigprocmask failed\n" );
+
+		close(pipe_stdout[pipe_read]);
+		close(pipe_stderr[pipe_read]);
+
+		if (-1 == dup2(pipe_stdout[pipe_write], STDOUT_FILENO) || -1 == dup2(pipe_stderr[pipe_write], STDERR_FILENO))
+		{
+			printf("dup2 failed\n");
+			exit(1);
+		}
+
+		close(pipe_stdout[pipe_write]);
+		close(pipe_stderr[pipe_write]);
+
+		vector<const char*> pArgs;
+		string allArgs;
+		for (const auto& arg : args)
+		{
+			pArgs.push_back(arg.c_str());
+			allArgs += " " + arg;
+		}
+		pArgs.push_back(nullptr);
+
+		//if (-1 == execv("/bin/sh", (char **) args))
+		if (-1 == execv(exec.c_str(), (char**) &pArgs[0]))
+		{
+			printf("execv failed in forked child (%d %s %s)\n", errno, exec.c_str(), allArgs.c_str());
+			exit(1);
+		}
+		// we never get here
+		abort();
+	}
+	else if (pid > 0)
+	{
+		// parent, success
+		ProcessID = pid;
+		int n_fds = 2;
+		int fds[2];
+		fd_set read_fds;
+		fds[0] = pipe_stdout[pipe_read];
+		fds[1] = pipe_stderr[pipe_read];
+
+		SetNonBlocking(fds[0]);
+		SetNonBlocking(fds[1]);
+
+		close(pipe_stdout[pipe_write]);
+		close(pipe_stderr[pipe_write]);
+
+		double tstart = TimeSeconds();
+		int exitCount = 0;
+
+		// after the process has exited, try at least once to read stdout.
+		// According to the tundra code, this produces a deadlock on OSX. I don't understand how though.
+		while (exitCount < 2)
+		{
+			FD_ZERO(&read_fds);
+			int max_fd = 0;
+			for (int i = 0; i < n_fds; i++)
+			{
+				if (fds[i] > max_fd)
+					max_fd = fds[i];
+				FD_SET(fds[i], &read_fds);
+			}
+
+			struct timeval timeout;
+			timeout.tv_sec = 5;
+			timeout.tv_usec = 500000;
+
+			if (n_fds != 0)
+			{
+				int count = select(max_fd + 1, &read_fds, nullptr, nullptr, &timeout);
+				if (count == -1)    // according to tundra code, this happens in gdb due to syscall interruption
+					continue;
+
+				for (int i = 0; i < n_fds; i++)
+				{
+					vector<char>* buf = fds[i] == pipe_stdout[pipe_read] ? &rStdOutBuf : &rStdErrBuf;
+					if (FD_ISSET(fds[i], &read_fds))
+					{
+						if (!ReadFromFile(fds[i], *buf))
+						{
+							// pipe is closed
+							n_fds--;
+							if (i == 0)
+								fds[0] = fds[1];
+						}
+					}
+				}
+			}
+
+			if (exitCount != 0)
+			{
+				exitCount++;
+				continue;
+			}
+
+			pid_t pwait = waitpid(pid, &pExit, WNOHANG);
+			if (pwait == 0)
+			{
+				// child still running
+				ReadIPC(16);
+				if (timeoutSeconds > 0 && TimeSeconds() - tstart > timeoutSeconds)
+				{
+					pExit = 1;
+					string msg = SPrintf("\nTest timed out (max time %f seconds)\n", timeoutSeconds);
+					size_t len = msg.length();
+					for (size_t i = 0; i < len; i++)
+						rStdOutBuf.push_back(msg[i]);
+					break;
+				}
+
+				if (n_fds == 0)
+					usleep(500000);
+			}
+			else if (pwait != pid)
+			{
+				// waitpid failed
+				printf("waitpid failed (%d)\n", (int) pwait);
+				pExit = 1;
+				break;
+			}
+			else
+			{
+				// child has exited
+				//printf( "forked parent: child has exited (%d). %s\n", pExit, n_fds == 0 ? "and pipes are closed" : "waiting for pipes to close" );
+				exitCount = 1;
+				if (n_fds == 0)
+					break;
+			}
+		}
+
+		rStdOut.append(&rStdOutBuf[0], rStdOutBuf.size());
+		// NOTE: we discard rStdErrBuf
+
+		close(pipe_stdout[pipe_read]);
+		close(pipe_stderr[pipe_read]);
+		return "";
+	}
+	else
+	{
+		// parent, error
+		printf("fork failed\n");
+		close(pipe_stdout[pipe_read]);
+		close(pipe_stdout[pipe_write]);
+		close(pipe_stderr[pipe_read]);
+		close(pipe_stderr[pipe_write]);
+		return "Error executing test sub-process (fork failed)";
+	}
 }
 #endif
 
-void Process::ReadIPC(uint waitMS)
+void Process::ReadIPC(unsigned waitMS)
 {
 	char raw[TT_IPC_MEM_SIZE];
 	memset(raw, 0, sizeof(raw));
@@ -991,7 +1226,7 @@ void Process::ReadIPC(uint waitMS)
 	{
 		raw[TT_IPC_MEM_SIZE - 1] = 0;
 		char cmd[200];
-		uint u_p0 = 0;
+		unsigned u_p0 = 0;
 		// Currently the only command is "subprocess-launch", so we don't even bother to check the value of 'cmd'
 		if (sscanf(raw, "%200s %u", cmd, &u_p0) == 2)
 		{
@@ -1000,9 +1235,9 @@ void Process::ReadIPC(uint waitMS)
 #ifdef _WIN32
 			HANDLE proc = OpenProcess(PROCESS_TERMINATE | SYNCHRONIZE, false, u_p0);
 			if (proc != NULL)
-				SubProcesses += proc;
+				SubProcesses.push_back(proc);
 #else
-			SubProcesses += u_p0;
+			SubProcesses.push_back(u_p0);
 #endif
 		}
 		else
@@ -1015,16 +1250,18 @@ void Process::ReadIPC(uint waitMS)
 void Process::CloseZombieProcesses()
 {
 #ifdef _WIN32
-	for (intp i = 0; i < SubProcesses.size(); i++)
+	for (size_t i = 0; i < SubProcesses.size(); i++)
 	{
 		if (WaitForSingleObject(SubProcesses[i], 0) != WAIT_OBJECT_0)
 			TerminateProcess(SubProcesses[i], 1);
 		CloseHandle(SubProcesses[i]);
 	}
 #else
-	for (intp i = 0; i < SubProcesses.size(); i++)
+	for (size_t i = 0; i < SubProcesses.size(); i++)
 	{
-		kill(SubProcesses[i], SIGKILL);
+		int status = 0;
+		if (waitpid(SubProcesses[i], &status, WNOHANG) != SubProcesses[i])
+			kill(SubProcesses[i], SIGKILL);
 	}
 #endif
 	SubProcesses.clear();
@@ -1059,32 +1296,32 @@ string EscapeXml(const string& s)
 	return Escape(true, s);
 }
 
-podvec<string> DiscardEmpties(const podvec<string>& s)
+vector<string> DiscardEmpties(const vector<string>& s)
 {
-	podvec<string> result;
-	for (intp i = 0; i < s.size(); i++)
+	vector<string> result;
+	for (size_t i = 0; i < s.size(); i++)
 	{
 		if (s[i] != "")
-			result += s[i];
+			result.push_back(s[i]);
 	}
 	return result;
 }
 
-podvec<string> Split(const string& s, char delim)
+vector<string> Split(const string& s, char delim)
 {
-	podvec<string> res;
+	vector<string> res;
 	size_t start = 0;
 	size_t end = 0;
 	for (; end < s.length(); end++)
 	{
 		if (s[end] == delim)
 		{
-			res += s.substr(start, end - start);
+			res.push_back(s.substr(start, end - start));
 			start = end + 1;
 		}
 	}
 	if (end - start > 0 || start != 0)
-		res += s.substr(start, end - start);
+		res.push_back(s.substr(start, end - start));
 	return res;
 }
 
@@ -1182,7 +1419,7 @@ bool WriteWholeFile(const string& filename, const string& s)
 	return good;
 }
 
-string IntToStr(int64 i)
+string IntToStr(int64_t i)
 {
 	char buf[100];
 	sprintf(buf, "%lld", (long long) i);
@@ -1278,225 +1515,81 @@ bool DirectoryExists(const string& s)
 // Return <= 0 on failure
 int OpenLockFile(const string& path)
 {
-	return AbcLockFileLock(path.c_str());
-}
+#ifdef _WIN32
+	int mode = _S_IREAD | _S_IWRITE;
+#else
+	int mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+#endif
 
-void CloseLockFile(int file)
-{
-	AbcLockFileRelease(file);
-}
+	int f = open(path.c_str(), O_CREAT | O_WRONLY, mode);
+	if (f == -1)
+		return -1;
 
 #ifdef _WIN32
-bool POpenReadAll(string exec, double timeoutSeconds, string& rStdOut, int& pExit)
-{
-	if (timeoutSeconds != -1)
-	{
-		printf("On Windows, POpenReadAll does not support timeout\n");
-		return false;
-	}
-	FILE* pipe = popen(exec.c_str(), "r");
-	if (pipe == nullptr)
-		return false;
-
-	double start = TimeSeconds();
-	size_t read = 0;
-	char buf[1024];
-	podvec<char> all;
-	while (0 != (read = fread(buf, 1, sizeof(buf), pipe)))
-		all.addn(buf, read);
-	pExit = pclose(pipe);
-	all += 0;
-	rStdOut = &all[0];
-	return true;
-}
+	int lock = _locking(f, _LK_NBLCK, 1);
 #else
-static void SetNonBlocking(int fd)
-{
-	int flags = fcntl(fd, F_GETFL) | O_NONBLOCK;
-	if (-1 == fcntl(fd, F_SETFL, flags))
-		fprintf(stderr, "couldn't unblock fd %d\n", fd);
-}
-
-static bool ReadFromFile(int fd, podvec<char>& out)
-{
-	while (true)
-	{
-		char buf[4096];
-		auto nbytes = read(fd, buf, sizeof(buf));
-		if (nbytes <= 0)
-		{
-			if (errno == EAGAIN)
-				return true;
-			else
-				return false;
-		}
-		out.addn(buf, nbytes);
-	}
-	// practically unreachable
-	return false;
-}
-
-// NOTE: We discard stderr, although we go through all the motions to save it.
-// Should you need it at some point, add it as a parameter to this function
-bool POpenReadAll(string exec, double timeoutSeconds, string& rStdOut, int& pExit)
-{
-	const int pipe_read = 0;
-	const int pipe_write = 1;
-
-	int pipe_stdout[2];
-	int pipe_stderr[2];
-
-	if (pipe(pipe_stdout) != 0 || pipe(pipe_stderr) != 0)
-		return false;
-
-	podvec<char> rStdOutBuf;
-	podvec<char> rStdErrBuf;
-
-	pid_t pid = fork();
-	if (pid == 0)
-	{
-		// child
-		const char *args[] = { "/bin/sh", "-c", exec.c_str(), nullptr };
-
-		//sigset_t sigs;
-		//sigfillset(&sigs);
-		//if ( 0 != sigprocmask(SIG_UNBLOCK, &sigs, 0) )
-		//	printf( "sigprocmask failed\n" );
-
-		close(pipe_stdout[pipe_read]);
-		close(pipe_stderr[pipe_read]);
-
-		if (-1 == dup2(pipe_stdout[pipe_write], STDOUT_FILENO) || -1 == dup2(pipe_stderr[pipe_write], STDERR_FILENO))
-		{
-			printf("dup2 failed\n");
-			exit(1);
-		}
-
-		close(pipe_stdout[pipe_write]);
-		close(pipe_stderr[pipe_write]);
-
-		if (-1 == execv("/bin/sh", (char **) args))
-		{
-			printf("execv failed in forked child\n");
-			exit(1);
-		}
-		// we never get here
-		abort();
-	}
-	else if (pid > 0)
-	{
-		// parent, success
-		int n_fds = 2;
-		int fds[2];
-		fd_set read_fds;
-		fds[0] = pipe_stdout[pipe_read];
-		fds[1] = pipe_stderr[pipe_read];
-
-		SetNonBlocking(fds[0]);
-		SetNonBlocking(fds[1]);
-
-		close(pipe_stdout[pipe_write]);
-		close(pipe_stderr[pipe_write]);
-
-		double tstart = TimeSeconds();
-		int exitCount = 0;
-
-		// after the process has exited, try at least once to read stdout.
-		// According to the tundra code, this produces a deadlock on OSX. I don't understand how though.
-		while (exitCount < 2)
-		{
-			FD_ZERO(&read_fds);
-			int max_fd = 0;
-			for (int i = 0; i < n_fds; i++)
-			{
-				if (fds[i] > max_fd)
-					max_fd = fds[i];
-				FD_SET(fds[i], &read_fds);
-			}
-
-			struct timeval timeout;
-			timeout.tv_sec = 5;
-			timeout.tv_usec = 500000;
-
-			if (n_fds != 0)
-			{
-				int count = select(max_fd + 1, &read_fds, nullptr, nullptr, &timeout);
-				if (count == -1)    // according to tundra code, this happens in gdb due to syscall interruption
-					continue;
-
-				for (int i = 0; i < n_fds; i++)
-				{
-					podvec<char>* buf = fds[i] == pipe_stdout[pipe_read] ? &rStdOutBuf : &rStdErrBuf;
-					if (FD_ISSET(fds[i], &read_fds))
-					{
-						if (!ReadFromFile(fds[i], *buf))
-						{
-							// pipe is closed
-							n_fds--;
-							if (i == 0)
-								fds[0] = fds[1];
-						}
-					}
-				}
-			}
-
-			if (exitCount != 0)
-			{
-				exitCount++;
-				continue;
-			}
-
-			pid_t pwait = waitpid(pid, &pExit, WNOHANG);
-			if (pwait == 0)
-			{
-				// child still running
-				if (timeoutSeconds > 0 && TimeSeconds() - tstart > timeoutSeconds)
-				{
-					pExit = 1;
-					string msg = SPrintf("\nTest timed out (max time %f seconds)\n", timeoutSeconds);
-					rStdOutBuf.addn(msg.c_str(), msg.length());
-					break;
-				}
-
-				if (n_fds == 0)
-					usleep(500000);
-			}
-			else if (pwait != pid)
-			{
-				// waitpid failed
-				printf("waitpid failed (%d)\n", (int) pwait);
-				pExit = 1;
-				break;
-			}
-			else
-			{
-				// child has exited
-				//printf( "forked parent: child has exited (%d). %s\n", pExit, n_fds == 0 ? "and pipes are closed" : "waiting for pipes to close" );
-				exitCount = 1;
-				if (n_fds == 0)
-					break;
-			}
-		}
-
-		rStdOut.append(&rStdOutBuf[0], rStdOutBuf.size());
-		// NOTE: we discard rStdErrBuf
-
-		close(pipe_stdout[pipe_read]);
-		close(pipe_stderr[pipe_read]);
-		return true;
-	}
-	else
-	{
-		// parent, error
-		printf("fork failed\n");
-		close(pipe_stdout[pipe_read]);
-		close(pipe_stdout[pipe_write]);
-		close(pipe_stderr[pipe_read]);
-		close(pipe_stderr[pipe_write]);
-		return false;
-	}
-}
+#	ifdef ANDROID
+	int lock = flock(f, LOCK_EX);
+#	else
+	int lock = lockf(f, F_TLOCK, 1);
+#	endif
 #endif
+	if (lock == -1)
+	{
+		close(f);
+		return -1;
+	}
+
+	return f;
+}
+
+void CloseLockFile(int f)
+{
+	if (f == -1)
+		return;
+
+	lseek(f, 0, SEEK_SET);
+#ifdef _WIN32
+	_locking(f, _LK_UNLCK, 1);
+#else
+#	ifdef ANDROID
+	flock(f, LOCK_UN);
+#	else
+	lockf(f, F_ULOCK, 1);
+#	endif
+#endif
+	close(f);
+}
+
+void MySleep(unsigned ms)
+{
+	this_thread::sleep_for(chrono::milliseconds(ms));
+}
+
+void GetNumCPUCores(int& physicalCores, int& logicalCores)
+{
+#ifdef _WIN32
+	SYSTEM_INFO inf;
+	GetSystemInfo(&inf);
+	physicalCores = (int) inf.dwNumberOfProcessors;
+	logicalCores = (int) inf.dwNumberOfProcessors;
+
+	SYSTEM_LOGICAL_PROCESSOR_INFORMATION log[256];
+	DWORD logSize = sizeof(log);
+	if (GetLogicalProcessorInformation(log, &logSize))
+	{
+		physicalCores = 0;
+		for (unsigned i = 0; i < logSize / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION); i++)
+		{
+			if (log[i].Relationship == RelationProcessorCore)
+				physicalCores++;
+		}
+	}
+#else
+	logicalCores = sysconf(_SC_NPROCESSORS_ONLN);
+	physicalCores = sysconf(_SC_NPROCESSORS_ONLN);
+#endif
+}
 
 #define S(x) #x
 
@@ -1529,4 +1622,3 @@ const char* JUnitTailTxt = S((
 
 #undef DEBUG_THREADS_CX
 #undef DEBUG_THREADS
-#undef ARCH_64

@@ -17,17 +17,17 @@ int main(int argc, char** argv)
 	_CrtSetAllocHook(CrtAllocHook);
 #endif
 
-	xoInitialize();
+	xo::Initialize();
 
 	// Uncomment this line to run tests on DirectX
 	//xoGlobal()->PreferOpenGL = false;
 
 	// Make clear color a predictable pink, no matter what the default is
-	xoGlobal()->ClearColor.Set(255, 30, 240, 255);
+	xo::Global()->ClearColor.Set(255, 30, 240, 255);
 
 	int retval = TTRun(argc, argv);
 
-	xoShutdown();
+	xo::Shutdown();
 
 #ifdef _WIN32
 	TTASSERT(_CrtDumpMemoryLeaks() == FALSE);

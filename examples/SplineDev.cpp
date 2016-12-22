@@ -4,25 +4,25 @@
 
 // This was used when developing the spline rendering code
 
-void Render(xoCanvas2D* canvas, int cx, int cy, float scale);
+void Render(xo::Canvas2D* canvas, int cx, int cy, float scale);
 
-void xoMain(xoSysWnd* wnd)
+void xoMain(xo::SysWnd* wnd)
 {
 	int left = 550;
 	int width = 1000;
 	int top = 60;
 	int height = 1000;
-	wnd->SetPosition(xoBox(left, top, left + width, top + height), xoSysWnd::SetPosition_Move | xoSysWnd::SetPosition_Size);
+	wnd->SetPosition(xo::Box(left, top, left + width, top + height), xo::SysWnd::SetPosition_Move | xo::SysWnd::SetPosition_Size);
 
-	//auto magic = xoColor::RGBA(0xff, 0xf0, 0xf0, 0xff);
+	//auto magic = xo::Color::RGBA(0xff, 0xf0, 0xf0, 0xff);
 
-	xoDomCanvas* canvas = wnd->Doc()->Root.AddCanvas();
+	xo::DomCanvas* canvas = wnd->Doc()->Root.AddCanvas();
 	canvas->StyleParsef("width: %dep; height: %dep;", width, height);
 	canvas->SetImageSizeOnly(width, height);
 
-	canvas->OnMouseMove([width, height](const xoEvent& ev) -> bool {
-		xoDomCanvas* canvas = (xoDomCanvas*) ev.Target;
-		xoCanvas2D* cx = canvas->GetCanvas2D();
+	canvas->OnMouseMove([width, height](const xo::Event& ev) -> bool {
+		xo::DomCanvas* canvas = (xo::DomCanvas*) ev.Target;
+		xo::Canvas2D* cx = canvas->GetCanvas2D();
 		//Render(cx, (int) ev.Points[0].x, (int) ev.Points[0].y);
 		Render(cx, width / 2, height / 2, FLT_EPSILON + ev.Points[0].x * 0.0001f);
 		canvas->ReleaseCanvas(cx);
@@ -47,15 +47,15 @@ float Eval2(float x, float y)
 	//return sqrt(dx * dx + dy * dy);
 }
 
-void Render(xoCanvas2D* canvas, int cx, int cy, float scale)
+void Render(xo::Canvas2D* canvas, int cx, int cy, float scale)
 {
 	//canvas->Fill(xoColor::White());
 	//xoBox box(0, 0, 7, 7);
 	//box.Offset(cx - box.Width() / 2.0f, cy - box.Height() / 2.0f);
 	//canvas->FillRect(box, xoColor::RGBA(200, 50, 50, 255));
-	double start = AbcTimeAccurateRTSeconds();
+	double start = xo::TimeAccurateSeconds();
 
-	uint8 lut[256];
+	uint8_t lut[256];
 	for (int i = 0; i < 256; i++)
 	{
 		lut[i] = i;
@@ -71,7 +71,7 @@ void Render(xoCanvas2D* canvas, int cx, int cy, float scale)
 	for (int y = 0; y < height; y++)
 	{
 		float yf = scale * (float) (cy - y); // we invert Y, so that up is positive
-		xoRGBA* line = (xoRGBA*) canvas->RowPtr(y);
+		xo::RGBA* line = (xo::RGBA*) canvas->RowPtr(y);
 		for (int x = 0; x < width; x++)
 		{
 			float xf = scale * (float) (x - cx);
@@ -81,12 +81,12 @@ void Render(xoCanvas2D* canvas, int cx, int cy, float scale)
 			// This is useful for illustration - having a gradient either side of the zero line
 			//float v = 127.0f + iscale * Eval(xf, yf));
 
-			int ilut = xoClamp((int) v, 0, 255);
-			uint8 lum = lut[ilut];
-			line[x] = xoRGBA::RGBA(lum, lum, lum, 255);
+			int ilut = xo::Clamp((int) v, 0, 255);
+			uint8_t lum = lut[ilut];
+			line[x] = xo::RGBA::Make(lum, lum, lum, 255);
 		}
 	}
-	canvas->Invalidate(xoBox(0, 0, canvas->Width(), canvas->Height()));
+	canvas->Invalidate(xo::Box(0, 0, canvas->Width(), canvas->Height()));
 
-	Trace("canvas render: %.3f ms\n", 1000.0f * (AbcTimeAccurateRTSeconds() - start));
+	xo::Trace("canvas render: %.3f ms\n", 1000.0f * (xo::TimeAccurateSeconds() - start));
 }

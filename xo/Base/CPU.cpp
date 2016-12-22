@@ -3,7 +3,7 @@
 
 namespace xo {
 
-int GetNumberOfCores() {
+XO_API int GetNumberOfCores() {
 #ifdef WIN32
 	SYSTEM_INFO sysinfo;
 	GetSystemInfo(&sysinfo);

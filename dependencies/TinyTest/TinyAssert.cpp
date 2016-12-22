@@ -47,7 +47,7 @@ TT_UNIVERSAL_FUNC void TTAssertFailed(const char* exp, const char* filename, int
 #ifdef _WIN32
 		__debugbreak();
 #else
-		_exit(1);
+		__builtin_trap();
 #endif
 	}
 }

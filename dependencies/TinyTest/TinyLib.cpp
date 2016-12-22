@@ -11,6 +11,7 @@ This file contains the utility functions that are used by testing code.
 #include "StackWalker.h"
 #else
 #include <unistd.h>
+#include <sys/wait.h>
 #define _T(x) x
 #endif
 
@@ -37,7 +38,7 @@ static char*		TestCmdLineArgs[TT_MAX_CMDLINE_ARGS + 1]; // +1 for the null termi
 static char			TestTempDir[TT_TEMP_DIR_SIZE + 1];
 
 // These are defined inside TinyMaster.cpp
-int		TTRun_Internal(const TT_TestList& tests, int argc, char** argv);
+static int			TTRun_Internal(const TT_TestList& tests, int argc, char** argv);
 
 void TTException::CopyStr(size_t n, char* dst, const char* src)
 {
@@ -174,6 +175,7 @@ static const char* ParallelName(TTParallel p)
 {
 	switch (p)
 	{
+	case TTParallel_Invalid: return "INVALID!";
 	case TTParallelDontCare: return TT_PARALLEL_DONTCARE;
 	case TTParallelWholeCore: return TT_PARALLEL_WHOLECORE;
 	case TTParallelSolo: return TT_PARALLEL_SOLO;
@@ -184,9 +186,9 @@ static const char* ParallelName(TTParallel p)
 unsigned int TTGetProcessID()
 {
 #ifdef _WIN32
-	return (uint) GetCurrentProcessId();
+	return (unsigned int) GetCurrentProcessId();
 #else
-	return (uint) getpid();
+	return (unsigned int) getpid();
 #endif
 }
 
@@ -207,7 +209,7 @@ void TTSleep(unsigned int milliseconds)
 #ifdef _WIN32
 	Sleep(milliseconds);
 #else
-	int64 nano = milliseconds * (int64) 1000;
+	int64_t nano = milliseconds * (int64_t) 1000000;
 	timespec t;
 	t.tv_nsec = nano % 1000000000;
 	t.tv_sec = (nano - t.tv_nsec) / 1000000000;
@@ -249,6 +251,10 @@ std::string TTGetTempDir()
 {
 	return TestTempDir;
 }
+
+std::string TT_ToString(int v)			{ return std::to_string(v); }
+std::string TT_ToString(double v)		{ return std::to_string(v); }
+std::string TT_ToString(std::string v)	{ return v; }
 
 const int MAXARGS = 30;
 
@@ -399,7 +405,7 @@ bool TT_IPC_Read_Raw(unsigned int waitMS, char (&filename)[256], char (&msg)[TT_
 		return false;
 	}
 
-	uint length = 0;
+	unsigned int length = 0;
 	bool good = false;
 	if (fread(&length, sizeof(length), 1, file) == 1)
 	{
@@ -431,14 +437,14 @@ void TT_IPC_Write_Raw(char (&filename)[256], const char* msg)
 	fclose(file);
 	file = NULL;
 	// The other side acknowledges this transmission by deleting the file
-	uint sleepMS = 30;
-	for (uint nwait = 0; nwait < 5 * 1000 / sleepMS; nwait++)
+	unsigned int sleepMS = 10;
+	for (unsigned int nwait = 0; nwait < 3 * 1000 / sleepMS; nwait++)
 	{
 		TTSleep(sleepMS);
-		file = fopen(filename, "rb");
-		if (file == NULL)
+		if (!TTFileExists(filename))
 			return;
-		fclose(file);
+		if (nwait * sleepMS > 500)
+			printf("Still waiting for other side to delete %s\n", filename);
 	}
 	sprintf(buf, "TT_IPC executor failed to acknowledge read on %s", filename);
 	TTAssertFailed(buf, "internal", 0, true);
@@ -467,6 +473,101 @@ static void TT_IPC(const char* msg, ...)
 void TTNotifySubProcess(unsigned int pid)
 {
 	TT_IPC("%s %u", TT_IPC_CMD_SUBP_RUN, pid);
+}
+
+unsigned int TTLaunchChildProcess_Internal(const char* cmd, const char** args)
+{
+#ifdef _WIN32
+	std::string all = cmd;
+	for (size_t i = 0; args[i]; i++)
+	{
+		all += " ";
+		all += args[i];
+	}
+	unsigned int pid = -1;
+	STARTUPINFO si;
+	memset(&si, 0, sizeof(si));
+	PROCESS_INFORMATION pi;
+	DWORD flags = 0;
+	// Creating a new console can be useful when debugging, but not sure if this is
+	// really the right thing to do, for consistency sake.
+	if (!TTIsRunningUnderMaster())
+		flags |= CREATE_NEW_CONSOLE;
+	char* buf = new char[all.size() + 1];
+	memcpy(buf, all.c_str(), all.size());
+	buf[all.size()] = 0;
+	bool ok = !!CreateProcessA(cmd, buf, NULL, NULL, false, flags, NULL, NULL, &si, &pi);
+	if (ok)
+	{
+		pid = pi.dwProcessId;
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+	}
+#else
+	std::vector<const char*> all;
+	all.push_back(cmd);
+	for (size_t i = 0; args[i]; i++)
+		all.push_back(args[i]);
+	all.push_back(nullptr);
+	pid_t pid = fork();
+	if (pid == 0)
+	{
+		// child
+		pid_t res = execvp(cmd, (char * const *) &all[0]);
+		// execvp only returns if an error occurred
+		printf("launch of pid = %d failed (%s)\n", (int) getpid(), cmd);
+		exit(1);
+	}
+	else
+	{
+		// parent
+		// We assume that the child process is expected to run indefinitely. At least,
+		// we expect it to run at least until we return from this function. So it's safe to
+		// say that if the child has already exited, then the execvp failed.
+		// We wait for only 5ms, because the execvp fails fast if the path cannot be found.
+		bool running = true;
+		for (int i = 0; i < 5; i++)
+		{
+			int status = 0;
+			pid_t res = waitpid(pid, &status, WNOHANG | WUNTRACED);
+			if (res == pid)
+			{
+				running = false;
+				break;
+			}
+			TTSleep(1);
+		}
+		if (!running)
+			return -1;
+		printf("launch of pid = %d succeeded (%s)\n", (int) pid, cmd);
+	}
+#endif
+
+	return (unsigned int) pid;
+}
+
+void TTLaunchChildProcess(const char* cmd, const char** args)
+{
+	unsigned int pid = TTLaunchChildProcess_Internal(cmd, args);
+	if (pid == -1)
+	{
+		// try rewriting 'cmd' path to be in same directory as ourselves
+		std::string self = TTGetProcessPath();
+		auto lastslash = self.rfind(DIRSEP);
+		if (lastslash != -1 && std::string(cmd).find(DIRSEP) == -1)
+		{
+			std::string newCmd = self.substr(0, lastslash + 1) + cmd;
+			if (newCmd.rfind(EXE_EXTENSION) != newCmd.size() - strlen(EXE_EXTENSION))
+				newCmd += EXE_EXTENSION;
+			pid = TTLaunchChildProcess_Internal(newCmd.c_str(), args);
+		}
+	}
+
+	if (pid != -1)
+		TTNotifySubProcess(pid);
+	else
+		TTAssertFailed((std::string("Failed to launch child process ") + cmd).c_str(), "", 0, true);
+
 }
 
 

@@ -83,10 +83,12 @@
 #include <stdlib.h>
 #pragma comment(lib, "version.lib")  // for "VerQueryValue"
 #pragma warning(push)
+#pragma warning(disable:4091)
 #pragma warning(disable:4826)
 #pragma warning(disable:4996)
 #pragma warning(disable:6388)
 #pragma warning(disable:6102)
+#pragma warning(disable:6340)
 #pragma warning(disable:28159)
 
 #include "StackWalker.h"
@@ -661,7 +663,7 @@ private:
     pGMI = (tGMI) GetProcAddress( hPsapi, "GetModuleInformation" );
     if ( (pEPM == NULL) || (pGMFNE == NULL) || (pGMBN == NULL) || (pGMI == NULL) )
     {
-      // we couldn´t find all functions
+      // we couldn't find all functions
       FreeLibrary(hPsapi);
       return FALSE;
     }

@@ -1,25 +1,25 @@
 #include "../xo/xo.h"
 
-void xoMain(xoSysWnd* wnd)
+void xoMain(xo::SysWnd* wnd)
 {
-	Trace("Hello 1\n");
-	xoDoc* doc = wnd->Doc();
+	xo::Trace("Hello 1\n");
+	xo::Doc* doc = wnd->Doc();
 	//doc->Root.StyleParse( "margin: 20px;" );
 	//doc->Root.StyleParse( "border-radius: 55px;" );
-	Trace("Hello 2\n");
+	xo::Trace("Hello 2\n");
 
-	xoDomNode* blocks[4];
+	xo::DomNode* blocks[4];
 	for (int i = 0; i < 4; i++)
 	{
-		xoDomNode* div = doc->Root.AddNode(xoTagDiv);
+		auto div = doc->Root.AddNode(xo::TagDiv);
 		//div->StyleParse( "width: 90px; height: 90px; border-radius: 0px; display: inline;" );
-		div->StyleParse(xo::fmt("width: 90px; height: 90px; border-radius: %vpx; display: inline;", 5 * i + 1).Z);
+		div->StyleParse(tsf::fmt("width: 90px; height: 90px; border-radius: %vpx; display: inline;", 5 * i + 1).c_str());
 		div->StyleParse("margin: 3px;");
 		blocks[i] = div;
 	}
 
 	// block with text inside it
-	xoDomNode* txtBox = doc->Root.AddNode(xoTagDiv);
+	auto txtBox = doc->Root.AddNode(xo::TagDiv);
 	txtBox->StyleParse("width: 90px; height: 90px; border-radius: 2px; background: #0c0; margin: 3px; position: absolute; font-size: 12ep;");
 	txtBox->SetText("This widget spans.. document->textDocument()->activeView()");
 
@@ -27,12 +27,12 @@ void xoMain(xoSysWnd* wnd)
 	blocks[1]->StyleParse("background: #ff000080");
 	blocks[2]->StyleParse("background: #ff0000ff");
 
-	Trace("Hello 3\n");
+	xo::Trace("Hello 3\n");
 
-	xoDomNode* greybox = blocks[3];
+	auto greybox = blocks[3];
 	greybox->StyleParse("background: #aaaa; position: absolute; left: 90px; top: 90px;");
 
-	auto onMoveOrTouch = [greybox, txtBox](const xoEvent& ev) -> bool {
+	auto onMoveOrTouch = [greybox, txtBox](const xo::Event& ev) -> bool {
 		greybox->StyleParsef("left: %fpx; top: %fpx;", ev.Points[0].x - 45.0, ev.Points[0].y - 45.0);
 		txtBox->StyleParsef("left: %fpx; top: %fpx;", ev.Points[0].x * 0.01 + 45.0, ev.Points[0].y * 0.01 + 150.0);
 		return true;
@@ -40,12 +40,12 @@ void xoMain(xoSysWnd* wnd)
 	doc->Root.OnMouseMove(onMoveOrTouch);
 	doc->Root.OnTouch(onMoveOrTouch);
 
-	Trace("Hello 4\n");
+	xo::Trace("Hello 4\n");
 
-	xoEvent inject;
+	xo::Event inject;
 	inject.PointCount = 1;
-	inject.Points[0] = XOVEC2(100,100);
+	inject.Points[0] = xo::VEC2(100,100);
 	onMoveOrTouch(inject);
 
-	Trace("Hello 5\n");
+	xo::Trace("Hello 5\n");
 }

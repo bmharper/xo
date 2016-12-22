@@ -3,7 +3,7 @@
 TESTFUNC(Parser)
 {
 	{
-		xoDoc d;
+		xo::Doc d;
 		TTASSERT(d.Parse(
 			"<div>"
 			"	<div>  text   </div>"
@@ -12,14 +12,14 @@ TESTFUNC(Parser)
 
 		// Pure whitespace is always stripped.
 		// This is solely in order to allow one to write a DOM string like the one above.
-		xoDomNode* div1;
-		xoDomNode* div2;
-		TTASSERT((div1 = (xoDomNode*) d.Root.ChildByIndex(0)) != nullptr);
+		xo::DomNode* div1;
+		xo::DomNode* div2;
+		TTASSERT((div1 = (xo::DomNode*) d.Root.ChildByIndex(0)) != nullptr);
 		TTASSERT(div1->ChildCount() == 1);
 
-		TTASSERT((div2 = (xoDomNode*) div1->ChildByIndex(0)) != nullptr);
+		TTASSERT((div2 = (xo::DomNode*) div1->ChildByIndex(0)) != nullptr);
 		TTASSERT(div2->ChildCount() == 1);
-		TTASSERT(xoString(div2->GetText()) == "  text   ");
+		TTASSERT(xo::String(div2->GetText()) == "  text   ");
 	}
 
 }

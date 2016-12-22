@@ -7,4 +7,4 @@ Features:
 	* Assertions can be written in DLLs that are not part of the test suite
 	* Clean up sub-processes launched by test application
 	
-For usage instructions, see TinyTest.h
+For usage instructions, see TinyTest.h, and 'example'

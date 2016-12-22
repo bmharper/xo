@@ -12,7 +12,7 @@
 
 namespace xo {
 
-String DefaultCacheDir(); // This informs Globals()->CacheDir, if it's not specified via InitParams
+XO_API String DefaultCacheDir(); // This informs Globals()->CacheDir, if it's not specified via InitParams
 
 struct FilesystemItem {
 	const char* Root;       // Directory of file
@@ -34,5 +34,5 @@ The callback must respond in the following ways
 	Return false to stop iteration of this directory
 This function returns false if an error occurred other than "no files found"
 */
-bool FindFiles(const char* dir, std::function<bool(const FilesystemItem& item)> callback);
+XO_API bool FindFiles(const char* dir, std::function<bool(const FilesystemItem& item)> callback);
 }

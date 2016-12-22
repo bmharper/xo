@@ -3,5 +3,5 @@
 namespace xo {
 
 // Return number of CPU cores
-int GetNumberOfCores();
+XO_API int GetNumberOfCores();
 }

@@ -20,7 +20,7 @@
 
 namespace xo {
 
-String DefaultCacheDir() {
+XO_API String DefaultCacheDir() {
 #if XO_PLATFORM_WIN_DESKTOP
 	wchar_t*     wpath;
 	std::wstring path;
@@ -61,7 +61,7 @@ inline double FileTimeToUnixSeconds(const FILETIME& ft) {
 	return (micro - (days_from_1601_to_1970 * microsecondsPerDay)) * (1.0 / 1000000.0);
 }
 
-bool FindFiles(const char* _dir, std::function<bool(const FilesystemItem& item)> callback) {
+XO_API bool FindFiles(const char* _dir, std::function<bool(const FilesystemItem& item)> callback) {
 	size_t dirLen = strlen(_dir);
 	if (dirLen == 0)
 		return false;

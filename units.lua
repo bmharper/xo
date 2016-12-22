@@ -310,7 +310,6 @@ local Test = Program {
 		{ "dependencies/stb_image.cpp"; Config = "win*" },
 		{ "dependencies/stb_image.c"; Config = "linux-*" },
 		"dependencies/stb_image_write.h",
-		"dependencies/Panacea/Platform/filesystem.cpp",
 	}
 }
 

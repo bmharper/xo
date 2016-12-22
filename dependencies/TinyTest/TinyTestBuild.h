@@ -11,8 +11,10 @@ TT_TestList TT_TESTS_ALL;
 #endif
 
 #ifdef _MSC_VER
+#pragma warning(push)
 #pragma warning(disable: 4530) // C++ exception handler used, but unwind semantics are not enabled. Specify /EHsc
 #pragma warning(disable: 4996) // CRT safety
+#pragma warning(disable: 28020) // Issue in the Windows 10 SDK 10240
 #endif
 
 #include <stdio.h>
@@ -37,22 +39,13 @@ TT_TestList TT_TESTS_ALL;
 #include <string>
 #include <algorithm>
 
-// PAPI defined implies that <Panacea/Panacea.h> has been included
-#ifndef PAPI
-#define PAPI
-#include <Panacea/Containers/podvec.h>
-#include <Panacea/Platform/syncprims.h>
-#include <Panacea/Platform/thread.h>
-#include <Panacea/Platform/cpu.h>
-#include <Panacea/Platform/err.cpp>
-#include <Panacea/Platform/cpu.cpp>
-#include <Panacea/Platform/syncprims.cpp>
-#include <Panacea/Platform/thread.cpp>
-#endif
-
 #define TT_UNIVERSAL_FUNC
 
 #include "TinyLib.cpp"
 #include "TinyAssert.cpp"
 #include "TinyMaster.cpp"
 #include "StackWalker.cpp"
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif

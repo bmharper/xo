@@ -17,9 +17,7 @@ Instructions
 
 4. Inside int main(int argc, char** argv), write:
 
-	int testretval = 0;
-	if (TTRun(argc, argv, &testretval)) // This function can only be called once, because it frees the test list before returning
-		return testretval;
+	return TTRun(argc, argv); // This function can only be called once, because it frees the test list before returning
 
 5. In other cpp files, write TT_TEST_FUNC(initfunc, teardown, size, testname, parallel) to define test functions, for example
 
@@ -51,6 +49,7 @@ For example:
 */
 
 #include <string>
+#include <string.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Test size classification.
@@ -120,12 +119,17 @@ bool			TTIsRunningUnderMaster();				// Return true if this process was launched 
 void			TTLog(const char* msg, ...);
 void			TTSetProcessIdle();						// Sets the process' priority to IDLE. This is just convenient if you're running tests while working on your dev machine.
 void			TTNotifySubProcess(unsigned int pid);	// Notify the test runner that you have launched a sub-process
+void			TTLaunchChildProcess(const char* cmd, const char** args);	// Helper function to launch a child process. Calls TTNotifySubProcess for you.
 unsigned int	TTGetProcessID();						// Get Process ID of this process
 std::string		TTGetProcessPath();
 void			TTSleep(unsigned int milliseconds);
 char**			TTArgs();								// Retrieve the command-line parameters that were passed in to this test specifically. Terminates with a NULL.
-void			TTSetTempDir(const char* tmp);		// Set the global test directory parameter.
+void			TTSetTempDir(const char* tmp);			// Set the global test directory parameter.
 std::string		TTGetTempDir();							// Get the global test temporary directory
+
+std::string		TT_ToString(int v);
+std::string		TT_ToString(double v);
+std::string		TT_ToString(std::string v);
 
 // Generate the filename used for IPC between the executor and the tested app
 // up: If true, then this is the channel from tested app to test harness app (aka the executor)
@@ -182,7 +186,7 @@ struct TT_Test
 	TTParallel		Parallel;
 
 	TT_Test(TTFuncBlank init, TTFuncBlank teardown, TTFuncBlank func, TTSizes size, const char* name, TTParallel parallel) : Init(init), Teardown(teardown),  Blank(func), Size(size), Name(name), Parallel(parallel) {}
-	TT_Test(const TT_Test& t) { memcpy(this, &t, sizeof(t)); }
+	TT_Test(const TT_Test& t) { *this = t; }
 
 	static int CompareName(const TT_Test* a, const TT_Test* b)
 	{
@@ -227,7 +231,7 @@ extern TT_TestList TT_TESTS_ALL;
 #define TTLOG(msg)			TTLog(msg)
 #define TTASSERT(exp)		(void)( (!!(exp)) || (TTAssertFailed(#exp, __FILE__, __LINE__, true), 0) )
 #define TTASSERTEX(exp)		(void)( (!!(exp)) || (throw TTException(#exp, __FILE__, __LINE__), 0) )
-#define TTASSEQ(a, b)		{ if (!((a) == (b)))  { TTAssertFailed( fmt("'%v' == '%v' (%v == %v)", (a), (b), #a, #b), __FILE__, __LINE__, true ); } }
+#define TTASSEQ(a, b)		{ if (!((a) == (b)))  { TTAssertFailed((std::string("'") + TT_ToString(a) + "' == '" + TT_ToString(b) + "' (" + #a + " == " + #b + ")").c_str(), __FILE__, __LINE__, true ); } }
 
 // "External Module" is typically a DLL that needs to know a little bit about its testing environment,
 // or wants to call TTASSERT.
