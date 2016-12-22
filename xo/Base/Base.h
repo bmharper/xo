@@ -150,6 +150,7 @@ typedef Mat4T<float> Mat4f;
 #include "Base/Queue.h"
 #include "Base/xoString.h"
 #include "Base/OS_Time.h"
+#include "Base/OS_IO.h"
 
 //#ifdef TEMP_ASSERT
 //#undef TEMP_ASSERT

@@ -1,14 +1,14 @@
 #include "pch.h"
 #include "../xo/xo.h"
 
-static xoStyleAttrib AttribAtPos(int pos)
+static xo::StyleAttrib AttribAtPos(int pos)
 {
-	xoStyleAttrib a;
-	a.SetSize((xoStyleCategories)(pos + 1), xoSize::Pixels((float) pos));
+	xo::StyleAttrib a;
+	a.SetSize((xo::StyleCategories)(pos + 1), xo::Size::Pixels((float) pos));
 	return a;
 }
 
-static bool EQUALS(const xoStyleAttrib& a, const xoStyleAttrib& b)
+static bool EQUALS(const xo::StyleAttrib& a, const xo::StyleAttrib& b)
 {
 	if (a.Category != b.Category) return false;
 	if (a.SubType != b.SubType) return false;
@@ -21,8 +21,8 @@ TESTFUNC(StyleSet)
 {
 	{
 		// set 0,1,1
-		xoPool pool;
-		xoStyleSet set;
+		xo::Pool pool;
+		xo::StyleSet set;
 		set.Set(AttribAtPos(0), &pool);
 		set.Set(AttribAtPos(1), &pool);
 		set.Set(AttribAtPos(1), &pool);
@@ -31,8 +31,8 @@ TESTFUNC(StyleSet)
 	}
 	{
 		// set 0,1,0
-		xoPool pool;
-		xoStyleSet set;
+		xo::Pool pool;
+		xo::StyleSet set;
 		set.Set(AttribAtPos(0), &pool);
 		set.Set(AttribAtPos(1), &pool);
 		set.Set(AttribAtPos(0), &pool);
@@ -40,17 +40,17 @@ TESTFUNC(StyleSet)
 		TTASSERT(EQUALS(set.Get(AttribAtPos(1).GetCategory()), AttribAtPos(1)));
 	}
 
-	for (int nstyle = 1; nstyle < xoCatEND; nstyle++)
+	for (int nstyle = 1; nstyle < xo::CatEND; nstyle++)
 	{
-		xoPool pool;
-		xoStyleSet set;
+		xo::Pool pool;
+		xo::StyleSet set;
 		for (int i = 0; i < nstyle; i++)
 		{
 			set.Set(AttribAtPos(i), &pool);
 			for (int j = 0; j <= i; j++)
 			{
-				xoStyleAttrib truth = AttribAtPos(j);
-				xoStyleAttrib check = set.Get(truth.GetCategory());
+				xo::StyleAttrib truth = AttribAtPos(j);
+				xo::StyleAttrib check = set.Get(truth.GetCategory());
 				TTASSERT(EQUALS(truth, check));
 			}
 		}

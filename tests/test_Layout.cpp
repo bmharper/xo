@@ -8,7 +8,7 @@
 
 TESTFUNC(Layout_BodyMargin)
 {
-	xoImageTester::DoTruthImage("body-margin", [](xoDomNode& root) {
+	xoImageTester::DoTruthImage("body-margin", [](xo::DomNode& root) {
 		root.StyleParse("margin: 20px;");
 	});
 }
