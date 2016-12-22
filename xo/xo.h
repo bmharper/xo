@@ -13,7 +13,7 @@
 #include "DocGroup.h"
 #include "Dom/DomCanvas.h"
 #include "Canvas/Canvas2D.h"
-#include "Layout/Layout3.h"
+#include "Layout/Layout.h"
 #include "Render/Renderer.h"
 #include "Render/RenderDoc.h"
 #include "Image/ImageStore.h"

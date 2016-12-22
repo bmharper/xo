@@ -5,7 +5,7 @@
 #include "../Text/GlyphCache.h"
 #include "../Text/FontStore.h"
 #include "../Base/MemPoolsAndContainers.h"
-#include "BoxLayout3.h"
+#include "BoxLayout.h"
 
 namespace xo {
 
@@ -21,9 +21,9 @@ Hidden things that would bite you if you tried to multithread this:
 that is thread safe.
 
 */
-class XO_API Layout3 {
+class XO_API Layout {
 public:
-	void Layout(const Doc& doc, RenderDomNode& root, Pool* pool);
+	void PerformLayout(const Doc& doc, RenderDomNode& root, Pool* pool);
 
 protected:
 	// Packed set of bindings between child and parent node
@@ -38,21 +38,21 @@ protected:
 		VerticalBindings VChildBaseline : 8;
 	};
 
-	struct LayoutInput3 {
+	struct LayoutInput {
 		cheapvec<int32_t>* RestartPoints; // This is IN/OUT
 		RenderDomNode*     ParentRNode;
 		Pos                ParentWidth;
 		Pos                ParentHeight;
 	};
 
-	struct LayoutOutput3 {
+	struct LayoutOutput {
 		BindingSet   Binds;
 		Pos          MarginBoxWidth;
 		Pos          MarginBoxHeight;
 		Pos          Baseline; // This is given in the coordinate system of the parent
 		RenderDomEl* RNode;
 		BreakType    Break;
-		Pos          BaselineInParent() const;
+		Pos          BaselinePlusRNodeTop() const;
 	};
 
 	enum ChunkType {
@@ -94,7 +94,7 @@ protected:
 	};
 
 	const Doc*                Doc;
-	BoxLayout3                Boxer;
+	BoxLayout                 Boxer;
 	Pool*                     Pool;
 	RenderStack               Stack;
 	FixedSizeHeap             FHeap;
@@ -109,9 +109,9 @@ protected:
 
 	void  RenderGlyphsNeeded();
 	void  LayoutInternal(RenderDomNode& root);
-	void  RunNode3(const DomNode* node, const LayoutInput3& in, LayoutOutput3& out);
-	void  RunText3(const DomText* node, const LayoutInput3& in, LayoutOutput3& out);
-	Point PositionChildFromBindings(const LayoutInput3& cin, Pos parentBaseline, LayoutOutput3& cout);
+	void  RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& out);
+	void  RunText(const DomText* node, const LayoutInput& in, LayoutOutput& out);
+	Point PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseline, LayoutOutput& cout);
 	void  GenerateTextWords(TextRunState& ts);
 	void  FinishTextRNode(TextRunState& ts, RenderDomText* rnode, size_t numChars);
 	void  OffsetTextHorz(TextRunState& ts, Pos offsetHorz, size_t numChars);

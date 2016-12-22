@@ -147,6 +147,8 @@ enum FlowContext {
 	FlowContextInject, // This object does not flow; it's children are promoted into it's parent's flow context.
 };
 
+// Bump was a concept created for <span> objects, such as "I told you <span class='highlight'>one hundred times</span> not to do that",
+// where the class inside the <span> has non-zero borders, margin, or padding.
 enum BumpStyle {
 	BumpRegular,  // Normal. Padding + Border + Margin affect surrounding objects
 	BumpHorzOnly, // Special for spans, and other things in injected flow. Their padding + border + margin don't affect vertical flow.

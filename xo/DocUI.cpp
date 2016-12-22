@@ -208,7 +208,7 @@ void DocUI::UpdateCursorLocation(const cheapvec<const RenderDomNode*>& nodeChain
 void DocUI::UpdateFocusWindow(const cheapvec<const RenderDomNode*>& nodeChain) {
 	// Find the window that should receive the focus
 	const DomNode* newFocus = nullptr;
-	for (size_t inode = nodeChain.size() - 1; inode > 0; inode--) {
+	for (size_t inode = nodeChain.size() - 1; inode != -1; inode--) {
 		const RenderDomNode* rnode = nodeChain[inode];
 		const DomNode*       node  = Doc->GetNodeByInternalID(rnode->InternalID);
 		if (node != nullptr) {

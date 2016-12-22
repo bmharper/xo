@@ -21,7 +21,7 @@ class Event;
 class OriginalEvent;
 class Image;
 class ImageStore;
-class Layout3;
+class Layout;
 class LayoutResult;
 class Pool;
 class DocGroup;

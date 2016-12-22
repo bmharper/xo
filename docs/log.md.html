@@ -606,9 +606,9 @@ in the inside of the arc are different to the widths on the outside of the arc.
 
 2016-11-29 Ubershaders
 ======================
-I am going to try combining all shaders into one ubershader. I don't see any way
-of reducing the driver state changes. One thought I had was that I could have just
-two ubershaders - one for text, and one for everything else. But if you go down
+I am going to try combining all shaders into one ubershader. I don't see any other
+way of reducing the driver state changes. One thought I had was that I could have
+just two ubershaders - one for text, and one for everything else. But if you go down
 this path, then you need to maintain a queue for the text objects, and make sure
 that you never paint over a text rectangle with a regular rectangle. Whenever you
 detect that condition, you need to flush your text queue. I imagine this could work
@@ -622,9 +622,29 @@ sorted out a lot of them, and the results look good for what I'd say is 99% of
 the types of eccentricities that you find in real-world UI corner radii. No
 doubt there will be cases where people push it to the extreme and it falls over
 (numerical precision issues manifest in just plain broken corners). Anyway,
-it's not particularly performance, but it's probably OK. The CPU setup work for
+it's not particularly performant, but it's probably OK. The CPU setup work for
 the arcs is embarrasing, but the fragment shader is just two square roots and
 some clamps, which I think is alright.
+
+2016-12-19 Ubershaders success
+==============================
+I shouldn't really declare this a success until measuring the performance, but
+my little "benchmark" project feels responsive enough. The system is definitely
+simpler if we only have one shader, and one vertex type.
+
+2016-12-20 Cleanup
+==================
+Embraced C++ namespaces. Ensured that all macros start with XO_.
+Reformat all code with clang-format (using my as-yet-unmerged changes to it, 
+https://reviews.llvm.org/D21279). Brace style changed from Allman to OTB, because
+I basically just do whatever John Carmack recommends, and I'm considering changing
+all of the new IMQS C++ code to OTB too, so that Go code, C++ code, and Typescript
+code all uses the same style.
+Got rid of lots of old dependencies that I brought with me from previous projects.
+Some could be replaced up by C++11, and other parts I brought into the 'xo' project
+into the 'Base' directory. Ideally, xo would have a very clean PAL layer, but I just
+don't have the time for that now. I don't think the PAL layer is terrible as it
+stands, but definitely a lot of room for improvement.
 
 
 <!-- Markdeep: -->
