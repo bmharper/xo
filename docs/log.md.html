@@ -646,6 +646,167 @@ into the 'Base' directory. Ideally, xo would have a very clean PAL layer, but I 
 don't have the time for that now. I don't think the PAL layer is terrible as it
 stands, but definitely a lot of room for improvement.
 
+2016-12-22 The Layout Algorithm
+===============================
+Initially, I thought that I could come up with a layout algorithm "on paper", that
+made sense, and covered all the bases, and then code it up. I just couldn't
+bring myself to do that though, because I couldn't envisage all the uses cases,
+so instead I had to evolve the algorithm in code, while trying my best to maintain
+a coherent system. This is my attempt to describe that system.
+
+DISCLAIMER
+
+I have not done the long hard miles of understanding all the intricasies
+of the various layout systems that have come before this, such as HTML [Box Inline Flexbox],
+Latex, Android, QT, WinForms, Delphi, WPF. I have only a mild understanding of them,
+and experience using some of them. One of my original goals with this project
+was to come up with a design language that took the good parts of all of those
+systems and distilled them down into a few great parts, which together formed
+a cohesive system that was simple to understand, yet capable enough to build
+complex real-world user interfaces. I haven't had enough time to realize that dream,
+so I'm pushing ahead with what I've got here, which is the third iteration of my
+layout system in this project. If, after lots of experience, we figure out the
+One True Layout System, there's always room for version 2.0. With that out of the way,
+here is the algorithm, in broad strokes:
+
+### In Broad Strokes
+
+Objects in the DOM form a tree, with the `body` node at the root of that tree.
+We walk that tree recursively, and at each node, we start a new _flow context_.
+A flow context is a box wherin we place smaller boxes, starting at the top left,
+and filling up each line from left to right, then onto the next line, etc, the way
+you'd imagine lines of text get drawn onto a page. The system has in it the DNA
+to lay objects out in different orders - ie right to left, and bottom to top, but
+so far I haven't needed it, so it hasn't been fully implemented yet.
+
+In order to flow over at the end of a line, a box needs to have
+a well defined width in order to know when you've reached the end of a line, and
+this means that you need to set it's `width` attribute in order for line wrapping to occur.
+For the root of the tree (the `body` tag), we know it's dimensions: they are the
+width and height of the OS
+window that houses our document. Nodes don't have to specify their width or height
+though, and such elements, when rendered, will never have their children flow within
+them. Instead, their children will just continue along the first horizontal line
+forever.
+
+Even if an object doesn't specify it's width or height explicitly, after rendering
+all of it's children, we DO know it's width and height, because the children expand
+the object, thereby giving it size. For example, if we need to place the nodes
+
+```
+<div>
+    <div style='width: 10px; height: 10px'></div>
+</div>
+```
+
+then the outer `div` element has no width, but because it's child has a width and
+height of 10 pixels, the outer div ends up having a width and height of 10 also.
+Keep in mind though that this calculated height can't be used in computations inside
+it's children, because our rendering is essentially a one-pass operation, so if your
+parent didn't define it's width or height explicitly, then you literally don't have
+access to it while you're being renderered.
+
+Once we have placed all the children of a node, we go back and perform _alignment_.
+Alignment occurs at the end of the rendering of each node. It is not something that spans
+different levels of the DOM. It looks only at the immediate children of a node.
+Alignment allows us to force all boxes to the top, left, right, bottom, or center.
+Our alignment rules are specified as a pair of the form `child:parent`, such as
+`left:hcenter`. The example here `left:hcenter` means that the left edge of the child
+must be aligned to the horizontal center of the parent. A more common value is `hcenter:hcenter`,
+which is used to perform horizontal centering, or `vcenter:vcenter`, which centers
+vertically. Another very common alignment rule is `baseline:baseline`, which is what
+you usually want for items containing text. Baseline is one of the vertical positions
+that you can bind to. An item's baseline alignment point is chosen as the baseline of the first
+word that appears in that node. More strictly speaking, an item's baseline is
+the baseline of the first child that has a non-null baseline. This stricter definition
+is necessary for cases such as the following:
+
+```
+<div class='bigfont'>Once</div> upon a time
+```
+
+In the above example, imagine that `Once` is written in a large font, and `upon a time`
+is written in a smaller font. We want the large and small text to align up on their
+baseline. The `div` object is not a text object, but it gets it's baseline from `Once`
+and because the `div` is the first object on that line, it defines the baseline, onto
+which `upon a time` can be aligned.
+
+### Baseline Propagation
+
+We should probably take the extra time to explain here how baselines propagate up and
+down the node hierarchy. Since the DOM is a recursive data structure, how do we decide
+who's baseline aligns up to whos? The answer is quite simple. One of the parameters
+to the `RenderNode` function is `parentBaseline`. This might be undefined, in which case
+trying to align to your parent's baseline will produce no action. However, if it is
+defined, then that is the definition `parent baseline`. That parent baseline does not
+magically propagate downwards and become the child's baseline. Instead, every node
+defines it's own internal baseline (remember, from it's first child with a non-null
+baseline), and that internal baseline becomes the `parent baseline` for the grandchildren.
+
+It is probably worth mentioning that I went through several iterations of experimenting
+with other concepts of how baseline would propagate, and you can find them in the log
+if you search for baseline. This ends up being the most sensible approach that I came
+up with, and it is also very simple and hopefully easy to understand.
+
+There are other issues that should be discussed here, such as how word boxes are
+generated, but I'd like to move onto the trickiest thing first, in case I run out of energy
+writing this document. That tricky thing is the concept of _injected flow_, and it's
+companion, _restarts_.
+
+### Injected Flow and Restarts
+
+Every node in the DOM has one of two flow modes: `inject` or `new`, as embodied by the
+tyle attributes `flow-context: inject` and `flow-context: new`.
+New flow is the thing you'd expect, and is the thing we've been
+talking about up until now. Injected flow is a special concept that was invented for
+text objects, and for `<span>` objects that surround text. The idea with injected flow
+is that such an object doesn't define it's own flow context. Instead, it places it's
+children inside the flow context of it's parent node. Imagine the following example:
+
+```
+<div>
+	Like one that on a <span class='bold-with-red-outline'>lonesome road</span> doth
+	walk in fear and dread
+</div>
+```
+
+In the above example, we want the words "lonesome road" within the span, to flow
+just as if they were the same as the words on the outside of the span. This is tricky
+to get right, especially if you imagine the case where "lonesome road" is split across
+two lines, and the style around the span specifies a rounded border. If you look at
+the HTML example "span", you'll see how HTML deals with this case, and you'll notice
+that in HTML, when a span is split across a line, it doesn't really get formatted nicely.
+Specifically, it is as though the pixels of the span get cut off at the end of the line,
+and then they start again on the next line. What we do instead, is to split the span
+up into multiple logical spans, as many necessary, due to line wrapping. The way we
+achieve this, is with the concept of restarts and injected flow.
+
+A `<span>` object has the attribute `flow-context: inject` toggled on it. What this means,
+is that conceptually, we want the `<span>` object not to create it's own flow context,
+but instead to operate within the flow context of it's parent. In practice, however,
+it ended up being easier not doing this, but instead to actually make the `<span>` object
+have it's own flow context, but to artificially limit the line length to the remaining
+line length inside which it was created. If you look at the above example, when it
+comes time to render the "lonesome road" span, the layout engine will see that the
+span object has the injected-flow style set, and it will pre-load the line box of the
+span, such that the remaining space is the length of the line, minus the length that
+was consumed by the initial words "Like one that on a". By doing this, we keep the code
+uniform, whether operating with injected flow or new flow. The next key thing, is
+what precisely happens when we hit the end of the line for the span. Imagine that
+"lonesome" is the last word to fit on the line, and "road" must wrap around. What we
+do in this case, is we issue a _restart_.
+
+When a restart occurs, we bubble back up, out of the recursive DOM tree, until
+we hit a node with `flow-context: new` (which is most nodes). When that node sees
+that a restart has been asked for, it will immediately issue a line break, and then
+descend back down into the DOM tree, but at each step of the way, each node will
+remember where it left off, and so it won't repeat the work that it already did
+on the previous walk. Instead, each node will start where it left off, but this
+time, it does so on a fresh line.
+
+It is this concept of restarts that allows us to generate nicer looking output
+for a `<span>` object that gets chopped across multiple lines. In my experience
+so far, it also makes for a fairly simple system.
 
 <!-- Markdeep: -->
 <style class="fallback">body{white-space:pre;font-family:monospace}</style>
