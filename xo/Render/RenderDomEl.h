@@ -50,8 +50,8 @@ public:
 };
 
 // This is confusing - it should perhaps be named RenderDomWords, because it
-// is at a lower level than an DomText object. This represents a bunch of words that
-// fit on a single line. An DomText object is actually represented by an RenderDomNode.
+// is at a lower level than a DomText object. This represents a bunch of words that
+// fit on a single line. A DomText object is actually represented by a RenderDomNode.
 // On the other hand, for efficiency sake, one might want to have another level of
 // object beneath this, called RenderDomWords, so that we don't redundantly store
 // [font, color, fontsize, flags] for every line of text. Probably needless worry though,

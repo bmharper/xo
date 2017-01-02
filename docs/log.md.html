@@ -808,6 +808,15 @@ It is this concept of restarts that allows us to generate nicer looking output
 for a `<span>` object that gets chopped across multiple lines. In my experience
 so far, it also makes for a fairly simple system.
 
+2017-01-02 Message Loop
+=======================
+If you find yourself tweaking timeouts to make a system responsive, you're probably
+doing it wrong, and my previous windows message loop was no exception. I was trying
+to avoid relying on a WM_PAINT to wake up the system, but that's a totally arbitrary
+and incorrect approach. WM_PAINT works well enough, and by relying on it entirely,
+I get rid of that hackish sleep mechanism, where I would switch between a "cold"
+GetMessage wait, and a "hot" PeekMessage spinloop.
+
 <!-- Markdeep: -->
 <style class="fallback">body{white-space:pre;font-family:monospace}</style>
 <script src="markdeep.min.js"></script>

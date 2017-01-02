@@ -45,13 +45,14 @@ public:
 		FlowRestart,
 	};
 	struct NodeInput {
-		InternalID InternalID;
-		Tag        Tag;
-		Box        MarginBorderPadding; // Sum of Margin, Border, and Padding boxes
-		Pos        ContentWidth;
-		Pos        ContentHeight;
-		BumpStyle  Bump;
-		bool       NewFlowContext;
+		InternalID   InternalID;
+		Tag          Tag;
+		Box          MarginBorderPadding; // Sum of Margin, Border, and Padding boxes
+		Pos          ContentWidth;
+		Pos          ContentHeight;
+		BumpStyle    Bump;
+		bool         NewFlowContext;
+		PositionType Position;
 	};
 	struct WordInput {
 		Pos Width;

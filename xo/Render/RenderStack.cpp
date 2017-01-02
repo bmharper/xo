@@ -34,11 +34,9 @@ void RenderStack::Initialize(const xo::Doc* doc, xo::Pool* pool) {
 
 	memset(Defaults, 0, sizeof(Defaults));
 	Defaults[CatColor].SetColor(CatColor, Color::RGBA(0, 0, 0, 255));
-	Defaults[CatDisplay].SetDisplay(DisplayInline);
 	Defaults[CatBackground].SetColor(CatBackground, Color::RGBA(0, 0, 0, 0));
 	//Defaults[CatBackgroundImage]
 	Defaults[CatCursor].SetCursor(CursorArrow);
-	Defaults[CatText_Align_Vertical].SetTextAlignVertical(TextAlignVerticalBaseline);
 	//Defaults[CatDummy2_UseMe]
 	//Defaults[CatDummy3_UseMe]
 	Defaults[CatMargin_Left].SetSize(CatMargin_Left, Size::Zero());

@@ -45,7 +45,6 @@ void DoBaselineAlignment(xo::Doc* doc)
 	auto root = &doc->Root;
 	root->StyleParse("padding: 10px;");
 	root->StyleParse("background: #ddd");
-	//root->StyleParse( "text-align-vertical: top" );
 	doc->ClassParse("baseline", "baseline:baseline");
 
 	if (1)
@@ -475,6 +474,13 @@ void DoTimer(xo::Doc* doc)
 	canvas->OnTimer(ontimer, 10);
 }
 
+void DoEditBox(xo::Doc* doc)
+{
+	auto edit = xo::controls::EditBox::AppendTo(&doc->Root);
+	edit->StyleParse("width: 320ep");
+	edit->SetText("ex Examples .");
+}
+
 void InitDOM(xo::Doc* doc)
 {
 	xo::DomNode* body = &doc->Root;
@@ -491,18 +497,18 @@ void InitDOM(xo::Doc* doc)
 	//DoVCenter(doc);
 	//DoTwoTextRects(doc);
 	//DoBlockMargins(doc);
-	DoLongText(doc);
+	//DoLongText(doc);
 	//DoInlineFlow(doc);
 	//DoBackupSettings(doc);
 	//DoPadding(doc);
 	//DoTextQuality(doc);
 	//DoQuadraticSplines(doc);
-	//DoTimer(doc);
+	DoTimer(doc);
+	//DoEditBox(doc);
 
 	body->OnClick([](const xo::Event& ev) -> bool {
 		xo::Trace("%f %f\n", ev.Points[0].x, ev.Points[0].y);
 		//xoGlobal()->EnableKerning = !xoGlobal()->EnableKerning;
-		//xoGlobal()->UseRect3 = !xoGlobal()->UseRect3;
 		//Trace("InternalID: %d\n", ev.Target->GetInternalID());
 		// Force a re-layout. Useful to click on the document and be able to debug the layout that occurs.
 		ev.Doc->IncVersion();

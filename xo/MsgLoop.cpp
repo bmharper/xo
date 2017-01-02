@@ -23,70 +23,38 @@ static void SetupTimerMessagesForAllDocs() {
 }
 
 XO_API void RunWin32MessageLoop() {
-	// Before HEAT_TIME_1, we sleep(1 ms), and call PeekMessage
-	// Before HEAT_TIME_2, we sleep(5 ms), and call PeekMessage
-	// After HEAT_TIME_2, we call GetMessage
-	const double HEAT_TIME_1 = 0.020;
-	const double HEAT_TIME_2 = 0.300;
-
-	double lastFrameStart = TimeAccurateSeconds();
-	double lastHeatAt     = TimeAccurateSeconds();
-
-	// Toggled when all renderers report that they have no further work to do (ie no animations playing, now or any time in the future)
-	// In that case, the only way we can have something happen is if we have an incoming message.
-	// Of course, this is NOT true for IO that is busy occurring on the UI thread.
-	// We'll have to devise a way (probably just a process-global custom window message) of causing the main loop to wake up.
-	bool renderIdle = false;
-
-	// Trying various things to get latency down to the same level as GDI, but I just can't do it.
-	//timeBeginPeriod( 5 );
-
 	while (true) {
 		SetupTimerMessagesForAllDocs();
 
-		// When idle, use GetMessage so that the OS can put us into a good sleep
-		MSG  msg;
-		bool haveMsg = true;
-		if (renderIdle && !AnyDocsDirty() && TimeAccurateSeconds() - lastHeatAt > HEAT_TIME_2) {
-			XOTRACE_OS_MSG_QUEUE("Render cold\n");
-			if (!GetMessage(&msg, NULL, 0, 0))
+		bool mustQuit = false;
+		while (true) {
+			MSG msg;
+			if (!GetMessage(&msg, NULL, 0, 0)) {
+				mustQuit = true;
 				break;
-			XOTRACE_OS_MSG_QUEUE("GetMessage returned\n");
-		} else {
-			XOTRACE_OS_MSG_QUEUE("Render hot\n");
-			haveMsg = !!PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
-		}
-
-		if (haveMsg) {
+			}
 			XOTRACE_OS_MSG_QUEUE("msg start: %x\n", msg.message);
-			if (msg.message == WM_QUIT)
-				break;
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-			XOTRACE_OS_MSG_QUEUE("msg end: %x\n", msg.message);
-			if (msg.message != WM_TIMER)
-				lastHeatAt = TimeAccurateSeconds();
+			XOTRACE_OS_MSG_QUEUE("msg end: %x. AnyDocsDirty() ? %s\n", msg.message, AnyDocsDirty() ? "yes" : "no");
+			if (!PeekMessage(&msg, nullptr, 0, 0, PM_NOREMOVE))
+				break;
 		}
+		if (mustQuit)
+			break;
 
-		double now            = TimeAccurateSeconds();
-		double nextFrameStart = lastFrameStart + 1.0 / Global()->TargetFPS;
-		if (now >= nextFrameStart || AnyDocsDirty()) {
+		if (AnyDocsDirty()) {
 			XOTRACE_OS_MSG_QUEUE("Render enter\n");
-			renderIdle     = true;
-			lastFrameStart = now;
 			for (DocGroup* dg : Global()->Docs) {
 				if (dg->IsDirty()) {
 					RenderResult rr = dg->Render();
-					if (rr != RenderResultIdle)
-						renderIdle = false;
-					dg->Wnd->ValidateWindow();
+					if (rr == RenderResultNeedMore) {
+						dg->Wnd->PostRepaintMessage();
+					} else {
+						dg->Wnd->ValidateWindow();
+					}
 				}
 			}
-		} else {
-			if (TimeAccurateSeconds() - lastHeatAt > HEAT_TIME_1)
-				SleepMS(5);
-			else
-				SleepMS(1);
 		}
 
 		// Add/remove items from the global list of windows. This only happens at Doc creation/destruction time.

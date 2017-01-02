@@ -13,8 +13,8 @@ public:
 	DomEl(Doc* doc, Tag tag, InternalID parentID = InternalIDNull);
 	virtual ~DomEl();
 
-	virtual void        SetText(const char* txt)                           = 0; // Replace all children with a single TagText child, or set internal text if 'this' is TagText.
-	virtual const char* GetText() const                                    = 0; // Reverse behaviour of SetText()
+	virtual void        SetText(const char* txt)                           = 0; // Ensure first child is TagText, and set it
+	virtual const char* GetText() const                                    = 0; // Inverse behaviour of SetText(). Returns empty string if first child is not text.
 	virtual void        CloneSlowInto(DomEl& c, uint32_t cloneFlags) const = 0;
 	virtual void        ForgetChildren()                                   = 0;
 

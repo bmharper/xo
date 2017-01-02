@@ -7,25 +7,39 @@
 namespace xo {
 
 DomNode::DomNode(xo::Doc* doc, xo::Tag tag, xo::InternalID parentID) : DomEl(doc, tag, parentID) {
-	AllEventMask = 0;
 }
 
 DomNode::~DomNode() {
+	if (!!(AllEventMask & EventDestroy)) {
+		Event ev;
+		ev.Doc  = Doc;
+		ev.Type = EventDestroy;
+		for (auto& h : Handlers) {
+			if (h.Handles(EventDestroy)) {
+				ev.Context = h.Context;
+				h.Func(ev);
+			}
+		}
+	}
 	for (size_t i = 0; i < Children.size(); i++)
 		Doc->FreeChild(Children[i]);
 	Children.clear();
 }
 
 void DomNode::SetText(const char* txt) {
-	if (Children.size() != 1 || Children[0]->GetTag() != TagText) {
-		RemoveAllChildren();
+	if (Children.size() == 0 || Children[0]->GetTag() != TagText) {
 		AddChild(TagText);
+		if (Children.size() != 1) {
+			Children.insert(0, nullptr);
+			std::swap(Children[0], Children[Children.size() - 1]);
+			Children.pop_back();
+		}
 	}
 	Children[0]->SetText(txt);
 }
 
 const char* DomNode::GetText() const {
-	if (Children.size() == 1 && Children[0]->GetTag() == TagText) {
+	if (Children.size() != 0 && Children[0]->GetTag() == TagText) {
 		return Children[0]->GetText();
 	} else {
 		return "";
@@ -63,7 +77,9 @@ DomEl* DomNode::AddChild(xo::Tag tag) {
 }
 
 DomNode* DomNode::AddNode(xo::Tag tag) {
+	// DomText is not a DomNode object, so our return type would be violated here.
 	XO_ASSERT(tag != TagText);
+
 	return static_cast<DomNode*>(AddChild(tag));
 }
 
@@ -179,17 +195,23 @@ void DomNode::RemoveClass(const char* klass) {
 		Classes.erase(index);
 }
 
-void DomNode::AddHandler(Events ev, EventHandlerF func, bool isLambda, void* context, uint32_t timerPeriodMS) {
+uint64_t DomNode::AddHandler(Events ev, EventHandlerF func, bool isLambda, void* context, uint32_t timerPeriodMS) {
+	// Fastest allowable timer is 1ms
+	if (ev == EventTimer)
+		timerPeriodMS = Max<uint32_t>(timerPeriodMS, 1);
+
 	for (size_t i = 0; i < Handlers.size(); i++) {
 		if (Handlers[i].Context == context && Handlers[i].Func == func) {
 			XO_ASSERT(isLambda == Handlers[i].IsLambda());
 			Handlers[i].Mask |= ev;
 			Handlers[i].TimerPeriodMS = timerPeriodMS;
 			RecalcAllEventMask();
-			return;
+			return Handlers[i].ID;
 		}
 	}
 	auto& h         = Handlers.add();
+	h.Parent        = this;
+	h.ID            = NextEventHandlerID++;
 	h.Context       = context;
 	h.Func          = func;
 	h.Mask          = ev;
@@ -197,23 +219,32 @@ void DomNode::AddHandler(Events ev, EventHandlerF func, bool isLambda, void* con
 	if (isLambda)
 		h.SetLambda();
 	RecalcAllEventMask();
+	return h.ID;
 }
 
-void DomNode::AddHandler(Events ev, EventHandlerLambda lambda) {
+uint64_t DomNode::AddHandler(Events ev, EventHandlerLambda lambda) {
 	EventHandlerLambda* copy = new EventHandlerLambda(lambda);
-	AddHandler(ev, EventHandler_LambdaStaticFunc, true, copy, 0);
+	return AddHandler(ev, EventHandler_LambdaStaticFunc, true, copy, 0);
 }
 
-void DomNode::AddTimerHandler(Events ev, EventHandlerLambda lambda, uint32_t periodMS) {
+uint64_t DomNode::AddTimerHandler(Events ev, EventHandlerLambda lambda, uint32_t periodMS) {
 	EventHandlerLambda* copy = new EventHandlerLambda(lambda);
-	AddHandler(ev, EventHandler_LambdaStaticFunc, true, copy, periodMS);
+	return AddHandler(ev, EventHandler_LambdaStaticFunc, true, copy, periodMS);
 }
 
-void DomNode::AddHandler(Events ev, EventHandlerF func, void* context) {
-	AddHandler(ev, func, false, context, 0);
+uint64_t DomNode::AddHandler(Events ev, EventHandlerF func, void* context) {
+	return AddHandler(ev, func, false, context, 0);
 }
 
-// Returns our fastest ticking timer event handler (or zero if none)
+void DomNode::RemoveHandler(uint64_t id) {
+	for (size_t i = 0; i < Handlers.size(); i++) {
+		if (Handlers[i].ID == id) {
+			Handlers.erase(i);
+			return;
+		}
+	}
+}
+
 uint32_t DomNode::FastestTimerMS() const {
 	uint32_t f = UINT32_MAX - 1;
 	for (const auto& h : Handlers) {
@@ -223,6 +254,19 @@ uint32_t DomNode::FastestTimerMS() const {
 		}
 	}
 	return f != UINT32_MAX - 1 ? f : 0;
+}
+
+// This function is not const, because we're going to update EventHandler.TimerLastTickMS after retrieving the list
+void DomNode::ReadyTimers(int64_t nowTicksMS, cheapvec<EventHandler*>& handlers) {
+	auto ms32 = MilliTicks_32(nowTicksMS);
+	for (auto& h : Handlers) {
+		if (h.TimerPeriodMS != 0 && ms32 - h.TimerLastTickMS > h.TimerPeriodMS)
+			handlers.push(&h);
+	}
+}
+
+bool DomNode::HasFocus() const {
+	return Doc->UI.IsFocused(InternalID);
 }
 
 void DomNode::RecalcAllEventMask() {

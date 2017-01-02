@@ -59,6 +59,7 @@ public:
 	void SetPosition(Box box, uint32_t setPosFlags);
 	Box  GetRelativeClientRect(); // Returns the client rectangle (in screen coordinates), relative to the non-client window
 	void PostCursorChangedMessage();
+	void PostRepaintMessage();
 
 	// Invalid rectangle management
 	void InvalidateRect(Box box);

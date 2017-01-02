@@ -249,7 +249,7 @@ XO_API void Initialize(const InitParams* init) {
 		Globals->CacheDir = DefaultCacheDir();
 
 	Globals->TargetFPS            = 60;
-	Globals->NumWorkerThreads     = numCPUCores;
+	Globals->NumWorkerThreads     = Min(numCPUCores, 4); // I can't think of a reason right now why you'd want lots of these
 	Globals->MaxSubpixelGlyphSize = 60;
 	Globals->PreferOpenGL         = true;
 	Globals->EnableVSync          = false;
@@ -278,7 +278,6 @@ XO_API void Initialize(const InitParams* init) {
 	// Do we round text line heights to whole pixels?
 	// We only render sub-pixel text on low resolution monitors that do not change orientation (ie desktop).
 	Globals->RoundLineHeights     = Globals->EnableSubpixelText || Globals->EpToPixel < 2.0f;
-	Globals->UseRect3             = true;
 	Globals->SnapBoxes            = true;
 	Globals->SnapSubpixelHorzText = false;
 	Globals->EnableKerning        = !Globals->EnableSubpixelText || !Globals->SnapSubpixelHorzText;
@@ -297,7 +296,7 @@ XO_API void Initialize(const InitParams* init) {
 #if XO_PLATFORM_WIN_DESKTOP
 	Initialize_Win32();
 #endif
-	Trace("xo using %d/%d processors.\n", (int) Globals->NumWorkerThreads, (int) numCPUCores);
+	Trace("xo creating %d worker threads (%d CPU cores).\n", (int) Globals->NumWorkerThreads, (int) numCPUCores);
 	for (int i = 0; i < Globals->NumWorkerThreads; i++)
 		Globals->WorkerThreads.push_back(std::thread(WorkerThreadFunc));
 }

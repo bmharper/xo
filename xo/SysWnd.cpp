@@ -260,6 +260,16 @@ void SysWnd::PostCursorChangedMessage() {
 #endif
 }
 
+void SysWnd::PostRepaintMessage() {
+#if XO_PLATFORM_WIN_DESKTOP
+	::InvalidateRect(Wnd, nullptr, false);
+#elif XO_PLATFORM_ANDROID
+#elif XO_PLATFORM_LINUX_DESKTOP
+#else
+	XO_TODO_STATIC
+#endif
+}
+
 void SysWnd::InvalidateRect(Box box) {
 	std::lock_guard<std::mutex> lock(InvalidRect_Lock);
 	InvalidRect.ExpandToFit(box);

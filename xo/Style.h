@@ -6,8 +6,7 @@ namespace xo {
 
 // The list of styles that are inherited by child nodes lives in InheritedStyleCategories
 
-// Represents a size that is zero, pixels, eye pixels, points, percent.
-// TODO: em
+// Represents a size that is zero, pixels, eye pixels, points, percent, em, ex.
 // Zero is represented as 0 pixels
 // See "layout" documentation for explanation of units.
 struct XO_API Size {
@@ -15,12 +14,22 @@ struct XO_API Size {
 		         PX,
 		         PT,
 		         EP,
+		         EM,
+		         EX,
 		         PERCENT };
 	float Val;
 	Types Type;
 
 	static Size Make(Types t, float v) {
 		Size s = {v, t};
+		return s;
+	}
+	static Size Em(float v) {
+		Size s = {v, EM};
+		return s;
+	}
+	static Size Ex(float v) {
+		Size s = {v, EX};
 		return s;
 	}
 	static Size Percent(float v) {
@@ -87,24 +96,14 @@ struct XO_API StyleBox {
 	void SetZero() { Left = Top = Right = Bottom = Size::Pixels(0); }
 };
 
-enum DisplayType {
-	DisplayBlock,
-	DisplayInline
-};
-
 enum FlowDirection {
 	FlowDirectionNormal,
-	FlowDirectionReversed
+	FlowDirectionReversed // Not implemented
 };
 
 enum FlowAxis {
-	FlowAxisVertical, // Vertical is the default
-	FlowAxisHorizontal
-};
-
-enum TextAlignVertical {
-	TextAlignVerticalBaseline, // Baseline is default
-	TextAlignVerticalTop       // This is unlikely to be useful, but having it proves that we *could* make other rules if proved useful
+	FlowAxisVertical,  // Vertical is the default
+	FlowAxisHorizontal // Not implemented
 };
 
 enum VerticalBindings {
@@ -175,7 +174,7 @@ enum StyleCategories {
 	CatNULL = 0,
 	CatColor,
 	CatFIRST = CatColor,
-	CatDisplay,
+	CatPadding_Use_Me_0,
 	CatBackground,
 	CatBackgroundImage,
 	CatText_Align_Vertical,
@@ -282,7 +281,6 @@ public:
 
 	void SetColor(StyleCategories cat, Color val) { SetU32(cat, val.u); }
 	void SetSize(StyleCategories cat, Size val) { SetWithSubtypeF(cat, val.Type, val.Val); }
-	void SetDisplay(DisplayType val) { SetU32(CatDisplay, val); }
 	void SetBorderRadius(Size val) { SetSize(CatBorderRadius, val); }
 	void SetPosition(PositionType val) { SetU32(CatPosition, val); }
 	void SetFont(FontID val) { SetU32(CatFontFamily, val); }
@@ -295,7 +293,6 @@ public:
 	void SetFlowDirectionHorizonal(FlowDirection dir) { SetU32(CatFlowDirection_Horizontal, dir); }
 	void SetFlowDirectionVertical(FlowDirection dir) { SetU32(CatFlowDirection_Vertical, dir); }
 	void SetBoxSizing(BoxSizeType type) { SetU32(CatBoxSizing, type); }
-	void SetTextAlignVertical(TextAlignVertical align) { SetU32(CatText_Align_Vertical, align); }
 	void SetLeft(HorizontalBindings bind) { SetU32(CatLeft, bind); }
 	void SetHCenter(HorizontalBindings bind) { SetU32(CatHCenter, bind); }
 	void SetRight(HorizontalBindings bind) { SetU32(CatRight, bind); }
@@ -308,7 +305,6 @@ public:
 	// Generic Set() that is used by template code
 	void Set(StyleCategories cat, Color val) { SetColor(cat, val); }
 	void Set(StyleCategories cat, Size val) { SetSize(cat, val); }
-	void Set(StyleCategories cat, DisplayType val) { SetDisplay(val); }
 	void Set(StyleCategories cat, PositionType val) { SetPosition(val); }
 	void Set(StyleCategories cat, BreakType val) { SetBreak(val); }
 	void Set(StyleCategories cat, Cursors val) { SetCursor(val); }
@@ -316,7 +312,6 @@ public:
 	void Set(StyleCategories cat, FlowAxis val) { SetFlowAxis(val); }
 	void Set(StyleCategories cat, FlowDirection val) { SetU32(cat, val); }
 	void Set(StyleCategories cat, BoxSizeType val) { SetBoxSizing(val); }
-	void Set(StyleCategories cat, TextAlignVertical val) { SetU32(cat, val); }
 	void Set(StyleCategories cat, HorizontalBindings val) { SetU32(cat, val); }
 	void Set(StyleCategories cat, VerticalBindings val) { SetU32(cat, val); }
 	void Set(StyleCategories cat, FontID val) { SetFont(val); }
@@ -331,7 +326,6 @@ public:
 	StyleCategories    GetCategory() const { return (StyleCategories) Category; }
 	Size               GetSize() const { return Size::Make((Size::Types) SubType, ValF); }
 	Color              GetColor() const { return Color::Make(ValU32); }
-	DisplayType        GetDisplayType() const { return (DisplayType) ValU32; }
 	PositionType       GetPositionType() const { return (PositionType) ValU32; }
 	BreakType          GetBreakType() const { return (BreakType) ValU32; }
 	bool               GetCanFocus() const { return ValU32 != 0; }
@@ -342,7 +336,6 @@ public:
 	FlowDirection      GetFlowDirectionMajor() const { return (FlowDirection) ValU32; }
 	FlowDirection      GetFlowDirectionMinor() const { return (FlowDirection) ValU32; }
 	BoxSizeType        GetBoxSizing() const { return (BoxSizeType) ValU32; }
-	TextAlignVertical  GetTextAlignVertical() const { return (TextAlignVertical) ValU32; }
 	HorizontalBindings GetHorizontalBinding() const { return (HorizontalBindings) ValU32; }
 	VerticalBindings   GetVerticalBinding() const { return (VerticalBindings) ValU32; }
 	BumpStyle          GetBump() const { return (BumpStyle) ValU32; }
@@ -530,7 +523,6 @@ protected:
 	ohash::map<String, int> NameToIndex;
 };
 
-XO_API bool ParseDisplayType(const char* s, size_t len, DisplayType& t);
 XO_API bool ParsePositionType(const char* s, size_t len, PositionType& t);
 XO_API bool ParseBreakType(const char* s, size_t len, BreakType& t);
 XO_API bool ParseCursor(const char* s, size_t len, Cursors& t);
@@ -538,7 +530,6 @@ XO_API bool ParseFlowContext(const char* s, size_t len, FlowContext& t);
 XO_API bool ParseFlowAxis(const char* s, size_t len, FlowAxis& t);
 XO_API bool ParseFlowDirection(const char* s, size_t len, FlowDirection& t);
 XO_API bool ParseBoxSize(const char* s, size_t len, BoxSizeType& t);
-XO_API bool ParseTextAlignVertical(const char* s, size_t len, TextAlignVertical& t);
 XO_API bool ParseHorizontalBinding(const char* s, size_t len, HorizontalBindings& t);
 XO_API bool ParseVerticalBinding(const char* s, size_t len, VerticalBindings& t);
 XO_API bool ParseBump(const char* s, size_t len, BumpStyle& t);

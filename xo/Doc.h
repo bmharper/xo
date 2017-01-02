@@ -50,9 +50,10 @@ public:
 	void     NodeGotTimer(InternalID node);
 	void     NodeLostTimer(InternalID node);
 	uint32_t FastestTimerMS();
+	void     ReadyTimers(int64_t nowTicksMS, cheapvec<EventHandler*>& handlers);
 
-	void ChildAdded(DomEl* el);
 	//void				ChildAddedFromDocumentClone( DomEl* el );
+	void           ChildAdded(DomEl* el);
 	void           ChildRemoved(DomEl* el);
 	void           SetChildModified(InternalID id);
 	size_t         ChildByInternalIDListSize() const { return ChildByInternalID.size(); }
@@ -74,5 +75,6 @@ protected:
 
 	void ResetInternalIDs();
 	void InitializeDefaultTagStyles();
+	void InitializeDefaultControls();
 };
 }

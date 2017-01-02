@@ -34,8 +34,29 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 	if (layout == nullptr)
 		return;
 
-	if (BubbleEvent(ev, layout))
-		Doc->IncVersion();
+	switch (ev.Type) {
+	case EventTimer: {
+		int64_t                 nowTicksMS    = MilliTicks();
+		uint32_t                nowTicksMS_32 = MilliTicks_32(nowTicksMS);
+		cheapvec<EventHandler*> handlers;
+		Doc->ReadyTimers(nowTicksMS, handlers);
+		Event localEv = ev;
+		for (auto h : handlers) {
+			localEv.Context    = h->Context;
+			bool keepAlive     = h->Func(localEv);
+			h->TimerLastTickMS = nowTicksMS_32;
+			if (!keepAlive) {
+				h->Parent->RemoveHandler(h->ID);
+			}
+		}
+		if (handlers.size() != 0)
+			Doc->IncVersion();
+		break;
+	}
+	default:
+		if (BubbleEvent(ev, layout))
+			Doc->IncVersion();
+	}
 }
 
 void DocUI::CloneSlowInto(DocUI& c) const {

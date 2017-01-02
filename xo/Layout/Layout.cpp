@@ -128,6 +128,7 @@ void Layout::RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& o
 	boxIn.MarginBorderPadding = margin.PiecewiseSum(border).PiecewiseSum(padding);
 	boxIn.NewFlowContext      = Stack.Get(CatFlowContext).GetFlowContext() == FlowContextNew || node->GetTag() == TagBody; // Body MUST be a new flow context
 	boxIn.Bump                = Stack.Get(CatBump).GetBump();
+	boxIn.Position            = Stack.Get(CatPosition).GetPositionType();
 
 	cheapvec<int32_t> myRestartPoints;
 
@@ -615,6 +616,24 @@ Pos Layout::ComputeDimension(Pos container, Size size) {
 	case Size::PX: return RealToPos(size.Val);
 	case Size::PT: return RealToPos(size.Val * PtToPixel);
 	case Size::EP: return RealToPos(size.Val * EpToPixel);
+	case Size::EM:
+	case Size::EX: {
+		FontID      fontID         = Stack.Get(CatFontFamily).GetFont();
+		const Font* font           = Fonts.GetByFontID(fontID);
+		StyleAttrib fontSizeAttrib = Stack.Get(CatFontSize);
+		Pos         fontHeight;
+		Size        fontSizeVal = fontSizeAttrib.GetSize();
+		if (fontSizeVal.Type == Size::EM || fontSizeVal.Type == Size::EX) {
+			// infinitely recursive, so we forbid this
+			fontHeight = 0;
+		} else {
+			fontHeight = ComputeDimension(container, fontSizeVal);
+		}
+		// the EM and EX metrics we use here are intended to be consistent with HTML
+		int32_t imetric = size.Type == Size::EX ? font->LinearXHeight_x256 : font->Ascender_x256;
+		float   metric  = (float) imetric / 256.0f;
+		return PosMul(RealToPos(size.Val * metric), fontHeight);
+	}
 	case Size::PERCENT:
 		if (container == PosNULL)
 			return PosNULL;

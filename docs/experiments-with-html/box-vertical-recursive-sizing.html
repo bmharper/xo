@@ -1,11 +1,11 @@
 <!DOCTYPE HTML>
 <head>
 </head>
-<!-- We have two outer boxes with unspecified vertical size. Their vertical size can only be calculated by
-summing up the sizes of the children. Does the browser do this? It needs to in order to be able to align
-a box by top or bottom -->
 <body style="font-size: 20px;">
-	<div style="width: 500px; background-color: #ddd">
+	<!-- We have two outer boxes with unspecified vertical size. Their vertical size can only be calculated by
+	summing up the sizes of the children. Does the browser do this? It needs to in order to be able to align
+	a box by top or bottom -->
+	<div style="width: 500px; background-color: #ddd; margin: 10px">
 		<div style="vertical-align: top; display: inline-block;">
 			<div style="width: 30px; height: 30px;">1</div>
 			<div style="width: 30px; height: 30px;">2</div>
@@ -36,8 +36,23 @@ a box by top or bottom -->
 			<div>The quick brown fox jumps over the lazy</div>
 		</div>
 	</div>
+	<!-- Conclusion: Yes.
+	Notice how the block with "vertical-align: bottom" first has to lay out its children before
+	it can know how high it is.
+	-->
+
+	<!-- The following test is checking whether 'height: 100%' works for objects who's parents
+	height is undefined.
+	-->
+	<div style="width: 500px; background-color: #ddd; margin: 10px">
+		<div>Hello undefined height<div style='display: inline-block; background-color: #d00; width: 2px; height: 100%'></div></div>
+		<div style='height: 25px'>Hello defined height<div style='display: inline-block; background-color: #d00; width: 2px; height: 100%'></div></div>
+	</div>
+	<!-- Conclusion: No.
+	Notice how, when our parent doesn't have an explicit height, specifying height: 100% is meaningless, so the red bar
+	doesn't appear on the top line. This was an attempt to define the height of the caret inside an edit box,
+	and my conclusion here is that one should use an "em" height to define the caret, or maybe there's even a caret
+	glyph. Anyway, that specific use case aside, if one wanted to make height: X% work, in the presence of an undefined
+	parent height, you end up with a recursive layout problem, which we choose to avoid.
+	-->
 </body>
-<!-- Conclusion: Yes.
-Notice how the block with "vertical-align: bottom" first has to lay out its children before
-it can know how high it is.
--->

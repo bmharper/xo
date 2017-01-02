@@ -198,14 +198,18 @@ void DocGroup::ProcessEvent(Event& ev) {
 
 	LayoutResult* layout = RenderDoc->AcquireLatestLayout();
 
-	Cursors oldCursor = Doc->UI.GetCursor();
+	Cursors oldCursor  = Doc->UI.GetCursor();
+	auto    oldVersion = Doc->GetVersion();
 
 	Doc->UI.InternalProcessEvent(ev, layout);
 
 	// Get the main thread to update it's cursor now
 	if (Doc->UI.GetCursor() != oldCursor) {
-		auto blah = Doc->UI.GetCursor();
 		Wnd->PostCursorChangedMessage();
+	}
+
+	if (Doc->GetVersion() != oldVersion) {
+		Wnd->PostRepaintMessage();
 	}
 
 	RenderDoc->ReleaseLayout(layout);

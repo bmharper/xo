@@ -20,6 +20,7 @@
 #include "Image/Image.h"
 #include "SysWnd.h"
 #include "Event.h"
+#include "Controls/EditBox.h"
 
 #ifdef _WIN32
 #pragma warning(pop)

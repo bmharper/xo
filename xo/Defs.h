@@ -83,6 +83,7 @@ inline double  PosToDouble(int32_t pos) { return pos * (1.0 / (1 << PosShift)); 
 inline int32_t PosRound(int32_t pos) { return pos + (1 << (PosShift - 1)) & ~PosMask; }
 inline int32_t PosRoundDown(int32_t pos) { return pos & ~PosMask; }
 inline int32_t PosRoundUp(int32_t pos) { return pos + ((1 << PosShift) - 1) & ~PosMask; }
+inline int32_t PosMul(int32_t a, int32_t b) { return (a * b) >> PosShift; }
 inline float   Round(float real) { return floor(real + 0.5f); }
 template <typename T>
 int Sign(T real) {
@@ -422,7 +423,6 @@ struct GlobalStruct {
 	bool EnableSRGBFramebuffer; // Enable sRGB framebuffer (implies linear blending)
 	bool EnableKerning;         // Enable kerning on text
 	bool RoundLineHeights;      // Round text line heights to integer amounts, so that text line separation is not subject to sub-pixel positioning differences.
-	bool UseRect3;              // Use 3rd attempt at box shader
 	bool SnapBoxes;             // Round certain boxes up to integer pixels.
 	                            // From the perspective of having the exact same layout on multiple devices, it seems desirable to operate
 	                            // in subpixel coordinates always. However, this ends up producing ugly visuals, for example when

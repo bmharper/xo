@@ -6,6 +6,7 @@
 #include "CloneHelpers.h"
 #include "Style.h"
 #include "Dom/DomCanvas.h"
+#include "Controls/EditBox.h"
 
 namespace xo {
 
@@ -16,6 +17,7 @@ Doc::Doc()
 	ClassStyles.AddDummyStyleZero();
 	ResetInternalIDs();
 	InitializeDefaultTagStyles();
+	InitializeDefaultControls();
 }
 
 Doc::~Doc() {
@@ -148,7 +150,7 @@ DomEl* Doc::AllocChild(Tag tag, InternalID parentID) {
 }
 
 void Doc::FreeChild(const DomEl* el) {
-	// Same as AllocChild, all DOM elements must be deleted here
+	// As the inverse of AllocChild, all DOM elements must be deleted by this function
 	delete el;
 }
 
@@ -174,6 +176,14 @@ uint32_t Doc::FastestTimerMS() {
 			fastest = Min(fastest, t);
 	}
 	return fastest != UINT32_MAX - 1 ? fastest : 0;
+}
+
+// Returns all nodes that have timers which have elapsed
+void Doc::ReadyTimers(int64_t nowTicksMS, cheapvec<EventHandler*>& handlers) {
+	for (InternalID it : NodesWithTimers) {
+		DomNode* node = GetNodeByInternalIDMutable(it);
+		node->ReadyTimers(nowTicksMS, handlers);
+	}
 }
 
 void Doc::ChildAdded(DomEl* el) {
@@ -272,13 +282,17 @@ void Doc::InitializeDefaultTagStyles() {
 
 	TagStyles[TagBody].Parse("background: #fff; width: 100%; height: 100%; box-sizing: margin; cursor: arrow", this);
 	TagStyles[TagBody].Set(afont);
-	TagStyles[TagCanvas].Parse("background: #fff", this);
 	TagStyles[TagDiv].Parse("baseline:baseline;", this);
 	// Setting cursor: text on <lab> is amusing, and it is the default in HTML, but not the right default for general-purpose UI.
 	// If this were true here also, then it would imply that all text on a page is selectable.
 	TagStyles[TagLab].Parse("baseline:baseline", this);
 	TagStyles[TagSpan].Parse("flow-context: inject; baseline: baseline; bump: horizontal", this);
+	TagStyles[TagCanvas].Parse("background: #fff", this);
 
 	static_assert(TagCanvas == TagEND - 1, "add default style for new tag");
+}
+
+void Doc::InitializeDefaultControls() {
+	controls::EditBox::InitializeStyles(this);
 }
 }

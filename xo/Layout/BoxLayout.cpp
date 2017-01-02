@@ -83,6 +83,7 @@ BoxLayout::FlowResult BoxLayout::AddWord(const WordInput& in, Box& marginBox) {
 	nin.NewFlowContext      = true;
 	nin.Tag                 = Tag_DummyWord;
 	nin.Bump                = BumpRegular; // should have no effect, because margins,border,padding are all zero
+	nin.Position            = PositionStatic;
 	BeginNode(nin);
 	// Words are always inside an injected-flow context. We cannot rely on EndNode()'s logic
 	// of determining the flow context, because words aren't added inside a special "text"
@@ -159,7 +160,9 @@ BoxLayout::FlowResult BoxLayout::EndNodeInternal(Box& marginBox, bool insideInje
 	FlowStates.Pop();
 	flow = nullptr;
 
-	if (!WaitingForRestart && insideInjectedFlow && WouldFlow(ns->Input.ContentWidth)) {
+	bool isAbsoluteOrFixed = ns->Input.Position == PositionAbsolute || ns->Input.Position == PositionFixed;
+
+	if (!WaitingForRestart && insideInjectedFlow && !isAbsoluteOrFixed && WouldFlow(ns->Input.ContentWidth)) {
 		// Bail out. The caller is going to have to unwind his stack out to the nearest ancestor
 		// that defines its own flow. That ancestor is going to have to create another copy of the
 		// child that it was busy with, but this new child will end up on a new line.
@@ -201,7 +204,11 @@ void BoxLayout::Flow(const NodeState& ns, FlowState& flow, Box& marginBox) {
 	if (!doHorzBump)
 		widthForFlow = marginBoxWidth - ns.Input.MarginBorderPadding.Left + ns.Input.MarginBorderPadding.Right;
 
-	if (!WaitingForRestart && MustFlow(flow, widthForFlow))
+	bool isAbsoluteOrFixed = ns.Input.Position == PositionAbsolute || ns.Input.Position == PositionFixed;
+	if (isAbsoluteOrFixed)
+		int abc = 123;
+
+	if (!WaitingForRestart && !isAbsoluteOrFixed && MustFlow(flow, widthForFlow))
 		NewLine(flow);
 
 	marginBox.Left   = flow.PosMinor;
@@ -227,8 +234,10 @@ void BoxLayout::Flow(const NodeState& ns, FlowState& flow, Box& marginBox) {
 		bottom = marginBox.Bottom - ns.Input.MarginBorderPadding.Bottom;
 	}
 
-	flow.PosMinor  = right;
-	flow.HighMajor = Max(flow.HighMajor, bottom);
+	if (ns.Input.Position == PositionStatic || ns.Input.Position == PositionRelative) {
+		flow.PosMinor  = right;
+		flow.HighMajor = Max(flow.HighMajor, bottom);
+	}
 }
 
 void BoxLayout::NewLine(FlowState& flow) {

@@ -59,51 +59,62 @@ public:
 	void RemoveClass(const char* klass);
 
 	// Events
-	void     AddHandler(Events ev, EventHandlerF func, void* context = NULL);
-	void     AddHandler(Events ev, EventHandlerLambda lambda);
+	// An event handler has a 64-bit ID that is specific to that DOM node.
+	// You can use that ID to remove the event handler again.
+	uint64_t AddHandler(Events ev, EventHandlerF func, void* context = NULL);
+	uint64_t AddHandler(Events ev, EventHandlerLambda lambda);
+	void     RemoveHandler(uint64_t id);
 	bool     HandlesEvent(Events ev) const { return !!(AllEventMask & ev); }
-	uint32_t FastestTimerMS() const;
+	uint32_t FastestTimerMS() const;                                             // Returns the period of our fastest ticking timer event (or zero if none)
+	void     ReadyTimers(int64_t nowTicksMS, cheapvec<EventHandler*>& handlers); // Fetch the list of timer events that are ready to run
+	bool     HasFocus() const;                                                   // Return true if this node has the keyboard focus
 
 	// It is tempting to use macros to generate these event handler functions,
 	// but the intellisense experience is so much worse that I avoid it.
 	// These functions exist purely for discoverability, because one can already achieve
 	// the same action by using the generic AddHandler().
 
-	void OnWindowSize(EventHandlerF func, void* context) { AddHandler(EventWindowSize, func, context); }
-	void OnTimer(EventHandlerF func, void* context, uint32_t periodMS) { AddHandler(EventTimer, func, false, context, periodMS); }
-	void OnGetFocus(EventHandlerF func, void* context) { AddHandler(EventGetFocus, func, context); }
-	void OnLoseFocus(EventHandlerF func, void* context) { AddHandler(EventLoseFocus, func, context); }
-	void OnTouch(EventHandlerF func, void* context) { AddHandler(EventTouch, func, context); }
-	void OnClick(EventHandlerF func, void* context) { AddHandler(EventClick, func, context); }
-	void OnDblClick(EventHandlerF func, void* context) { AddHandler(EventDblClick, func, context); }
-	void OnMouseMove(EventHandlerF func, void* context) { AddHandler(EventMouseMove, func, context); }
-	void OnMouseEnter(EventHandlerF func, void* context) { AddHandler(EventMouseEnter, func, context); }
-	void OnMouseLeave(EventHandlerF func, void* context) { AddHandler(EventMouseLeave, func, context); }
-	void OnMouseDown(EventHandlerF func, void* context) { AddHandler(EventMouseDown, func, context); }
-	void OnMouseUp(EventHandlerF func, void* context) { AddHandler(EventMouseUp, func, context); }
+	// Timer event handlers are special. If a timer event handler returns false, then the
+	// timer event is cancelled.
 
-	void OnWindowSize(EventHandlerLambda lambda) { AddHandler(EventWindowSize, lambda); }
-	void OnTimer(EventHandlerLambda lambda, uint32_t periodMS) { AddTimerHandler(EventTimer, lambda, periodMS); }
-	void OnGetFocus(EventHandlerLambda lambda) { AddHandler(EventGetFocus, lambda); }
-	void OnLoseFocus(EventHandlerLambda lambda) { AddHandler(EventLoseFocus, lambda); }
-	void OnTouch(EventHandlerLambda lambda) { AddHandler(EventTouch, lambda); }
-	void OnClick(EventHandlerLambda lambda) { AddHandler(EventClick, lambda); }
-	void OnDblClick(EventHandlerLambda lambda) { AddHandler(EventDblClick, lambda); }
-	void OnMouseMove(EventHandlerLambda lambda) { AddHandler(EventMouseMove, lambda); }
-	void OnMouseEnter(EventHandlerLambda lambda) { AddHandler(EventMouseEnter, lambda); }
-	void OnMouseLeave(EventHandlerLambda lambda) { AddHandler(EventMouseLeave, lambda); }
-	void OnMouseDown(EventHandlerLambda lambda) { AddHandler(EventMouseDown, lambda); }
-	void OnMouseUp(EventHandlerLambda lambda) { AddHandler(EventMouseUp, lambda); }
+	uint64_t OnWindowSize(EventHandlerF func, void* context) { return AddHandler(EventWindowSize, func, context); }
+	uint64_t OnTimer(EventHandlerF func, void* context, uint32_t periodMS) { return AddHandler(EventTimer, func, false, context, periodMS); }
+	uint64_t OnGetFocus(EventHandlerF func, void* context) { return AddHandler(EventGetFocus, func, context); }
+	uint64_t OnLoseFocus(EventHandlerF func, void* context) { return AddHandler(EventLoseFocus, func, context); }
+	uint64_t OnTouch(EventHandlerF func, void* context) { return AddHandler(EventTouch, func, context); }
+	uint64_t OnClick(EventHandlerF func, void* context) { return AddHandler(EventClick, func, context); }
+	uint64_t OnDblClick(EventHandlerF func, void* context) { return AddHandler(EventDblClick, func, context); }
+	uint64_t OnMouseMove(EventHandlerF func, void* context) { return AddHandler(EventMouseMove, func, context); }
+	uint64_t OnMouseEnter(EventHandlerF func, void* context) { return AddHandler(EventMouseEnter, func, context); }
+	uint64_t OnMouseLeave(EventHandlerF func, void* context) { return AddHandler(EventMouseLeave, func, context); }
+	uint64_t OnMouseDown(EventHandlerF func, void* context) { return AddHandler(EventMouseDown, func, context); }
+	uint64_t OnMouseUp(EventHandlerF func, void* context) { return AddHandler(EventMouseUp, func, context); }
+	uint64_t OnDestroy(EventHandlerF func, void* context) { return AddHandler(EventDestroy, func, context); }
+
+	uint64_t OnWindowSize(EventHandlerLambda lambda) { return AddHandler(EventWindowSize, lambda); }
+	uint64_t OnTimer(EventHandlerLambda lambda, uint32_t periodMS) { return AddTimerHandler(EventTimer, lambda, periodMS); }
+	uint64_t OnGetFocus(EventHandlerLambda lambda) { return AddHandler(EventGetFocus, lambda); }
+	uint64_t OnLoseFocus(EventHandlerLambda lambda) { return AddHandler(EventLoseFocus, lambda); }
+	uint64_t OnTouch(EventHandlerLambda lambda) { return AddHandler(EventTouch, lambda); }
+	uint64_t OnClick(EventHandlerLambda lambda) { return AddHandler(EventClick, lambda); }
+	uint64_t OnDblClick(EventHandlerLambda lambda) { return AddHandler(EventDblClick, lambda); }
+	uint64_t OnMouseMove(EventHandlerLambda lambda) { return AddHandler(EventMouseMove, lambda); }
+	uint64_t OnMouseEnter(EventHandlerLambda lambda) { return AddHandler(EventMouseEnter, lambda); }
+	uint64_t OnMouseLeave(EventHandlerLambda lambda) { return AddHandler(EventMouseLeave, lambda); }
+	uint64_t OnMouseDown(EventHandlerLambda lambda) { return AddHandler(EventMouseDown, lambda); }
+	uint64_t OnMouseUp(EventHandlerLambda lambda) { return AddHandler(EventMouseUp, lambda); }
+	uint64_t OnDestroy(EventHandlerLambda lambda) { return AddHandler(EventDestroy, lambda); }
 
 protected:
-	uint32_t               AllEventMask;
+	uint64_t               NextEventHandlerID = 1;
+	uint32_t               AllEventMask       = 0;
 	Style                  Style; // Styles that override those referenced by the Tag and the Classes.
 	cheapvec<EventHandler> Handlers;
 	cheapvec<DomEl*>       Children;
 	cheapvec<StyleClassID> Classes; // Classes of styles
 
-	void RecalcAllEventMask();
-	void AddHandler(Events ev, EventHandlerF func, bool isLambda, void* context, uint32_t timerPeriodMS);
-	void AddTimerHandler(Events ev, EventHandlerLambda lambda, uint32_t periodMS);
+	void     RecalcAllEventMask();
+	uint64_t AddHandler(Events ev, EventHandlerF func, bool isLambda, void* context, uint32_t timerPeriodMS);
+	uint64_t AddTimerHandler(Events ev, EventHandlerLambda lambda, uint32_t periodMS);
 };
 }

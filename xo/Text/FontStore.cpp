@@ -168,8 +168,9 @@ FontID FontStore::Insert_Internal(const Font& font) {
 
 void FontStore::LoadFontConstants(Font& font) {
 	uint32_t ftflags  = FT_LOAD_LINEAR_DESIGN;
+	int32_t  refSize  = 100;
 	FT_UInt  iFTGlyph = FT_Get_Char_Index(font.FTFace, 32);
-	FT_Error e        = FT_Set_Pixel_Sizes(font.FTFace, 100, 100);
+	FT_Error e        = FT_Set_Pixel_Sizes(font.FTFace, refSize, refSize);
 	XO_ASSERT(e == 0);
 	e = FT_Load_Glyph(font.FTFace, iFTGlyph, ftflags);
 	if (e != 0) {
@@ -178,6 +179,17 @@ void FontStore::LoadFontConstants(Font& font) {
 	} else {
 		font.LinearHoriAdvance_Space_x256 = EM_TO_256(font.FTFace->glyph->linearHoriAdvance);
 	}
+
+	iFTGlyph = FT_Get_Char_Index(font.FTFace, 'x');
+	XO_ASSERT(e == 0);
+	e = FT_Load_Glyph(font.FTFace, iFTGlyph, ftflags);
+	if (e != 0) {
+		Trace("Failed to load glyph for character %d (%d)\n", 'x', iFTGlyph);
+		font.LinearXHeight_x256 = 0;
+	} else {
+		font.LinearXHeight_x256 = font.FTFace->glyph->metrics.height * (256 / 64) / refSize;
+	}
+
 	font.LineHeight_x256 = EM_TO_256(font.FTFace->height);
 	font.Ascender_x256   = EM_TO_256(font.FTFace->ascender);
 	font.Descender_x256  = EM_TO_256(font.FTFace->descender);

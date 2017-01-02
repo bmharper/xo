@@ -15,6 +15,7 @@ public:
 	String   Facename;
 	FT_Face  FTFace;
 	int32_t  LinearHoriAdvance_Space_x256; // How much does character 32 advance?
+	int32_t  LinearXHeight_x256;           // Height of the 'x' character
 	int32_t  LineHeight_x256;              // Recommended spacing between consecutive lines
 	int32_t  Ascender_x256;                // Ascender
 	int32_t  Descender_x256;               // Descender

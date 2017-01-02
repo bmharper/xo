@@ -4,7 +4,7 @@
 namespace xo {
 
 // It will be good if we can keep these inside 32 bits, for easy masking of handlers.
-// If not, just use as many 32-bit words as necessary. Probably fine by now to use 64-bit words actually...
+// If not, just use as many 64-bit words as necessary.
 enum Events {
 	EventWindowSize = 1,
 	EventTimer      = 2,
@@ -18,6 +18,7 @@ enum Events {
 	EventMouseLeave = 512,
 	EventMouseDown  = 1024,
 	EventMouseUp    = 2048,
+	EventDestroy    = 4096, // DOM node is being removed from document
 };
 
 enum MouseButton {
@@ -69,11 +70,14 @@ enum EventHandlerFlags {
 
 class XO_API EventHandler {
 public:
-	uint32_t      Mask          = 0;
-	uint32_t      Flags         = 0;
-	uint32_t      TimerPeriodMS = 0; // Only applicable to Timer event handlers
-	void*         Context       = nullptr;
-	EventHandlerF Func          = nullptr;
+	DomNode*      Parent          = nullptr; // Not ordinarily needed, but convenient so that we can pass just an EventHandler around, and know it's parent (specifically for removing a timer event)
+	uint64_t      ID              = 0;
+	uint32_t      Mask            = 0;
+	uint32_t      Flags           = 0;
+	uint32_t      TimerPeriodMS   = 0; // Only applicable to Timer event handlers
+	uint32_t      TimerLastTickMS = 0; // Only applicable to Timer event handlers. Time in xo::MilliTicks() when we last ticked, truncated to uint32.
+	void*         Context         = nullptr;
+	EventHandlerF Func            = nullptr;
 
 	EventHandler();
 	~EventHandler();

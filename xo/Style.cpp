@@ -63,8 +63,10 @@ static int FindSpaces(const char* s, size_t len, int (&spaces)[10]) {
 }
 
 bool Size::Parse(const char* s, size_t len, Size& v) {
-	// 1.23px
+	// 1.23em
 	// 1.23ep
+	// 1.23ex
+	// 1.23px
 	// 1.23pt
 	// 1.23%
 	// 0
@@ -103,6 +105,13 @@ bool Size::Parse(const char* s, size_t len, Size& v) {
 			}
 		} else if (s[nondig] == 'e' && len - nondig >= 2 && s[nondig + 1] == 'p') {
 			x.Type = Size::EP;
+		} else if (s[nondig] == 'e' && len - nondig >= 2 && s[nondig + 1] == 'm') {
+			x.Type = Size::EM;
+		} else if (s[nondig] == 'e' && len - nondig >= 2 && s[nondig + 1] == 'x') {
+			x.Type = Size::EX;
+		} else {
+			ParseFail("Parse failed, invalid size: %.*s\n", (int) len, s);
+			return false;
 		}
 	}
 	v = x;
@@ -350,7 +359,6 @@ bool Style::Parse(const char* t, size_t maxLen, Doc* doc) {
 			else if (MATCH(t, startk, eq, "height"))		            { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatHeight, *this); }
 			else if (MATCH(t, startk, eq, "padding"))		            { ok = ParseCompound(TSTART, TLEN, &StyleBox::Parse, CatPadding_Left, *this); }
 			else if (MATCH(t, startk, eq, "margin"))		            { ok = ParseCompound(TSTART, TLEN, &StyleBox::Parse, CatMargin_Left, *this); }
-			else if (MATCH(t, startk, eq, "display"))		            { ok = ParseSingleAttrib(TSTART, TLEN, &ParseDisplayType, CatDisplay, *this); }
 			else if (MATCH(t, startk, eq, "position"))		            { ok = ParseSingleAttrib(TSTART, TLEN, &ParsePositionType, CatPosition, *this); }
 			else if (MATCH(t, startk, eq, "border"))		            { ok = ParseDirect(TSTART, TLEN, &ParseBorder, *this); }
 			else if (MATCH(t, startk, eq, "border-radius"))		        { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatBorderRadius, *this); }
@@ -368,7 +376,6 @@ bool Style::Parse(const char* t, size_t maxLen, Doc* doc) {
 			else if (MATCH(t, startk, eq, "box-sizing"))                { ok = ParseSingleAttrib(TSTART, TLEN, &ParseBoxSize, CatBoxSizing, *this); }
 			else if (MATCH(t, startk, eq, "font-size"))                 { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatFontSize, *this); }
 			else if (MATCH(t, startk, eq, "font-family"))               { ok = ParseSingleAttrib(TSTART, TLEN, &ParseFontFamily, CatFontFamily, *this); }
-			else if (MATCH(t, startk, eq, "text-align-vertical"))       { ok = ParseSingleAttrib(TSTART, TLEN, &ParseTextAlignVertical, CatText_Align_Vertical, *this); }
 			else if (MATCH(t, startk, eq, "left"))                      { ok = ParseSingleAttrib(TSTART, TLEN, &ParseHorizontalBinding, CatLeft, *this); }
 			else if (MATCH(t, startk, eq, "hcenter"))                   { ok = ParseSingleAttrib(TSTART, TLEN, &ParseHorizontalBinding, CatHCenter, *this); }
 			else if (MATCH(t, startk, eq, "right"))                     { ok = ParseSingleAttrib(TSTART, TLEN, &ParseHorizontalBinding, CatRight, *this); }
@@ -742,18 +749,6 @@ void StyleTable::CloneFastInto(StyleTable& c, Pool* pool) const {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-XO_API bool ParseDisplayType(const char* s, size_t len, DisplayType& t) {
-	if (MATCH(s, 0, len, "block")) {
-		t = DisplayBlock;
-		return true;
-	}
-	if (MATCH(s, 0, len, "inline")) {
-		t = DisplayInline;
-		return true;
-	}
-	return false;
-}
-
 XO_API bool ParsePositionType(const char* s, size_t len, PositionType& t) {
 	if (MATCH(s, 0, len, "static")) {
 		t = PositionStatic;
@@ -857,18 +852,6 @@ XO_API bool ParseBoxSize(const char* s, size_t len, BoxSizeType& t) {
 	}
 	if (MATCH(s, 0, len, "margin")) {
 		t = BoxSizeMargin;
-		return true;
-	}
-	return false;
-}
-
-XO_API bool ParseTextAlignVertical(const char* s, size_t len, TextAlignVertical& t) {
-	if (MATCH(s, 0, len, "baseline")) {
-		t = TextAlignVerticalBaseline;
-		return true;
-	}
-	if (MATCH(s, 0, len, "top")) {
-		t = TextAlignVerticalTop;
 		return true;
 	}
 	return false;
