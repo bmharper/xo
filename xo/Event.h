@@ -70,7 +70,6 @@ enum EventHandlerFlags {
 
 class XO_API EventHandler {
 public:
-	DomNode*      Parent          = nullptr; // Not ordinarily needed, but convenient so that we can pass just an EventHandler around, and know it's parent (specifically for removing a timer event)
 	uint64_t      ID              = 0;
 	uint32_t      Mask            = 0;
 	uint32_t      Flags           = 0;
@@ -85,5 +84,10 @@ public:
 	bool Handles(Events ev) const { return !!(Mask & ev); }
 	bool IsLambda() const { return !!(Flags & EventHandlerFlag_IsLambda); }
 	void SetLambda() { Flags |= EventHandlerFlag_IsLambda; }
+};
+
+struct NodeEventIDPair {
+	InternalID NodeID;
+	uint64_t   EventID;
 };
 }

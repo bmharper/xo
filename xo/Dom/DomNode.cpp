@@ -12,8 +12,9 @@ DomNode::DomNode(xo::Doc* doc, xo::Tag tag, xo::InternalID parentID) : DomEl(doc
 DomNode::~DomNode() {
 	if (!!(AllEventMask & EventDestroy)) {
 		Event ev;
-		ev.Doc  = Doc;
-		ev.Type = EventDestroy;
+		ev.Doc    = Doc;
+		ev.Target = this;
+		ev.Type   = EventDestroy;
 		for (auto& h : Handlers) {
 			if (h.Handles(EventDestroy)) {
 				ev.Context = h.Context;
@@ -210,7 +211,6 @@ uint64_t DomNode::AddHandler(Events ev, EventHandlerF func, bool isLambda, void*
 		}
 	}
 	auto& h         = Handlers.add();
-	h.Parent        = this;
 	h.ID            = NextEventHandlerID++;
 	h.Context       = context;
 	h.Func          = func;
@@ -245,6 +245,14 @@ void DomNode::RemoveHandler(uint64_t id) {
 	}
 }
 
+EventHandler* DomNode::HandlerByID(uint64_t id) {
+	for (size_t i = 0; i < Handlers.size(); i++) {
+		if (Handlers[i].ID == id)
+			return &Handlers[i];
+	}
+	return nullptr;
+}
+
 uint32_t DomNode::FastestTimerMS() const {
 	uint32_t f = UINT32_MAX - 1;
 	for (const auto& h : Handlers) {
@@ -257,11 +265,11 @@ uint32_t DomNode::FastestTimerMS() const {
 }
 
 // This function is not const, because we're going to update EventHandler.TimerLastTickMS after retrieving the list
-void DomNode::ReadyTimers(int64_t nowTicksMS, cheapvec<EventHandler*>& handlers) {
+void DomNode::ReadyTimers(int64_t nowTicksMS, cheapvec<NodeEventIDPair>& handlers) {
 	auto ms32 = MilliTicks_32(nowTicksMS);
 	for (auto& h : Handlers) {
 		if (h.TimerPeriodMS != 0 && ms32 - h.TimerLastTickMS > h.TimerPeriodMS)
-			handlers.push(&h);
+			handlers.push({InternalID, h.ID});
 	}
 }
 

@@ -61,13 +61,14 @@ public:
 	// Events
 	// An event handler has a 64-bit ID that is specific to that DOM node.
 	// You can use that ID to remove the event handler again.
-	uint64_t AddHandler(Events ev, EventHandlerF func, void* context = NULL);
-	uint64_t AddHandler(Events ev, EventHandlerLambda lambda);
-	void     RemoveHandler(uint64_t id);
-	bool     HandlesEvent(Events ev) const { return !!(AllEventMask & ev); }
-	uint32_t FastestTimerMS() const;                                             // Returns the period of our fastest ticking timer event (or zero if none)
-	void     ReadyTimers(int64_t nowTicksMS, cheapvec<EventHandler*>& handlers); // Fetch the list of timer events that are ready to run
-	bool     HasFocus() const;                                                   // Return true if this node has the keyboard focus
+	uint64_t      AddHandler(Events ev, EventHandlerF func, void* context = NULL);
+	uint64_t      AddHandler(Events ev, EventHandlerLambda lambda);
+	void          RemoveHandler(uint64_t id);
+	EventHandler* HandlerByID(uint64_t id);
+	bool          HandlesEvent(Events ev) const { return !!(AllEventMask & ev); }
+	uint32_t      FastestTimerMS() const;                                               // Returns the period of our fastest ticking timer event (or zero if none)
+	void          ReadyTimers(int64_t nowTicksMS, cheapvec<NodeEventIDPair>& handlers); // Fetch the list of timer events that are ready to run
+	bool          HasFocus() const;                                                     // Return true if this node has the keyboard focus
 
 	// It is tempting to use macros to generate these event handler functions,
 	// but the intellisense experience is so much worse that I avoid it.

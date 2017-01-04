@@ -15,7 +15,7 @@ DomNode* EditBox::AppendTo(DomNode* node) {
 	auto edit = node->AddNode(xo::TagLab);
 	edit->AddClass("editbox");
 
-	// Add the empty text value
+	// Add the empty text value (must be first child for DomNode.SetText to work)
 	edit->AddText();
 
 	// Create the caret
@@ -27,7 +27,6 @@ DomNode* EditBox::AppendTo(DomNode* node) {
 	auto flip = [s, caret]() {
 		s->IsBlinked = !s->IsBlinked;
 		caret->StyleParse(s->IsBlinked ? "background: #000" : "background: #0000");
-		TimeTrace("Caret flip %s\n", s->IsBlinked ? "on" : "off");
 	};
 
 	auto timer = [s, edit, flip](const Event& ev) -> bool {
@@ -37,9 +36,8 @@ DomNode* EditBox::AppendTo(DomNode* node) {
 	};
 
 	edit->OnGetFocus([s, flip, edit, timer](const Event& ev) -> bool {
-		uint32_t caretTickIntervalMS = 500;
 		flip();
-		edit->OnTimer(timer, caretTickIntervalMS);
+		edit->OnTimer(timer, Global()->CaretBlinkTimeMS);
 		return true;
 	});
 	edit->OnLoseFocus([s, flip](const Event& ev) -> bool {

@@ -50,7 +50,7 @@ public:
 	void     NodeGotTimer(InternalID node);
 	void     NodeLostTimer(InternalID node);
 	uint32_t FastestTimerMS();
-	void     ReadyTimers(int64_t nowTicksMS, cheapvec<EventHandler*>& handlers);
+	void     ReadyTimers(int64_t nowTicksMS, cheapvec<NodeEventIDPair>& handlers);
 
 	//void				ChildAddedFromDocumentClone( DomEl* el );
 	void           ChildAdded(DomEl* el);

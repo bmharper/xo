@@ -121,6 +121,14 @@ local unicode = ExternalLibrary {
 	},
 }
 
+local utfz = StaticLibrary {
+	Name = "utfz",
+	Depends = { crt, },
+	Sources = {
+		"dependencies/utfz/utfz.cpp",
+	}
+}
+
 local freetype = StaticLibrary {
 	Name = "freetype",
 	Defines = {

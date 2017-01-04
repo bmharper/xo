@@ -164,8 +164,11 @@ void UIThread() {
 		Global()->UIEventQueue.SemObj().wait();
 		if (Global()->ExitSignalled)
 			break;
-		OriginalEvent ev;
+		OriginalEvent          ev;
+		TQueue<OriginalEvent>& q      = Global()->UIEventQueue;
+		uint32_t               qsize1 = q.Size();
 		XO_VERIFY(Global()->UIEventQueue.PopTail(ev));
+		uint32_t qsize2 = q.Size();
 		ev.DocGroup->ProcessEvent(ev.Event);
 	}
 }
@@ -242,6 +245,12 @@ XO_API void Initialize(const InitParams* init) {
 		Globals->EpToPixel = init->EpToPixel;
 	else
 		Globals->EpToPixel = ComputeEpToPixel();
+
+	// Windows default is 530
+	Globals->CaretBlinkTimeMS = 530;
+#ifdef XO_PLATFORM_WIN_DESKTOP
+	Globals->CaretBlinkTimeMS = GetCaretBlinkTime();
+#endif
 
 	if (init && init->CacheDir != "")
 		Globals->CacheDir = init->CacheDir;

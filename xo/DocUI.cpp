@@ -36,26 +36,32 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 
 	switch (ev.Type) {
 	case EventTimer: {
-		int64_t                 nowTicksMS    = MilliTicks();
-		uint32_t                nowTicksMS_32 = MilliTicks_32(nowTicksMS);
-		cheapvec<EventHandler*> handlers;
+		// Remember that any callback can do *anything* to our DOM, so we cannot assume that
+		// anything is still alive between calls to different callbacks.
+		int64_t                   nowTicksMS    = MilliTicks();
+		uint32_t                  nowTicksMS_32 = MilliTicks_32(nowTicksMS);
+		cheapvec<NodeEventIDPair> handlers;
 		Doc->ReadyTimers(nowTicksMS, handlers);
+
 		Event localEv = ev;
 		for (auto h : handlers) {
-			localEv.Context    = h->Context;
-			bool keepAlive     = h->Func(localEv);
-			h->TimerLastTickMS = nowTicksMS_32;
-			if (!keepAlive) {
-				h->Parent->RemoveHandler(h->ID);
-			}
+			DomNode* target = Doc->GetNodeByInternalIDMutable(h.NodeID);
+			if (!target)
+				continue;
+			EventHandler* eh = target->HandlerByID(h.EventID);
+			if (!eh)
+				continue;
+			localEv.Context     = eh->Context;
+			localEv.Target      = target;
+			bool keepAlive      = eh->Func(localEv);
+			eh->TimerLastTickMS = nowTicksMS_32;
+			if (!keepAlive)
+				target->RemoveHandler(h.EventID);
 		}
-		if (handlers.size() != 0)
-			Doc->IncVersion();
 		break;
 	}
 	default:
-		if (BubbleEvent(ev, layout))
-			Doc->IncVersion();
+		BubbleEvent(ev, layout);
 	}
 }
 

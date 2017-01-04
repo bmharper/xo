@@ -434,6 +434,7 @@ struct GlobalStruct {
 	float     SubPixelTextGamma;   // Tweak freetype's gamma when doing sub-pixel text rendering. Should be no need to use anything other than 1.0
 	float     WholePixelTextGamma; // Tweak freetype's gamma when doing whole-pixel text rendering. Should be no need to use anything other than 1.0
 	float     EpToPixel;           // Eye Pixel to Pixel.
+	uint32_t  CaretBlinkTimeMS;    // Milliseconds between blinks of the text caret
 	TextureID MaxTextureID;        // Used to test texture ID wrap-around. Were it not for testing, this could be 2^32 - 1
 	Color     ClearColor;          // glClearColor
 	String    CacheDir;            // Root directory where we store font caches, etc. Overridable with InitParams

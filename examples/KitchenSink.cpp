@@ -503,8 +503,8 @@ void InitDOM(xo::Doc* doc)
 	//DoPadding(doc);
 	//DoTextQuality(doc);
 	//DoQuadraticSplines(doc);
-	DoTimer(doc);
-	//DoEditBox(doc);
+	//DoTimer(doc);
+	DoEditBox(doc);
 
 	body->OnClick([](const xo::Event& ev) -> bool {
 		xo::Trace("%f %f\n", ev.Points[0].x, ev.Points[0].y);

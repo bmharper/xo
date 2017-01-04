@@ -59,6 +59,7 @@ void DomCanvas::ReleaseCanvas(Canvas2D* canvas2D) {
 	if (img != nullptr)
 		img->TexInvalidRect.ExpandToFit(canvas2D->GetInvalidRect());
 	delete canvas2D;
+	IncVersion();
 }
 
 const char* DomCanvas::GetCanvasImageName() const {

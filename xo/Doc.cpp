@@ -179,7 +179,7 @@ uint32_t Doc::FastestTimerMS() {
 }
 
 // Returns all nodes that have timers which have elapsed
-void Doc::ReadyTimers(int64_t nowTicksMS, cheapvec<EventHandler*>& handlers) {
+void Doc::ReadyTimers(int64_t nowTicksMS, cheapvec<NodeEventIDPair>& handlers) {
 	for (InternalID it : NodesWithTimers) {
 		DomNode* node = GetNodeByInternalIDMutable(it);
 		node->ReadyTimers(nowTicksMS, handlers);

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "queue.h"
 #include "Asserts.h"
+#include "../Defs.h"
 
 namespace xo {
 
@@ -57,9 +58,24 @@ void Queue::Grow() {
 	void*    nb      = realloc(Buffer, (size_t) ItemSize * newsize);
 	XO_ASSERT(nb != NULL);
 	Buffer = nb;
-	// If head is behind tail, then we need to copy the later items in front of the earlier ones.
-	if ((Head & Mask()) <= (Tail & Mask()) && SizeInternal() != 0)
-		memcpy(Slot(RingSize), Slot(0), (size_t) ItemSize * (Head & Mask()));
+	// If data is currently wrapped around, then we need to unwrap it for the expanded ring size
+	uint32_t count   = (uint32_t) SizeInternal();
+	uint32_t oldTail = Tail & (RingSize - 1);
+	uint32_t oldHead = Head & (RingSize - 1);
+	if (oldTail + count > RingSize) {
+		memcpy(Slot(RingSize, newsize - 1), Slot(0), (size_t) ItemSize * oldHead);
+	}
+	// Since our divisor is now different, we need to reset our head and tail numbers. I haven't
+	// taken the time to really understand why this is necessary, but I could see obvious bugs
+	// when I didn't do this. It sorta makes sense - your modulus is changing, so your old head
+	// and tail numbers no longer have the same meaning under this new modulus.
+	// A simple example is the case where the ring expands from 2 to 4, and Tail = 6, Head = 8.
+	// In that case, both tail and head are pointing to the same slot, meaning the ring is full.
+	// When we expand the ring from 2 to 4, Tail now points to slot 2 (because 6 % 4 = 2),
+	// and Head now points to slot 0 (because 8 % 4 = 0). So Head has sort-of stayed in the same
+	// place, but Tail moved up by two slots.
+	Tail     = oldTail;
+	Head     = Tail + count;
 	RingSize = newsize;
 }
 
@@ -70,13 +86,14 @@ int32_t Queue::Size() {
 
 void Queue::Scan(bool forwards, void* context, ScanCallback cb) {
 	std::lock_guard<std::mutex> lock(Lock);
+	uint32_t                    size = SizeInternal();
 	if (forwards) {
-		for (uint32_t i = Tail; i - Tail != SizeInternal(); i++) {
+		for (uint32_t i = Tail; i - Tail != size; i++) {
 			if (!cb(context, Slot(i)))
 				return;
 		}
 	} else {
-		for (uint32_t i = Head - 1; i - Tail != -1; i--) {
+		for (uint32_t i = Head - 1; Head - 1 - i != size; i--) {
 			if (!cb(context, Slot(i)))
 				return;
 		}
