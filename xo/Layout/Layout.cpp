@@ -385,13 +385,12 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 	if (Global()->RoundLineHeights)
 		lineHeight = PosRoundUp(lineHeight);
 
-	ts.GlyphsNeeded                = false;
-	const Glyph*   prevGlyph       = nullptr;
-	RenderDomText* rtxt            = nullptr;
-	Pos            rtxt_left       = PosNULL;
-	Pos            lastWordTop     = PosNULL;
-	int            numCharsInQueue = 0; // Number of characters in TextRunState::Chars that are waiting to be flushed to rtxt. Wonder why this is necessary?
-	bool           aborted         = false;
+	ts.GlyphsNeeded            = false;
+	const Glyph*   prevGlyph   = nullptr;
+	RenderDomText* rtxt        = nullptr;
+	Pos            rtxt_left   = PosNULL;
+	Pos            lastWordTop = PosNULL;
+	bool           aborted     = false;
 	Chunk          chunk;
 	Chunker        chunker(txt);
 	while (!aborted && chunker.Next(chunk)) {
@@ -421,16 +420,14 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 				ts.RNode->Children += rtxt_new;
 				if (rtxt != nullptr) {
 					// retire previous text object - which is all characters in the queue, except for the most recent word
-					FinishTextRNode(ts, rtxt, numCharsInQueue);
+					FinishTextRNode(ts, rtxt);
 				}
-				rtxt_new->Pos   = marginBox;
-				rtxt            = rtxt_new;
-				rtxt_left       = marginBox.Left;
-				lastWordTop     = marginBox.Top;
-				numCharsInQueue = chunkLen;
+				rtxt_new->Pos = marginBox;
+				rtxt          = rtxt_new;
+				rtxt_left     = marginBox.Left;
+				lastWordTop   = marginBox.Top;
 			} else {
 				// another word on existing line
-				numCharsInQueue += chunkLen;
 				OffsetTextHorz(ts, marginBox.Left - rtxt_left, chunkLen);
 				rtxt->Pos.Right = marginBox.Right;
 			}
@@ -445,7 +442,6 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 			el.X                 = pos;
 			el.Y                 = 0;
 			el.Width             = charWidth_32;
-			numCharsInQueue++;
 			break;
 		}
 		case ChunkLineBreak: {
@@ -458,21 +454,20 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 	}
 	// the end
 	if (rtxt != nullptr)
-		FinishTextRNode(ts, rtxt, numCharsInQueue);
+		FinishTextRNode(ts, rtxt);
 	ts.RNodeTxt = rtxt;
 }
 
-void Layout::FinishTextRNode(TextRunState& ts, RenderDomText* rnode, size_t numChars) {
+void Layout::FinishTextRNode(TextRunState& ts, RenderDomText* rnode) {
 	rnode->FontID     = ts.FontID;
 	rnode->Color      = ts.Color;
 	rnode->FontSizePx = ts.FontSizePx;
 	if (ts.IsSubPixel)
 		rnode->Flags |= RenderDomText::FlagSubPixelGlyphs;
 
-	XO_ASSERT(ts.Chars.Size() >= numChars);
-
-	rnode->Text.resize(numChars);
-	for (size_t i = 0; i < numChars; i++)
+	size_t size = ts.Chars.Size();
+	rnode->Text.resize(size);
+	for (size_t i = 0; i < size; i++)
 		rnode->Text[i] = ts.Chars.PopTail();
 }
 
