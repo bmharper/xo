@@ -17,6 +17,9 @@ struct XO_API Size {
 		         EM,
 		         EX,
 		         PERCENT };
+	// Note that value 255 is used by StyleAttrib::SubType_SizeBinding, so do not
+	// use 255 inside the Types enum.
+
 	float Val;
 	Types Type;
 
@@ -214,9 +217,14 @@ enum StyleCategories {
 	CatVCenter,
 	CatBottom,
 	CatBaseline,
+	CatVertBinding_FIRST = CatTop,
+	CatVertBinding_LAST  = CatBaseline,
+
 	CatLeft,
 	CatHCenter,
 	CatRight,
+	CatHorzBinding_FIRST = CatLeft,
+	CatHorzBinding_LAST  = CatRight,
 
 	CatFontSize,
 	CatFontFamily,
@@ -246,6 +254,15 @@ extern const StyleCategories InheritedStyleCategories[NumInheritedStyleCategorie
 This must be zero-initializable (i.e. with memset(0)).
 It must remain small.
 Currently, sizeof(StyleAttrib) = 8. This is verified by a static assertion below.
+
+The binding points left,right,hcenter,top,bottom,vcenter, are quite special, because they
+can take on either an alignment point of their parent, such as left:left, or left:hcenter,
+OR they can take on an exact value, in which case that value is a number inside their
+parent's content box. For example, left:5px. It is highly desirable to maintain this
+attribute as a single StyleAttrib, instead of trying to split it out into some other hackish
+pair, so we take that pain inside StyleAttrib. We use a special SubType, which is outside
+the normal range of the Size subtypes (PX,EM,etc), to represent the fact that the size is
+a binding point instead of a size.
 */
 class XO_API StyleAttrib {
 public:
@@ -253,6 +270,16 @@ public:
 		// This means that the attribute takes its value from its closest ancestor in the DOM tree.
 		// Some styles are inherited by default (the list specified inside InheritedStyleCategories).
 		FlagInherit = 1,
+	};
+
+	enum SubTypes {
+		// This lives in the same space as Size::Types, so it must not conflict with any of them.
+		// This is used to indicate that a horizontal or vertical binding attribute is actually
+		// a size value, which means "distance from top or left of parent content-box", depending
+		// on whether it's a vertical or horizontal binding.
+		// If our category type is any of the Binding values, and the SubType is anything other than
+		// SubType_EnumBinding, then the attribute is a Size object.
+		SubType_EnumBinding = 255
 	};
 
 	StyleCategories Category : 8;
@@ -293,13 +320,23 @@ public:
 	void SetFlowDirectionHorizonal(FlowDirection dir) { SetU32(CatFlowDirection_Horizontal, dir); }
 	void SetFlowDirectionVertical(FlowDirection dir) { SetU32(CatFlowDirection_Vertical, dir); }
 	void SetBoxSizing(BoxSizeType type) { SetU32(CatBoxSizing, type); }
-	void SetLeft(HorizontalBindings bind) { SetU32(CatLeft, bind); }
-	void SetHCenter(HorizontalBindings bind) { SetU32(CatHCenter, bind); }
-	void SetRight(HorizontalBindings bind) { SetU32(CatRight, bind); }
-	void SetTop(VerticalBindings bind) { SetU32(CatTop, bind); }
-	void SetVCenter(VerticalBindings bind) { SetU32(CatVCenter, bind); }
-	void SetBottom(VerticalBindings bind) { SetU32(CatBottom, bind); }
-	void SetBaseline(VerticalBindings bind) { SetU32(CatBaseline, bind); }
+
+	void SetLeft(HorizontalBindings bind) { SetWithSubtypeU32(CatLeft, SubType_EnumBinding, bind); }
+	void SetHCenter(HorizontalBindings bind) { SetWithSubtypeU32(CatHCenter, SubType_EnumBinding, bind); }
+	void SetRight(HorizontalBindings bind) { SetWithSubtypeU32(CatRight, SubType_EnumBinding, bind); }
+	void SetTop(VerticalBindings bind) { SetWithSubtypeU32(CatTop, SubType_EnumBinding, bind); }
+	void SetVCenter(VerticalBindings bind) { SetWithSubtypeU32(CatVCenter, SubType_EnumBinding, bind); }
+	void SetBottom(VerticalBindings bind) { SetWithSubtypeU32(CatBottom, SubType_EnumBinding, bind); }
+	void SetBaseline(VerticalBindings bind) { SetWithSubtypeU32(CatBaseline, SubType_EnumBinding, bind); }
+
+	void SetLeft(Size val) { SetWithSubtypeF(CatLeft, val.Type, val.Val); }
+	void SetHCenter(Size val) { SetWithSubtypeF(CatHCenter, val.Type, val.Val); }
+	void SetRight(Size val) { SetWithSubtypeF(CatRight, val.Type, val.Val); }
+	void SetTop(Size val) { SetWithSubtypeF(CatTop, val.Type, val.Val); }
+	void SetVCenter(Size val) { SetWithSubtypeF(CatVCenter, val.Type, val.Val); }
+	void SetBottom(Size val) { SetWithSubtypeF(CatBottom, val.Type, val.Val); }
+	void SetBaseline(Size val) { SetWithSubtypeF(CatBaseline, val.Type, val.Val); }
+
 	void SetBump(BumpStyle bump) { SetU32(CatBump, bump); }
 
 	// Generic Set() that is used by template code
@@ -312,8 +349,8 @@ public:
 	void Set(StyleCategories cat, FlowAxis val) { SetFlowAxis(val); }
 	void Set(StyleCategories cat, FlowDirection val) { SetU32(cat, val); }
 	void Set(StyleCategories cat, BoxSizeType val) { SetBoxSizing(val); }
-	void Set(StyleCategories cat, HorizontalBindings val) { SetU32(cat, val); }
-	void Set(StyleCategories cat, VerticalBindings val) { SetU32(cat, val); }
+	void Set(StyleCategories cat, HorizontalBindings val) { SetWithSubtypeU32(cat, SubType_EnumBinding, val); }
+	void Set(StyleCategories cat, VerticalBindings val) { SetWithSubtypeU32(cat, SubType_EnumBinding, val); }
 	void Set(StyleCategories cat, FontID val) { SetFont(val); }
 	void Set(StyleCategories cat, BumpStyle val) { SetU32(cat, val); }
 	void Set(StyleCategories cat, const char* val, Doc* doc) { SetString(cat, val, doc); }
@@ -322,6 +359,9 @@ public:
 
 	bool IsNull() const { return Category == CatNULL; }
 	bool IsInherit() const { return Flags == FlagInherit; }
+	bool IsHorzBinding() const { return Category >= CatHorzBinding_FIRST && Category <= CatHorzBinding_LAST; }
+	bool IsVertBinding() const { return Category >= CatVertBinding_FIRST && Category <= CatVertBinding_LAST; }
+	bool IsBindingTypeEnum() const { return SubType == SubType_EnumBinding; }
 
 	StyleCategories    GetCategory() const { return (StyleCategories) Category; }
 	Size               GetSize() const { return Size::Make((Size::Types) SubType, ValF); }
@@ -532,6 +572,7 @@ XO_API bool ParseFlowDirection(const char* s, size_t len, FlowDirection& t);
 XO_API bool ParseBoxSize(const char* s, size_t len, BoxSizeType& t);
 XO_API bool ParseHorizontalBinding(const char* s, size_t len, HorizontalBindings& t);
 XO_API bool ParseVerticalBinding(const char* s, size_t len, VerticalBindings& t);
+XO_API bool ParseBinding(bool isHorz, const char* s, size_t len, StyleCategories cat, Style& style);
 XO_API bool ParseBump(const char* s, size_t len, BumpStyle& t);
 XO_API bool ParseBorder(const char* s, size_t len, Style& style);
 }

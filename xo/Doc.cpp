@@ -109,6 +109,10 @@ void Doc::CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const {
 	UI.CloneSlowInto(c.UI);
 }
 
+InternalID Doc::InternalIDSize() const {
+	return (InternalID) ChildByInternalID.size();
+}
+
 bool Doc::ClassParse(const char* klass, const char* style) {
 	const char* colon = strchr(klass, ':');
 	String      tmpKlass;

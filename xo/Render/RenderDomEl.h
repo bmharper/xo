@@ -10,9 +10,11 @@ class RenderDomNode;
 class RenderDomText;
 
 struct XO_API RenderCharEl {
-	int Char;
-	Pos X;
-	Pos Y;
+	int32_t OriginalCharIndex = -1; // Index of first byte of UTF-8 character inside DomEl.Text. Used for selection and UI feedback, such as caret placement inside edit box.
+	int32_t Char              = 0;  // Unicode code point
+	Pos     X                 = 0;
+	Pos     Y                 = 0;
+	Pos     Width             = 0;
 };
 
 // Element that is ready for rendering
@@ -63,8 +65,6 @@ public:
 		FlagSubPixelGlyphs = 1,
 	};
 	RenderDomText(xo::InternalID id, Pool* pool);
-
-	void SetStyle(RenderStack& stack); // get rid of me. Instead just set color manually, the way it's done from Layout3
 
 	bool IsSubPixel() const { return !!(Flags & FlagSubPixelGlyphs); }
 

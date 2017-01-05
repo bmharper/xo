@@ -34,6 +34,8 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 	if (layout == nullptr)
 		return;
 
+	ev.LayoutResult = layout;
+
 	switch (ev.Type) {
 	case EventTimer: {
 		// Remember that any callback can do *anything* to our DOM, so we cannot assume that
@@ -97,31 +99,31 @@ bool DocUI::BubbleEvent(Event& ev, const LayoutResult* layout) {
 	bool stop    = false;
 	bool handled = false;
 
-	cheapvec<const RenderDomNode*> nodeChain;
+	SelectorChain selChain;
 	if (ev.Type == EventMouseLeave) {
 		// When EventMouseLeave comes in from the window system, it means the cursor has left our
 		// client area. This is not the same thing as the cursor leaving a DOM node.
 		ev.Type = EventMouseMove;
 	} else {
-		FindTarget(ev.Points[0], nodeChain, layout);
+		FindTarget(ev.Points[0], selChain, layout);
 	}
 
 	if (ev.Type == EventMouseMove) {
-		UpdateCursorLocation(nodeChain);
+		UpdateCursorLocation(selChain);
 	}
 
 	//XOTRACE_EVENTS( "FindTarget chainlen = %d\n", (int) nodeChain.size() );
 
 	// start at the inner-most node first
-	for (size_t inode = nodeChain.size() - 1; inode != -1; inode--) {
-		const RenderDomNode* rnode = nodeChain[inode];
+	for (size_t inode = selChain.Nodes.size() - 1; inode != -1; inode--) {
+		const RenderDomNode* rnode = selChain.Nodes[inode];
 		const DomNode*       node  = Doc->GetNodeByInternalID(rnode->InternalID);
 		if (node != nullptr) {
 			if (node->HandlesEvent(ev.Type)) {
 				// Remember that SendEvent is allowed to do absolutely anything it wants to our DOM.
 				// So it could be that the rest of the objects inside nodeChain are invalid once
 				// SendEvent returns. We cater for this by always fetching DOM nodes based on InternalID.
-				SendEvent(ev, node, &handled, &stop);
+				SendEvent(ev, node, &selChain, &handled, &stop);
 				if (stop)
 					break;
 			}
@@ -129,7 +131,7 @@ bool DocUI::BubbleEvent(Event& ev, const LayoutResult* layout) {
 	}
 
 	if (ev.Type == EventClick)
-		UpdateFocusWindow(nodeChain);
+		UpdateFocusWindow(selChain);
 
 	return handled;
 }
@@ -140,28 +142,48 @@ to the inner-most DOM element beneath the cursor.
 This code does not make provision for elements that are positioned outside of their parent,
 such as relative-positioned or absolute-positioned.
 */
-void DocUI::FindTarget(Vec2f p, cheapvec<const RenderDomNode*>& nodeChain, const LayoutResult* layout) {
+void DocUI::FindTarget(Vec2f p, SelectorChain& selChain, const LayoutResult* layout) {
 	Point                pos  = {RealToPos(p.x), RealToPos(p.y)};
 	const RenderDomNode* body = layout->Body();
 	if (!body->BorderBox().IsInsideMe(pos))
 		return;
 	cheapvec<Point> posChain;
 	size_t          stackPos = 0;
-	nodeChain += body;
+	selChain.Nodes += body;
 	posChain += pos - body->Pos.TopLeft();
-	while (stackPos < nodeChain.size()) {
-		const RenderDomNode* top    = nodeChain[stackPos];
+	// The condition "stackPos < nodeChain.size()" is just another way of saying "we have a deeper node to recurse into"
+	while (stackPos < selChain.Nodes.size()) {
+		const RenderDomNode* top    = selChain.Nodes[stackPos];
 		Point                relPos = posChain[stackPos];
 		stackPos++;
-		// walk backwards, yielding implicit z-order from child order
+		// Walk backwards, yielding implicit z-order from child order.
+		// Pick the last (ie the top-most) child who's border-box contains
+		// this point, and continue recursing down into that node.
 		for (size_t i = top->Children.size() - 1; i != -1; i--) {
 			if (top->Children[i]->IsNode()) {
 				const RenderDomNode* childNode = static_cast<const RenderDomNode*>(top->Children[i]);
 				if (childNode->BorderBox().IsInsideMe(relPos)) {
-					nodeChain += childNode;
+					selChain.Nodes += childNode;
 					posChain += relPos - childNode->Pos.TopLeft();
 					// Only allow a single path to the inner-most object.
-					// This code will need to be extended to handle explicit z-order
+					// This code would need to be extended to handle explicit z-order
+					break;
+				}
+			} else if (top->Children[i]->IsText()) {
+				const RenderDomText* childTxt = static_cast<const RenderDomText*>(top->Children[i]);
+				if (childTxt->Pos.IsInsideMe(relPos)) {
+					// Find the nearest glyph inside this rendertext object.
+					// Because we're not adding anything new to selChain.Nodes here,
+					// this is the final stop in our walk down the DOM tree.
+					selChain.Text      = childTxt;
+					Point relPosToText = relPos - childTxt->Pos.TopLeft();
+					for (size_t j = 0; j < childTxt->Text.size(); j++) {
+						const auto& g = childTxt->Text[j];
+						if (g.X <= relPosToText.X && relPosToText.X < g.X + g.Width) {
+							selChain.Glyph = &g;
+							break;
+						}
+					}
 					break;
 				}
 			}
@@ -169,10 +191,11 @@ void DocUI::FindTarget(Vec2f p, cheapvec<const RenderDomNode*>& nodeChain, const
 	}
 }
 
-void DocUI::UpdateCursorLocation(const cheapvec<const RenderDomNode*>& nodeChain) {
+void DocUI::UpdateCursorLocation(const SelectorChain& selChain) {
 	// Update Hover states, send mouse leave and mouse enter events.
 	bool                   anyHoverChanges = false;
 	ohash::set<InternalID> oldNodeIDs, newNodeIDs;
+	const auto&            nodeChain = selChain.Nodes;
 
 	for (size_t i = 0; i < HoverNodes.size(); i++)
 		oldNodeIDs.insert(HoverNodes[i].InternalID);
@@ -232,11 +255,11 @@ void DocUI::UpdateCursorLocation(const cheapvec<const RenderDomNode*>& nodeChain
 	}
 }
 
-void DocUI::UpdateFocusWindow(const cheapvec<const RenderDomNode*>& nodeChain) {
+void DocUI::UpdateFocusWindow(const SelectorChain& selChain) {
 	// Find the window that should receive the focus
 	const DomNode* newFocus = nullptr;
-	for (size_t inode = nodeChain.size() - 1; inode != -1; inode--) {
-		const RenderDomNode* rnode = nodeChain[inode];
+	for (size_t inode = selChain.Nodes.size() - 1; inode != -1; inode--) {
+		const RenderDomNode* rnode = selChain.Nodes[inode];
 		const DomNode*       node  = Doc->GetNodeByInternalID(rnode->InternalID);
 		if (node != nullptr) {
 			StyleResolveOnceOff style(node);
@@ -283,29 +306,39 @@ void DocUI::InvalidateRenderForPseudoClass() {
 	Doc->IncVersion();
 }
 
-void DocUI::SendEvent(const Event& ev, const DomNode* node, bool* handled, bool* stop) {
-	bool                localHandled = false;
-	bool                localStop    = false;
-	Event               localEv      = ev;
+void DocUI::SendEvent(const Event& ev, const DomNode* target, const SelectorChain* selChain, bool* handled, bool* stop) {
+	bool       localHandled = false;
+	bool       localStop    = false;
+	Event      localEv      = ev;
+	auto       doc          = target->GetDoc();
+	InternalID targetID     = target->GetInternalID();
+	localEv.Target          = const_cast<DomNode*>(target);
+	if (selChain && selChain->Text) {
+		localEv.TargetText = (DomText*) doc->GetChildByInternalID(selChain->Text->InternalID);
+		if (selChain->Glyph != 0)
+			localEv.TargetChar = selChain->Glyph->OriginalCharIndex;
+	}
 	const EventHandler* h;
 	size_t              hcount;
-	node->GetHandlers(h, hcount);
+	target->GetHandlers(h, hcount);
 	XOTRACE_EVENTS("Found %d event handlers\n", (int) hcount);
 	for (size_t i = 0; i < hcount; i++) {
 		if (h[i].Handles(ev.Type)) {
 			XOTRACE_EVENTS("Dispatching event to %d/%d (%p)\n", (int) i, (int) hcount, h[i].Func);
 			localHandled    = true;
 			localEv.Context = h[i].Context;
-			localEv.Target  = const_cast<DomNode*>(node);
 			if (!h[i].Func(localEv)) {
 				localStop = true;
 				break;
 			}
+			// The handler may have deleted the DOM element itself, so cancel all other events if that has happened.
+			if (!doc->GetChildByInternalID(targetID))
+				break;
 		}
 		// re-acquire set of handlers. This is not perfect - but if the handler is altering the list of
 		// handlers, then I'm not sure what the most sensible course of action is. "do not crash" is
 		// a reasonable requirement though.
-		node->GetHandlers(h, hcount);
+		target->GetHandlers(h, hcount);
 	}
 	if (handled != nullptr)
 		*handled = localHandled;

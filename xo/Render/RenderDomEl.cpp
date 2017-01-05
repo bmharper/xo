@@ -51,8 +51,4 @@ RenderDomText::RenderDomText(xo::InternalID id, xo::Pool* pool) : RenderDomEl(id
 	FontSizePx = 0;
 	Flags      = 0;
 }
-
-void RenderDomText::SetStyle(RenderStack& stack) {
-	Color = stack.Get(CatColor).GetColor();
-}
 }

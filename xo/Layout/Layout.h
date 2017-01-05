@@ -27,15 +27,20 @@ public:
 
 protected:
 	// Packed set of bindings between child and parent node
+	// This is unfortunately a large data structure. I haven't found a simple way of making it smaller.
+	// The key thing driving the size up here, is that each binding point can be either a Size type,
+	// or a binding point. We could represent this in a more compact manner by have 7x 32-bit fields for
+	// the enum or size value, and 7x 4-bit fields, for the nature of the size or binding type, but
+	// that only brings us down to 32 bytes, which I'm not convinced is worth the extra code.
 	struct BindingSet {
-		HorizontalBindings HChildLeft : 8;
-		HorizontalBindings HChildCenter : 8;
-		HorizontalBindings HChildRight : 8;
+		StyleAttrib HChildLeft;
+		StyleAttrib HChildCenter;
+		StyleAttrib HChildRight;
 
-		VerticalBindings VChildTop : 8;
-		VerticalBindings VChildCenter : 8;
-		VerticalBindings VChildBottom : 8;
-		VerticalBindings VChildBaseline : 8;
+		StyleAttrib VChildTop;
+		StyleAttrib VChildCenter;
+		StyleAttrib VChildBottom;
+		StyleAttrib VChildBaseline;
 	};
 
 	struct LayoutInput {
@@ -117,11 +122,11 @@ protected:
 	void  OffsetTextHorz(TextRunState& ts, Pos offsetHorz, size_t numChars);
 	Pos   MeasureWord(const char* txt, const Font* font, Pos fontAscender, Chunk chunk, TextRunState& ts);
 
-	Pos        ComputeDimension(Pos container, StyleCategories cat);
-	Pos        ComputeDimension(Pos container, Size size);
-	Box        ComputeBox(Pos containerWidth, Pos containerHeight, StyleCategories cat);
-	Box        ComputeBox(Pos containerWidth, Pos containerHeight, StyleBox box);
-	BindingSet ComputeBinds();
+	Pos  ComputeDimension(Pos container, StyleCategories cat);
+	Pos  ComputeDimension(Pos container, Size size);
+	Box  ComputeBox(Pos containerWidth, Pos containerHeight, StyleCategories cat);
+	Box  ComputeBox(Pos containerWidth, Pos containerHeight, StyleBox box);
+	void PopulateBindings(BindingSet& bindings);
 
 	Pos HoriAdvance(const Glyph* glyph, const TextRunState& ts);
 
@@ -155,32 +160,38 @@ protected:
 	};
 
 	// These helpers make the binding code a lot less repetitive.
+	// Why can child can never be a Size?
+	// That would be like writing "123:top", which is equivalent to "top:-123", so we
+	// only allow the top:-123 formulation, in part because the 123:top is hard to read, but it also opens
+	// a can of worms for our style parser.
 	class VBindHelper {
 	public:
-		Pos ParentHeight;
-		Pos ParentBaseline;
-		Pos ChildTop;
-		Pos ChildHeight;
-		Pos ChildBaseline;
+		Layout* Layout;
+		Pos     ParentHeight;
+		Pos     ParentBaseline;
+		Pos     ChildTop;
+		Pos     ChildHeight;
+		Pos     ChildBaseline;
 
-		VBindHelper(Pos parentHeight, Pos parentBaseline, Pos childTop, Pos childHeight, Pos childBaseline) : ParentHeight(parentHeight), ParentBaseline(parentBaseline), ChildTop(childTop), ChildHeight(childHeight), ChildBaseline(childBaseline) {}
+		VBindHelper(xo::Layout* layout, Pos parentHeight, Pos parentBaseline, Pos childTop, Pos childHeight, Pos childBaseline) : Layout(layout), ParentHeight(parentHeight), ParentBaseline(parentBaseline), ChildTop(childTop), ChildHeight(childHeight), ChildBaseline(childBaseline) {}
 
-		Pos Parent(VerticalBindings bind);
+		Pos Parent(StyleAttrib bind);
 		Pos Child(VerticalBindings bind);
-		Pos Delta(VerticalBindings parent, VerticalBindings child);
+		Pos Delta(StyleAttrib parent, VerticalBindings child);
 	};
 
 	class HBindHelper {
 	public:
-		Pos ParentWidth;
-		Pos ChildLeft;
-		Pos ChildWidth;
+		Layout* Layout;
+		Pos     ParentWidth;
+		Pos     ChildLeft;
+		Pos     ChildWidth;
 
-		HBindHelper(Pos parentWidth, Pos childLeft, Pos childWidth) : ParentWidth(parentWidth), ChildLeft(childLeft), ChildWidth(childWidth) {}
+		HBindHelper(xo::Layout* layout, Pos parentWidth, Pos childLeft, Pos childWidth) : Layout(layout), ParentWidth(parentWidth), ChildLeft(childLeft), ChildWidth(childWidth) {}
 
-		Pos Parent(HorizontalBindings bind);
+		Pos Parent(StyleAttrib bind);
 		Pos Child(HorizontalBindings bind);
-		Pos Delta(HorizontalBindings parent, HorizontalBindings child);
+		Pos Delta(StyleAttrib parent, HorizontalBindings child);
 	};
 };
 }

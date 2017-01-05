@@ -59,6 +59,9 @@ RenderResult RenderDoc::Render(RenderBase* driver) {
 	Renderer     rend;
 	RenderResult res = rend.Render(&Doc, &ClonedImages, &Doc.Strings, driver, &layout->Root);
 
+	layout->IDToNode.resize(Doc.InternalIDSize());
+	PopulateIDToNode(layout, &layout->Root);
+
 	// Atomically publish the new layout
 	{
 		std::lock_guard<std::mutex> lock(LayoutLock);
@@ -110,6 +113,18 @@ void RenderDoc::PurgeOldLayouts() {
 			delete OldLayouts[i];
 			OldLayouts.erase(i);
 		}
+	}
+}
+
+void RenderDoc::PopulateIDToNode(LayoutResult* res, RenderDomNode* node) {
+	// populate 'node'
+	res->IDToNode[node->InternalID] = node;
+
+	// recurse into children of 'node'
+	for (size_t i = 0; i < node->Children.size(); i++) {
+		RenderDomNode* cnode = node->Children[i]->ToNode();
+		if (cnode)
+			PopulateIDToNode(res, cnode);
 	}
 }
 }

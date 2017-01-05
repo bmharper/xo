@@ -31,12 +31,13 @@ public:
 
 	Doc();
 	~Doc();
-	void     Reset();
-	void     IncVersion();
-	uint32_t GetVersion() { return Version; }                                      // Renderers use purposefully loose thread semantics on this.
-	void     ResetModifiedBitmap();                                                // Reset the 'ismodified' bitmap of all DOM elements.
-	void     MakeFreeIDsUsable();                                                  // All of our dependent renderers have been updated, we can move FreeIDs over to UsableIDs.
-	void     CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const; // Used to make a read-only clone for the renderer. Preserves existing.
+	void       Reset();
+	void       IncVersion();
+	uint32_t   GetVersion() { return Version; }                                      // Renderers use purposefully loose thread semantics on this.
+	void       ResetModifiedBitmap();                                                // Reset the 'ismodified' bitmap of all DOM elements.
+	void       MakeFreeIDsUsable();                                                  // All of our dependent renderers have been updated, we can move FreeIDs over to UsableIDs.
+	void       CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const; // Used to make a read-only clone for the renderer. Preserves existing.
+	InternalID InternalIDSize() const;                                               // Returns the size of the InternalID table
 	//void				CloneFastInto( Doc& c, uint32_t cloneFlags, RenderStats& stats ) const;	// Used to make a read-only clone for the renderer. Starts from scratch.
 
 	// Style Classes

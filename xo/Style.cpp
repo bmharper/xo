@@ -376,13 +376,13 @@ bool Style::Parse(const char* t, size_t maxLen, Doc* doc) {
 			else if (MATCH(t, startk, eq, "box-sizing"))                { ok = ParseSingleAttrib(TSTART, TLEN, &ParseBoxSize, CatBoxSizing, *this); }
 			else if (MATCH(t, startk, eq, "font-size"))                 { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatFontSize, *this); }
 			else if (MATCH(t, startk, eq, "font-family"))               { ok = ParseSingleAttrib(TSTART, TLEN, &ParseFontFamily, CatFontFamily, *this); }
-			else if (MATCH(t, startk, eq, "left"))                      { ok = ParseSingleAttrib(TSTART, TLEN, &ParseHorizontalBinding, CatLeft, *this); }
-			else if (MATCH(t, startk, eq, "hcenter"))                   { ok = ParseSingleAttrib(TSTART, TLEN, &ParseHorizontalBinding, CatHCenter, *this); }
-			else if (MATCH(t, startk, eq, "right"))                     { ok = ParseSingleAttrib(TSTART, TLEN, &ParseHorizontalBinding, CatRight, *this); }
-			else if (MATCH(t, startk, eq, "top"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &ParseVerticalBinding, CatTop, *this); }
-			else if (MATCH(t, startk, eq, "vcenter"))                   { ok = ParseSingleAttrib(TSTART, TLEN, &ParseVerticalBinding, CatVCenter, *this); }
-			else if (MATCH(t, startk, eq, "bottom"))                    { ok = ParseSingleAttrib(TSTART, TLEN, &ParseVerticalBinding, CatBottom, *this); }
-			else if (MATCH(t, startk, eq, "baseline"))                  { ok = ParseSingleAttrib(TSTART, TLEN, &ParseVerticalBinding, CatBaseline, *this); }
+			else if (MATCH(t, startk, eq, "left"))                      { ok = ParseBinding(true, TSTART, TLEN, CatLeft, *this); }
+			else if (MATCH(t, startk, eq, "hcenter"))                   { ok = ParseBinding(true, TSTART, TLEN, CatHCenter, *this); }
+			else if (MATCH(t, startk, eq, "right"))                     { ok = ParseBinding(true, TSTART, TLEN, CatRight, *this); }
+			else if (MATCH(t, startk, eq, "top"))                       { ok = ParseBinding(false, TSTART, TLEN, CatTop, *this); }
+			else if (MATCH(t, startk, eq, "vcenter"))                   { ok = ParseBinding(false, TSTART, TLEN, CatVCenter, *this); }
+			else if (MATCH(t, startk, eq, "bottom"))                    { ok = ParseBinding(false, TSTART, TLEN, CatBottom, *this); }
+			else if (MATCH(t, startk, eq, "baseline"))                  { ok = ParseBinding(false, TSTART, TLEN, CatBaseline, *this); }
 			else if (MATCH(t, startk, eq, "bump"))                      { ok = ParseSingleAttrib(TSTART, TLEN, &ParseBump, CatBump, *this); }
 			// clang-format on
 			else {
@@ -899,6 +899,39 @@ XO_API bool ParseVerticalBinding(const char* s, size_t len, VerticalBindings& t)
 		return true;
 	}
 	return false;
+}
+
+XO_API bool ParseBinding(bool isHorz, const char* s, size_t len, StyleCategories cat, Style& style) {
+	StyleAttrib attrib;
+	Size        size;
+	bool        ok = false;
+	if (isHorz) {
+		HorizontalBindings hb;
+		if (ParseHorizontalBinding(s, len, hb)) {
+			ok = true;
+			attrib.Set(cat, hb);
+		}
+	} else {
+		VerticalBindings vb;
+		if (ParseVerticalBinding(s, len, vb)) {
+			ok = true;
+			attrib.Set(cat, vb);
+		}
+	}
+
+	if (!ok) {
+		ok = size.Parse(s, len, size);
+		if (ok)
+			attrib.Set(cat, size);
+	}
+
+	if (ok) {
+		style.Set(attrib);
+		return true;
+	} else {
+		ParseFail("Parse failed, unknown value: '%.*s'\n", (int) len, s);
+		return false;
+	}
 }
 
 XO_API bool ParseBump(const char* s, size_t len, BumpStyle& t) {

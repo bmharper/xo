@@ -254,7 +254,8 @@ void Layout::RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& o
 	else
 		out.Baseline = PosNULL;
 
-	out.Binds           = ComputeBinds();
+	PopulateBindings(out.Binds);
+
 	out.RNode           = rnode;
 	out.MarginBoxWidth  = marginBox.Width();
 	out.MarginBoxHeight = marginBox.Height();
@@ -304,12 +305,12 @@ void Layout::RunText(const DomText* node, const LayoutInput& in, LayoutOutput& o
 		out.Baseline = TempText.FontAscender;
 	else
 		out.Baseline = PosNULL;
-	out.MarginBoxHeight      = 0;
-	out.MarginBoxWidth       = 0;
-	out.Binds                = BindingSet();
-	out.Binds.VChildBaseline = VerticalBindingBaseline;
-	out.RNode                = TempText.RNodeTxt;
-	out.Break                = BreakNULL;
+	out.MarginBoxHeight = 0;
+	out.MarginBoxWidth  = 0;
+	//out.Binds                = BindingSet();
+	out.Binds.VChildBaseline.Set(CatBaseline, VerticalBindingBaseline);
+	out.RNode = TempText.RNodeTxt;
+	out.Break = BreakNULL;
 }
 
 /*
@@ -431,6 +432,7 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 				// another word on existing line
 				numCharsInQueue += chunkLen;
 				OffsetTextHorz(ts, marginBox.Left - rtxt_left, chunkLen);
+				rtxt->Pos.Right = marginBox.Right;
 			}
 		} break;
 		case ChunkSpace:
@@ -503,14 +505,19 @@ Pos Layout::MeasureWord(const char* txt, const Font* font, Pos fontAscender, Chu
 			posX += kerning;
 		}
 
-		RenderCharEl& rtxt = ts.Chars.PushHead();
-		rtxt.Char          = key.Char;
-		rtxt.X             = posX + Realx256ToPos(glyph->MetricLeftx256);
-		rtxt.Y             = baseline - RealToPos(glyph->MetricTop); // rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
 		// For determining the word width, one might want to not use the horizontal advance for the very last glyph, but instead
 		// use the glyph's exact width. The difference would be tiny, and it may even be annoying, because you would end up with
 		// no padding on the right side of a word.
-		posX += HoriAdvance(glyph, ts);
+
+		RenderCharEl& rtxt     = ts.Chars.PushHead();
+		rtxt.OriginalCharIndex = i;
+		rtxt.Char              = key.Char;
+		rtxt.X                 = posX + Realx256ToPos(glyph->MetricLeftx256);
+		rtxt.Y                 = baseline - RealToPos(glyph->MetricTop); // rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
+		// It might be better to use the glyph width for rtxt.Width.
+		// However, HoriAdvance is definitely the right thing to use for incrementing posX.
+		rtxt.Width = HoriAdvance(glyph, ts);
+		posX += rtxt.Width;
 		prevGlyph = glyph;
 	}
 	return posX;
@@ -521,7 +528,7 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Horizontal
-	HBindHelper helperH(cin.ParentWidth, cout.RNode->Pos.Left, cout.MarginBoxWidth);
+	HBindHelper helperH(this, cin.ParentWidth, cout.RNode->Pos.Left, cout.MarginBoxWidth);
 
 	// If HCenter is bound, then move the child to the binding point
 	Pos moveX = helperH.Delta(cout.Binds.HChildCenter, HorizontalBindingCenter);
@@ -560,7 +567,7 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Vertical
-	VBindHelper helperV(cin.ParentHeight, parentBaseline, cout.RNode->Pos.Top, cout.MarginBoxHeight, cout.Baseline);
+	VBindHelper helperV(this, cin.ParentHeight, parentBaseline, cout.RNode->Pos.Top, cout.MarginBoxHeight, cout.Baseline);
 
 	Pos moveY = PosNULL;
 
@@ -656,19 +663,15 @@ Box Layout::ComputeBox(Pos containerWidth, Pos containerHeight, StyleBox box) {
 	return b;
 }
 
-Layout::BindingSet Layout::ComputeBinds() {
-	BindingSet binds;
+void Layout::PopulateBindings(BindingSet& bindings) {
+	bindings.HChildLeft   = Stack.Get(CatLeft);
+	bindings.HChildCenter = Stack.Get(CatHCenter);
+	bindings.HChildRight  = Stack.Get(CatRight);
 
-	binds.HChildLeft   = Stack.Get(CatLeft).GetHorizontalBinding();
-	binds.HChildCenter = Stack.Get(CatHCenter).GetHorizontalBinding();
-	binds.HChildRight  = Stack.Get(CatRight).GetHorizontalBinding();
-
-	binds.VChildTop      = Stack.Get(CatTop).GetVerticalBinding();
-	binds.VChildCenter   = Stack.Get(CatVCenter).GetVerticalBinding();
-	binds.VChildBottom   = Stack.Get(CatBottom).GetVerticalBinding();
-	binds.VChildBaseline = Stack.Get(CatBaseline).GetVerticalBinding();
-
-	return binds;
+	bindings.VChildTop      = Stack.Get(CatTop);
+	bindings.VChildCenter   = Stack.Get(CatVCenter);
+	bindings.VChildBottom   = Stack.Get(CatBottom);
+	bindings.VChildBaseline = Stack.Get(CatBaseline);
 }
 
 Pos Layout::HoriAdvance(const Glyph* glyph, const TextRunState& ts) {
@@ -799,17 +802,24 @@ bool Layout::Chunker::Next(Chunk& c) {
 	return true;
 }
 
-Pos Layout::VBindHelper::Parent(VerticalBindings bind) {
-	return Layout::VBindOffset(bind, 0, ParentBaseline, ParentHeight);
+Pos Layout::VBindHelper::Parent(StyleAttrib bind) {
+	if (bind.IsBindingTypeEnum()) {
+		return Layout::VBindOffset(bind.GetVerticalBinding(), 0, ParentBaseline, ParentHeight);
+	} else {
+		return Layout->ComputeDimension(ParentHeight, bind.GetSize());
+	}
 }
 
 Pos Layout::VBindHelper::Child(VerticalBindings bind) {
 	return Layout::VBindOffset(bind, ChildTop, ChildBaseline, ChildHeight);
 }
 
-Pos Layout::VBindHelper::Delta(VerticalBindings parent, VerticalBindings child) {
-	if (parent == VerticalBindingNULL || child == VerticalBindingNULL)
+Pos Layout::VBindHelper::Delta(StyleAttrib parent, VerticalBindings child) {
+	XO_DEBUG_ASSERT(child != VerticalBindingNULL);
+
+	if (parent.IsNull() || (parent.IsBindingTypeEnum() && parent.GetVerticalBinding() == VerticalBindingNULL))
 		return PosNULL;
+
 	Pos p = Parent(parent);
 	Pos c = Child(child);
 	if (IsDefined(p) && IsDefined(c))
@@ -817,17 +827,23 @@ Pos Layout::VBindHelper::Delta(VerticalBindings parent, VerticalBindings child) 
 	return PosNULL;
 }
 
-Pos Layout::HBindHelper::Parent(HorizontalBindings bind) {
-	return Layout::HBindOffset(bind, 0, ParentWidth);
+Pos Layout::HBindHelper::Parent(StyleAttrib bind) {
+	if (bind.IsBindingTypeEnum()) {
+		return Layout::HBindOffset(bind.GetHorizontalBinding(), 0, ParentWidth);
+	} else {
+		return Layout->ComputeDimension(ChildWidth, bind.GetSize());
+	}
 }
 
 Pos Layout::HBindHelper::Child(HorizontalBindings bind) {
 	return Layout::HBindOffset(bind, ChildLeft, ChildWidth);
 }
 
-Pos Layout::HBindHelper::Delta(HorizontalBindings parent, HorizontalBindings child) {
-	if (parent == HorizontalBindingNULL || child == HorizontalBindingNULL)
+Pos Layout::HBindHelper::Delta(StyleAttrib parent, HorizontalBindings child) {
+	XO_DEBUG_ASSERT(child != HorizontalBindingNULL);
+	if (parent.IsNull() || (parent.IsBindingTypeEnum() && parent.GetHorizontalBinding() == HorizontalBindingNULL))
 		return PosNULL;
+
 	Pos p = Parent(parent);
 	Pos c = Child(child);
 	if (IsDefined(p) && IsDefined(c))
