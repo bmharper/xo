@@ -40,27 +40,52 @@ DomNode* EditBox::AppendTo(DomNode* node) {
 	};
 
 	edit->OnClick([s, flip, edit, timer, caret](const Event& ev) -> bool {
-		if (ev.TargetText && ev.TargetChar != -1) {
-			RenderDomNode* rbox = ev.LayoutResult->IDToNode[ev.Target->GetInternalID()];
-			if (rbox->Children.size() >= 1 && rbox->Children[0]->IsText()) {
-				auto  rtxt = rbox->Children[0]->ToText();
-				float pos  = PosToReal(rtxt->Text[ev.TargetChar].X);
-				caret->StyleParsef("left: %fpx", pos);
-				s->IsBlinkVisible = false;
-				flip();
+		Trace("[%f %f]\n", ev.PointsRel[0].x, ev.PointsRel[0].y);
+		RenderDomNode* rbox = ev.LayoutResult->IDToNode[ev.Target->GetInternalID()];
+		if (rbox->Children.size() >= 1 && rbox->Children[0]->IsText()) {
+			// Find the closest 'crack' in between the two nearest glyphs where we should place the caret.
+			// We place our caret at the right edge of the 'crack' character
+			int   crack         = 0;
+			float rightOffsetPx = 1; // this is a hackish number. don't know what's best
+			auto  rtxt          = rbox->Children[0]->ToText();
+			float mindist       = FLT_MAX;
+			for (size_t i = 0; i < rtxt->Text.size(); i++) {
+				float dist = std::abs(PosToReal(rtxt->Text[i].X + rtxt->Text[i].Width) - ev.PointsRel[0].x);
+				if (dist < mindist) {
+					mindist = dist;
+					crack   = (int) i;
+				}
 			}
-			s->CaretPos = ev.TargetChar;
+			float pos;
+			if (ev.PointsRel[0].x - 0 < mindist) {
+				// start of text
+				crack = -1;
+				pos   = -rightOffsetPx;
+			} else {
+				// end of an existing character
+				pos = PosToReal(rtxt->Text[crack].X + rtxt->Text[crack].Width);
+			}
+			caret->StyleParsef("left: %fpx", pos + rightOffsetPx);
+			if (s->TimerID)
+				edit->RemoveHandler(s->TimerID);
+			s->TimerID        = edit->OnTimer(timer, Global()->CaretBlinkTimeMS);
+			s->IsBlinkVisible = false;
+			flip();
+			s->CaretPos = crack;
 		}
 		return true;
 	});
 	edit->OnGetFocus([s, flip, edit, timer](const Event& ev) -> bool {
-		flip();
-		edit->OnTimer(timer, Global()->CaretBlinkTimeMS);
+		if (!s->TimerID)
+			s->TimerID = edit->OnTimer(timer, Global()->CaretBlinkTimeMS);
 		return true;
 	});
-	edit->OnLoseFocus([s, flip](const Event& ev) -> bool {
+	edit->OnLoseFocus([s, flip, edit](const Event& ev) -> bool {
 		s->IsBlinkVisible = true;
 		flip();
+		if (s->TimerID)
+			edit->RemoveHandler(s->TimerID);
+		s->TimerID = 0;
 		return true;
 	});
 	edit->OnDestroy([s](const Event& ev) -> bool {

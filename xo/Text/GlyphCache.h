@@ -22,6 +22,7 @@ struct Glyph {
 	int16_t  MetricLeft; // intended for use by SnapSubpixelHorzText
 	int16_t  MetricLeftx256;
 	int16_t  MetricTop;
+	int16_t  MetricWidth;
 	int32_t  MetricHoriAdvance; // intended for use by SnapSubpixelHorzText
 	float    MetricLinearHoriAdvance;
 

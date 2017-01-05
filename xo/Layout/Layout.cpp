@@ -519,10 +519,8 @@ Pos Layout::MeasureWord(const char* txt, const Font* font, Pos fontAscender, Chu
 		rtxt.Char              = key.Char;
 		rtxt.X                 = posX + Realx256ToPos(glyph->MetricLeftx256);
 		rtxt.Y                 = baseline - RealToPos(glyph->MetricTop); // rtxt.Y is the top of the glyph bitmap. glyph->MetricTop is the distance from the baseline to the top of the glyph
-		// It might be better to use the glyph width for rtxt.Width.
-		// However, HoriAdvance is definitely the right thing to use for incrementing posX.
-		rtxt.Width = HoriAdvance(glyph, ts);
-		posX += rtxt.Width;
+		rtxt.Width             = RealToPos(glyph->MetricWidth);
+		posX += HoriAdvance(glyph, ts);
 		prevGlyph = glyph;
 	}
 	return posX;
