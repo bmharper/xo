@@ -44,8 +44,9 @@ public:
 	const LayoutResult* LayoutResult = nullptr;
 	Events              Type         = EventMouseMove;
 	MouseButton         Button       = MouseButtonNull;
-	int                 PointCount   = 0; // Mouse = 1	Touch >= 1
-	Vec2f               Points[XO_MAX_TOUCHES];
+	int                 PointCount   = 0;          // Mouse = 1	Touch >= 1
+	Vec2f               PointsAbs[XO_MAX_TOUCHES]; // Points in pixels, relative to viewport top-left
+	Vec2f               PointsRel[XO_MAX_TOUCHES]; // Points relative to Target's content-box top-left
 
 	Event();
 	~Event();

@@ -9,16 +9,17 @@ XO_API bool EventHandler_LambdaStaticFunc(const Event& ev) {
 }
 
 Event::Event() {
-	memset(Points, 0, sizeof(Points));
+	memset(PointsRel, 0, sizeof(PointsRel));
+	memset(PointsAbs, 0, sizeof(PointsAbs));
 }
 
 Event::~Event() {
 }
 
 void Event::MakeWindowSize(int w, int h) {
-	Type        = EventWindowSize;
-	Points[0].x = (float) w;
-	Points[0].y = (float) h;
+	Type           = EventWindowSize;
+	PointsAbs[0].x = (float) w;
+	PointsAbs[0].y = (float) h;
 }
 
 EventHandler::EventHandler() {

@@ -196,18 +196,18 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			// We don't send EventMouseEnter from here. It is the DocUI's job to synthesize that message
 			// on a per-DOM-node basis. It determines this when it receives mousemove messages.
 		}
-		ev.Event.Type       = EventMouseMove;
-		ev.Event.PointCount = 1;
-		ev.Event.Points[0]  = cursor;
+		ev.Event.Type         = EventMouseMove;
+		ev.Event.PointCount   = 1;
+		ev.Event.PointsAbs[0] = cursor;
 		AddOrReplaceMessage(ev);
 		XOTRACE_LATENCY("MouseMove\n");
 		break;
 
 	case WM_MOUSELEAVE:
-		IsMouseTracking     = false;
-		ev.Event.Type       = EventMouseLeave;
-		ev.Event.PointCount = 1;
-		ev.Event.Points[0]  = cursor;
+		IsMouseTracking       = false;
+		ev.Event.Type         = EventMouseLeave;
+		ev.Event.PointCount   = 1;
+		ev.Event.PointsAbs[0] = cursor;
 		Global()->UIEventQueue.Add(ev);
 		break;
 
@@ -216,10 +216,10 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_RBUTTONDOWN:
 	case WM_XBUTTONDOWN:
 		XOTRACE_LATENCY("ButtonDown\n");
-		ev.Event.Type       = EventMouseDown;
-		ev.Event.Button     = WM_ButtonToXo(message, wParam);
-		ev.Event.PointCount = 1;
-		ev.Event.Points[0]  = cursor;
+		ev.Event.Type         = EventMouseDown;
+		ev.Event.Button       = WM_ButtonToXo(message, wParam);
+		ev.Event.PointCount   = 1;
+		ev.Event.PointsAbs[0] = cursor;
 		Global()->UIEventQueue.Add(ev);
 		break;
 
@@ -228,10 +228,10 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_RBUTTONUP:
 	case WM_XBUTTONUP:
 		XOTRACE_LATENCY("ButtonUp\n");
-		ev.Event.Type       = EventMouseUp;
-		ev.Event.Button     = WM_ButtonToXo(message, wParam);
-		ev.Event.PointCount = 1;
-		ev.Event.Points[0]  = cursor;
+		ev.Event.Type         = EventMouseUp;
+		ev.Event.Button       = WM_ButtonToXo(message, wParam);
+		ev.Event.PointCount   = 1;
+		ev.Event.PointsAbs[0] = cursor;
 		Global()->UIEventQueue.Add(ev);
 		// Click event needs refinement (ie on down, capture, etc)
 		ev.Event.Type = EventClick;
@@ -243,10 +243,10 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_RBUTTONDBLCLK:
 	case WM_XBUTTONDBLCLK:
 		XOTRACE_LATENCY("ButtonDblClick\n");
-		ev.Event.Type       = EventDblClick;
-		ev.Event.Button     = WM_ButtonToXo(message, wParam);
-		ev.Event.PointCount = 1;
-		ev.Event.Points[0]  = cursor;
+		ev.Event.Type         = EventDblClick;
+		ev.Event.Button       = WM_ButtonToXo(message, wParam);
+		ev.Event.PointCount   = 1;
+		ev.Event.PointsAbs[0] = cursor;
 		Global()->UIEventQueue.Add(ev);
 		break;
 

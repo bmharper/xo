@@ -10,7 +10,8 @@ namespace xo {
 // a DOM node. This is the output of the function that answers the question
 // "what is underneath the mouse cursor".
 struct XO_API SelectorChain {
-	cheapvec<const RenderDomNode*> Nodes;
+	cheapvec<const RenderDomNode*> Nodes;           // Parallel to PosInNode
+	cheapvec<Point>                PosInNode;       // Parallel to Nodes - contains position relative to node content box top-left
 	const RenderDomText*           Text  = nullptr; // This is not necessarily populated
 	const RenderCharEl*            Glyph = nullptr; // This is not necessarily populated
 };
@@ -55,12 +56,12 @@ protected:
 	volatile Cursors Cursor;
 
 	bool  BubbleEvent(Event& ev, const LayoutResult* layout);
-	void  FindTarget(Vec2f p, SelectorChain& selChain, const LayoutResult* layout);
+	void  FindTarget(Vec2f p, const LayoutResult* layout, SelectorChain& selChain);
 	void  UpdateCursorLocation(const SelectorChain& selChain);
 	void  UpdateFocusWindow(const SelectorChain& selChain);
 	Event MakeEvent(Events evType);
 	void  InvalidateRenderForPseudoClass();
 
-	static void SendEvent(const Event& ev, const DomNode* target, const SelectorChain* selChain = nullptr, bool* handled = nullptr, bool* stop = nullptr);
+	static void SendEvent(const Event& ev, const DomNode* target, bool* handled = nullptr, bool* stop = nullptr);
 };
 }

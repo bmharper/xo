@@ -259,7 +259,7 @@ void RenderGL::CheckExtensions() {
             else if (pos == NULL)
                 return false;
         }
-	};
+    };
 
 	Trace("Checking OpenGL extensions\n");
 	// On my desktop Nvidia I get "4.3.0"

@@ -350,6 +350,8 @@ void Renderer::RenderQuadratic(Point base, const RenderDomNode* node) {
 void Renderer::RenderText(Point base, const RenderDomText* node) {
 	bool subPixelGlyphs = node->Flags & RenderDomText::FlagSubPixelGlyphs;
 	for (size_t i = 0; i < node->Text.size(); i++) {
+		if (node->Text[i].Char == 32)
+			continue;
 		if (subPixelGlyphs)
 			RenderTextChar_SubPixel(base, node, node->Text[i]);
 		else

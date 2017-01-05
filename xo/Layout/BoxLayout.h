@@ -79,7 +79,7 @@ public:
 	FlowResult EndNode(Box& marginBox);
 
 	FlowResult AddWord(const WordInput& in, Box& marginBox);
-	void       AddSpace(Pos size);
+	Pos        AddSpace(Pos size);
 	void       AddNewLineCharacter(Pos height); // Doesn't call Linebreak. Just makes sure that PosMajor is bumped down.
 
 	void Linebreak();

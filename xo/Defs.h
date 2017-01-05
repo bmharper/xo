@@ -150,6 +150,7 @@ public:
 		Y -= p.Y;
 		return *this;
 	}
+	Vec2f ToReal() const { return Vec2f(PosToReal(X), PosToReal(Y)); }
 };
 
 /*

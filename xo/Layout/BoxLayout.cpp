@@ -93,8 +93,10 @@ BoxLayout::FlowResult BoxLayout::AddWord(const WordInput& in, Box& marginBox) {
 	return EndNodeInternal(marginBox, true);
 }
 
-void BoxLayout::AddSpace(Pos size) {
+Pos BoxLayout::AddSpace(Pos size) {
+	auto oldPos = FlowStates.Back().PosMinor;
 	FlowStates.Back().PosMinor += size;
+	return oldPos;
 }
 
 // This is needed for the case where you have a \n\n sequence in a text object.

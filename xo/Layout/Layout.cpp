@@ -323,13 +323,13 @@ appending involves growing a vector, so plenty of memory reallocs.
 Instead, we queue up a string of characters and write them all
 out at once, when we either detect a new line, or when we are done
 with the entire text object.
-Having this tight coupling between Layout3 and BoxLayout is
+Having this tight coupling between Layout and BoxLayout is
 unfortunate. Perhaps if all the dust has settled, then it might
-be worth it to break that coupling, to the degree that Layout3
+be worth it to break that coupling, to the degree that Layout
 doesn't know where its word boxes are going - it just dumps them
 to BoxLayout and forgets about them.
 This would mean that BoxLayout is responsible for adjusting
-the positions of the glyphs inside an RenderDomText object.
+the positions of the glyphs inside a RenderDomText object.
 
 NOTE: This function has some defunct history to it. It was originally
 written such that it would output words on different lines.
@@ -390,7 +390,7 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 	RenderDomText* rtxt            = nullptr;
 	Pos            rtxt_left       = PosNULL;
 	Pos            lastWordTop     = PosNULL;
-	int            numCharsInQueue = 0; // Number of characters in TextRunState::Chars that are waiting to be flushed to rtxt
+	int            numCharsInQueue = 0; // Number of characters in TextRunState::Chars that are waiting to be flushed to rtxt. Wonder why this is necessary?
 	bool           aborted         = false;
 	Chunk          chunk;
 	Chunker        chunker(txt);
@@ -434,10 +434,20 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 				OffsetTextHorz(ts, marginBox.Left - rtxt_left, chunkLen);
 				rtxt->Pos.Right = marginBox.Right;
 			}
-		} break;
-		case ChunkSpace:
-			Boxer.AddSpace(charWidth_32);
 			break;
+		}
+		case ChunkSpace: {
+			auto pos = Boxer.AddSpace(charWidth_32);
+			// We emit space characters, purely for the sake of UI selection, and caret placement inside text edit boxes
+			RenderCharEl& el     = ts.Chars.PushHead();
+			el.OriginalCharIndex = chunk.Start;
+			el.Char              = 32;
+			el.X                 = pos;
+			el.Y                 = 0;
+			el.Width             = charWidth_32;
+			numCharsInQueue++;
+			break;
+		}
 		case ChunkLineBreak: {
 			aborted = true;
 			Boxer.AddNewLineCharacter(lineHeight);
