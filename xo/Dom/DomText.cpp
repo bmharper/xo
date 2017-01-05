@@ -4,6 +4,7 @@
 namespace xo {
 
 DomText::DomText(xo::Doc* doc, xo::Tag tag, xo::InternalID parentID) : DomEl(doc, tag, parentID) {
+	XO_ASSERT(tag == TagText);
 }
 
 DomText::~DomText() {

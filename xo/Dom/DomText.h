@@ -16,6 +16,6 @@ public:
 	virtual void        ForgetChildren() override;
 
 protected:
-	String Text; // Applicable only to TagText elements
+	String Text;
 };
 }

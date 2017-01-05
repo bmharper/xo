@@ -36,13 +36,16 @@ enum MouseButton {
 */
 class XO_API Event {
 public:
-	Doc*        Doc        = nullptr;
-	void*       Context    = nullptr;
-	DomEl*      Target     = nullptr;
-	Events      Type       = EventMouseMove;
-	MouseButton Button     = MouseButtonNull;
-	int         PointCount = 0; // Mouse = 1	Touch >= 1
-	Vec2f       Points[XO_MAX_TOUCHES];
+	Doc*          Doc          = nullptr;
+	void*         Context      = nullptr;
+	DomEl*        Target       = nullptr;
+	DomText*      TargetText   = nullptr;
+	int32_t       TargetChar   = -1;
+	LayoutResult* LayoutResult = nullptr;
+	Events        Type         = EventMouseMove;
+	MouseButton   Button       = MouseButtonNull;
+	int           PointCount   = 0; // Mouse = 1	Touch >= 1
+	Vec2f         Points[XO_MAX_TOUCHES];
 
 	Event();
 	~Event();

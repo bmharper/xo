@@ -5,6 +5,16 @@
 
 namespace xo {
 
+// Chain of objects, always starting at document root, and following down a path of
+// children, until we reach a final entity, which can either be a single glyph, or
+// a DOM node. This is the output of the function that answers the question
+// "what is underneath the mouse cursor".
+struct XO_API SelectorChain {
+	cheapvec<const RenderDomNode*> Nodes;
+	const RenderDomText*           Text  = nullptr; // This is not necessarily populated
+	const RenderCharEl*            Glyph = nullptr; // This is not necessarily populated
+};
+
 /* Document UI state.
 Platform-level events are fed into this class, and inside here we generate
 events for DOM elements. We also maintain the list of objects underneath the cursor, as well
@@ -45,12 +55,12 @@ protected:
 	volatile Cursors Cursor;
 
 	bool  BubbleEvent(Event& ev, const LayoutResult* layout);
-	void  FindTarget(Vec2f p, cheapvec<const RenderDomNode*>& nodeChain, const LayoutResult* layout);
-	void  UpdateCursorLocation(const cheapvec<const RenderDomNode*>& nodeChain);
-	void  UpdateFocusWindow(const cheapvec<const RenderDomNode*>& nodeChain);
+	void  FindTarget(Vec2f p, SelectorChain& selChain, const LayoutResult* layout);
+	void  UpdateCursorLocation(const SelectorChain& selChain);
+	void  UpdateFocusWindow(const SelectorChain& selChain);
 	Event MakeEvent(Events evType);
 	void  InvalidateRenderForPseudoClass();
 
-	static void SendEvent(const Event& ev, const DomNode* node, bool* handled = nullptr, bool* stop = nullptr);
+	static void SendEvent(const Event& ev, const DomNode* target, const SelectorChain* selChain = nullptr, bool* handled = nullptr, bool* stop = nullptr);
 };
 }
