@@ -9,10 +9,7 @@ namespace controls {
 void EditBox::InitializeStyles(Doc* doc) {
 	doc->ClassParse("editbox", "padding: 5ep 3ep 5ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd; canfocus: true; cursor: text");
 	doc->ClassParse("editbox:focus", "border: 1px #8888ee");
-
-	// This magic caret height of 1.2em is thumbsuck. I don't currently have a better solution. We keep 'em' consistent with HTML's definition of it,
-	// which is less than the line height. What we're really looking for here is line height, but we don't have a unit for that.
-	doc->ClassParse("editbox.caret", "background: #0000; position: absolute; width: 1px; height: 1.2em; vcenter: vcenter");
+	doc->ClassParse("editbox.caret", "background: #0000; position: absolute; width: 1px; height: 1eh; vcenter: vcenter");
 }
 
 DomNode* EditBox::AppendTo(DomNode* node) {
@@ -46,7 +43,7 @@ DomNode* EditBox::AppendTo(DomNode* node) {
 			// Find the closest 'crack' in between the two nearest glyphs where we should place the caret.
 			// We place our caret at the right edge of the 'crack' character
 			int   crack         = 0;
-			float rightOffsetPx = 1; // this is a hackish number. don't know what's best
+			float rightOffsetPx = 0; // this is a hackish number. don't know what's best. looks like zero is best for small fonts.
 			auto  rtxt          = rbox->Children[0]->ToText();
 			float mindist       = FLT_MAX;
 			for (size_t i = 0; i < rtxt->Text.size(); i++) {
@@ -65,7 +62,7 @@ DomNode* EditBox::AppendTo(DomNode* node) {
 				// end of an existing character
 				pos = PosToReal(rtxt->Text[crack].X + rtxt->Text[crack].Width);
 			}
-			caret->StyleParsef("left: %fpx", pos + rightOffsetPx);
+			caret->StyleParsef("left: %fpx", Round(pos + rightOffsetPx));
 			if (s->TimerID)
 				edit->RemoveHandler(s->TimerID);
 			s->TimerID        = edit->OnTimer(timer, Global()->CaretBlinkTimeMS);

@@ -626,6 +626,7 @@ Pos Layout::ComputeDimension(Pos container, Size size) {
 	case Size::PX: return RealToPos(size.Val);
 	case Size::PT: return RealToPos(size.Val * PtToPixel);
 	case Size::EP: return RealToPos(size.Val * EpToPixel);
+	case Size::EH:
 	case Size::EM:
 	case Size::EX: {
 		FontID      fontID         = Stack.Get(CatFontFamily).GetFont();
@@ -633,15 +634,22 @@ Pos Layout::ComputeDimension(Pos container, Size size) {
 		StyleAttrib fontSizeAttrib = Stack.Get(CatFontSize);
 		Pos         fontHeight;
 		Size        fontSizeVal = fontSizeAttrib.GetSize();
-		if (fontSizeVal.Type == Size::EM || fontSizeVal.Type == Size::EX) {
+		if (fontSizeVal.Type == Size::EM || fontSizeVal.Type == Size::EX || fontSizeVal.Type == Size::EH) {
 			// infinitely recursive, so we forbid this
 			fontHeight = 0;
 		} else {
 			fontHeight = ComputeDimension(container, fontSizeVal);
 		}
 		// the EM and EX metrics we use here are intended to be consistent with HTML
-		int32_t imetric = size.Type == Size::EX ? font->LinearXHeight_x256 : font->Ascender_x256;
-		float   metric  = (float) imetric / 256.0f;
+		// EH is our own invention, and is used to specify the caret height of an edit box
+		int32_t imetric;
+		if (size.Type == Size::EH)
+			imetric = font->LineHeight_x256;
+		else if (size.Type == Size::EM)
+			imetric = font->Ascender_x256;
+		else if (size.Type == Size::EX)
+			imetric = font->LinearXHeight_x256;
+		float metric = (float) imetric / 256.0f;
 		return PosMul(RealToPos(size.Val * metric), fontHeight);
 	}
 	case Size::PERCENT:

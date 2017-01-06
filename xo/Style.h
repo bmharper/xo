@@ -11,12 +11,14 @@ namespace xo {
 // See "layout" documentation for explanation of units.
 struct XO_API Size {
 	enum Types { NONE = 0,
-		         PX,
-		         PT,
-		         EP,
-		         EM,
-		         EX,
-		         PERCENT };
+		         PX,     // native device pixels
+		         PT,     // points (1/72) of an inch
+		         EP,     // eye pixels (ie adjusted for resolution of screen)
+		         EM,     // colloquially, "height of the 'm' character", but more specifically, the 'ascender' metric of the font face
+		         EX,     // height of 'x' character
+		         EH,     // Line height. 'eh' looks better as a numeric suffix than 'lh', because the 'l' looks like a 1.
+		         PERCENT // percentage of parent's content width or height
+	};
 	// Note that value 255 is used by StyleAttrib::SubType_SizeBinding, so do not
 	// use 255 inside the Types enum.
 
@@ -33,6 +35,10 @@ struct XO_API Size {
 	}
 	static Size Ex(float v) {
 		Size s = {v, EX};
+		return s;
+	}
+	static Size Eh(float v) {
+		Size s = {v, EH};
 		return s;
 	}
 	static Size Percent(float v) {

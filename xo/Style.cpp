@@ -66,6 +66,7 @@ bool Size::Parse(const char* s, size_t len, Size& v) {
 	// 1.23em
 	// 1.23ep
 	// 1.23ex
+	// 1.23eh
 	// 1.23px
 	// 1.23pt
 	// 1.23%
@@ -86,33 +87,36 @@ bool Size::Parse(const char* s, size_t len, Size& v) {
 	x.Val          = (float) atof(digits);
 	if (nondig == len) {
 		if (len == 1 && s[0] == '0') {
-			// ok
+			v = x;
+			return true;
 		} else {
 			ParseFail("Parse failed, invalid size: %.*s\n", (int) len, s);
 			return false;
 		}
-	} else {
-		if (s[nondig] == '%') {
-			x.Type = Size::PERCENT;
-		} else if (s[nondig] == 'p' && len - nondig >= 2) {
-			if (s[nondig + 1] == 'x')
-				x.Type = Size::PX;
-			else if (s[nondig + 1] == 't')
-				x.Type = Size::PT;
-			else {
-				ParseFail("Parse failed, invalid size: %.*s\n", (int) len, s);
-				return false;
-			}
-		} else if (s[nondig] == 'e' && len - nondig >= 2 && s[nondig + 1] == 'p') {
+	}
+
+	x.Type = Size::NONE;
+	if (len - nondig == 1 && s[nondig] == '%') {
+		x.Type = Size::PERCENT;
+	} else if (len - nondig == 2) {
+		char a = s[nondig];
+		char b = s[nondig + 1];
+		if (a == 'p' && b == 'x')
+			x.Type = Size::PX;
+		else if (a == 'p' && b == 't')
+			x.Type = Size::PT;
+		else if (a == 'e' && b == 'p')
 			x.Type = Size::EP;
-		} else if (s[nondig] == 'e' && len - nondig >= 2 && s[nondig + 1] == 'm') {
+		else if (a == 'e' && b == 'm')
 			x.Type = Size::EM;
-		} else if (s[nondig] == 'e' && len - nondig >= 2 && s[nondig + 1] == 'x') {
+		else if (a == 'e' && b == 'x')
 			x.Type = Size::EX;
-		} else {
-			ParseFail("Parse failed, invalid size: %.*s\n", (int) len, s);
-			return false;
-		}
+		else if (a == 'e' && b == 'h')
+			x.Type = Size::EH;
+	}
+	if (x.Type == Size::NONE) {
+		ParseFail("Parse failed, invalid size: %.*s\n", (int) len, s);
+		return false;
 	}
 	v = x;
 	return true;
