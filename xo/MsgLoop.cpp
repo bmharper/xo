@@ -33,6 +33,8 @@ XO_API void RunWin32MessageLoop() {
 				mustQuit = true;
 				break;
 			}
+			if (msg.message == WM_KEYDOWN)
+				int abc = 123;
 			XOTRACE_OS_MSG_QUEUE("msg start: %x\n", msg.message);
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);

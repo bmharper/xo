@@ -46,28 +46,43 @@ enum XoWindowsTimers {
 	XoWindowsTimerGenericEvent             = 2, // A user event, such as when you bind to DomNode.OnTimer
 };
 
-static MouseButton WM_ButtonToXo(UINT message, WPARAM wParam) {
+static Button WM_MouseButtonToXo(UINT message, WPARAM wParam) {
 	switch (message) {
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
 	case WM_LBUTTONDBLCLK:
-		return MouseButtonLeft;
+		return Button::MouseLeft;
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONUP:
 	case WM_RBUTTONDBLCLK:
-		return MouseButtonRight;
+		return Button::MouseRight;
 	case WM_MBUTTONDOWN:
 	case WM_MBUTTONUP:
 	case WM_MBUTTONDBLCLK:
-		return MouseButtonMiddle;
+		return Button::MouseMiddle;
 	case WM_XBUTTONDOWN:
 	case WM_XBUTTONUP:
 	case WM_XBUTTONDBLCLK:
 		// If this assertion fails, then raise the enums above MouseButtonX4
 		XO_DEBUG_ASSERT(GET_XBUTTON_WPARAM(wParam) < 4);
-		return (MouseButton)(MouseButtonX1 + (GET_XBUTTON_WPARAM(wParam) - XBUTTON1));
+		return (Button)((int) Button::MouseX1 + (GET_XBUTTON_WPARAM(wParam) - XBUTTON1));
 	}
-	return MouseButtonNull;
+	return Button::Null;
+}
+
+static Button WM_KeyButtonToXo(WPARAM wp, LPARAM lp) {
+	if (wp >= 0x30 && wp <= 0x39)
+		return (Button)((int) Button::Key0 + (wp - 0x30));
+
+	if (wp >= 0x41 && wp <= 0x5A)
+		return (Button)((int) Button::KeyA + (wp - 0x41));
+
+	switch (wp) {
+	case VK_BACK: return Button::KeyBack;
+	case VK_TAB: return Button::KeyTab;
+	case VK_SPACE: return Button::KeySpace;
+	case VK_ESCAPE: return Button::KeyEscape;
+	}
 }
 
 static Box ToBox(RECT r) { return Box(r.left, r.top, r.right, r.bottom); }
@@ -217,7 +232,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_XBUTTONDOWN:
 		XOTRACE_LATENCY("ButtonDown\n");
 		ev.Event.Type         = EventMouseDown;
-		ev.Event.Button       = WM_ButtonToXo(message, wParam);
+		ev.Event.Button       = WM_MouseButtonToXo(message, wParam);
 		ev.Event.PointCount   = 1;
 		ev.Event.PointsAbs[0] = cursor;
 		Global()->UIEventQueue.Add(ev);
@@ -229,7 +244,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_XBUTTONUP:
 		XOTRACE_LATENCY("ButtonUp\n");
 		ev.Event.Type         = EventMouseUp;
-		ev.Event.Button       = WM_ButtonToXo(message, wParam);
+		ev.Event.Button       = WM_MouseButtonToXo(message, wParam);
 		ev.Event.PointCount   = 1;
 		ev.Event.PointsAbs[0] = cursor;
 		Global()->UIEventQueue.Add(ev);
@@ -244,11 +259,36 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_XBUTTONDBLCLK:
 		XOTRACE_LATENCY("ButtonDblClick\n");
 		ev.Event.Type         = EventDblClick;
-		ev.Event.Button       = WM_ButtonToXo(message, wParam);
+		ev.Event.Button       = WM_MouseButtonToXo(message, wParam);
 		ev.Event.PointCount   = 1;
 		ev.Event.PointsAbs[0] = cursor;
 		Global()->UIEventQueue.Add(ev);
 		break;
+
+	//case WM_KEYDOWN:
+	//	//XOTRACE_LATENCY("KeyDown\n");
+	//	//ev.Event.Type         = EventKeyDown;
+	//	//ev.Event.Button       = WM_KeyButtonToXo(wParam, lParam);
+	//	//Global()->UIEventQueue.Add(ev);
+	//	break;
+
+	// Although the docs for WM_UNICHAR seem ideal for us (an ANSI window), WM_UNICHAR messages
+	// don't seem to be sent by a stock Windows 10 install. It looks like it may have disappeared
+	// when Windows7 arrived. Various reports on the internet seem to suggest that WM_UNICHAR is
+	// not a reliable way of receiving keyboard characters.
+	// So how do we receive characters greater than 65535? At present, the only way I'm able
+	// to synthesize this is with a tool called "unicodeinput.exe". The registry change to
+	// HKCU\Control Panel\Input Method\EnableHexNumpad doesn't work for me on Windows 10.
+	case WM_CHAR:
+		// TODO: Combine two WM_CHAR keys into one message, for high unicode values that don't
+		// fit into a 16-bit number.
+		// http://www.catch22.net/tuts/unicode-text-editing
+		Trace("KeyChar %u\n", (uint32_t) wParam);
+		XOTRACE_LATENCY("KeyChar %u\n", (uint32_t) wParam);
+		ev.Event.Type    = EventKeyChar;
+		ev.Event.KeyChar = (int32_t) wParam;
+		Global()->UIEventQueue.Add(ev);
+		return 0;
 
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);

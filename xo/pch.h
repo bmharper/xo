@@ -42,6 +42,8 @@ XO_TODO_STATIC
 #include "Base/warnings.h"
 #include "Base/Base.h"
 
+#include "../dependencies/utfz/utfz.h"
+
 // We do not leak the Freetype definitions to our consumer
 #include "../dependencies/freetype/include/ft2build.h"
 #include FT_FREETYPE_H

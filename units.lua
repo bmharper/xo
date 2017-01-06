@@ -236,7 +236,7 @@ local xo = SharedLibrary {
 		"dependencies/freetype/include",
 		"dependencies/agg/include",
 	},
-	Depends = { crt, freetype, directx, },
+	Depends = { crt, freetype, directx, utfz, },
 	PrecompiledHeader = {
 		Source = "xo/pch.cpp",
 		Header = "pch.h",

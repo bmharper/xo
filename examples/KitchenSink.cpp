@@ -9,7 +9,7 @@ void InitDOM(xo::Doc* doc);
 void xoMain(xo::SysWnd* wnd)
 {
 	xo::Global()->FontStore->AddFontDirectory("C:\\temp\\fonts");
-	int left = -500;
+	int left = 2000;
 	int width = 400;
 	int top = 60;
 	int height = 500;
@@ -444,8 +444,8 @@ void DoQuadraticSplines(xo::Doc* doc)
 	auto top_pad = doc->Root.ChildByIndex(0)->GetInternalID();
 	auto left_pad = doc->Root.ChildByIndex(1)->GetInternalID();
 	doc->Root.OnMouseMove([top_pad, left_pad](const xo::Event& ev) -> bool {
-		ev.Doc->GetNodeByInternalIDMutable(top_pad)->StyleParsef("height: %dep", (int) ev.Points[0].y);
-		ev.Doc->GetNodeByInternalIDMutable(left_pad)->StyleParsef("width: %dep", (int) ev.Points[0].x);
+		ev.Doc->GetNodeByInternalIDMutable(top_pad)->StyleParsef("height: %dep", (int) ev.PointsAbs[0].y);
+		ev.Doc->GetNodeByInternalIDMutable(left_pad)->StyleParsef("width: %dep", (int) ev.PointsAbs[0].x);
 		return true;
 	});
 }
@@ -478,7 +478,7 @@ void DoEditBox(xo::Doc* doc)
 {
 	auto edit = xo::controls::EditBox::AppendTo(&doc->Root);
 	edit->StyleParse("width: 320ep");
-	edit->SetText("ex Examples .");
+	edit->SetText(" ");
 }
 
 void InitDOM(xo::Doc* doc)
@@ -507,7 +507,7 @@ void InitDOM(xo::Doc* doc)
 	DoEditBox(doc);
 
 	body->OnClick([](const xo::Event& ev) -> bool {
-		xo::Trace("%f %f\n", ev.Points[0].x, ev.Points[0].y);
+		//xo::Trace("%f %f\n", ev.PointsAbs[0].x, ev.PointsAbs[0].y);
 		//xoGlobal()->EnableKerning = !xoGlobal()->EnableKerning;
 		//Trace("InternalID: %d\n", ev.Target->GetInternalID());
 		// Force a re-layout. Useful to click on the document and be able to debug the layout that occurs.

@@ -18,18 +18,45 @@ enum Events {
 	EventMouseLeave = 512,
 	EventMouseDown  = 1024,
 	EventMouseUp    = 2048,
-	EventDestroy    = 4096, // DOM node is being removed from document
+	EventKeyDown    = 4096,
+	EventKeyUp      = 8192,
+	EventKeyChar    = 16384,
+	EventDestroy    = 32768, // DOM node is being removed from document
 };
 
-enum MouseButton {
-	MouseButtonNull   = 0,
-	MouseButtonLeft   = 1,
-	MouseButtonMiddle = 2,
-	MouseButtonRight  = 3,
-	MouseButtonX1     = 4, // Windows X button 1 (back)
-	MouseButtonX2     = 5, // Windows X button 2 (forward)
-	MouseButtonX3     = 6, // Windows X button 3 (not sure if this ever exists)
-	MouseButtonX4     = 7, // Windows X button 4 (not sure if this ever exists)
+enum class Button {
+	Null        = 0,
+	MouseLeft   = 1,
+	MouseMiddle = 2,
+	MouseRight  = 3,
+	MouseX1     = 4, // Windows X button 1 (back)
+	MouseX2     = 5, // Windows X button 2 (forward)
+	MouseX3     = 6, // Windows X button 3 (not sure if this ever exists)
+	MouseX4     = 7, // Windows X button 4 (not sure if this ever exists)
+	Key0,
+	Key9 = Key0 + 9,
+	KeyA,
+	KeyZ = KeyA + 25,
+	KeyBack,
+	KeySpace,
+	KeyTab,
+	KeyEscape,
+	KeyInsert,
+	KeyDelete,
+	KeyHome,
+	KeyEnd,
+	KeyPageUp,
+	KeyPageDown,
+	KeyNumLeft,
+	KeyNumRight,
+	KeyNumUp,
+	KeyNumDown,
+	KeyNumInsert,
+	KeyNumDelete,
+	KeyNumPlus,
+	KeyNumMinus,
+	KeyNumMultiply,
+	KeyNumDivide,
 };
 
 /* User interface event (keyboard, mouse, touch, etc).
@@ -43,7 +70,8 @@ public:
 	int32_t             TargetChar   = -1;
 	const LayoutResult* LayoutResult = nullptr;
 	Events              Type         = EventMouseMove;
-	MouseButton         Button       = MouseButtonNull;
+	Button              Button       = Button::Null;
+	int32_t             KeyChar      = 0;          // Unicode code point of a key message
 	int                 PointCount   = 0;          // Mouse = 1	Touch >= 1
 	Vec2f               PointsAbs[XO_MAX_TOUCHES]; // Points in pixels, relative to viewport top-left
 	Vec2f               PointsRel[XO_MAX_TOUCHES]; // Points relative to Target's content-box top-left

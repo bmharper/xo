@@ -7,7 +7,7 @@
 
 namespace xo {
 
-static const TCHAR* WClass = _T("xo");
+static const wchar_t* WClass = L"xo";
 
 #if XO_PLATFORM_ANDROID
 SysWnd* SingleMainWnd = NULL;
@@ -115,7 +115,7 @@ SysWnd* SysWnd::Create(uint32_t createFlags) {
 		ws |= WS_POPUP;
 	uint32_t wsx = 0;
 	//w->Wnd = CreateWindow(WClass, _T("xo"), ws, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup);
-	w->Wnd = CreateWindowEx(wsx, WClass, _T("xo"), ws, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup);
+	w->Wnd = CreateWindowEx(wsx, WClass, L"xo", ws, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, GetModuleHandle(NULL), w->DocGroup);
 	if (w->Wnd) {
 		if (w->InitializeRenderer())
 			ok = true;

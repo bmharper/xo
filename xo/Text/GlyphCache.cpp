@@ -181,7 +181,7 @@ uint32_t GlyphCache::RenderGlyph(const GlyphCacheKey& key) {
 	g.MetricLeft              = font->FTFace->glyph->bitmap_left / combinedHorzMultiplier;
 	g.MetricLeftx256          = font->FTFace->glyph->bitmap_left * 256 / combinedHorzMultiplier;
 	g.MetricTop               = font->FTFace->glyph->bitmap_top;
-	g.MetricWidth             = font->FTFace->glyph->metrics.width / (64 * combinedHorzMultiplier);
+	g.MetricWidth             = (uint16_t)(font->FTFace->glyph->metrics.width / (64 * combinedHorzMultiplier));
 	g.MetricHoriAdvance       = font->FTFace->glyph->advance.x / (64 * combinedHorzMultiplier);
 	g.MetricLinearHoriAdvance = (font->FTFace->glyph->linearHoriAdvance * (int32_t) pixSize) / (float) font->FTFace->units_per_EM;
 	Table.insert(key, (uint32_t) Glyphs.size());

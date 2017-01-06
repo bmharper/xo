@@ -32,8 +32,8 @@ public:
 
 	//void					CloneFastInto( DomEl& c, Pool* pool, uint32_t cloneFlags ) const;
 
-	void SetInternalID(InternalID id) { InternalID = id; }  // Used by Doc during element creation.
-	void SetDoc(Doc* doc) { Doc                    = doc; } // Used by Doc during element creation and destruction.
+	void SetInternalID(InternalID id) { InternalID = id; } // Used by Doc during element creation.
+	void SetDoc(Doc* doc) { Doc = doc; }                   // Used by Doc during element creation and destruction.
 	bool IsNode() const { return Tag != TagText; }
 	bool IsText() const { return Tag == TagText; }
 

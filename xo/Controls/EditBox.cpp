@@ -63,6 +63,7 @@ DomNode* EditBox::AppendTo(DomNode* node) {
 				pos = PosToReal(rtxt->Text[crack].X + rtxt->Text[crack].Width);
 			}
 			caret->StyleParsef("left: %fpx", Round(pos + rightOffsetPx));
+			// restart the timer, so that the caret is visible for the next 500ms or so, after the user clicked
 			if (s->TimerID)
 				edit->RemoveHandler(s->TimerID);
 			s->TimerID        = edit->OnTimer(timer, Global()->CaretBlinkTimeMS);
@@ -70,6 +71,16 @@ DomNode* EditBox::AppendTo(DomNode* node) {
 			flip();
 			s->CaretPos = crack;
 		}
+		return true;
+	});
+	edit->OnKeyChar([s, edit](const Event& ev) -> bool {
+		std::string txt    = edit->GetText();
+		int         insert = Clamp((int) s->CaretPos + 1, 0, (int) txt.length());
+		std::string newChar;
+		utfz::encode(newChar, ev.KeyChar);
+		txt.insert(insert, newChar);
+		edit->SetText(txt.c_str());
+		s->CaretPos++;
 		return true;
 	});
 	edit->OnGetFocus([s, flip, edit, timer](const Event& ev) -> bool {

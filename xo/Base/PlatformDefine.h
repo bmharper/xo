@@ -43,6 +43,11 @@ enum Platform {
 #endif
 #endif
 
+#if XO_PLATFORM_WIN_DESKTOP
+#define _UNICODE
+#define UNICODE
+#endif
+
 // We need to define this early on, because things such as gl.h will include stdint.h
 #if !XO_PLATFORM_WIN_DESKTOP
 // Necessary on some linux stdint.h (esp Android), to get INT32_MAX etc.

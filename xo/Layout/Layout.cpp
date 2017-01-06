@@ -360,8 +360,11 @@ descender   X  |                    X              |             X
 void Layout::GenerateTextWords(TextRunState& ts) {
 	XO_DEBUG_ASSERT(ts.Chars.Size() == 0);
 
-	const char* txt        = ts.Node->GetText();
-	int32_t     txt_offset = 0;
+	const char* txt = ts.Node->GetText();
+	if (!txt)
+		return;
+
+	int32_t txt_offset = 0;
 	if (ts.RestartPoints->size() != 0) {
 		txt_offset = ts.RestartPoints->rpop();
 		txt += txt_offset;

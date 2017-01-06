@@ -18,27 +18,24 @@ template <typename vreal>
 class Vec2Traits
 {
 public:
-	static const TCHAR* StringFormat() { return _T("[ %g %g ]"); }
-	static const TCHAR* StringFormatBare() { return _T("%g %g"); }
-	static const char* StringAFormatBare() { return "%g %g"; }
+	static const char* StringFormat() { return "[ %g %g ]"; }
+	static const char* StringFormatBare() { return "%g %g"; }
 };
 
 template <>
 class Vec2Traits<float>
 {
 public:
-	static const TCHAR* StringFormat() { return _T("[ %.6g %.6g ]"); }
-	static const TCHAR* StringFormatBare() { return _T("%.6g %.6g"); }
-	static const char* StringAFormatBare() { return "%.6g %.6g"; }
+	static const char* StringFormat() { return "[ %.6g %.6g ]"; }
+	static const char* StringFormatBare() { return "%.6g %.6g"; }
 };
 
 template <>
 class Vec2Traits<double>
 {
 public:
-	static const TCHAR* StringFormat() { return _T("[ %.10g %.10g ]"); }
-	static const TCHAR* StringFormatBare() { return _T("%.10g %.10g"); }
-	static const char* StringAFormatBare() { return "%.10g %.10g"; }
+	static const char* StringFormat() { return "[ %.10g %.10g ]"; }
+	static const char* StringFormatBare() { return "%.10g %.10g"; }
 };
 
 // The "Base" class has no constructor, so that it can be included inside a union

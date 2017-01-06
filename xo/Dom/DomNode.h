@@ -90,6 +90,9 @@ public:
 	uint64_t OnMouseLeave(EventHandlerF func, void* context) { return AddHandler(EventMouseLeave, func, context); }
 	uint64_t OnMouseDown(EventHandlerF func, void* context) { return AddHandler(EventMouseDown, func, context); }
 	uint64_t OnMouseUp(EventHandlerF func, void* context) { return AddHandler(EventMouseUp, func, context); }
+	uint64_t OnKeyDown(EventHandlerF func, void* context) { return AddHandler(EventKeyDown, func, context); }
+	uint64_t OnKeyUp(EventHandlerF func, void* context) { return AddHandler(EventKeyUp, func, context); }
+	uint64_t OnKeyChar(EventHandlerF func, void* context) { return AddHandler(EventKeyChar, func, context); }
 	uint64_t OnDestroy(EventHandlerF func, void* context) { return AddHandler(EventDestroy, func, context); }
 
 	uint64_t OnWindowSize(EventHandlerLambda lambda) { return AddHandler(EventWindowSize, lambda); }
@@ -104,6 +107,9 @@ public:
 	uint64_t OnMouseLeave(EventHandlerLambda lambda) { return AddHandler(EventMouseLeave, lambda); }
 	uint64_t OnMouseDown(EventHandlerLambda lambda) { return AddHandler(EventMouseDown, lambda); }
 	uint64_t OnMouseUp(EventHandlerLambda lambda) { return AddHandler(EventMouseUp, lambda); }
+	uint64_t OnKeyDown(EventHandlerLambda lambda) { return AddHandler(EventKeyDown, lambda); }
+	uint64_t OnKeyUp(EventHandlerLambda lambda) { return AddHandler(EventKeyUp, lambda); }
+	uint64_t OnKeyChar(EventHandlerLambda lambda) { return AddHandler(EventKeyChar, lambda); }
 	uint64_t OnDestroy(EventHandlerLambda lambda) { return AddHandler(EventDestroy, lambda); }
 
 protected:
