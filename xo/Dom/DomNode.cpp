@@ -136,16 +136,28 @@ void DomNode::Discard() {
 
 String DomNode::Parse(const char* src) {
 	RemoveAllChildren();
-	return ParseAppend(src);
+	String err;
+	ParseAppend(src, &err);
+	return err;
 }
 
-String DomNode::ParseAppend(const char* src) {
+DomEl* DomNode::ParseAppend(const char* src, String* error) {
+	auto      nChild = Children.size();
 	DocParser p;
-	return p.Parse(src, this);
+	auto      err = p.Parse(src, this);
+	if (!err.IsEmpty()) {
+		if (error)
+			*error = err;
+		return nullptr;
+	}
+	if (Children.size() > nChild)
+		return Children[nChild];
+	else
+		return nullptr;
 }
 
-String DomNode::ParseAppend(const StringRaw& src) {
-	return ParseAppend(src.Z);
+DomEl* DomNode::ParseAppend(const StringRaw& src, String* error) {
+	return ParseAppend(src.CStr(), error);
 }
 
 bool DomNode::StyleParse(const char* t, size_t maxLen) {

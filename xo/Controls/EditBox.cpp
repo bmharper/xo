@@ -7,7 +7,7 @@ namespace xo {
 namespace controls {
 
 void EditBox::InitializeStyles(Doc* doc) {
-	doc->ClassParse("editbox", "padding: 5ep 3ep 5ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd; canfocus: true; cursor: text");
+	doc->ClassParse("editbox", "padding: 5ep 3ep 5ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd; canfocus: true; cursor: text; height: 1eh");
 	doc->ClassParse("editbox:focus", "border: 1px #8888ee");
 	doc->ClassParse("editbox.caret", "background: #0000; position: absolute; width: 1px; height: 1eh; vcenter: vcenter");
 }

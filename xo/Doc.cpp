@@ -121,7 +121,7 @@ bool Doc::ClassParse(const char* klass, const char* style) {
 		tmpKlass                  = klass;
 		tmpKlass.Z[colon - klass] = 0;
 		pseudo                    = colon + 1;
-		klass                     = tmpKlass.Z;
+		klass                     = tmpKlass.CStr();
 	}
 	StyleClass* s      = ClassStyles.GetOrCreate(klass);
 	Style*      subset = nullptr;

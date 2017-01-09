@@ -16,7 +16,7 @@ void DomText::SetText(const char* txt) {
 }
 
 const char* DomText::GetText() const {
-	return Text.Z;
+	return Text.CStr();
 }
 
 void DomText::CloneSlowInto(DomEl& c, uint32_t cloneFlags) const {

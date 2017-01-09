@@ -68,7 +68,7 @@ String DocParser::Parse(const char* src, DomNode* target) {
 		ssize_t start = Max<ssize_t>(pos - 1, 0);
 		String  sample;
 		sample.Set(src + start, 10);
-		return tsf::fmt("Parse error at position %v (%v): %v", pos, sample.Z, msg).c_str();
+		return tsf::fmt("Parse error at position %v (%v): %v", pos, sample.CStr(), msg).c_str();
 	};
 
 	auto newNode = [&]() -> String {
@@ -103,7 +103,7 @@ String DocParser::Parse(const char* src, DomNode* target) {
 					else if (len == 3 && src[escape] == 'a' && src[escape + 1] == 'm' && src[escape + 2] == 'p')
 						str.Add('&');
 					else
-						return tsf::fmt("Invalid escape sequence (%v)", String(src + escape, len).Z).c_str();
+						return tsf::fmt("Invalid escape sequence (%v)", String(src + escape, len).CStr()).c_str();
 					escape = -1;
 				}
 			} else {
@@ -141,7 +141,7 @@ String DocParser::Parse(const char* src, DomNode* target) {
 			return "Too many closing tags";
 		DomNode* top = stack.back();
 		if (!EqNoCase(TagNames[top->GetTag()], src + xStart, xEnd - xStart))
-			return tsf::fmt("Cannot close %v here. Expected %v close.", String(src + xStart, xEnd - xStart).Z, TagNames[top->GetTag()]).c_str();
+			return tsf::fmt("Cannot close %v here. Expected %v close.", String(src + xStart, xEnd - xStart).CStr(), TagNames[top->GetTag()]).c_str();
 		stack.pop();
 		return "";
 	};
@@ -169,7 +169,7 @@ String DocParser::Parse(const char* src, DomNode* target) {
 							buf[len] = 0;
 							node->AddClass(buf);
 						} else {
-							node->AddClass(String(src + cstart, i - cstart).Z);
+							node->AddClass(String(src + cstart, i - cstart).CStr());
 						}
 					}
 					cstart = i + 1;
@@ -288,7 +288,7 @@ String DocParser::Parse(const char* src, DomNode* target) {
 			}
 		}
 		if (e != "")
-			return err(e.Z);
+			return err(e.CStr());
 	}
 
 	if (s != SText)

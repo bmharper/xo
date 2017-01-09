@@ -85,7 +85,7 @@ FontID FontStore::Insert(const Font& font) {
 	XO_ASSERT(font.Facename.Length() != 0);
 	std::lock_guard<std::mutex> lock(Lock);
 
-	const Font* existing = GetByFacename_Internal(font.Facename.Z);
+	const Font* existing = GetByFacename_Internal(font.Facename.CStr());
 	if (existing)
 		return existing->ID;
 
@@ -269,13 +269,13 @@ void FontStore::BuildAndSaveFontTable() {
 			return true;
 		};
 
-		FindFiles(Directories[i].Z, cb);
+		FindFiles(Directories[i].CStr(), cb);
 	}
 
 	String cacheFile = Global()->CacheDir + XO_DIR_SEP_STR + "fonts";
-	FILE*  manifest  = fopen(cacheFile.Z, "wb");
+	FILE*  manifest  = fopen(cacheFile.CStr(), "wb");
 	if (manifest == nullptr) {
-		Trace("Failed to open font cache file %s. Aborting.\n", cacheFile.Z);
+		Trace("Failed to open font cache file %s. Aborting.\n", cacheFile.CStr());
 		XO_DIE_MSG("Failed to open font cache file");
 	}
 	fprintf(manifest, "%d\n", ManifestVersion);
@@ -283,15 +283,15 @@ void FontStore::BuildAndSaveFontTable() {
 
 	for (size_t i = 0; i < files.size(); i++) {
 		FT_Face  face;
-		FT_Error e = FT_New_Face(FTLibrary, files[i].Z, 0, &face);
+		FT_Error e = FT_New_Face(FTLibrary, files[i].CStr(), 0, &face);
 		if (e == 0) {
 			String facename     = face->family_name;
 			String style        = face->style_name;
 			String fullFacename = facename + " " + style;
-			fprintf(manifest, "%s%c%s\n", files[i].Z, UnitSeparator, fullFacename.Z);
+			fprintf(manifest, "%s%c%s\n", files[i].CStr(), UnitSeparator, fullFacename.CStr());
 			FT_Done_Face(face);
 		} else {
-			Trace("Failed to load font (filename=%s)\n", files[i].Z);
+			Trace("Failed to load font (filename=%s)\n", files[i].CStr());
 		}
 	}
 
@@ -304,7 +304,7 @@ bool FontStore::LoadFontTable() {
 	XOTRACE_FONTS("LoadFontTable enter\n");
 
 	FacenameToFilename.clear();
-	FILE* manifest = fopen((Global()->CacheDir + XO_DIR_SEP_STR + "fonts").Z, "rb");
+	FILE* manifest = fopen((Global()->CacheDir + XO_DIR_SEP_STR + "fonts").CStr(), "rb");
 	if (manifest == nullptr)
 		return false;
 
@@ -344,7 +344,7 @@ bool FontStore::LoadFontTable() {
 				path.Set(buf + lineStart, term1 - lineStart);
 				facename.Set(buf + term1 + 1, i - term1 - 1);
 				FacenameToFilename.insert(facename, path);
-				XOTRACE_FONTS("Font %s -> %s\n", facename.Z, path.Z);
+				XOTRACE_FONTS("Font %s -> %s\n", facename.CStr(), path.CStr());
 			}
 			lineStart = i + 1;
 			term1     = lineStart;
@@ -375,7 +375,7 @@ uint64_t FontStore::ComputeFontDirHash() {
 	};
 
 	for (size_t i = 0; i < Directories.size(); i++)
-		FindFiles(Directories[i].Z, cb);
+		FindFiles(Directories[i].CStr(), cb);
 
 	return (uint64_t) XXH64_digest(hstate);
 }

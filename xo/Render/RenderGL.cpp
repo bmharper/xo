@@ -259,7 +259,7 @@ void RenderGL::CheckExtensions() {
             else if (pos == NULL)
                 return false;
         }
-	};
+    };
 
 	Trace("Checking OpenGL extensions\n");
 	// On my desktop Nvidia I get "4.3.0"
@@ -754,17 +754,18 @@ bool RenderGL::LoadTexture(Texture* tex, int texUnit) {
 		return true;
 
 	int iformat = 0;
-	int format = 0;
+	int format  = 0;
 	switch (tex->TexFormat) {
 	case TexFormatGrey8:
 		iformat = GL_XO_RED_OR_LUMINANCE;
-		format = GL_XO_RED_OR_LUMINANCE;
+		format  = GL_XO_RED_OR_LUMINANCE;
 		break;
 	//case : format = GL_RG;
 	//case : format = GL_RGB;
 	case TexFormatRGBA8:
 		iformat = GL_SRGB8_ALPHA8;
-		format = GL_RGBA; break;
+		format  = GL_RGBA;
+		break;
 	default:
 		XO_TODO;
 	}
@@ -837,7 +838,7 @@ void RenderGL::PreparePreprocessor() {
 	if ( Preprocessor.MacroCount() != 0 )
 	return;
 
-	Preprocessor.SetMacro( "XO_GLYPH_ATLAS_SIZE", fmt("%v", GlyphAtlasSize).Z );
+	Preprocessor.SetMacro( "XO_GLYPH_ATLAS_SIZE", fmt("%v", GlyphAtlasSize).CStr() );
 
 	if ( Global()->EnableSRGBFramebuffer )
 	Preprocessor.SetMacro( "XO_SRGB_FRAMEBUFFER", "" );
@@ -940,7 +941,7 @@ bool RenderGL::LoadShader(GLenum shaderType, GLuint& shader, const char* name, c
 	std::string processed = raw_prefix + BaseShader + raw_other;
 	//String processed = Preprocessor.Run( raw_src );
 	//String processed(raw_src);
-	//processed.ReplaceAll( "XO_GLYPH_ATLAS_SIZE", fmt("%v", GlyphAtlasSize).Z );
+	//processed.ReplaceAll( "XO_GLYPH_ATLAS_SIZE", fmt("%v", GlyphAtlasSize).CStr() );
 	//fputs( processed.c_str(), stderr );
 
 	GLchar* vstring[1];

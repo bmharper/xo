@@ -259,7 +259,7 @@ static void ParseString(const char* s, size_t len, StyleCategories cat, Doc* doc
 	} else {
 		String copy;
 		copy.Set(s, len);
-		attrib.Set(cat, copy.Z, doc);
+		attrib.Set(cat, copy.CStr(), doc);
 	}
 	style.Set(attrib);
 }

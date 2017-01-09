@@ -15,13 +15,15 @@ class XO_API StringRaw {
 public:
 	char* Z;
 
-	size_t   Length() const;
-	void     CloneFastInto(StringRaw& b, Pool* pool) const;
-	void     Discard();
-	uint32_t GetHashCode() const;
-	size_t   Index(const char* find) const;      // Find the first occurrence of 'find', or -1 if none
-	size_t   RIndex(const char* find) const;     // Find the last occurrence of 'find', or -1 if none
-	bool     EndsWith(const char* suffix) const; // Returns true if the string ends with 'suffix'
+	bool        IsEmpty() const { return Z == nullptr || Z[0] == 0; }
+	const char* CStr() const;
+	size_t      Length() const;
+	void        CloneFastInto(StringRaw& b, Pool* pool) const;
+	void        Discard();
+	uint32_t    GetHashCode() const;
+	size_t      Index(const char* find) const;      // Find the first occurrence of 'find', or -1 if none
+	size_t      RIndex(const char* find) const;     // Find the last occurrence of 'find', or -1 if none
+	bool        EndsWith(const char* suffix) const; // Returns true if the string ends with 'suffix'
 
 	bool operator==(const char* b) const;
 	bool operator!=(const char* b) const { return !(*this == b); }

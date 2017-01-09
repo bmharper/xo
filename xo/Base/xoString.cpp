@@ -4,6 +4,10 @@
 
 namespace xo {
 
+const char* StringRaw::CStr() const {
+	return Z ? Z : "";
+}
+
 size_t StringRaw::Length() const {
 	return Z == nullptr ? 0 : strlen(Z);
 }

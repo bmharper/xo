@@ -95,6 +95,13 @@ SysWnd::~SysWnd() {
 #endif
 	Global()->DocRemoveQueue.Add(DocGroup);
 	DocGroup = NULL;
+
+	// For a simple, single-window application, by the time we get here, the message loop has already exited, so
+	// the application can be confident that it can clean up resources by now, without worrying that it's still
+	// going to be receiving UI input during that time. See RunAppLowLevel() and RunApp() to understand how
+	// this works.
+	for (auto cb : OnWindowClose)
+		cb();
 }
 
 SysWnd* SysWnd::Create(uint32_t createFlags) {

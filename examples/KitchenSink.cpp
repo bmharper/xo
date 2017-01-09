@@ -8,12 +8,16 @@ void InitDOM(xo::Doc* doc);
 
 void xoMain(xo::SysWnd* wnd)
 {
+	wnd->OnWindowClose.push_back([]() {
+		// This just demonstrates how to clean up global resources when an application exits
+		xo::Trace("KitchenSink application is closing\n");
+	});
 	xo::Global()->FontStore->AddFontDirectory("C:\\temp\\fonts");
 	int left = 2000;
 	int width = 400;
 	int top = 60;
 	int height = 500;
-	wnd->SetPosition(xo::Box(left, top, left + width, top + height), xo::SysWnd::SetPosition_Move | xo::SysWnd::SetPosition_Size);
+	//wnd->SetPosition(xo::Box(left, top, left + width, top + height), xo::SysWnd::SetPosition_Move | xo::SysWnd::SetPosition_Size);
 	InitDOM(wnd->Doc());
 }
 
@@ -477,8 +481,7 @@ void DoTimer(xo::Doc* doc)
 void DoEditBox(xo::Doc* doc)
 {
 	auto edit = xo::controls::EditBox::AppendTo(&doc->Root);
-	edit->StyleParse("width: 320ep");
-	edit->SetText(" ");
+	edit->StyleParse("width: 15em");
 }
 
 void InitDOM(xo::Doc* doc)

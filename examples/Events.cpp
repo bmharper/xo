@@ -33,8 +33,8 @@ void xoMain(xo::SysWnd* wnd)
 	greybox->StyleParse("background: #aaaa; position: absolute; left: 90px; top: 90px;");
 
 	auto onMoveOrTouch = [greybox, txtBox](const xo::Event& ev) -> bool {
-		greybox->StyleParsef("left: %fpx; top: %fpx;", ev.Points[0].x - 45.0, ev.Points[0].y - 45.0);
-		txtBox->StyleParsef("left: %fpx; top: %fpx;", ev.Points[0].x * 0.01 + 45.0, ev.Points[0].y * 0.01 + 150.0);
+		greybox->StyleParsef("left: %fpx; top: %fpx;", ev.PointsRel[0].x - 45.0, ev.PointsRel[0].y - 45.0);
+		txtBox->StyleParsef("left: %fpx; top: %fpx;", ev.PointsRel[0].x * 0.01 + 45.0, ev.PointsRel[0].y * 0.01 + 150.0);
 		return true;
 	};
 	doc->Root.OnMouseMove(onMoveOrTouch);
@@ -44,7 +44,7 @@ void xoMain(xo::SysWnd* wnd)
 
 	xo::Event inject;
 	inject.PointCount = 1;
-	inject.Points[0] = xo::VEC2(100,100);
+	inject.PointsRel[0] = xo::VEC2(100,100);
 	onMoveOrTouch(inject);
 
 	xo::Trace("Hello 5\n");

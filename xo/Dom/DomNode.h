@@ -45,8 +45,8 @@ public:
 
 	// Replace all child elements with the given xml-like string. Returns empty string on success, or error message.
 	String Parse(const char* src);
-	String ParseAppend(const char* src); // Same as Parse, but append to node
-	String ParseAppend(const StringRaw& src);
+	DomEl* ParseAppend(const char* src, String* error = nullptr); // Same as Parse, but append to node. Returns root of first element added.
+	DomEl* ParseAppend(const StringRaw& src, String* error = nullptr);
 
 	bool StyleParse(const char* t, size_t maxLen = -1);
 	bool StyleParsef(const char* t, ...);

@@ -40,8 +40,9 @@ public:
 #else
 	XO_TODO_STATIC;
 #endif
-	DocGroup*   DocGroup;
-	RenderBase* Renderer;
+	DocGroup*                          DocGroup;
+	RenderBase*                        Renderer;
+	std::vector<std::function<void()>> OnWindowClose; // You can use this in a simple application to detect when the application is closing
 
 	SysWnd();
 	~SysWnd();

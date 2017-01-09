@@ -67,7 +67,7 @@ void RenderStack::Initialize(const xo::Doc* doc, xo::Pool* pool) {
 	//Defaults[CatBottom]
 	Defaults[CatFontSize].SetSize(CatFontSize, Size::EyePixels(12));
 	// Font should inherit from body. Doc initializes the default font for TagBody
-	//Defaults[CatFontFamily].SetFont( doc->TagStyles[TagBody].Get().GetFont( doc ).Z, doc );
+	//Defaults[CatFontFamily].SetFont( doc->TagStyles[TagBody].Get().GetFont( doc ).CStr(), doc );
 	Defaults[CatBorderRadius].SetSize(CatBorderRadius, Size::Zero());
 	Defaults[CatPosition].SetPosition(PositionStatic);
 	Defaults[CatFlowContext].SetFlowContext(FlowContextNew);

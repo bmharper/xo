@@ -11,7 +11,7 @@ DomCanvas::DomCanvas(xo::Doc* doc, xo::InternalID parentID) : DomNode(doc, TagCa
 
 DomCanvas::~DomCanvas() {
 	if (ImageName != "")
-		Doc->Images.Delete(ImageName.Z);
+		Doc->Images.Delete(ImageName.CStr());
 }
 
 void DomCanvas::CloneSlowInto(DomEl& c, uint32_t cloneFlags) const {
@@ -25,7 +25,7 @@ bool DomCanvas::SetImageSizeOnly(uint32_t width, uint32_t height) {
 	if ((width == 0 || height == 0) && ImageName == "")
 		return true;
 
-	Image* img = Doc->Images.Get(ImageName.Z);
+	Image* img = Doc->Images.Get(ImageName.CStr());
 	if (img == nullptr) {
 		img = new Image();
 		if (!img->Alloc(TexFormatRGBA8, width, height)) {
@@ -51,7 +51,7 @@ bool DomCanvas::SetSize(uint32_t width, uint32_t height) {
 }
 
 Canvas2D* DomCanvas::GetCanvas2D() {
-	return new Canvas2D(Doc->Images.Get(ImageName.Z));
+	return new Canvas2D(Doc->Images.Get(ImageName.CStr()));
 }
 
 void DomCanvas::ReleaseCanvas(Canvas2D* canvas2D) {
@@ -63,6 +63,6 @@ void DomCanvas::ReleaseCanvas(Canvas2D* canvas2D) {
 }
 
 const char* DomCanvas::GetCanvasImageName() const {
-	return ImageName.Z;
+	return ImageName.CStr();
 }
 }
