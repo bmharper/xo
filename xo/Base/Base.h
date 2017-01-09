@@ -142,7 +142,9 @@ typedef Mat4T<float> Mat4f;
 }
 ///////////////////////////////////////////////////////////////////////////
 
+#ifndef XXH32_SIZEOFSTATE
 #include "../dependencies/hash/xxhash.h"
+#endif
 
 #include "Base/Alloc.h"
 #include "Base/cheapvec.h"
