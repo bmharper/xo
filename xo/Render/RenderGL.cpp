@@ -753,18 +753,21 @@ bool RenderGL::LoadTexture(Texture* tex, int texUnit) {
 	if (!invRect.IsAreaPositive())
 		return true;
 
+	int iformat = 0;
 	int format = 0;
 	switch (tex->TexFormat) {
 	case TexFormatGrey8:
+		iformat = GL_XO_RED_OR_LUMINANCE;
 		format = GL_XO_RED_OR_LUMINANCE;
 		break;
 	//case : format = GL_RG;
 	//case : format = GL_RGB;
-	case TexFormatRGBA8: format = GL_RGBA; break;
+	case TexFormatRGBA8:
+		iformat = GL_SRGB8_ALPHA8;
+		format = GL_RGBA; break;
 	default:
 		XO_TODO;
 	}
-	int iformat = format;
 
 	if (Have_Unpack_RowLength)
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, tex->TexStride / (int) tex->TexBytesPerPixel());

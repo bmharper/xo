@@ -234,7 +234,7 @@ def gen_combined(common, ext, vert, frag, name, filename_base)
 			end
 		}
 		load_func_body << "\tif (nfail != 0)\n"
-		load_func_body << "\t\tXOTRACE(\"Failed to bind %d variables of shader #{name}\\n\", nfail);\n"
+		load_func_body << "\t\tTrace(\"Failed to bind %d variables of shader #{name}\\n\", nfail);\n"
 		reset.rstrip!
 		txt = replace.call(txt)
 		txt.gsub!("RESET", reset)
