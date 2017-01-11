@@ -530,7 +530,7 @@ Pos Layout::MeasureWord(const char* txt, const Font* font, Pos fontAscender, Chu
 }
 
 Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseline, LayoutOutput& cout) {
-	Point retval(0, 0);
+	Point orgPos(cout.RNode->Pos.Left, cout.RNode->Pos.Top);
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Horizontal
@@ -542,7 +542,6 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 	if (IsDefined(moveX)) {
 		cout.RNode->Pos.Offset(moveX, 0);
 		helperH.ChildLeft += moveX;
-		retval.X = moveX;
 	}
 
 	Pos leftDelta  = helperH.Delta(cout.Binds.HChildLeft, HorizontalBindingLeft);
@@ -556,7 +555,6 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 		} else {
 			// Move to left
 			cout.RNode->Pos.Offset(leftDelta, 0);
-			retval.X = leftDelta;
 		}
 	}
 
@@ -567,7 +565,6 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 		} else {
 			// Move to right
 			cout.RNode->Pos.Offset(rightDelta, 0);
-			retval.X = rightDelta;
 		}
 	}
 
@@ -585,7 +582,6 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 	if (IsDefined(moveY)) {
 		cout.RNode->Pos.Offset(0, moveY);
 		helperV.ChildTop += moveY;
-		retval.Y = moveY;
 	}
 
 	Pos topDelta    = helperV.Delta(cout.Binds.VChildTop, VerticalBindingTop);
@@ -601,7 +597,6 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 		} else {
 			// Move to top
 			cout.RNode->Pos.Offset(0, topDelta);
-			retval.Y = topDelta;
 		}
 	}
 
@@ -612,11 +607,21 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 		} else {
 			// Move to bottom
 			cout.RNode->Pos.Offset(0, bottomDelta);
-			retval.Y = bottomDelta;
 		}
 	}
 
-	return retval;
+	if (SnapBoxes) {
+		Pos width = cout.RNode->Pos.WidthOrNull();
+		Pos height = cout.RNode->Pos.HeightOrNull();
+		cout.RNode->Pos.Left = PosRound(cout.RNode->Pos.Left);
+		cout.RNode->Pos.Top = PosRound(cout.RNode->Pos.Top);
+		if (width != PosNULL)
+			cout.RNode->Pos.Right = cout.RNode->Pos.Left + PosRoundUp(width);
+		if (height != PosNULL)
+			cout.RNode->Pos.Bottom = cout.RNode->Pos.Top + PosRoundUp(height);
+	}
+
+	return Point(cout.RNode->Pos.Left - orgPos.X, cout.RNode->Pos.Top - orgPos.Y);
 }
 
 Pos Layout::ComputeDimension(Pos container, StyleCategories cat) {

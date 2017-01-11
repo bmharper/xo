@@ -37,7 +37,7 @@ TESTFUNC(DocumentClone)
 		TTASSERT(g->RenderStats.Clone_NumEls == 3);   // div1
 	}
 
-	d->Root.RemoveChild(div1);
+	d->Root.DeleteChild(div1);
 	for (int i = 0; i < 5; i++)
 	{
 		g->Render();

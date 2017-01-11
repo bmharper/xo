@@ -21,6 +21,8 @@
 #include "SysWnd.h"
 #include "Event.h"
 #include "Controls/EditBox.h"
+#include "Controls/Button.h"
+#include "Controls/MsgBox.h"
 
 #ifdef _WIN32
 #pragma warning(pop)

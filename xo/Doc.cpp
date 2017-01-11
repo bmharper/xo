@@ -7,6 +7,8 @@
 #include "Style.h"
 #include "Dom/DomCanvas.h"
 #include "Controls/EditBox.h"
+#include "Controls/Button.h"
+#include "Controls/MsgBox.h"
 
 namespace xo {
 
@@ -298,5 +300,8 @@ void Doc::InitializeDefaultTagStyles() {
 
 void Doc::InitializeDefaultControls() {
 	controls::EditBox::InitializeStyles(this);
+	controls::Button::InitializeStyles(this);
+	controls::MsgBox::InitializeStyles(this);
 }
+
 }

@@ -32,12 +32,12 @@ public:
         count    = Handlers.size();
 	}
 
-	DomEl*       AddChild(xo::Tag tag);
-	DomNode*     AddNode(xo::Tag tag);
-	DomCanvas*   AddCanvas();
-	DomText*     AddText(const char* txt = nullptr);
-	void         RemoveChild(DomEl* c);
-	void         RemoveAllChildren();
+	DomEl*       AddChild(xo::Tag tag, size_t position = -1);
+	DomNode*     AddNode(xo::Tag tag, size_t position = -1);
+	DomCanvas*   AddCanvas(size_t position = -1);
+	DomText*     AddText(const char* txt = nullptr, size_t position = -1);
+	void         DeleteChild(DomEl* c);
+	void         DeleteAllChildren();
 	size_t       ChildCount() const { return Children.size(); }
 	DomEl*       ChildByIndex(size_t index);
 	const DomEl* ChildByIndex(size_t index) const;
@@ -123,5 +123,6 @@ protected:
 	void     RecalcAllEventMask();
 	uint64_t AddHandler(Events ev, EventHandlerF func, bool isLambda, void* context, uint32_t timerPeriodMS);
 	uint64_t AddTimerHandler(Events ev, EventHandlerLambda lambda, uint32_t periodMS);
+	void     DeleteChildInternal(DomEl* c);
 };
 }

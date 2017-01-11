@@ -69,48 +69,48 @@ void DomNode::ForgetChildren() {
 	Children.clear_noalloc();
 }
 
-DomEl* DomNode::AddChild(xo::Tag tag) {
+DomEl* DomNode::AddChild(xo::Tag tag, size_t position) {
 	IncVersion();
 	DomEl* c = Doc->AllocChild(tag, InternalID);
-	Children += c;
+	if (position >= Children.size())
+		Children += c;
+	else
+		Children.insert(position, c);
 	Doc->ChildAdded(c);
 	return c;
 }
 
-DomNode* DomNode::AddNode(xo::Tag tag) {
+DomNode* DomNode::AddNode(xo::Tag tag, size_t position) {
 	// DomText is not a DomNode object, so our return type would be violated here.
 	XO_ASSERT(tag != TagText);
 
-	return static_cast<DomNode*>(AddChild(tag));
+	return static_cast<DomNode*>(AddChild(tag, position));
 }
 
-DomCanvas* DomNode::AddCanvas() {
-	return static_cast<DomCanvas*>(AddChild(TagCanvas));
+DomCanvas* DomNode::AddCanvas(size_t position) {
+	return static_cast<DomCanvas*>(AddChild(TagCanvas, position));
 }
 
-DomText* DomNode::AddText(const char* txt) {
-	DomText* el = static_cast<DomText*>(AddChild(TagText));
+DomText* DomNode::AddText(const char* txt, size_t position) {
+	DomText* el = static_cast<DomText*>(AddChild(TagText, position));
 	el->SetText(txt);
 	return el;
 }
 
-void DomNode::RemoveChild(DomEl* c) {
+void DomNode::DeleteChild(DomEl* c) {
 	if (!c)
 		return;
 	IncVersion();
 	size_t ix = Children.find(c);
 	XO_ASSERT(ix != -1);
 	Children.erase(ix);
-	Doc->ChildRemoved(c);
-	Doc->FreeChild(c);
+	DeleteChildInternal(c);
 }
 
-void DomNode::RemoveAllChildren() {
+void DomNode::DeleteAllChildren() {
 	IncVersion();
-	for (size_t i = 0; i < Children.size(); i++) {
-		Doc->ChildRemoved(Children[i]);
-		Doc->FreeChild(Children[i]);
-	}
+	for (size_t i = 0; i < Children.size(); i++)
+		DeleteChildInternal(Children[i]);
 	Children.clear();
 }
 
@@ -135,7 +135,7 @@ void DomNode::Discard() {
 }
 
 String DomNode::Parse(const char* src) {
-	RemoveAllChildren();
+	DeleteAllChildren();
 	String err;
 	ParseAppend(src, &err);
 	return err;
@@ -304,4 +304,13 @@ void DomNode::RecalcAllEventMask() {
 	else if (hadTimer && !hasTimerNow)
 		Doc->NodeLostTimer(InternalID);
 }
+
+void DomNode::DeleteChildInternal(DomEl* c) {
+	auto node = c->ToNode();
+	if (node)
+		node->DeleteAllChildren();
+	Doc->ChildRemoved(c);
+	Doc->FreeChild(c);
+}
+
 }

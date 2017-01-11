@@ -334,7 +334,7 @@ void DoInlineFlow(xo::Doc* doc)
 	{
 		static bool doSpan = false;
 		doSpan = !doSpan;
-		doc->Root.RemoveAllChildren();
+		doc->Root.DeleteAllChildren();
 		doc->Root.StyleParse("font-size: 26px");
 		doc->Root.StyleParse("margin: 5px");
 		doc->ClassParse("red", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #d00b; background: #fddb");
@@ -482,6 +482,12 @@ void DoEditBox(xo::Doc* doc)
 {
 	auto edit = xo::controls::EditBox::AppendTo(&doc->Root);
 	edit->StyleParse("width: 15em");
+	auto btn = xo::controls::Button::AppendTo(&doc->Root);
+	btn->SetText("Click me");
+	btn->OnClick([doc](const xo::Event& ev) -> bool {
+		xo::controls::MsgBox::Show(doc, "How now brown cow\nA new line");
+		return true;
+	});
 }
 
 void InitDOM(xo::Doc* doc)

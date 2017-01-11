@@ -5,8 +5,7 @@ class Doc;
 class DomNode;
 namespace controls {
 
-// This is an attempt at creating a UI control by utilizing the primitives inside xo,
-// but without embedding the logic directly into the core of xo.
+// A single-line text edit box
 class XO_API EditBox {
 public:
 	struct State {
