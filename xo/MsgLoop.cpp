@@ -10,7 +10,7 @@ namespace xo {
 #if XO_PLATFORM_WIN_DESKTOP
 
 static bool AnyDocsDirty() {
-	for (int i = 0; i < Global()->Docs.size(); i++) {
+	for (size_t i = 0; i < Global()->Docs.size(); i++) {
 		if (Global()->Docs[i]->IsDirty())
 			return true;
 	}

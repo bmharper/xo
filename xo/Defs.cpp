@@ -334,11 +334,11 @@ XO_API void Shutdown() {
 
 	// signal all threads to exit
 	Job nullJob = Job();
-	for (int i = 0; i < Globals->WorkerThreads.size(); i++)
+	for (size_t i = 0; i < Globals->WorkerThreads.size(); i++)
 		Globals->JobQueue.Add(nullJob);
 
 	// wait for each thread in turn
-	for (int i = 0; i < Globals->WorkerThreads.size(); i++)
+	for (size_t i = 0; i < Globals->WorkerThreads.size(); i++)
 		Globals->WorkerThreads[i].join();
 
 	Globals->GlyphCache->Clear();

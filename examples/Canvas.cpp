@@ -16,5 +16,6 @@ void xoMain(xo::SysWnd* wnd)
 	};
 	c2d->Fill(xo::Color::RGBA(0,0,0,0));
 	c2d->StrokeLine(true, arraysize(vx), &vx[0].x, sizeof(vx[0]), xo::Color::RGBA(200, 0, 0, 255), 5.0f);
+	c2d->StrokeCircle(80, 80, 5, xo::Color::RGBA(200, 0, 0, 255), 1.0f);
 	delete c2d;
 }

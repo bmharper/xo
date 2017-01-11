@@ -85,6 +85,19 @@ inline int32_t PosRoundDown(int32_t pos) { return pos & ~PosMask; }
 inline int32_t PosRoundUp(int32_t pos) { return pos + ((1 << PosShift) - 1) & ~PosMask; }
 inline int32_t PosMul(int32_t a, int32_t b) { return (a * b) >> PosShift; }
 inline float   Round(float real) { return floor(real + 0.5f); }
+
+// This is Jim Blinn's ubyte*ubyte multiplier, which is 100% accurate
+inline uint8_t MulUBGood(uint8_t a, uint8_t b) {
+	uint32_t i = (uint32_t) a * (uint32_t) b + 128;
+	return (uint8_t) ((i + (i >> 8)) >> 8);
+}
+
+// This is a cheap ubyte*ubyte multiplier, which maintains 0*1 = 0 and 1*1 = 1
+inline uint8_t MulUBCheap(uint8_t a, uint8_t b) {
+	uint32_t i = (uint32_t) a * ((uint32_t) b + 1);
+	return (uint8_t) (i >> 8);
+}
+
 template <typename T>
 int Sign(T real) {
 	return (real == 0) ? 0 : (real < 0 ? -1 : 1);
@@ -308,6 +321,9 @@ struct XO_API Color {
 	}
 	Vec4f GetVec4sRGB() const;
 	Vec4f GetVec4Linear() const;
+	Color Premultiply() const {
+		return Color::RGBA(MulUBGood(r, a), MulUBGood(g, a), MulUBGood(b, a), a);
+	}
 
 	bool         operator==(const Color& x) const { return u == x.u; }
 	bool         operator!=(const Color& x) const { return u != x.u; }

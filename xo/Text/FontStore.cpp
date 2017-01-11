@@ -17,7 +17,7 @@ void FontTableImmutable::Initialize(const cheapvec<Font*>& fonts) {
 }
 
 const Font* FontTableImmutable::GetByFontID(FontID fontID) const {
-	XO_ASSERT(fontID != FontIDNull && fontID < Fonts.size());
+	XO_ASSERT(fontID != FontIDNull && (size_t) fontID < Fonts.size());
 	return Fonts[fontID];
 }
 
@@ -70,7 +70,7 @@ void FontStore::ShutdownFreetype() {
 }
 
 const Font* FontStore::GetByFontID(FontID fontID) {
-	XO_ASSERT(fontID != FontIDNull && fontID < Fonts.size());
+	XO_ASSERT(fontID != FontIDNull && (size_t) fontID < Fonts.size());
 	std::lock_guard<std::mutex> lock(Lock);
 	return Fonts[fontID];
 }

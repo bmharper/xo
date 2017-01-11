@@ -97,11 +97,33 @@ void Canvas2D::StrokeLine(bool closed, int nvx, const float* vx, int vx_stride_b
 	RenderScanlines();
 }
 
+void Canvas2D::StrokeCircle(float x, float y, float radius, Color color, float linewidth) {
+	if (!IsAlive)
+		return;
+
+	RasAA.reset();
+	agg::path_storage path;
+	path.start_new_path();
+	agg::ellipse elps;
+	elps.init(x, y, radius, radius);
+	path.concat_path(elps, 0);
+
+	TLineClipper clipped_line(path);
+	clipped_line.clip_box(-linewidth, -linewidth, Width() + linewidth, Height() + linewidth);
+	agg::conv_stroke<TLineClipper> clipped_line_stroked(clipped_line);
+	clipped_line_stroked.width(linewidth);
+	RasAA.add_path(clipped_line_stroked);
+	RenderAA_RGBA_Pre.color(ColorToAgg8(color));
+	RenderScanlines();
+}
+
 agg::rgba Canvas2D::ColorToAgg(Color c) {
+	c = c.Premultiply();
 	return agg::rgba(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
 }
 
 agg::rgba8 Canvas2D::ColorToAgg8(Color c) {
+	c = c.Premultiply();
 	return agg::rgba8(c.r, c.g, c.b, c.a);
 }
 

@@ -87,6 +87,7 @@ char (&ArraySizeHelper(T (&array)[N]))[N];
 #include "../dependencies/agg/include/agg_conv_curve.h"
 #include "../dependencies/agg/include/agg_conv_clip_polyline.h"
 #include "../dependencies/agg/include/agg_conv_clip_polygon.h"
+#include "../dependencies/agg/include/agg_ellipse.h"
 #include "../dependencies/agg/include/agg_path_storage.h"
 #include "../dependencies/agg/include/agg_pixfmt_rgba.h"
 #include "../dependencies/agg/include/agg_rasterizer_scanline_aa.h"

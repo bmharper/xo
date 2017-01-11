@@ -233,7 +233,7 @@ void Layout::RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& o
 	int  linebox_index = 0;
 	auto linebox       = Boxer.GetLineFromPreviousNode(linebox_index);
 	for (size_t i = 0; i < childOuts.Size(); i++) {
-		while (i > linebox->LastChild)
+		while ((ssize_t) i > linebox->LastChild)
 			linebox = Boxer.GetLineFromPreviousNode(++linebox_index);
 
 		if (childOuts[i].RNode != nullptr) {
