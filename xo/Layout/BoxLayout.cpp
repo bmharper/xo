@@ -207,8 +207,6 @@ void BoxLayout::Flow(const NodeState& ns, FlowState& flow, Box& marginBox) {
 		widthForFlow = marginBoxWidth - ns.Input.MarginBorderPadding.Left + ns.Input.MarginBorderPadding.Right;
 
 	bool isAbsoluteOrFixed = ns.Input.Position == PositionAbsolute || ns.Input.Position == PositionFixed;
-	if (isAbsoluteOrFixed)
-		int abc = 123;
 
 	if (!WaitingForRestart && !isAbsoluteOrFixed && MustFlow(flow, widthForFlow))
 		NewLine(flow);
