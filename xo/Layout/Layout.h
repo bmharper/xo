@@ -54,7 +54,8 @@ protected:
 		BindingSet   Binds;
 		Pos          MarginBoxWidth;
 		Pos          MarginBoxHeight;
-		Pos          Baseline; // This is given in the coordinate system of the parent
+		Pos          Baseline; // This is in the coordinate system of the parent
+		Pos          RNodeTop; // Usually equal to RNode->Pos.Top, but empty text objects need this too, and they have RNode = null. Rather store it here than an extra RenderDomEl.
 		RenderDomEl* RNode;
 		BreakType    Break;
 		Pos          BaselinePlusRNodeTop() const;

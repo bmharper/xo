@@ -175,7 +175,6 @@ void Layout::RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& o
 		if (!(isRestarting && isRestartAllZeroes)) {
 			// Notify the boxer of this new node's baseline and index
 			Boxer.NotifyNodeEmitted(childOut.BaselinePlusRNodeTop(), (int) childOuts.Size());
-			//Boxer.NotifyNodeEmitted(childOut.Baseline, (int) childOuts.Size());
 			childOuts.Push(childOut);
 
 			if (childOut.Break == BreakAfter)
@@ -257,6 +256,7 @@ void Layout::RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& o
 	PopulateBindings(out.Binds);
 
 	out.RNode           = rnode;
+	out.RNodeTop        = rnode->Pos.Top;
 	out.MarginBoxWidth  = marginBox.Width();
 	out.MarginBoxHeight = marginBox.Height();
 	out.Break           = Stack.Get(CatBreak).GetBreakType();
@@ -301,15 +301,16 @@ void Layout::RunText(const DomText* node, const LayoutInput& in, LayoutOutput& o
 	// "<span style='padding: 10px'>something</span> else" would not have 'else' aligned
 	// to 'something' if we didn't align words to baseline.
 	// Since we only bind on baseline, we don't need to populate width and height
-	if (TempText.RNodeTxt != nullptr)
-		out.Baseline = TempText.FontAscender;
-	else
-		out.Baseline = PosNULL;
+	out.Baseline = TempText.FontAscender;
 	out.MarginBoxHeight = 0;
 	out.MarginBoxWidth  = 0;
-	//out.Binds                = BindingSet();
 	out.Binds.VChildBaseline.Set(CatBaseline, VerticalBindingBaseline);
 	out.RNode = TempText.RNodeTxt;
+	// If TempText.RNodeTxt is null, then it means we're an empty text object, or we emitted
+	// only whitespace. In that case, I'm not sure whether our 'top' is actually zero, although
+	// I've been unable to create a case where it's not zero. Anyway, if you see that zero is
+	// wrong here, then you'll need to save it out of the GenerateTextWords function.
+	out.RNodeTop = TempText.RNodeTxt ? TempText.RNodeTxt->Pos.Top : 0;
 	out.Break = BreakNULL;
 }
 
@@ -361,13 +362,12 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 	XO_DEBUG_ASSERT(ts.Chars.Size() == 0);
 
 	const char* txt = ts.Node->GetText();
-	if (!txt)
-		return;
 
 	int32_t txt_offset = 0;
 	if (ts.RestartPoints->size() != 0) {
 		txt_offset = ts.RestartPoints->rpop();
-		txt += txt_offset;
+		if (txt)
+			txt += txt_offset;
 		XO_ASSERT(ts.RestartPoints->size() == 0); // Text is a leaf node. The restart stack must be empty now.
 	}
 
@@ -387,6 +387,21 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 	Pos lineHeight = Realx256ToPos(ts.FontSizePx * font->LineHeight_x256);
 	if (Global()->RoundLineHeights)
 		lineHeight = PosRoundUp(lineHeight);
+
+	if (!txt || txt[0] == 0) {
+		// Even if 'txt' is empty (typically embodied by txt = null), we still run this function,
+		// so that we emit a  zero-width box. This is necessary for generating baseline alignment
+		// of empty text elements. Think of a text edit box that is empty.
+		BoxLayout::WordInput wordin;
+		wordin.Width  = 0;
+		wordin.Height = lineHeight;
+		Box marginBox;
+		if (Boxer.AddWord(wordin, marginBox) == BoxLayout::FlowRestart) {
+			// This is surprising. I don't expect it in practice, but not something we'd like to crash on. So let it through.
+			ts.RestartPoints->push(0);
+		}
+		return;
+	}
 
 	ts.GlyphsNeeded            = false;
 	const Glyph*   prevGlyph   = nullptr;
@@ -777,7 +792,7 @@ void Layout::MoveLeftTop(RenderDomEl* relem, Point delta) {
 }
 
 Pos Layout::LayoutOutput::BaselinePlusRNodeTop() const {
-	return Baseline == PosNULL ? PosNULL : Baseline + RNode->Pos.Top;
+	return Baseline == PosNULL ? PosNULL : Baseline + RNodeTop;
 }
 
 Layout::Chunker::Chunker(const char* txt) : Txt(txt),
