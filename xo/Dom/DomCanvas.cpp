@@ -50,6 +50,12 @@ bool DomCanvas::SetSize(uint32_t width, uint32_t height) {
 	return true;
 }
 
+void DomCanvas::Fill(xo::Color color) {
+	auto c = GetCanvas2D();
+	c->Fill(color);
+	ReleaseCanvas(c);
+}
+
 Canvas2D* DomCanvas::GetCanvas2D() {
 	return new Canvas2D(Doc->Images.Get(ImageName.CStr()));
 }

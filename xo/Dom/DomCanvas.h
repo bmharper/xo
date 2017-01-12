@@ -16,6 +16,7 @@ public:
 
 	bool        SetImageSizeOnly(uint32_t width, uint32_t height); // Sets the size of the image only (DOM styles are unaffected). Returns false if memory allocation fails.
 	bool        SetSize(uint32_t width, uint32_t height);          // Convenience function to set width/height styles, as well as resize the canvas object. Returns false if memory allocation fails
+	void        Fill(xo::Color color);
 	Canvas2D*   GetCanvas2D();
 	void        ReleaseCanvas(Canvas2D* canvas2D);
 	const char* GetCanvasImageName() const;
