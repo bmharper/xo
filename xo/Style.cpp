@@ -307,7 +307,7 @@ static bool ParseBox(const char* s, size_t len, const char* subCategory, size_t 
 				return false;
 			}
 			StyleAttrib attrib;
-			attrib.Set((StyleCategories) (cat + offset), val.Left);
+			attrib.Set((StyleCategories)(cat + offset), val.Left);
 			style.Set(attrib);
 			return true;
 		}

@@ -3,9 +3,9 @@
 
 namespace xo {
 
-XO_API bool EventHandler_LambdaStaticFunc(const Event& ev) {
+XO_API void EventHandler_LambdaStaticFunc(Event& ev) {
 	EventHandlerLambda* lambda = reinterpret_cast<EventHandlerLambda*>(ev.Context);
-	return (*lambda)(ev);
+	(*lambda)(ev);
 }
 
 Event::Event() {

@@ -303,5 +303,4 @@ void Doc::InitializeDefaultControls() {
 	controls::Button::InitializeStyles(this);
 	controls::MsgBox::InitializeStyles(this);
 }
-
 }

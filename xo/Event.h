@@ -71,15 +71,19 @@ public:
 	const LayoutResult* LayoutResult = nullptr;
 	Events              Type         = EventMouseMove;
 	Button              Button       = Button::Null;
-	int32_t             KeyChar      = 0;          // Unicode code point of a key message
-	int                 PointCount   = 0;          // Mouse = 1	Touch >= 1
-	Vec2f               PointsAbs[XO_MAX_TOUCHES]; // Points in pixels, relative to viewport top-left
-	Vec2f               PointsRel[XO_MAX_TOUCHES]; // Points relative to Target's content-box top-left
+	int32_t             KeyChar      = 0;                 // Unicode code point of a key message
+	int                 PointCount   = 0;                 // Mouse = 1	Touch >= 1
+	Vec2f               PointsAbs[XO_MAX_TOUCHES];        // Points in pixels, relative to viewport top-left
+	Vec2f               PointsRel[XO_MAX_TOUCHES];        // Points relative to Target's content-box top-left
+	bool                IsStopPropagationToggled = false; // True if StopPropagation() has been called, and the event must not bubble out to enclosing DOM elements
+	bool                IsCancelTimerToggled     = false; // True if CancelTimer() has been called, in which case the timer will be cancelled
 
 	Event();
 	~Event();
 
 	void MakeWindowSize(int w, int h);
+	void StopPropagation() { IsStopPropagationToggled = true; } // Stop bubbling out to higher DOM elements
+	void CancelTimer() { IsCancelTimerToggled = true; }         // Cancel this timer.
 };
 
 // This is the event that the Windowing system will post onto the single event queue.
@@ -90,11 +94,11 @@ public:
 	Event     Event;
 };
 
-typedef std::function<bool(const Event& ev)> EventHandlerLambda;
+typedef std::function<void(Event& ev)> EventHandlerLambda;
 
-typedef bool (*EventHandlerF)(const Event& ev);
+typedef void (*EventHandlerF)(Event& ev);
 
-XO_API bool EventHandler_LambdaStaticFunc(const Event& ev);
+XO_API void EventHandler_LambdaStaticFunc(Event& ev);
 
 enum EventHandlerFlags {
 	EventHandlerFlag_IsLambda = 1,

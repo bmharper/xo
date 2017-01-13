@@ -20,13 +20,12 @@ void xoMain(xo::SysWnd* wnd)
 	canvas->StyleParsef("width: %dep; height: %dep;", width, height);
 	canvas->SetImageSizeOnly(width, height);
 
-	canvas->OnMouseMove([width, height](const xo::Event& ev) -> bool {
+	canvas->OnMouseMove([width, height](xo::Event& ev) {
 		xo::DomCanvas* canvas = (xo::DomCanvas*) ev.Target;
 		xo::Canvas2D* cx = canvas->GetCanvas2D();
 		//Render(cx, (int) ev.Points[0].x, (int) ev.Points[0].y);
 		Render(cx, width / 2, height / 2, FLT_EPSILON + ev.PointsRel[0].x * 0.0001f);
 		canvas->ReleaseCanvas(cx);
-		return true;
 	});
 }
 

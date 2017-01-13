@@ -312,5 +312,4 @@ void DomNode::DeleteChildInternal(DomEl* c) {
 	Doc->ChildRemoved(c);
 	Doc->FreeChild(c);
 }
-
 }

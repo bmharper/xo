@@ -416,7 +416,7 @@ XO_API void RunApp(MainCallback mainCallback) {
             mainWnd = nullptr;
             break;
         }
-    };
+	};
 	RunAppLowLevel(mainCallbackEv);
 }
 

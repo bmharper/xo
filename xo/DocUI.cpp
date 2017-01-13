@@ -53,11 +53,15 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 			EventHandler* eh = target->HandlerByID(h.EventID);
 			if (!eh)
 				continue;
-			localEv.Context     = eh->Context;
-			localEv.Target      = target;
-			bool keepAlive      = eh->Func(localEv);
+			localEv.Context              = eh->Context;
+			localEv.Target               = target;
+			localEv.IsCancelTimerToggled = false;
+			eh->Func(localEv);
+			// If the timer has destroyed it's owning DOM element, then 'eh' and 'target' will be dead.
+			if (!Doc->GetNodeByInternalIDMutable(h.NodeID))
+				continue;
 			eh->TimerLastTickMS = nowTicksMS_32;
-			if (!keepAlive)
+			if (localEv.IsCancelTimerToggled)
 				target->RemoveHandler(h.EventID);
 		}
 		break;
@@ -339,9 +343,11 @@ void DocUI::SendEvent(const Event& ev, const DomNode* target, bool* handled, boo
 	for (size_t i = 0; i < hcount; i++) {
 		if (h[i].Handles(ev.Type)) {
 			XOTRACE_EVENTS("Dispatching event to %d/%d (%p)\n", (int) i, (int) hcount, h[i].Func);
-			localHandled    = true;
-			localEv.Context = h[i].Context;
-			if (!h[i].Func(localEv)) {
+			localHandled                     = true;
+			localEv.IsStopPropagationToggled = false;
+			localEv.Context                  = h[i].Context;
+			h[i].Func(localEv);
+			if (localEv.IsStopPropagationToggled) {
 				localStop = true;
 				break;
 			}

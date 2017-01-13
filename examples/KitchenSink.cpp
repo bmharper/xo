@@ -330,7 +330,7 @@ void DoLongText(xo::Doc* doc)
 // This was used when developing Layout3
 void DoInlineFlow(xo::Doc* doc)
 {
-	auto create = [doc](const xo::Event& ev) -> bool
+	auto create = [doc](xo::Event& ev)
 	{
 		static bool doSpan = false;
 		doSpan = !doSpan;
@@ -367,7 +367,6 @@ void DoInlineFlow(xo::Doc* doc)
 		//doc->Root.ParseAppend(R"(<div style='cursor: hand'>blah!</div>)");
 		//doc->Root.ParseAppend(R"(The <span style='color: #a00; background: #fff'>brown</span>)");
 		//doc->Root.ParseAppend( R"(The quick)");
-		return true;
 	};
 	doc->Root.OnClick(create);
 	create(xo::Event());
@@ -447,10 +446,9 @@ void DoQuadraticSplines(xo::Doc* doc)
 	doc->Root.ParseAppend("<div style='background: #fff0f0ff; width: 100ep; height: 100ep'><div>");
 	auto top_pad = doc->Root.ChildByIndex(0)->GetInternalID();
 	auto left_pad = doc->Root.ChildByIndex(1)->GetInternalID();
-	doc->Root.OnMouseMove([top_pad, left_pad](const xo::Event& ev) -> bool {
+	doc->Root.OnMouseMove([top_pad, left_pad](xo::Event& ev) {
 		ev.Doc->GetNodeByInternalIDMutable(top_pad)->StyleParsef("height: %dep", (int) ev.PointsAbs[0].y);
 		ev.Doc->GetNodeByInternalIDMutable(left_pad)->StyleParsef("width: %dep", (int) ev.PointsAbs[0].x);
-		return true;
 	});
 }
 
@@ -462,7 +460,7 @@ void DoTimer(xo::Doc* doc)
 	int* size = new int(0);
 	int* dsize = new int(1);
 
-	auto ontimer = [size, dsize, canvas](const xo::Event& ev) -> bool
+	auto ontimer = [size, dsize, canvas](xo::Event& ev)
 	{
 		xo::Canvas2D* cx = canvas->GetCanvas2D();
 		*size += *dsize;
@@ -473,7 +471,6 @@ void DoTimer(xo::Doc* doc)
 		cx->Fill(xo::Color::RGBA(255, 255, 255, 255));
 		cx->FillRect(xo::Box(0, 0, *size, *size), xo::Color::RGBA(150, 0, 0, 255));
 		canvas->ReleaseCanvas(cx);
-		return true;
 	};
 	canvas->OnTimer(ontimer, 10);
 }
@@ -484,9 +481,8 @@ void DoEditBox(xo::Doc* doc)
 	edit->StyleParse("width: 15em");
 	auto btn = xo::controls::Button::AppendTo(&doc->Root);
 	btn->SetText("Click me");
-	btn->OnClick([doc](const xo::Event& ev) -> bool {
+	btn->OnClick([doc](xo::Event& ev) {
 		xo::controls::MsgBox::Show(doc, "How now brown cow\nA new line");
-		return true;
 	});
 }
 
@@ -515,12 +511,11 @@ void InitDOM(xo::Doc* doc)
 	//DoTimer(doc);
 	DoEditBox(doc);
 
-	body->OnClick([](const xo::Event& ev) -> bool {
+	body->OnClick([](xo::Event& ev) {
 		//xo::Trace("%f %f\n", ev.PointsAbs[0].x, ev.PointsAbs[0].y);
 		//xoGlobal()->EnableKerning = !xoGlobal()->EnableKerning;
 		//Trace("InternalID: %d\n", ev.Target->GetInternalID());
 		// Force a re-layout. Useful to click on the document and be able to debug the layout that occurs.
 		ev.Doc->IncVersion();
-		return true;
 	});
 }

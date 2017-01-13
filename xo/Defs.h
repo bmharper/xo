@@ -89,13 +89,13 @@ inline float   Round(float real) { return floor(real + 0.5f); }
 // This is Jim Blinn's ubyte*ubyte multiplier, which is 100% accurate
 inline uint8_t MulUBGood(uint8_t a, uint8_t b) {
 	uint32_t i = (uint32_t) a * (uint32_t) b + 128;
-	return (uint8_t) ((i + (i >> 8)) >> 8);
+	return (uint8_t)((i + (i >> 8)) >> 8);
 }
 
 // This is a cheap ubyte*ubyte multiplier, which maintains 0*1 = 0 and 1*1 = 1
 inline uint8_t MulUBCheap(uint8_t a, uint8_t b) {
 	uint32_t i = (uint32_t) a * ((uint32_t) b + 1);
-	return (uint8_t) (i >> 8);
+	return (uint8_t)(i >> 8);
 }
 
 template <typename T>

@@ -301,7 +301,7 @@ void Layout::RunText(const DomText* node, const LayoutInput& in, LayoutOutput& o
 	// "<span style='padding: 10px'>something</span> else" would not have 'else' aligned
 	// to 'something' if we didn't align words to baseline.
 	// Since we only bind on baseline, we don't need to populate width and height
-	out.Baseline = TempText.FontAscender;
+	out.Baseline        = TempText.FontAscender;
 	out.MarginBoxHeight = 0;
 	out.MarginBoxWidth  = 0;
 	out.Binds.VChildBaseline.Set(CatBaseline, VerticalBindingBaseline);
@@ -311,7 +311,7 @@ void Layout::RunText(const DomText* node, const LayoutInput& in, LayoutOutput& o
 	// I've been unable to create a case where it's not zero. Anyway, if you see that zero is
 	// wrong here, then you'll need to save it out of the GenerateTextWords function.
 	out.RNodeTop = TempText.RNodeTxt ? TempText.RNodeTxt->Pos.Top : 0;
-	out.Break = BreakNULL;
+	out.Break    = BreakNULL;
 }
 
 /*
@@ -626,10 +626,10 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 	}
 
 	if (SnapBoxes) {
-		Pos width = cout.RNode->Pos.WidthOrNull();
-		Pos height = cout.RNode->Pos.HeightOrNull();
+		Pos width            = cout.RNode->Pos.WidthOrNull();
+		Pos height           = cout.RNode->Pos.HeightOrNull();
 		cout.RNode->Pos.Left = PosRound(cout.RNode->Pos.Left);
-		cout.RNode->Pos.Top = PosRound(cout.RNode->Pos.Top);
+		cout.RNode->Pos.Top  = PosRound(cout.RNode->Pos.Top);
 		if (width != PosNULL)
 			cout.RNode->Pos.Right = cout.RNode->Pos.Left + PosRoundUp(width);
 		if (height != PosNULL)
