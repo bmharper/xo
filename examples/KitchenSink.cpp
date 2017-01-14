@@ -477,6 +477,7 @@ void DoTimer(xo::Doc* doc)
 
 void DoEditBox(xo::Doc* doc)
 {
+	//doc->Root.ParseAppend("<div style='break:after'>something</div>");
 	auto edit = xo::controls::EditBox::AppendTo(&doc->Root);
 	edit->StyleParse("width: 15em");
 	auto btn = xo::controls::Button::AppendTo(&doc->Root);

@@ -23,22 +23,25 @@ DomNode* EditBox::AppendTo(DomNode* node) {
 	auto caret = edit->AddNode(xo::TagDiv);
 	caret->AddClass("xo.editbox.caret");
 
-	State* s = new State();
+	State* s     = new State();
+	s->EditBoxID = edit->GetInternalID();
+	s->CaretID   = caret->GetInternalID();
 
 	auto flip = [s, caret]() {
 		s->IsBlinkVisible = !s->IsBlinkVisible;
 		caret->StyleParse(s->IsBlinkVisible ? "background: #000" : "background: #0000");
 	};
 
-	auto timer = [s, edit, flip](const Event& ev) -> bool {
+	auto timer = [s, edit, flip](Event& ev) {
 		if (edit->HasFocus())
 			flip();
-		return edit->HasFocus();
+		if (!edit->HasFocus())
+			ev.CancelTimer();
 	};
 
-	edit->OnClick([s, flip, edit, timer, caret](const Event& ev) -> bool {
-		Trace("[%f %f]\n", ev.PointsRel[0].x, ev.PointsRel[0].y);
-		RenderDomNode* rbox = ev.LayoutResult->IDToNode[ev.Target->GetInternalID()];
+	edit->OnClick([s, flip, edit, timer, caret](Event& ev) {
+		//Trace("[%f %f]\n", ev.PointsRel[0].x, ev.PointsRel[0].y);
+		RenderDomNode* rbox = ev.LayoutResult->IDToNodeTable[ev.Target->GetInternalID()];
 		if (rbox->Children.size() >= 1 && rbox->Children[0]->IsText()) {
 			// Find the closest 'crack' in between the two nearest glyphs where we should place the caret.
 			// We place our caret at the right edge of the 'crack' character
@@ -53,27 +56,20 @@ DomNode* EditBox::AppendTo(DomNode* node) {
 					crack   = (int) i;
 				}
 			}
-			float pos;
-			if (ev.PointsRel[0].x - 0 < mindist) {
-				// start of text
+			// -1 = on the left side of all our text
+			if (ev.PointsRel[0].x - 0 < mindist)
 				crack = -1;
-				pos   = -rightOffsetPx;
-			} else {
-				// end of an existing character
-				pos = PosToReal(rtxt->Text[crack].X + rtxt->Text[crack].Width);
-			}
-			caret->StyleParsef("left: %fpx", Round(pos + rightOffsetPx));
+			s->CaretPos = crack;
+			PlaceCaretIndicator(s, ev);
 			// restart the timer, so that the caret is visible for the next 500ms or so, after the user clicked
 			if (s->TimerID)
 				edit->RemoveHandler(s->TimerID);
 			s->TimerID        = edit->OnTimer(timer, Global()->CaretBlinkTimeMS);
 			s->IsBlinkVisible = false;
 			flip();
-			s->CaretPos = crack;
 		}
-		return true;
 	});
-	edit->OnKeyChar([s, edit](const Event& ev) -> bool {
+	edit->OnKeyChar([s, edit](Event& ev) {
 		std::string txt    = edit->GetText();
 		int         insert = Clamp((int) s->CaretPos + 1, 0, (int) txt.length());
 		std::string newChar;
@@ -81,26 +77,41 @@ DomNode* EditBox::AppendTo(DomNode* node) {
 		txt.insert(insert, newChar);
 		edit->SetText(txt.c_str());
 		s->CaretPos++;
-		return true;
+		// We need the DOM to call us back when it's finished rendering, because we don't yet have
+		// the RenderDomText node that we need in order to place our caret.
+		PlaceCaretIndicator(s, ev);
 	});
-	edit->OnGetFocus([s, flip, edit, timer](const Event& ev) -> bool {
+	edit->OnGetFocus([s, flip, edit, timer](Event& ev) {
 		if (!s->TimerID)
 			s->TimerID = edit->OnTimer(timer, Global()->CaretBlinkTimeMS);
-		return true;
 	});
-	edit->OnLoseFocus([s, flip, edit](const Event& ev) -> bool {
+	edit->OnLoseFocus([s, flip, edit](Event& ev) {
 		s->IsBlinkVisible = true;
 		flip();
 		if (s->TimerID)
 			edit->RemoveHandler(s->TimerID);
 		s->TimerID = 0;
-		return true;
 	});
-	edit->OnDestroy([s](const Event& ev) -> bool {
+	edit->OnDestroy([s](Event& ev) {
 		delete s;
-		return true;
 	});
 	return edit;
+}
+
+void EditBox::PlaceCaretIndicator(State* s, Event& ev) {
+	auto rbox  = ev.LayoutResult->Node(s->EditBoxID);
+	auto caret = ev.Doc->GetNodeByInternalIDMutable(s->CaretID);
+	if (caret) {
+		float pos = 0;
+		if (rbox->Children.size() >= 1 && rbox->Children[0]->IsText()) {
+			auto rtxt = rbox->Children[0]->ToText();
+			int clamped = Clamp(s->CaretPos, -1, (int) rtxt->Text.size() - 1);
+			if ((size_t) clamped < (size_t) rtxt->Text.size())
+				pos = PosToReal(rtxt->Text[clamped].X + rtxt->Text[clamped].Width);
+			xo::Trace("clamped: %d, pos: %f\n", clamped, pos);
+		}
+		caret->StyleParsef("left: %fpx", Round(pos));
+	}
 }
 }
 }

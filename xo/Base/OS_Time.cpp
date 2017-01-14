@@ -41,10 +41,10 @@ XO_API double TimeAccurateSeconds() {
 #endif
 
 XO_API int64_t MilliTicks() {
-	return (int64_t)(TimeAccurateSeconds() * 10e6);
+	return (int64_t)(TimeAccurateSeconds() * 1e3);
 }
 
 XO_API int64_t NanoTicks() {
-	return (int64_t)(TimeAccurateSeconds() * 10e9);
+	return (int64_t)(TimeAccurateSeconds() * 1e9);
 }
 }
