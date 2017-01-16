@@ -285,24 +285,39 @@ void DomNode::ReadyTimers(int64_t nowTicksMS, cheapvec<NodeEventIDPair>& handler
 	}
 }
 
+// Unlike ReaderTimers, this function could be const, but I haven't bothered.
+void DomNode::RenderHandlers(cheapvec<NodeEventIDPair>& handlers) {
+	for (auto& h : Handlers) {
+		if (!!(h.Mask & EventRender))
+			handlers.push({InternalID, h.ID});
+	}
+}
+
 bool DomNode::HasFocus() const {
 	return Doc->UI.IsFocused(InternalID);
 }
 
 void DomNode::RecalcAllEventMask() {
-	bool hadTimer = !!(AllEventMask & EventTimer);
+	bool hadTimer  = !!(AllEventMask & EventTimer);
+	bool hadRender = !!(AllEventMask & EventTimer);
 
 	uint32_t m = 0;
 	for (size_t i = 0; i < Handlers.size(); i++)
 		m |= Handlers[i].Mask;
 	AllEventMask = m;
 
-	bool hasTimerNow = !!(AllEventMask & EventTimer);
+	bool hasTimerNow  = !!(AllEventMask & EventTimer);
+	bool hasRenderNow = !!(AllEventMask & EventRender);
 
 	if (!hadTimer && hasTimerNow)
 		Doc->NodeGotTimer(InternalID);
 	else if (hadTimer && !hasTimerNow)
 		Doc->NodeLostTimer(InternalID);
+
+	if (!hadRender && hasRenderNow)
+		Doc->NodeGotRender(InternalID);
+	else if (hadRender && !hasRenderNow)
+		Doc->NodeLostRender(InternalID);
 }
 
 void DomNode::DeleteChildInternal(DomEl* c) {

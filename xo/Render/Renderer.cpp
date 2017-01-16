@@ -34,7 +34,7 @@ RenderResult Renderer::Render(const xo::Doc* doc, ImageStore* images, StringTabl
 	bool needGlyphs = GlyphsNeeded.size() != 0;
 	RenderGlyphsNeeded();
 
-	return needGlyphs ? RenderResultNeedMore : RenderResultIdle;
+	return needGlyphs ? RenderResultNeedMore : RenderResultDone;
 }
 
 void Renderer::RenderEl(Point base, const RenderDomEl* el) {

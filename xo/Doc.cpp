@@ -186,9 +186,24 @@ uint32_t Doc::FastestTimerMS() {
 
 // Returns all nodes that have timers which have elapsed
 void Doc::ReadyTimers(int64_t nowTicksMS, cheapvec<NodeEventIDPair>& handlers) {
-	for (InternalID it : NodesWithTimers) {
-		DomNode* node = GetNodeByInternalIDMutable(it);
+	for (InternalID id : NodesWithTimers) {
+		DomNode* node = GetNodeByInternalIDMutable(id);
 		node->ReadyTimers(nowTicksMS, handlers);
+	}
+}
+
+void Doc::NodeGotRender(InternalID node) {
+	NodesWithRender.insert(node);
+}
+
+void Doc::NodeLostRender(InternalID node) {
+	NodesWithRender.erase(node);
+}
+
+void Doc::RenderHandlers(cheapvec<NodeEventIDPair>& handlers) {
+	for (InternalID id : NodesWithRender) {
+		DomNode* node = GetNodeByInternalIDMutable(id);
+		node->RenderHandlers(handlers);
 	}
 }
 
@@ -220,8 +235,12 @@ void Doc::ChildRemoved(DomEl* el) {
 	XO_ASSERT(elID != 0);
 	XO_ASSERT(el->GetDoc() == this);
 	DomNode* node = el->ToNode();
-	if (node && node->HandlesEvent(EventTimer))
-		NodeLostTimer(elID);
+	if (node) {
+		if (node->HandlesEvent(EventTimer))
+			NodeLostTimer(elID);
+		if (node->HandlesEvent(EventRender))
+			NodeLostRender(elID);
+	}
 	IncVersion();
 	SetChildModified(elID);
 	ChildByInternalID[elID] = NULL;

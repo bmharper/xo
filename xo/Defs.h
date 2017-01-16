@@ -122,7 +122,7 @@ enum MainEvent {
 enum RenderResult {
 	// SYNC-JAVA
 	RenderResultNeedMore,
-	RenderResultIdle
+	RenderResultDone
 };
 
 enum EndRenderFlags {

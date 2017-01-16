@@ -53,6 +53,13 @@ public:
 	uint32_t FastestTimerMS();
 	void     ReadyTimers(int64_t nowTicksMS, cheapvec<NodeEventIDPair>& handlers);
 
+	// Register a handler that is called the next time we have finished rendering.
+	// These callbacks are called only once.
+	void   NodeGotRender(InternalID node);
+	void   NodeLostRender(InternalID node);
+	void   RenderHandlers(cheapvec<NodeEventIDPair>& handlers);
+	size_t AnyRenderHandlers() const { return NodesWithRender.size() != 0; }
+
 	//void				ChildAddedFromDocumentClone( DomEl* el );
 	void           ChildAdded(DomEl* el);
 	void           ChildRemoved(DomEl* el);
@@ -73,6 +80,7 @@ protected:
 	cheapvec<InternalID>   UsableIDs;       // When we do a render sync, then FreeIDs are moved into UsableIDs
 	cheapvec<InternalID>   FreeIDs;
 	ohash::set<InternalID> NodesWithTimers; // Set of all nodes that have an OnTimer event handler registered
+	ohash::set<InternalID> NodesWithRender; // Set of all nodes that have an OnRender event handler registered
 
 	void ResetInternalIDs();
 	void InitializeDefaultTagStyles();

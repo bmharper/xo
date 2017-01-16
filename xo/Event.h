@@ -22,6 +22,7 @@ enum Events {
 	EventKeyUp      = 8192,
 	EventKeyChar    = 16384,
 	EventDestroy    = 32768, // DOM node is being removed from document
+	EventRender     = 65536, // Document has finished rendering
 };
 
 enum class Button {
@@ -83,7 +84,7 @@ public:
 
 	void MakeWindowSize(int w, int h);
 	void StopPropagation() { IsStopPropagationToggled = true; } // Stop bubbling out to higher DOM elements
-	void CancelTimer() { IsCancelTimerToggled = true; }         // Cancel this timer.
+	void CancelTimer() { IsCancelTimerToggled         = true; } // Cancel this timer.
 };
 
 // This is the event that the Windowing system will post onto the single event queue.

@@ -68,6 +68,7 @@ public:
 	bool          HandlesEvent(Events ev) const { return !!(AllEventMask & ev); }
 	uint32_t      FastestTimerMS() const;                                               // Returns the period of our fastest ticking timer event (or zero if none)
 	void          ReadyTimers(int64_t nowTicksMS, cheapvec<NodeEventIDPair>& handlers); // Fetch the list of timer events that are ready to run
+	void          RenderHandlers(cheapvec<NodeEventIDPair>& handlers);                  // Fetch the list of handlers for the Render event
 	bool          HasFocus() const;                                                     // Return true if this node has the keyboard focus
 
 	// It is tempting to use macros to generate these event handler functions,
@@ -94,6 +95,7 @@ public:
 	uint64_t OnKeyUp(EventHandlerF func, void* context) { return AddHandler(EventKeyUp, func, context); }
 	uint64_t OnKeyChar(EventHandlerF func, void* context) { return AddHandler(EventKeyChar, func, context); }
 	uint64_t OnDestroy(EventHandlerF func, void* context) { return AddHandler(EventDestroy, func, context); }
+	uint64_t OnRender(EventHandlerF func, void* context) { return AddHandler(EventRender, func, context); }
 
 	uint64_t OnWindowSize(EventHandlerLambda lambda) { return AddHandler(EventWindowSize, lambda); }
 	uint64_t OnTimer(EventHandlerLambda lambda, uint32_t periodMS) { return AddTimerHandler(EventTimer, lambda, periodMS); }
@@ -111,6 +113,7 @@ public:
 	uint64_t OnKeyUp(EventHandlerLambda lambda) { return AddHandler(EventKeyUp, lambda); }
 	uint64_t OnKeyChar(EventHandlerLambda lambda) { return AddHandler(EventKeyChar, lambda); }
 	uint64_t OnDestroy(EventHandlerLambda lambda) { return AddHandler(EventDestroy, lambda); }
+	uint64_t OnRender(EventHandlerLambda lambda) { return AddHandler(EventRender, lambda); }
 
 protected:
 	uint64_t               NextEventHandlerID = 1;

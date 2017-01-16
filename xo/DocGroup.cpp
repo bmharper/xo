@@ -91,7 +91,7 @@ RenderResult DocGroup::RenderInternal(Image* targetImage) {
 		DocLock.unlock();
 	}
 
-	RenderResult rendResult   = RenderResultIdle;
+	RenderResult rendResult   = RenderResultDone;
 	bool         presentFrame = false;
 
 	if (docValid && Wnd != nullptr) {
@@ -115,6 +115,18 @@ RenderResult DocGroup::RenderInternal(Image* targetImage) {
 		// presentFrame will be false when the only action we've taken on the GPU is uploading textures.
 		//TimeTrace( "Render Finish\n" );
 		Wnd->EndRender(presentFrame ? 0 : EndRenderNoSwap);
+	}
+
+	// If anybody is listening, queue a "post render" event
+	if (rendResult == RenderResultDone) {
+		DocLock.lock();
+		if (Doc->AnyRenderHandlers() != 0) {
+			OriginalEvent ev;
+			ev.DocGroup   = this;
+			ev.Event.Type = EventRender;
+			Global()->UIEventQueue.Add(ev);
+		}
+		DocLock.unlock();
 	}
 
 	return rendResult;
@@ -165,7 +177,8 @@ static bool AddOrReplaceMessage_Scan(void* context, OriginalEvent* iter) {
 // Why do we do this? Normally the OS does this for us - it coalesces mouse move messages into
 // a single message, when we ask for it. However, because our message polling loop runs on a different
 // thread to our 'program' thread, we can consume mouse move messages faster than the 'program'
-// can process them. So we can end up with a massive backlog of messages to process. Right now
+// can process them. By 'program' here, we mean the DOM event handlers that run from our UI thread.
+// Because of this, we can end up with a massive backlog of messages to process. Right now
 // all we do is replace old events from the queue, but in future.. see the TODO message above.
 void DocGroup::AddOrReplaceMessage(const OriginalEvent& ev) {
 	AddOrReplaceMessage_Context cx = {&ev, false};
@@ -192,6 +205,8 @@ void DocGroup::ProcessEvent(Event& ev) {
 	// if (DocAge() >= 1) SleepMS(1);
 
 	std::lock_guard<std::mutex> lock(DocLock);
+
+	ev.Doc = Doc;
 
 	if (ev.Type != EventTimer)
 		XOTRACE_LATENCY("ProcessEvent (not a timer)\n");

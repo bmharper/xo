@@ -26,6 +26,15 @@ XO_API void RunWin32MessageLoop() {
 	while (true) {
 		SetupTimerMessagesForAllDocs();
 
+		// Dispatch messages until queue is empty. This should work, because a message
+		// dispatch is not actually running much code. It only generates our own
+		// platform-agnostic event and places that event in our own queue. The actual
+		// handling of those events occur on our UI thread. When the UI thread
+		// changes our document state, so that it needs to be rendered, then we invalidate
+		// our window using InvalidateRect, and we rely on a WM_PAINT message to wake
+		// us up from the GetMessage() sleep. We don't really need any of the windows
+		// WM_PAINT/invalidation infrastructure. All we really need is a jolt that causes
+		// GetMessage() to return control to us, so that we can go ahead and draw ourselves.
 		bool mustQuit = false;
 		while (true) {
 			MSG msg;
@@ -115,7 +124,7 @@ XO_API void RunXMessageLoop() {
 		for (int i = 0; i < Global()->Docs.size(); i++) {
 			RenderResult rr = Global()->Docs[i]->Render();
 			//XOTRACE_OS_MSG_QUEUE( "rr = %d\n", rr );
-			//if ( rr != RenderResultIdle )
+			//if ( rr != RenderResultDone )
 			//	renderIdle = false;
 		}
 

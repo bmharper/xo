@@ -27,28 +27,28 @@ DomNode* EditBox::AppendTo(DomNode* node) {
 	s->EditBoxID = edit->GetInternalID();
 	s->CaretID   = caret->GetInternalID();
 
-	auto flip = [s, caret]() {
+	auto flip = [s](Doc* doc) {
 		s->IsBlinkVisible = !s->IsBlinkVisible;
+		auto caret        = doc->GetNodeByInternalIDMutable(s->CaretID);
 		caret->StyleParse(s->IsBlinkVisible ? "background: #000" : "background: #0000");
 	};
 
 	auto timer = [s, edit, flip](Event& ev) {
 		if (edit->HasFocus())
-			flip();
+			flip(ev.Doc);
 		if (!edit->HasFocus())
 			ev.CancelTimer();
 	};
 
-	edit->OnClick([s, flip, edit, timer, caret](Event& ev) {
+	edit->OnClick([s, flip, edit, timer](Event& ev) {
 		//Trace("[%f %f]\n", ev.PointsRel[0].x, ev.PointsRel[0].y);
 		RenderDomNode* rbox = ev.LayoutResult->IDToNodeTable[ev.Target->GetInternalID()];
 		if (rbox->Children.size() >= 1 && rbox->Children[0]->IsText()) {
 			// Find the closest 'crack' in between the two nearest glyphs where we should place the caret.
 			// We place our caret at the right edge of the 'crack' character
-			int   crack         = 0;
-			float rightOffsetPx = 0; // this is a hackish number. don't know what's best. looks like zero is best for small fonts.
-			auto  rtxt          = rbox->Children[0]->ToText();
-			float mindist       = FLT_MAX;
+			auto  rtxt    = rbox->Children[0]->ToText();
+			float mindist = FLT_MAX;
+			int   crack   = 0;
 			for (size_t i = 0; i < rtxt->Text.size(); i++) {
 				float dist = std::abs(PosToReal(rtxt->Text[i].X + rtxt->Text[i].Width) - ev.PointsRel[0].x);
 				if (dist < mindist) {
@@ -66,28 +66,42 @@ DomNode* EditBox::AppendTo(DomNode* node) {
 				edit->RemoveHandler(s->TimerID);
 			s->TimerID        = edit->OnTimer(timer, Global()->CaretBlinkTimeMS);
 			s->IsBlinkVisible = false;
-			flip();
+			flip(ev.Doc);
 		}
 	});
 	edit->OnKeyChar([s, edit](Event& ev) {
-		std::string txt    = edit->GetText();
-		int         insert = Clamp((int) s->CaretPos + 1, 0, (int) txt.length());
-		std::string newChar;
-		utfz::encode(newChar, ev.KeyChar);
-		txt.insert(insert, newChar);
+		std::string txt       = edit->GetText();
+		int         insertPos = Clamp((int) s->CaretPos + 1, 0, (int) txt.length());
+		if (ev.KeyChar == 8) {
+			// backspace
+			if (insertPos > 0) {
+				txt.erase(insertPos - 1, 1);
+				s->CaretPos--;
+			}
+		} else {
+			std::string newChar;
+			utfz::encode(newChar, ev.KeyChar);
+			txt.insert(insertPos, newChar);
+			s->CaretPos++;
+		}
 		edit->SetText(txt.c_str());
-		s->CaretPos++;
 		// We need the DOM to call us back when it's finished rendering, because we don't yet have
 		// the RenderDomText node that we need in order to place our caret.
-		PlaceCaretIndicator(s, ev);
+		s->PlaceCaretOnNextRender = true;
 	});
 	edit->OnGetFocus([s, flip, edit, timer](Event& ev) {
 		if (!s->TimerID)
 			s->TimerID = edit->OnTimer(timer, Global()->CaretBlinkTimeMS);
 	});
+	edit->OnRender([s](Event& ev) {
+		if (s->PlaceCaretOnNextRender) {
+			s->PlaceCaretOnNextRender = false;
+			PlaceCaretIndicator(s, ev);
+		}
+	});
 	edit->OnLoseFocus([s, flip, edit](Event& ev) {
 		s->IsBlinkVisible = true;
-		flip();
+		flip(ev.Doc);
 		if (s->TimerID)
 			edit->RemoveHandler(s->TimerID);
 		s->TimerID = 0;
@@ -104,8 +118,8 @@ void EditBox::PlaceCaretIndicator(State* s, Event& ev) {
 	if (caret) {
 		float pos = 0;
 		if (rbox->Children.size() >= 1 && rbox->Children[0]->IsText()) {
-			auto rtxt = rbox->Children[0]->ToText();
-			int clamped = Clamp(s->CaretPos, -1, (int) rtxt->Text.size() - 1);
+			auto rtxt    = rbox->Children[0]->ToText();
+			int  clamped = Clamp(s->CaretPos, -1, (int) rtxt->Text.size() - 1);
 			if ((size_t) clamped < (size_t) rtxt->Text.size())
 				pos = PosToReal(rtxt->Text[clamped].X + rtxt->Text[clamped].Width);
 			xo::Trace("clamped: %d, pos: %f\n", clamped, pos);

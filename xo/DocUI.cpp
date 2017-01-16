@@ -46,7 +46,7 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 		Doc->ReadyTimers(nowTicksMS, handlers);
 
 		Event localEv = ev;
-		for (auto h : handlers) {
+		for (NodeEventIDPair h : handlers) {
 			DomNode* target = Doc->GetNodeByInternalIDMutable(h.NodeID);
 			if (!target)
 				continue;
@@ -63,6 +63,25 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 			eh->TimerLastTickMS = nowTicksMS_32;
 			if (localEv.IsCancelTimerToggled)
 				target->RemoveHandler(h.EventID);
+		}
+		break;
+	}
+	case EventRender: {
+		// Very similar principles apply here as with timers - we need to be very careful that objects
+		// are still alive, at every step of the way.
+		cheapvec<NodeEventIDPair> handlers;
+		Doc->RenderHandlers(handlers);
+		Event localEv = ev;
+		for (NodeEventIDPair h : handlers) {
+			DomNode* target = Doc->GetNodeByInternalIDMutable(h.NodeID);
+			if (!target)
+				continue;
+			EventHandler* eh = target->HandlerByID(h.EventID);
+			if (!eh)
+				continue;
+			localEv.Context = eh->Context;
+			localEv.Target  = target;
+			eh->Func(localEv);
 		}
 		break;
 	}
