@@ -48,6 +48,10 @@ enum class Button {
 	KeyEnd,
 	KeyPageUp,
 	KeyPageDown,
+	KeyLeft,
+	KeyRight,
+	KeyUp,
+	KeyDown,
 	KeyNumLeft,
 	KeyNumRight,
 	KeyNumUp,
@@ -72,7 +76,7 @@ public:
 	const LayoutResult* LayoutResult = nullptr;
 	Events              Type         = EventMouseMove;
 	Button              Button       = Button::Null;
-	int32_t             KeyChar      = 0;                 // Unicode code point of a key message
+	int                 KeyChar      = 0;                 // Unicode code point of a key message. If not a Unicode code point (eg DELETE), then use Button
 	int                 PointCount   = 0;                 // Mouse = 1	Touch >= 1
 	Vec2f               PointsAbs[XO_MAX_TOUCHES];        // Points in pixels, relative to viewport top-left
 	Vec2f               PointsRel[XO_MAX_TOUCHES];        // Points relative to Target's content-box top-left

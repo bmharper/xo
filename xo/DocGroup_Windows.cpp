@@ -70,18 +70,50 @@ static Button WM_MouseButtonToXo(UINT message, WPARAM wParam) {
 	return Button::Null;
 }
 
-static Button WM_KeyButtonToXo(WPARAM wp, LPARAM lp) {
-	if (wp >= 0x30 && wp <= 0x39)
-		return (Button)((int) Button::Key0 + (wp - 0x30));
+static void WM_KeyButtonToXo(WPARAM wp, LPARAM lp, Button& btn, int& codepoint) {
+	if (wp >= 0x30 && wp <= 0x39) {
+		btn = (Button)((int) Button::Key0 + (wp - 0x30));
+		return;
+	}
 
-	if (wp >= 0x41 && wp <= 0x5A)
-		return (Button)((int) Button::KeyA + (wp - 0x41));
+	if (wp >= 0x41 && wp <= 0x5A) {
+		btn = (Button)((int) Button::KeyA + (wp - 0x41));
+		return;
+	}
 
 	switch (wp) {
-	case VK_BACK: return Button::KeyBack;
-	case VK_TAB: return Button::KeyTab;
-	case VK_SPACE: return Button::KeySpace;
-	case VK_ESCAPE: return Button::KeyEscape;
+	case VK_BACK: btn = Button::KeyBack; break;
+	case VK_TAB:
+		btn       = Button::KeyTab;
+		codepoint = 9;
+		break;
+	case VK_SPACE:
+		btn       = Button::KeySpace;
+		codepoint = 32;
+		break;
+	case VK_ESCAPE:
+		btn       = Button::KeyEscape;
+		codepoint = 27;
+		break;
+	case VK_LEFT: btn   = Button::KeyLeft; break;
+	case VK_RIGHT: btn  = Button::KeyRight; break;
+	case VK_UP: btn     = Button::KeyUp; break;
+	case VK_DOWN: btn   = Button::KeyDown; break;
+	case VK_DELETE: btn = Button::KeyDelete; break;
+	}
+}
+
+static bool GeneratesCharMsg(WPARAM wp, LPARAM lp) {
+	switch (wp) {
+	case VK_BACK:
+	case VK_LEFT:
+	case VK_RIGHT:
+	case VK_UP:
+	case VK_DOWN:
+	case VK_DELETE:
+		return false;
+	default:
+		return true;
 	}
 }
 
@@ -265,12 +297,28 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		Global()->UIEventQueue.Add(ev);
 		break;
 
-	//case WM_KEYDOWN:
-	//	//XOTRACE_LATENCY("KeyDown\n");
-	//	//ev.Event.Type         = EventKeyDown;
-	//	//ev.Event.Button       = WM_KeyButtonToXo(wParam, lParam);
-	//	//Global()->UIEventQueue.Add(ev);
-	//	break;
+	case WM_KEYDOWN:
+		XOTRACE_LATENCY("KeyDown %u\n", (uint32_t) wParam);
+		ev.Event.Type = EventKeyDown;
+		WM_KeyButtonToXo(wParam, lParam, ev.Event.Button, ev.Event.KeyChar);
+		Global()->UIEventQueue.Add(ev);
+		// Also add an EventKeyChar message, so that one doesn't need to deal with two messages
+		// that distinguish between arbitrary different keys. For example, why does BACKSPACE
+		// generate a WM_CHAR, but VK_DELETE only generates WM_KEYDOWN? That seems pretty arbitrary.
+		// In order to avoid duplicate messages from WM_CHAR, we need to only send messages that
+		// get ignored by WM_CHAR (aka TranslateMessage)
+		if (!GeneratesCharMsg(wParam, lParam)) {
+			ev.Event.Type = EventKeyChar;
+			Global()->UIEventQueue.Add(ev);
+		}
+		break;
+
+	case WM_KEYUP:
+		XOTRACE_LATENCY("KeyUp %u\n", (uint32_t) wParam);
+		ev.Event.Type = EventKeyUp;
+		WM_KeyButtonToXo(wParam, lParam, ev.Event.Button, ev.Event.KeyChar);
+		Global()->UIEventQueue.Add(ev);
+		break;
 
 	// Although the docs for WM_UNICHAR seem ideal for us (an ANSI window), WM_UNICHAR messages
 	// don't seem to be sent by a stock Windows 10 install. It looks like it may have disappeared
@@ -283,7 +331,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// TODO: Combine two WM_CHAR keys into one message, for high unicode values that don't
 		// fit into a 16-bit number.
 		// http://www.catch22.net/tuts/unicode-text-editing
-		Trace("KeyChar %u\n", (uint32_t) wParam);
+		//Trace("KeyChar %u\n", (uint32_t) wParam);
 		XOTRACE_LATENCY("KeyChar %u\n", (uint32_t) wParam);
 		ev.Event.Type    = EventKeyChar;
 		ev.Event.KeyChar = (int32_t) wParam;

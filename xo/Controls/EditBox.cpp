@@ -6,6 +6,10 @@
 namespace xo {
 namespace controls {
 
+static int ClampCaretPos(int p, size_t strLen) {
+	return Clamp(p, -1, (int) strLen - 1);
+}
+
 void EditBox::InitializeStyles(Doc* doc) {
 	doc->ClassParse("xo.editbox", "padding: 5ep 3ep 5ep 3ep; margin: 6ep 3ep 6ep 3ep; border: 1px #bdbdbd; canfocus: true; cursor: text; height: 1eh");
 	doc->ClassParse("xo.editbox:focus", "border: 1px #8888ee");
@@ -69,22 +73,65 @@ DomNode* EditBox::AppendTo(DomNode* node) {
 			flip(ev.Doc);
 		}
 	});
-	edit->OnKeyChar([s, edit](Event& ev) {
+	edit->OnKeyChar([s, flip, edit](Event& ev) {
 		std::string txt       = edit->GetText();
 		int         insertPos = Clamp((int) s->CaretPos + 1, 0, (int) txt.length());
-		if (ev.KeyChar == 8) {
+		switch (ev.KeyChar) {
+		case 8:
 			// backspace
 			if (insertPos > 0) {
 				txt.erase(insertPos - 1, 1);
 				s->CaretPos--;
 			}
-		} else {
+			break;
+		case 10:
+		case 13:
+		case 27:
+			return;
+		case 0: {
+			// control characters such as left, right, delete
+			int newCaretPos = ClampCaretPos(s->CaretPos, txt.length());
+			switch (ev.Button) {
+			case Button::KeyLeft:
+				newCaretPos = ClampCaretPos(s->CaretPos - 1, txt.length());
+				break;
+			case Button::KeyRight:
+				newCaretPos = ClampCaretPos(s->CaretPos + 1, txt.length());
+				break;
+			case Button::KeyDelete: {
+				int p = Clamp(s->CaretPos + 1, 0, (int) txt.length());
+				if (p < (int) txt.length() && txt.length() != 0) {
+					int len = utfz::seq_len(txt[p]);
+					if (len == utfz::invalid) {
+						txt.erase(p, 1);
+					} else {
+						len = Min(len, (int) txt.length() - p);
+						txt.erase(p, len);
+					}
+				}
+				break;
+			}
+			}
+
+			s->CaretPos = newCaretPos;
+
+			break;
+		}
+		default: {
 			std::string newChar;
 			utfz::encode(newChar, ev.KeyChar);
 			txt.insert(insertPos, newChar);
-			s->CaretPos++;
+			s->CaretPos = ClampCaretPos(s->CaretPos + 1, txt.length());
+			break;
 		}
-		edit->SetText(txt.c_str());
+		}
+		if (txt != edit->GetText())
+			edit->SetText(txt.c_str());
+
+		// always show the caret after pressing any key
+		s->IsBlinkVisible = false;
+		flip(ev.Doc);
+
 		// We need the DOM to call us back when it's finished rendering, because we don't yet have
 		// the RenderDomText node that we need in order to place our caret.
 		s->PlaceCaretOnNextRender = true;

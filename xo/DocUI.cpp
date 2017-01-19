@@ -122,7 +122,7 @@ bool DocUI::BubbleEvent(Event& ev, const LayoutResult* layout) {
 	bool stop    = false;
 	bool handled = false;
 
-	if (ev.Type == EventKeyChar) {
+	if (ev.Type == EventKeyChar || ev.Type == EventKeyDown || ev.Type == EventKeyUp) {
 		// TODO: build upward chain and do bubbling... Possibly downward bubbling for keyboard shortcut management?
 		DomNode* focus = (DomNode*) Doc->GetChildByInternalID(CurrentFocusID);
 		if (!focus)
