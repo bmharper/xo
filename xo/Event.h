@@ -64,6 +64,14 @@ enum class Button {
 	KeyNumDivide,
 };
 
+enum {
+	// Number of mouse buttons that we can represent. See ButtonToMouseNumber.
+	NumMouseButtons = (int) Button::MouseX4 - (int) Button::MouseLeft
+};
+
+// Returns an integer between 0 and MouseNumberSize - 1, or -1 if this is not a mouse button
+XO_API int ButtonToMouseNumber(Button b);
+
 /* User interface event (keyboard, mouse, touch, etc).
 */
 class XO_API Event {

@@ -19,7 +19,8 @@ void MsgBox::Show(Doc* doc, const char* msg) {
 	auto box = (DomNode*) grabber->ParseAppend("<div class='xo.msgbox.box'></div>");
 	auto lab = (DomNode*) box->ParseAppend("<lab class='xo.msgbox.txt'></lab>");
 	lab->SetText(msg);
-	auto okBtn = (DomNode*) box->ParseAppend("<lab class='xo.button'>OK</lab>");
+	//auto okBtn = (DomNode*) box->ParseAppend("<lab class='xo.button'>OK</lab>");
+	auto okBtn = (DomNode*) Button::AppendTo(box, "OK");
 
 	okBtn->OnClick([doc, grabber](Event& ev) {
 		doc->Root.DeleteChild(grabber);

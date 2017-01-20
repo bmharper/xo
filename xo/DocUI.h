@@ -34,7 +34,13 @@ public:
 
 	bool    IsHovering(InternalID id) const { return HoverSet.contains(id); }
 	bool    IsFocused(InternalID id) const { return CurrentFocusID == id; }
+	bool    IsCaptured(InternalID id) const { return CurrentCaptureID == id; }
 	Cursors GetCursor() const { return Cursor; }
+
+	// Capture input, so that all UI events are dispatched only to this node, until ReleaseCapture is called.
+	void SetCapture(InternalID id);
+	// Release input capture. This does nothing if 'id' is not the item that currently holds the input capture
+	void ReleaseCapture(InternalID id);
 
 protected:
 	struct HoverNode {
@@ -43,7 +49,9 @@ protected:
 	};
 
 	Doc*                   Doc;
-	InternalID             CurrentFocusID = InternalIDNull; // Element that has the keyboard focus
+	InternalID             CurrentFocusID   = InternalIDNull; // Element that has the keyboard focus
+	InternalID             CurrentCaptureID = InternalIDNull; // Element that has the input captured
+	InternalID             MouseDownID[NumMouseButtons];      // Element where a mouse button went down
 	cheapvec<HoverNode>    HoverNodes;
 	ohash::set<InternalID> HoverSet;
 	uint32_t               ViewportWidth, ViewportHeight; // Device pixels
@@ -57,10 +65,12 @@ protected:
 
 	bool  BubbleEvent(Event& ev, const LayoutResult* layout);
 	void  FindTarget(Vec2f p, const LayoutResult* layout, SelectorChain& selChain);
+	void  SetupChainForDeepNode(InternalID deepNode, Vec2f p, const LayoutResult* layout, SelectorChain& selChain);
 	void  UpdateCursorLocation(const SelectorChain& selChain);
 	void  UpdateFocusWindow(const SelectorChain& selChain);
 	Event MakeEvent(Events evType);
 	void  InvalidateRenderForPseudoClass();
+	bool  CanReceiveInputEvents(InternalID nodeID);
 
 	static void SendEvent(const Event& ev, const DomNode* target, bool* handled = nullptr, bool* stop = nullptr);
 };

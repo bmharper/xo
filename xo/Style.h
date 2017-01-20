@@ -527,6 +527,7 @@ public:
 	Style Default; // Default styles
 	Style Hover;   // Styles present when cursor is over node
 	Style Focus;   // Styles present when object has focus
+	Style Capture; // Styles present when object has input capture
 };
 
 // The set of style information that is used by the renderer
@@ -540,8 +541,9 @@ public:
 	Color BorderColor;
 	int   BackgroundImageID;
 	float BorderRadius;
-	bool  HasHoverStyle : 1; // Element's appearance depends upon whether the cursor is over it.
-	bool  HasFocusStyle : 1; // Element's appearance depends upon whether it has the focus
+	bool  HasHoverStyle : 1;   // Element's appearance depends upon whether the cursor is over it
+	bool  HasFocusStyle : 1;   // Element's appearance depends upon whether it has the focus
+	bool  HasCaptureStyle : 1; // Element's appearance depends upon whether it has the input captured
 
 	StyleRender() { memset(this, 0, sizeof(*this)); }
 };

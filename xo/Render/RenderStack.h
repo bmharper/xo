@@ -11,6 +11,7 @@ public:
 	StyleSet Styles;
 	bool     HasHoverStyle : 1;
 	bool     HasFocusStyle : 1;
+	bool     HasCaptureStyle : 1;
 
 	void Reset();
 
@@ -55,6 +56,7 @@ public:
 
 	bool HasHoverStyle() const;
 	bool HasFocusStyle() const;
+	bool HasCaptureStyle() const;
 
 	void           StackPop();
 	RenderStackEl& StackPush();

@@ -103,6 +103,7 @@ static void WM_KeyButtonToXo(WPARAM wp, LPARAM lp, Button& btn, int& codepoint) 
 	}
 }
 
+// See the article on MSDN "Legacy User Interaction Features" > "Keyboard and Mouse Input" > "Using Keyboard Input". Just search for "MSDN Using Keyboard Input".
 static bool GeneratesCharMsg(WPARAM wp, LPARAM lp) {
 	switch (wp) {
 	case VK_BACK:
@@ -279,9 +280,6 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		ev.Event.Button       = WM_MouseButtonToXo(message, wParam);
 		ev.Event.PointCount   = 1;
 		ev.Event.PointsAbs[0] = cursor;
-		Global()->UIEventQueue.Add(ev);
-		// Click event needs refinement (ie on down, capture, etc)
-		ev.Event.Type = EventClick;
 		Global()->UIEventQueue.Add(ev);
 		break;
 

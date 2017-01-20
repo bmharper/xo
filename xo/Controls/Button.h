@@ -9,7 +9,7 @@ namespace controls {
 class XO_API Button {
 public:
 	static void     InitializeStyles(Doc* doc);
-	static DomNode* AppendTo(DomNode* node);
+	static DomNode* AppendTo(DomNode* node, const char* txt = nullptr);
 };
 }
 }

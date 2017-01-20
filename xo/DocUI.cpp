@@ -13,12 +13,13 @@ DocUI::DocUI(xo::Doc* doc) {
 	ViewportWidth  = 0;
 	ViewportHeight = 0;
 	Cursor         = CursorArrow;
+	memset(MouseDownID, 0, sizeof(MouseDownID));
 }
 
 DocUI::~DocUI() {
 }
 
-// This is always called from the UI thread
+// This is always called from the UI thread (ie not the render/main msg loop thread)
 // By the time this is called, the DocGroup->DocLock must already be held.
 void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 	switch (ev.Type) {
@@ -91,12 +92,35 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 }
 
 void DocUI::CloneSlowInto(DocUI& c) const {
-	c.CurrentFocusID = CurrentFocusID;
-	c.HoverNodes     = HoverNodes;
-	c.HoverSet       = HoverSet;
-	c.ViewportWidth  = ViewportWidth;
-	c.ViewportHeight = ViewportHeight;
-	c.Cursor         = Cursor;
+	memcpy(c.MouseDownID, MouseDownID, sizeof(MouseDownID));
+	c.CurrentFocusID   = CurrentFocusID;
+	c.CurrentCaptureID = CurrentCaptureID;
+	c.HoverNodes       = HoverNodes;
+	c.HoverSet         = HoverSet;
+	c.ViewportWidth    = ViewportWidth;
+	c.ViewportHeight   = ViewportHeight;
+	c.Cursor           = Cursor;
+}
+
+void DocUI::SetCapture(InternalID id) {
+	ReleaseCapture(CurrentCaptureID);
+	if (id != InternalIDNull) {
+		StyleResolveOnceOff res(Doc->GetNodeByInternalID(id));
+		if (res.RS->HasCaptureStyle())
+			InvalidateRenderForPseudoClass();
+	}
+	CurrentCaptureID = id;
+}
+
+void DocUI::ReleaseCapture(InternalID id) {
+	if (id == CurrentCaptureID) {
+		if (CurrentCaptureID != InternalIDNull) {
+			StyleResolveOnceOff res(Doc->GetNodeByInternalID(CurrentCaptureID));
+			if (res.RS->HasCaptureStyle())
+				InvalidateRenderForPseudoClass();
+		}
+		CurrentCaptureID = InternalIDNull;
+	}
 }
 
 // Returns true if the event was handled
@@ -107,11 +131,11 @@ bool DocUI::BubbleEvent(Event& ev, const LayoutResult* layout) {
 
 	// TODO. My plan is to go with upward bubbling only. The inner-most
 	// control gets the event first, then outward.
-	// A return value of false means "cancel the bubble".
+	// Event has a method on it called StopPropagation(), which stops the bubbling action.
 	// But ah.... downward bubbling is necessary for things like shortcut
 	// keys. I'm not sure how one does that with HTML.
 	// Right.. so "capturing" is the method where the event propagates inwards.
-	// IE does not support capturing though, so nobody really use it.
+	// IE does not support capturing though, so nobody really uses it.
 	// We simply ignore the question of how to do shortcut keys for now.
 	// Thinking more about shortcut keys - these are different from cursor events.
 	// Keyboard events are always targeted at the object that has the focus,
@@ -123,7 +147,7 @@ bool DocUI::BubbleEvent(Event& ev, const LayoutResult* layout) {
 	bool handled = false;
 
 	if (ev.Type == EventKeyChar || ev.Type == EventKeyDown || ev.Type == EventKeyUp) {
-		// TODO: build upward chain and do bubbling... Possibly downward bubbling for keyboard shortcut management?
+		// TODO: build upward chain and do inward bubbling, as mentioned in the comment above
 		DomNode* focus = (DomNode*) Doc->GetChildByInternalID(CurrentFocusID);
 		if (!focus)
 			focus = &Doc->Root;
@@ -131,49 +155,110 @@ bool DocUI::BubbleEvent(Event& ev, const LayoutResult* layout) {
 		return handled;
 	}
 
-	SelectorChain selChain;
+	// We have two selector chains.
+	// cursorSelChain  - The chain of objects underneath the cursor
+	// captureSelChain - The chain of objects that leads down to the element with the capture
+	// captureSelChain is only used when SetCapture() is active.
+	SelectorChain cursorSelChain;
+	SelectorChain captureSelChain;
 	Vec2f         posInTarget;
-	if (ev.Type == EventMouseLeave) {
+	bool          mouseLeaveOSWindow = ev.Type == EventMouseLeave;
+	if (mouseLeaveOSWindow) {
 		// When EventMouseLeave comes in from the window system, it means the cursor has left our
-		// client area. This is not the same thing as the cursor leaving a DOM node.
+		// client area. This is not the same thing as the cursor leaving a DOM node, which is what
+		// EventMouseLeave means for the DOM node event handler.
+		// We synthesize our MouseLeave messages out of OS MouseMove messages during UpdateCursorLocation(),
+		// so here we're ensuring that process happens correctly.
 		ev.Type = EventMouseMove;
 	} else {
-		FindTarget(ev.PointsAbs[0], layout, selChain);
+		FindTarget(ev.PointsAbs[0], layout, cursorSelChain);
 	}
 
-	if (ev.Type == EventMouseMove)
-		UpdateCursorLocation(selChain);
+	if (CurrentCaptureID) {
+		if (mouseLeaveOSWindow) {
+			// This is heavy handed, but I'm not sure what else to do right now.
+			ReleaseCapture(CurrentCaptureID);
+		}
+		SetupChainForDeepNode(CurrentCaptureID, ev.PointsAbs[0], layout, captureSelChain);
+	}
 
-	//XOTRACE_EVENTS( "FindTarget chainlen = %d\n", (int) nodeChain.size() );
+	if (ev.Type == EventMouseMove && !CurrentCaptureID)
+		UpdateCursorLocation(cursorSelChain);
 
-	// Start at the inner-most node first.
-	// Remember that SendEvent is allowed to do absolutely anything it wants to our DOM.
-	// So it could be that the rest of the objects inside nodeChain are invalid once
-	// SendEvent returns. We cater for this by always fetching DOM nodes based on InternalID.
-	for (size_t inode = selChain.Nodes.size() - 1; inode != -1; inode--) {
-		bool                 isDeepestNode = inode == selChain.Nodes.size() - 1;
-		const RenderDomNode* rnode         = selChain.Nodes[inode];
-		const DomNode*       node          = Doc->GetNodeByInternalID(rnode->InternalID);
-		if (node != nullptr) {
-			if (node->HandlesEvent(ev.Type)) {
-				if (isDeepestNode && selChain.Text) {
-					ev.TargetText = (DomText*) Doc->GetChildByInternalID(selChain.Text->InternalID);
-					if (selChain.Glyph)
-						ev.TargetChar = selChain.Glyph->OriginalCharIndex;
-				} else {
-					ev.TargetText = nullptr;
-					ev.TargetChar = -1;
-				}
-				ev.PointsRel[0] = selChain.PosInNode[inode].ToReal();
-				SendEvent(ev, node, &handled, &stop);
-				if (stop)
-					break;
+	InternalID deepestNodeUnderCursor = cursorSelChain.Nodes.size() == 0 ? InternalIDNull : cursorSelChain.Nodes.back()->InternalID;
+
+	// We copy 'ev' into finalEvents[0], so that we can synthesize a click event, immediately
+	// after a mouseup is received in the same window where it went down. In that case,
+	// finalEvents[0] = MouseUp
+	// finalEvents[1] = Click
+	// In all other cases, we have just one event in finalEvents.
+	int   numFinalEvents = 1;
+	Event finalEvents[2];
+	finalEvents[0] = ev;
+
+	if (ev.Type == EventMouseDown) {
+		MouseDownID[ButtonToMouseNumber(ev.Button)] = deepestNodeUnderCursor;
+	} else if (ev.Type == EventMouseUp) {
+		if (MouseDownID[ButtonToMouseNumber(ev.Button)] == deepestNodeUnderCursor) {
+			// Mouse is coming up in the same object where it went down. This is a "click".
+			if (CanReceiveInputEvents(deepestNodeUnderCursor)) {
+				finalEvents[numFinalEvents]      = ev;
+				finalEvents[numFinalEvents].Type = EventClick;
+				numFinalEvents++;
 			}
 		}
+		MouseDownID[ButtonToMouseNumber(ev.Button)] = InternalIDNull;
 	}
 
-	if (ev.Type == EventClick)
-		UpdateFocusWindow(selChain);
+	SelectorChain bubbleChain;
+	if (CurrentCaptureID) {
+		// Don't actually bubble out. Only send message to the node with capture
+		bubbleChain = captureSelChain;
+		if (bubbleChain.Nodes.size() != 0) {
+			bubbleChain.Nodes.erase(0, bubbleChain.Nodes.size() - 1);
+			bubbleChain.PosInNode.erase(0, bubbleChain.PosInNode.size() - 1);
+		}
+	} else {
+		// Here we bubble
+		bubbleChain = cursorSelChain;
+	}
+
+	// After this point, we don't expect to see usage of 'ev'. Only finalEvents[i].
+
+	// This is the actual "bubbling" action
+	//XOTRACE_EVENTS( "FindTarget chainlen = %d\n", (int) nodeChain.size() );
+	for (int iEvent = 0; iEvent < numFinalEvents; iEvent++) {
+		Event& finalEv = finalEvents[iEvent];
+
+		// Start at the inner-most node first.
+		// Remember that SendEvent is allowed to do absolutely anything it wants to our DOM.
+		// So it could be that the rest of the objects inside nodeChain are invalid once
+		// SendEvent returns. We cater for this by always fetching DOM nodes based on InternalID.
+		for (size_t inode = bubbleChain.Nodes.size() - 1; inode != -1; inode--) {
+			bool                 isDeepestNode = inode == bubbleChain.Nodes.size() - 1;
+			const RenderDomNode* rnode         = bubbleChain.Nodes[inode];
+			const DomNode*       node          = Doc->GetNodeByInternalID(rnode->InternalID);
+			if (node != nullptr) {
+				if (node->HandlesEvent(finalEv.Type)) {
+					if (isDeepestNode && bubbleChain.Text) {
+						finalEv.TargetText = (DomText*) Doc->GetChildByInternalID(bubbleChain.Text->InternalID);
+						if (bubbleChain.Glyph)
+							finalEv.TargetChar = bubbleChain.Glyph->OriginalCharIndex;
+					} else {
+						finalEv.TargetText = nullptr;
+						finalEv.TargetChar = -1;
+					}
+					finalEv.PointsRel[0] = bubbleChain.PosInNode[inode].ToReal();
+					SendEvent(finalEv, node, &handled, &stop);
+					if (stop)
+						break;
+				}
+			}
+		}
+
+		if (finalEv.Type == EventClick)
+			UpdateFocusWindow(bubbleChain);
+	}
 
 	return handled;
 }
@@ -230,6 +315,28 @@ void DocUI::FindTarget(Vec2f p, const LayoutResult* layout, SelectorChain& selCh
 				}
 			}
 		}
+	}
+}
+
+// Populate selChain with the parents of deepNode
+void DocUI::SetupChainForDeepNode(InternalID deepNode, Vec2f p, const LayoutResult* layout, SelectorChain& selChain) {
+	// Build up a chain from deep node to root DOM node.
+	InternalID nodeID = deepNode;
+	while (nodeID != InternalIDNull) {
+		const RenderDomNode* rnode = layout->Node(nodeID);
+		selChain.Nodes.push(rnode);
+		nodeID = Doc->GetNodeByInternalID(nodeID)->GetParentID();
+	}
+
+	// Invert the chain, so that it goes from root DOM node down to deep node
+	for (size_t i = 0; i < selChain.Nodes.size() / 2; i++)
+		std::swap(selChain.Nodes[i], selChain.Nodes[selChain.Nodes.size() - i - 1]);
+
+	// Compute the relative cursor position for all nodes along the tree
+	Point relPos = {RealToPos(p.x), RealToPos(p.y)};
+	for (size_t i = 0; i < selChain.Nodes.size(); i++) {
+		relPos -= selChain.Nodes[i]->Pos.TopLeft();
+		selChain.PosInNode.push(relPos);
 	}
 }
 
@@ -346,6 +453,12 @@ Event DocUI::MakeEvent(Events evType) {
 void DocUI::InvalidateRenderForPseudoClass() {
 	// This is heavy-handed. Ideally we could inform the layout system that it doesn't need to re-evaluate styles.
 	Doc->IncVersion();
+}
+
+bool DocUI::CanReceiveInputEvents(InternalID nodeID) {
+	if (CurrentCaptureID == InternalIDNull)
+		return true;
+	return CurrentCaptureID == nodeID;
 }
 
 void DocUI::SendEvent(const Event& ev, const DomNode* target, bool* handled, bool* stop) {

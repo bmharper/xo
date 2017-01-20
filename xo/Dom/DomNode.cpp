@@ -297,6 +297,14 @@ bool DomNode::HasFocus() const {
 	return Doc->UI.IsFocused(InternalID);
 }
 
+void DomNode::SetCapture() const {
+	Doc->UI.SetCapture(InternalID);
+}
+
+void DomNode::ReleaseCapture() const {
+	Doc->UI.ReleaseCapture(InternalID);
+}
+
 void DomNode::RecalcAllEventMask() {
 	bool hadTimer  = !!(AllEventMask & EventTimer);
 	bool hadRender = !!(AllEventMask & EventTimer);

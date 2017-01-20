@@ -3,6 +3,14 @@
 
 namespace xo {
 
+XO_API int ButtonToMouseNumber(Button b) {
+	int i = (int) b - (int) Button::MouseLeft;
+	if (i >= 0 && i < NumMouseButtons)
+		return i;
+	else
+		return -1;
+}
+
 XO_API void EventHandler_LambdaStaticFunc(Event& ev) {
 	EventHandlerLambda* lambda = reinterpret_cast<EventHandlerLambda*>(ev.Context);
 	(*lambda)(ev);

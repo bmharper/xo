@@ -70,6 +70,8 @@ public:
 	void          ReadyTimers(int64_t nowTicksMS, cheapvec<NodeEventIDPair>& handlers); // Fetch the list of timer events that are ready to run
 	void          RenderHandlers(cheapvec<NodeEventIDPair>& handlers);                  // Fetch the list of handlers for the Render event
 	bool          HasFocus() const;                                                     // Return true if this node has the keyboard focus
+	void          SetCapture() const;                                                   // Captures input events so that they only fire on this node
+	void          ReleaseCapture() const;                                               // Releases input capture
 
 	// It is tempting to use macros to generate these event handler functions,
 	// but the intellisense experience is so much worse that I avoid it.

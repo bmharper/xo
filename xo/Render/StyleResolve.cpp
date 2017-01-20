@@ -32,11 +32,17 @@ void StyleResolver::Set(RenderStack& stack, const DomEl* node, const StyleClass&
 	if (stack.Doc->UI.IsFocused(node->GetInternalID()))
 		Set(stack, node, klass.Focus);
 
+	if (stack.Doc->UI.IsCaptured(node->GetInternalID()))
+		Set(stack, node, klass.Capture);
+
 	if (!klass.Hover.IsEmpty())
 		stack.StackBack().HasHoverStyle = true;
 
 	if (!klass.Focus.IsEmpty())
 		stack.StackBack().HasFocusStyle = true;
+
+	if (!klass.Capture.IsEmpty())
+		stack.StackBack().HasCaptureStyle = true;
 }
 
 void StyleResolver::Set(RenderStack& stack, const DomEl* node, const Style& style) {

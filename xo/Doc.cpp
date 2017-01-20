@@ -133,6 +133,8 @@ bool Doc::ClassParse(const char* klass, const char* style) {
 		subset = &s->Hover;
 	} else if (pseudo == "focus") {
 		subset = &s->Focus;
+	} else if (pseudo == "capture") {
+		subset = &s->Capture;
 	} else {
 		return false;
 	}

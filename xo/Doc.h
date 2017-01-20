@@ -17,6 +17,14 @@ way of detecting any change to the document, without requiring that all document
 some kind of accessor function. Our renderer compares its last version to our current version,
 and if the two differ, it knows that it needs to update.
 
+InternalID Recycling
+--------------------
+It's a bit scary how we recycle IDs. For example, I can imagine DocUI.MouseDownID being populated
+with an ID that is destroyed and recreated during the time when the mouse is down, which would
+produce incorrect behaviour. A safer alternative would be to only recycle IDs once we've wrapped
+around 2^32. That would force more complicated code on us, because we could no longer use a
+simple lookup table for ID -> Object. I guess time will tell if this is a problem.
+
 */
 class XO_API Doc {
 	XO_DISALLOW_COPY_AND_ASSIGN(Doc);

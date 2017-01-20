@@ -6,9 +6,10 @@ namespace xo {
 
 void RenderStackEl::Reset() {
 	Styles.Reset();
-	Pool          = NULL;
-	HasHoverStyle = false;
-	HasFocusStyle = false;
+	Pool            = NULL;
+	HasHoverStyle   = false;
+	HasFocusStyle   = false;
+	HasCaptureStyle = false;
 }
 
 RenderStackEl& RenderStackEl::operator=(const RenderStackEl& b) {
@@ -106,6 +107,10 @@ bool RenderStack::HasHoverStyle() const {
 
 bool RenderStack::HasFocusStyle() const {
 	return Stack.back().HasFocusStyle;
+}
+
+bool RenderStack::HasCaptureStyle() const {
+	return Stack.back().HasCaptureStyle;
 }
 
 void RenderStack::StackPop() {

@@ -13,7 +13,7 @@ public:
 	bool                     IsLocked; // True if we are being used by the UI thread to do things like hit-testing
 	RenderDomNode            Root;     // This is a dummy node that is above Body. Use Body() to get the true root of the tree.
 	Pool                     Pool;
-	cheapvec<RenderDomNode*> IDToNodeTable; // Mapping from InternalID to Node.
+	cheapvec<RenderDomNode*> IDToNodeTable; // Mapping from InternalID to Node. Use Node() function rather than this directly.
 
 	const RenderDomNode* Body() const; // This is the effective root of the DOM
 

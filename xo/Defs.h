@@ -55,8 +55,8 @@ static const uint32_t PosMask  = (1 << PosShift) - 1; // 255
 
 // An ID that is internal to xo - i.e. it is not controllable by external code.
 // This ID is an integer that you can use to reference a DOM element. These IDs are recycled.
-typedef int32_t         InternalID;
-static const InternalID InternalIDNull = 0; // Zero is always an invalid DOM element ID
+typedef uint32_t        InternalID;
+static const InternalID InternalIDNull = 0; // Zero is always an invalid DOM element ID. Must be zero - code assumes it can zero-initialize this.
 static const InternalID InternalIDRoot = 1; // The root of the DOM tree always has ID = 1
 
 typedef int32_t     FontID;

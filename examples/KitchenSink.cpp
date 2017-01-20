@@ -480,8 +480,7 @@ void DoEditBox(xo::Doc* doc)
 	//doc->Root.ParseAppend("<div style='break:after'>something</div>");
 	auto edit = xo::controls::EditBox::AppendTo(&doc->Root);
 	edit->StyleParse("width: 15em");
-	auto btn = xo::controls::Button::AppendTo(&doc->Root);
-	btn->SetText("Click me");
+	auto btn = xo::controls::Button::AppendTo(&doc->Root, "Click me");
 	btn->OnClick([doc](xo::Event& ev) {
 		xo::controls::MsgBox::Show(doc, "How now brown cow\nA new line");
 	});
