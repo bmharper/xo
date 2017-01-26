@@ -52,6 +52,9 @@ XO_TODO_STATIC
 #include "../dependencies/stb_image.c"
 #undef STBI_HEADER_FILE_ONLY
 
+// The implementation is compiled in Image/Image.cpp
+#include "../dependencies/stb_image_write.h"
+
 #ifdef _WIN32
 #pragma warning(disable : 4345) // POD initialized with ()
 #endif

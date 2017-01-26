@@ -17,7 +17,7 @@ DocGroup::DocGroup() {
 	DestroyDocWithGroup = false;
 	Doc                 = NULL;
 	Wnd                 = NULL;
-	RenderDoc           = new xo::RenderDoc();
+	RenderDoc           = new xo::RenderDoc(this);
 	RenderStats.Reset();
 }
 

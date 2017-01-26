@@ -158,8 +158,6 @@ const char* GLProg_Uber::FragSrc()
 		"		vec4 bg_tex = vec4(0, 0, 0, 0);\n"
 		"		if (enableBGTex)\n"
 		"		{\n"
-		"			// Why is fromSRGB necessary here? Can't we get the GPU to do that for us earlier in the pipeline,\n"
-		"			// when we define the texture?\n"
 		"			bg_tex = premultiply(texture2D(f_tex0, uv));\n"
 		"			bg_color = blend_over(bg_color, bg_tex);\n"
 		"		}\n"

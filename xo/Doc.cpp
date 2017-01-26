@@ -12,8 +12,8 @@
 
 namespace xo {
 
-Doc::Doc()
-    : Root(this, TagBody, InternalIDNull), UI(this) {
+Doc::Doc(DocGroup* group)
+    : Root(this, TagBody, InternalIDNull), UI(this), Group(group) {
 	IsReadOnly = false;
 	Version    = 0;
 	ClassStyles.AddDummyStyleZero();
@@ -307,7 +307,8 @@ void Doc::InitializeDefaultTagStyles() {
 	// The defaults inside RenderStack are like a fallback. These are definitely at a "higher" level
 	// of abstraction.
 
-	TagStyles[TagBody].Parse("background: #fff; width: 100%; height: 100%; box-sizing: margin; cursor: arrow", this);
+	TagStyles[TagBody].Parse("background: #fff; box-sizing: margin; cursor: arrow", this);
+	TagStyles[TagBody].Parse("width: 100%; height: 100%", this);
 	TagStyles[TagBody].Set(afont);
 	TagStyles[TagDiv].Parse("baseline:baseline;", this);
 	// Setting cursor: text on <lab> is amusing, and it is the default in HTML, but not the right default for general-purpose UI.

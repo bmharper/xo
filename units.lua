@@ -249,6 +249,9 @@ local xo = SharedLibrary {
 		makeGlob("dependencies/GL", {}),
 		makeGlob("dependencies/hash", {}),
 		"dependencies/tsf/xo_tsf_wrapper.cpp",
+		{ "dependencies/stb_image.cpp"; Config = "win*" },  
+		{ "dependencies/stb_image.c"; Config = "linux-*" }, -- now that we can use PCH on linux, probably can get rid of this difference and use the .cpp version everywhere
+		"dependencies/stb_image_write.h",
 	},
 }
 

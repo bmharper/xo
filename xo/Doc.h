@@ -30,23 +30,25 @@ class XO_API Doc {
 	XO_DISALLOW_COPY_AND_ASSIGN(Doc);
 
 public:
-	DomNode     Root;              // Root element of the document tree
-	StyleTable  ClassStyles;       // All style classes defined in this document
-	Style       TagStyles[TagEND]; // Styles of tags. For example, the style of <p>, or the style of <h1>.
-	StringTable Strings;           // Generic string table.
-	ImageStore  Images;            // All images. Some day we may want to be able to share these amongst different documents.
-	DocUI       UI;                // UI state (which element has the focus, over which elements is the cursor, etc)
+	DomNode                        Root;              // Root element of the document tree
+	StyleTable                     ClassStyles;       // All style classes defined in this document
+	Style                          TagStyles[TagEND]; // Styles of tags. For example, the style of <p>, or the style of <h1>.
+	StringTable                    Strings;           // Generic string table.
+	ImageStore                     Images;            // All images. Some day we may want to be able to share these amongst different documents.
+	DocUI                          UI;                // UI state (which element has the focus, over which elements is the cursor, etc)
+	DocGroup*                      Group = nullptr;
 
-	Doc();
+	Doc(DocGroup* group);
 	~Doc();
 	void       Reset();
 	void       IncVersion();
-	uint32_t   GetVersion() { return Version; }                                      // Renderers use purposefully loose thread semantics on this.
+	uint32_t   GetVersion() { return Version; }                                      // Renderers use purposefully loose thread semantics on this. Valgrind will be unhappy with this.
 	void       ResetModifiedBitmap();                                                // Reset the 'ismodified' bitmap of all DOM elements.
 	void       MakeFreeIDsUsable();                                                  // All of our dependent renderers have been updated, we can move FreeIDs over to UsableIDs.
 	void       CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const; // Used to make a read-only clone for the renderer. Preserves existing.
 	InternalID InternalIDSize() const;                                               // Returns the size of the InternalID table
 	//void				CloneFastInto( Doc& c, uint32_t cloneFlags, RenderStats& stats ) const;	// Used to make a read-only clone for the renderer. Starts from scratch.
+	DocGroup*  GetDocGroup() const { return Group; }
 
 	// Style Classes
 	bool ClassParse(const char* klass, const char* style); // Set the class, overwriting any previously set style

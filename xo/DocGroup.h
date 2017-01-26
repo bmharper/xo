@@ -5,6 +5,8 @@
 namespace xo {
 
 // The umbrella class that houses a DOM tree, as well as its rendered representation.
+// This is not a bunch of different documents. It is one document and all it's different representations.
+// It might be better to come up with a new name for this concept.
 // TODO: Pull the platform-specific stuff (ie WndProc, StaticWndProc, IsMouseTracking) out of this class.
 class XO_API DocGroup {
 	XO_DISALLOW_COPY_AND_ASSIGN(DocGroup);
@@ -14,7 +16,6 @@ public:
 	SysWnd*    Wnd;
 	RenderDoc* RenderDoc; // Copy of Canonical Document, as well as rendered state of document
 	bool       DestroyDocWithGroup;
-
 	RenderStats RenderStats;
 
 	DocGroup();

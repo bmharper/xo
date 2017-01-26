@@ -91,6 +91,7 @@ void Layout::RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& o
 	Box         margin        = ComputeBox(in.ParentWidth, in.ParentHeight, CatMargin_Left);
 	Box         padding       = ComputeBox(in.ParentWidth, in.ParentHeight, CatPadding_Left);
 	Box         border        = ComputeBox(in.ParentWidth, in.ParentHeight, CatBorder_Left);
+	Box         borderRadius  = ComputeBox(in.ParentWidth, in.ParentHeight, CatBorderRadius_TL);
 	Pos         contentWidth  = ComputeDimension(in.ParentWidth, CatWidth);
 	Pos         contentHeight = ComputeDimension(in.ParentHeight, CatHeight);
 	BoxSizeType boxSizeType   = Stack.Get(CatBoxSizing).GetBoxSizing();
@@ -216,7 +217,7 @@ void Layout::RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& o
 	// the padding in order to compute the content-box, which is what RenderDomNode needs.
 	rnode->Pos = marginBox.ShrunkBy(boxIn.MarginBorderPadding);
 	rnode->SetStyle(Stack);
-	rnode->Style.BorderRadius = PosToReal(ComputeDimension(in.ParentWidth, CatBorderRadius));
+	rnode->Style.BorderRadius.Set2BitPrecision(borderRadius);
 	rnode->Style.BorderSize   = border;
 	rnode->Style.Padding      = padding;
 

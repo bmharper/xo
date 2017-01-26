@@ -817,6 +817,100 @@ and incorrect approach. WM_PAINT works well enough, and by relying on it entirel
 I get rid of that hackish sleep mechanism, where I would switch between a "cold"
 GetMessage wait, and a "hot" PeekMessage spinloop.
 
+2017-01-24 Updated Node Box Rendering Split
+===========================================
+I suspected, when I drew out the original split of a node box rendering, in
+section [2015-08-19 Rendering box nodes], that it wasn't going to be sufficient for the cases
+where the border radius differed from corner to corner, and now that I've actually
+implemented unique radii for each corner, I see that the original layout isn't
+sufficient.
+
+What I'm going to do instead, is the following layout, which has a little bit of variation,
+depending on whether the top radius or bottom radius is greater. Two examples:
+
+*********************************  
+*   .-------+-----+----+---.    *   
+*  |        |     |  E |    |   *   
+*  |        |     +----+----+   *   
+*  |        | C1  |         |   *   
+*  +--------+     |    B    |   *   
+*  |        +-----+         |   *   
+*  |    A   |     +---------+   *   
+*  |        | C2  |         |   *   
+*  +---+----+     |         |   *   
+*  |   |  D |     |         |   *   
+*   '--+----+-----+--------'    *   
+*********************************  
+
+*********************************  
+*   .--+----+-----+--------.    *  
+*  |   |  D |     |         |   *  
+*  +---+----+     |         |   *  
+*  |        | C1  |         |   *  
+*  |   A    |     +---------+   *  
+*  |        +-----+         |   *  
+*  |        |     |    B    |   *  
+*  +--------+ C2  |         |   *  
+*  |        |     +----+----+   *  
+*  |        |     |  E |    |   *  
+*   '-------+-----+----+---'    *  
+*********************************  
+
+The two figures above aren't the only configurations. There are four configurations in total,
+and the remaining two layouts are where D and E are both at the top, or where D and E are both at the bottom.
+
+The principle here is that the big blocks A and B and stretched so that they are as wide
+as the maximum radius of their tops and bottoms. Specifically, A is as wide as max(x,z),
+and B is as wide as max(y,w). We then place C1 and C2, so that they meet at the equator,
+and together they form a vertical strip down the middle. Finally, D and E fill up the
+tiny blocks that remain.
+
+The nature of our arc rendering technique means we need to enclose the arc sweep in a tight
+box, which is why the previous simple four quad technique is not sufficient, once we allow
+different radii at each corner of the box.
+
+The following diagram shows the layout of the key point numbers, which are referred to in the code:
+
+************************************
+*  x0    x1   x2   x3   x4    x5   *
+* y0+-----+----+----+----+-----+   *
+*   |     |    |    |    |     |   *
+*   |     | D  |    | E  |     |   *
+*   |     |    | C1 |    |     |   *
+* y1+-----+----+    +----+-----+y4 *
+*   |          |    |          |   *
+*   |          |    |          |   *
+*   |    A   y6+----+    B     |   *
+*   |          |    |          |   *
+*   |          |    |          |   *
+* y2+-----+----+    +----+-----+y5 *
+*   |     |    | C2 |    |     |   *
+*   |     | D  |    | E  |     |   *
+*   |     |    |    |    |     |   *
+* y3+-----+----+----+----+-----+   *
+*        x6             x7         *
+************************************
+
+
+The candidates for block D are either x1-x2/y0-y1 or x6-x2/y2-y3. In other words, D must lie
+at the top or the bottom. At least one of these two blocks will always be degenerate, because
+the distance from x1 to x2, or x6 to x2 can be zero. Or, both of these distances can be zero,
+which occurs when the left horizontal radii are the same on the top and the bottom. The same
+idea applies to the right side, for block E.
+
+Note that this scheme arbitrarly picks the horizontal axis as the one where we use the max radius.
+The entire scheme could just as well use the vertical axis, but we've arbitrarly chosen to go
+with the horizontal.
+
+The scheme described thus far mostly works, but there remains one little gap that can get missed,
+and this gap occurs when a corner radius is less than the border width. The following screenshot
+shows it:
+
+![missing pieces](img/node-rect-missing-pieces.png)
+
+The grey pieces that are next to the red corners, are the final bits that need to be filled in.
+It is simple to fill these. They are filled 100% with the border color.
+
 <!-- Markdeep: -->
 <style class="fallback">body{white-space:pre;font-family:monospace}</style>
 <script src="markdeep.min.js"></script>
