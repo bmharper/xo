@@ -239,6 +239,10 @@ public:
 	}
 };
 
+// The values in here have either 8 bits of sub-pixel precision, like Pos values,
+// or they have 2-bit sub-pixel precision. The 2-bit subpixel precision was added for
+// the sake of the border-radius values, where a limit of 256 is too low for drawing
+// a circle that fills the screen.
 class XO_API Box16 {
 public:
 	uint16_t Left;
@@ -250,12 +254,17 @@ public:
 	Box16(const Box& b) : Left(b.Left), Right(b.Right), Top(b.Top), Bottom(b.Bottom) {}
 	Box16(const Box16& b) : Left(b.Left), Right(b.Right), Top(b.Top), Bottom(b.Bottom) {}
 	Box16(Pos left, Pos top, Pos right, Pos bottom) : Left(left), Right(right), Top(top), Bottom(bottom) {}
+	void Set2BitPrecision(const Box& b);
 	BoxF ToRealBox() const;
+	BoxF ToRealBox2BitPrecision() const;
 };
 
 class XO_API BoxF {
 public:
-	float Left, Right, Top, Bottom;
+	float Left;
+	float Top;
+	float Right;
+	float Bottom;
 
 	BoxF() : Left(0), Right(0), Top(0), Bottom(0) {}
 	BoxF(float left, float top, float right, float bottom) : Left(left), Right(right), Top(top), Bottom(bottom) {}

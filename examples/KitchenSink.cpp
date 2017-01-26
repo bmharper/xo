@@ -13,11 +13,11 @@ void xoMain(xo::SysWnd* wnd)
 		xo::Trace("KitchenSink application is closing\n");
 	});
 	xo::Global()->FontStore->AddFontDirectory("C:\\temp\\fonts");
-	int left = 2000;
-	int width = 400;
+	int left = -1400;
+	int width = 1300;
 	int top = 60;
-	int height = 500;
-	//wnd->SetPosition(xo::Box(left, top, left + width, top + height), xo::SysWnd::SetPosition_Move | xo::SysWnd::SetPosition_Size);
+	int height = 700;
+	wnd->SetPosition(xo::Box(left, top, left + width, top + height), xo::SysWnd::SetPosition_Move | xo::SysWnd::SetPosition_Size);
 	InitDOM(wnd->Doc());
 }
 
@@ -29,6 +29,7 @@ void DoBorder(xo::Doc* doc)
 		"<div style='border: #007; border: 2px 20px 5px 15px; border-radius: 100px 30px 20px 10px; width: 240ep; height: 240ep; background: #fff; margin: 2px'></div>"
 		"<div style='border: #007; border: 1px 2px 3px 4px; border-radius: 5px; width: 200ep; height: 200ep; background: #fff; margin: 2px'></div>"
 		"<div style='border: #070; border: 1px 1px 2px 3px; border-radius: 0px; width: 200ep; height: 200ep; background: #fff; margin: 2px'>aaaaa</div>"
+		"<div style='border: #070; border: 1px 1px 2px 3px; border-radius: 2px; width: 200ep; height: 200ep; background: #fff; margin: 2px'>aaaaa</div>"
 		"<div style='border: 5px #070; border-radius: 8px; width: 100ep; height: 100ep; background: #fff; margin: 1px'>b</div>"
 		"<div style='border: 1px #557; width: 150ep; height: 22ep; background: #fff; margin: 1px'>c</div>"
 		"<div style='border: 5ep #456; width: 40ep; height: 40ep; background: #567; margin: 1px'>d</div>" // ensure border color goes through sRGB conversion
@@ -491,7 +492,7 @@ void InitDOM(xo::Doc* doc)
 	xo::DomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
 
-	//DoBorder(doc);
+	DoBorder(doc);
 	//DoBaselineAlignment(doc);
 	//DoBaselineAlignment_rev2(doc);
 	//DoBaselineAlignment_Multiline(doc);
@@ -509,7 +510,7 @@ void InitDOM(xo::Doc* doc)
 	//DoTextQuality(doc);
 	//DoQuadraticSplines(doc);
 	//DoTimer(doc);
-	DoEditBox(doc);
+	//DoEditBox(doc);
 
 	body->OnClick([](xo::Event& ev) {
 		//xo::Trace("%f %f\n", ev.PointsAbs[0].x, ev.PointsAbs[0].y);

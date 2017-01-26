@@ -84,12 +84,30 @@ BoxF Box::ToRealBox() const {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void Box16::Set2BitPrecision(const Box& b) {
+	const auto shift = PosShift - 2;
+	Left = b.Left >> shift;
+	Top = b.Top >> shift;
+	Right = b.Right >> shift;
+	Bottom = b.Bottom >> shift;
+}
+
 BoxF Box16::ToRealBox() const {
 	BoxF f;
 	f.Left   = PosToReal(Left);
 	f.Right  = PosToReal(Right);
 	f.Top    = PosToReal(Top);
 	f.Bottom = PosToReal(Bottom);
+	return f;
+}
+
+BoxF Box16::ToRealBox2BitPrecision() const {
+	const auto shift = PosShift - 2;
+	BoxF f;
+	f.Left   = PosToReal(Left << shift);
+	f.Right  = PosToReal(Right << shift);
+	f.Top    = PosToReal(Top << shift);
+	f.Bottom = PosToReal(Bottom << shift);
 	return f;
 }
 

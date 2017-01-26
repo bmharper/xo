@@ -71,7 +71,7 @@ struct XO_API Size {
 
 // Convenience struct used during layout computation
 struct XO_API StyleBox {
-	// This order (left,top,right,bottom) must be consistent with the order presented inside XO_STYLE_DEFINE
+	// This order (left,top,right,bottom) must be consistent with the order presented inside the StyleCategories enum
 	union {
 		struct
 		{
@@ -103,6 +103,42 @@ struct XO_API StyleBox {
 		return b;
 	}
 	void SetZero() { Left = Top = Right = Bottom = Size::Pixels(0); }
+};
+
+// Convenience struct used during layout computation
+struct XO_API CornerStyleBox {
+	// This order (topleft, topright, bottomright, bottomleft) must be consistent with the order presented inside the StyleCategories enum
+	union {
+		struct
+		{
+			Size TopLeft, TopRight, BottomRight, BottomLeft;
+		};
+		Size All[4];
+	};
+
+	static bool           Parse(const char* s, size_t len, CornerStyleBox& v);
+	static CornerStyleBox Make(Size topleft, Size topright, Size bottomright, Size bottomleft) {
+		CornerStyleBox b;
+		b.TopLeft     = topleft;
+		b.TopRight    = topright;
+		b.BottomRight = bottomright;
+		b.BottomLeft  = bottomleft;
+		return b;
+	}
+	static CornerStyleBox MakeUniform(Size all) {
+		CornerStyleBox b;
+		b.All[0] = all;
+		b.All[1] = all;
+		b.All[2] = all;
+		b.All[3] = all;
+		return b;
+	}
+	static StyleBox MakeZero() {
+		StyleBox b;
+		b.SetZero();
+		return b;
+	}
+	void SetZero() { All[0] = All[1] = All[2] = All[3] = Size::Pixels(0); }
 };
 
 enum FlowDirection {
@@ -216,6 +252,11 @@ enum StyleCategories {
 	CatBorderColor_Right,
 	CatBorderColor_Bottom,
 
+	CatBorderRadius_TL,
+	CatBorderRadius_TR,
+	CatBorderRadius_BR,
+	CatBorderRadius_BL,
+
 	CatWidth,
 	CatHeight,
 
@@ -235,7 +276,6 @@ enum StyleCategories {
 	CatFontSize,
 	CatFontFamily,
 
-	CatBorderRadius,
 	CatPosition,
 	CatFlowContext,
 	CatFlowAxis,
@@ -314,7 +354,7 @@ public:
 
 	void SetColor(StyleCategories cat, Color val) { SetU32(cat, val.u); }
 	void SetSize(StyleCategories cat, Size val) { SetWithSubtypeF(cat, val.Type, val.Val); }
-	void SetBorderRadius(Size val) { SetSize(CatBorderRadius, val); }
+	//void SetBorderRadius(Size val) { SetSize(CatBorderRadius, val); }
 	void SetPosition(PositionType val) { SetU32(CatPosition, val); }
 	void SetFont(FontID val) { SetU32(CatFontFamily, val); }
 	void SetBackgroundImage(const char* image, Doc* doc) { SetString(CatBackgroundImage, image, doc); }
@@ -411,12 +451,15 @@ public:
 	bool               Parse(const char* t, size_t maxLen, Doc* doc);
 	const StyleAttrib* Get(StyleCategories cat) const;
 	void               SetBox(StyleCategories cat, StyleBox val);
-	void               GetBox(StyleCategories cat, StyleBox& box) const;
+	void               GetBox(StyleCategories cat, StyleBox& val) const;
+	void               SetCornerBox(StyleCategories cat, CornerStyleBox val);
+	void               GetCornerBox(StyleCategories cat, CornerStyleBox& val) const;
 	void               SetUniformBox(StyleCategories cat, StyleAttrib val);
 	void               SetUniformBox(StyleCategories cat, Color color);
 	void               SetUniformBox(StyleCategories cat, Size size);
 	void               Set(StyleAttrib attrib);
-	void               Set(StyleCategories cat, StyleBox val); // This overload is identical to SetBox, but needs to be present for templated parsing functions
+	void               Set(StyleCategories cat, StyleBox val);       // This overload is identical to SetBox, but needs to be present for templated parsing functions
+	void               Set(StyleCategories cat, CornerStyleBox val); // Same as above
 	//void					Compute( const Doc& doc, const DomEl& node );
 	void Discard();
 	void CloneSlowInto(Style& c) const;
@@ -448,7 +491,8 @@ public:
 
 protected:
 	//void					MergeInZeroCopy( int n, const Style** src );
-	void SetBoxInternal(StyleCategories catBase, StyleBox val);
+	void GetBoxInternal(StyleCategories catBase, Size* quad) const;
+	void SetBoxInternal(StyleCategories catBase, Size* quad);
 };
 
 /* A bag of styles in a performant container.
@@ -537,10 +581,10 @@ class XO_API StyleRender {
 public:
 	Box16 BorderSize;
 	Box16 Padding;
+	Box16 BorderRadius; // 2 bits of sub-pixel precision, giving maximum radius of 16384
 	Color BackgroundColor;
 	Color BorderColor;
 	int   BackgroundImageID;
-	float BorderRadius;
 	bool  HasHoverStyle : 1;   // Element's appearance depends upon whether the cursor is over it
 	bool  HasFocusStyle : 1;   // Element's appearance depends upon whether it has the focus
 	bool  HasCaptureStyle : 1; // Element's appearance depends upon whether it has the input captured
