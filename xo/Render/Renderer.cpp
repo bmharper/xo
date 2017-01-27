@@ -127,7 +127,7 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 	bool anyBorders = border != BoxF(0, 0, 0, 0);
 
 	if (bg.a != 0 || bgImage || (style->BorderColor.a != 0 && anyBorders)) {
-		Vx_Uber vx[20];
+		Vx_Uber vx[32];
 		float   vmid      = 0.5f * (top + bottom);
 		float   borderPos = border.Top;
 		// more padding, for our smooth edges
@@ -165,13 +165,13 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 
 		// left (start at the left edge and work our way in)
 		x[0] = left - hpad;
-		x[1] = left - hpad + radii.TopLeft.x;
-		x[2] = left - hpad + leftEdgeMax;
-		x[3] = right + hpad - rightEdgeMax;
-		x[4] = right + hpad - radii.TopRight.x;
+		x[1] = left + radii.TopLeft.x;
+		x[2] = left + leftEdgeMax;
+		x[3] = right - rightEdgeMax;
+		x[4] = right - radii.TopRight.x;
 		x[5] = right + hpad;
-		x[6] = left - hpad + radii.BottomLeft.x;
-		x[7] = right + hpad - radii.BottomRight.x;
+		x[6] = left + radii.BottomLeft.x;
+		x[7] = right - radii.BottomRight.x;
 
 		float uZero = left + border.Left; // left edge of content-box
 		for (int i = 0; i < arraysize(x); i++)
@@ -183,11 +183,11 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 
 		// top
 		y[0] = top - vpad;
-		y[1] = top - vpad + Max(radii.TopLeft.y, border.Top);
-		y[2] = bottom + vpad - Max(radii.BottomLeft.y, border.Bottom);
+		y[1] = top + Max(radii.TopLeft.y, border.Top);
+		y[2] = bottom - Max(radii.BottomLeft.y, border.Bottom);
 		y[3] = bottom + vpad;
-		y[4] = top - vpad + Max(radii.TopRight.y, border.Top);
-		y[5] = bottom + vpad - Max(radii.BottomRight.y, border.Bottom);
+		y[4] = top + Max(radii.TopRight.y, border.Top);
+		y[5] = bottom - Max(radii.BottomRight.y, border.Bottom);
 		y[6] = 0.5f * (top + bottom);
 
 		float vZero = top + border.Top; // top edge of content-box
@@ -232,6 +232,14 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 			vx[c++].Set1(shader, VEC2(x[5], y[4]), VEC4(border.Right, -hpad, u[2], v[1]), bgRGBA, borderRGBA);
 		}
 
+		// Top D
+		if (x[2] - x[1] != 0 && y[1] - y[0] != 0) {
+			vx[c++].Set1(shader, VEC2(x[1], y[0]), VEC4(border.Top, -vpad, u[6], v[2]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[1], y[1]), VEC4(border.Top, y[1] - top, u[6], v[3]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[2], y[1]), VEC4(border.Top, y[1] - top, u[2], v[3]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[2], y[0]), VEC4(border.Top, -vpad, u[2], v[2]), bgRGBA, borderRGBA);
+		}
+		
 		// Bottom D
 		if (x[2] - x[6] != 0 && y[3] - y[2] != 0) {
 			vx[c++].Set1(shader, VEC2(x[6], y[2]), VEC4(border.Bottom, bottom - y[2], u[6], v[2]), bgRGBA, borderRGBA);
@@ -240,8 +248,31 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 			vx[c++].Set1(shader, VEC2(x[2], y[2]), VEC4(border.Bottom, bottom - y[2], u[2], v[2]), bgRGBA, borderRGBA);
 		}
 
+		// Top E
+		if (x[4] - x[3] != 0 && y[4] - y[0] != 0) {
+			vx[c++].Set1(shader, VEC2(x[3], y[0]), VEC4(border.Top, -vpad, u[3], v[0]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[3], y[4]), VEC4(border.Top, y[4] - top, u[3], v[4]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[4], y[4]), VEC4(border.Top, y[4] - top, u[4], v[4]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[4], y[0]), VEC4(border.Top, -vpad, u[4], v[0]), bgRGBA, borderRGBA);
+		}
+
+		// Bottom E
+		if (x[7] - x[3] != 0 && y[3] - y[2] != 0) {
+			vx[c++].Set1(shader, VEC2(x[3], y[5]), VEC4(border.Bottom, bottom - y[5], u[3], v[5]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[3], y[3]), VEC4(border.Bottom, -vpad, u[3], v[3]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[7], y[3]), VEC4(border.Bottom, -vpad, u[7], v[3]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[7], y[5]), VEC4(border.Bottom, bottom - y[5], u[7], v[5]), bgRGBA, borderRGBA);
+		}
+
 		Driver->ActivateShader(ShaderUber);
 		Driver->Draw(GPUPrimQuads, c, vx);
+
+		if (anyArcs) {
+			RenderCornerArcs(shaderFlags, TopLeft, VEC2(left, top), radii.TopLeft, VEC2(border.Left, border.Top), uvScale * VEC2(x[1], y[1]), uvScale, bgRGBA, borderRGBA);
+			RenderCornerArcs(shaderFlags, BottomLeft, VEC2(left, bottom), radii.BottomLeft, VEC2(border.Left, border.Bottom), uvScale * VEC2(x[6], y[2]), uvScale, bgRGBA, borderRGBA);
+			RenderCornerArcs(shaderFlags, BottomRight, VEC2(right, bottom), radii.BottomRight, VEC2(border.Right, border.Bottom), uvScale * VEC2(x[4], y[4]), uvScale, bgRGBA, borderRGBA);
+			RenderCornerArcs(shaderFlags, TopRight, VEC2(right, top), radii.TopRight, VEC2(border.Right, border.Top), uvScale * VEC2(x[7], y[5]), uvScale, bgRGBA, borderRGBA);
+		}
 
 		/*
 		// top middle slice (C1)                                  |           |
@@ -322,6 +353,9 @@ void Renderer::RenderCornerArcs(int shaderFlags, Corners corner, Vec2f edge, Vec
 	if (outerRadii.x == 0 || outerRadii.y == 0)
 		return;
 
+	outerRadii.x = Max(outerRadii.x, borderWidth.x);
+	outerRadii.y = Max(outerRadii.y, borderWidth.y);
+
 	Driver->ActivateShader(ShaderUber);
 	float maxOuterRadius = Max(outerRadii.x, outerRadii.y);
 	float fanRadius;
@@ -379,6 +413,8 @@ void Renderer::RenderCornerArcs(int shaderFlags, Corners corner, Vec2f edge, Vec
 	auto innerRadii = outerRadii - VEC2(borderWidth.x, borderWidth.y);
 	innerRadii.x    = fabs(innerRadii.x);
 	innerRadii.y    = fabs(innerRadii.y);
+	//innerRadii.x = Max(innerRadii.x, 0.0001f); // HACKKKKK.. for PtOnEllipse
+	//innerRadii.y = Max(innerRadii.y, 0.0001f);
 	auto fanPos     = VEC2(center.x + fanRadius * cos(th), center.y - fanRadius * sin(th)); // -y, because our coord system is Y down
 	auto fanUV      = centerUV + uvScale * (fanPos - center);
 
@@ -389,6 +425,7 @@ void Renderer::RenderCornerArcs(int shaderFlags, Corners corner, Vec2f edge, Vec
 
 	// TODO: dynamically pick the cheaper cos/sin for circular arcs, or tan for ellipses
 	// ie pick between two functions - PtOnEllipse, and PtOnCircle.
+	bool zeroInnerRadius = innerRadii.x * innerRadii.y == 0;
 
 	for (; slice < divs; th += inc, unit_slice += unit_inc, slice++) {
 		auto fanPosNext   = VEC2(center.x + fanRadius * cos(th), center.y - fanRadius * sin(th));
@@ -401,7 +438,12 @@ void Renderer::RenderCornerArcs(int shaderFlags, Corners corner, Vec2f edge, Vec
 		Vec2f innerCenter, outerCenter;
 		float innerRadius, outerRadius;
 		CircleFrom3Pt(outerPos, outerPosHalf, outerPosNext, outerCenter, outerRadius);
-		CircleFrom3Pt(innerPos, innerPosHalf, innerPosNext, innerCenter, innerRadius);
+		if (zeroInnerRadius) {
+			innerCenter = innerPos;
+			innerRadius = 0;
+		} else {
+			CircleFrom3Pt(innerPos, innerPosHalf, innerPosNext, innerCenter, innerRadius);
+		}
 
 		auto arcCenters = VEC4(innerCenter.x, innerCenter.y, outerCenter.x, outerCenter.y);
 		auto arcRadii   = VEC2(innerRadius, outerRadius);
@@ -669,6 +711,8 @@ float Renderer::CircleFrom3Pt(const Vec2f& a, const Vec2f& b, const Vec2f& c, Ve
 }
 
 Vec2f Renderer::PtOnEllipse(float flipX, float flipY, float a, float b, float theta) {
+	if (a * b == 0)
+		return Vec2f(0, 0);
 	float x = (a * b) / sqrt(b * b + a * a * powf(tan(theta), 2.0f));
 	float y = (a * b) / sqrt(a * a + b * b / powf(tan(theta), 2.0f));
 	return Vec2f(flipX * x, flipY * y);
