@@ -33,7 +33,7 @@ public:
 	// Defining state
 	Doc Doc;
 
-	RenderDoc();
+	RenderDoc(DocGroup* group);
 	~RenderDoc();
 
 	RenderResult Render(RenderBase* driver);

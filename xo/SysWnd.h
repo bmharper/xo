@@ -61,6 +61,7 @@ public:
 	Box  GetRelativeClientRect(); // Returns the client rectangle (in screen coordinates), relative to the non-client window
 	void PostCursorChangedMessage();
 	void PostRepaintMessage();
+	bool CopySurfaceToImage(Box box, Image& img);
 
 	// Invalid rectangle management
 	void InvalidateRect(Box box);

@@ -54,16 +54,14 @@ XO_API void RunWin32MessageLoop() {
 		if (mustQuit)
 			break;
 
-		if (AnyDocsDirty()) {
-			XOTRACE_OS_MSG_QUEUE("Render enter\n");
-			for (DocGroup* dg : Global()->Docs) {
-				if (dg->IsDirty()) {
-					RenderResult rr = dg->Render();
-					if (rr == RenderResultNeedMore) {
-						dg->Wnd->PostRepaintMessage();
-					} else {
-						dg->Wnd->ValidateWindow();
-					}
+		for (DocGroup* dg : Global()->Docs) {
+			if (dg->IsDirty()) {
+				XOTRACE_OS_MSG_QUEUE("Render enter (%p)\n", dg);
+				RenderResult rr = dg->Render();
+				if (rr == RenderResultNeedMore) {
+					dg->Wnd->PostRepaintMessage();
+				} else {
+					dg->Wnd->ValidateWindow();
 				}
 			}
 		}

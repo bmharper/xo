@@ -902,6 +902,14 @@ Note that this scheme arbitrarly picks the horizontal axis as the one where we u
 The entire scheme could just as well use the vertical axis, but we've arbitrarly chosen to go
 with the horizontal.
 
+The scheme described thus far mostly works, but there remains one little gap that can get missed,
+and this gap occurs when a corner radius is less than the border width. The following screenshot
+shows it:
+
+![missing pieces](img/node-rect-missing-pieces.png)
+
+The grey pieces that are next to the red corners, are the final bits that need to be filled in.
+It is simple to fill these. They are filled 100% with the border color.
 
 <!-- Markdeep: -->
 <style class="fallback">body{white-space:pre;font-family:monospace}</style>

@@ -4,6 +4,7 @@
 #include "Doc.h"
 #include "Render/RenderGL.h"
 #include "Render/RenderDX.h"
+#include "Image//Image.h"
 
 namespace xo {
 
@@ -175,7 +176,7 @@ SysWnd* SysWnd::CreateWithDoc(uint32_t createFlags) {
 	SysWnd* w = Create(createFlags);
 	if (!w)
 		return NULL;
-	w->Attach(new xo::Doc(), true);
+	w->Attach(new xo::Doc(w->DocGroup), true);
 	Global()->DocAddQueue.Add(w->DocGroup);
 	return w;
 }
@@ -272,6 +273,76 @@ void SysWnd::PostRepaintMessage() {
 	::InvalidateRect(Wnd, nullptr, false);
 #elif XO_PLATFORM_ANDROID
 #elif XO_PLATFORM_LINUX_DESKTOP
+#else
+	XO_TODO_STATIC
+#endif
+}
+
+bool SysWnd::CopySurfaceToImage(Box box, Image& img) {
+#if XO_PLATFORM_WIN_DESKTOP
+	RECT r;
+	GetClientRect(Wnd, &r);
+	int width = (int) box.Width();
+	int height = (int) box.Height();
+	if (width <= 0 || height <= 0)
+		return false;
+	if (!img.Alloc(TexFormatRGBA8, width, height))
+		return false;
+	BITMAPINFO bmpInfoLoc;
+	HBITMAP    dibSec = nullptr;
+	void* bits = nullptr;
+	memset(&bmpInfoLoc.bmiHeader, 0, sizeof(BITMAPINFOHEADER));
+	bmpInfoLoc.bmiHeader.biSize          = sizeof(BITMAPINFOHEADER);
+	bmpInfoLoc.bmiHeader.biBitCount      = 32;
+	bmpInfoLoc.bmiHeader.biWidth         = width;
+	bmpInfoLoc.bmiHeader.biHeight        = -height; // negative = top-down
+	bmpInfoLoc.bmiHeader.biPlanes        = 1;
+	bmpInfoLoc.bmiHeader.biCompression   = BI_RGB;
+	bmpInfoLoc.bmiHeader.biSizeImage     = 0;
+	bmpInfoLoc.bmiHeader.biXPelsPerMeter = 72;
+	bmpInfoLoc.bmiHeader.biYPelsPerMeter = 72;
+	bmpInfoLoc.bmiHeader.biClrUsed       = 0;
+	bmpInfoLoc.bmiHeader.biClrImportant  = 0;
+	dibSec                           = CreateDIBSection(NULL, &bmpInfoLoc, DIB_RGB_COLORS, &bits, NULL, NULL);
+	if (!dibSec)
+		return false;
+
+	HDC dc = GetDC(Wnd);
+	if (!dc) {
+		DeleteObject(dibSec);
+		return false;
+	}
+
+	HDC capDC = CreateCompatibleDC(dc);
+	if (!capDC) {
+		DeleteObject(dibSec);
+		ReleaseDC(Wnd, dc);
+		return false;
+	}
+
+	SelectObject(capDC, dibSec);
+	BitBlt(capDC, 0, 0, width, height, dc, box.Left, box.Top, SRCCOPY);
+
+	for (int y = 0; y < height; y++) {
+		uint8_t* src = (uint8_t*) bits + y * width * 4;
+		uint8_t* dst = (uint8_t*) img.TexDataAtLine(y);
+		auto src_end = src + width * 4;
+		for (; src != src_end; src += 4, dst += 4) {
+			dst[0] = src[2];
+			dst[1] = src[1];
+			dst[2] = src[0];
+			dst[3] = 0xff;
+		}
+	}
+
+	DeleteObject(capDC);
+	ReleaseDC(Wnd, dc);
+	DeleteObject(dibSec);
+	return true;
+#elif XO_PLATFORM_ANDROID
+	return false;
+#elif XO_PLATFORM_LINUX_DESKTOP
+	return false;
 #else
 	XO_TODO_STATIC
 #endif

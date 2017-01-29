@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "Image.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../dependencies/stb_image_write.h"
+
 namespace xo {
 
 Image::Image() {
@@ -66,4 +69,9 @@ bool Image::Alloc(xo::TexFormat format, uint32_t width, uint32_t height) {
 		return true;
 	}
 }
+
+bool Image::SaveToPng(const char* filename) const {
+	return stbi_write_png(filename, TexWidth, TexHeight, TexFormatChannelCount(TexFormat), TexData, TexStride) != 0;
+}
+
 }
