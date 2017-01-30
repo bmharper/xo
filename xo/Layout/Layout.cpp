@@ -31,10 +31,10 @@ void Layout::PerformLayout(const xo::Doc& doc, RenderDomNode& root, xo::Pool* po
 	// inside the vectors that store LayoutOutput inside RunNode
 	FHeap.Initialize(100, 64);
 
-	Fonts                = Global()->FontStore->GetImmutableTable();
-	SnapBoxes            = Global()->SnapBoxes;
-	SnapSubpixelHorzText = Global()->SnapSubpixelHorzText;
-	EnableKerning        = Global()->EnableKerning;
+	Fonts         = Global()->FontStore->GetImmutableTable();
+	SnapBoxes     = Global()->SnapBoxes;
+	SnapHorzText  = Global()->SnapHorzText;
+	EnableKerning = Global()->EnableKerning;
 
 	while (true) {
 		LayoutInternal(root);
@@ -218,8 +218,8 @@ void Layout::RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& o
 	rnode->Pos = marginBox.ShrunkBy(boxIn.MarginBorderPadding);
 	rnode->SetStyle(Stack);
 	rnode->Style.BorderRadius.Set2BitPrecision(borderRadius);
-	rnode->Style.BorderSize   = border;
-	rnode->Style.Padding      = padding;
+	rnode->Style.BorderSize = border;
+	rnode->Style.Padding    = padding;
 
 	// Apply alignment bindings
 	if (childIn.ParentWidth == PosNULL)
@@ -381,7 +381,7 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 	Pos fontAscender      = Realx256ToPos(font->Ascender_x256 * ts.FontSizePx);
 	ts.FontAscender       = fontAscender;
 
-	if (SnapSubpixelHorzText)
+	if (SnapHorzText)
 		charWidth_32 = PosRound(charWidth_32);
 
 	// if we add a "line-height" style then we'll want to multiply that by this
@@ -710,7 +710,7 @@ void Layout::PopulateBindings(BindingSet& bindings) {
 }
 
 Pos Layout::HoriAdvance(const Glyph* glyph, const TextRunState& ts) {
-	if (SnapSubpixelHorzText)
+	if (SnapHorzText)
 		return IntToPos(glyph->MetricHoriAdvance);
 	else
 		return RealToPos(glyph->MetricLinearHoriAdvance * ts.FontWidthScale);

@@ -20,8 +20,25 @@ varying 	float	f_shader;
 out		vec4		out_color0;
 out		vec4		out_color1;
 
+// color must be premultiplied
 void write_color(vec4 color)
 {
+	//                                        srcColor   dstColor              srcAlpha   dstAlpha
+	//                                           |       |                        |       |
+	// Our blend equation is glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC1_COLOR, GL_ONE, GL_ONE_MINUS_SRC1_ALPHA),
+	// which means source RGB is multiplied by ONE, and destination RGB is multiplied by (1 - SRC1_COLOR), individually for each component.
+	// In the classic blend OVER equation, you have R = a*r + (1-a)*R, where R is the framebuffer Red. In this equation,
+	// the 'a' is the same for each of the red, green, and blue channels.
+	// However, glBlendFuncSeparate means that the 'a' in the above equation is no longer just a single value, but it can
+	// vary per color component. This is key for doing sub-pixel text rendering, where the 'a' for a channel is computed as
+	// the alpha value of the text color, multiplied by the filter value for that subpixel. This yields what we name aR for
+	// alpha red, aG for alpha green, etc. Those are the final alpha values that we want to send the blender, and critically,
+	// those are the ones that have meaning through the GL_ONE_MINUS_SRC1_COLOR, shown above.
+	// So... if you need this setup to behave like the classic blend equation, then the red,green,blue "alpha" values that
+	// you're sending to GL_ONE_MINUS_SRC1_COLOR, should all be the classic source alpha value. That is why we fill
+	// our_color1 with color.aaaa.
+	// There is one redundant piece of information here - and that is out_color0.a. That value is not used at all during blending,
+	// so no matter what you make it, it won't change a thing.
 	out_color0 = color;
 	out_color1 = color.aaaa;
 }
@@ -55,8 +72,8 @@ void main()
 		float radius1 = f_uv2.x;
 		float radius2 = f_uv2.y;
 		vec2 uv = f_uv2.zw;
-		vec4 bg_color = f_color1;
-		vec4 border_color = f_color2;
+		vec4 bg_color = premultiply(f_color1);
+		vec4 border_color = premultiply(f_color2);
 
 		vec4 bg_tex = vec4(0, 0, 0, 0);
 		if (enableBGTex)
@@ -79,8 +96,8 @@ void main()
 		float border_width = f_uv1.x;
 		float border_distance = f_uv1.y;
 		vec2 uv = f_uv1.zw;
-		vec4 bg_color = f_color1;
-		vec4 border_color = f_color2;
+		vec4 bg_color = premultiply(f_color1);
+		vec4 border_color = premultiply(f_color2);
 
 		// Distance from edge.
 		// We target fragments that are targeted at pixel centers, so if border_distance = 0.5, then alpha must be 1.0.
@@ -129,6 +146,8 @@ void main()
 		//float w1 = 0.28;
 		//float w2 = 0.12;
 
+		// Note that f_color1 needs to be non-premultiplied here.
+
 		float r = (w2 * tap0 + w1 * tap1 + w0 * tap2 + w1 * tap3 + w2 * tap4);
 		float g = (w2 * tap1 + w1 * tap2 + w0 * tap3 + w1 * tap4 + w2 * tap5);
 		float b = (w2 * tap2 + w1 * tap3 + w0 * tap4 + w1 * tap5 + w2 * tap6);
@@ -137,7 +156,9 @@ void main()
 		float aB = b * f_color1.a;
 		float avgA = (r + g + b) / 3.0;
 
-		out_color0 = vec4(f_color1.rgb, avgA);
+		// See the long explanation inside write_color for more details. In order to be consistent with regular
+		// (non-sub-pixel) rendering, we need to premultiply our RGB here with their respective alpha values.
+		out_color0 = vec4(f_color1.r * aR, f_color1.g * aG, f_color1.b * aB, avgA);
 		out_color1 = vec4(aR, aG, aB, avgA);
 	}
 #endif

@@ -22,8 +22,9 @@ void xoMain(xo::SysWnd* wnd) {
 
 void DoBorder(xo::Doc* doc) {
 	auto root = &doc->Root;
-	root->StyleParse("background: #aaa");
+	root->StyleParse("background: #fff");
 	root->Parse(
+		"<div style='border: 1px #bfb; background: #dfd; border-radius: 5px; width: 50px; height: 50px; margin: 2px'></div>"
 	    "<div style='border: #007e; border: 2px 20px 2px 20px; border-radius: 0px 0px 0px 40px; width: 200ep; height: 200ep; background: #fffe; margin: 2px'></div>"
 	    "<div style='border: #007e; border: 20px 2px 20px 2px; border-radius: 5px 5px 5px 5px; width: 200ep; height: 200ep; background: #fffe; margin: 2px'></div>"
 	    "<div style='border: #007e; border: 2px 20px 2px 20px; border-radius: 5px 5px 5px 5px; width: 200ep; height: 200ep; background: #fffe; margin: 2px'></div>"
@@ -388,7 +389,7 @@ void DoTextQuality(xo::Doc* doc) {
 	doc->Root.ParseAppend("<div style='break:after; font-family: Microsoft Sans Serif'>The quick brown fox jumps over the lazy dog<div>");
 	doc->Root.ParseAppend("<div style='break:after; padding: 20px; font-family: Microsoft Sans Serif'>h<div>");
 	doc->Root.ParseAppend("<div style='break:after; font-family: Microsoft Sans Serif'>Backup from<div>");
-	doc->Root.ParseAppend("<div style='break:after; font-family: Segoe UI; font-size: 12px'>Backup from<div>");
+	doc->Root.ParseAppend("<div style='break:after; font-family: Segoe UI; font-size: 12px; color: #f008'>Backup from<div>");
 	doc->Root.ParseAppend("<div style='break:after; font-family: Consolas; font-size: 12px; color: #383'>DoBaselineAlignment_Multiline(doc)<div>");
 }
 
@@ -443,12 +444,12 @@ void InitDOM(xo::Doc* doc) {
 	xo::DomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
 
-	DoBorder(doc);
+	//DoBorder(doc);
 	//DoBaselineAlignment(doc);
 	//DoBaselineAlignment_rev2(doc);
 	//DoBaselineAlignment_Multiline(doc);
 	//DoBaselineAlignment_DownPropagate(doc);
-	//DoCanvas(doc);
+	DoCanvas(doc);
 	//DoCenter(doc);
 	//DoHCenter(doc);
 	//DoVCenter(doc);

@@ -360,10 +360,8 @@ void RenderGL::ActivateShader(Shaders shader) {
 	XOTRACE_RENDER("Activate shader %s\n", p->Name());
 	glUseProgram(p->Prog);
 	if (ActiveShader == ShaderTextRGB || ActiveShader == ShaderUber) {
-		// outputColor0 = vec4(color.r, color.g, color.b, avgA);
-		// outputColor1 = vec4(aR, aG, aB, avgA);
 		if (Have_BlendFuncExtended)
-			glBlendFuncSeparate(GL_SRC1_COLOR, GL_ONE_MINUS_SRC1_COLOR, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+			glBlendFuncSeparate(GL_ONE, GL_ONE_MINUS_SRC1_COLOR, GL_ONE, GL_ONE_MINUS_SRC1_ALPHA);
 		// else we are screwed!
 		// there might be a solution that is better than simply ignoring the problem, but I
 		// haven't bothered yet. On my Sandy Bridge (i7-2600K) with 2014-04-15 Intel drivers,
@@ -373,7 +371,7 @@ void RenderGL::ActivateShader(Shaders shader) {
 		// so sticking with DirectX 11 there is hopefully fine. Hmm.. actually desktop linux
 		// is indeed such a combination. We'll have to wait and see.
 	} else {
-		//glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );	// this is for non-premultiplied
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);	// this is for non-premultiplied
 		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // this is premultiplied
 	}
 	Check();

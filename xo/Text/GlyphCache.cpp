@@ -92,7 +92,7 @@ uint32_t GlyphCache::RenderGlyph(const GlyphCacheKey& key) {
 	FT_UInt iFTGlyph = FT_Get_Char_Index(font->FTFace, key.Char);
 
 	bool isSubPixel    = GlyphFlag_IsSubPixel(key.Flags);
-	bool useFTSubpixel = isSubPixel && Global()->SnapSubpixelHorzText;
+	bool useFTSubpixel = isSubPixel && Global()->UseFreetypeSubpixel;
 
 	uint32_t pixSize                = key.Size;
 	int32_t  combinedHorzMultiplier = 1;
@@ -151,7 +151,7 @@ uint32_t GlyphCache::RenderGlyph(const GlyphCacheKey& key) {
 			if (isSubPixel) {
 				newAtlas->TexFilterMin = TexFilterNearest;
 				newAtlas->TexFilterMax = TexFilterNearest;
-			} else if (!Global()->SnapSubpixelHorzText || !Global()->RoundLineHeights) {
+			} else if (!Global()->SnapHorzText || !Global()->RoundLineHeights) {
 				newAtlas->TexFilterMin = TexFilterLinear;
 				newAtlas->TexFilterMax = TexFilterLinear;
 			}

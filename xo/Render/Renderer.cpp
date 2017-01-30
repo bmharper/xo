@@ -135,11 +135,6 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 		uint32_t green      = xo::RGBA::Make(0, 200, 0, 220).u;
 		uint32_t purple     = xo::RGBA::Make(150, 0, 200, 220).u;
 
-		// This is a little hack for rounded corners, to prevent bleeding of the border color. Ideally, we should be applying this logic to each corner individually,
-		// instead of just doing it for all corners or none.
-		if (!anyBorders)
-			borderRGBA = bgRGBA;
-
 		float leftEdgeTopWidth     = Max(radii.TopLeft.x, border.Left);
 		float leftEdgeBottomWidth  = Max(radii.BottomLeft.x, border.Left);
 		float rightEdgeTopWidth    = Max(radii.TopRight.x, border.Right);
@@ -532,7 +527,7 @@ void Renderer::RenderTextChar_SubPixel(Point base, const RenderDomText* node, co
 	//top = (float) floor(top + 0.5); -- vertical rounding has been moved to fixed point layout
 
 	// You cannot do this here - it needs to happen during layout (which it does indeed)
-	//if ( Global()->SnapSubpixelHorzText )
+	//if ( Global()->SnapHorzText )
 	//	left = floor(left + 0.5f);
 
 	float right  = left + roundedWidth;

@@ -110,7 +110,7 @@ protected:
 	ohash::set<GlyphCacheKey> GlyphsNeeded;
 	TextRunState              TempText;
 	bool                      SnapBoxes;
-	bool                      SnapSubpixelHorzText;
+	bool                      SnapHorzText;
 	bool                      EnableKerning;
 
 	void  RenderGlyphsNeeded();

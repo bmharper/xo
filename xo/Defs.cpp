@@ -86,10 +86,10 @@ BoxF Box::ToRealBox() const {
 
 void Box16::Set2BitPrecision(const Box& b) {
 	const auto shift = PosShift - 2;
-	Left = b.Left >> shift;
-	Top = b.Top >> shift;
-	Right = b.Right >> shift;
-	Bottom = b.Bottom >> shift;
+	Left             = b.Left >> shift;
+	Top              = b.Top >> shift;
+	Right            = b.Right >> shift;
+	Bottom           = b.Bottom >> shift;
 }
 
 BoxF Box16::ToRealBox() const {
@@ -103,7 +103,7 @@ BoxF Box16::ToRealBox() const {
 
 BoxF Box16::ToRealBox2BitPrecision() const {
 	const auto shift = PosShift - 2;
-	BoxF f;
+	BoxF       f;
 	f.Left   = PosToReal(Left << shift);
 	f.Right  = PosToReal(Right << shift);
 	f.Top    = PosToReal(Top << shift);
@@ -304,10 +304,11 @@ XO_API void Initialize(const InitParams* init) {
 #endif
 	// Do we round text line heights to whole pixels?
 	// We only render sub-pixel text on low resolution monitors that do not change orientation (ie desktop).
-	Globals->RoundLineHeights     = Globals->EnableSubpixelText || Globals->EpToPixel < 2.0f;
-	Globals->SnapBoxes            = true;
-	Globals->SnapSubpixelHorzText = false;
-	Globals->EnableKerning        = !Globals->EnableSubpixelText || !Globals->SnapSubpixelHorzText;
+	Globals->RoundLineHeights    = Globals->EnableSubpixelText || Globals->EpToPixel < 2.0f;
+	Globals->SnapBoxes           = true;
+	Globals->SnapHorzText        = false;
+	Globals->UseFreetypeSubpixel = false;
+	Globals->EnableKerning       = !Globals->EnableSubpixelText || !Globals->SnapHorzText;
 	//Globals->DebugZeroClonedChildList = true;
 	Globals->MaxTextureID = ~((TextureID) 0);
 	//Globals->ClearColor.Set( 200, 0, 200, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node

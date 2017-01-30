@@ -24,6 +24,7 @@ void main()
 	f_pos = pos.xy;
 	f_uv1 = v_uv1;
 	f_uv2 = v_uv2;
+	// You might be tempted to premultiply right here, but unfortunately the subpixel text renderer needs the RGB values unassociated.
 	f_color1 = fromSRGB(v_color1);
 	f_color2 = fromSRGB(v_color2);
 	f_shader = v_shader;

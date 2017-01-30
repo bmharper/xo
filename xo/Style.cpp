@@ -67,6 +67,10 @@ static int FindSpaces(const char* s, size_t len, int (&spaces)[10]) {
 		if (IsWhitespace(s[i]))
 			spaces[nspaces++] = (int) i;
 	}
+	// Fill the remaining members of 'spaces' with 'len', so that the parser
+	// doesn't need to distinguish between a space and the end of the string
+	for (size_t i = nspaces; i < 10; i++)
+		spaces[i] = (int) len;
 	return nspaces;
 }
 
@@ -1076,17 +1080,23 @@ XO_API bool ParseBorder(const char* s, size_t len, Style& style) {
 				return true;
 			}
 		}
-	} else if (nspaces == 3) {
-		// 1px 2px 3px 4px
+	} else if (nspaces == 3 || nspaces == 4) {
+		// 1px 2px 3px 4px #000
 		StyleBox box;
 		bool     s1 = Size::Parse(s, spaces[0], box.Left);
 		bool     s2 = Size::Parse(s + spaces[0] + 1, spaces[1] - spaces[0] - 1, box.Top);
 		bool     s3 = Size::Parse(s + spaces[1] + 1, spaces[2] - spaces[1] - 1, box.Right);
-		bool     s4 = Size::Parse(s + spaces[2] + 1, len - spaces[2] - 1, box.Bottom);
-		if (s1 && s2 && s3 && s4) {
-			style.SetBox(CatBorder_Left, box);
-			return true;
+		bool     s4 = Size::Parse(s + spaces[2] + 1, spaces[3] - spaces[2] - 1, box.Bottom);
+		if (!(s1 && s2 && s3 && s4))
+			return false;
+		style.SetBox(CatBorder_Left, box);
+		if (nspaces == 4) {
+			Color color;
+			if (!Color::Parse(s + spaces[3] + 1, spaces[4] - spaces[3] - 1, color))
+				return false;
+			style.SetUniformBox(CatBorderColor_Left, color);
 		}
+		return true;
 	}
 
 	return false;

@@ -19,11 +19,11 @@ struct Glyph {
 	uint16_t Y;
 	uint16_t Width;
 	uint16_t Height;
-	int16_t  MetricLeft; // intended for use by SnapSubpixelHorzText
+	int16_t  MetricLeft; // intended for use by SnapHorzText
 	int16_t  MetricLeftx256;
 	int16_t  MetricTop;
 	uint16_t MetricWidth;
-	int32_t  MetricHoriAdvance; // intended for use by SnapSubpixelHorzText
+	int32_t  MetricHoriAdvance; // intended for use by SnapHorzText
 	float    MetricLinearHoriAdvance;
 
 	// A Null glyph is one that could not be found in the font

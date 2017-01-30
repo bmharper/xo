@@ -454,7 +454,8 @@ struct GlobalStruct {
 	                            // in subpixel coordinates always. However, this ends up producing ugly visuals, for example when
 	                            // you have a box with a single pixel border, and it is not aligned to a pixel boundary, then you get
 	                            // the border smudged across two pixels.
-	bool SnapSubpixelHorzText;  // When rendering subpixel text, snap glyphs to whole pixels, instead of sub-pixel horizontal positioning.
+	bool SnapHorzText;          // Snap glyphs to whole pixels, instead of sub-pixel horizontal positioning.
+	bool UseFreetypeSubpixel;   // Use Freetype's subpixel renderer, instead of emulating it ourselves. This only looks good when SnapHorzText is true.
 	                            // This not only determines layout behaviour, but also how our subpixel glyphs are rasterized.
 	//bool						EmulateGammaBlending;	// Only applicable when EnableSRGBFramebuffer = true, this tries to emulate gamma-space blending. You would turn this on to get consistent blending on all devices. FAILED EXPERIMENT - BAD IDEA.
 	float     SubPixelTextGamma;   // Tweak freetype's gamma when doing sub-pixel text rendering. Should be no need to use anything other than 1.0
