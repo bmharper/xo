@@ -219,10 +219,10 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 
 		// B
 		if (x[5] - x[3] != 0 && y[5] - y[4] != 0) {
-			vx[c++].Set1(shader, VEC2(x[3], y[4]), VEC4(border.Right, right - x[3], u[0], v[1]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[3], y[5]), VEC4(border.Right, right - x[3], u[0], v[2]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[5], y[5]), VEC4(border.Right, -hpad, u[2], v[2]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[5], y[4]), VEC4(border.Right, -hpad, u[2], v[1]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[3], y[4]), VEC4(border.Right, right - x[3], u[3], v[4]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[3], y[5]), VEC4(border.Right, right - x[3], u[3], v[5]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[5], y[5]), VEC4(border.Right, -hpad, u[5], v[5]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[5], y[4]), VEC4(border.Right, -hpad, u[5], v[4]), bgRGBA, borderRGBA);
 		}
 
 		// Top D
@@ -313,10 +313,10 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 		Driver->Draw(GPUPrimQuads, c, vx);
 
 		if (anyArcs) {
-			RenderCornerArcs(shaderFlags, TopLeft, VEC2(left, top), radii.TopLeft, VEC2(border.Left, border.Top), uvScale * VEC2(x[1], y[1]), uvScale, bgRGBA, borderRGBA);
-			RenderCornerArcs(shaderFlags, BottomLeft, VEC2(left, bottom), radii.BottomLeft, VEC2(border.Left, border.Bottom), uvScale * VEC2(x[6], y[2]), uvScale, bgRGBA, borderRGBA);
-			RenderCornerArcs(shaderFlags, BottomRight, VEC2(right, bottom), radii.BottomRight, VEC2(border.Right, border.Bottom), uvScale * VEC2(x[4], y[4]), uvScale, bgRGBA, borderRGBA);
-			RenderCornerArcs(shaderFlags, TopRight, VEC2(right, top), radii.TopRight, VEC2(border.Right, border.Top), uvScale * VEC2(x[7], y[5]), uvScale, bgRGBA, borderRGBA);
+			RenderCornerArcs(shaderFlags, TopLeft, VEC2(left, top), radii.TopLeft, VEC2(border.Left, border.Top), VEC2(u[1], v[1]), uvScale, bgRGBA, borderRGBA);
+			RenderCornerArcs(shaderFlags, BottomLeft, VEC2(left, bottom), radii.BottomLeft, VEC2(border.Left, border.Bottom), VEC2(u[6], v[2]), uvScale, bgRGBA, borderRGBA);
+			RenderCornerArcs(shaderFlags, BottomRight, VEC2(right, bottom), radii.BottomRight, VEC2(border.Right, border.Bottom), VEC2(u[4], v[5]), uvScale, bgRGBA, borderRGBA);
+			RenderCornerArcs(shaderFlags, TopRight, VEC2(right, top), radii.TopRight, VEC2(border.Right, border.Top), VEC2(u[4], v[4]), uvScale, bgRGBA, borderRGBA);
 		}
 
 	}
