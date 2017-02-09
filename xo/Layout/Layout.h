@@ -122,6 +122,8 @@ protected:
 	void  OffsetTextHorz(TextRunState& ts, Pos offsetHorz, size_t numChars);
 	Pos   MeasureWord(const char* txt, const Font* font, Pos fontAscender, Chunk chunk, TextRunState& ts);
 
+	Pos  ComputeWidthOrHeightDimension(Pos containerSize, Pos containerRemaining, StyleCategories cat);
+	Pos  ComputeWidthOrHeightDimension(Pos containerSize, Pos containerRemaining, Size size);
 	Pos  ComputeDimension(Pos container, StyleCategories cat);
 	Pos  ComputeDimension(Pos container, Size size);
 	Box  ComputeBox(Pos containerWidth, Pos containerHeight, StyleCategories cat);

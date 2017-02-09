@@ -82,6 +82,7 @@ bool Size::Parse(const char* s, size_t len, Size& v) {
 	// 1.23px
 	// 1.23pt
 	// 1.23%
+	// 1.23%r
 	// 0
 	char digits[100];
 	if (len > 30) {
@@ -108,8 +109,12 @@ bool Size::Parse(const char* s, size_t len, Size& v) {
 	}
 
 	x.Type = Size::NONE;
-	if (len - nondig == 1 && s[nondig] == '%') {
-		x.Type = Size::PERCENT;
+	if (s[nondig] == '%') {
+		if (len - nondig == 1) {
+			x.Type = Size::PERCENT;
+		} else if (len - nondig == 2 && s[nondig + 1] == 'r') {
+			x.Type = Size::REMAINING;
+		}
 	} else if (len - nondig == 2) {
 		char a = s[nondig];
 		char b = s[nondig + 1];

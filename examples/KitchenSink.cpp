@@ -229,6 +229,15 @@ void DoCenter2(xo::Doc* doc) {
 	    "<div class='v-outer'><lab class='v-inner' style='top: top; bottom: bottom'>stretch</lab></div>");
 }
 
+void DoFill(xo::Doc* doc) {
+	doc->Root.ParseAppend(
+		"<div style='width: 500px; height: 30px; border: 1px #000'>"
+		"	<div style='width: 30px; height: 100%; background: #a88'></div>"
+		"	<div style='width: 100%r; height: 100%; background: #8a8'></div>" // 100%r - fill 100% of the remaining space
+		"</div>"
+	);
+}
+
 void DoBindings(xo::Doc* doc) {
 	// This is where I discovered that I was aligning to child's content box, instead of aligning to
 	// child's margin box. That is fixed.
@@ -471,6 +480,7 @@ void InitDOM(xo::Doc* doc) {
 	//DoCanvas(doc);
 	//DoCenter(doc);
 	//DoCenter2(doc);
+	DoFill(doc);
 	//DoTwoTextRects(doc);
 	//DoBlockMargins(doc);
 	//DoLongText(doc);
@@ -480,7 +490,7 @@ void InitDOM(xo::Doc* doc) {
 	//DoTextQuality(doc);
 	//DoQuadraticSplines(doc);
 	//DoTimer(doc);
-	DoEditBox(doc);
+	//DoEditBox(doc);
 
 	body->OnClick([](xo::Event& ev) {
 		//xo::Trace("%f %f\n", ev.PointsAbs[0].x, ev.PointsAbs[0].y);

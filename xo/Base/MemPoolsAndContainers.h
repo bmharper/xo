@@ -174,6 +174,10 @@ public:
 		return Items[Count - 1];
 	}
 
+	const T& Back() const {
+		return Items[Count - 1];
+	}
+
 	T& operator[](size_t i) { return Items[i]; }
 };
 

@@ -84,6 +84,8 @@ public:
 
 	void Linebreak();
 	void NotifyNodeEmitted(Pos baseline, int child); // Notify the boxer of a new node. Set the baseline of the current line box, but only if it's null
+	Pos  RemainingSpaceX() const;                    // Return amount of horizontal space remaining
+	Pos  RemainingSpaceY() const;                    // Return amount of vertical space remaining
 
 	// Retrieve the linebox at line_index, from the node that has most recently been finished with EndNode.
 	// It may seem strange that we can retrieve linebox data from a node that has already ended,

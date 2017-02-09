@@ -121,6 +121,20 @@ void BoxLayout::NotifyNodeEmitted(Pos baseline, int child) {
 	line.LastChild = child;
 }
 
+Pos BoxLayout::RemainingSpaceX() const {
+	auto& flow = FlowStates.Back();
+	if (flow.MaxMinor != PosNULL)
+		return flow.MaxMinor - flow.PosMinor;
+	return PosNULL;
+}
+
+Pos BoxLayout::RemainingSpaceY() const {
+	auto& flow = FlowStates.Back();
+	if (flow.MaxMajor != PosNULL)
+		return flow.MaxMajor - flow.PosMajor;
+	return PosNULL;
+}
+
 BoxLayout::LineBox* BoxLayout::GetLineFromPreviousNode(int line_index) {
 	// If FlowStates did bounds checking, then the following call would fail that check.
 	// We explicitly choose a container for FlowStates that leaves items intact when

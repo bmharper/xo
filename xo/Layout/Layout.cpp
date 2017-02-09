@@ -92,8 +92,8 @@ void Layout::RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& o
 	Box         padding       = ComputeBox(in.ParentWidth, in.ParentHeight, CatPadding_Left);
 	Box         border        = ComputeBox(in.ParentWidth, in.ParentHeight, CatBorder_Left);
 	Box         borderRadius  = ComputeBox(in.ParentWidth, in.ParentHeight, CatBorderRadius_TL);
-	Pos         contentWidth  = ComputeDimension(in.ParentWidth, CatWidth);
-	Pos         contentHeight = ComputeDimension(in.ParentHeight, CatHeight);
+	Pos         contentWidth  = ComputeWidthOrHeightDimension(in.ParentWidth, Boxer.RemainingSpaceX(), CatWidth);
+	Pos         contentHeight = ComputeWidthOrHeightDimension(in.ParentHeight, Boxer.RemainingSpaceY(), CatHeight);
 	BoxSizeType boxSizeType   = Stack.Get(CatBoxSizing).GetBoxSizing();
 
 	if (boxSizeType == BoxSizeMargin) {
@@ -301,7 +301,7 @@ void Layout::RunText(const DomText* node, const LayoutInput& in, LayoutOutput& o
 	// "<span style='padding: 10px'>something</span> else" would not have 'else' aligned
 	// to 'something' if we didn't align words to baseline.
 	// Since we only bind on baseline, we don't need to populate width and height
-	out.Baseline        = TempText.FontAscender;
+	out.Baseline = TempText.FontAscender;
 	if (TempText.RNodeTxt)
 		out.MarginBox = TempText.RNodeTxt->Pos;
 	else
@@ -637,9 +637,9 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 	}
 
 	Box deltaBox;
-	deltaBox.Left = cout.MarginBox.Left - orgBox.Left;
-	deltaBox.Top = cout.MarginBox.Top - orgBox.Top;
-	deltaBox.Right = cout.MarginBox.Right - orgBox.Right;
+	deltaBox.Left   = cout.MarginBox.Left - orgBox.Left;
+	deltaBox.Top    = cout.MarginBox.Top - orgBox.Top;
+	deltaBox.Right  = cout.MarginBox.Right - orgBox.Right;
 	deltaBox.Bottom = cout.MarginBox.Bottom - orgBox.Bottom;
 	cout.RNode->Pos.Left += deltaBox.Left;
 	cout.RNode->Pos.Top += deltaBox.Top;
@@ -658,6 +658,21 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 	}
 
 	return Point(deltaBox.Left, deltaBox.Top);
+}
+
+Pos Layout::ComputeWidthOrHeightDimension(Pos containerSize, Pos containerRemaining, StyleCategories cat) {
+	return ComputeWidthOrHeightDimension(containerSize, containerRemaining, Stack.Get(cat).GetSize());
+}
+
+Pos Layout::ComputeWidthOrHeightDimension(Pos containerSize, Pos containerRemaining, Size size) {
+	if (size.Type == Size::REMAINING) {
+		if (containerRemaining == PosNULL)
+			return PosNULL;
+		else
+			return Pos(Round((float) containerRemaining * (size.Val * 0.01f))); // same comment here about rationals, as down below on regular percentage amounts
+	} else {
+		return ComputeDimension(containerSize, size);
+	}
 }
 
 Pos Layout::ComputeDimension(Pos container, StyleCategories cat) {
