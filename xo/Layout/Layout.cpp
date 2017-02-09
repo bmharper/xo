@@ -238,7 +238,7 @@ void Layout::RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& o
 
 		if (childOuts[i].RNode != nullptr) {
 			Point offset = PositionChildFromBindings(childIn, linebox->InnerBaseline, childOuts[i]);
-			if (linebox->InnerBaselineDefinedBy == i) {
+			if (linebox->InnerBaselineDefinedBy == i && IsDefined(linebox->InnerBaseline)) {
 				// The child that originally defined the baseline has been moved, so we need to move the baseline along with it
 				linebox->InnerBaseline += offset.Y;
 			}
@@ -250,17 +250,16 @@ void Layout::RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& o
 	Pos myBaseline = Boxer.GetLineFromPreviousNode(0)->InnerBaseline;
 
 	if (myBaseline != PosNULL)
-		out.Baseline = myBaseline; // +rnode->Pos.Top;	// we emit baseline in the coordinate system of our parent
+		out.Baseline = myBaseline;
 	else
 		out.Baseline = PosNULL;
 
 	PopulateBindings(out.Binds);
 
-	out.RNode           = rnode;
-	out.RNodeTop        = rnode->Pos.Top;
-	out.MarginBoxWidth  = marginBox.Width();
-	out.MarginBoxHeight = marginBox.Height();
-	out.Break           = Stack.Get(CatBreak).GetBreakType();
+	out.RNode     = rnode;
+	out.RNodeTop  = rnode->Pos.Top;
+	out.MarginBox = marginBox;
+	out.Break     = Stack.Get(CatBreak).GetBreakType();
 
 	Stack.StackPop();
 }
@@ -303,8 +302,10 @@ void Layout::RunText(const DomText* node, const LayoutInput& in, LayoutOutput& o
 	// to 'something' if we didn't align words to baseline.
 	// Since we only bind on baseline, we don't need to populate width and height
 	out.Baseline        = TempText.FontAscender;
-	out.MarginBoxHeight = 0;
-	out.MarginBoxWidth  = 0;
+	if (TempText.RNodeTxt)
+		out.MarginBox = TempText.RNodeTxt->Pos;
+	else
+		out.MarginBox = Box(0, 0, 0, 0); // same quandary here as below
 	out.Binds.VChildBaseline.Set(CatBaseline, VerticalBindingBaseline);
 	out.RNode = TempText.RNodeTxt;
 	// If TempText.RNodeTxt is null, then it means we're an empty text object, or we emitted
@@ -546,17 +547,19 @@ Pos Layout::MeasureWord(const char* txt, const Font* font, Pos fontAscender, Chu
 }
 
 Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseline, LayoutOutput& cout) {
-	Point orgPos(cout.RNode->Pos.Left, cout.RNode->Pos.Top);
+	Box orgBox = cout.MarginBox;
+
+	// Alignments are performed on the margin box of the child, and content box of the parent
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Horizontal
-	HBindHelper helperH(this, cin.ParentWidth, cout.RNode->Pos.Left, cout.MarginBoxWidth);
+	HBindHelper helperH(this, cin.ParentWidth, cout.MarginBox.Left, cout.MarginBox.Width());
 
 	// If HCenter is bound, then move the child to the binding point
 	Pos moveX = helperH.Delta(cout.Binds.HChildCenter, HorizontalBindingCenter);
 
 	if (IsDefined(moveX)) {
-		cout.RNode->Pos.Offset(moveX, 0);
+		cout.MarginBox.Offset(moveX, 0);
 		helperH.ChildLeft += moveX;
 	}
 
@@ -564,29 +567,34 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 	Pos rightDelta = helperH.Delta(cout.Binds.HChildRight, HorizontalBindingRight);
 	if (IsDefined(leftDelta)) {
 		if (IsDefined(moveX) || IsDefined(rightDelta)) {
-			// stretch to left. don't change absolute position of children of cout.RNode
-			MoveLeftTop(cout.RNode, Point(leftDelta, 0));
+			// stretch to left. don't change absolute position of children of cout.RNode -- HUH? Isn't that what we're doing in there?
+			// hmm ok.. yeah we're compensating for the change by un-moving the children. Is that right? It seems inconsistent to me.
+			// heh.. It seems to me that the right solution is that for bindings that affect the width or height of the node need
+			// to be evaluated before descending into the node's render. They should be treated like width= or height= statements,
+			// only they're computed. Anything else will be useless.
+			MoveChildren(cout.RNode, Point(-leftDelta, 0));
 			helperH.ChildLeft += leftDelta;
 			helperH.ChildWidth -= leftDelta;
+			cout.MarginBox.Left += leftDelta;
 		} else {
 			// Move to left
-			cout.RNode->Pos.Offset(leftDelta, 0);
+			cout.MarginBox.Offset(leftDelta, 0);
 		}
 	}
 
 	if (IsDefined(rightDelta)) {
 		if (IsDefined(moveX) || IsDefined(leftDelta)) {
 			// Stretch to right. Since we're not changing our reference frame, this is simpler than stretching the top.
-			cout.RNode->Pos.Right += rightDelta;
+			cout.MarginBox.Right += rightDelta;
 		} else {
 			// Move to right
-			cout.RNode->Pos.Offset(rightDelta, 0);
+			cout.MarginBox.Offset(rightDelta, 0);
 		}
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Vertical
-	VBindHelper helperV(this, cin.ParentHeight, parentBaseline, cout.RNode->Pos.Top, cout.MarginBoxHeight, cout.Baseline);
+	VBindHelper helperV(this, cin.ParentHeight, parentBaseline, cout.MarginBox.Top, cout.MarginBox.Height(), cout.BaselinePlusRNodeTop());
 
 	Pos moveY = PosNULL;
 
@@ -596,8 +604,9 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 		moveY = helperV.Delta(cout.Binds.VChildCenter, VerticalBindingCenter);
 
 	if (IsDefined(moveY)) {
-		cout.RNode->Pos.Offset(0, moveY);
+		cout.MarginBox.Offset(0, moveY);
 		helperV.ChildTop += moveY;
+		helperV.ChildBaseline += moveY;
 	}
 
 	Pos topDelta    = helperV.Delta(cout.Binds.VChildTop, VerticalBindingTop);
@@ -605,26 +614,37 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 	if (IsDefined(topDelta)) {
 		if (IsDefined(moveY) || IsDefined(bottomDelta)) {
 			// stretch to top. don't change absolute position of children of cout.RNode
-			MoveLeftTop(cout.RNode, Point(0, topDelta));
+			MoveChildren(cout.RNode, Point(0, -topDelta));
 			cout.Baseline -= topDelta;
 			helperV.ChildTop += topDelta;
 			helperV.ChildHeight -= topDelta;
 			helperV.ChildBaseline -= topDelta;
+			cout.MarginBox.Top += topDelta;
 		} else {
 			// Move to top
-			cout.RNode->Pos.Offset(0, topDelta);
+			cout.MarginBox.Offset(0, topDelta);
 		}
 	}
 
 	if (IsDefined(bottomDelta)) {
 		if (IsDefined(moveY) || IsDefined(topDelta)) {
 			// Stretch to bottom. Since we're not changing our reference frame, this is simpler than stretching the top.
-			cout.RNode->Pos.Bottom += bottomDelta;
+			cout.MarginBox.Bottom += bottomDelta;
 		} else {
 			// Move to bottom
-			cout.RNode->Pos.Offset(0, bottomDelta);
+			cout.MarginBox.Offset(0, bottomDelta);
 		}
 	}
+
+	Box deltaBox;
+	deltaBox.Left = cout.MarginBox.Left - orgBox.Left;
+	deltaBox.Top = cout.MarginBox.Top - orgBox.Top;
+	deltaBox.Right = cout.MarginBox.Right - orgBox.Right;
+	deltaBox.Bottom = cout.MarginBox.Bottom - orgBox.Bottom;
+	cout.RNode->Pos.Left += deltaBox.Left;
+	cout.RNode->Pos.Top += deltaBox.Top;
+	cout.RNode->Pos.Right += deltaBox.Right;
+	cout.RNode->Pos.Bottom += deltaBox.Bottom;
 
 	if (SnapBoxes) {
 		Pos width            = cout.RNode->Pos.WidthOrNull();
@@ -637,7 +657,7 @@ Point Layout::PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseli
 			cout.RNode->Pos.Bottom = cout.RNode->Pos.Top + PosRoundUp(height);
 	}
 
-	return Point(cout.RNode->Pos.Left - orgPos.X, cout.RNode->Pos.Top - orgPos.Y);
+	return Point(deltaBox.Left, deltaBox.Top);
 }
 
 Pos Layout::ComputeDimension(Pos container, StyleCategories cat) {
@@ -736,7 +756,7 @@ Pos Layout::VBindOffset(VerticalBindings bind, Pos top, Pos baseline, Pos height
 	case VerticalBindingBottom: return top + height;
 	case VerticalBindingBaseline:
 		if (IsDefined(baseline))
-			return top + baseline;
+			return baseline;
 		else {
 			// This occurs often enough that it's not too noisy to be useful
 			//XOTRACE_LAYOUT_WARNING("Undefined baseline used in alignment\n");
@@ -778,14 +798,11 @@ bool Layout::IsAllZeros(const cheapvec<int32_t>& list) {
 	return true;
 }
 
-void Layout::MoveLeftTop(RenderDomEl* relem, Point delta) {
-	relem->Pos.Left += delta.X;
-	relem->Pos.Top += delta.Y;
-
+void Layout::MoveChildren(RenderDomEl* relem, Point delta) {
 	RenderDomNode* rnode = relem->ToNode();
 	if (rnode != nullptr) {
 		for (size_t i = 0; i < rnode->Children.size(); i++)
-			rnode->Children[i]->Pos.Offset(-delta.X, -delta.Y);
+			rnode->Children[i]->Pos.Offset(delta.X, delta.Y);
 	} else {
 		// do we need to do anything here?
 		//RenderDomText* rtxt = relem->ToText();

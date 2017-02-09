@@ -16,7 +16,7 @@ DomNode* Button::AppendTo(DomNode* node, const char* txt) {
 	auto btn = node->AddNode(xo::TagLab);
 	btn->AddClass("xo.button");
 
-	// Add the empty text value (must be first child for DomNode.SetText to work)
+	// Add the text, even if it's empty (must be first child for DomNode.SetText to work)
 	btn->AddText(txt);
 
 	btn->OnMouseDown([btn](Event& ev) {

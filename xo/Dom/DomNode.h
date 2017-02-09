@@ -57,6 +57,7 @@ public:
 	// Classes
 	void AddClass(const char* klass);
 	void RemoveClass(const char* klass);
+	bool HasClass(const char* klass) const;
 
 	// Events
 	// An event handler has a 64-bit ID that is specific to that DOM node.

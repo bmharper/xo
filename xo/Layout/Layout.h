@@ -52,9 +52,8 @@ protected:
 
 	struct LayoutOutput {
 		BindingSet   Binds;
-		Pos          MarginBoxWidth;
-		Pos          MarginBoxHeight;
-		Pos          Baseline; // This is in the coordinate system of the parent
+		Box          MarginBox;
+		Pos          Baseline; // This is in the coordinate system of the child. In other words, this is a distance from RNodeTop.
 		Pos          RNodeTop; // Usually equal to RNode->Pos.Top, but empty text objects need this too, and they have RNode = null. Rather store it here than an extra RenderDomEl.
 		RenderDomEl* RNode;
 		BreakType    Break;
@@ -139,7 +138,7 @@ protected:
 	static GlyphCacheKey MakeGlyphCacheKey(const TextRunState& ts);
 	static GlyphCacheKey MakeGlyphCacheKey(bool isSubPixel, FontID fontID, int fontSizePx);
 	static bool          IsAllZeros(const cheapvec<int32_t>& list);
-	static void          MoveLeftTop(RenderDomEl* relem, Point delta);
+	static void          MoveChildren(RenderDomEl* relem, Point delta);
 
 	static bool IsDefined(Pos p) { return p != PosNULL; }
 	static bool IsNull(Pos p) { return p == PosNULL; }

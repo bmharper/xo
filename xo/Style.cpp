@@ -138,6 +138,7 @@ static bool ParseQuadSize(const char* s, size_t len, Size* quad) {
 	int spaces[10];
 	int nspaces = FindSpaces(s, len, spaces);
 
+	// LRTB
 	// 20px
 	if (nspaces == 0) {
 		Size one;
@@ -147,13 +148,29 @@ static bool ParseQuadSize(const char* s, size_t len, Size* quad) {
 		}
 	}
 
+	// LR  TB
+	// 1px 2px
+	if (nspaces == 1) {
+		Size tmp[2];
+		bool ok1 = Size::Parse(s, spaces[0], tmp[0]);
+		bool ok2 = Size::Parse(s + spaces[0] + 1, spaces[1] - spaces[0] - 1, tmp[1]);
+		if (ok1 && ok2) {
+			quad[0] = tmp[0];
+			quad[1] = tmp[1];
+			quad[2] = tmp[0];
+			quad[3] = tmp[1];
+			return true;
+		}
+	}
+
+	// L   T   R   B
 	// 1px 2px 3px 4px
 	if (nspaces == 3) {
 		Size tmp[4];
 		bool ok1 = Size::Parse(s, spaces[0], tmp[0]);
 		bool ok2 = Size::Parse(s + spaces[0] + 1, spaces[1] - spaces[0] - 1, tmp[1]);
 		bool ok3 = Size::Parse(s + spaces[1] + 1, spaces[2] - spaces[1] - 1, tmp[2]);
-		bool ok4 = Size::Parse(s + spaces[2] + 1, (int) len - spaces[2] - 1, tmp[3]);
+		bool ok4 = Size::Parse(s + spaces[2] + 1, spaces[3] - spaces[2] - 1, tmp[3]);
 		if (ok1 && ok2 && ok3 && ok4) {
 			memcpy(quad, tmp, sizeof(tmp));
 			return true;
@@ -836,13 +853,23 @@ StyleClassID StyleTable::GetClassID(const char* name) {
 }
 
 void StyleTable::CloneSlowInto(StyleTable& c) const {
-	// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
 	c.Classes = Classes;
+	// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
+	// HOWEVER, it can be useful when debugging
+#ifdef _DEBUG
+	c.NameToIndex = NameToIndex;
+#endif
 }
 
 void StyleTable::CloneFastInto(StyleTable& c, Pool* pool) const {
 	// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
 	ClonePodvecWithMemCopy(c.Classes, Classes, pool);
+}
+
+void StyleTable::DebugDump() const {
+	Trace("%d classes:\n", (int) NameToIndex.size());
+	for (auto it : NameToIndex)
+		Trace("%s: %d\n", it.first.CStr(), (int) it.second);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -607,6 +607,7 @@ public:
 	StyleClassID      GetClassID(const char* name);
 	void              CloneSlowInto(StyleTable& c) const;             // Does not clone NameToIndex
 	void              CloneFastInto(StyleTable& c, Pool* pool) const; // Does not clone NameToIndex
+	void              DebugDump() const;
 
 protected:
 	cheapvec<String>        Names; // Names and Classes are parallel

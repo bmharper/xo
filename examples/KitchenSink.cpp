@@ -24,7 +24,7 @@ void DoBorder(xo::Doc* doc) {
 	auto root = &doc->Root;
 	root->StyleParse("background: #fff");
 	root->Parse(
-		"<div style='border: 1px #bfb; background: #dfd; border-radius: 5px; width: 50px; height: 50px; margin: 2px'></div>"
+	    "<div style='border: 1px #bfb; background: #dfd; border-radius: 5px; width: 50px; height: 50px; margin: 2px'></div>"
 	    "<div style='border: #007e; border: 2px 20px 2px 20px; border-radius: 0px 0px 0px 40px; width: 200ep; height: 200ep; background: #fffe; margin: 2px'></div>"
 	    "<div style='border: #007e; border: 20px 2px 20px 2px; border-radius: 5px 5px 5px 5px; width: 200ep; height: 200ep; background: #fffe; margin: 2px'></div>"
 	    "<div style='border: #007e; border: 2px 20px 2px 20px; border-radius: 5px 5px 5px 5px; width: 200ep; height: 200ep; background: #fffe; margin: 2px'></div>"
@@ -208,9 +208,9 @@ void DoCenter(xo::Doc* doc) {
 	}
 }
 
-void DoHCenter(xo::Doc* doc) {
+void DoCenter2(xo::Doc* doc) {
 	doc->ClassParse("h-outer", "width: 140ep; height: 70ep; background: #fef; border: 1px #0008; margin: 1ep");
-	doc->ClassParse("v-outer", "width: 140ep; height: 70ep; background: #ffe; border: 1px #0008; margin: 1ep");
+	doc->ClassParse("v-outer", "width: 140ep; height: 70ep; background: #ffe; border: 1px #0008; margin: 1ep; baseline: none");
 	doc->ClassParse("h-inner", "vcenter: vcenter; background: #faa");
 	doc->ClassParse("v-inner", "hcenter: hcenter; baseline: none; background: #faa;"); // note that we need to remove 'baseline' from <div>
 	doc->Root.ParseAppend(
@@ -227,6 +227,24 @@ void DoHCenter(xo::Doc* doc) {
 	    "<div class='v-outer'><lab class='v-inner' style='top: top'>move top (identity)</lab></div>"
 	    "<div class='v-outer'><lab class='v-inner' style='bottom: bottom'>move bottom</lab></div>"
 	    "<div class='v-outer'><lab class='v-inner' style='top: top; bottom: bottom'>stretch</lab></div>");
+}
+
+void DoBindings(xo::Doc* doc) {
+	// This is where I discovered that I was aligning to child's content box, instead of aligning to
+	// child's margin box. That is fixed.
+	doc->Root.ParseAppend(
+		"right\n"
+		"<div style='width: 64px; height: 64px; background: #bdb; break: after; margin: 20px; padding: 0'>"
+		"	<div style='width: 8px; height: 8px; background: #0a0'></div>"
+		"	<div style='height: 16px; right: right; background: #d55; padding: 16px 0px;'></div>"
+	    "</div>");
+
+	doc->Root.ParseAppend(
+		"bottom\n"
+		"<div style='width: 64px; height: 64px; background: #bdb; break: after; margin: 20px; padding: 0'>"
+		"	<div style='width: 8px; height: 8px; background: #0a0'></div>"
+		"	<div style='height: 16px; bottom: bottom; background: #d55; padding: 16px 0px;'></div>"
+	    "</div>");
 }
 
 void DoTwoTextRects(xo::Doc* doc) {
@@ -449,10 +467,10 @@ void InitDOM(xo::Doc* doc) {
 	//DoBaselineAlignment_rev2(doc);
 	//DoBaselineAlignment_Multiline(doc);
 	//DoBaselineAlignment_DownPropagate(doc);
-	DoCanvas(doc);
+	//DoBindings(doc);
+	//DoCanvas(doc);
 	//DoCenter(doc);
-	//DoHCenter(doc);
-	//DoVCenter(doc);
+	//DoCenter2(doc);
 	//DoTwoTextRects(doc);
 	//DoBlockMargins(doc);
 	//DoLongText(doc);
@@ -462,7 +480,7 @@ void InitDOM(xo::Doc* doc) {
 	//DoTextQuality(doc);
 	//DoQuadraticSplines(doc);
 	//DoTimer(doc);
-	//DoEditBox(doc);
+	DoEditBox(doc);
 
 	body->OnClick([](xo::Event& ev) {
 		//xo::Trace("%f %f\n", ev.PointsAbs[0].x, ev.PointsAbs[0].y);
@@ -474,8 +492,8 @@ void InitDOM(xo::Doc* doc) {
 			ev.Doc->IncVersion();
 		} else if (ev.Button == xo::Button::MouseRight) {
 			// To make the best use of this, comment out the line inside Doc.cpp that says: TagStyles[TagBody].Parse("width: 100%; height: 100%", this)
-			int width = (int) xo::PosToReal(ev.LayoutResult->Body()->Pos.Width());
-			int height = (int) xo::PosToReal(ev.LayoutResult->Body()->Pos.Height());
+			int       width  = (int) xo::PosToReal(ev.LayoutResult->Body()->Pos.Width());
+			int       height = (int) xo::PosToReal(ev.LayoutResult->Body()->Pos.Height());
 			xo::Image img;
 			if (ev.Doc->GetDocGroup()->Wnd->CopySurfaceToImage(xo::Box(0, 0, width, height), img)) {
 				img.SaveToPng("c:\\temp\\xo-screenshot.png");

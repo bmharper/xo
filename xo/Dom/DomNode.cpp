@@ -208,6 +208,10 @@ void DomNode::RemoveClass(const char* klass) {
 		Classes.erase(index);
 }
 
+bool DomNode::HasClass(const char* klass) const {
+	return Classes.find(Doc->ClassStyles.GetClassID(klass)) != -1;
+}
+
 uint64_t DomNode::AddHandler(Events ev, EventHandlerF func, bool isLambda, void* context, uint32_t timerPeriodMS) {
 	// Fastest allowable timer is 1ms
 	if (ev == EventTimer)

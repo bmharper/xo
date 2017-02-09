@@ -95,6 +95,8 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 	//auto bgImage = style.Get( CatBackgroundImage );
 	Color bg = style->BackgroundColor;
 	//const char* bgImageName = Strings->GetStr(style->BackgroundImageID); -- todo
+	if (bg == Color(0xdd, 0x55, 0x55, 0xff))
+		int abc = 123;
 
 	int shaderFlags = 0;
 
@@ -325,6 +327,10 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 void Renderer::RenderCornerArcs(int shaderFlags, Corners corner, Vec2f edge, Vec2f outerRadii, Vec2f borderWidth, Vec2f centerUV, Vec2f uvScale, uint32_t bgRGBA, uint32_t borderRGBA) {
 	if (outerRadii.x == 0 || outerRadii.y == 0)
 		return;
+
+	// I don't know how to get rid of this tweak
+	if (borderWidth.x == 0 && borderWidth.y == 0)
+		borderRGBA = bgRGBA;
 
 	Driver->ActivateShader(ShaderUber);
 	float maxOuterRadius = Max(outerRadii.x, outerRadii.y);
