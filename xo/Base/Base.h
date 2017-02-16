@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <crtdbg.h>
 #endif
+#include <WinSock2.h> // xo doesn't use Winsock, but not having this header before windows.h causes pain
 #include <windows.h>
 #include <windowsx.h>
 #include <mmsystem.h>

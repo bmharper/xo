@@ -10,8 +10,6 @@ namespace xo {
 #endif
 
 Pool::Pool() {
-	ChunkSize = 64 * 1024;
-	TopRemain = 0;
 }
 
 Pool::~Pool() {
@@ -32,28 +30,30 @@ void Pool::FreeAll() {
 		free(BigBlocks[i]);
 	Chunks.clear();
 	BigBlocks.clear();
-	TopRemain = 0;
+	TopRemain      = 0;
+	TotalAllocated = 0;
 }
 
-/* This is an optimization for a pool that is frequently re-used.
-The pool must have quite a predictable size for this to be effective.
-*/
 void Pool::FreeAllExceptOne() {
-	if (Chunks.size() == 1 && BigBlocks.size() == 0)
+	if (Chunks.size() == 1 && BigBlocks.size() == 0) {
 		TopRemain = ChunkSize;
-	else
+		TotalAllocated = ChunkSize;
+	} else {
 		FreeAll();
+	}
 }
 
 void* Pool::Alloc(size_t bytes, bool zeroInit) {
 	XO_ASSERT(bytes != 0);
 	if (bytes > ChunkSize) {
+		TotalAllocated += bytes;
 		BigBlocks += MallocOrDie(bytes);
 		if (zeroInit)
 			memset(BigBlocks.back(), 0, bytes);
 		return BigBlocks.back();
 	} else {
 		if ((ssize_t)(TopRemain - bytes) < 0) {
+			TotalAllocated += ChunkSize;
 			Chunks += MallocOrDie(ChunkSize);
 			TopRemain = ChunkSize;
 		}
@@ -138,5 +138,15 @@ uint32_t FixedSizeHeap::SlotFromPtr(void* p) const {
 		return slot;
 	else
 		return -1;
+}
+}
+
+namespace std {
+XO_API void swap(xo::Pool& a, xo::Pool& b) {
+	xo::Pool tmp;
+	memcpy(&tmp, &a, sizeof(xo::Pool));
+	memcpy(&a, &b, sizeof(xo::Pool));
+	memcpy(&b, &tmp, sizeof(xo::Pool));
+	memset(&tmp, 0, sizeof(xo::Pool));
 }
 }

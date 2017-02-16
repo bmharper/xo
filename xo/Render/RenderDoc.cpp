@@ -48,6 +48,10 @@ RenderDoc::~RenderDoc() {
 
 RenderResult RenderDoc::Render(RenderBase* driver) {
 	//XOTRACE_RENDER( "RenderDoc: Reset\n" );
+	if (!HasBakedStyleVariables) {
+		XOTRACE_RENDER("RenderDoc: Bake Styles\n");
+		BakeStyleVariables();
+	}
 
 	LayoutResult* layout = new LayoutResult(Doc);
 
@@ -83,6 +87,8 @@ void RenderDoc::CopyFromCanonical(const xo::Doc& canonical, RenderStats& stats) 
 
 	// This must happen after textures are uploaded to the GPU. DocGroup ensures that.
 	ClonedImages.CloneMetadataFrom(canonical.Images);
+
+	HasBakedStyleVariables = false;
 }
 
 LayoutResult* RenderDoc::AcquireLatestLayout() {
@@ -127,4 +133,9 @@ void RenderDoc::PopulateIDToNode(LayoutResult* res, RenderDomNode* node) {
 			PopulateIDToNode(res, cnode);
 	}
 }
+
+void RenderDoc::BakeStyleVariables() {
+
+}
+
 }

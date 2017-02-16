@@ -15,6 +15,9 @@ class XO_API StringRaw {
 public:
 	char* Z;
 
+	static StringRaw Wrap(char* s) { return StringRaw{s}; }
+	static StringRaw WrapConstAway(const char* s) { return StringRaw{const_cast<char*>(s)}; }
+
 	bool        IsEmpty() const { return Z == nullptr || Z[0] == 0; }
 	const char* CStr() const;
 	size_t      Length() const;
@@ -42,7 +45,7 @@ protected:
 // This is the classic thing you'd expect from a string. The destructor will free the memory.
 class XO_API String : public StringRaw {
 public:
-	String();
+	String() { Z = nullptr; }
 	String(const String& b);
 	String(const StringRaw& b);
 	String(const char* z, size_t maxLength = -1); // Calls Set()
@@ -79,6 +82,7 @@ void XO_API Itoa(int64_t value, char* buf, int base);
 
 namespace ohash {
 inline ohash::hashkey_t gethashcode(const xo::String& k) { return (ohash::hashkey_t) k.GetHashCode(); }
+inline ohash::hashkey_t gethashcode(const xo::StringRaw& k) { return (ohash::hashkey_t) k.GetHashCode(); }
 }
 
 #ifdef _WIN32

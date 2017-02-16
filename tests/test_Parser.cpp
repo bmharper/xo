@@ -3,7 +3,7 @@
 TESTFUNC(Parser)
 {
 	{
-		xo::Doc d;
+		xo::Doc d(nullptr);
 		TTASSERT(d.Parse(
 			"<div>"
 			"	<div>  text   </div>"

@@ -1,15 +1,19 @@
 #pragma once
 namespace xo {
 
-// A memory pool
+/* A memory pool
+This provides an std::swap implementation, so that you can repack a pool
+if using it in a garbage-collected situation.
+*/
 class XO_API Pool {
 public:
 	Pool();
 	~Pool();
 
-	void SetChunkSize(size_t size);
-
-	void* Alloc(size_t bytes, bool zeroInit);
+	void   SetChunkSize(size_t size);
+	size_t GetChunkSize() const { return ChunkSize; }
+	void*  Alloc(size_t bytes, bool zeroInit);
+	size_t TotalAllocatedBytes() const { return TotalAllocated; }
 
 	template <typename T>
 	T* AllocT(bool zeroInit) { return (T*) Alloc(sizeof(T), zeroInit); }
@@ -18,11 +22,17 @@ public:
 	T* AllocNT(size_t count, bool zeroInit) { return (T*) Alloc(count * sizeof(T), zeroInit); }
 
 	void FreeAll();
+
+	/* This is an optimization for a pool that is frequently re-used.
+	The pool must have quite a predictable size for this to be effective.
+	Do not change chunk size while using this.
+	*/
 	void FreeAllExceptOne();
 
 protected:
-	size_t          ChunkSize;
-	size_t          TopRemain;
+	size_t          ChunkSize      = 64 * 1024;
+	size_t          TopRemain      = 0;
+	size_t          TotalAllocated = 0;
 	cheapvec<void*> Chunks;
 	cheapvec<void*> BigBlocks;
 };
@@ -344,4 +354,8 @@ protected:
 	uint32_t       Count    = 0;
 	T*             Items    = nullptr;
 };
+}
+
+namespace std {
+XO_API void swap(xo::Pool& a, xo::Pool& b);
 }

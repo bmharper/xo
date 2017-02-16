@@ -485,7 +485,7 @@ unsigned int TTLaunchChildProcess_Internal(const char* cmd, const char** args)
 		all += args[i];
 	}
 	unsigned int pid = -1;
-	STARTUPINFO si;
+	STARTUPINFOA si;
 	memset(&si, 0, sizeof(si));
 	PROCESS_INFORMATION pi;
 	DWORD flags = 0;

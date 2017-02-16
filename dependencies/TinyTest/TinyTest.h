@@ -4,16 +4,15 @@
 
 Instructions
 ------------
-
 1. Create an application (not a dynamic library) that will host your tests.
 2. #define TT_MODULE_NAME as the name of your application, and include <TinyTest.h> into all files
 	that will define tests in them. For example:
 
-	#define TT_MODULE_NAME imqstool
+	#define TT_MODULE_NAME gizmo
 	#include <TinyTest/TinyTest.h>
 
-3. Inside one of your cpp files, #include <TinyTest/TinyTestBuild.h>. This particular .cpp file may not
-	define any tests of its own. This is a linker issue that I have not bothered to solve yet.
+3. Inside one of your cpp files, #include <TinyTest/TinyTestBuild.h>. This particular .cpp, which is typically
+	your "main.cpp" file, is not allowed to define any tests of its own (this is a linker issue that I have not bothered to solve yet).
 
 4. Inside int main(int argc, char** argv), write:
 
@@ -21,14 +20,26 @@ Instructions
 
 5. In other cpp files, write TT_TEST_FUNC(initfunc, teardown, size, testname, parallel) to define test functions, for example
 
-	void InitSandbox() {...}
-	TT_TEST_FUNC(&InitSandbox, NULL, TTSizeSmall, hello, TTParallelDontCare)
+	void InitSandbox() { // ... }
+
+	TT_TEST_FUNC(&InitSandbox, nullptr, TTSizeSmall, hello, TTParallelDontCare)
 	{
 		TTASSERT(1 + 1 == 2);
 	}
 
 	Typically, you'll define a high level macro that wraps TT_TEST_FUNC, for example:
 	#define TESTFUNC(x) TT_TEST_FUNC(MySetup, MyTearDown, TTSizeSmall, x, TTParallelDontCare)
+
+Debugging Tests
+---------------
+In order to debug a unit test, launch the the test program like so:
+
+	your_test_program.exe :foo
+
+Ordinarily, if you want to run the test named "foo", you don't include the colon before it's name.
+The colon is a special instruction to the test system that tells it that you're running this under
+a debugger. This causes the test system to run all code within a single process, which makes debugging
+simpler.
 
 Including tests in dynamic libraries
 ------------------------------------

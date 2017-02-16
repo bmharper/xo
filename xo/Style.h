@@ -21,7 +21,7 @@ struct XO_API Size {
 		         REMAINING, // Fill percentage of remaining space
 	};
 	// Note that value 255 is used by StyleAttrib::SubType_SizeBinding, so do not
-	// use 255 inside the Types enum.
+	// use 255 inside this Types enum.
 
 	float Val;
 	Types Type;
@@ -288,6 +288,14 @@ enum StyleCategories {
 	CatFlowDirection_Vertical,
 	CatBoxSizing,
 	CatBump,
+
+	// Generic categories used for style properties that reference variables
+	CatGenMargin,
+	CatGenPadding,
+	CatGenBorder,
+	CatGenBorderColor,
+	CatGenBorderRadius,
+
 	CatEND,
 };
 
@@ -321,6 +329,10 @@ public:
 		// This means that the attribute takes its value from its closest ancestor in the DOM tree.
 		// Some styles are inherited by default (the list specified inside InheritedStyleCategories).
 		FlagInherit = 1,
+		// The value inside ValU32 is an integer ID that was assigned by Doc::GetOrCreateStyleVerbatimID().
+		// This integer can be used with Doc::GetStyleVerbatim() to get the original string of that style
+		// attribute, such as "1px $dark-border".
+		FlagVerbatim = 2,
 	};
 
 	enum SubTypes {
@@ -356,6 +368,7 @@ public:
 	}
 
 	void SetInherit(StyleCategories cat);
+	void SetVerbatim(StyleCategories cat, int verbatimID);
 
 	void SetColor(StyleCategories cat, Color val) { SetU32(cat, val.u); }
 	void SetSize(StyleCategories cat, Size val) { SetWithSubtypeF(cat, val.Type, val.Val); }
@@ -452,6 +465,8 @@ class XO_API Style {
 public:
 	cheapvec<StyleAttrib> Attribs;
 
+	// Parse a number of styles, enclosed in {} braces
+	static bool        ParseSheet(const char* t, Doc* doc);
 	bool               Parse(const char* t, Doc* doc);
 	bool               Parse(const char* t, size_t maxLen, Doc* doc);
 	const StyleAttrib* Get(StyleCategories cat) const;
@@ -462,6 +477,7 @@ public:
 	void               SetUniformBox(StyleCategories cat, StyleAttrib val);
 	void               SetUniformBox(StyleCategories cat, Color color);
 	void               SetUniformBox(StyleCategories cat, Size size);
+	void               SetVerbatim(StyleCategories cat, int verbatimID);
 	void               Set(StyleAttrib attrib);
 	void               Set(StyleCategories cat, StyleBox val);       // This overload is identical to SetBox, but needs to be present for templated parsing functions
 	void               Set(StyleCategories cat, CornerStyleBox val); // Same as above
@@ -570,7 +586,7 @@ protected:
 	static int32_t CapacityAt(uint32_t bitsPerSlot) { return (1 << bitsPerSlot) - 1; }
 };
 
-// This is a style class, such as ".button"
+// This is a style class, such as "xo.controls.button"
 class XO_API StyleClass {
 public:
 	Style Default; // Default styles
@@ -632,5 +648,5 @@ XO_API bool ParseHorizontalBinding(const char* s, size_t len, HorizontalBindings
 XO_API bool ParseVerticalBinding(const char* s, size_t len, VerticalBindings& t);
 XO_API bool ParseBinding(bool isHorz, const char* s, size_t len, StyleCategories cat, Style& style);
 XO_API bool ParseBump(const char* s, size_t len, BumpStyle& t);
-XO_API bool ParseBorder(const char* s, size_t len, Style& style);
+XO_API bool ParseBorder(const char* s, size_t len, Style& style, Doc* doc);
 }

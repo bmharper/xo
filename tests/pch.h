@@ -5,13 +5,17 @@
 #ifndef _CRTDBG_MAP_ALLOC
 #define _CRTDBG_MAP_ALLOC
 #endif
-#include <stdlib.h>
-#include <crtdbg.h>
-#include <WinSock2.h>
-#include <windows.h>
 #endif
 
 #include "../xo/xo.h"
+
+#ifdef _WIN32
+//#include <WinSock2.h>
+//#include <stdlib.h>
+//#include <crtdbg.h>
+//#include <windows.h>
+#endif
+
 #include "../dependencies/stb_image_write.h"
 
 #define STBI_HEADER_FILE_ONLY

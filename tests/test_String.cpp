@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "../xo/xo.h"
 
 TESTFUNC(String)
 {

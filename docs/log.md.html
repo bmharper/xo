@@ -911,6 +911,44 @@ shows it:
 The grey pieces that are next to the red corners, are the final bits that need to be filled in.
 It is simple to fill these. They are filled 100% with the border color.
 
+2017-02-16 Style variables
+==========================
+It's harder than you'd think to build $variables into the styling language, ala SASS for CSS,
+if you want to allow the variables to be late bound. In other words, if you allow changing
+a variable at any time, and have all the styles that reference that variable, change along
+with it. I believe this is worth doing though. Honestly, I can't see a lot of value in this,
+but somehow it feels wrong to leave it out.
+
+So what's the plan for achieving this right now?
+
+Firstly, keep a variable table, which maps $varname to "arbitrary string". That part is simple.
+Next, figure out how to store a class that includes one or more variables, such as:
+
+```
+button {
+	border: $thin-border-width $dark-outline;
+	border-top: 1px $light-outline;
+}
+```
+
+The example above is already quite complicated, because you have a generic "border" spec, which
+may or may not include widths, as well as a single overridden property of the border, "border-top".
+Because one needs to retain this kind of override behaviour, we need to store both the "border"
+property and the "border-top" property inside our class. The simplest thing is to just store the
+entire string representation of the class, and defer parsing until render time. I worry about
+the performance implications of this, if one was to use it heavily. Anyway, that's what I'm doing
+for now. If a class contains any variable references, then the entire class is stored as a string.
+
+HMM NO. That's wrong.
+
+How about if we add some enums for things like "border". We already have enums for things such
+as BorderColor_Left, but we don't have generic placeholder enums for this purpose. If we do create
+such enums, then we don't need to store the entire class as a string. We can instead just
+store the value (in this case "$thin-border-width $dark-outline") as a string. In addition,
+the override behaviour is not a problem, because class styles are stored as a vector of
+StyleAttrib objects, so provided we don't mess with the ordering, we can still get the desired
+override behaviour.
+
 <!-- Markdeep: -->
 <style class="fallback">body{white-space:pre;font-family:monospace}</style>
 <script src="markdeep.min.js"></script>

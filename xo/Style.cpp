@@ -23,8 +23,25 @@ inline bool IsNumeric(char c) {
 
 // This is parsing whitespace, not DOM/textual whitespace
 // In other words, it is the space between the comma and verdana in "font-family: verdana, arial",
-inline bool IsWhitespace(char c) {
-	return c == 32 || c == 9;
+static bool IsWhite(char c) {
+	return c == 9 || c == 32 || c == 10 || c == 13;
+}
+
+static bool IsAlpha(char c) {
+	return (c >= 'a' && c <= 'z') ||
+	       (c >= 'A' && c <= 'Z');
+}
+
+static bool IsIdent(char c) {
+	return IsAlpha(c) || c == '_' || c == '-' || c == '.' || (c >= '0' && c <= '9');
+}
+
+static bool HasDollar(const char* s, size_t start, size_t end) {
+	for (; start != end; start++) {
+		if (s[start] == '$')
+			return true;
+	}
+	return false;
 }
 
 enum MatchFlags {
@@ -61,10 +78,13 @@ static uint8_t ParseHexCharSingle(const char* ch) {
 	return (v << 4) | v;
 }
 
-static int FindSpaces(const char* s, size_t len, int (&spaces)[10]) {
+static int FindSpaces(const char* s, size_t len, int (&spaces)[10], bool& hasDollar) {
 	int nspaces = 0;
+	hasDollar   = false;
 	for (size_t i = 0; i < len && nspaces < arraysize(spaces); i++) {
-		if (IsWhitespace(s[i]))
+		if (s[i] == '$')
+			hasDollar = true;
+		if (IsWhite(s[i]))
 			spaces[nspaces++] = (int) i;
 	}
 	// Fill the remaining members of 'spaces' with 'len', so that the parser
@@ -140,8 +160,9 @@ bool Size::Parse(const char* s, size_t len, Size& v) {
 }
 
 static bool ParseQuadSize(const char* s, size_t len, Size* quad) {
-	int spaces[10];
-	int nspaces = FindSpaces(s, len, spaces);
+	int  spaces[10];
+	bool hasDollar;
+	int  nspaces = FindSpaces(s, len, spaces, hasDollar);
 
 	// LRTB
 	// 20px
@@ -255,12 +276,18 @@ void StyleAttrib::SetWithSubtypeF(StyleCategories cat, uint8_t subtype, float va
 
 void StyleAttrib::SetString(StyleCategories cat, const char* str, Doc* doc) {
 	Category = cat;
-	ValU32   = doc->Strings.GetId(str);
+	ValU32   = doc->Strings.GetOrCreateID(str);
 }
 
 void StyleAttrib::SetInherit(StyleCategories cat) {
 	Category = cat;
 	Flags    = FlagInherit;
+}
+
+void StyleAttrib::SetVerbatim(StyleCategories cat, int verbatimID) {
+	Category = cat;
+	Flags    = FlagVerbatim;
+	ValU32   = verbatimID;
 }
 
 const char* StyleAttrib::GetBackgroundImage(StringTable* strings) const {
@@ -274,6 +301,9 @@ FontID StyleAttrib::GetFont() const {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static bool ParseMacro(const char* s, size_t len, StyleCategories cat, Style& style) {
+}
 
 template <typename T>
 static bool ParseSingleAttrib(const char* s, size_t len, bool (*parseFunc)(const char* s, size_t len, T& t), StyleCategories cat, Style& style) {
@@ -383,8 +413,8 @@ static bool ParseCornerBox(const char* s, size_t len, const char* subCategory, s
 	}
 }
 
-static bool ParseDirect(const char* s, size_t len, bool (*parseFunc)(const char* s, size_t len, Style& style), Style& style) {
-	if (parseFunc(s, len, style)) {
+static bool ParseDirect(const char* s, size_t len, bool (*parseFunc)(const char* s, size_t len, Style& style, Doc* doc), Style& style, Doc* doc) {
+	if (parseFunc(s, len, style, doc)) {
 		return true;
 	} else {
 		ParseFail("Parse failed on: '%.*s'\n", (int) len, s);
@@ -413,7 +443,7 @@ static bool ParseFontFamily(const char* s, size_t len, FontID& v) {
 		} else {
 			if (i == len)
 				break;
-			if (IsWhitespace(s[i]))
+			if (IsWhite(s[i]))
 				continue;
 			onFont        = true;
 			buf[bufPos++] = s[i];
@@ -425,6 +455,96 @@ static bool ParseFontFamily(const char* s, size_t len, FontID& v) {
 	}
 	// not sure whether we should do this. One might want no font to be set instead.
 	v = Global()->FontStore->GetFallbackFontID();
+	return true;
+}
+
+template <size_t BufSize>
+static void ParseExtractString(const char* t, size_t start, size_t end, char (&nameBuf)[BufSize]) {
+	while (start < end && IsWhite(t[start]))
+		start++;
+	while (end > start + 1 && IsWhite(t[end - 1]))
+		end--;
+	if (end - start > BufSize - 1)
+		end = start + BufSize - 1;
+	auto len = end - start;
+	memcpy(nameBuf, t + start, len);
+	nameBuf[len] = 0;
+}
+
+// Next steps? Use a string table, so that StyleAttrib stores a 32-bit ID for the variable,
+// instead of directly storing the string.
+bool Style::ParseSheet(const char* t, Doc* doc) {
+	enum States {
+		NONE,
+		STYLE_NAME,
+		VAR_NAME,
+		STYLE_VAL,
+		VAR_VAL
+	};
+
+	States S             = NONE;
+	size_t nameStartAt   = -1;
+	size_t braceOpenedAt = -1;
+	size_t valStartAt    = -1;
+	char   nameBuf[128];
+	char   valBuf[256];
+	for (size_t i = 0; true; i++) {
+		int c = t[i];
+		if (c == 0)
+			break;
+		switch (S) {
+		case NONE:
+			if (c == '$') {
+				S           = VAR_NAME;
+				nameStartAt = i;
+			} else if (IsAlpha(c)) {
+				S           = STYLE_NAME;
+				nameStartAt = i;
+			} else if (!IsWhite(c)) {
+				ParseFail("Unexpected character '%c' at position %d", c, (int) i);
+				return false;
+			}
+			break;
+		case STYLE_NAME:
+			if (c == '{') {
+				ParseExtractString(t, nameStartAt, i, nameBuf);
+				S             = STYLE_VAL;
+				braceOpenedAt = i + 1;
+			} else if (!(IsWhite(c) || IsIdent(c))) {
+				ParseFail("Unexpected character '%c' at position %d", c, (int) i);
+				return false;
+			}
+			break;
+		case VAR_NAME:
+			if (c == '=') {
+				ParseExtractString(t, nameStartAt, i, nameBuf);
+				S          = VAR_VAL;
+				valStartAt = i + 1;
+			} else if (!(IsWhite(c) || IsIdent(c))) {
+				ParseFail("Unexpected character '%c' at position %d", c, (int) i);
+				return false;
+			}
+			break;
+		case STYLE_VAL:
+			if (c == '}') {
+				if (!doc->ClassParse(nameBuf, t + braceOpenedAt, i - braceOpenedAt))
+					return false;
+				S = NONE;
+			}
+			break;
+		case VAR_VAL:
+			if (c == ';') {
+				ParseExtractString(t, valStartAt, i, valBuf);
+				doc->SetStyleVar(nameBuf, valBuf);
+				S = NONE;
+			}
+			break;
+		}
+	}
+	if (S != NONE) {
+		ParseFail("State %d not finished", (int) S);
+		return false;
+	}
 	return true;
 }
 
@@ -444,15 +564,17 @@ bool Style::Parse(const char* t, size_t maxLen, Doc* doc) {
 	size_t startv = -1;
 	int    nerror = 0;
 	for (size_t i = 0; true; i++) {
-		bool eof = t[i] == 0 || i == maxLen;
-		if (t[i] == 32) {
-		} else if (t[i] == ':') {
+		bool eof = i == maxLen || t[i] == 0;
+		char c   = eof ? 0 : t[i];
+		if (IsWhite(c)) {
+		} else if (c == ':') {
 			eq = i;
-		} else if (t[i] == '-') {
+		} else if (c == '-') {
 			dash = i;
-		} else if (t[i] == ';' || (eof && startv != -1)) {
+		} else if (c == ';' || (eof && startv != -1)) {
 			// clang-format off
 			bool ok = true;
+			//if (HasDollar(t, startv, i))                                  { ok = ParseMacro(TSTART, TLEN, *this); }
 			if (MATCH(t, startk, eq, "background"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &Color::Parse, CatBackground, *this); }
 			else if (MATCH(t, startk, eq, "color"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &Color::Parse, CatColor, *this); }
 			else if (MATCH(t, startk, eq, "width"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatWidth, *this); }
@@ -462,7 +584,7 @@ bool Style::Parse(const char* t, size_t maxLen, Doc* doc) {
 			else if (MATCH(t, startk, eq, "margin"))                      { ok = ParseBox(TSTART, TLEN, nullptr, 0, &StyleBox::Parse, CatMargin_Left, *this); }
 			else if (MATCH(t, startk, eq, "margin-", MatchPrefix))        { ok = ParseBox(TSTART, TLEN, KSTART + 7, KLEN - 7, &StyleBox::Parse, CatMargin_Left, *this); }
 			else if (MATCH(t, startk, eq, "position"))                    { ok = ParseSingleAttrib(TSTART, TLEN, &ParsePositionType, CatPosition, *this); }
-			else if (MATCH(t, startk, eq, "border"))                      { ok = ParseDirect(TSTART, TLEN, &ParseBorder, *this); }
+			else if (MATCH(t, startk, eq, "border"))                      { ok = ParseDirect(TSTART, TLEN, &ParseBorder, *this, doc); }
 			else if (MATCH(t, startk, eq, "border-radius"))               { ok = ParseCornerBox(TSTART, TLEN, nullptr, 0, &CornerStyleBox::Parse, CatBorderRadius_TL, *this); }
 			else if (MATCH(t, startk, eq, "border-radius-", MatchPrefix)) { ok = ParseCornerBox(TSTART, TLEN, KSTART + 14, KLEN - 14, &CornerStyleBox::Parse, CatBorderRadius_TL, *this); }
 			//else if (MATCH(t, startk, eq, "border-radius"))             { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatBorderRadius, *this); }
@@ -575,6 +697,12 @@ void Style::GetBoxInternal(StyleCategories cat, Size* quad) const {
 		if (pindex < 4)
 			quad[pindex] = Attribs[i].GetSize();
 	}
+}
+
+void Style::SetVerbatim(StyleCategories cat, int verbatimID) {
+	StyleAttrib a;
+	a.SetVerbatim(cat, verbatimID);
+	Set(a);
 }
 
 void Style::SetBoxInternal(StyleCategories catBase, Size* quad) {
@@ -859,8 +987,8 @@ StyleClassID StyleTable::GetClassID(const char* name) {
 
 void StyleTable::CloneSlowInto(StyleTable& c) const {
 	c.Classes = Classes;
-	// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
-	// HOWEVER, it can be useful when debugging
+// The renderer doesn't need a Name -> ID table. That lookup table is only for end-user convenience.
+// HOWEVER, it can be useful when debugging
 #ifdef _DEBUG
 	c.NameToIndex = NameToIndex;
 #endif
@@ -1084,9 +1212,15 @@ XO_API bool ParseBump(const char* s, size_t len, BumpStyle& t) {
 	return false;
 }
 
-XO_API bool ParseBorder(const char* s, size_t len, Style& style) {
-	int spaces[10];
-	int nspaces = FindSpaces(s, len, spaces);
+XO_API bool ParseBorder(const char* s, size_t len, Style& style, Doc* doc) {
+	int  spaces[10];
+	bool hasDollar;
+	int  nspaces = FindSpaces(s, len, spaces, hasDollar);
+	if (hasDollar) {
+		int verbatimID = doc->GetOrCreateStyleVerbatimID(s, len);
+		style.SetVerbatim(CatGenBorder, verbatimID);
+		return true;
+	}
 
 	if (nspaces == 0) {
 		// 1px		OR

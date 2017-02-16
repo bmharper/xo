@@ -297,12 +297,13 @@ void TTShowHelp()
 {
 	std::string msg =
 		" [options] testname1 testname2...\n"
+		"\n"
 		"  testname(s)         Wildcards of the tests that you want to run, or '" TT_TOKEN_ALL_TESTS "' to run all.\n"
 		"                      If you specify no tests, then all tests are listed.\n"
-		"                      If you prefix the name of a test with a colon, for example :testname1, then the\n"
-		"                      test harness assumes you are debugging that test. In this case, the test app does\n"
-		"                      not launch a sub-process for each test, and issues a debug break intrinsic if an\n"
-		"                      assertion fails.\n"
+		"\n"
+		"                      To debug a test, prefix the name of the test with a colon, for example ':foo'.\n"
+		"                      In this case, the test app does not launch a sub-process for each test,\n"
+		"                      and issues a debug break intrinsic if an assertion fails.\n"
 		"\n"
 		"  -xEXCLUDE           Exclude any tests that match the wildcard EXCLUDE. Excludes override includes.\n"
 		"  -tt-small           Run only small tests\n"
@@ -313,7 +314,7 @@ void TTShowHelp()
 		"  -tt-tail            For HTML, output only tail\n"
 		"  -tt-out DIR         For JUnit, write xml files to this directory\n"
 		"  -tt-ident IDENT     Give this test suite a name, such as 'win32-release'. This forms part of the JUnit xml file\n";
-	msg = FilenameOnly(TTGetProcessPath()) + msg;
+	msg = "\n" + FilenameOnly(TTGetProcessPath()) + msg;
 	fputs(msg.c_str(), stdout);
 }
 

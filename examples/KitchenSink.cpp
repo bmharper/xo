@@ -480,7 +480,7 @@ void InitDOM(xo::Doc* doc) {
 	//DoCanvas(doc);
 	//DoCenter(doc);
 	//DoCenter2(doc);
-	DoFill(doc);
+	//DoFill(doc);
 	//DoTwoTextRects(doc);
 	//DoBlockMargins(doc);
 	//DoLongText(doc);
@@ -490,7 +490,7 @@ void InitDOM(xo::Doc* doc) {
 	//DoTextQuality(doc);
 	//DoQuadraticSplines(doc);
 	//DoTimer(doc);
-	//DoEditBox(doc);
+	DoEditBox(doc);
 
 	body->OnClick([](xo::Event& ev) {
 		//xo::Trace("%f %f\n", ev.PointsAbs[0].x, ev.PointsAbs[0].y);

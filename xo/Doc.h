@@ -2,7 +2,9 @@
 #include "Dom/DomNode.h"
 #include "Dom/DomText.h"
 #include "Base/MemPoolsAndContainers.h"
-#include "StringTable.h"
+#include "Containers/StringTable.h"
+#include "Containers/StringTableGC.h"
+#include "Containers/VariableTable.h"
 #include "Image/ImageStore.h"
 #include "DocUI.h"
 
@@ -30,28 +32,35 @@ class XO_API Doc {
 	XO_DISALLOW_COPY_AND_ASSIGN(Doc);
 
 public:
-	DomNode                        Root;              // Root element of the document tree
-	StyleTable                     ClassStyles;       // All style classes defined in this document
-	Style                          TagStyles[TagEND]; // Styles of tags. For example, the style of <p>, or the style of <h1>.
-	StringTable                    Strings;           // Generic string table.
-	ImageStore                     Images;            // All images. Some day we may want to be able to share these amongst different documents.
-	DocUI                          UI;                // UI state (which element has the focus, over which elements is the cursor, etc)
-	DocGroup*                      Group = nullptr;
+	DomNode     Root;              // Root element of the document tree
+	StyleTable  ClassStyles;       // All style classes defined in this document
+	Style       TagStyles[TagEND]; // Styles of tags. For example, the style of <p>, or the style of <h1>.
+	StringTable Strings;           // Generic string table.
+	ImageStore  Images;            // All images. Some day we may want to be able to share these amongst different documents.
+	DocUI       UI;                // UI state (which element has the focus, over which elements is the cursor, etc)
+	DocGroup*   Group = nullptr;
 
 	Doc(DocGroup* group);
 	~Doc();
 	void       Reset();
 	void       IncVersion();
 	uint32_t   GetVersion() { return Version; }                                      // Renderers use purposefully loose thread semantics on this. Valgrind will be unhappy with this.
-	void       ResetModifiedBitmap();                                                // Reset the 'ismodified' bitmap of all DOM elements.
+	void       ResetModifiedBitmap();                                                // Reset the 'is modified' bitmap of all DOM elements and other things, such as the variable table.
 	void       MakeFreeIDsUsable();                                                  // All of our dependent renderers have been updated, we can move FreeIDs over to UsableIDs.
 	void       CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const; // Used to make a read-only clone for the renderer. Preserves existing.
 	InternalID InternalIDSize() const;                                               // Returns the size of the InternalID table
 	//void				CloneFastInto( Doc& c, uint32_t cloneFlags, RenderStats& stats ) const;	// Used to make a read-only clone for the renderer. Starts from scratch.
-	DocGroup*  GetDocGroup() const { return Group; }
+	DocGroup* GetDocGroup() const { return Group; }
 
 	// Style Classes
-	bool ClassParse(const char* klass, const char* style); // Set the class, overwriting any previously set style
+	bool        ClassParse(const char* klass, const char* style, size_t styleMaxLen = -1); // Set the class, overwriting any previously set style
+	bool        ParseStyleSheet(const char* sheet);                                        // Parse a style sheet
+	void        SetStyleVar(const char* var, const char* val);                             // Set a style variable
+	const char* StyleVar(const char* var) const;                                           // Get a style variable, or null if undefined
+
+	// Style variables
+	int         GetOrCreateStyleVerbatimID(const char* val, size_t len);
+	const char* GetStyleVerbatim(int id) const; // Returns null if the ID is invalid
 
 	DomEl* AllocChild(Tag tag, InternalID parentID);
 	void   FreeChild(const DomEl* el);
@@ -91,6 +100,8 @@ protected:
 	cheapvec<InternalID>   FreeIDs;
 	ohash::set<InternalID> NodesWithTimers; // Set of all nodes that have an OnTimer event handler registered
 	ohash::set<InternalID> NodesWithRender; // Set of all nodes that have an OnRender event handler registered
+	VariableTable          StyleVariables;
+	StringTableGC          StyleVerbatimStrings; // Table of all the verbatim style strings that contain variable references
 
 	void ResetInternalIDs();
 	void InitializeDefaultTagStyles();

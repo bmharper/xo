@@ -13,7 +13,7 @@
 namespace xo {
 
 Doc::Doc(DocGroup* group)
-    : Root(this, TagBody, InternalIDNull), UI(this), Group(group) {
+    : Root(this, TagBody, InternalIDNull), UI(this), Group(group), StyleVariables(this) {
 	IsReadOnly = false;
 	Version    = 0;
 	ClassStyles.AddDummyStyleZero();
@@ -37,6 +37,7 @@ void Doc::IncVersion() {
 void Doc::ResetModifiedBitmap() {
 	if (ChildIsModified.size() != 0)
 		ChildIsModified.fill(false);
+	StyleVariables.ResetModified();
 }
 
 void Doc::MakeFreeIDsUsable() {
@@ -104,6 +105,7 @@ void Doc::CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const {
 	ClassStyles.CloneSlowInto(c.ClassStyles);
 	CloneStaticArrayWithCloneSlowInto(c.TagStyles, TagStyles);
 
+	c.StyleVariables.CloneFrom_Incremental(StyleVariables);
 	c.Strings.CloneFrom_Incremental(Strings);
 
 	c.Version = Version;
@@ -115,7 +117,7 @@ InternalID Doc::InternalIDSize() const {
 	return (InternalID) ChildByInternalID.size();
 }
 
-bool Doc::ClassParse(const char* klass, const char* style) {
+bool Doc::ClassParse(const char* klass, const char* style, size_t styleMaxLen) {
 	const char* colon = strchr(klass, ':');
 	String      tmpKlass;
 	String      pseudo;
@@ -138,7 +140,27 @@ bool Doc::ClassParse(const char* klass, const char* style) {
 	} else {
 		return false;
 	}
-	return subset->Parse(style, this);
+	return subset->Parse(style, styleMaxLen, this);
+}
+
+bool Doc::ParseStyleSheet(const char* sheet) {
+	return Style::ParseSheet(sheet, this);
+}
+
+void Doc::SetStyleVar(const char* var, const char* val) {
+	StyleVariables.Set(var, val);
+}
+
+const char* Doc::StyleVar(const char* var) const {
+	return StyleVariables.Get(var);
+}
+
+int Doc::GetOrCreateStyleVerbatimID(const char* val, size_t len) {
+	return StyleVerbatimStrings.GetOrCreateID(val, len);
+}
+
+const char* Doc::GetStyleVerbatim(int id) const {
+	return StyleVerbatimStrings.GetStr(id);
 }
 
 DomEl* Doc::AllocChild(Tag tag, InternalID parentID) {

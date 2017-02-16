@@ -48,6 +48,9 @@ protected:
 	// Cloned image metadata
 	ImageStore ClonedImages;
 
+	// Tracks whether style variables (eg $dark = #aaa) have been baked into the styles yet
+	bool HasBakedStyleVariables = false;
+
 	// Rendered state
 	std::mutex              LayoutLock;             // This guards the pointers LayoutResult and OldLayouts (but not necessarily the content that is pointed to)
 	LayoutResult*           LatestLayout = nullptr; // Most recent layout performed
@@ -55,5 +58,6 @@ protected:
 
 	void PurgeOldLayouts();
 	void PopulateIDToNode(LayoutResult* res, RenderDomNode* node);
+	void BakeStyleVariables();
 };
 }
