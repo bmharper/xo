@@ -261,6 +261,16 @@ public:
 	}
 
 	void grow() { growfor(count + 1); }
+
+	void growfor(size_t target) {
+		// Regular growth rate is 2.0, which is what most containers (.NET, STL) use.
+		// There is no theoretical optimal. It's simply a trade-off between memcpy time and wasted VM.
+		size_t ncap = capacity ? capacity : 1;
+		while (ncap < target)
+			ncap = ncap * 2;
+		resizeto(ncap, true);
+	}
+
 	class iterator {
 	private:
 		cheapvec* vec;
@@ -324,15 +334,6 @@ protected:
 
 	bool isinternal(const T* p) const {
 		return (size_t)(p - data) < capacity;
-	}
-
-	void growfor(size_t target) {
-		// Regular growth rate is 2.0, which is what most containers (.NET, STL) use.
-		// There is no theoretical optimal. It's simply a trade-off between memcpy time and wasted VM.
-		size_t ncap = capacity ? capacity : 1;
-		while (ncap < target)
-			ncap = ncap * 2;
-		resizeto(ncap, true);
 	}
 
 	void resize_internal(size_t newsize, bool initmem) {

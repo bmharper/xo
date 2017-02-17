@@ -16,6 +16,7 @@
 #include "Layout/Layout.h"
 #include "Render/Renderer.h"
 #include "Render/RenderDoc.h"
+#include "Render/StyleResolve.h"
 #include "Image/ImageStore.h"
 #include "Image/Image.h"
 #include "SysWnd.h"

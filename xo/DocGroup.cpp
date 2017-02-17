@@ -72,7 +72,6 @@ RenderResult DocGroup::RenderInternal(Image* targetImage) {
 		haveLock = true;
 	}
 
-	// TODO: If AnyAnimationsRunning(), then we are not idle
 	bool docValid    = Doc->UI.GetViewportWidth() != 0 && Doc->UI.GetViewportHeight() != 0;
 	bool beganRender = false;
 

@@ -43,6 +43,7 @@ protected:
 	static void Set(RenderStack& stack, const DomEl* node, const StyleClass& klass);
 	static void Set(RenderStack& stack, const DomEl* node, const Style& style);
 	static void SetInherited(RenderStack& stack, const DomEl* node, StyleCategories cat);
+	static void SetOrExplode(RenderStack& stack, const DomEl* node, RenderStackEl& result, StyleAttrib attrib);
 	static void SetFinal(RenderStackEl& result, StyleAttrib attrib);
 };
 

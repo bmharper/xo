@@ -49,8 +49,7 @@ public:
 	void       MakeFreeIDsUsable();                                                  // All of our dependent renderers have been updated, we can move FreeIDs over to UsableIDs.
 	void       CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const; // Used to make a read-only clone for the renderer. Preserves existing.
 	InternalID InternalIDSize() const;                                               // Returns the size of the InternalID table
-	//void				CloneFastInto( Doc& c, uint32_t cloneFlags, RenderStats& stats ) const;	// Used to make a read-only clone for the renderer. Starts from scratch.
-	DocGroup* GetDocGroup() const { return Group; }
+	DocGroup*  GetDocGroup() const { return Group; }
 
 	// Style Classes
 	bool        ClassParse(const char* klass, const char* style, size_t styleMaxLen = -1); // Set the class, overwriting any previously set style

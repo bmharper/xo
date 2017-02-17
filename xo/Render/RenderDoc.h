@@ -58,6 +58,6 @@ protected:
 
 	void PurgeOldLayouts();
 	void PopulateIDToNode(LayoutResult* res, RenderDomNode* node);
-	void BakeStyleVariables();
+	void BakeStyleVariables(); // Bake the value of style variables such as $dark-outline = #333
 };
 }

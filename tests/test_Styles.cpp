@@ -21,6 +21,8 @@ static bool EQUALS(const xo::StyleAttrib& a, const xo::StyleAttrib& b) {
 TESTFUNC(StyleVars) {
 	{
 		xo::Doc doc(nullptr);
+		
+		// Notice that $dark-border has a nested variable
 		doc.ParseStyleSheet(R"(
 			$dark-color2 = #ccc;
 			$dark-border = 1px 2px 3px 4px $dark-color2;
@@ -31,12 +33,25 @@ TESTFUNC(StyleVars) {
 		)");
 		TTASSERT(EQ(doc.StyleVar("$dark-color2"), "#ccc"));
 		TTASSERT(EQ(doc.StyleVar("$dark-border"), "1px 2px 3px 4px $dark-color2"));
+		
 		auto thing = doc.ClassStyles.GetOrCreate("thing");
 		TTASSERT(thing);
+
+		// Verify sanity of 'thing' class - this is before variable bake
 		const auto& attribs = thing->Default.Attribs;
 		TTASSERT(attribs.size() == 5);
 		TTASSERT(attribs[0].Category == xo::CatGenBorder && attribs[0].Flags == xo::StyleAttrib::FlagVerbatim);
 		TTASSERT(attribs[1].Category == xo::CatPadding_Left && attribs[1].GetSize().Val == 2);
+
+		// Add 'thing' class to DOM root
+		doc.Root.AddClass("thing");
+
+		xo::StyleResolveOnceOff res(&doc.Root);
+		TTASSERT(res.RS->Get(xo::CatBorderColor_Left).GetColor() == xo::Color(0xcc, 0xcc, 0xcc, 255));
+		TTASSERT(res.RS->Get(xo::CatBorderColor_Bottom).GetColor() == xo::Color(0xcc, 0xcc, 0xcc, 255));
+		TTASSERT(res.RS->Get(xo::CatBorder_Left).GetSize() == xo::Size::Pixels(1));
+		TTASSERT(res.RS->Get(xo::CatBorder_Bottom).GetSize() == xo::Size::Pixels(4));
+		TTASSERT(res.RS->Get(xo::CatPadding_Bottom).GetSize() == xo::Size::Pixels(2));
 	}
 }
 

@@ -38,30 +38,13 @@ void Doc::ResetModifiedBitmap() {
 	if (ChildIsModified.size() != 0)
 		ChildIsModified.fill(false);
 	StyleVariables.ResetModified();
+	StyleVerbatimStrings.ResetModified();
 }
 
 void Doc::MakeFreeIDsUsable() {
 	UsableIDs += FreeIDs;
 	FreeIDs.clear();
 }
-
-/*
-void Doc::CloneFastInto( Doc& c, uint32_t cloneFlags, RenderStats& stats ) const
-{
-	// this code path died...
-	XO_ASSERT(false);
-
-	//c.Reset();
-
-	if ( c.ChildByInternalID.size() != ChildByInternalID.size() )
-		c.ChildByInternalID.resize( ChildByInternalID.size() );
-	c.ChildByInternalID.nullfill();
-	Root.CloneFastInto( c.Root, &c.Pool, cloneFlags );
-
-	ClassStyles.CloneFastInto( c.ClassStyles, &c.Pool );
-	CloneStaticArrayWithCloneFastInto( c.TagStyles, TagStyles, &c.Pool );
-}
-*/
 
 // This clones only the objects that are marked as modified.
 void Doc::CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const {
@@ -107,6 +90,7 @@ void Doc::CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const {
 
 	c.StyleVariables.CloneFrom_Incremental(StyleVariables);
 	c.Strings.CloneFrom_Incremental(Strings);
+	c.StyleVerbatimStrings.CloneFrom_Incremental(StyleVerbatimStrings);
 
 	c.Version = Version;
 
@@ -148,6 +132,7 @@ bool Doc::ParseStyleSheet(const char* sheet) {
 }
 
 void Doc::SetStyleVar(const char* var, const char* val) {
+	XO_ASSERT(strlen(val) <= MaxVarNameLen);
 	StyleVariables.Set(var, val);
 }
 

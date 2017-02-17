@@ -21,12 +21,6 @@ inline bool IsNumeric(char c) {
 	return (c >= '0' && c <= '9') || (c == '.') || (c == '-');
 }
 
-// This is parsing whitespace, not DOM/textual whitespace
-// In other words, it is the space between the comma and verdana in "font-family: verdana, arial",
-static bool IsWhite(char c) {
-	return c == 9 || c == 32 || c == 10 || c == 13;
-}
-
 static bool IsAlpha(char c) {
 	return (c >= 'a' && c <= 'z') ||
 	       (c >= 'A' && c <= 'Z');
@@ -84,7 +78,7 @@ static int FindSpaces(const char* s, size_t len, int (&spaces)[10], bool& hasDol
 	for (size_t i = 0; i < len && nspaces < arraysize(spaces); i++) {
 		if (s[i] == '$')
 			hasDollar = true;
-		if (IsWhite(s[i]))
+		if (IsWhitespace(s[i]))
 			spaces[nspaces++] = (int) i;
 	}
 	// Fill the remaining members of 'spaces' with 'len', so that the parser
@@ -93,6 +87,77 @@ static int FindSpaces(const char* s, size_t len, int (&spaces)[10], bool& hasDol
 		spaces[i] = (int) len;
 	return nspaces;
 }
+
+const char* CatNameTable[CatEND] = {
+    nullptr,
+    "color",
+    "padding_use_me_0",
+    "background",
+    "backgroundimage",
+    "text_align_vertical",
+
+    "break",
+    "canfocus",
+    "cursor",
+
+    "padding_use_me_1",
+    "padding_use_me_2",
+    "padding_use_me_3",
+
+    "margin-left",
+    "margin-top",
+    "margin-right",
+    "margin-bottom",
+
+    "padding-left",
+    "padding-top",
+    "padding-right",
+    "padding-bottom",
+
+    "border-left",
+    "border-top",
+    "border-right",
+    "border-bottom",
+
+    "border-color-left",
+    "border-color-top",
+    "border-color-right",
+    "border-color-bottom",
+
+    "border-radius-top-left",
+    "border-radius-top-right",
+    "border-radius-bottom-right",
+    "border-radius-bottom-left",
+
+    "width",
+    "height",
+
+    "top",
+    "vcenter",
+    "bottom",
+    "baseline",
+
+    "left",
+    "hcenter",
+    "right",
+
+    "font-size",
+    "font-family",
+
+    "position",
+    "flow-context",
+    "flow-axis",
+    "flow-direction-horizontal",
+    "flow-direction-vertical",
+    "box-sizing",
+    "bump",
+
+    "margin",
+    "padding",
+    "border",
+    "border-color",
+    "border-radius",
+};
 
 bool Size::Parse(const char* s, size_t len, Size& v) {
 	// 1.23em
@@ -443,7 +508,7 @@ static bool ParseFontFamily(const char* s, size_t len, FontID& v) {
 		} else {
 			if (i == len)
 				break;
-			if (IsWhite(s[i]))
+			if (IsWhitespace(s[i]))
 				continue;
 			onFont        = true;
 			buf[bufPos++] = s[i];
@@ -460,9 +525,9 @@ static bool ParseFontFamily(const char* s, size_t len, FontID& v) {
 
 template <size_t BufSize>
 static void ParseExtractString(const char* t, size_t start, size_t end, char (&nameBuf)[BufSize]) {
-	while (start < end && IsWhite(t[start]))
+	while (start < end && IsWhitespace(t[start]))
 		start++;
-	while (end > start + 1 && IsWhite(t[end - 1]))
+	while (end > start + 1 && IsWhitespace(t[end - 1]))
 		end--;
 	if (end - start > BufSize - 1)
 		end = start + BufSize - 1;
@@ -500,7 +565,7 @@ bool Style::ParseSheet(const char* t, Doc* doc) {
 			} else if (IsAlpha(c)) {
 				S           = STYLE_NAME;
 				nameStartAt = i;
-			} else if (!IsWhite(c)) {
+			} else if (!IsWhitespace(c)) {
 				ParseFail("Unexpected character '%c' at position %d", c, (int) i);
 				return false;
 			}
@@ -510,7 +575,7 @@ bool Style::ParseSheet(const char* t, Doc* doc) {
 				ParseExtractString(t, nameStartAt, i, nameBuf);
 				S             = STYLE_VAL;
 				braceOpenedAt = i + 1;
-			} else if (!(IsWhite(c) || IsIdent(c))) {
+			} else if (!(IsWhitespace(c) || IsIdent(c))) {
 				ParseFail("Unexpected character '%c' at position %d", c, (int) i);
 				return false;
 			}
@@ -520,7 +585,7 @@ bool Style::ParseSheet(const char* t, Doc* doc) {
 				ParseExtractString(t, nameStartAt, i, nameBuf);
 				S          = VAR_VAL;
 				valStartAt = i + 1;
-			} else if (!(IsWhite(c) || IsIdent(c))) {
+			} else if (!(IsWhitespace(c) || IsIdent(c))) {
 				ParseFail("Unexpected character '%c' at position %d", c, (int) i);
 				return false;
 			}
@@ -566,7 +631,7 @@ bool Style::Parse(const char* t, size_t maxLen, Doc* doc) {
 	for (size_t i = 0; true; i++) {
 		bool eof = i == maxLen || t[i] == 0;
 		char c   = eof ? 0 : t[i];
-		if (IsWhite(c)) {
+		if (IsWhitespace(c)) {
 		} else if (c == ':') {
 			eq = i;
 		} else if (c == '-') {
@@ -574,6 +639,7 @@ bool Style::Parse(const char* t, size_t maxLen, Doc* doc) {
 		} else if (c == ';' || (eof && startv != -1)) {
 			// clang-format off
 			bool ok = true;
+			// Keep these in sync with CatNameTable
 			//if (HasDollar(t, startv, i))                                  { ok = ParseMacro(TSTART, TLEN, *this); }
 			if (MATCH(t, startk, eq, "background"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &Color::Parse, CatBackground, *this); }
 			else if (MATCH(t, startk, eq, "color"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &Color::Parse, CatColor, *this); }

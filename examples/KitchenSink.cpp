@@ -467,6 +467,16 @@ void DoEditBox(xo::Doc* doc) {
 	});
 }
 
+void DoStyleVars(xo::Doc* doc) {
+	auto root = &doc->Root;
+	root->StyleParse("background: #fff");
+	doc->SetStyleVar("$btn-bg", "#ccc");
+	doc->SetStyleVar("$btn-border", "#aaa");
+	root->Parse(
+	    "<div style='border: 1px $btn-border; background: $btn-bg; border-radius: 5px; width: 50px; height: 50px; margin: 2px'></div>"
+	);
+}
+
 void InitDOM(xo::Doc* doc) {
 	xo::DomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
@@ -490,7 +500,8 @@ void InitDOM(xo::Doc* doc) {
 	//DoTextQuality(doc);
 	//DoQuadraticSplines(doc);
 	//DoTimer(doc);
-	DoEditBox(doc);
+	//DoEditBox(doc);
+	DoStyleVars(doc);
 
 	body->OnClick([](xo::Event& ev) {
 		//xo::Trace("%f %f\n", ev.PointsAbs[0].x, ev.PointsAbs[0].y);

@@ -6,6 +6,15 @@ namespace xo {
 
 // The list of styles that are inherited by child nodes lives in InheritedStyleCategories
 
+// Maximum length of a style variable name
+static const size_t MaxVarNameLen = 63;
+
+// This is parsing whitespace, not DOM/textual whitespace
+// In other words, it is the space between the comma and verdana in "font-family: verdana, arial",
+inline bool IsWhitespace(char c) {
+	return c == 9 || c == 32 || c == 10 || c == 13;
+}
+
 // Represents a size that is zero, pixels, eye pixels, points, percent, em, ex.
 // Zero is represented as 0 pixels
 // See "layout" documentation for explanation of units.
@@ -72,6 +81,9 @@ struct XO_API Size {
 	}
 
 	static bool Parse(const char* s, size_t len, Size& v);
+
+	bool operator==(const Size& b) const { return Type == b.Type && Val == b.Val; }
+	bool operator!=(const Size& b) const { return Type != b.Type || Val != b.Val; }
 };
 
 // Convenience struct used during layout computation
@@ -220,6 +232,8 @@ enum BumpStyle {
 // The order of the box components (left,top,right,bottom) must be consistent with the order in StyleBox
 // In addition, all 'box' types must fall between Margin_Left and Border_Bottom. This is simply for sanity. It is verified
 // inside Style.SetBox()
+//
+// !!! This must be kept in sync with CatNameTable !!!
 enum StyleCategories {
 	CatNULL = 0,
 	CatColor,
@@ -300,6 +314,8 @@ enum StyleCategories {
 };
 
 static_assert(CatMargin_Left % 4 == 0, "Start of boxes must be multiple of 4");
+
+extern const char* CatNameTable[CatEND];
 
 inline StyleCategories CatMakeBaseBox(StyleCategories c) { return (StyleCategories)(c & ~3); }
 
@@ -422,7 +438,8 @@ public:
 	void SetBool(StyleCategories cat, bool val) { SetU32(cat, val); }
 
 	bool IsNull() const { return Category == CatNULL; }
-	bool IsInherit() const { return Flags == FlagInherit; }
+	bool IsInherit() const { return !!(Flags & FlagInherit); }
+	bool IsVerbatim() const { return !!(Flags & FlagVerbatim); }
 	bool IsHorzBinding() const { return Category >= CatHorzBinding_FIRST && Category <= CatHorzBinding_LAST; }
 	bool IsVertBinding() const { return Category >= CatVertBinding_FIRST && Category <= CatVertBinding_LAST; }
 	bool IsBindingTypeEnum() const { return SubType == SubType_EnumBinding; }
@@ -443,6 +460,7 @@ public:
 	HorizontalBindings GetHorizontalBinding() const { return (HorizontalBindings) ValU32; }
 	VerticalBindings   GetVerticalBinding() const { return (VerticalBindings) ValU32; }
 	BumpStyle          GetBump() const { return (BumpStyle) ValU32; }
+	int                GetVerbatimID() const { return ValU32; }
 
 	const char* GetBackgroundImage(StringTable* strings) const;
 	FontID      GetFont() const;
