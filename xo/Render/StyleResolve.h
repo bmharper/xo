@@ -38,6 +38,10 @@ public:
 	// Resolves the given node, and places its style on the top of the stack
 	static void ResolveAndPush(RenderStack& stack, const DomNode* node);
 
+	// The 'doc' here is not const, because an expanded variable could cause a new string object
+	// to be created in the document's string table. For example, an image reference.
+	static bool ExplodeVerbatimAttrib(Doc* doc, const StyleAttrib& attrib, cheapvec<char>& bufTemp, Style& explodeTemp);
+
 protected:
 	static void Set(RenderStack& stack, const DomEl* node, size_t n, const StyleAttrib* vals);
 	static void Set(RenderStack& stack, const DomEl* node, const StyleClass& klass);

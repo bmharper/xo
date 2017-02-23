@@ -132,7 +132,7 @@ bool Doc::ParseStyleSheet(const char* sheet) {
 }
 
 void Doc::SetStyleVar(const char* var, const char* val) {
-	XO_ASSERT(strlen(val) <= MaxVarNameLen);
+	XO_ASSERT(strlen(var) <= MaxStyleVarNameLen);
 	StyleVariables.Set(var, val);
 }
 

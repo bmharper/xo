@@ -3,6 +3,7 @@
 #include "Style.h"
 #include "CloneHelpers.h"
 #include "Text/FontStore.h"
+#include "Render/StyleResolve.h"
 
 namespace xo {
 
@@ -51,7 +52,7 @@ static bool MATCH(const char* s, size_t start, size_t end, const char* truth, ui
 				return false;
 		}
 	}
-	return true;
+	return *truth == 0;
 }
 
 static uint8_t ParseHexChar(char ch) {
@@ -86,6 +87,18 @@ static int FindSpaces(const char* s, size_t len, int (&spaces)[10], bool& hasDol
 	for (size_t i = nspaces; i < 10; i++)
 		spaces[i] = (int) len;
 	return nspaces;
+}
+
+static StyleCategories CatUngenerify(StyleCategories c) {
+	switch (c) {
+	case CatGenMargin: return CatMargin_Left;
+	case CatGenPadding: return CatPadding_Left;
+	case CatGenBorder: return CatBorder_Left;
+	case CatGenBorderColor: return CatBorderColor_Left;
+	case CatGenBorderRadius: return CatBorderRadius_TL;
+	default:
+		return c;
+	}
 }
 
 const char* CatNameTable[CatEND] = {
@@ -367,11 +380,13 @@ FontID StyleAttrib::GetFont() const {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static bool ParseMacro(const char* s, size_t len, StyleCategories cat, Style& style) {
-}
-
 template <typename T>
-static bool ParseSingleAttrib(const char* s, size_t len, bool (*parseFunc)(const char* s, size_t len, T& t), StyleCategories cat, Style& style) {
+static bool ParseSingleAttrib(const char* s, size_t len, bool (*parseFunc)(const char* s, size_t len, T& t), StyleCategories cat, Doc* doc, Style& style) {
+	if (HasDollar(s, 0, len)) {
+		style.SetVerbatim(cat, doc->GetOrCreateStyleVerbatimID(s, len));
+		return true;
+	}
+
 	T val;
 	if (parseFunc(s, len, val)) {
 		StyleAttrib attrib;
@@ -400,13 +415,16 @@ static void ParseString(const char* s, size_t len, StyleCategories cat, Doc* doc
 	style.Set(attrib);
 }
 
-static bool ParseBool(const char* s, size_t len, StyleCategories cat, Style& style) {
+static bool ParseBool(const char* s, size_t len, StyleCategories cat, Doc* doc, Style& style) {
 	bool val;
-	if (len == 4 && s[0] == 't')
+	if (len == 4 && s[0] == 't') {
 		val = true;
-	else if (len == 5 && s[0] == 'f')
+	} else if (len == 5 && s[0] == 'f') {
 		val = false;
-	else {
+	} else if (s[0] == '$') {
+		style.SetVerbatim(cat, doc->GetOrCreateStyleVerbatimID(s, len));
+		return true;
+	} else {
 		ParseFail("Parse failed, illegal boolean value: '%.*s'. Valid values are 'true' and 'false'.\n", (int) len, s);
 		return false;
 	}
@@ -416,26 +434,44 @@ static bool ParseBool(const char* s, size_t len, StyleCategories cat, Style& sty
 	return true;
 }
 
+// Returns a modified category, based on 'base', or CatNULL if none match
+StyleCategories SubCategoryOffsetLTRB(StyleCategories base, const char* subCategory, size_t subCategoryLen) {
+	int offset = -1;
+	if (MATCH(subCategory, 0, subCategoryLen, "left"))
+		offset = 0;
+	else if (MATCH(subCategory, 0, subCategoryLen, "top"))
+		offset = 1;
+	else if (MATCH(subCategory, 0, subCategoryLen, "right"))
+		offset = 2;
+	else if (MATCH(subCategory, 0, subCategoryLen, "bottom"))
+		offset = 3;
+	else {
+		ParseFail("Parse failed, unknown sub-type: '%.*s'\n", (int) subCategoryLen, subCategory);
+		return CatNULL;
+	}
+	return (StyleCategories) (CatUngenerify(base) + offset);
+}
+
 template <typename T>
-static bool ParseBox(const char* s, size_t len, const char* subCategory, size_t subCategoryLen, bool (*parseFunc)(const char* s, size_t len, T& t), StyleCategories cat, Style& style) {
+static bool ParseBox(const char* s, size_t len, const char* subCategory, size_t subCategoryLen, bool (*parseFunc)(const char* s, size_t len, T& t), StyleCategories cat, Doc* doc, Style& style) {
+	if (subCategory) {
+		cat = SubCategoryOffsetLTRB(cat, subCategory, subCategoryLen);
+		if (cat == CatNULL)
+			return false;
+	}
+
+	if (HasDollar(s, 0, len)) {
+		style.SetVerbatim(cat, doc->GetOrCreateStyleVerbatimID(s, len));
+		return true;
+	}
+
+	cat = CatUngenerify(cat);
+
 	T val;
 	if (parseFunc(s, len, val)) {
 		if (subCategory) {
-			int offset = -1;
-			if (MATCH(subCategory, 0, subCategoryLen, "left"))
-				offset = 0;
-			else if (MATCH(subCategory, 0, subCategoryLen, "top"))
-				offset = 1;
-			else if (MATCH(subCategory, 0, subCategoryLen, "right"))
-				offset = 2;
-			else if (MATCH(subCategory, 0, subCategoryLen, "bottom"))
-				offset = 3;
-			if (offset == -1) {
-				ParseFail("Parse failed, unknown sub-type: '%.*s'\n", (int) subCategoryLen, subCategory);
-				return false;
-			}
 			StyleAttrib attrib;
-			attrib.Set((StyleCategories)(cat + offset), val.Left);
+			attrib.Set(cat, val.Left);
 			style.Set(attrib);
 			return true;
 		}
@@ -448,25 +484,36 @@ static bool ParseBox(const char* s, size_t len, const char* subCategory, size_t 
 }
 
 template <typename T>
-static bool ParseCornerBox(const char* s, size_t len, const char* subCategory, size_t subCategoryLen, bool (*parseFunc)(const char* s, size_t len, T& t), StyleCategories cat, Style& style) {
+static bool ParseCornerBox(const char* s, size_t len, const char* subCategory, size_t subCategoryLen, bool (*parseFunc)(const char* s, size_t len, T& t), StyleCategories cat, Doc* doc, Style& style) {
+	if (subCategory) {
+		int offset = -1;
+		if (MATCH(subCategory, 0, subCategoryLen, "top-left"))
+			offset = 0;
+		else if (MATCH(subCategory, 0, subCategoryLen, "top-right"))
+			offset = 1;
+		else if (MATCH(subCategory, 0, subCategoryLen, "bottom-right"))
+			offset = 2;
+		else if (MATCH(subCategory, 0, subCategoryLen, "bottom-left"))
+			offset = 3;
+		if (offset == -1) {
+			ParseFail("Parse failed, unknown sub-type: '%.*s'\n", (int) subCategoryLen, subCategory);
+			return false;
+		}
+		cat = (StyleCategories)(cat + offset);
+	}
+
+	if (HasDollar(s, 0, len)) {
+		style.SetVerbatim(cat, doc->GetOrCreateStyleVerbatimID(s, len));
+		return true;
+	}
+
+	cat = CatUngenerify(cat);
+
 	T val;
 	if (parseFunc(s, len, val)) {
 		if (subCategory) {
-			int offset = -1;
-			if (MATCH(subCategory, 0, subCategoryLen, "top-left"))
-				offset = 0;
-			else if (MATCH(subCategory, 0, subCategoryLen, "top-right"))
-				offset = 1;
-			else if (MATCH(subCategory, 0, subCategoryLen, "bottom-right"))
-				offset = 2;
-			else if (MATCH(subCategory, 0, subCategoryLen, "bottom-left"))
-				offset = 3;
-			if (offset == -1) {
-				ParseFail("Parse failed, unknown sub-type: '%.*s'\n", (int) subCategoryLen, subCategory);
-				return false;
-			}
 			StyleAttrib attrib;
-			attrib.Set((StyleCategories)(cat + offset), val.TopLeft);
+			attrib.Set(cat, val.TopLeft);
 			style.Set(attrib);
 			return true;
 		}
@@ -478,8 +525,10 @@ static bool ParseCornerBox(const char* s, size_t len, const char* subCategory, s
 	}
 }
 
-static bool ParseDirect(const char* s, size_t len, bool (*parseFunc)(const char* s, size_t len, Style& style, Doc* doc), Style& style, Doc* doc) {
-	if (parseFunc(s, len, style, doc)) {
+static bool ParseDirect(const char* s, size_t len, const char* subCategory, size_t subCategoryLen,
+                        bool (*parseFunc)(const char* s, size_t len, const char* subCategory, size_t subCategoryLen, Doc* doc, Style& style),
+                        Doc* doc, Style& style) {
+	if (parseFunc(s, len, subCategory, subCategoryLen, doc, style)) {
 		return true;
 	} else {
 		ParseFail("Parse failed on: '%.*s'\n", (int) len, s);
@@ -640,42 +689,37 @@ bool Style::Parse(const char* t, size_t maxLen, Doc* doc) {
 			// clang-format off
 			bool ok = true;
 			// Keep these in sync with CatNameTable
-			//if (HasDollar(t, startv, i))                                  { ok = ParseMacro(TSTART, TLEN, *this); }
-			if (MATCH(t, startk, eq, "background"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &Color::Parse, CatBackground, *this); }
-			else if (MATCH(t, startk, eq, "color"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &Color::Parse, CatColor, *this); }
-			else if (MATCH(t, startk, eq, "width"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatWidth, *this); }
-			else if (MATCH(t, startk, eq, "height"))                      { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatHeight, *this); }
-			else if (MATCH(t, startk, eq, "padding"))                     { ok = ParseBox(TSTART, TLEN, nullptr, 0, &StyleBox::Parse, CatPadding_Left, *this); }
-			else if (MATCH(t, startk, eq, "padding-", MatchPrefix))       { ok = ParseBox(TSTART, TLEN, KSTART + 8, KLEN - 8, &StyleBox::Parse, CatPadding_Left, *this); }
-			else if (MATCH(t, startk, eq, "margin"))                      { ok = ParseBox(TSTART, TLEN, nullptr, 0, &StyleBox::Parse, CatMargin_Left, *this); }
-			else if (MATCH(t, startk, eq, "margin-", MatchPrefix))        { ok = ParseBox(TSTART, TLEN, KSTART + 7, KLEN - 7, &StyleBox::Parse, CatMargin_Left, *this); }
-			else if (MATCH(t, startk, eq, "position"))                    { ok = ParseSingleAttrib(TSTART, TLEN, &ParsePositionType, CatPosition, *this); }
-			else if (MATCH(t, startk, eq, "border"))                      { ok = ParseDirect(TSTART, TLEN, &ParseBorder, *this, doc); }
-			else if (MATCH(t, startk, eq, "border-radius"))               { ok = ParseCornerBox(TSTART, TLEN, nullptr, 0, &CornerStyleBox::Parse, CatBorderRadius_TL, *this); }
-			else if (MATCH(t, startk, eq, "border-radius-", MatchPrefix)) { ok = ParseCornerBox(TSTART, TLEN, KSTART + 14, KLEN - 14, &CornerStyleBox::Parse, CatBorderRadius_TL, *this); }
-			//else if (MATCH(t, startk, eq, "border-radius"))             { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatBorderRadius, *this); }
-			//else if ( MATCH(t, startk, eq, "left") )                    { ok = ParseSingleAttrib( TSTART, TLEN, &Size::Parse, CatLeft, *this ); }
-			//else if ( MATCH(t, startk, eq, "right") )                   { ok = ParseSingleAttrib( TSTART, TLEN, &Size::Parse, CatRight, *this ); }
-			//else if ( MATCH(t, startk, eq, "top") )                     { ok = ParseSingleAttrib( TSTART, TLEN, &Size::Parse, CatTop, *this ); }
-			//else if ( MATCH(t, startk, eq, "bottom") )                  { ok = ParseSingleAttrib( TSTART, TLEN, &Size::Parse, CatBottom, *this ); }
-			else if (MATCH(t, startk, eq, "break"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &ParseBreakType, CatBreak, *this); }
-			else if (MATCH(t, startk, eq, "canfocus"))                    { ok = ParseBool(TSTART, TLEN, CatCanFocus, *this); }
-			else if (MATCH(t, startk, eq, "cursor"))                      { ok = ParseSingleAttrib(TSTART, TLEN, &ParseCursor, CatCursor, *this); }
-			else if (MATCH(t, startk, eq, "flow-context"))                { ok = ParseSingleAttrib(TSTART, TLEN, &ParseFlowContext, CatFlowContext, *this); }
-			else if (MATCH(t, startk, eq, "flow-axis"))                   { ok = ParseSingleAttrib(TSTART, TLEN, &ParseFlowAxis, CatFlowAxis, *this); }
-			else if (MATCH(t, startk, eq, "flow-direction-horizontal"))   { ok = ParseSingleAttrib(TSTART, TLEN, &ParseFlowDirection, CatFlowDirection_Horizontal, *this); }
-			else if (MATCH(t, startk, eq, "flow-direction-vertical"))     { ok = ParseSingleAttrib(TSTART, TLEN, &ParseFlowDirection, CatFlowDirection_Vertical, *this); }
-			else if (MATCH(t, startk, eq, "box-sizing"))                  { ok = ParseSingleAttrib(TSTART, TLEN, &ParseBoxSize, CatBoxSizing, *this); }
-			else if (MATCH(t, startk, eq, "font-size"))                   { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatFontSize, *this); }
-			else if (MATCH(t, startk, eq, "font-family"))                 { ok = ParseSingleAttrib(TSTART, TLEN, &ParseFontFamily, CatFontFamily, *this); }
-			else if (MATCH(t, startk, eq, "left"))                        { ok = ParseBinding(true, TSTART, TLEN, CatLeft, *this); }
-			else if (MATCH(t, startk, eq, "hcenter"))                     { ok = ParseBinding(true, TSTART, TLEN, CatHCenter, *this); }
-			else if (MATCH(t, startk, eq, "right"))                       { ok = ParseBinding(true, TSTART, TLEN, CatRight, *this); }
-			else if (MATCH(t, startk, eq, "top"))                         { ok = ParseBinding(false, TSTART, TLEN, CatTop, *this); }
-			else if (MATCH(t, startk, eq, "vcenter"))                     { ok = ParseBinding(false, TSTART, TLEN, CatVCenter, *this); }
-			else if (MATCH(t, startk, eq, "bottom"))                      { ok = ParseBinding(false, TSTART, TLEN, CatBottom, *this); }
-			else if (MATCH(t, startk, eq, "baseline"))                    { ok = ParseBinding(false, TSTART, TLEN, CatBaseline, *this); }
-			else if (MATCH(t, startk, eq, "bump"))                        { ok = ParseSingleAttrib(TSTART, TLEN, &ParseBump, CatBump, *this); }
+			if (MATCH(t, startk, eq, "background"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &Color::Parse, CatBackground, doc, *this); }
+			else if (MATCH(t, startk, eq, "color"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &Color::Parse, CatColor, doc, *this); }
+			else if (MATCH(t, startk, eq, "width"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatWidth, doc, *this); }
+			else if (MATCH(t, startk, eq, "height"))                      { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatHeight, doc, *this); }
+			else if (MATCH(t, startk, eq, "padding"))                     { ok = ParseBox(TSTART, TLEN, nullptr, 0, &StyleBox::Parse, CatGenPadding, doc, *this); }
+			else if (MATCH(t, startk, eq, "padding-", MatchPrefix))       { ok = ParseBox(TSTART, TLEN, KSTART + 8, KLEN - 8, &StyleBox::Parse, CatPadding_Left, doc, *this); }
+			else if (MATCH(t, startk, eq, "margin"))                      { ok = ParseBox(TSTART, TLEN, nullptr, 0, &StyleBox::Parse, CatGenMargin, doc, *this); }
+			else if (MATCH(t, startk, eq, "margin-", MatchPrefix))        { ok = ParseBox(TSTART, TLEN, KSTART + 7, KLEN - 7, &StyleBox::Parse, CatMargin_Left, doc, *this); }
+			else if (MATCH(t, startk, eq, "position"))                    { ok = ParseSingleAttrib(TSTART, TLEN, &ParsePositionType, CatPosition, doc, *this); }
+			else if (MATCH(t, startk, eq, "border-radius"))               { ok = ParseCornerBox(TSTART, TLEN, nullptr, 0, &CornerStyleBox::Parse, CatGenBorderRadius, doc, *this); }
+			else if (MATCH(t, startk, eq, "border-radius-", MatchPrefix)) { ok = ParseCornerBox(TSTART, TLEN, KSTART + 14, KLEN - 14, &CornerStyleBox::Parse, CatBorderRadius_TL, doc, *this); }
+			else if (MATCH(t, startk, eq, "border"))                      { ok = ParseDirect(TSTART, TLEN, nullptr, 0, &ParseBorder, doc, *this); }
+			else if (MATCH(t, startk, eq, "border-", MatchPrefix))        { ok = ParseDirect(TSTART, TLEN, KSTART + 7, KLEN - 7, &ParseBorder, doc, *this); }
+			else if (MATCH(t, startk, eq, "break"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &ParseBreakType, CatBreak, doc, *this); }
+			else if (MATCH(t, startk, eq, "canfocus"))                    { ok = ParseBool(TSTART, TLEN, CatCanFocus, doc, *this); }
+			else if (MATCH(t, startk, eq, "cursor"))                      { ok = ParseSingleAttrib(TSTART, TLEN, &ParseCursor, CatCursor, doc, *this); }
+			else if (MATCH(t, startk, eq, "flow-context"))                { ok = ParseSingleAttrib(TSTART, TLEN, &ParseFlowContext, CatFlowContext, doc, *this); }
+			else if (MATCH(t, startk, eq, "flow-axis"))                   { ok = ParseSingleAttrib(TSTART, TLEN, &ParseFlowAxis, CatFlowAxis, doc, *this); }
+			else if (MATCH(t, startk, eq, "flow-direction-horizontal"))   { ok = ParseSingleAttrib(TSTART, TLEN, &ParseFlowDirection, CatFlowDirection_Horizontal, doc, *this); }
+			else if (MATCH(t, startk, eq, "flow-direction-vertical"))     { ok = ParseSingleAttrib(TSTART, TLEN, &ParseFlowDirection, CatFlowDirection_Vertical, doc, *this); }
+			else if (MATCH(t, startk, eq, "box-sizing"))                  { ok = ParseSingleAttrib(TSTART, TLEN, &ParseBoxSize, CatBoxSizing, doc, *this); }
+			else if (MATCH(t, startk, eq, "font-size"))                   { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatFontSize, doc, *this); }
+			else if (MATCH(t, startk, eq, "font-family"))                 { ok = ParseSingleAttrib(TSTART, TLEN, &ParseFontFamily, CatFontFamily, doc, *this); }
+			else if (MATCH(t, startk, eq, "left"))                        { ok = ParseBinding(true, TSTART, TLEN, CatLeft, doc, *this); }
+			else if (MATCH(t, startk, eq, "hcenter"))                     { ok = ParseBinding(true, TSTART, TLEN, CatHCenter, doc, *this); }
+			else if (MATCH(t, startk, eq, "right"))                       { ok = ParseBinding(true, TSTART, TLEN, CatRight, doc, *this); }
+			else if (MATCH(t, startk, eq, "top"))                         { ok = ParseBinding(false, TSTART, TLEN, CatTop, doc, *this); }
+			else if (MATCH(t, startk, eq, "vcenter"))                     { ok = ParseBinding(false, TSTART, TLEN, CatVCenter, doc, *this); }
+			else if (MATCH(t, startk, eq, "bottom"))                      { ok = ParseBinding(false, TSTART, TLEN, CatBottom, doc, *this); }
+			else if (MATCH(t, startk, eq, "baseline"))                    { ok = ParseBinding(false, TSTART, TLEN, CatBaseline, doc, *this); }
+			else if (MATCH(t, startk, eq, "bump"))                        { ok = ParseSingleAttrib(TSTART, TLEN, &ParseBump, CatBump, doc, *this); }
 			// clang-format on
 			else {
 				ok = false;
@@ -1065,6 +1109,43 @@ void StyleTable::CloneFastInto(StyleTable& c, Pool* pool) const {
 	ClonePodvecWithMemCopy(c.Classes, Classes, pool);
 }
 
+void StyleTable::ExpandVerbatimVariables(Doc* doc) {
+	cheapvec<char> buf;
+
+	for (auto& c : Classes) {
+		Style* pseudoGroup = c.All4PseudoTypes();
+		for (size_t i = 0; i < 4; i++) {
+			Style& pseudo = pseudoGroup[i];
+
+			// Instead of modifying the list of attributes in-place, which can potentially
+			// involve a lot of memmoves, we rather build up a new style, the moment we
+			// detect any verbatim replacements
+			Style newStyle;
+			bool  usingNewStyle = false;
+
+			for (size_t j = 0; j < pseudo.Attribs.size(); j++) {
+				const StyleAttrib& attrib = pseudo.Attribs[j];
+				if (attrib.IsVerbatim()) {
+					if (!usingNewStyle) {
+						usingNewStyle = true;
+						for (size_t k = 0; k < j; k++)
+							newStyle.Attribs.push(pseudo.Attribs[k]);
+					}
+					// ignore parsing errors inside ExplodeVerbatimAttrib - there is nothing we can do about it
+					StyleResolver::ExplodeVerbatimAttrib(doc, attrib, buf, newStyle);
+				} else {
+					// not verbatim
+					if (usingNewStyle)
+						newStyle.Attribs.push(attrib);
+				}
+			}
+
+			if (usingNewStyle)
+				std::swap(newStyle, pseudo);
+		}
+	}
+}
+
 void StyleTable::DebugDump() const {
 	Trace("%d classes:\n", (int) NameToIndex.size());
 	for (auto it : NameToIndex)
@@ -1225,7 +1306,12 @@ XO_API bool ParseVerticalBinding(const char* s, size_t len, VerticalBindings& t)
 	return false;
 }
 
-XO_API bool ParseBinding(bool isHorz, const char* s, size_t len, StyleCategories cat, Style& style) {
+XO_API bool ParseBinding(bool isHorz, const char* s, size_t len, StyleCategories cat, Doc* doc, Style& style) {
+	if (HasDollar(s, 0, len)) {
+		style.SetVerbatim(cat, doc->GetOrCreateStyleVerbatimID(s, len));
+		return true;
+	}
+
 	StyleAttrib attrib;
 	Size        size;
 	bool        ok = false;
@@ -1278,27 +1364,41 @@ XO_API bool ParseBump(const char* s, size_t len, BumpStyle& t) {
 	return false;
 }
 
-XO_API bool ParseBorder(const char* s, size_t len, Style& style, Doc* doc) {
+XO_API bool ParseBorder(const char* s, size_t len, const char* subCategory, size_t subCategoryLen, Doc* doc, Style& style) {
+	StyleCategories cat = CatGenBorder;
+	if (subCategory) {
+		cat = SubCategoryOffsetLTRB(cat, subCategory, subCategoryLen);
+		if (cat == CatNULL)
+			return false;
+	}
+
 	int  spaces[10];
 	bool hasDollar;
 	int  nspaces = FindSpaces(s, len, spaces, hasDollar);
 	if (hasDollar) {
-		int verbatimID = doc->GetOrCreateStyleVerbatimID(s, len);
-		style.SetVerbatim(CatGenBorder, verbatimID);
+		style.SetVerbatim(cat, doc->GetOrCreateStyleVerbatimID(s, len));
 		return true;
 	}
+
+	StyleCategories catColor = (StyleCategories) (cat + (CatBorderColor_Left - CatBorder_Left));
 
 	if (nspaces == 0) {
 		// 1px		OR
 		// #000
 		Color color;
 		if (Color::Parse(s, len, color)) {
-			style.SetUniformBox(CatBorderColor_Left, color);
+			if (subCategory)
+				style.Set(catColor, color);
+			else
+				style.SetUniformBox(CatBorderColor_Left, color);
 			return true;
 		}
 		Size size;
 		if (Size::Parse(s, len, size)) {
-			style.SetBox(CatBorder_Left, StyleBox::MakeUniform(size));
+			if (subCategory)
+				style.Set(cat, size);
+			else
+				style.SetBox(CatBorder_Left, StyleBox::MakeUniform(size));
 			return true;
 		}
 	} else if (nspaces == 1) {
@@ -1307,12 +1407,17 @@ XO_API bool ParseBorder(const char* s, size_t len, Style& style, Doc* doc) {
 		Color color;
 		if (Size::Parse(s, spaces[0], size)) {
 			if (Color::Parse(s + spaces[0] + 1, len - spaces[0] - 1, color)) {
-				style.SetBox(CatBorder_Left, StyleBox::MakeUniform(size));
-				style.SetUniformBox(CatBorderColor_Left, color);
+				if (subCategory) {
+					style.Set(cat, size);
+					style.Set(catColor, color);
+				} else {
+					style.SetBox(CatBorder_Left, StyleBox::MakeUniform(size));
+					style.SetUniformBox(CatBorderColor_Left, color);
+				}
 				return true;
 			}
 		}
-	} else if (nspaces == 3 || nspaces == 4) {
+	} else if ((nspaces == 3 || nspaces == 4) && !subCategory) {
 		// 1px 2px 3px 4px #000
 		StyleBox box;
 		bool     s1 = Size::Parse(s, spaces[0], box.Left);

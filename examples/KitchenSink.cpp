@@ -470,8 +470,8 @@ void DoEditBox(xo::Doc* doc) {
 void DoStyleVars(xo::Doc* doc) {
 	auto root = &doc->Root;
 	root->StyleParse("background: #fff");
-	doc->SetStyleVar("$btn-bg", "#ccc");
-	doc->SetStyleVar("$btn-border", "#aaa");
+	doc->SetStyleVar("$btn-bg", "#cdc");
+	doc->SetStyleVar("$btn-border", "#aba");
 	root->Parse(
 	    "<div style='border: 1px $btn-border; background: $btn-bg; border-radius: 5px; width: 50px; height: 50px; margin: 2px'></div>"
 	);

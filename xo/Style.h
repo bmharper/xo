@@ -7,7 +7,7 @@ namespace xo {
 // The list of styles that are inherited by child nodes lives in InheritedStyleCategories
 
 // Maximum length of a style variable name
-static const size_t MaxVarNameLen = 63;
+static const size_t MaxStyleVarNameLen = 127;
 
 // This is parsing whitespace, not DOM/textual whitespace
 // In other words, it is the space between the comma and verdana in "font-family: verdana, arial",
@@ -303,7 +303,7 @@ enum StyleCategories {
 	CatBoxSizing,
 	CatBump,
 
-	// Generic categories used for style properties that reference variables
+	// Generic categories used for style properties that reference variables. Use CatUngenerify to make a concret _Left category.
 	CatGenMargin,
 	CatGenPadding,
 	CatGenBorder,
@@ -318,6 +318,9 @@ static_assert(CatMargin_Left % 4 == 0, "Start of boxes must be multiple of 4");
 extern const char* CatNameTable[CatEND];
 
 inline StyleCategories CatMakeBaseBox(StyleCategories c) { return (StyleCategories)(c & ~3); }
+
+// Translate from CatGenMargin to CatMargin_Left, etc.
+StyleCategories CatUngenerify(StyleCategories c);
 
 // Styles that are inherited by default
 // Generally it is text styles that are inherited
@@ -499,7 +502,14 @@ public:
 	void               Set(StyleAttrib attrib);
 	void               Set(StyleCategories cat, StyleBox val);       // This overload is identical to SetBox, but needs to be present for templated parsing functions
 	void               Set(StyleCategories cat, CornerStyleBox val); // Same as above
-	//void					Compute( const Doc& doc, const DomEl& node );
+
+	template <typename T>
+	void Set(StyleCategories cat, const T& v) {
+		StyleAttrib a;
+		a.Set(cat, v);
+		Set(a);
+	}
+
 	void Discard();
 	void CloneSlowInto(Style& c) const;
 	void CloneFastInto(Style& c, Pool* pool) const;
@@ -607,10 +617,12 @@ protected:
 // This is a style class, such as "xo.controls.button"
 class XO_API StyleClass {
 public:
-	Style Default; // Default styles
-	Style Hover;   // Styles present when cursor is over node
-	Style Focus;   // Styles present when object has focus
-	Style Capture; // Styles present when object has input capture
+	Style        Default; // Default styles
+	Style        Hover;   // Styles present when cursor is over node
+	Style        Focus;   // Styles present when object has focus
+	Style        Capture; // Styles present when object has input capture
+	Style*       All4PseudoTypes() { return &Default; }
+	const Style* All4PseudoTypes() const { return &Default; }
 };
 
 // The set of style information that is used by the renderer
@@ -646,12 +658,12 @@ public:
 	StyleClassID      GetClassID(const char* name);
 	void              CloneSlowInto(StyleTable& c) const;             // Does not clone NameToIndex
 	void              CloneFastInto(StyleTable& c, Pool* pool) const; // Does not clone NameToIndex
+	void              ExpandVerbatimVariables(Doc* doc);              // Expand style $variables
 	void              DebugDump() const;
 
 protected:
 	cheapvec<String>        Names; // Names and Classes are parallel
 	cheapvec<StyleClass>    Classes;
-	cheapvec<int>           UnusedSlots;
 	ohash::map<String, int> NameToIndex;
 };
 
@@ -664,7 +676,7 @@ XO_API bool ParseFlowDirection(const char* s, size_t len, FlowDirection& t);
 XO_API bool ParseBoxSize(const char* s, size_t len, BoxSizeType& t);
 XO_API bool ParseHorizontalBinding(const char* s, size_t len, HorizontalBindings& t);
 XO_API bool ParseVerticalBinding(const char* s, size_t len, VerticalBindings& t);
-XO_API bool ParseBinding(bool isHorz, const char* s, size_t len, StyleCategories cat, Style& style);
+XO_API bool ParseBinding(bool isHorz, const char* s, size_t len, StyleCategories cat, Doc* doc, Style& style);
 XO_API bool ParseBump(const char* s, size_t len, BumpStyle& t);
-XO_API bool ParseBorder(const char* s, size_t len, Style& style, Doc* doc);
+XO_API bool ParseBorder(const char* s, size_t len, const char* subCategory, size_t subCategoryLen, Doc* doc, Style& style);
 }

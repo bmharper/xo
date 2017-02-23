@@ -48,9 +48,9 @@ RenderDoc::~RenderDoc() {
 
 RenderResult RenderDoc::Render(RenderBase* driver) {
 	//XOTRACE_RENDER( "RenderDoc: Reset\n" );
-	if (!HasBakedStyleVariables) {
-		XOTRACE_RENDER("RenderDoc: Bake Styles\n");
-		BakeStyleVariables();
+	if (!HasExpandedClassVariables) {
+		XOTRACE_RENDER("RenderDoc: Expand Class Variables\n");
+		ExpandVerbatimClassVariables();
 	}
 
 	LayoutResult* layout = new LayoutResult(Doc);
@@ -88,7 +88,7 @@ void RenderDoc::CopyFromCanonical(const xo::Doc& canonical, RenderStats& stats) 
 	// This must happen after textures are uploaded to the GPU. DocGroup ensures that.
 	ClonedImages.CloneMetadataFrom(canonical.Images);
 
-	HasBakedStyleVariables = false;
+	HasExpandedClassVariables = false;
 }
 
 LayoutResult* RenderDoc::AcquireLatestLayout() {
@@ -134,8 +134,9 @@ void RenderDoc::PopulateIDToNode(LayoutResult* res, RenderDomNode* node) {
 	}
 }
 
-void RenderDoc::BakeStyleVariables() {
-
+void RenderDoc::ExpandVerbatimClassVariables() {
+	HasExpandedClassVariables = true;
+	Doc.ClassStyles.ExpandVerbatimVariables(&Doc);
 }
 
 }

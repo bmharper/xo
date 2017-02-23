@@ -479,6 +479,9 @@ struct GlobalStruct {
 	// NOPE.. it's just too confusing to have this optional. It's always on.
 	//bool						DebugZeroClonedChildList;	// During a document clone, zero out ChildByInternalID before populating. This will ensure that gaps are NULL instead of random memory.
 
+	// Used to reduce console clutter, when showing messages about missing style variables
+	std::atomic<uint32_t> LastStyleLookupFailHash;
+
 	cheapvec<DocGroup*>   Docs;           // Only Main thread is allowed to touch this.
 	TQueue<DocGroup*>     DocAddQueue;    // Documents requesting addition
 	TQueue<DocGroup*>     DocRemoveQueue; // Documents requesting removal
@@ -508,6 +511,7 @@ XO_API void          RunAppLowLevel(MainCallbackLowLevel mainCallback);
 XO_API void          RunApp(MainCallback mainCallback);
 XO_API void          AddOrRemoveDocsFromGlobalList();
 XO_API void          ParseFail(const char* msg, ...);
+XO_API void          StyleVarLookupFailed(const char* var);
 XO_API void          Trace(const char* msg, ...);
 XO_API void          TimeTrace(const char* msg, ...);
 #if XO_PLATFORM_WIN_DESKTOP

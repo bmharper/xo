@@ -48,8 +48,9 @@ protected:
 	// Cloned image metadata
 	ImageStore ClonedImages;
 
-	// Tracks whether style variables (eg $dark = #aaa) have been baked into the styles yet
-	bool HasBakedStyleVariables = false;
+	// Tracks whether style variables (eg $dark = #aaa) have been baked into the class styles yet
+	// Variables on individual DOM element styles are baked in at final resolve time
+	bool HasExpandedClassVariables = false;
 
 	// Rendered state
 	std::mutex              LayoutLock;             // This guards the pointers LayoutResult and OldLayouts (but not necessarily the content that is pointed to)
@@ -58,6 +59,6 @@ protected:
 
 	void PurgeOldLayouts();
 	void PopulateIDToNode(LayoutResult* res, RenderDomNode* node);
-	void BakeStyleVariables(); // Bake the value of style variables such as $dark-outline = #333
+	void ExpandVerbatimClassVariables(); // Expand and parse the value of style variables such as $dark-outline = #333
 };
 }

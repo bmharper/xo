@@ -454,6 +454,16 @@ XO_API void ParseFail(const char* msg, ...) {
 		XO_TRACE_WRITE(buff);
 }
 
+XO_API void StyleVarLookupFailed(const char* var) {
+	// We're not strict about atomicity here on LastStyleLookupFailHash, because we don't care. It's just a warning.
+	uint32_t hash = xo::StringRaw::WrapConstAway(var).GetHashCode();
+	uint32_t last = Globals->LastStyleLookupFailHash;
+	if (hash != last) {
+		Globals->LastStyleLookupFailHash = last;
+		Trace("Style variable %s undefined\n", var);
+	}
+}
+
 XO_API void Trace(const char* msg, ...) {
 	char    buff[2048];
 	va_list va;

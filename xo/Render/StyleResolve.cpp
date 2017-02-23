@@ -23,6 +23,72 @@ void StyleResolver::ResolveAndPush(RenderStack& stack, const DomNode* node) {
 	Set(stack, node, node->GetStyle());
 }
 
+static void RecursiveVariableResolve(const Doc* doc, cheapvec<char>& buf) {
+	// use nameBuf to store a null terminated copy of the variable name, such as $foo
+	char nameBuf[MaxStyleVarNameLen + 1];
+
+	// length of nameBuf
+	size_t j = -1;
+
+	for (size_t i = 0; true; i++) {
+		int c = i == buf.size() ? 32 : buf[i];
+		if (j != -1) {
+			if (IsWhitespace(c) || j == MaxStyleVarNameLen) {
+				nameBuf[j]         = 0;
+				const char* varVal = doc->StyleVar(nameBuf);
+				if (!varVal) {
+					StyleVarLookupFailed(nameBuf);
+					varVal = "";
+				}
+				// rewind to the start of our variable
+				i -= j;
+				// move memory up to make space for the variable
+				size_t orgSize     = buf.count;
+				size_t expandedLen = strlen(varVal);
+				buf.growfor(buf.count - j + expandedLen);
+				buf.count += expandedLen - j;
+				memmove(buf.data + i + expandedLen, buf.data + i + j, orgSize - (i + j));
+				size_t k = 0;
+				for (; varVal[k]; k++) {
+					buf[i + k] = varVal[k];
+				}
+				j = -1;
+			} else {
+				nameBuf[j++] = buf[i];
+			}
+		} else {
+			if (c == '$') {
+				j            = 0;
+				nameBuf[j++] = buf[i];
+			}
+		}
+		if (i == buf.size())
+			break;
+	}
+}
+
+bool StyleResolver::ExplodeVerbatimAttrib(Doc* doc, const StyleAttrib& attrib, cheapvec<char>& bufTemp, Style& explodeInto) {
+	const char* catName  = CatNameTable[attrib.Category];
+	const char* verbatim = doc->GetStyleVerbatim(attrib.GetVerbatimID());
+
+	// resolve variable values recursively
+	auto catLen = strlen(catName);
+	auto varLen = strlen(verbatim);
+
+	// build up a string such as "border: $width $color"
+	size_t totalLen = catLen + 1 + varLen;
+	bufTemp.growfor(totalLen);
+	strcpy(bufTemp.data, catName);
+	bufTemp.data[catLen] = ':';
+
+	memcpy(bufTemp.data + catLen + 1, verbatim, varLen);
+	bufTemp.count = totalLen;
+	RecursiveVariableResolve(doc, bufTemp);
+	bufTemp.push(0);
+
+	return explodeInto.Parse(bufTemp.data, doc);
+}
+
 void StyleResolver::Set(RenderStack& stack, const DomEl* node, const StyleClass& klass) {
 	Set(stack, node, klass.Default);
 
@@ -73,76 +139,19 @@ void StyleResolver::SetInherited(RenderStack& stack, const DomEl* node, StyleCat
 	}
 }
 
-void RecursiveVariableResolve(const Doc* doc, cheapvec<char>& buf) {
-	// use nameBuf to store a null terminated copy of the variable name, such as $foo
-	char nameBuf[MaxVarNameLen + 1];
-
-	// length of nameBuf
-	size_t j = -1;
-
-	for (size_t i = 0; true; i++) {
-		int c = i == buf.size() ? 32 : buf[i];
-		if (j != -1) {
-			if (IsWhitespace(c) || j == MaxVarNameLen) {
-				nameBuf[j] = 0;
-				const char* varVal = doc->StyleVar(nameBuf);
-				if (varVal) {
-					// rewind to the start of our variable
-					i -= j;
-					// move memory up to make space for the variable
-					size_t orgSize = buf.count;
-					size_t expandedLen = strlen(varVal);
-					buf.growfor(buf.count - j + expandedLen);
-					buf.count += expandedLen - j;
-					memmove(buf.data + i + expandedLen, buf.data + i + j, orgSize - (i + j));
-					size_t k = 0;
-					for (; varVal[k]; k++) {
-						buf[i + k] = varVal[k];
-					}
-				}
-				j = -1;
-			} else {
-				nameBuf[j++] = buf[i];
-			}
-		} else {
-			if (c == '$') {
-				j = 0;
-				nameBuf[j++] = buf[i];
-			}
-		}
-		if (i == buf.size())
-			break;
-	}
-}
-
 void StyleResolver::SetOrExplode(RenderStack& stack, const DomEl* node, RenderStackEl& result, StyleAttrib attrib) {
 	if (attrib.IsVerbatim()) {
-		const char* catName = CatNameTable[attrib.Category];
-		const char* verbatim = stack.Doc->GetStyleVerbatim(attrib.GetVerbatimID());
-
-		// resolve variable values recursively
-		auto catLen = strlen(catName);
-		auto varLen = strlen(verbatim);
-
-		// build up a string such as "border: $width $color"
-		size_t totalLen = catLen + 1 + varLen;
-		stack.VerbatimBufTemp.growfor(totalLen);
-		strcpy(stack.VerbatimBufTemp.data, catName);
-		stack.VerbatimBufTemp.data[catLen] = ':';
-
-		memcpy(stack.VerbatimBufTemp.data + catLen + 1, verbatim, varLen);
-		stack.VerbatimBufTemp.count = totalLen;
-		RecursiveVariableResolve(stack.Doc, stack.VerbatimBufTemp);
-		stack.VerbatimBufTemp.push(0);
 
 		// We justify the const_cast here, knowing that style parse will not alter Doc if we aren't
-		// defining new strings or variable.
-		// HMM.. We COULD be defining new strings!
+		// defining new strings or variables.
+		// We know that we're not defining new variables, because RecursiveVariableResolve makes sure
+		// that all variables have been substituted, even if they are undefined.
+		// HOWEVER.... We COULD be defining new strings!
 
 		stack.VerbatimExplodeTemp.Attribs.count = 0;
-		if (stack.VerbatimExplodeTemp.Parse(stack.VerbatimBufTemp.data, const_cast<Doc*>(stack.Doc))) {
+
+		if (ExplodeVerbatimAttrib(const_cast<Doc*>(stack.Doc), attrib, stack.VerbatimBufTemp, stack.VerbatimExplodeTemp))
 			Set(stack, node, stack.VerbatimExplodeTemp.Attribs.size(), &stack.VerbatimExplodeTemp.Attribs[0]);
-		}
 	} else {
 		SetFinal(result, attrib);
 	}
@@ -153,7 +162,7 @@ void StyleResolver::SetFinal(RenderStackEl& result, StyleAttrib attrib) {
 	// style with a NULL value for itself. Ideally we could erase a style from StyleSet.
 	StyleCategories nullify = CatNULL;
 	switch (attrib.Category) {
-	case CatVCenter: nullify  = CatBaseline; break;
+	case CatVCenter: nullify = CatBaseline; break;
 	case CatBaseline: nullify = CatVCenter; break;
 	}
 	if (nullify != CatNULL)
