@@ -50,18 +50,23 @@ RenderResult RenderDoc::Render(RenderBase* driver) {
 	//XOTRACE_RENDER( "RenderDoc: Reset\n" );
 	if (!HasExpandedClassVariables) {
 		XOTRACE_RENDER("RenderDoc: Expand Class Variables\n");
+		CodeTimer t;
 		ExpandVerbatimClassVariables();
+		TimeVariableBake = t.Measure();
 	}
 
 	LayoutResult* layout = new LayoutResult(Doc);
 
 	XOTRACE_RENDER("RenderDoc: Layout\n");
+	CodeTimer t;
 	Layout lay;
 	lay.PerformLayout(Doc, layout->Root, &layout->Pool);
+	TimeLayout = t.MeasureAndRestart();
 
 	XOTRACE_RENDER("RenderDoc: Render\n");
 	Renderer     rend;
 	RenderResult res = rend.Render(&Doc, &ClonedImages, &Doc.Strings, driver, &layout->Root);
+	TimeRender = t.MeasureAndRestart();
 
 	layout->IDToNodeTable.resize(Doc.InternalIDSize());
 	PopulateIDToNode(layout, &layout->Root);
@@ -78,6 +83,7 @@ RenderResult RenderDoc::Render(RenderBase* driver) {
 		}
 		LatestLayout = layout;
 	}
+	TimePostRender = t.MeasureAndRestart();
 
 	return res;
 }

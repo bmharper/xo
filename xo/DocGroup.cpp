@@ -75,10 +75,13 @@ RenderResult DocGroup::RenderInternal(Image* targetImage) {
 	bool docValid    = Doc->UI.GetViewportWidth() != 0 && Doc->UI.GetViewportHeight() != 0;
 	bool beganRender = false;
 
+	double timeCopyDoc = 0;
+
 	if (haveLock) {
 		UploadImagesToGPU(beganRender);
 
 		//Trace( "Render Version %u\n", Doc->GetVersion() );
+		CodeTimer t;
 		RenderDoc->CopyFromCanonical(*Doc, RenderStats);
 
 		// Assume we are the only renderer of 'Doc'. If this assumption were not true, then you would need to update
@@ -86,6 +89,7 @@ RenderResult DocGroup::RenderInternal(Image* targetImage) {
 		//Trace( "MakeFreeIDsUsable\n" );
 		Doc->MakeFreeIDsUsable();
 		Doc->ResetModifiedBitmap(); // AbcBitMap has an absolutely awful implementation of this (uint8_t-filled vs SSE or at least pointer-word-size-filled)
+		timeCopyDoc = t.Measure();
 
 		DocLock.unlock();
 	}
@@ -127,6 +131,10 @@ RenderResult DocGroup::RenderInternal(Image* targetImage) {
 		}
 		DocLock.unlock();
 	}
+
+	if (Global()->ShowCoarseTimes)
+		xo::Trace("Copy: %.1f, Bake: %.1f, Layout: %.1f, Render: %.1f, PostRender: %.1f\n",
+			timeCopyDoc * 1000, RenderDoc->TimeVariableBake * 1000, RenderDoc->TimeLayout * 1000, RenderDoc->TimeRender * 1000, RenderDoc->TimePostRender * 1000);
 
 	return rendResult;
 }

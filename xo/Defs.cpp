@@ -309,6 +309,7 @@ XO_API void Initialize(const InitParams* init) {
 	Globals->SnapHorzText        = false;
 	Globals->UseFreetypeSubpixel = false;
 	Globals->EnableKerning       = !Globals->EnableSubpixelText || !Globals->SnapHorzText;
+	Globals->ShowCoarseTimes     = true;
 	//Globals->DebugZeroClonedChildList = true;
 	Globals->MaxTextureID = ~((TextureID) 0);
 	//Globals->ClearColor.Set( 200, 0, 200, 255 );  // Make our clear color a very noticeable purple, so you know when you've screwed up the root node

@@ -473,6 +473,8 @@ struct GlobalStruct {
 	Color     ClearColor;          // glClearColor
 	String    CacheDir;            // Root directory where we store font caches, etc. Overridable with InitParams
 
+	bool ShowCoarseTimes; // Show coarse frame times
+
 	// Debugging flags. Enabling these should make debugging easier.
 	// Some of them may turn out to have a small enough performance hit that you can
 	// leave them turned on always.

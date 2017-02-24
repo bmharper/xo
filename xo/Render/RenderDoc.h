@@ -30,8 +30,13 @@ The 'Doc' member is a complete clone of the original document.
 */
 class XO_API RenderDoc {
 public:
-	// Defining state
-	Doc Doc;
+	Doc Doc; // Defining state
+
+	// Timings of most recent render
+	double TimeVariableBake = 0;
+	double TimeLayout       = 0;
+	double TimeRender       = 0;
+	double TimePostRender   = 0;
 
 	RenderDoc(DocGroup* group);
 	~RenderDoc();
