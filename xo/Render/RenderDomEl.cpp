@@ -23,7 +23,10 @@ void RenderDomNode::Discard() {
 void RenderDomNode::SetStyle(RenderStack& stack) {
 	Style.BackgroundImageID = stack.Get(CatBackgroundImage).GetStringID();
 	Style.BackgroundColor   = stack.Get(CatBackground).GetColor();
-	Style.BorderColor       = stack.Get(CatBorderColor_Left).GetColor();
+	Style.BorderColor[0]    = stack.Get(CatBorderColor_Left).GetColor();
+	Style.BorderColor[1]    = stack.Get(CatBorderColor_Top).GetColor();
+	Style.BorderColor[2]    = stack.Get(CatBorderColor_Right).GetColor();
+	Style.BorderColor[3]    = stack.Get(CatBorderColor_Bottom).GetColor();
 	Style.HasHoverStyle     = stack.HasHoverStyle();
 	Style.HasFocusStyle     = stack.HasFocusStyle();
 }

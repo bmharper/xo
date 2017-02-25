@@ -96,6 +96,9 @@ void Layout::RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& o
 	Pos         contentHeight = ComputeWidthOrHeightDimension(in.ParentHeight, Boxer.RemainingSpaceY(), CatHeight);
 	BoxSizeType boxSizeType   = Stack.Get(CatBoxSizing).GetBoxSizing();
 
+	if (padding.Top < 0)
+		int abc = 123;
+
 	if (boxSizeType == BoxSizeMargin) {
 		if (contentWidth != PosNULL)
 			contentWidth -= margin.Left + margin.Right + padding.Left + padding.Right + border.Left + border.Right;

@@ -160,6 +160,17 @@ DomEl* DomNode::ParseAppend(const StringRaw& src, String* error) {
 	return ParseAppend(src.CStr(), error);
 }
 
+DomNode* DomNode::ParseAppendNode(const char* src, String* error) {
+	DomEl* el = ParseAppend(src, error);
+	if (!el->ToNode())
+		ParseFail("ParseAppendNode: '%20s' is not a node", src);
+	return el->ToNode();
+}
+
+DomNode* DomNode::ParseAppendNode(const StringRaw& src, String* error) {
+	return ParseAppendNode(src.CStr(), error);
+}
+
 bool DomNode::StyleParse(const char* t, size_t maxLen) {
 	IncVersion();
 	return Style.Parse(t, maxLen, Doc);

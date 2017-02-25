@@ -245,10 +245,10 @@ public:
 // a circle that fills the screen.
 class XO_API Box16 {
 public:
-	uint16_t Left;
-	uint16_t Top;
-	uint16_t Right;
-	uint16_t Bottom;
+	int16_t Left;
+	int16_t Top;
+	int16_t Right;
+	int16_t Bottom;
 
 	Box16() : Left(0), Right(0), Top(0), Bottom(0) {}
 	Box16(const Box& b) : Left(b.Left), Right(b.Right), Top(b.Top), Bottom(b.Bottom) {}

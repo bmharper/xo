@@ -317,7 +317,6 @@ void Doc::InitializeDefaultTagStyles() {
 	TagStyles[TagBody].Parse("background: #fff; box-sizing: margin; cursor: arrow", this);
 	TagStyles[TagBody].Parse("width: 100%; height: 100%", this);
 	TagStyles[TagBody].Set(afont);
-	TagStyles[TagDiv].Parse("baseline:baseline;", this);
 	// Setting cursor: text on <lab> is amusing, and it is the default in HTML, but not the right default for general-purpose UI.
 	// If this were true here also, then it would imply that all text on a page is selectable.
 	TagStyles[TagLab].Parse("baseline:baseline", this);

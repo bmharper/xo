@@ -189,6 +189,10 @@ bool Size::Parse(const char* s, size_t len, Size& v) {
 	}
 	Size   x      = Size::Pixels(0);
 	size_t nondig = 0;
+	if (s[0] == '-') {
+		digits[0] = '-';
+		nondig = 1;
+	}
 	for (; nondig < len; nondig++) {
 		digits[nondig] = s[nondig];
 		if (!IsNumeric(s[nondig]))

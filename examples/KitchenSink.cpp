@@ -121,8 +121,8 @@ void DoBaselineAlignment_DownPropagate(xo::Doc* doc) {
 	// These examples were used when trying out downward baseline propagation with layout3.
 	// AHEM. I have abandoned downward baseline propagation, hopefully for the last time.
 	doc->Root.Parse(R"(
-		<div style='font-family: Times New Roman; background: #fcc; font-size: 35ep'>I just called</div>
-		<div style='font-family: Times New Roman; background: #fcf; font-size: 14ep'>to say hello</div>
+		<lab style='font-family: Times New Roman; background: #fcc; font-size: 35ep'>I just called</lab>
+		<lab style='font-family: Times New Roman; background: #fcf; font-size: 14ep'>to say hello</lab>
 	)");
 }
 
@@ -390,7 +390,7 @@ void DoBackupSettings(xo::Doc* doc) {
 		    "	<div class='bg-light'><lab style='vcenter:vcenter'>" +
 		    title +
 		    "</lab></div>"
-		    "	<div class='bg-dark'>"
+			"	<div class='bg-dark' style='baseline:baseline'>"
 		    "		<lab class='textbox' style='width: 320ep'>this is a text box</lab>"
 		    "		<lab class='button'>Browse...</lab>"
 		    "	</div>"
@@ -495,13 +495,13 @@ void InitDOM(xo::Doc* doc) {
 	//DoBlockMargins(doc);
 	//DoLongText(doc);
 	//DoInlineFlow(doc);
-	//DoBackupSettings(doc);
+	DoBackupSettings(doc);
 	//DoPadding(doc);
 	//DoTextQuality(doc);
 	//DoQuadraticSplines(doc);
 	//DoTimer(doc);
 	//DoEditBox(doc);
-	DoStyleVars(doc);
+	//DoStyleVars(doc);
 
 	body->OnClick([](xo::Event& ev) {
 		//xo::Trace("%f %f\n", ev.PointsAbs[0].x, ev.PointsAbs[0].y);

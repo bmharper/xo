@@ -247,8 +247,8 @@ enum StyleCategories {
 	CatCanFocus,
 	CatCursor,
 
-	CatPadding_Use_Me_1,
-	CatPadding_Use_Me_2,
+	CatOverflowX, // TODO
+	CatOverflowY, // TODO
 	CatPadding_Use_Me_3,
 
 	CatMargin_Left,
@@ -634,7 +634,7 @@ public:
 	Box16 Padding;
 	Box16 BorderRadius; // 2 bits of sub-pixel precision, giving maximum radius of 16384
 	Color BackgroundColor;
-	Color BorderColor;
+	Color BorderColor[4];
 	int   BackgroundImageID;
 	bool  HasHoverStyle : 1;   // Element's appearance depends upon whether the cursor is over it
 	bool  HasFocusStyle : 1;   // Element's appearance depends upon whether it has the focus

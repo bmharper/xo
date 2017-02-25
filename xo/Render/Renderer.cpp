@@ -61,6 +61,13 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 	// Use this to demo the quadratic curve rendering (Blinn/Loop)
 	//if (node->Style.BackgroundColor == Color::RGBA(0xff, 0xf0, 0xf0, 0xff)) { RenderQuadratic(base, node); return; }
 
+	enum {
+		Left,
+		Top,
+		Right,
+		Bottom,
+	};
+
 	const StyleRender* style = &node->Style;
 	Box                pos   = node->Pos;
 	pos.Offset(base);
@@ -70,6 +77,9 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 	float bottom  = PosToReal(pos.Bottom) + border.Bottom + padding.Bottom;
 	float left    = PosToReal(pos.Left) - border.Left - padding.Left;
 	float right   = PosToReal(pos.Right) + border.Right + padding.Right;
+
+	if (padding.Top < 0)
+		int abc = 123;
 
 	float contentWidth  = PosToReal(pos.Right) - PosToReal(pos.Left);
 	float contentHeight = PosToReal(pos.Bottom) - PosToReal(pos.Top);
@@ -121,21 +131,26 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 	radii.BottomLeft  = {rad[3], rad[3]};
 
 	bool anyArcs    = radii.TopLeft != VEC2(0, 0) || radii.TopRight != VEC2(0, 0) || radii.BottomLeft != VEC2(0, 0) || radii.BottomRight != VEC2(0, 0);
-	bool anyBorders = border != BoxF(0, 0, 0, 0);
+	bool anyBorders = (border.Left != 0 && style->BorderColor[Left].a != 0) ||
+	                  (border.Top != 0 && style->BorderColor[Top].a != 0) ||
+	                  (border.Right != 0 && style->BorderColor[Right].a != 0) ||
+	                  (border.Bottom != 0 && style->BorderColor[Bottom].a != 0);
 
-	if (bg.a != 0 || bgImage || (style->BorderColor.a != 0 && anyBorders)) {
+	if (bg.a != 0 || bgImage || anyBorders) {
 		Vx_Uber vx[48];
 		float   vmid      = 0.5f * (top + bottom);
 		float   borderPos = border.Top;
 		// more padding, for our smooth edges
-		float    vpad       = 1;
-		float    hpad       = 1;
-		uint32_t bgRGBA     = bg.GetRGBA();
-		uint32_t borderRGBA = style->BorderColor.GetRGBA();
-		uint32_t red        = xo::RGBA::Make(200, 0, 0, 220).u;
-		uint32_t dgreen     = xo::RGBA::Make(0, 100, 0, 220).u;
-		uint32_t green      = xo::RGBA::Make(0, 200, 0, 220).u;
-		uint32_t purple     = xo::RGBA::Make(150, 0, 200, 220).u;
+		float    vpad = 1;
+		float    hpad = 1;
+		uint32_t borderRGBA[4];
+		for (int i = 0; i < 4; i++)
+			borderRGBA[i] = style->BorderColor[i].GetRGBA();
+		uint32_t bgRGBA = bg.GetRGBA();
+		uint32_t red    = xo::RGBA::Make(200, 0, 0, 220).u;
+		uint32_t dgreen = xo::RGBA::Make(0, 100, 0, 220).u;
+		uint32_t green  = xo::RGBA::Make(0, 200, 0, 220).u;
+		uint32_t purple = xo::RGBA::Make(150, 0, 200, 220).u;
 
 		float leftEdgeTopWidth     = Max(radii.TopLeft.x, border.Left);
 		float leftEdgeBottomWidth  = Max(radii.BottomLeft.x, border.Left);
@@ -200,31 +215,31 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 		//                                          Border width
 		//                                          |           Distance from edge
 		//                                          |           |
-		vx[c++].Set1(shader, VEC2(x[2], y[0]), VEC4(border.Top, -vpad, u[2], v[0]), bgRGBA, borderRGBA);
-		vx[c++].Set1(shader, VEC2(x[2], y[6]), VEC4(border.Top, y[6] - top, u[2], v[6]), bgRGBA, borderRGBA);
-		vx[c++].Set1(shader, VEC2(x[3], y[6]), VEC4(border.Top, y[6] - top, u[3], v[6]), bgRGBA, borderRGBA);
-		vx[c++].Set1(shader, VEC2(x[3], y[0]), VEC4(border.Top, -vpad, u[3], v[0]), bgRGBA, borderRGBA);
+		vx[c++].Set1(shader, VEC2(x[2], y[0]), VEC4(border.Top, -vpad, u[2], v[0]), bgRGBA, borderRGBA[Top]);
+		vx[c++].Set1(shader, VEC2(x[2], y[6]), VEC4(border.Top, y[6] - top, u[2], v[6]), bgRGBA, borderRGBA[Top]);
+		vx[c++].Set1(shader, VEC2(x[3], y[6]), VEC4(border.Top, y[6] - top, u[3], v[6]), bgRGBA, borderRGBA[Top]);
+		vx[c++].Set1(shader, VEC2(x[3], y[0]), VEC4(border.Top, -vpad, u[3], v[0]), bgRGBA, borderRGBA[Top]);
 
 		// C2
-		vx[c++].Set1(shader, VEC2(x[2], y[6]), VEC4(border.Bottom, bottom - y[6], u[2], v[6]), bgRGBA, borderRGBA);
-		vx[c++].Set1(shader, VEC2(x[2], y[3]), VEC4(border.Bottom, -vpad, u[2], v[3]), bgRGBA, borderRGBA);
-		vx[c++].Set1(shader, VEC2(x[3], y[3]), VEC4(border.Bottom, -vpad, u[3], v[3]), bgRGBA, borderRGBA);
-		vx[c++].Set1(shader, VEC2(x[3], y[6]), VEC4(border.Bottom, bottom - y[6], u[3], v[6]), bgRGBA, borderRGBA);
+		vx[c++].Set1(shader, VEC2(x[2], y[6]), VEC4(border.Bottom, bottom - y[6], u[2], v[6]), bgRGBA, borderRGBA[Bottom]);
+		vx[c++].Set1(shader, VEC2(x[2], y[3]), VEC4(border.Bottom, -vpad, u[2], v[3]), bgRGBA, borderRGBA[Bottom]);
+		vx[c++].Set1(shader, VEC2(x[3], y[3]), VEC4(border.Bottom, -vpad, u[3], v[3]), bgRGBA, borderRGBA[Bottom]);
+		vx[c++].Set1(shader, VEC2(x[3], y[6]), VEC4(border.Bottom, bottom - y[6], u[3], v[6]), bgRGBA, borderRGBA[Bottom]);
 
 		// A
 		if (x[2] - x[0] != 0 && y[2] - y[1] != 0) {
-			vx[c++].Set1(shader, VEC2(x[0], y[1]), VEC4(border.Left, -hpad, u[0], v[1]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[0], y[2]), VEC4(border.Left, -hpad, u[0], v[2]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[2], y[2]), VEC4(border.Left, x[2] - left, u[2], v[2]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[2], y[1]), VEC4(border.Left, x[2] - left, u[2], v[1]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[0], y[1]), VEC4(border.Left, -hpad, u[0], v[1]), bgRGBA, borderRGBA[Left]);
+			vx[c++].Set1(shader, VEC2(x[0], y[2]), VEC4(border.Left, -hpad, u[0], v[2]), bgRGBA, borderRGBA[Left]);
+			vx[c++].Set1(shader, VEC2(x[2], y[2]), VEC4(border.Left, x[2] - left, u[2], v[2]), bgRGBA, borderRGBA[Left]);
+			vx[c++].Set1(shader, VEC2(x[2], y[1]), VEC4(border.Left, x[2] - left, u[2], v[1]), bgRGBA, borderRGBA[Left]);
 		}
 
 		// B
 		if (x[5] - x[3] != 0 && y[5] - y[4] != 0) {
-			vx[c++].Set1(shader, VEC2(x[3], y[4]), VEC4(border.Right, right - x[3], u[3], v[4]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[3], y[5]), VEC4(border.Right, right - x[3], u[3], v[5]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[5], y[5]), VEC4(border.Right, -hpad, u[5], v[5]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[5], y[4]), VEC4(border.Right, -hpad, u[5], v[4]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[3], y[4]), VEC4(border.Right, right - x[3], u[3], v[4]), bgRGBA, borderRGBA[Right]);
+			vx[c++].Set1(shader, VEC2(x[3], y[5]), VEC4(border.Right, right - x[3], u[3], v[5]), bgRGBA, borderRGBA[Right]);
+			vx[c++].Set1(shader, VEC2(x[5], y[5]), VEC4(border.Right, -hpad, u[5], v[5]), bgRGBA, borderRGBA[Right]);
+			vx[c++].Set1(shader, VEC2(x[5], y[4]), VEC4(border.Right, -hpad, u[5], v[4]), bgRGBA, borderRGBA[Right]);
 		}
 
 		// Top D
@@ -238,89 +253,89 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 			// a box of the form "border: 20px 2px 20px 2px; border-radius: 5px". ie thick left/right borders, and thin
 			// top/bottom borders.
 			float borderWidth = radii.TopLeft.x < border.Left ? infinitelyThickBorder : border.Top;
-			vx[c++].Set1(shader, VEC2(x[1], y[0]), VEC4(borderWidth, -vpad, u[6], v[2]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[1], y[1]), VEC4(borderWidth, y[1] - top, u[6], v[3]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[2], y[1]), VEC4(borderWidth, y[1] - top, u[2], v[3]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[2], y[0]), VEC4(borderWidth, -vpad, u[2], v[2]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[1], y[0]), VEC4(borderWidth, -vpad, u[6], v[2]), bgRGBA, borderRGBA[Top]);
+			vx[c++].Set1(shader, VEC2(x[1], y[1]), VEC4(borderWidth, y[1] - top, u[6], v[3]), bgRGBA, borderRGBA[Top]);
+			vx[c++].Set1(shader, VEC2(x[2], y[1]), VEC4(borderWidth, y[1] - top, u[2], v[3]), bgRGBA, borderRGBA[Top]);
+			vx[c++].Set1(shader, VEC2(x[2], y[0]), VEC4(borderWidth, -vpad, u[2], v[2]), bgRGBA, borderRGBA[Top]);
 		}
 
 		// Bottom D
 		if (x[2] - x[6] != 0 && y[3] - y[2] != 0) {
 			float borderWidth = radii.BottomLeft.x < border.Left ? infinitelyThickBorder : border.Bottom;
-			vx[c++].Set1(shader, VEC2(x[6], y[2]), VEC4(borderWidth, bottom - y[2], u[6], v[2]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[6], y[3]), VEC4(borderWidth, -vpad, u[6], v[3]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[2], y[3]), VEC4(borderWidth, -vpad, u[2], v[3]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[2], y[2]), VEC4(borderWidth, bottom - y[2], u[2], v[2]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[6], y[2]), VEC4(borderWidth, bottom - y[2], u[6], v[2]), bgRGBA, borderRGBA[Bottom]);
+			vx[c++].Set1(shader, VEC2(x[6], y[3]), VEC4(borderWidth, -vpad, u[6], v[3]), bgRGBA, borderRGBA[Bottom]);
+			vx[c++].Set1(shader, VEC2(x[2], y[3]), VEC4(borderWidth, -vpad, u[2], v[3]), bgRGBA, borderRGBA[Bottom]);
+			vx[c++].Set1(shader, VEC2(x[2], y[2]), VEC4(borderWidth, bottom - y[2], u[2], v[2]), bgRGBA, borderRGBA[Bottom]);
 		}
 
 		// Top E
 		if (x[4] - x[3] != 0 && y[4] - y[0] != 0) {
 			float borderWidth = radii.TopRight.x < border.Right ? infinitelyThickBorder : border.Top;
-			vx[c++].Set1(shader, VEC2(x[3], y[0]), VEC4(borderWidth, -vpad, u[3], v[0]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[3], y[4]), VEC4(borderWidth, y[4] - top, u[3], v[4]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[4], y[4]), VEC4(borderWidth, y[4] - top, u[4], v[4]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[4], y[0]), VEC4(borderWidth, -vpad, u[4], v[0]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[3], y[0]), VEC4(borderWidth, -vpad, u[3], v[0]), bgRGBA, borderRGBA[Top]);
+			vx[c++].Set1(shader, VEC2(x[3], y[4]), VEC4(borderWidth, y[4] - top, u[3], v[4]), bgRGBA, borderRGBA[Top]);
+			vx[c++].Set1(shader, VEC2(x[4], y[4]), VEC4(borderWidth, y[4] - top, u[4], v[4]), bgRGBA, borderRGBA[Top]);
+			vx[c++].Set1(shader, VEC2(x[4], y[0]), VEC4(borderWidth, -vpad, u[4], v[0]), bgRGBA, borderRGBA[Top]);
 		}
 
 		// Bottom E
 		if (x[7] - x[3] != 0 && y[3] - y[2] != 0) {
 			float borderWidth = radii.BottomRight.x < border.Right ? infinitelyThickBorder : border.Bottom;
-			vx[c++].Set1(shader, VEC2(x[3], y[5]), VEC4(borderWidth, bottom - y[5], u[3], v[5]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[3], y[3]), VEC4(borderWidth, -vpad, u[3], v[3]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[7], y[3]), VEC4(borderWidth, -vpad, u[7], v[3]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[7], y[5]), VEC4(borderWidth, bottom - y[5], u[7], v[5]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[3], y[5]), VEC4(borderWidth, bottom - y[5], u[3], v[5]), bgRGBA, borderRGBA[Bottom]);
+			vx[c++].Set1(shader, VEC2(x[3], y[3]), VEC4(borderWidth, -vpad, u[3], v[3]), bgRGBA, borderRGBA[Bottom]);
+			vx[c++].Set1(shader, VEC2(x[7], y[3]), VEC4(borderWidth, -vpad, u[7], v[3]), bgRGBA, borderRGBA[Bottom]);
+			vx[c++].Set1(shader, VEC2(x[7], y[5]), VEC4(borderWidth, bottom - y[5], u[7], v[5]), bgRGBA, borderRGBA[Bottom]);
 		}
 
 		// Slivers (described at the bottom of log entry).
 		// For the slivers, we ignore the UV coords, because the entire sliver is contained inside the border,
 		// so the UVs shouldn't matter.
-		
+
 		// top left sliver
 		if (border.Top > radii.TopLeft.y) {
 			float height = border.Top - radii.TopLeft.y;
-			vx[c++].Set1(shader, VEC2(x[0], y[1] - height), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[0], y[1]), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[1], y[1]), VEC4(infinitelyThickBorder, x[1] - left, u[0], v[0]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[1], y[1] - height), VEC4(infinitelyThickBorder, x[1] - left, u[0], v[0]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[0], y[1] - height), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA[Left]);
+			vx[c++].Set1(shader, VEC2(x[0], y[1]), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA[Left]);
+			vx[c++].Set1(shader, VEC2(x[1], y[1]), VEC4(infinitelyThickBorder, x[1] - left, u[0], v[0]), bgRGBA, borderRGBA[Left]);
+			vx[c++].Set1(shader, VEC2(x[1], y[1] - height), VEC4(infinitelyThickBorder, x[1] - left, u[0], v[0]), bgRGBA, borderRGBA[Left]);
 		}
 
 		// bottom left sliver
 		if (border.Bottom > radii.BottomLeft.y) {
 			float height = border.Bottom - radii.BottomLeft.y;
-			vx[c++].Set1(shader, VEC2(x[0], y[2]), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[0], y[2] + height), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[6], y[2] + height), VEC4(infinitelyThickBorder, x[6] - left, u[0], v[0]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[6], y[2]), VEC4(infinitelyThickBorder, x[6] - left, u[0], v[0]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[0], y[2]), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA[Left]);
+			vx[c++].Set1(shader, VEC2(x[0], y[2] + height), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA[Left]);
+			vx[c++].Set1(shader, VEC2(x[6], y[2] + height), VEC4(infinitelyThickBorder, x[6] - left, u[0], v[0]), bgRGBA, borderRGBA[Left]);
+			vx[c++].Set1(shader, VEC2(x[6], y[2]), VEC4(infinitelyThickBorder, x[6] - left, u[0], v[0]), bgRGBA, borderRGBA[Left]);
 		}
 
 		// top right sliver
 		if (border.Top > radii.TopRight.y) {
 			float height = border.Top - radii.TopRight.y;
-			vx[c++].Set1(shader, VEC2(x[4], y[4] - height), VEC4(infinitelyThickBorder, right - x[4], u[0], v[0]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[4], y[4]), VEC4(infinitelyThickBorder, right - x[4], u[0], v[0]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[5], y[4]), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[5], y[4] - height), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[4], y[4] - height), VEC4(infinitelyThickBorder, right - x[4], u[0], v[0]), bgRGBA, borderRGBA[Right]);
+			vx[c++].Set1(shader, VEC2(x[4], y[4]), VEC4(infinitelyThickBorder, right - x[4], u[0], v[0]), bgRGBA, borderRGBA[Right]);
+			vx[c++].Set1(shader, VEC2(x[5], y[4]), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA[Right]);
+			vx[c++].Set1(shader, VEC2(x[5], y[4] - height), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA[Right]);
 		}
 
 		// bottom right sliver
 		if (border.Bottom > radii.BottomRight.y) {
 			float height = border.Bottom - radii.BottomRight.y;
-			vx[c++].Set1(shader, VEC2(x[7], y[5]), VEC4(infinitelyThickBorder, right - x[7], u[0], v[0]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[7], y[5] + height), VEC4(infinitelyThickBorder, right - x[7], u[0], v[0]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[5], y[5] + height), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA);
-			vx[c++].Set1(shader, VEC2(x[5], y[5]), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA);
+			vx[c++].Set1(shader, VEC2(x[7], y[5]), VEC4(infinitelyThickBorder, right - x[7], u[0], v[0]), bgRGBA, borderRGBA[Right]);
+			vx[c++].Set1(shader, VEC2(x[7], y[5] + height), VEC4(infinitelyThickBorder, right - x[7], u[0], v[0]), bgRGBA, borderRGBA[Right]);
+			vx[c++].Set1(shader, VEC2(x[5], y[5] + height), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA[Right]);
+			vx[c++].Set1(shader, VEC2(x[5], y[5]), VEC4(infinitelyThickBorder, -hpad, u[0], v[0]), bgRGBA, borderRGBA[Right]);
 		}
 
 		Driver->ActivateShader(ShaderUber);
 		Driver->Draw(GPUPrimQuads, c, vx);
 
 		if (anyArcs) {
-			RenderCornerArcs(shaderFlags, TopLeft, VEC2(left, top), radii.TopLeft, VEC2(border.Left, border.Top), VEC2(u[1], v[1]), uvScale, bgRGBA, borderRGBA);
-			RenderCornerArcs(shaderFlags, BottomLeft, VEC2(left, bottom), radii.BottomLeft, VEC2(border.Left, border.Bottom), VEC2(u[6], v[2]), uvScale, bgRGBA, borderRGBA);
-			RenderCornerArcs(shaderFlags, BottomRight, VEC2(right, bottom), radii.BottomRight, VEC2(border.Right, border.Bottom), VEC2(u[4], v[5]), uvScale, bgRGBA, borderRGBA);
-			RenderCornerArcs(shaderFlags, TopRight, VEC2(right, top), radii.TopRight, VEC2(border.Right, border.Top), VEC2(u[4], v[4]), uvScale, bgRGBA, borderRGBA);
+			// TODO: Fade between adjacent border colors
+			RenderCornerArcs(shaderFlags, TopLeft, VEC2(left, top), radii.TopLeft, VEC2(border.Left, border.Top), VEC2(u[1], v[1]), uvScale, bgRGBA, borderRGBA[Left]);
+			RenderCornerArcs(shaderFlags, BottomLeft, VEC2(left, bottom), radii.BottomLeft, VEC2(border.Left, border.Bottom), VEC2(u[6], v[2]), uvScale, bgRGBA, borderRGBA[Left]);
+			RenderCornerArcs(shaderFlags, BottomRight, VEC2(right, bottom), radii.BottomRight, VEC2(border.Right, border.Bottom), VEC2(u[4], v[5]), uvScale, bgRGBA, borderRGBA[Right]);
+			RenderCornerArcs(shaderFlags, TopRight, VEC2(right, top), radii.TopRight, VEC2(border.Right, border.Top), VEC2(u[4], v[4]), uvScale, bgRGBA, borderRGBA[Right]);
 		}
-
 	}
 }
 
