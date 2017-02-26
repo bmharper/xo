@@ -123,7 +123,8 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 	BoxF   rr  = style->BorderRadius.ToRealBox2BitPrecision();
 	float* rad = (float*) &rr;
 	for (int i = 0; i < 4; i++)
-		rad[i] = Min(rad[i], halfMinDim);
+		//rad[i] = Min(rad[i], halfMinDim);
+		rad[i] = Min(rad[i], mindim); // TODO: if the sum of neighbouring radii exceed mindim, them shrink them proportionally so that they fit
 	BoxRadiusSet radii;
 	radii.TopLeft     = {rad[0], rad[0]};
 	radii.TopRight    = {rad[1], rad[1]};
@@ -352,7 +353,7 @@ void Renderer::RenderCornerArcs(int shaderFlags, Corners corner, Vec2f edge, Vec
 	float fanRadius;
 	int   divs;
 	if (borderWidth.x == borderWidth.y && outerRadii.x == outerRadii.y)
-		fanRadius = maxOuterRadius * 1.04f + 2.0f; // I haven't worked out why, but empirically 1.04 seems to be sufficient up to 200px radius.
+		fanRadius = maxOuterRadius * 1.07f + 2.0f; // I haven't worked out why, but empirically this value seems to be sufficient up to 200px radius.
 	else
 		fanRadius = maxOuterRadius * 1.1f + 2.0f;
 

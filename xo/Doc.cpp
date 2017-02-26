@@ -253,8 +253,9 @@ void Doc::ChildRemoved(DomEl* el) {
 	IncVersion();
 	SetChildModified(elID);
 	ChildByInternalID[elID] = NULL;
-	el->SetDoc(NULL);
-	el->SetInternalID(InternalIDNull);
+	// The following pair is actually a bad idea, because some objects (Canvas) need to know their Doc to clean up after themselves.
+	//el->SetDoc(NULL);
+	//el->SetInternalID(InternalIDNull);
 	FreeIDs += elID;
 }
 

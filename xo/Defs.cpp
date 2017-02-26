@@ -309,6 +309,7 @@ XO_API void Initialize(const InitParams* init) {
 	Globals->SnapHorzText        = false;
 	Globals->UseFreetypeSubpixel = false;
 	Globals->EnableKerning       = !Globals->EnableSubpixelText || !Globals->SnapHorzText;
+	Globals->EnableKerning       = false; // Freetype's kerning is CRAZY SLOW.. from one quick profile that I did. Will investigate more later.
 	Globals->ShowCoarseTimes     = true;
 	//Globals->DebugZeroClonedChildList = true;
 	Globals->MaxTextureID = ~((TextureID) 0);

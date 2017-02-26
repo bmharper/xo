@@ -35,7 +35,8 @@ void DoBorder(xo::Doc* doc) {
 	    "<div style='border: 5px #070e; border-radius: 8px; width: 100ep; height: 100ep; background: #fffe; margin: 1px'>b</div>"
 	    "<div style='border: 1px #557e; width: 150ep; height: 22ep; background: #fffe; margin: 1px'>c</div>"
 	    "<div style='border: 5ep #456e; width: 40ep; height: 40ep; background: #567e; margin: 1px'>d</div>" // ensure border color goes through sRGB conversion
-	    "<div style='border: #007e; border: 10px 30px 10px 30px; border-radius: 20px 20px 20px 20px; width: 100ep; height: 100ep; background: #fffe; margin: 10px'></div>");
+	    "<div style='border: #007e; border: 10px 30px 10px 30px; border-radius: 20px 20px 20px 20px; width: 100ep; height: 100ep; background: #fffe; margin: 10px'></div>"
+	    "<div style='border: #007e; border: 1px; border-radius: 100ep 0 0 0; width: 100ep; height: 100ep; background: #fffe; margin: 10px'></div>");
 }
 
 void DoBaselineAlignment(xo::Doc* doc) {
@@ -481,7 +482,7 @@ void InitDOM(xo::Doc* doc) {
 	xo::DomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
 
-	//DoBorder(doc);
+	DoBorder(doc);
 	//DoBaselineAlignment(doc);
 	//DoBaselineAlignment_rev2(doc);
 	//DoBaselineAlignment_Multiline(doc);
@@ -495,7 +496,7 @@ void InitDOM(xo::Doc* doc) {
 	//DoBlockMargins(doc);
 	//DoLongText(doc);
 	//DoInlineFlow(doc);
-	DoBackupSettings(doc);
+	//DoBackupSettings(doc);
 	//DoPadding(doc);
 	//DoTextQuality(doc);
 	//DoQuadraticSplines(doc);
