@@ -7,7 +7,10 @@ class Doc;
 class DomNode;
 namespace controls {
 
-// A single-line text edit box
+/* A single-line text edit box
+
+The text value of the edit box is accessible using GetText and SetText of the DOM node returned by AppendTo().
+*/
 class XO_API EditBox {
 public:
 	struct State {
@@ -20,7 +23,7 @@ public:
 	};
 
 	static void     InitializeStyles(Doc* doc);
-	static DomNode* AppendTo(DomNode* node);
+	static DomNode* AppendTo(DomNode* node, const char* txt = nullptr);
 
 private:
 	static void PlaceCaretIndicator(State* s, Event& ev);

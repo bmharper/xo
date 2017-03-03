@@ -16,12 +16,12 @@ void EditBox::InitializeStyles(Doc* doc) {
 	doc->ClassParse("xo.editbox.caret", "background: #0000; position: absolute; width: 1px; height: 1eh; vcenter: vcenter");
 }
 
-DomNode* EditBox::AppendTo(DomNode* node) {
+DomNode* EditBox::AppendTo(DomNode* node, const char* txt) {
 	auto edit = node->AddNode(xo::TagLab);
 	edit->AddClass("xo.editbox");
 
 	// Add the empty text value (must be first child for DomNode.SetText to work)
-	edit->AddText();
+	edit->AddText(txt);
 
 	// Create the caret
 	auto caret = edit->AddNode(xo::TagDiv);
