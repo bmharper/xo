@@ -37,6 +37,7 @@ public:
 	void StrokeRect(Box box, Color color, float linewidth);
 	void StrokeLine(bool closed, int nvx, const float* vx, int vx_stride_bytes, Color color, float linewidth);
 	void StrokeCircle(float x, float y, float radius, Color color, float linewidth);
+	void FillCircle(float x, float y, float radius, Color color);
 
 	void SetPixel(int x, int y, RGBA c) { ((uint32_t*) RenderBuff.row_ptr(y))[x] = c.u; }
 
