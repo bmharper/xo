@@ -44,6 +44,19 @@ DomNode* EditBox::AppendTo(DomNode* node, const char* txt) {
 			ev.CancelTimer();
 	};
 
+	auto changeText = [s, flip, edit](xo::Doc* doc, const std::string& txt) {
+		if (txt != edit->GetText())
+			edit->SetText(txt.c_str());
+
+		// always show the caret after pressing any key
+		s->IsBlinkVisible = false;
+		flip(doc);
+
+		// We need the DOM to call us back when it's finished rendering, because we don't yet have
+		// the RenderDomText node that we need in order to place our caret.
+		s->PlaceCaretOnNextRender = true;
+	};
+
 	edit->OnClick([s, flip, edit, timer](Event& ev) {
 		//Trace("[%f %f]\n", ev.PointsRel[0].x, ev.PointsRel[0].y);
 		RenderDomNode* rbox = ev.LayoutResult->IDToNodeTable[ev.Target->GetInternalID()];
@@ -73,76 +86,60 @@ DomNode* EditBox::AppendTo(DomNode* node, const char* txt) {
 			flip(ev.Doc);
 		}
 	});
-	edit->OnKeyChar([s, flip, edit](Event& ev) {
-		std::string txt       = edit->GetText();
-		int         insertPos = Clamp((int) s->CaretPos + 1, 0, (int) txt.length());
-		switch (ev.KeyChar) {
-		case 8:
+	edit->OnKeyDown([s, changeText, edit](Event& ev) {
+		std::string txt         = edit->GetText();
+		int         insertPos   = Clamp((int) s->CaretPos + 1, 0, (int) txt.length());
+		int         newCaretPos = ClampCaretPos(s->CaretPos, txt.length());
+
+		switch (ev.Button) {
+		case (Button)((int) Button::KeyA + ('v' - 'a')):
+			if (ev.IsModifierKeyDown(Button::KeyCtrl)) {
+				// hard-coded Ctrl+V for paste. I just need this too much right now!
+				auto clipboard = ClipboardRead();
+				txt.insert(insertPos, clipboard);
+				newCaretPos += (int) clipboard.length();
+			}
+			break;
+		case Button::KeyBack:
 			// backspace
 			if (insertPos > 0) {
 				txt.erase(insertPos - 1, 1);
-				s->CaretPos--;
+				//s->CaretPos--;
+				newCaretPos--;
 			}
 			break;
-		case 10:
-		case 13:
-		case 27:
-			return;
-		case 0: {
-			// control characters such as left, right, delete
-			int newCaretPos = ClampCaretPos(s->CaretPos, txt.length());
-			switch (ev.Button) {
-			case Button::KeyLeft:
-				newCaretPos = ClampCaretPos(s->CaretPos - 1, txt.length());
-				break;
-			case Button::KeyRight:
-				newCaretPos = ClampCaretPos(s->CaretPos + 1, txt.length());
-				break;
-			case Button::KeyDelete: {
-				int p = Clamp(s->CaretPos + 1, 0, (int) txt.length());
-				if (p < (int) txt.length() && txt.length() != 0) {
-					int len = utfz::seq_len(txt[p]);
-					if (len == utfz::invalid) {
-						txt.erase(p, 1);
-					} else {
-						len = Min(len, (int) txt.length() - p);
-						txt.erase(p, len);
-					}
+		case Button::KeyLeft:
+			newCaretPos--;
+			break;
+		case Button::KeyRight:
+			newCaretPos++;
+			break;
+		case Button::KeyDelete: {
+			int p = Clamp(s->CaretPos + 1, 0, (int) txt.length());
+			if (p < (int) txt.length() && txt.length() != 0) {
+				int len = utfz::seq_len(txt[p]);
+				if (len == utfz::invalid) {
+					txt.erase(p, 1);
+				} else {
+					len = Min(len, (int) txt.length() - p);
+					txt.erase(p, len);
 				}
-				break;
-			}
-			}
-
-			s->CaretPos = newCaretPos;
-
-			break;
-		}
-		default: {
-			// Shortcut keys
-			if (ev.KeyChar == 'v' && ev.IsControlKeyDown(Button::KeyCtrl)) {
-				// hard-coded Ctrl+V. I just need this too much right now!
-				auto clipboard = ClipboardRead();
-				txt.insert(insertPos, clipboard);
-				s->CaretPos = ClampCaretPos(s->CaretPos + (int) clipboard.length(), txt.length());
-			} else {
-				std::string newChar;
-				utfz::encode(newChar, ev.KeyChar);
-				txt.insert(insertPos, newChar);
-				s->CaretPos = ClampCaretPos(s->CaretPos + 1, txt.length());
 			}
 			break;
 		}
 		}
-		if (txt != edit->GetText())
-			edit->SetText(txt.c_str());
+		s->CaretPos = ClampCaretPos(newCaretPos, txt.length());
 
-		// always show the caret after pressing any key
-		s->IsBlinkVisible = false;
-		flip(ev.Doc);
-
-		// We need the DOM to call us back when it's finished rendering, because we don't yet have
-		// the RenderDomText node that we need in order to place our caret.
-		s->PlaceCaretOnNextRender = true;
+		changeText(ev.Doc, txt);
+	});
+	edit->OnKeyChar([s, changeText, edit](Event& ev) {
+		std::string txt       = edit->GetText();
+		int         insertPos = Clamp((int) s->CaretPos + 1, 0, (int) txt.length());
+		std::string newChar;
+		utfz::encode(newChar, ev.KeyChar);
+		txt.insert(insertPos, newChar);
+		s->CaretPos = ClampCaretPos(s->CaretPos + 1, txt.length());
+		changeText(ev.Doc, txt);
 	});
 	edit->OnGetFocus([s, flip, edit, timer](Event& ev) {
 		if (!s->TimerID)

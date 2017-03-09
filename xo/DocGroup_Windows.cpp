@@ -103,15 +103,18 @@ static void WM_KeyButtonToXo(WPARAM wp, LPARAM lp, Button& btn, int& codepoint) 
 	}
 }
 
-static void PopulateControlKeyStates(Event& ev) {
-	ev.ControlKeys.LShift   = !!(0x8000 & GetKeyState(VK_LSHIFT));
-	ev.ControlKeys.RShift   = !!(0x8000 & GetKeyState(VK_RSHIFT));
-	ev.ControlKeys.LMenu    = !!(0x8000 & GetKeyState(VK_LMENU));
-	ev.ControlKeys.RMenu    = !!(0x8000 & GetKeyState(VK_RMENU));
-	ev.ControlKeys.LCtrl    = !!(0x8000 & GetKeyState(VK_LCONTROL));
-	ev.ControlKeys.RCtrl    = !!(0x8000 & GetKeyState(VK_RCONTROL));
-	ev.ControlKeys.LWindows = !!(0x8000 & GetKeyState(VK_LWIN));
-	ev.ControlKeys.RWindows = !!(0x8000 & GetKeyState(VK_RWIN));
+// Why populate this here? We can't let the user call GetKeyState,
+// because he runs on a different thread, so he's not guaranteed to get
+// the correct result from the moment when the original event was generated.
+static void PopulateModifierKeyStates(Event& ev) {
+	ev.ModifierKeys.LShift   = !!(0x8000 & GetKeyState(VK_LSHIFT));
+	ev.ModifierKeys.RShift   = !!(0x8000 & GetKeyState(VK_RSHIFT));
+	ev.ModifierKeys.LAlt     = !!(0x8000 & GetKeyState(VK_LMENU));
+	ev.ModifierKeys.RAlt     = !!(0x8000 & GetKeyState(VK_RMENU));
+	ev.ModifierKeys.LCtrl    = !!(0x8000 & GetKeyState(VK_LCONTROL));
+	ev.ModifierKeys.RCtrl    = !!(0x8000 & GetKeyState(VK_RCONTROL));
+	ev.ModifierKeys.LWindows = !!(0x8000 & GetKeyState(VK_LWIN));
+	ev.ModifierKeys.RWindows = !!(0x8000 & GetKeyState(VK_RWIN));
 }
 
 // See the article on MSDN "Legacy User Interaction Features" > "Keyboard and Mouse Input" > "Using Keyboard Input". Just search for "MSDN Using Keyboard Input".
@@ -258,7 +261,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		ev.Event.Type         = EventMouseMove;
 		ev.Event.PointCount   = 1;
 		ev.Event.PointsAbs[0] = cursor;
-		PopulateControlKeyStates(ev.Event);
+		PopulateModifierKeyStates(ev.Event);
 		AddOrReplaceMessage(ev);
 		XOTRACE_LATENCY("MouseMove\n");
 		break;
@@ -280,7 +283,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		ev.Event.Button       = WM_MouseButtonToXo(message, wParam);
 		ev.Event.PointCount   = 1;
 		ev.Event.PointsAbs[0] = cursor;
-		PopulateControlKeyStates(ev.Event);
+		PopulateModifierKeyStates(ev.Event);
 		Global()->UIEventQueue.Add(ev);
 		break;
 
@@ -293,7 +296,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		ev.Event.Button       = WM_MouseButtonToXo(message, wParam);
 		ev.Event.PointCount   = 1;
 		ev.Event.PointsAbs[0] = cursor;
-		PopulateControlKeyStates(ev.Event);
+		PopulateModifierKeyStates(ev.Event);
 		Global()->UIEventQueue.Add(ev);
 		break;
 
@@ -306,7 +309,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		ev.Event.Button       = WM_MouseButtonToXo(message, wParam);
 		ev.Event.PointCount   = 1;
 		ev.Event.PointsAbs[0] = cursor;
-		PopulateControlKeyStates(ev.Event);
+		PopulateModifierKeyStates(ev.Event);
 		Global()->UIEventQueue.Add(ev);
 		break;
 
@@ -314,31 +317,38 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		XOTRACE_LATENCY("KeyDown %u\n", (uint32_t) wParam);
 		ev.Event.Type = EventKeyDown;
 		WM_KeyButtonToXo(wParam, lParam, ev.Event.Button, ev.Event.KeyChar);
-		PopulateControlKeyStates(ev.Event);
+		PopulateModifierKeyStates(ev.Event);
 		Global()->UIEventQueue.Add(ev);
 		// Also add an EventKeyChar message, so that one doesn't need to deal with two messages
 		// that distinguish between arbitrary different keys. For example, why does BACKSPACE
 		// generate a WM_CHAR, but VK_DELETE only generates WM_KEYDOWN? That seems pretty arbitrary.
 		// In order to avoid duplicate messages from WM_CHAR, we need to only send messages that
 		// get ignored by WM_CHAR (aka TranslateMessage)
-		if (!GeneratesCharMsg(wParam, lParam)) {
-			ev.Event.Type = EventKeyChar;
-			Global()->UIEventQueue.Add(ev);
-		}
+		// UPDATE: Microsoft is right! You don't want to tangle WM_CHAR and WM_KEYDOWN for things
+		// like BACKSPACE. One case in point, is that you can press CTRL+H to generate BACKSPACE,
+		// and that goes in as a WM_CHAR message. So if you're writing an Edit Box, and you want
+		// to do it all via WM_CHAR, how do you distinguish between CTRL+H and BACKSPACE? The answer
+		// is that you can't, and you really shouldn't be mixing those two, especially when it
+		// comes to dealing with shortcut keys.
+		//if (!GeneratesCharMsg(wParam, lParam)) {
+		//	ev.Event.Type = EventKeyChar;
+		//	Global()->UIEventQueue.Add(ev);
+		//}
 		break;
 
 	case WM_KEYUP:
 		XOTRACE_LATENCY("KeyUp %u\n", (uint32_t) wParam);
 		ev.Event.Type = EventKeyUp;
 		WM_KeyButtonToXo(wParam, lParam, ev.Event.Button, ev.Event.KeyChar);
-		PopulateControlKeyStates(ev.Event);
+		PopulateModifierKeyStates(ev.Event);
 		Global()->UIEventQueue.Add(ev);
 		break;
 
 	// Although the docs for WM_UNICHAR seem ideal for us (an ANSI window), WM_UNICHAR messages
 	// don't seem to be sent by a stock Windows 10 install. It looks like it may have disappeared
 	// when Windows7 arrived. Various reports on the internet seem to suggest that WM_UNICHAR is
-	// not a reliable way of receiving keyboard characters.
+	// not a reliable way of receiving keyboard characters. Actually, the MSDN docs ("Keyboard Input": https://msdn.microsoft.com/en-us/library/windows/desktop/gg153546(v=vs.85).aspx)
+	// confirms that this is WM_UNICHAR is deprecated.
 	// So how do we receive characters greater than 65535? At present, the only way I'm able
 	// to synthesize this is with a tool called "unicodeinput.exe". The registry change to
 	// HKCU\Control Panel\Input Method\EnableHexNumpad doesn't work for me on Windows 10.
@@ -350,13 +360,14 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		XOTRACE_LATENCY("KeyChar %u\n", (uint32_t) wParam);
 		TimeTrace("KeyChar %u\n", (uint32_t) wParam);
 		// When Ctrl is held down, then wparam starts at 1 for 'a', 2 for 'b', and upwards like that.
-		if (wParam == 22) {
-			// Ctrl+V
+		if (wParam < 32) {
+			// Ctrl+Key
+		} else {
+			ev.Event.Type    = EventKeyChar;
+			ev.Event.KeyChar = (int32_t) wParam;
+			PopulateModifierKeyStates(ev.Event);
+			Global()->UIEventQueue.Add(ev);
 		}
-		ev.Event.Type    = EventKeyChar;
-		ev.Event.KeyChar = (int32_t) wParam;
-		PopulateControlKeyStates(ev.Event);
-		Global()->UIEventQueue.Add(ev);
 		return 0;
 
 	default:

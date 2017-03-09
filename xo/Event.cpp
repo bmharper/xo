@@ -11,14 +11,27 @@ XO_API int ButtonToMouseNumber(Button b) {
 		return -1;
 }
 
-bool ControlKeyStates::IsKeyDown(Button btn) const {
+XO_API Button AsciiToButton(char c) { 
+	if (c >= 'a' && c <= 'z')
+		return (Button) ((int) (c - 'a') + (int) Button::KeyA);
+
+	if (c >= 'Z' && c <= 'Z')
+		return (Button) ((int) (c - 'A') + (int) Button::KeyA);
+
+	if (c >= '0' && c <= '9')
+		return (Button) ((int) (c - '0') + (int) Button::Key0);
+
+	return Button::Null;
+}
+
+bool ModifierKeyStates::IsKeyDown(Button btn) const {
 	switch (btn) {
 	case Button::KeyShift: return LShift || RShift;
 	case Button::KeyLShift: return LShift;
 	case Button::KeyRShift: return RShift;
-	case Button::KeyMenu: return LMenu || RMenu;
-	case Button::KeyLMenu: return LMenu;
-	case Button::KeyRMenu: return RMenu;
+	case Button::KeyAlt: return LAlt || RAlt;
+	case Button::KeyLAlt: return LAlt;
+	case Button::KeyRAlt: return RAlt;
 	case Button::KeyCtrl: return LCtrl || RCtrl;
 	case Button::KeyLCtrl: return LCtrl;
 	case Button::KeyRCtrl: return RCtrl;
@@ -53,8 +66,8 @@ void Event::MakeWindowSize(int w, int h) {
 	PointsAbs[0].y = (float) h;
 }
 
-bool Event::IsControlKeyDown(xo::Button btn) const {
-	return ControlKeys.IsKeyDown(btn);
+bool Event::IsModifierKeyDown(xo::Button btn) const {
+	return ModifierKeys.IsKeyDown(btn);
 }
 
 EventHandler::EventHandler() {

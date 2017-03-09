@@ -38,7 +38,7 @@ enum class Button {
 	Key9 = Key0 + 9,
 	KeyA,
 	KeyZ = KeyA + 25,
-	KeyBack,
+	KeyBack, // aka Backspace
 	KeySpace,
 	KeyTab,
 	KeyEscape,
@@ -65,9 +65,9 @@ enum class Button {
 	KeyShift, // A pseudo-key, used for checking whether either shift key is down
 	KeyLShift,
 	KeyRShift,
-	KeyMenu, // A pseudo-key, used for checking whether either menu key is down
-	KeyLMenu,
-	KeyRMenu,
+	KeyAlt, // A pseudo-key, used for checking whether either alt key is down
+	KeyLAlt,
+	KeyRAlt,
 	KeyCtrl, // A pseudo-key, used for checking whether either ctrl key is down
 	KeyLCtrl,
 	KeyRCtrl,
@@ -84,14 +84,17 @@ enum {
 // Returns an integer between 0 and MouseNumberSize - 1, or -1 if this is not a mouse button
 XO_API int ButtonToMouseNumber(Button b);
 
-class XO_API ControlKeyStates {
+// Convert an ASCII character from a..z, A..Z, 0..9, to a Button. a..z and A..Z are mapped to the same range of buttons.
+XO_API Button AsciiToButton(char c);
+
+class XO_API ModifierKeyStates {
 public:
 	union {
 		struct {
 			bool LCtrl : 1;
 			bool RCtrl : 1;
-			bool LMenu : 1;
-			bool RMenu : 1;
+			bool LAlt : 1;
+			bool RAlt : 1;
 			bool LWindows : 1;
 			bool RWindows : 1;
 			bool LShift : 1;
@@ -100,7 +103,7 @@ public:
 		uint32_t All;
 	};
 
-	ControlKeyStates() : All(0) {}
+	ModifierKeyStates() : All(0) {}
 	bool IsKeyDown(Button btn) const;
 };
 
@@ -116,7 +119,7 @@ public:
 	const LayoutResult* LayoutResult = nullptr;
 	Events              Type         = EventMouseMove;
 	Button              Button       = Button::Null;
-	ControlKeyStates    ControlKeys;
+	ModifierKeyStates   ModifierKeys;                     // Modifier key state. These are saved when the message is generated, to guarantee correct timing of keys (in case event is processed after control key is lifted)
 	int                 KeyChar    = 0;                   // Unicode code point of a key message. If not a Unicode code point (eg DELETE), then use Button
 	int                 PointCount = 0;                   // Mouse = 1	Touch >= 1
 	Vec2f               PointsAbs[XO_MAX_TOUCHES];        // Points in pixels, relative to viewport top-left
@@ -130,7 +133,7 @@ public:
 	void MakeWindowSize(int w, int h);
 	void StopPropagation() { IsStopPropagationToggled = true; } // Stop bubbling out to higher DOM elements
 	void CancelTimer() { IsCancelTimerToggled = true; }         // Cancel this timer.
-	bool IsControlKeyDown(xo::Button btn) const;                // Returns the state of the control key when the event was fired. See ControlKeyStates for valid control keys
+	bool IsModifierKeyDown(xo::Button btn) const;               // Returns the state of the control key when the event was fired. See ControlKeyStates for valid control keys
 };
 
 // This is the event that the Windowing system will post onto the single event queue.

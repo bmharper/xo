@@ -12,11 +12,11 @@ void xoMain(xo::SysWnd* wnd) {
 		xo::Trace("KitchenSink application is closing\n");
 	});
 	xo::Global()->FontStore->AddFontDirectory("C:\\temp\\fonts");
-	int left   = -1400;
-	int width  = 1300;
-	int top    = 60;
-	int height = 700;
-	wnd->SetPosition(xo::Box(left, top, left + width, top + height), xo::SysWnd::SetPosition_Move | xo::SysWnd::SetPosition_Size);
+	//int left   = -1400;
+	//int width  = 1300;
+	//int top    = 60;
+	//int height = 700;
+	//wnd->SetPosition(xo::Box(left, top, left + width, top + height), xo::SysWnd::SetPosition_Move | xo::SysWnd::SetPosition_Size);
 	InitDOM(wnd->Doc());
 }
 
