@@ -62,6 +62,18 @@ enum class Button {
 	KeyNumMinus,
 	KeyNumMultiply,
 	KeyNumDivide,
+	KeyShift, // A pseudo-key, used for checking whether either shift key is down
+	KeyLShift,
+	KeyRShift,
+	KeyMenu, // A pseudo-key, used for checking whether either menu key is down
+	KeyLMenu,
+	KeyRMenu,
+	KeyCtrl, // A pseudo-key, used for checking whether either ctrl key is down
+	KeyLCtrl,
+	KeyRCtrl,
+	KeyWindows, // A pseudo-key, used for checking whether either windows key is down
+	KeyLWindows,
+	KeyRWindows,
 };
 
 enum {
@@ -71,6 +83,26 @@ enum {
 
 // Returns an integer between 0 and MouseNumberSize - 1, or -1 if this is not a mouse button
 XO_API int ButtonToMouseNumber(Button b);
+
+class XO_API ControlKeyStates {
+public:
+	union {
+		struct {
+			bool LCtrl : 1;
+			bool RCtrl : 1;
+			bool LMenu : 1;
+			bool RMenu : 1;
+			bool LWindows : 1;
+			bool RWindows : 1;
+			bool LShift : 1;
+			bool RShift : 1;
+		};
+		uint32_t All;
+	};
+
+	ControlKeyStates() : All(0) {}
+	bool IsKeyDown(Button btn) const;
+};
 
 /* User interface event (keyboard, mouse, touch, etc).
 */
@@ -84,8 +116,9 @@ public:
 	const LayoutResult* LayoutResult = nullptr;
 	Events              Type         = EventMouseMove;
 	Button              Button       = Button::Null;
-	int                 KeyChar      = 0;                 // Unicode code point of a key message. If not a Unicode code point (eg DELETE), then use Button
-	int                 PointCount   = 0;                 // Mouse = 1	Touch >= 1
+	ControlKeyStates    ControlKeys;
+	int                 KeyChar    = 0;                   // Unicode code point of a key message. If not a Unicode code point (eg DELETE), then use Button
+	int                 PointCount = 0;                   // Mouse = 1	Touch >= 1
 	Vec2f               PointsAbs[XO_MAX_TOUCHES];        // Points in pixels, relative to viewport top-left
 	Vec2f               PointsRel[XO_MAX_TOUCHES];        // Points relative to Target's content-box top-left
 	bool                IsStopPropagationToggled = false; // True if StopPropagation() has been called, and the event must not bubble out to enclosing DOM elements
@@ -96,7 +129,8 @@ public:
 
 	void MakeWindowSize(int w, int h);
 	void StopPropagation() { IsStopPropagationToggled = true; } // Stop bubbling out to higher DOM elements
-	void CancelTimer() { IsCancelTimerToggled         = true; } // Cancel this timer.
+	void CancelTimer() { IsCancelTimerToggled = true; }         // Cancel this timer.
+	bool IsControlKeyDown(xo::Button btn) const;                // Returns the state of the control key when the event was fired. See ControlKeyStates for valid control keys
 };
 
 // This is the event that the Windowing system will post onto the single event queue.
@@ -107,14 +141,18 @@ public:
 	Event     Event;
 };
 
-typedef std::function<void(Event& ev)> EventHandlerLambda;
+typedef std::function<void()>          EventHandlerLambda0; // 0 Parameters
+typedef std::function<void(Event& ev)> EventHandlerLambda1; // 1 Parameter
 
 typedef void (*EventHandlerF)(Event& ev);
 
-XO_API void EventHandler_LambdaStaticFunc(Event& ev);
+XO_API void EventHandler_LambdaStaticFunc0(Event& ev);
+XO_API void EventHandler_LambdaStaticFunc1(Event& ev);
 
 enum EventHandlerFlags {
-	EventHandlerFlag_IsLambda = 1,
+	EventHandlerFlag_None      = 0,
+	EventHandlerFlag_IsLambda0 = 1, // 0 parameter lambda function
+	EventHandlerFlag_IsLambda1 = 2, // 1 parameter lambda function
 };
 
 class XO_API EventHandler {
@@ -131,8 +169,10 @@ public:
 	~EventHandler();
 
 	bool Handles(Events ev) const { return !!(Mask & ev); }
-	bool IsLambda() const { return !!(Flags & EventHandlerFlag_IsLambda); }
-	void SetLambda() { Flags |= EventHandlerFlag_IsLambda; }
+	bool IsLambda0() const { return !!(Flags & EventHandlerFlag_IsLambda0); }
+	bool IsLambda1() const { return !!(Flags & EventHandlerFlag_IsLambda1); }
+	void SetLambda0() { Flags |= EventHandlerFlag_IsLambda0; }
+	void SetLambda1() { Flags |= EventHandlerFlag_IsLambda1; }
 };
 
 struct NodeEventIDPair {

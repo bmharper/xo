@@ -31,13 +31,13 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 // This is useful if you want a console application, which you'll typically only do during some stage
 // of debugging, and you really want stdout/stderr.
 // If you set the linker flag /SUBSYSTEM:CONSOLE, then you get a console application.
-int main(int argc, char** argv)
-{
-	_CrtSetAllocHook(CrtAllocHook);
-	xo::RunApp(xoMain);
-	_CrtDumpMemoryLeaks();
-	return 0;
-}
+//int main(int argc, char** argv)
+//{
+//	_CrtSetAllocHook(CrtAllocHook);
+//	xo::RunApp(xoMain);
+//	_CrtDumpMemoryLeaks();
+//	return 0;
+//}
 
 #elif XO_PLATFORM_LINUX_DESKTOP
 

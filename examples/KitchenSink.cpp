@@ -482,7 +482,7 @@ void InitDOM(xo::Doc* doc) {
 	xo::DomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
 
-	DoBorder(doc);
+	//DoBorder(doc);
 	//DoBaselineAlignment(doc);
 	//DoBaselineAlignment_rev2(doc);
 	//DoBaselineAlignment_Multiline(doc);
@@ -501,7 +501,7 @@ void InitDOM(xo::Doc* doc) {
 	//DoTextQuality(doc);
 	//DoQuadraticSplines(doc);
 	//DoTimer(doc);
-	//DoEditBox(doc);
+	DoEditBox(doc);
 	//DoStyleVars(doc);
 
 	body->OnClick([](xo::Event& ev) {

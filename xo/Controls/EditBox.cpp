@@ -118,10 +118,18 @@ DomNode* EditBox::AppendTo(DomNode* node, const char* txt) {
 			break;
 		}
 		default: {
-			std::string newChar;
-			utfz::encode(newChar, ev.KeyChar);
-			txt.insert(insertPos, newChar);
-			s->CaretPos = ClampCaretPos(s->CaretPos + 1, txt.length());
+			// Shortcut keys
+			if (ev.KeyChar == 'v' && ev.IsControlKeyDown(Button::KeyCtrl)) {
+				// hard-coded Ctrl+V. I just need this too much right now!
+				auto clipboard = ClipboardRead();
+				txt.insert(insertPos, clipboard);
+				s->CaretPos = ClampCaretPos(s->CaretPos + (int) clipboard.length(), txt.length());
+			} else {
+				std::string newChar;
+				utfz::encode(newChar, ev.KeyChar);
+				txt.insert(insertPos, newChar);
+				s->CaretPos = ClampCaretPos(s->CaretPos + 1, txt.length());
+			}
 			break;
 		}
 		}

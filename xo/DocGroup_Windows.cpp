@@ -95,12 +95,23 @@ static void WM_KeyButtonToXo(WPARAM wp, LPARAM lp, Button& btn, int& codepoint) 
 		btn       = Button::KeyEscape;
 		codepoint = 27;
 		break;
-	case VK_LEFT: btn   = Button::KeyLeft; break;
-	case VK_RIGHT: btn  = Button::KeyRight; break;
-	case VK_UP: btn     = Button::KeyUp; break;
-	case VK_DOWN: btn   = Button::KeyDown; break;
+	case VK_LEFT: btn = Button::KeyLeft; break;
+	case VK_RIGHT: btn = Button::KeyRight; break;
+	case VK_UP: btn = Button::KeyUp; break;
+	case VK_DOWN: btn = Button::KeyDown; break;
 	case VK_DELETE: btn = Button::KeyDelete; break;
 	}
+}
+
+static void PopulateControlKeyStates(Event& ev) {
+	ev.ControlKeys.LShift   = !!(0x8000 & GetKeyState(VK_LSHIFT));
+	ev.ControlKeys.RShift   = !!(0x8000 & GetKeyState(VK_RSHIFT));
+	ev.ControlKeys.LMenu    = !!(0x8000 & GetKeyState(VK_LMENU));
+	ev.ControlKeys.RMenu    = !!(0x8000 & GetKeyState(VK_RMENU));
+	ev.ControlKeys.LCtrl    = !!(0x8000 & GetKeyState(VK_LCONTROL));
+	ev.ControlKeys.RCtrl    = !!(0x8000 & GetKeyState(VK_RCONTROL));
+	ev.ControlKeys.LWindows = !!(0x8000 & GetKeyState(VK_LWIN));
+	ev.ControlKeys.RWindows = !!(0x8000 & GetKeyState(VK_RWIN));
 }
 
 // See the article on MSDN "Legacy User Interaction Features" > "Keyboard and Mouse Input" > "Using Keyboard Input". Just search for "MSDN Using Keyboard Input".
@@ -142,9 +153,9 @@ static void UpdateWindowsCursor(HWND wnd, Cursors cursor, WPARAM wParam, LPARAM 
 	LPTSTR wc = IDC_ARROW;
 	switch (cursor) {
 	case CursorArrow: wc = IDC_ARROW; break;
-	case CursorHand: wc  = IDC_HAND; break;
-	case CursorText: wc  = IDC_IBEAM; break;
-	case CursorWait: wc  = IDC_WAIT; break;
+	case CursorHand: wc = IDC_HAND; break;
+	case CursorText: wc = IDC_IBEAM; break;
+	case CursorWait: wc = IDC_WAIT; break;
 	}
 	static_assert(CursorWait == 3, "Implement new cursor");
 	SetCursor(LoadCursor(NULL, wc));
@@ -247,6 +258,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		ev.Event.Type         = EventMouseMove;
 		ev.Event.PointCount   = 1;
 		ev.Event.PointsAbs[0] = cursor;
+		PopulateControlKeyStates(ev.Event);
 		AddOrReplaceMessage(ev);
 		XOTRACE_LATENCY("MouseMove\n");
 		break;
@@ -268,6 +280,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		ev.Event.Button       = WM_MouseButtonToXo(message, wParam);
 		ev.Event.PointCount   = 1;
 		ev.Event.PointsAbs[0] = cursor;
+		PopulateControlKeyStates(ev.Event);
 		Global()->UIEventQueue.Add(ev);
 		break;
 
@@ -280,6 +293,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		ev.Event.Button       = WM_MouseButtonToXo(message, wParam);
 		ev.Event.PointCount   = 1;
 		ev.Event.PointsAbs[0] = cursor;
+		PopulateControlKeyStates(ev.Event);
 		Global()->UIEventQueue.Add(ev);
 		break;
 
@@ -292,6 +306,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		ev.Event.Button       = WM_MouseButtonToXo(message, wParam);
 		ev.Event.PointCount   = 1;
 		ev.Event.PointsAbs[0] = cursor;
+		PopulateControlKeyStates(ev.Event);
 		Global()->UIEventQueue.Add(ev);
 		break;
 
@@ -299,6 +314,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		XOTRACE_LATENCY("KeyDown %u\n", (uint32_t) wParam);
 		ev.Event.Type = EventKeyDown;
 		WM_KeyButtonToXo(wParam, lParam, ev.Event.Button, ev.Event.KeyChar);
+		PopulateControlKeyStates(ev.Event);
 		Global()->UIEventQueue.Add(ev);
 		// Also add an EventKeyChar message, so that one doesn't need to deal with two messages
 		// that distinguish between arbitrary different keys. For example, why does BACKSPACE
@@ -315,6 +331,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		XOTRACE_LATENCY("KeyUp %u\n", (uint32_t) wParam);
 		ev.Event.Type = EventKeyUp;
 		WM_KeyButtonToXo(wParam, lParam, ev.Event.Button, ev.Event.KeyChar);
+		PopulateControlKeyStates(ev.Event);
 		Global()->UIEventQueue.Add(ev);
 		break;
 
@@ -331,8 +348,14 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// http://www.catch22.net/tuts/unicode-text-editing
 		//Trace("KeyChar %u\n", (uint32_t) wParam);
 		XOTRACE_LATENCY("KeyChar %u\n", (uint32_t) wParam);
+		TimeTrace("KeyChar %u\n", (uint32_t) wParam);
+		// When Ctrl is held down, then wparam starts at 1 for 'a', 2 for 'b', and upwards like that.
+		if (wParam == 22) {
+			// Ctrl+V
+		}
 		ev.Event.Type    = EventKeyChar;
 		ev.Event.KeyChar = (int32_t) wParam;
+		PopulateControlKeyStates(ev.Event);
 		Global()->UIEventQueue.Add(ev);
 		return 0;
 

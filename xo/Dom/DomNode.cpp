@@ -223,14 +223,14 @@ bool DomNode::HasClass(const char* klass) const {
 	return Classes.find(Doc->ClassStyles.GetClassID(klass)) != -1;
 }
 
-uint64_t DomNode::AddHandler(Events ev, EventHandlerF func, bool isLambda, void* context, uint32_t timerPeriodMS) {
+uint64_t DomNode::AddHandler(Events ev, EventHandlerF func, EventHandlerFlags flags, void* context, uint32_t timerPeriodMS) {
 	// Fastest allowable timer is 1ms
 	if (ev == EventTimer)
 		timerPeriodMS = Max<uint32_t>(timerPeriodMS, 1);
 
 	for (size_t i = 0; i < Handlers.size(); i++) {
 		if (Handlers[i].Context == context && Handlers[i].Func == func) {
-			XO_ASSERT(isLambda == Handlers[i].IsLambda());
+			XO_ASSERT(flags == Handlers[i].Flags);
 			Handlers[i].Mask |= ev;
 			Handlers[i].TimerPeriodMS = timerPeriodMS;
 			RecalcAllEventMask();
@@ -243,24 +243,33 @@ uint64_t DomNode::AddHandler(Events ev, EventHandlerF func, bool isLambda, void*
 	h.Func          = func;
 	h.Mask          = ev;
 	h.TimerPeriodMS = timerPeriodMS;
-	if (isLambda)
-		h.SetLambda();
+	h.Flags         = flags;
 	RecalcAllEventMask();
 	return h.ID;
 }
 
-uint64_t DomNode::AddHandler(Events ev, EventHandlerLambda lambda) {
-	EventHandlerLambda* copy = new EventHandlerLambda(lambda);
-	return AddHandler(ev, EventHandler_LambdaStaticFunc, true, copy, 0);
+uint64_t DomNode::AddHandler(Events ev, EventHandlerLambda0 lambda) {
+	EventHandlerLambda0* copy = new EventHandlerLambda0(lambda);
+	return AddHandler(ev, EventHandler_LambdaStaticFunc0, EventHandlerFlag_IsLambda0, copy, 0);
 }
 
-uint64_t DomNode::AddTimerHandler(Events ev, EventHandlerLambda lambda, uint32_t periodMS) {
-	EventHandlerLambda* copy = new EventHandlerLambda(lambda);
-	return AddHandler(ev, EventHandler_LambdaStaticFunc, true, copy, periodMS);
+uint64_t DomNode::AddHandler(Events ev, EventHandlerLambda1 lambda) {
+	EventHandlerLambda1* copy = new EventHandlerLambda1(lambda);
+	return AddHandler(ev, EventHandler_LambdaStaticFunc1, EventHandlerFlag_IsLambda1, copy, 0);
+}
+
+uint64_t DomNode::AddTimerHandler(Events ev, EventHandlerLambda0 lambda, uint32_t periodMS) {
+	EventHandlerLambda0* copy = new EventHandlerLambda0(lambda);
+	return AddHandler(ev, EventHandler_LambdaStaticFunc0, EventHandlerFlag_IsLambda0, copy, periodMS);
+}
+
+uint64_t DomNode::AddTimerHandler(Events ev, EventHandlerLambda1 lambda, uint32_t periodMS) {
+	EventHandlerLambda1* copy = new EventHandlerLambda1(lambda);
+	return AddHandler(ev, EventHandler_LambdaStaticFunc1, EventHandlerFlag_IsLambda1, copy, periodMS);
 }
 
 uint64_t DomNode::AddHandler(Events ev, EventHandlerF func, void* context) {
-	return AddHandler(ev, func, false, context, 0);
+	return AddHandler(ev, func, EventHandlerFlag_None, context, 0);
 }
 
 void DomNode::RemoveHandler(uint64_t id) {

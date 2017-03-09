@@ -65,7 +65,8 @@ public:
 	// An event handler has a 64-bit ID that is specific to that DOM node.
 	// You can use that ID to remove the event handler again.
 	uint64_t      AddHandler(Events ev, EventHandlerF func, void* context = NULL);
-	uint64_t      AddHandler(Events ev, EventHandlerLambda lambda);
+	uint64_t      AddHandler(Events ev, EventHandlerLambda0 lambda);
+	uint64_t      AddHandler(Events ev, EventHandlerLambda1 lambda);
 	void          RemoveHandler(uint64_t id);
 	EventHandler* HandlerByID(uint64_t id);
 	bool          HandlesEvent(Events ev) const { return !!(AllEventMask & ev); }
@@ -85,7 +86,7 @@ public:
 	// timer event is cancelled.
 
 	uint64_t OnWindowSize(EventHandlerF func, void* context) { return AddHandler(EventWindowSize, func, context); }
-	uint64_t OnTimer(EventHandlerF func, void* context, uint32_t periodMS) { return AddHandler(EventTimer, func, false, context, periodMS); }
+	uint64_t OnTimer(EventHandlerF func, void* context, uint32_t periodMS) { return AddHandler(EventTimer, func, EventHandlerFlags::EventHandlerFlag_None, context, periodMS); }
 	uint64_t OnGetFocus(EventHandlerF func, void* context) { return AddHandler(EventGetFocus, func, context); }
 	uint64_t OnLoseFocus(EventHandlerF func, void* context) { return AddHandler(EventLoseFocus, func, context); }
 	uint64_t OnTouch(EventHandlerF func, void* context) { return AddHandler(EventTouch, func, context); }
@@ -102,23 +103,41 @@ public:
 	uint64_t OnDestroy(EventHandlerF func, void* context) { return AddHandler(EventDestroy, func, context); }
 	uint64_t OnRender(EventHandlerF func, void* context) { return AddHandler(EventRender, func, context); }
 
-	uint64_t OnWindowSize(EventHandlerLambda lambda) { return AddHandler(EventWindowSize, lambda); }
-	uint64_t OnTimer(EventHandlerLambda lambda, uint32_t periodMS) { return AddTimerHandler(EventTimer, lambda, periodMS); }
-	uint64_t OnGetFocus(EventHandlerLambda lambda) { return AddHandler(EventGetFocus, lambda); }
-	uint64_t OnLoseFocus(EventHandlerLambda lambda) { return AddHandler(EventLoseFocus, lambda); }
-	uint64_t OnTouch(EventHandlerLambda lambda) { return AddHandler(EventTouch, lambda); }
-	uint64_t OnClick(EventHandlerLambda lambda) { return AddHandler(EventClick, lambda); }
-	uint64_t OnDblClick(EventHandlerLambda lambda) { return AddHandler(EventDblClick, lambda); }
-	uint64_t OnMouseMove(EventHandlerLambda lambda) { return AddHandler(EventMouseMove, lambda); }
-	uint64_t OnMouseEnter(EventHandlerLambda lambda) { return AddHandler(EventMouseEnter, lambda); }
-	uint64_t OnMouseLeave(EventHandlerLambda lambda) { return AddHandler(EventMouseLeave, lambda); }
-	uint64_t OnMouseDown(EventHandlerLambda lambda) { return AddHandler(EventMouseDown, lambda); }
-	uint64_t OnMouseUp(EventHandlerLambda lambda) { return AddHandler(EventMouseUp, lambda); }
-	uint64_t OnKeyDown(EventHandlerLambda lambda) { return AddHandler(EventKeyDown, lambda); }
-	uint64_t OnKeyUp(EventHandlerLambda lambda) { return AddHandler(EventKeyUp, lambda); }
-	uint64_t OnKeyChar(EventHandlerLambda lambda) { return AddHandler(EventKeyChar, lambda); }
-	uint64_t OnDestroy(EventHandlerLambda lambda) { return AddHandler(EventDestroy, lambda); }
-	uint64_t OnRender(EventHandlerLambda lambda) { return AddHandler(EventRender, lambda); }
+	uint64_t OnWindowSize(EventHandlerLambda0 lambda) { return AddHandler(EventWindowSize, lambda); }
+	uint64_t OnTimer(EventHandlerLambda0 lambda, uint32_t periodMS) { return AddTimerHandler(EventTimer, lambda, periodMS); }
+	uint64_t OnGetFocus(EventHandlerLambda0 lambda) { return AddHandler(EventGetFocus, lambda); }
+	uint64_t OnLoseFocus(EventHandlerLambda0 lambda) { return AddHandler(EventLoseFocus, lambda); }
+	uint64_t OnTouch(EventHandlerLambda0 lambda) { return AddHandler(EventTouch, lambda); }
+	uint64_t OnClick(EventHandlerLambda0 lambda) { return AddHandler(EventClick, lambda); }
+	uint64_t OnDblClick(EventHandlerLambda0 lambda) { return AddHandler(EventDblClick, lambda); }
+	uint64_t OnMouseMove(EventHandlerLambda0 lambda) { return AddHandler(EventMouseMove, lambda); }
+	uint64_t OnMouseEnter(EventHandlerLambda0 lambda) { return AddHandler(EventMouseEnter, lambda); }
+	uint64_t OnMouseLeave(EventHandlerLambda0 lambda) { return AddHandler(EventMouseLeave, lambda); }
+	uint64_t OnMouseDown(EventHandlerLambda0 lambda) { return AddHandler(EventMouseDown, lambda); }
+	uint64_t OnMouseUp(EventHandlerLambda0 lambda) { return AddHandler(EventMouseUp, lambda); }
+	uint64_t OnKeyDown(EventHandlerLambda0 lambda) { return AddHandler(EventKeyDown, lambda); }
+	uint64_t OnKeyUp(EventHandlerLambda0 lambda) { return AddHandler(EventKeyUp, lambda); }
+	uint64_t OnKeyChar(EventHandlerLambda0 lambda) { return AddHandler(EventKeyChar, lambda); }
+	uint64_t OnDestroy(EventHandlerLambda0 lambda) { return AddHandler(EventDestroy, lambda); }
+	uint64_t OnRender(EventHandlerLambda0 lambda) { return AddHandler(EventRender, lambda); }
+
+	uint64_t OnWindowSize(EventHandlerLambda1 lambda) { return AddHandler(EventWindowSize, lambda); }
+	uint64_t OnTimer(EventHandlerLambda1 lambda, uint32_t periodMS) { return AddTimerHandler(EventTimer, lambda, periodMS); }
+	uint64_t OnGetFocus(EventHandlerLambda1 lambda) { return AddHandler(EventGetFocus, lambda); }
+	uint64_t OnLoseFocus(EventHandlerLambda1 lambda) { return AddHandler(EventLoseFocus, lambda); }
+	uint64_t OnTouch(EventHandlerLambda1 lambda) { return AddHandler(EventTouch, lambda); }
+	uint64_t OnClick(EventHandlerLambda1 lambda) { return AddHandler(EventClick, lambda); }
+	uint64_t OnDblClick(EventHandlerLambda1 lambda) { return AddHandler(EventDblClick, lambda); }
+	uint64_t OnMouseMove(EventHandlerLambda1 lambda) { return AddHandler(EventMouseMove, lambda); }
+	uint64_t OnMouseEnter(EventHandlerLambda1 lambda) { return AddHandler(EventMouseEnter, lambda); }
+	uint64_t OnMouseLeave(EventHandlerLambda1 lambda) { return AddHandler(EventMouseLeave, lambda); }
+	uint64_t OnMouseDown(EventHandlerLambda1 lambda) { return AddHandler(EventMouseDown, lambda); }
+	uint64_t OnMouseUp(EventHandlerLambda1 lambda) { return AddHandler(EventMouseUp, lambda); }
+	uint64_t OnKeyDown(EventHandlerLambda1 lambda) { return AddHandler(EventKeyDown, lambda); }
+	uint64_t OnKeyUp(EventHandlerLambda1 lambda) { return AddHandler(EventKeyUp, lambda); }
+	uint64_t OnKeyChar(EventHandlerLambda1 lambda) { return AddHandler(EventKeyChar, lambda); }
+	uint64_t OnDestroy(EventHandlerLambda1 lambda) { return AddHandler(EventDestroy, lambda); }
+	uint64_t OnRender(EventHandlerLambda1 lambda) { return AddHandler(EventRender, lambda); }
 
 protected:
 	uint64_t               NextEventHandlerID = 1;
@@ -129,8 +148,9 @@ protected:
 	cheapvec<StyleClassID> Classes; // Classes of styles
 
 	void     RecalcAllEventMask();
-	uint64_t AddHandler(Events ev, EventHandlerF func, bool isLambda, void* context, uint32_t timerPeriodMS);
-	uint64_t AddTimerHandler(Events ev, EventHandlerLambda lambda, uint32_t periodMS);
+	uint64_t AddHandler(Events ev, EventHandlerF func, EventHandlerFlags flags, void* context, uint32_t timerPeriodMS);
+	uint64_t AddTimerHandler(Events ev, EventHandlerLambda0 lambda, uint32_t periodMS);
+	uint64_t AddTimerHandler(Events ev, EventHandlerLambda1 lambda, uint32_t periodMS);
 	void     DeleteChildInternal(DomEl* c);
 };
 }
