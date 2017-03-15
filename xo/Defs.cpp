@@ -466,27 +466,12 @@ XO_API void StyleVarLookupFailed(const char* var) {
 	}
 }
 
-XO_API void Trace(const char* msg, ...) {
-	char    buff[2048];
-	va_list va;
-	va_start(va, msg);
-	uint32_t r = vsnprintf(buff, arraysize(buff), msg, va);
-	va_end(va);
-	buff[arraysize(buff) - 1] = 0;
-	if (r < arraysize(buff))
-		XO_TRACE_WRITE(buff);
-}
-
-XO_API void TimeTrace(const char* msg, ...) {
+XO_API void TimeTraceBuf(const char* msg) {
 	const int timeChars = 16;
-	char      buff[2048];
-	sprintf(buff, "%-15.3f  ", TimeAccurateSeconds() * 1000);
-	va_list va;
-	va_start(va, msg);
-	uint32_t r = vsnprintf(buff + timeChars, arraysize(buff) - timeChars, msg, va);
-	va_end(va);
-	buff[arraysize(buff) - 1] = 0;
-	if (r < arraysize(buff))
-		XO_TRACE_WRITE(buff);
+	char      buf[2024];
+	sprintf(buf, "%-15.3f  ", TimeAccurateSeconds() * 1000);
+	strncpy(buf + timeChars, msg, arraysize(buf) - timeChars);
+	buf[arraysize(buf) - 1] = 0;
+	XO_TRACE_WRITE(buf);
 }
 }

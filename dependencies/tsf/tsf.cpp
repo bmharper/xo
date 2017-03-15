@@ -238,6 +238,9 @@ static inline int fmt_output_with_snprintf(char* outbuf, char fmt_type, char arg
 	{
 	case fmtarg::TNull:
 		return 0;
+	case fmtarg::TPtr:
+		SETTYPE1('p');
+		return fmt_snprintf(outbuf, outputSize, argbuf, arg->Ptr);
 	case fmtarg::TCStr:
 		SETTYPE2("", 's');
 		return format_string(outbuf, outputSize, argbuf, arg->CStr);
@@ -265,7 +268,6 @@ static inline int fmt_output_with_snprintf(char* outbuf, char fmt_type, char arg
 		if (tokenreal)	{ SETTYPE1(fmt_type); }
 		else			{ SETTYPE1('g'); }
 		return fmt_snprintf(outbuf, outputSize, argbuf, arg->Dbl);
-		break;
 	}
 
 #undef SETTYPE1
@@ -274,7 +276,7 @@ static inline int fmt_output_with_snprintf(char* outbuf, char fmt_type, char arg
 	return 0;
 }
 
-TSF_FMT_API std::string fmt_core(const fmt_context& context, const char* fmt, ssize_t nargs, const fmtarg* args)
+TSF_FMT_API std::string fmt_core(const context& context, const char* fmt, ssize_t nargs, const fmtarg* args)
 {
 	static const size_t bufsize = 256;
 	char staticbuf[bufsize];
@@ -285,7 +287,7 @@ TSF_FMT_API std::string fmt_core(const fmt_context& context, const char* fmt, ss
 	return str;
 }
 
-TSF_FMT_API StrLenPair fmt_core(const fmt_context& context, const char* fmt, ssize_t nargs, const fmtarg* args, char* staticbuf, size_t staticbuf_size)
+TSF_FMT_API StrLenPair fmt_core(const context& context, const char* fmt, ssize_t nargs, const fmtarg* args, char* staticbuf, size_t staticbuf_size)
 {
 	if (nargs == 0)
 	{

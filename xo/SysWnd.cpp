@@ -109,7 +109,7 @@ SysWnd* SysWnd::Create(uint32_t createFlags) {
 #if XO_PLATFORM_WIN_DESKTOP
 	bool    ok = false;
 	SysWnd* w  = new SysWnd();
-	Trace("DocGroup = %p\n", w->DocGroup);
+	Trace("DocGroup = %p\n", (void*) w->DocGroup);
 	uint32_t ws = 0;
 	if (!!(createFlags & CreateMinimizeButton))
 		ws |= WS_CAPTION | WS_MINIMIZEBOX;
