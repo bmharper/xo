@@ -97,6 +97,14 @@ void Canvas2D::StrokeLine(bool closed, int nvx, const float* vx, int vx_stride_b
 	RenderScanlines();
 }
 
+void Canvas2D::StrokeLine(float x1, float y1, float x2, float y2, Color color, float linewidth) {
+	float vx[4] = {
+		x1,y1,
+		x2,y2,
+	};
+	StrokeLine(false, 2, vx, 2 * sizeof(float), color, linewidth);
+}
+
 void Canvas2D::StrokeCircle(float x, float y, float radius, Color color, float linewidth) {
 	if (!IsAlive)
 		return;

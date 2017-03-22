@@ -23,6 +23,8 @@ public:
 	const void* Buffer() const { return RenderBuff.buf(); }
 	void*       RowPtr(int line) { return RenderBuff.row_ptr(line); }
 	const void* RowPtr(int line) const { return RenderBuff.row_ptr(line); }
+	void*       PixelPtr(int x, int y) { return RenderBuff.row_ptr(y) + 4 * (uint32_t) x; }
+	const void* PixelPtr(int x, int y) const { return RenderBuff.row_ptr(y) + 4 * (uint32_t) x; }
 	int32_t     Stride() const { return RenderBuff.stride(); }
 	uint32_t    StrideAbs() const { return RenderBuff.stride_abs(); }
 	uint32_t    Width() const { return RenderBuff.width(); }
@@ -36,6 +38,7 @@ public:
 	void FillRect(Box box, Color color);
 	void StrokeRect(Box box, Color color, float linewidth);
 	void StrokeLine(bool closed, int nvx, const float* vx, int vx_stride_bytes, Color color, float linewidth);
+	void StrokeLine(float x1, float y1, float x2, float y2, Color color, float linewidth);
 	void StrokeCircle(float x, float y, float radius, Color color, float linewidth);
 	void FillCircle(float x, float y, float radius, Color color);
 
