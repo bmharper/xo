@@ -325,7 +325,7 @@ bool SysWnd::CopySurfaceToImage(Box box, Image& img) {
 
 	for (int y = 0; y < height; y++) {
 		uint8_t* src = (uint8_t*) bits + y * width * 4;
-		uint8_t* dst = (uint8_t*) img.TexDataAtLine(y);
+		uint8_t* dst = (uint8_t*) img.DataAtLine(y);
 		auto src_end = src + width * 4;
 		for (; src != src_end; src += 4, dst += 4) {
 			dst[0] = src[2];

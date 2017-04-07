@@ -12,12 +12,31 @@ void Button::InitializeStyles(Doc* doc) {
 	doc->ClassParse("xo.button:capture", "border: 1px #7777ee; background: #cdcdcd");
 }
 
-DomNode* Button::AppendTo(DomNode* node, const char* txt) {
-	auto btn = node->AddNode(xo::TagLab);
+DomNode* Button::NewText(DomNode* node, const char* txt) {
+	return New(node, txt, nullptr, nullptr, nullptr);
+}
+
+DomNode* Button::NewSvg(DomNode* node, const char* svgIcon, const char* width, const char* height) {
+	return New(node, nullptr, svgIcon, width, height);
+}
+
+DomNode* Button::New(DomNode* node, const char* txt, const char* svgIcon, const char* width, const char* height) {
+	auto btn = node->AddNode(svgIcon ? xo::TagDiv : xo::TagLab);
 	btn->AddClass("xo.button");
 
-	// Add the text, even if it's empty (must be first child for DomNode.SetText to work)
-	btn->AddText(txt);
+	if (txt) {
+		// Add the text, even if it's empty (must be first child for DomNode.SetText to work)
+		btn->AddText(txt);
+	} else {
+		auto svg = btn->AddNode(TagDiv);
+		svg->StyleParsef("width: 100%%; height: 100%%; background: svg(%v)", svgIcon);
+	}
+
+	if (width)
+		btn->StyleParsef("width: %v", width);
+
+	if (height)
+		btn->StyleParsef("height: %v", height);
 
 	btn->OnMouseDown([btn](Event& ev) {
 		btn->SetCapture();
@@ -28,5 +47,6 @@ DomNode* Button::AppendTo(DomNode* node, const char* txt) {
 	});
 	return btn;
 }
+
 }
 }

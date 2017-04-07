@@ -9,6 +9,9 @@ namespace xo {
 // Maximum length of a style variable name
 static const size_t MaxStyleVarNameLen = 127;
 
+// Maximum length of an SVG name
+static const size_t MaxSvgNameLen = 127;
+
 // This is parsing whitespace, not DOM/textual whitespace
 // In other words, it is the space between the comma and verdana in "font-family: verdana, arial",
 inline bool IsWhitespace(char c) {
@@ -238,9 +241,9 @@ enum StyleCategories {
 	CatNULL = 0,
 	CatColor,
 	CatFIRST = CatColor,
-	CatPadding_Use_Me_0,
+	CatPadding_Use_Me_1,
 	CatBackground,
-	CatBackgroundImage,
+	CatPadding_Use_Me_2,
 	CatText_Align_Vertical,
 
 	CatBreak,
@@ -361,7 +364,10 @@ public:
 		// on whether it's a vertical or horizontal binding.
 		// If our category type is any of the Binding values, and the SubType is anything other than
 		// SubType_EnumBinding, then the attribute is a Size object.
-		SubType_EnumBinding = 255
+		SubType_EnumBinding = 255,
+
+		// background is actually a vector icon
+		SubType_Background_Vector = 1,
 	};
 
 	StyleCategories Category : 8;
@@ -394,7 +400,7 @@ public:
 	//void SetBorderRadius(Size val) { SetSize(CatBorderRadius, val); }
 	void SetPosition(PositionType val) { SetU32(CatPosition, val); }
 	void SetFont(FontID val) { SetU32(CatFontFamily, val); }
-	void SetBackgroundImage(const char* image, Doc* doc) { SetString(CatBackgroundImage, image, doc); }
+	void SetBackgroundVector(int vectorID) { SetWithSubtypeU32(CatBackground, SubType_Background_Vector, vectorID); }
 	void SetBreak(BreakType type) { SetU32(CatBreak, type); }
 	void SetCanFocus(bool canFocus) { SetU32(CatCanFocus, canFocus); }
 	void SetCursor(Cursors cursor) { SetU32(CatCursor, cursor); }
@@ -630,15 +636,15 @@ public:
 // This struct is present in every single RenderDomNode, so it pays to keep it tight.
 class XO_API StyleRender {
 public:
-	Box16 BorderSize;
-	Box16 Padding;
-	Box16 BorderRadius; // 2 bits of sub-pixel precision, giving maximum radius of 16384
-	Color BackgroundColor;
-	Color BorderColor[4];
-	int   BackgroundImageID;
-	bool  HasHoverStyle : 1;   // Element's appearance depends upon whether the cursor is over it
-	bool  HasFocusStyle : 1;   // Element's appearance depends upon whether it has the focus
-	bool  HasCaptureStyle : 1; // Element's appearance depends upon whether it has the input captured
+	Box16    BorderSize;
+	Box16    Padding;
+	Box16    BorderRadius; // 2 bits of sub-pixel precision, giving maximum radius of 16384
+	Color    BackgroundColor;
+	Color    BorderColor[4];
+	uint16_t BackgroundImageID;   // I hope 64k is enough for this
+	bool     HasHoverStyle : 1;   // Element's appearance depends upon whether the cursor is over it
+	bool     HasFocusStyle : 1;   // Element's appearance depends upon whether it has the focus
+	bool     HasCaptureStyle : 1; // Element's appearance depends upon whether it has the input captured
 
 	StyleRender() { memset(this, 0, sizeof(*this)); }
 };
@@ -679,4 +685,5 @@ XO_API bool ParseVerticalBinding(const char* s, size_t len, VerticalBindings& t)
 XO_API bool ParseBinding(bool isHorz, const char* s, size_t len, StyleCategories cat, Doc* doc, Style& style);
 XO_API bool ParseBump(const char* s, size_t len, BumpStyle& t);
 XO_API bool ParseBorder(const char* s, size_t len, const char* subCategory, size_t subCategoryLen, Doc* doc, Style& style);
+XO_API bool ParseBackground(const char* s, size_t len, const char* subCategory, size_t subCategoryLen, Doc* doc, Style& style);
 }

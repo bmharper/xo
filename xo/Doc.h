@@ -61,6 +61,12 @@ public:
 	int         GetOrCreateStyleVerbatimID(const char* val, size_t len);
 	const char* GetStyleVerbatim(int id) const; // Returns null if the ID is invalid
 
+	// SVG icons
+	int                  SetSvg(const char* name, const char* val); // Returns an ID for this icon
+	int                  GetSvgID(const char* name) const;
+	const char*          GetSvg(int id) const;
+	const VariableTable& GetSvgTable() const { return VectorIcons; }
+
 	DomEl* AllocChild(Tag tag, InternalID parentID);
 	void   FreeChild(const DomEl* el);
 
@@ -101,6 +107,7 @@ protected:
 	ohash::set<InternalID> NodesWithRender; // Set of all nodes that have an OnRender event handler registered
 	VariableTable          StyleVariables;
 	StringTableGC          StyleVerbatimStrings; // Table of all the verbatim style strings that contain variable references
+	VariableTable          VectorIcons;          // SVG Icons. Abuse VariableTable... VariableTable might need a rename or a slight refactor!
 
 	void ResetInternalIDs();
 	void InitializeDefaultTagStyles();

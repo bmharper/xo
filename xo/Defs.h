@@ -62,6 +62,10 @@ static const InternalID InternalIDRoot = 1; // The root of the DOM tree always h
 typedef int32_t     FontID;
 static const FontID FontIDNull = 0; // Zero is always an invalid Font ID
 
+// Handle to an image inside ImageStore.
+typedef int32_t      ImageID;
+static const ImageID ImageIDNull = 0; // Zero is the null image, which will return null from ImageStore
+
 // Handle to a texture that is (maybe) resident in the graphics driver.
 // xo supports the concept of the graphics device being "lost", so just because you have
 // a non-zero TextureID, does not mean that the ID is valid. Prior to drawing the scene,
@@ -85,6 +89,7 @@ inline int32_t PosRoundDown(int32_t pos) { return pos & ~PosMask; }
 inline int32_t PosRoundUp(int32_t pos) { return pos + ((1 << PosShift) - 1) & ~PosMask; }
 inline int32_t PosMul(int32_t a, int32_t b) { return (a * b) >> PosShift; }
 inline float   Round(float real) { return floor(real + 0.5f); }
+inline int32_t RoundToInt(float real) { return (int) floor(real + 0.5f); }
 
 // This is Jim Blinn's ubyte*ubyte multiplier, which is 100% accurate
 inline uint8_t MulUBGood(uint8_t a, uint8_t b) {
@@ -407,22 +412,25 @@ Once a texture has been uploaded, you may not change width, height, channel coun
 */
 class XO_API Texture {
 public:
-	uint32_t  TexWidth       = 0;
-	uint32_t  TexHeight      = 0;
-	Box       TexInvalidRect = Box::Inverted(); // Invalid rectangle, in integer texel coordinates.
-	TextureID TexID          = InternalIDNull;  // ID of texture in renderer.
-	TexFormat TexFormat      = TexFormatInvalid;
-	void*     TexData        = nullptr;
-	int       TexStride      = 0;
-	TexFilter TexFilterMin   = TexFilterLinear;
-	TexFilter TexFilterMax   = TexFilterLinear;
+	uint32_t  Width       = 0;
+	uint32_t  Height      = 0;
+	Box       InvalidRect = Box::Inverted(); // Invalid rectangle, in integer texel coordinates.
+	TextureID TexID       = InternalIDNull;  // ID of texture in renderer.
+	TexFormat Format      = TexFormatInvalid;
+	void*     Data        = nullptr;
+	int       Stride      = 0;
+	TexFilter FilterMin   = TexFilterLinear;
+	TexFilter FilterMax   = TexFilterLinear;
 
-	void   TexInvalidateWholeSurface() { TexInvalidRect = Box(0, 0, TexWidth, TexHeight); }
-	void   TexClearInvalidRect() { TexInvalidRect.SetInverted(); }
-	void*  TexDataAt(int x, int y) { return ((char*) TexData) + y * TexStride + x * TexFormatBytesPerPixel(TexFormat); }
-	void*  TexDataAtLine(int y) { return ((char*) TexData) + y * TexStride; }
-	size_t TexBytesPerPixel() const { return TexFormatBytesPerPixel(TexFormat); }
-	void   FlipVertical();
+	void    Attach(void* buf, uint32_t width, uint32_t height, int stride);
+	void    InvalidateWholeSurface() { InvalidRect = Box(0, 0, Width, Height); }
+	void    ClearInvalidRect() { InvalidRect.SetInverted(); }
+	void*   DataAt(int x, int y) { return ((char*) Data) + y * Stride + x * TexFormatBytesPerPixel(Format); }
+	void*   DataAtLine(int y) { return ((char*) Data) + y * Stride; }
+	size_t  BytesPerPixel() const { return TexFormatBytesPerPixel(Format); }
+	void    FlipVertical();
+	void    CopyInto(int x, int y, const void* src, int stride, int width, int height);
+	Texture Window(int x, int y, int width, int height) const; // Returns a window into this texture
 };
 
 // Base of GL and DX shader programs

@@ -1,6 +1,7 @@
 #pragma once
 #include "../Doc.h"
 #include "RenderDomEl.h"
+#include "VectorCache.h"
 
 namespace xo {
 
@@ -30,7 +31,9 @@ The 'Doc' member is a complete clone of the original document.
 */
 class XO_API RenderDoc {
 public:
-	Doc Doc; // Defining state
+	Doc         Doc; // Defining state
+
+	VectorCache VectorCache;
 
 	// Timings of most recent render
 	double TimeVariableBake = 0;

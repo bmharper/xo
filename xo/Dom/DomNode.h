@@ -14,10 +14,10 @@ public:
 	DomNode(xo::Doc* doc, xo::Tag tag, xo::InternalID parentID);
 	virtual ~DomNode();
 
-	virtual void        SetText(const char* txt) override;
-	virtual const char* GetText() const override;
-	virtual void        CloneSlowInto(DomEl& c, uint32_t cloneFlags) const override;
-	virtual void        ForgetChildren() override;
+	void        SetText(const char* txt) override;
+	const char* GetText() const override;
+	void        CloneSlowInto(DomEl& c, uint32_t cloneFlags) const override;
+	void        ForgetChildren() override;
 
 	const cheapvec<DomEl*>& GetChildren() const { return Children; }
 	cheapvec<StyleClassID>& GetClassesMutable() {
@@ -50,8 +50,11 @@ public:
 	DomNode* ParseAppendNode(const char* src, String* error = nullptr);      // Logs a warning and returns null if resulting element is not a node
 	DomNode* ParseAppendNode(const StringRaw& src, String* error = nullptr); // Logs a warning and returns null if resulting element is not a node
 
-	bool StyleParse(const char* t, size_t maxLen = -1);
-	bool StyleParsef(const char* t, ...);
+	bool StyleParse(const char* s, size_t maxLen = -1);
+
+	template <typename... Args>
+	bool StyleParsef(const char* fs, const Args&... args);
+
 	// TODO: This is here for experiments. Future work needs a better performing method for setting just one attribute of the style.
 	void HackSetStyle(const Style& style);
 	void HackSetStyle(StyleAttrib attrib); // TODO: This is also "Hack" because it doesn't work for attribute such as background-image
@@ -153,4 +156,14 @@ protected:
 	uint64_t AddTimerHandler(Events ev, EventHandlerLambda1 lambda, uint32_t periodMS);
 	void     DeleteChildInternal(DomEl* c);
 };
+
+template <typename... Args>
+bool DomNode::StyleParsef(const char* fs, const Args&... args) {
+	char buf[1024];
+	auto s  = tsf::fmt_buf(buf, sizeof(buf), fs, args...);
+	bool ok = StyleParse(s.Str, s.Len);
+	if (s.Str != buf)
+		delete[] s.Str;
+	return ok;
+}
 }

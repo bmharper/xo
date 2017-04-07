@@ -12,5 +12,6 @@ const char* TagNames[TagEND] =
         "Lab",
         "Span",
         "Canvas",
+		"Img",
 };
 }

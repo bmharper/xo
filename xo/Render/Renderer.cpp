@@ -17,11 +17,13 @@ const int SHADER_RECT          = 2;
 const int SHADER_TEXT_SIMPLE   = 3;
 const int SHADER_TEXT_SUBPIXEL = 4;
 
-RenderResult Renderer::Render(const xo::Doc* doc, ImageStore* images, StringTable* strings, RenderBase* driver, const RenderDomNode* root) {
-	Doc     = doc;
-	Driver  = driver;
-	Images  = images;
-	Strings = strings;
+RenderResult Renderer::Render(const xo::Doc* doc, ImageStore* images, const VariableTable* vectors, xo::VectorCache* vcache, StringTable* strings, RenderBase* driver, const RenderDomNode* root) {
+	Doc         = doc;
+	Driver      = driver;
+	Images      = images;
+	Vectors     = vectors;
+	VectorCache = vcache;
+	Strings     = strings;
 
 	Driver->PreRender();
 
@@ -31,10 +33,11 @@ RenderResult Renderer::Render(const xo::Doc* doc, ImageStore* images, StringTabl
 
 	Driver->PostRenderCleanup();
 
-	bool needGlyphs = GlyphsNeeded.size() != 0;
+	bool moreNeeded = GlyphsNeeded.size() != 0 || VectorsNeeded.size() != 0;
 	RenderGlyphsNeeded();
+	RenderVectorsNeeded();
 
-	return needGlyphs ? RenderResultNeedMore : RenderResultDone;
+	return moreNeeded ? RenderResultNeedMore : RenderResultDone;
 }
 
 void Renderer::RenderEl(Point base, const RenderDomEl* el) {
@@ -99,20 +102,27 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 	// Vertex ordering: 0 3
 	//                  1 2
 
-	Image* bgImage = nullptr;
+	Texture* bgImage = nullptr;
+	Box      bgImageRect(0, 0, 0, 0);
 
-	//auto bg = style.Get( CatBackground );
-	//auto bgImage = style.Get( CatBackgroundImage );
-	Color bg = style->BackgroundColor;
-	//const char* bgImageName = Strings->GetStr(style->BackgroundImageID); -- todo
-	if (bg == Color(0xdd, 0x55, 0x55, 0xff))
-		int abc = 123;
+	Color                 bg = style->BackgroundColor;
+	xo::VectorCache::Elem bgImageCache;
+	if (style->BackgroundImageID != 0) {
+		auto key = VectorCacheKey::Make(style->BackgroundImageID, xo::RoundToInt(contentWidth), xo::RoundToInt(contentHeight));
+		if (VectorCache->Get(key, bgImageCache)) {
+			bgImage     = VectorCache->GetAtlas(bgImageCache.Atlas);
+			bgImageRect = Box(bgImageCache.X, bgImageCache.Y, bgImageCache.X + key.Width, bgImageCache.Y + key.Height);
+		} else {
+			VectorsNeeded.insert(key);
+		}
+	}
 
 	int shaderFlags = 0;
 
 	if (node->IsCanvas()) {
 		const DomCanvas* canvas = static_cast<const DomCanvas*>(Doc->GetChildByInternalID(node->InternalID));
-		bgImage                 = Images->Get(canvas->GetCanvasImageName());
+		bgImage                 = Images->Get(canvas->GetImageID());
+		bgImageRect             = Box(0, 0, bgImage->Width, bgImage->Height);
 	}
 
 	if (bgImage) {
@@ -167,7 +177,13 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 
 		const float infinitelyThickBorder = 4096; // This constant is just a thumbsuck - unit is in pixels.
 
-		auto uvScale = VEC2(1.0f / contentWidth, 1.0f / contentHeight);
+		auto uvScale  = VEC2(1.0f / contentWidth, 1.0f / contentHeight);
+		auto uvOffset = VEC2(0, 0);
+		if (bgImage) {
+			uvScale.x *= bgImageRect.Width() / (float) bgImage->Width;
+			uvScale.y *= bgImageRect.Height() / (float) bgImage->Height;
+			uvOffset = Vec2f((float) bgImageRect.Left / bgImage->Width, (float) bgImageRect.Top / bgImage->Height);
+		}
 
 		// Refer to log entry from 2017-01-24 for what A,B,C1,C2,D,E means here, as well as x1..x8 and y1..y4
 
@@ -188,7 +204,7 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 
 		float uZero = left + border.Left; // left edge of content-box
 		for (int i = 0; i < arraysize(x); i++)
-			u[i] = uvScale.x * (x[i] - uZero);
+			u[i] = uvOffset.x + uvScale.x * (x[i] - uZero);
 
 		for (int i = 1; i <= 5; i++)
 			XO_DEBUG_ASSERT(x[i] >= x[i - 1]);
@@ -205,7 +221,7 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 
 		float vZero = top + border.Top; // top edge of content-box
 		for (int i = 0; i < arraysize(y); i++)
-			v[i] = uvScale.y * (y[i] - vZero);
+			v[i] = uvOffset.y + uvScale.y * (y[i] - vZero);
 
 		for (int i = 1; i <= 3; i++)
 			XO_DEBUG_ASSERT(y[i] >= y[i - 1]);
@@ -523,8 +539,8 @@ void Renderer::RenderTextChar_SubPixel(Point base, const RenderDomText* node, co
 	}
 
 	TextureAtlas* atlas       = Global()->GlyphCache->GetAtlasMutable(glyph->AtlasID);
-	float         atlasScaleX = 1.0f / atlas->GetWidth();
-	float         atlasScaleY = 1.0f / atlas->GetHeight();
+	float         atlasScaleX = 1.0f / atlas->Width;
+	float         atlasScaleY = 1.0f / atlas->Height;
 
 	float top  = PosToReal(PosRound(base.Y + txtEl.Y));
 	float left = PosToReal(base.X + txtEl.X);
@@ -608,8 +624,8 @@ void Renderer::RenderTextChar_WholePixel(Point base, const RenderDomText* node, 
 	}
 
 	TextureAtlas* atlas       = Global()->GlyphCache->GetAtlasMutable(glyph->AtlasID);
-	float         atlasScaleX = 1.0f / atlas->GetWidth();
-	float         atlasScaleY = 1.0f / atlas->GetHeight();
+	float         atlasScaleX = 1.0f / atlas->Width;
+	float         atlasScaleY = 1.0f / atlas->Height;
 
 	float top  = PosToReal(base.Y + txtEl.Y);
 	float left = PosToReal(base.X + txtEl.X);
@@ -670,16 +686,22 @@ void Renderer::RenderTextChar_WholePixel(Point base, const RenderDomText* node, 
 }
 
 void Renderer::RenderGlyphsNeeded() {
-	for (auto it = GlyphsNeeded.begin(); it != GlyphsNeeded.end(); it++)
-		Global()->GlyphCache->RenderGlyph(*it);
+	for (const auto& key : GlyphsNeeded)
+		Global()->GlyphCache->RenderGlyph(key);
 	GlyphsNeeded.clear();
+}
+
+void Renderer::RenderVectorsNeeded() {
+	for (const auto& key : VectorsNeeded)
+		VectorCache->Render(*Vectors, key);
+	VectorsNeeded.clear();
 }
 
 bool Renderer::LoadTexture(Texture* tex, TexUnits texUnit) {
 	if (!Driver->LoadTexture(tex, texUnit))
 		return false;
 
-	tex->TexClearInvalidRect();
+	tex->ClearInvalidRect();
 	return true;
 }
 

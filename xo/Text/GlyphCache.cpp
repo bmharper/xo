@@ -149,11 +149,11 @@ uint32_t GlyphCache::RenderGlyph(const GlyphCacheKey& key) {
 			newAtlas->Initialize(GlyphAtlasSize, GlyphAtlasSize, TexFormatGrey8, glyphPadding);
 			newAtlas->Zero();
 			if (isSubPixel) {
-				newAtlas->TexFilterMin = TexFilterNearest;
-				newAtlas->TexFilterMax = TexFilterNearest;
+				newAtlas->FilterMin = TexFilterNearest;
+				newAtlas->FilterMax = TexFilterNearest;
 			} else if (!Global()->SnapHorzText || !Global()->RoundLineHeights) {
-				newAtlas->TexFilterMin = TexFilterLinear;
-				newAtlas->TexFilterMax = TexFilterLinear;
+				newAtlas->FilterMin = TexFilterLinear;
+				newAtlas->FilterMax = TexFilterLinear;
 			}
 			Atlasses += newAtlas;
 		}
@@ -164,9 +164,9 @@ uint32_t GlyphCache::RenderGlyph(const GlyphCacheKey& key) {
 	}
 
 	if (isSubPixel)
-		FilterAndCopyBitmap(font, atlas->TexDataAt(atlasX, atlasY), atlas->GetStride());
+		FilterAndCopyBitmap(font, atlas->DataAt(atlasX, atlasY), atlas->Stride);
 	else
-		CopyBitmap(font, atlas->TexDataAt(atlasX, atlasY), atlas->GetStride());
+		CopyBitmap(font, atlas->DataAt(atlasX, atlasY), atlas->Stride);
 
 	if (key.Char == '1')
 		int abc = 123;

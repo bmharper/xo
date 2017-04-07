@@ -104,17 +104,17 @@ static StyleCategories CatUngenerify(StyleCategories c) {
 const char* CatNameTable[CatEND] = {
     nullptr,
     "color",
-    "padding_use_me_0",
+    "Padding_Use_Me_1",
     "background",
-    "backgroundimage",
+    "Padding_Use_Me_2",
     "text_align_vertical",
 
     "break",
     "canfocus",
     "cursor",
 
-    "padding_use_me_1",
-    "padding_use_me_2",
+    "overflow-x",
+    "overflow-y",
     "padding_use_me_3",
 
     "margin-left",
@@ -693,7 +693,7 @@ bool Style::Parse(const char* t, size_t maxLen, Doc* doc) {
 			// clang-format off
 			bool ok = true;
 			// Keep these in sync with CatNameTable
-			if (MATCH(t, startk, eq, "background"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &Color::Parse, CatBackground, doc, *this); }
+			if (MATCH(t, startk, eq, "background"))                       { ok = ParseDirect(TSTART, TLEN, nullptr, 0, &ParseBackground, doc, *this); }
 			else if (MATCH(t, startk, eq, "color"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &Color::Parse, CatColor, doc, *this); }
 			else if (MATCH(t, startk, eq, "width"))                       { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatWidth, doc, *this); }
 			else if (MATCH(t, startk, eq, "height"))                      { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatHeight, doc, *this); }
@@ -1442,4 +1442,43 @@ XO_API bool ParseBorder(const char* s, size_t len, const char* subCategory, size
 
 	return false;
 }
+
+XO_API bool ParseBackground(const char* s, size_t len, const char* subCategory, size_t subCategoryLen, Doc* doc, Style& style) {
+	// #rgb
+	// #rgba
+	// #rrggbb
+	// #rrggbbaa
+	// svg(image name)
+
+	char buf[MaxSvgNameLen + 1];
+
+	if (s[0] == '#') {
+		Color c;
+		if (Color::Parse(s, len, c)) {
+			style.Set(xo::StyleCategories::CatBackground, c);
+			return true;
+		}
+	} else if (s[0] == 's' && s[1] == 'v' && s[2] == 'g' && s[3] == '(') {
+		size_t i = 4;
+		for (; i < len; i++) {
+			if (s[i] == ')') {
+				size_t nameLen = i - 4;
+				if (nameLen > MaxSvgNameLen)
+					return false;
+				memcpy(buf, s + 4, nameLen);
+				buf[nameLen] = 0;
+				int id = doc->GetSvgID(buf);
+				if (id == 0)
+					return false;
+				StyleAttrib a;
+				a.SetBackgroundVector(id);
+				style.Set(a);
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 }

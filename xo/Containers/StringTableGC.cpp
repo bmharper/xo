@@ -55,10 +55,7 @@ const char* StringTableGC::GetStr(int id) const {
 
 int StringTableGC::GetID(const char* str, size_t len) const {
 	XO_ASSERT(str != nullptr);
-	int                 id = 0;
-	TruncatedTempString tstr(str, len);
-	StrToID.get(tstr, id);
-	return id;
+	return StrToID.get(TruncatedTempString(str, len));
 }
 
 int StringTableGC::GetOrCreateID(const char* str, size_t len) {

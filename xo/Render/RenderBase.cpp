@@ -75,8 +75,8 @@ uintptr_t RenderBase::GetTextureDeviceHandle(TextureID texID) const {
 }
 
 void RenderBase::EnsureTextureProperlyDefined(Texture* tex, int texUnit) {
-	XO_ASSERT(tex->TexWidth != 0 && tex->TexHeight != 0);
-	XO_ASSERT(tex->TexFormat != TexFormatInvalid);
+	XO_ASSERT(tex->Width != 0 && tex->Height != 0);
+	XO_ASSERT(tex->Format != TexFormatInvalid);
 	XO_ASSERT(texUnit < MaxTextureUnits);
 }
 

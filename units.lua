@@ -129,6 +129,18 @@ local utfz = StaticLibrary {
 	}
 }
 
+local expat = StaticLibrary {
+	Name = "expat",
+	Depends = { crt, },
+	Defines = {
+		"XML_STATIC",
+		{ "WIN32"; Config = winFilter },
+	},
+	Sources = {
+		makeGlob("dependencies/expat", {})
+	}
+}
+
 local freetype = StaticLibrary {
 	Name = "freetype",
 	Defines = {
@@ -231,12 +243,16 @@ local xo = SharedLibrary {
 		{ "X11", "GL", "GLU", "stdc++"; Config = "linux-*" },
 	},
 	--SourceDir = ".",
+	Defines = {
+		"XML_STATIC",
+	},
 	Includes = {
 		"xo",
 		"dependencies/freetype/include",
 		"dependencies/agg/include",
+		"dependencies/expat",
 	},
-	Depends = { crt, freetype, directx, utfz, },
+	Depends = { crt, freetype, directx, utfz, expat, },
 	PrecompiledHeader = {
 		Source = "xo/pch.cpp",
 		Header = "pch.h",
@@ -276,30 +292,34 @@ local HelloAmalgamation = Program {
 	}
 }
 
-local function XoExampleApp(template, example)
+local function XoExampleApp(template, name, sources)
+	local src = {
+		"templates/" .. template,
+		"dependencies/tsf/tsf.cpp",
+	}
+	for _, s in ipairs(sources) do
+		src[#src + 1] = "examples/" .. s
+	end
+
 	return Program {
-		Name = example,
+		Name = name,
 		Includes = { "xo" },
 		Libs = { "stdc++", "m"; Config = "linux-*" },
 		Depends = {
 			crt,
-			xo
+			xo,
 		},
-		Sources = {
-			"templates/" .. template,
-			"examples/" .. example .. ".cpp",
-			"dependencies/tsf/tsf.cpp",
-		}
+		Sources = src,
 	}
 end
 
-local ExampleBench       = XoExampleApp("xoWinMain.cpp", "Bench")
-local ExampleCanvas      = XoExampleApp("xoWinMain.cpp", "Canvas")
-local ExampleEvents      = XoExampleApp("xoWinMain.cpp", "Events")
-local ExampleHelloWorld  = XoExampleApp("xoWinMain.cpp", "HelloWorld")
-local ExampleKitchenSink = XoExampleApp("xoWinMain.cpp", "KitchenSink")
-local ExampleSplineDev   = XoExampleApp("xoWinMain.cpp", "SplineDev")
-local ExampleLowLevel    = XoExampleApp("xoWinMainLowLevel.cpp", "RunAppLowLevel")
+local ExampleBench       = XoExampleApp("xoWinMain.cpp", "Bench", {"Bench.cpp"})
+local ExampleCanvas      = XoExampleApp("xoWinMain.cpp", "Canvas", {"Canvas.cpp"})
+local ExampleEvents      = XoExampleApp("xoWinMain.cpp", "Events", {"Events.cpp"})
+local ExampleHelloWorld  = XoExampleApp("xoWinMain.cpp", "HelloWorld", {"HelloWorld.cpp"})
+local ExampleKitchenSink = XoExampleApp("xoWinMain.cpp", "KitchenSink", {"KitchenSink.cpp", "SVGSamples.cpp"})
+local ExampleSplineDev   = XoExampleApp("xoWinMain.cpp", "SplineDev", {"SplineDev.cpp"})
+local ExampleLowLevel    = XoExampleApp("xoWinMainLowLevel.cpp", "RunAppLowLevel", {"RunAppLowLevel.cpp"})
 
 local Test = Program {
 	Name = "Test",

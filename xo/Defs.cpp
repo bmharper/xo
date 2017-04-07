@@ -17,19 +17,42 @@ static GlobalStruct* Globals = NULL;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void Texture::Attach(void* buf, uint32_t width, uint32_t height, int stride) {
+	Data = buf;
+	Width = width;
+	Height = height;
+	Stride = stride;
+}
+
 void Texture::FlipVertical() {
 	uint8_t  sline[4096];
 	uint8_t* line    = sline;
-	size_t   astride = std::abs(TexStride);
+	size_t   astride = std::abs(Stride);
 	if (astride > sizeof(sline))
 		line = (uint8_t*) MallocOrDie(astride);
-	for (uint32_t i = 0; i < TexHeight / 2; i++) {
-		memcpy(line, TexDataAtLine(TexHeight - i - 1), astride);
-		memcpy(TexDataAtLine(TexHeight - i - 1), TexDataAtLine(i), astride);
-		memcpy(TexDataAtLine(i), line, astride);
+	for (uint32_t i = 0; i < Height / 2; i++) {
+		memcpy(line, DataAtLine(Height - i - 1), astride);
+		memcpy(DataAtLine(Height - i - 1), DataAtLine(i), astride);
+		memcpy(DataAtLine(i), line, astride);
 	}
 	if (line != sline)
 		free(line);
+}
+
+void Texture::CopyInto(int x, int y, const void* src, int stride, int width, int height) {
+	auto src8 = (const uint8_t*) src;
+	int astride = std::abs(stride);
+	for (int i = 0; y < height; i++)
+		memcpy(DataAt(x, y + i), src8 + i * stride, astride);
+}
+
+Texture Texture::Window(int x, int y, int width, int height) const {
+	Texture t = *this;
+	t.Width = width;
+	t.Height = height;
+	(char*&) t.Data += x * BytesPerPixel();
+	(char*&) t.Data += y * Stride;
+	return t;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////

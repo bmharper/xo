@@ -9,9 +9,9 @@ VariableTable::VariableTable(xo::Doc* doc) : Doc(doc) {
 VariableTable::~VariableTable() {
 }
 
-void VariableTable::Set(const char* var, const char* value, size_t valueMaxLen) {
+int VariableTable::Set(const char* var, const char* value, size_t valueMaxLen) {
 	if (var[0] == 0)
-		return;
+		return 0;
 	int id = IDTable.GetOrCreateID(var);
 	while ((size_t) id >= Values.size()) {
 		Values.push(String());
@@ -19,13 +19,24 @@ void VariableTable::Set(const char* var, const char* value, size_t valueMaxLen) 
 	}
 	Values[id].Set(value, valueMaxLen);
 	IsModified[id] = true;
+	return id;
 }
 
-const char* VariableTable::Get(const char* var) const {
+const char* VariableTable::GetByName(const char* var) const {
 	int id = IDTable.GetID(var);
 	if (id == 0)
 		return nullptr;
 	return Values[id].Z;
+}
+
+const char* VariableTable::GetByID(int id) const {
+	if ((size_t) id >= Values.size())
+		return nullptr;
+	return Values[id].Z;
+}
+
+int VariableTable::GetID(const char* var) const {
+	return IDTable.GetID(var);
 }
 
 void VariableTable::CloneFrom_Incremental(const VariableTable& src) {

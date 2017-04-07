@@ -59,14 +59,14 @@ RenderResult RenderDoc::Render(RenderBase* driver) {
 
 	XOTRACE_RENDER("RenderDoc: Layout\n");
 	CodeTimer t;
-	Layout lay;
+	Layout    lay;
 	lay.PerformLayout(Doc, layout->Root, &layout->Pool);
 	TimeLayout = t.MeasureAndRestart();
 
 	XOTRACE_RENDER("RenderDoc: Render\n");
 	Renderer     rend;
-	RenderResult res = rend.Render(&Doc, &ClonedImages, &Doc.Strings, driver, &layout->Root);
-	TimeRender = t.MeasureAndRestart();
+	RenderResult res = rend.Render(&Doc, &ClonedImages, &Doc.GetSvgTable(), &VectorCache, &Doc.Strings, driver, &layout->Root);
+	TimeRender       = t.MeasureAndRestart();
 
 	layout->IDToNodeTable.resize(Doc.InternalIDSize());
 	PopulateIDToNode(layout, &layout->Root);
@@ -144,5 +144,4 @@ void RenderDoc::ExpandVerbatimClassVariables() {
 	HasExpandedClassVariables = true;
 	Doc.ClassStyles.ExpandVerbatimVariables(&Doc);
 }
-
 }

@@ -171,27 +171,9 @@ DomNode* DomNode::ParseAppendNode(const StringRaw& src, String* error) {
 	return ParseAppendNode(src.CStr(), error);
 }
 
-bool DomNode::StyleParse(const char* t, size_t maxLen) {
+bool DomNode::StyleParse(const char* s, size_t maxLen) {
 	IncVersion();
-	return Style.Parse(t, maxLen, Doc);
-}
-
-bool DomNode::StyleParsef(const char* t, ...) {
-	char    buff[8192];
-	va_list va;
-	va_start(va, t);
-	uint32_t r = vsnprintf(buff, arraysize(buff), t, va);
-	va_end(va);
-	buff[arraysize(buff) - 1] = 0;
-	if (r < arraysize(buff)) {
-		return StyleParse(buff);
-	} else {
-		String str = String(t);
-		str.Z[50]  = 0;
-		ParseFail("Parse string is too long for StyleParsef: %s...", str.Z);
-		XO_DEBUG_ASSERT(false);
-		return false;
-	}
+	return Style.Parse(s, maxLen, Doc);
 }
 
 void DomNode::HackSetStyle(const xo::Style& style) {

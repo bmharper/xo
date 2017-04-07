@@ -10,10 +10,10 @@ public:
 	DomText(xo::Doc* doc, xo::Tag tag, xo::InternalID parentID);
 	virtual ~DomText();
 
-	virtual void        SetText(const char* txt) override;
-	virtual const char* GetText() const override;
-	virtual void        CloneSlowInto(DomEl& c, uint32_t cloneFlags) const override;
-	virtual void        ForgetChildren() override;
+	void        SetText(const char* txt) override;
+	const char* GetText() const override;
+	void        CloneSlowInto(DomEl& c, uint32_t cloneFlags) const override;
+	void        ForgetChildren() override;
 
 protected:
 	String Text;

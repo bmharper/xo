@@ -10,22 +10,22 @@ DomCanvas::DomCanvas(xo::Doc* doc, xo::InternalID parentID) : DomNode(doc, TagCa
 }
 
 DomCanvas::~DomCanvas() {
-	if (ImageName != "")
-		Doc->Images.Delete(ImageName.CStr());
+	if (ImageID != ImageIDNull)
+		Doc->Images.Delete(ImageID);
 }
 
 void DomCanvas::CloneSlowInto(DomEl& c, uint32_t cloneFlags) const {
 	DomNode::CloneSlowInto(c, cloneFlags);
 
 	DomCanvas& cc = static_cast<DomCanvas&>(c);
-	cc.ImageName  = ImageName;
+	cc.ImageID    = ImageID;
 }
 
 bool DomCanvas::SetImageSizeOnly(uint32_t width, uint32_t height) {
-	if ((width == 0 || height == 0) && ImageName == "")
+	if ((width == 0 || height == 0) && ImageID == ImageIDNull)
 		return true;
 
-	Image* img = Doc->Images.Get(ImageName.CStr());
+	Image* img = Doc->Images.Get(ImageID);
 	if (img == nullptr) {
 		img = new Image();
 		if (!img->Alloc(TexFormatRGBA8, width, height)) {
@@ -34,9 +34,9 @@ bool DomCanvas::SetImageSizeOnly(uint32_t width, uint32_t height) {
 		}
 		//img->TexFilterMin = TexFilterNearest;
 		//img->TexFilterMax = TexFilterNearest;
-		img->TexFilterMin = TexFilterLinear;
-		img->TexFilterMax = TexFilterLinear;
-		ImageName         = Doc->Images.SetAnonymous(img);
+		img->FilterMin = TexFilterLinear;
+		img->FilterMax = TexFilterLinear;
+		ImageID        = Doc->Images.SetAnonymous(img);
 		return true;
 	} else {
 		return img->Alloc(TexFormatRGBA8, width, height);
@@ -57,18 +57,15 @@ void DomCanvas::Fill(xo::Color color) {
 }
 
 Canvas2D* DomCanvas::GetCanvas2D() {
-	return new Canvas2D(Doc->Images.Get(ImageName.CStr()));
+	return new Canvas2D(Doc->Images.Get(ImageID));
 }
 
 void DomCanvas::ReleaseCanvas(Canvas2D* canvas2D) {
-	Image* img = canvas2D->GetImage();
+	auto img = canvas2D->GetImage();
 	if (img != nullptr)
-		img->TexInvalidRect.ExpandToFit(canvas2D->GetInvalidRect());
+		img->InvalidRect.ExpandToFit(canvas2D->GetInvalidRect());
 	delete canvas2D;
 	IncVersion();
 }
 
-const char* DomCanvas::GetCanvasImageName() const {
-	return ImageName.CStr();
-}
 }

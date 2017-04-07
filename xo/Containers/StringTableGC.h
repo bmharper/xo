@@ -14,7 +14,7 @@ public:
 	StringTableGC();
 	~StringTableGC();
 
-	const char* GetStr(int id) const; // Returns null if the id is invalid or zero.
+	const char* GetStr(int id) const; // Returns null if the id is invalid or zero (ie does not segfault).
 	int         GetID(const char* str, size_t len = -1) const;
 	int         GetOrCreateID(const char* str, size_t len = -1);
 

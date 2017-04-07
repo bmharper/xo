@@ -4,14 +4,14 @@
 
 namespace xo {
 
-Canvas2D::Canvas2D(xo::Image* backingImage)
+Canvas2D::Canvas2D(xo::Texture* backingImage)
     : Image(backingImage) {
-	if (Image != nullptr && Image->TexFormat == TexFormatRGBA8) {
-		RenderBuff.attach((uint8_t*) Image->GetData(), Image->GetWidth(), Image->GetHeight(), Image->TexStride);
+	if (Image != nullptr && Image->Format == TexFormatRGBA8) {
+		RenderBuff.attach((uint8_t*) Image->Data, Image->Width, Image->Height, Image->Stride);
 		PixFormatRGBA_Pre.attach(RenderBuff);
 		RenderBaseRGBA_Pre.attach(PixFormatRGBA_Pre);
 		RenderAA_RGBA_Pre.attach(RenderBaseRGBA_Pre);
-		IsAlive = Image->GetData() != nullptr && Image->GetWidth() != 0 && Image->GetHeight() != 0;
+		IsAlive = Image->Data != nullptr && Image->Width != 0 && Image->Height != 0;
 		InvalidRect.SetInverted();
 	} else {
 		IsAlive = false;
@@ -141,6 +141,53 @@ void Canvas2D::FillCircle(float x, float y, float radius, Color color) {
 	RenderScanlines();
 }
 
+void Canvas2D::RenderSVG(const char* svg) {
+	try {
+		agg::svg::path_renderer path;
+		agg::svg::parser parse(path);
+		parse.parse_mem(svg);
+
+        typedef agg::pixfmt_bgra32 pixfmt;
+        typedef agg::renderer_base<pixfmt> renderer_base;
+        typedef agg::renderer_scanline_aa_solid<renderer_base> renderer_solid;
+
+		//int stride = key.Width * 4;
+		//uint8_t* buf = (uint8_t*) MallocOrDie(stride * key.Height);
+		//agg::rendering_buffer rbuf(buf, key.Width, key.Height, stride);
+
+		pixfmt pixf(RenderBuff);
+		renderer_base rb(pixf);
+		renderer_solid ren(rb);
+
+		rb.clear(agg::rgba(1,1,1, 0));
+
+		agg::rasterizer_scanline_aa<> ras;
+		agg::scanline_p8 sl;
+		agg::trans_affine mtx;
+
+		auto vb = parse.view_box();
+		double vbWidth = vb[2] - vb[0];
+		double vbHeight = vb[3] - vb[1];
+		double scale = std::min(Width() / vbWidth, Height() / vbHeight);
+
+		//ras.gamma(agg::gamma_power(1));
+		//ras.gamma(agg::gamma_power(m_gamma.value()));
+		//mtx *= agg::trans_affine_translation((m_min_x + m_max_x) * -0.5, (m_min_y + m_max_y) * -0.5);
+		mtx *= agg::trans_affine_scaling(scale);
+		//mtx *= agg::trans_affine_rotation(agg::deg2rad(m_rotate.value()));
+		//mtx *= agg::trans_affine_translation((m_min_x + m_max_x) * 0.5 + m_x, (m_min_y + m_max_y) * 0.5 + m_y + 30);
+        
+		//m_path.expand(m_expand.value());
+		//start_timer();
+		path.render(ras, sl, ren, mtx, rb.clip_box(), 1.0);
+		//double tm = elapsed_time();
+		//unsigned vertex_count = m_path.vertex_count();
+
+	} catch (const agg::svg::exception& ex) {
+		Trace("Error rendering svg: %v", ex.msg());
+	}
+}
+
 agg::rgba Canvas2D::ColorToAgg(Color c) {
 	c = c.Premultiply();
 	return agg::rgba(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
@@ -155,4 +202,5 @@ void Canvas2D::RenderScanlines() {
 	agg::render_scanlines(RasAA, Scanline, RenderAA_RGBA_Pre);
 	InvalidRect.ExpandToFit(Box(RasAA.min_x(), RasAA.min_y(), RasAA.max_x(), RasAA.max_y()));
 }
+
 }

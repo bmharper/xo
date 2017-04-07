@@ -440,8 +440,8 @@ ID3D11Buffer* RenderDX::CreateBuffer(size_t sizeBytes, D3D11_USAGE usage, D3D11_
 bool RenderDX::CreateTexture2D(Texture* tex) {
 	D3D11_TEXTURE2D_DESC desc;
 	memset(&desc, 0, sizeof(desc));
-	desc.Width            = tex->TexWidth;
-	desc.Height           = tex->TexHeight;
+	desc.Width            = tex->Width;
+	desc.Height           = tex->Height;
 	desc.MipLevels        = 1; // 0 = generate all levels. 1 = just one level
 	desc.ArraySize        = 1;
 	desc.SampleDesc.Count = 1;
@@ -449,7 +449,7 @@ bool RenderDX::CreateTexture2D(Texture* tex) {
 	desc.BindFlags        = D3D11_BIND_SHADER_RESOURCE;
 	desc.CPUAccessFlags   = 0;
 	desc.MiscFlags        = 0;
-	switch (tex->TexFormat) {
+	switch (tex->Format) {
 	case TexFormatRGBA8: desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; break;
 	case TexFormatGrey8: desc.Format = DXGI_FORMAT_R8_UNORM; break;
 	default: XO_DIE_MSG("Unrecognized texture format");
@@ -470,17 +470,17 @@ bool RenderDX::CreateTexture2D(Texture* tex) {
 		return false;
 	}
 	tex->TexID = RegisterTextureDX(t);
-	tex->TexInvalidateWholeSurface();
+	tex->InvalidateWholeSurface();
 	return true;
 }
 
 void RenderDX::UpdateTexture2D(ID3D11Texture2D* dxTex, Texture* tex) {
 	// This happens when a texture fails to upload to the GPU during synchronization from UI doc to render doc.
-	if (tex->TexData == nullptr)
+	if (tex->Data == nullptr)
 		return;
 
-	Box invRect  = tex->TexInvalidRect;
-	Box fullRect = Box(0, 0, tex->TexWidth, tex->TexHeight);
+	Box invRect  = tex->InvalidRect;
+	Box fullRect = Box(0, 0, tex->Width, tex->Height);
 	invRect.ClampTo(fullRect);
 
 	if (!invRect.IsAreaPositive())
@@ -492,7 +492,7 @@ void RenderDX::UpdateTexture2D(ID3D11Texture2D* dxTex, Texture* tex) {
 	box.bottom = invRect.Bottom;
 	box.front  = 0;
 	box.back   = 1;
-	D3D.Context->UpdateSubresource(dxTex, 0, &box, tex->TexDataAt(invRect.Left, invRect.Top), tex->TexStride, 0);
+	D3D.Context->UpdateSubresource(dxTex, 0, &box, tex->DataAt(invRect.Left, invRect.Top), tex->Stride, 0);
 }
 
 void RenderDX::PostRenderCleanup() {
@@ -618,7 +618,7 @@ bool RenderDX::ReadBackbuffer(Image& image) {
 		if (SUCCEEDED(D3D.Context->Map(tempTex, 0, D3D11_MAP_READ, 0, &map))) {
 			if (image.Alloc(TexFormatRGBA8, FBWidth, FBHeight)) {
 				for (int i = 0; i < FBHeight; i++)
-					memcpy(image.TexDataAtLine(i), (char*) map.pData + map.RowPitch * (uint32_t) i, image.TexStride);
+					memcpy(image.DataAtLine(i), (char*) map.pData + map.RowPitch * (uint32_t) i, image.Stride);
 				D3D.Context->Unmap(tempTex, 0);
 				ok = true;
 			} else {

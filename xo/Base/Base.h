@@ -74,15 +74,6 @@ char (&ArraySizeHelper(T (&array)[N]))[N];
 	TypeName(const TypeName&) = delete;       \
 	TypeName& operator=(const TypeName&) = delete
 
-//#ifndef ASSERT
-//#define TEMP_ASSERT
-//#ifdef _DEBUG
-//#define ASSERT(condition) (void) 0
-//#else
-//#define ASSERT(condition) assert(condition)
-//#endif
-//#endif
-
 #include "../dependencies/agg/include/agg_basics.h"
 #include "../dependencies/agg/include/agg_conv_stroke.h"
 #include "../dependencies/agg/include/agg_conv_curve.h"
@@ -95,24 +86,9 @@ char (&ArraySizeHelper(T (&array)[N]))[N];
 #include "../dependencies/agg/include/agg_renderer_scanline.h"
 #include "../dependencies/agg/include/agg_rendering_buffer.h"
 #include "../dependencies/agg/include/agg_scanline_u.h"
-
-/*
-#include "../dependencies/Panacea/Platform/coredefs.h"
-#include "../dependencies/Panacea/Platform/stdint.h"
-#include "../dependencies/Panacea/Containers/cheapvec.h"
-#include "../dependencies/Panacea/Containers/cheapvec.h"
-#include "../dependencies/Panacea/Containers/queue.h"
-#include "../dependencies/Panacea/Platform/cpu.h"
-#include "../dependencies/Panacea/Platform/err.h"
-#include "../dependencies/Panacea/Platform/filesystem.h"
-#include "../dependencies/Panacea/Platform/process.h"
-#include "../dependencies/Panacea/Platform/syncprims.h"
-#include "../dependencies/Panacea/Platform/timeprims.h"
-#include "../dependencies/Panacea/Platform/thread.h"
-#include "../dependencies/Panacea/Other/StackAllocators.h"
-#include "../dependencies/Panacea/Bits/BitMap.h"
-#include "../dependencies/Panacea/Platform/ConvertUTF.h"
-*/
+#include "../dependencies/agg/include/agg_scanline_p.h"
+#include "../dependencies/agg/svg/agg_svg_parser.h"
+#include "../dependencies/agg/svg/agg_svg_path_renderer.h"
 
 #include "../dependencies/sema.h"
 #include "../dependencies/ConvertUTF/ConvertUTF.h"

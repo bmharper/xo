@@ -3,7 +3,7 @@
 
 #ifdef _MSC_VER
 #pragma warning(push)
-#pragma warning(disable: 4244)
+#pragma warning(disable : 4244)
 #endif
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -24,22 +24,20 @@ Image::~Image() {
 
 Image* Image::Clone() const {
 	Image* c = new Image();
-	c->Set(TexFormat, GetWidth(), GetHeight(), GetData());
+	c->Set(Format, Width, Height, Data);
 	return c;
 }
 
-Image* Image::CloneMetadata() const {
-	Image* c     = new Image();
-	*c           = *this;
-	c->TexData   = nullptr;
-	c->TexStride = 0;
-	return c;
+void Image::CloneMetadataFrom(const Image& b) {
+	*this  = b;
+	Data   = nullptr;
+	Stride = 0;
 }
 
 void Image::Free() {
-	if (TexData) {
-		AlignedFree(TexData);
-		TexData = NULL;
+	if (Data) {
+		AlignedFree(Data);
+		Data = NULL;
 	}
 	TexID = TextureIDNull;
 }
@@ -47,40 +45,39 @@ void Image::Free() {
 bool Image::Set(xo::TexFormat format, uint32_t width, uint32_t height, const void* bytes) {
 	if (!Alloc(format, width, height))
 		return false;
-	size_t size = TexWidth * TexHeight * TexFormatBytesPerPixel(format);
+	size_t size = Width * Height * TexFormatBytesPerPixel(format);
 	if (size != 0)
-		memcpy(TexData, bytes, size);
+		memcpy(Data, bytes, size);
 	return true;
 }
 
 bool Image::Alloc(xo::TexFormat format, uint32_t width, uint32_t height) {
-	size_t existingFormatBPP = TexFormatBytesPerPixel(TexFormat);
+	size_t existingFormatBPP = TexFormatBytesPerPixel(Format);
 	size_t requiredFormatBPP = TexFormatBytesPerPixel(format);
 
-	if (width == TexWidth && height == TexHeight && existingFormatBPP == requiredFormatBPP) {
-		if (TexFormat != format)
-			TexFormat = format;
+	if (width == Width && height == Height && existingFormatBPP == requiredFormatBPP) {
+		if (Format != format)
+			Format = format;
 		return true;
 	}
 
-	if (TexWidth != width || TexWidth != height)
+	if (Width != width || Width != height)
 		Free();
-	TexWidth  = width;
-	TexHeight = height;
-	TexFormat = format;
-	if (TexWidth != 0 && TexHeight != 0) {
-		TexInvalidateWholeSurface();
-		TexStride   = TexWidth * (uint32_t) TexBytesPerPixel();
-		size_t size = TexHeight * TexStride;
-		TexData     = AlignedAlloc(size, 16);
-		return TexData != nullptr;
+	Width     = width;
+	Height    = height;
+	Format = format;
+	if (Width != 0 && Height != 0) {
+		InvalidateWholeSurface();
+		Stride      = Width * (uint32_t) BytesPerPixel();
+		size_t size = Height * Stride;
+		Data        = AlignedAlloc(size, 16);
+		return Data != nullptr;
 	} else {
 		return true;
 	}
 }
 
 bool Image::SaveToPng(const char* filename) const {
-	return stbi_write_png(filename, TexWidth, TexHeight, TexFormatChannelCount(TexFormat), TexData, TexStride) != 0;
+	return stbi_write_png(filename, Width, Height, TexFormatChannelCount(Format), Data, Stride) != 0;
 }
-
 }

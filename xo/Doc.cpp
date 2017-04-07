@@ -13,7 +13,7 @@
 namespace xo {
 
 Doc::Doc(DocGroup* group)
-    : Root(this, TagBody, InternalIDNull), UI(this), Group(group), StyleVariables(this) {
+    : Root(this, TagBody, InternalIDNull), UI(this), Group(group), StyleVariables(this), VectorIcons(this) {
 	IsReadOnly = false;
 	Version    = 0;
 	ClassStyles.AddDummyStyleZero();
@@ -91,6 +91,8 @@ void Doc::CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const {
 	c.StyleVariables.CloneFrom_Incremental(StyleVariables);
 	c.Strings.CloneFrom_Incremental(Strings);
 	c.StyleVerbatimStrings.CloneFrom_Incremental(StyleVerbatimStrings);
+	
+	c.VectorIcons.CloneFrom_Incremental(VectorIcons);
 
 	c.Version = Version;
 
@@ -137,7 +139,7 @@ void Doc::SetStyleVar(const char* var, const char* val) {
 }
 
 const char* Doc::StyleVar(const char* var) const {
-	return StyleVariables.Get(var);
+	return StyleVariables.GetByName(var);
 }
 
 int Doc::GetOrCreateStyleVerbatimID(const char* val, size_t len) {
@@ -146,6 +148,18 @@ int Doc::GetOrCreateStyleVerbatimID(const char* val, size_t len) {
 
 const char* Doc::GetStyleVerbatim(int id) const {
 	return StyleVerbatimStrings.GetStr(id);
+}
+
+int Doc::SetSvg(const char* name, const char* val) {
+	return VectorIcons.Set(name, val);
+}
+
+int Doc::GetSvgID(const char* name) const {
+	return VectorIcons.GetID(name);
+}
+
+const char* Doc::GetSvg(int id) const {
+	return VectorIcons.GetByID(id);
 }
 
 DomEl* Doc::AllocChild(Tag tag, InternalID parentID) {
@@ -324,7 +338,7 @@ void Doc::InitializeDefaultTagStyles() {
 	TagStyles[TagSpan].Parse("flow-context: inject; baseline: baseline; bump: horizontal", this);
 	TagStyles[TagCanvas].Parse("background: #fff", this);
 
-	static_assert(TagCanvas == TagEND - 1, "add default style for new tag");
+	static_assert(TagImg == TagEND - 1, "add default style for new tag");
 }
 
 void Doc::InitializeDefaultControls() {

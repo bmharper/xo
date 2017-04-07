@@ -730,7 +730,7 @@ bool RenderGL::LoadTexture(Texture* tex, int texUnit) {
 		GLuint t;
 		glGenTextures(1, &t);
 		tex->TexID = RegisterTextureInt(t);
-		tex->TexInvalidateWholeSurface();
+		tex->InvalidateWholeSurface();
 	}
 
 	GLuint glTexID = GetTextureDeviceHandleInt(tex->TexID);
@@ -741,19 +741,19 @@ bool RenderGL::LoadTexture(Texture* tex, int texUnit) {
 	}
 
 	// This happens when a texture fails to upload to the GPU during synchronization from UI doc to render doc.
-	if (tex->TexData == nullptr)
+	if (tex->Data == nullptr)
 		return true;
 
 	// If the texture has not been updated, then we are done
-	Box invRect  = tex->TexInvalidRect;
-	Box fullRect = Box(0, 0, tex->TexWidth, tex->TexHeight);
+	Box invRect  = tex->InvalidRect;
+	Box fullRect = Box(0, 0, tex->Width, tex->Height);
 	invRect.ClampTo(fullRect);
 	if (!invRect.IsAreaPositive())
 		return true;
 
 	int iformat = 0;
 	int format  = 0;
-	switch (tex->TexFormat) {
+	switch (tex->Format) {
 	case TexFormatGrey8:
 		iformat = GL_XO_RED_OR_LUMINANCE;
 		format  = GL_XO_RED_OR_LUMINANCE;
@@ -769,20 +769,20 @@ bool RenderGL::LoadTexture(Texture* tex, int texUnit) {
 	}
 
 	if (Have_Unpack_RowLength)
-		glPixelStorei(GL_UNPACK_ROW_LENGTH, tex->TexStride / (int) tex->TexBytesPerPixel());
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, tex->Stride / (int) tex->BytesPerPixel());
 
 	if (!Have_Unpack_RowLength || invRect == fullRect) {
-		glTexImage2D(GL_TEXTURE_2D, 0, iformat, tex->TexWidth, tex->TexHeight, 0, format, GL_UNSIGNED_BYTE, tex->TexData);
+		glTexImage2D(GL_TEXTURE_2D, 0, iformat, tex->Width, tex->Height, 0, format, GL_UNSIGNED_BYTE, tex->Data);
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilterToGL(tex->TexFilterMin));
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilterToGL(tex->TexFilterMax));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilterToGL(tex->FilterMin));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilterToGL(tex->FilterMax));
 		// Clamping should have no effect for RGB text, since we clamp inside our fragment shader.
 		// Also, when rendering 'whole pixel' glyphs, we shouldn't need clamping either, because
 		// our UV coordinates are exact, and we always have a 1:1 texel:pixel ratio.
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	} else {
-		glTexSubImage2D(GL_TEXTURE_2D, 0, invRect.Left, invRect.Top, invRect.Width(), invRect.Height(), format, GL_UNSIGNED_BYTE, tex->TexDataAt(invRect.Left, invRect.Top));
+		glTexSubImage2D(GL_TEXTURE_2D, 0, invRect.Left, invRect.Top, invRect.Width(), invRect.Height(), format, GL_UNSIGNED_BYTE, tex->DataAt(invRect.Left, invRect.Top));
 	}
 
 	if (Have_Unpack_RowLength)
@@ -794,9 +794,9 @@ bool RenderGL::LoadTexture(Texture* tex, int texUnit) {
 bool RenderGL::ReadBackbuffer(Image& image) {
 	image.Alloc(TexFormatRGBA8, FBWidth, FBHeight);
 	if (Have_Unpack_RowLength)
-		glPixelStorei(GL_UNPACK_ROW_LENGTH, image.TexStride / 4);
+		glPixelStorei(GL_UNPACK_ROW_LENGTH, image.Stride / 4);
 
-	glReadPixels(0, 0, FBWidth, FBHeight, GL_RGBA, GL_UNSIGNED_BYTE, image.TexDataAtLine(0));
+	glReadPixels(0, 0, FBWidth, FBHeight, GL_RGBA, GL_UNSIGNED_BYTE, image.DataAtLine(0));
 
 	// our image is top-down
 	// glReadPixels is bottom-up

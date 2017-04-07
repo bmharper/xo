@@ -150,7 +150,7 @@ void DocGroup::UploadImagesToGPU(bool& beganRender) {
 
 		for (size_t i = 0; i < invalidImages.size(); i++) {
 			if (Wnd->Renderer->LoadTexture(invalidImages[i], 0)) {
-				invalidImages[i]->TexClearInvalidRect();
+				invalidImages[i]->ClearInvalidRect();
 			} else {
 				XOTRACE_WARNING("Failed to upload image to GPU\n");
 			}

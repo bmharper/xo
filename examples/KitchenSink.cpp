@@ -1,4 +1,5 @@
 #include "../xo/xo.h"
+#include "SVGSamples.h"
 
 /*
 This sample was created when developing the layout concepts
@@ -462,7 +463,7 @@ void DoEditBox(xo::Doc* doc) {
 	//doc->Root.ParseAppend("<div style='break:after'>something</div>");
 	auto edit = xo::controls::EditBox::AppendTo(&doc->Root);
 	edit->StyleParse("width: 15em");
-	auto btn = xo::controls::Button::AppendTo(&doc->Root, "Click me");
+	auto btn = xo::controls::Button::NewText(&doc->Root, "Click me");
 	btn->OnClick([doc](xo::Event& ev) {
 		xo::controls::MsgBox::Show(doc, "How now brown cow\nA new line");
 	});
@@ -476,6 +477,13 @@ void DoStyleVars(xo::Doc* doc) {
 	root->Parse(
 	    "<div style='border: 1px $btn-border; background: $btn-bg; border-radius: 5px; width: 50px; height: 50px; margin: 2px'></div>"
 	);
+}
+
+void DoSVG(xo::Doc* doc) {
+	doc->SetSvg("media-play", svgmedia::MediaPlay);
+	doc->SetSvg("media-step-forward", svgmedia::MediaStepForward);
+	xo::controls::Button::NewSvg(&doc->Root, "media-play", "20ep", "20ep");
+	xo::controls::Button::NewSvg(&doc->Root, "media-step-forward", "20ep", "20ep");
 }
 
 void InitDOM(xo::Doc* doc) {
@@ -501,8 +509,9 @@ void InitDOM(xo::Doc* doc) {
 	//DoTextQuality(doc);
 	//DoQuadraticSplines(doc);
 	//DoTimer(doc);
-	DoEditBox(doc);
+	//DoEditBox(doc);
 	//DoStyleVars(doc);
+	DoSVG(doc);
 
 	body->OnClick([](xo::Event& ev) {
 		//xo::Trace("%f %f\n", ev.PointsAbs[0].x, ev.PointsAbs[0].y);

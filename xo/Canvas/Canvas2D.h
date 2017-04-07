@@ -15,7 +15,7 @@ namespace xo {
 */
 class XO_API Canvas2D {
 public:
-	Canvas2D(Image* backingImage);
+	Canvas2D(Texture* backingImage);
 	~Canvas2D();
 
 	// Buffer/State access (use Invalidate if you modify contents directly)
@@ -32,7 +32,7 @@ public:
 	Box         GetInvalidRect() const { return InvalidRect; }               // Retrieve the bounding rectangle of all pixels that have been modified
 	void        Invalidate(Box box) { InvalidRect.ExpandToFit(box); }        // Call this if you modify the buffer by directly accessing its memory
 	void        Invalidate() { InvalidRect = Box(0, 0, Width(), Height()); } // Call this if you modify the buffer by directly accessing its memory
-	Image*      GetImage() { return Image; }
+	Texture*    GetImage() { return Image; }
 	// Drawing functions
 	void Fill(Color color);
 	void FillRect(Box box, Color color);
@@ -41,6 +41,7 @@ public:
 	void StrokeLine(float x1, float y1, float x2, float y2, Color color, float linewidth);
 	void StrokeCircle(float x, float y, float radius, Color color, float linewidth);
 	void FillCircle(float x, float y, float radius, Color color);
+	void RenderSVG(const char* svg);
 
 	void SetPixel(int x, int y, RGBA c) { ((uint32_t*) RenderBuff.row_ptr(y))[x] = c.u; }
 
@@ -58,7 +59,7 @@ protected:
 	TRenderBaseRGBA_Pre    RenderBaseRGBA_Pre;
 	TRendererAA_RGBA_Pre   RenderAA_RGBA_Pre;
 	agg::pixfmt_rgba32_pre PixFormatRGBA_Pre;
-	Image*                 Image;
+	Texture*               Image;
 	Box                    InvalidRect;
 	bool                   IsAlive; // We have a valid Image, and non-zero width and height
 

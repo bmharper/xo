@@ -21,16 +21,22 @@ it until expansion time.
 
 StringTable, which is used by this class, assumes that values are never
 deleted. That will cause memory bloat if you don't recycle variable names.
+
+Every value gets a non-zero integer ID, that you can use instead of
+the string, as a key to lookup that value. This is used when an element
+says background: svg(foo), so that the StyleAttrib doesn't need to store
+the string "foo". It just stores the ID of the vector icon string "foo".
 */
 class XO_API VariableTable {
 public:
 	VariableTable(xo::Doc* doc);
 	~VariableTable();
 
-	void Set(const char* var, const char* value, size_t valueMaxLen = -1);
+	int Set(const char* var, const char* value, size_t valueMaxLen = -1);
 
-	// Returns null if not defined
-	const char* Get(const char* var) const;
+	const char* GetByName(const char* var) const; // Returns null if not defined
+	const char* GetByID(int id) const;            // Returns null if not defined
+	int         GetID(const char* var) const;
 
 	void CloneFrom_Incremental(const VariableTable& src);
 	void ResetModified();
