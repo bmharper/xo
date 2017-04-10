@@ -191,16 +191,16 @@ void xoImageTester::CreateOrVerifyTruthImage(bool create, const char* filename, 
 	xo::RenderResult res = Wnd->DocGroup->RenderToImage(img);
 	if (create)
 	{
-		stbi_write_png(truthFile.Z, img.GetWidth(), img.GetHeight(), 4, img.TexDataAtLine(0), img.TexStride);
+		stbi_write_png(truthFile.Z, img.Width, img.Height, 4, img.DataAtLine(0), img.Stride);
 	}
 	else
 	{
 		int width = 0, height = 0, comp = 0;
 		unsigned char* data = stbi_load(truthFile.Z, &width, &height, &comp, 4);
-		bool same = ImageEquals(img.GetWidth(), img.GetHeight(), img.TexStride, img.TexDataAtLine(0), width, height, width * 4, data);
+		bool same = ImageEquals(img.Width, img.Height, img.Stride, img.DataAtLine(0), width, height, width * 4, data);
 		if (!same)
 		{
-			stbi_write_png(newSample.Z, img.GetWidth(), img.GetHeight(), 4, img.TexDataAtLine(0), img.TexStride);
+			stbi_write_png(newSample.Z, img.Width, img.Height, 4, img.DataAtLine(0), img.Stride);
 		}
 		TTASSERT(same);
 		stbi_image_free(data);
