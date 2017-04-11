@@ -187,6 +187,24 @@ bool DocUI::BubbleEvent(Event& ev, const LayoutResult* layout) {
 
 	InternalID deepestNodeUnderCursor = cursorSelChain.Nodes.size() == 0 ? InternalIDNull : cursorSelChain.Nodes.back()->InternalID;
 
+	// This is necessary for buttons, which implement capture, which have icons or something else inside them.
+	// In this case, deepestNodeUnderCursor is not actually the button, but, for example, an SVG div inside of
+	// the button. Clicking on that SVG div must have the same effect as if you'd clicked on a naked part of 
+	// the button's div.
+	// NOTE: The solution here is not perfect. I hacked it in quickly. The current solution still suffers from
+	// the problem that if the mouse goes down over the SVG in the button, then it also needs to come up over
+	// the SVG. The correct solution is that the mouse can go down anywhere inside the button, and come up
+	// anywhere inside the button.
+	bool isDeepestNodeChildOfCapture = false;
+	if (CurrentCaptureID) {
+		for (size_t i = cursorSelChain.Nodes.size() - 1; i != -1; i--) {
+			if (cursorSelChain.Nodes[i]->InternalID == CurrentCaptureID) {
+				isDeepestNodeChildOfCapture = true;
+				break;
+			}
+		}
+	}
+
 	// We copy 'ev' into finalEvents[0], so that we can synthesize a click event, immediately
 	// after a mouseup is received in the same window where it went down. In that case,
 	// finalEvents[0] = MouseUp
@@ -201,7 +219,7 @@ bool DocUI::BubbleEvent(Event& ev, const LayoutResult* layout) {
 	} else if (ev.Type == EventMouseUp) {
 		if (MouseDownID[ButtonToMouseNumber(ev.Button)] == deepestNodeUnderCursor) {
 			// Mouse is coming up in the same object where it went down. This is a "click".
-			if (CanReceiveInputEvents(deepestNodeUnderCursor)) {
+			if (CanReceiveInputEvents(deepestNodeUnderCursor) || isDeepestNodeChildOfCapture) {
 				finalEvents[numFinalEvents]      = ev;
 				finalEvents[numFinalEvents].Type = EventClick;
 				numFinalEvents++;

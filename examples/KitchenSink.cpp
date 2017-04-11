@@ -233,28 +233,27 @@ void DoCenter2(xo::Doc* doc) {
 
 void DoFill(xo::Doc* doc) {
 	doc->Root.ParseAppend(
-		"<div style='width: 500px; height: 30px; border: 1px #000'>"
-		"	<div style='width: 30px; height: 100%; background: #a88'></div>"
-		"	<div style='width: 100%r; height: 100%; background: #8a8'></div>" // 100%r - fill 100% of the remaining space
-		"</div>"
-	);
+	    "<div style='width: 500px; height: 30px; border: 1px #000'>"
+	    "	<div style='width: 30px; height: 100%; background: #a88'></div>"
+	    "	<div style='width: 100%r; height: 100%; background: #8a8'></div>" // 100%r - fill 100% of the remaining space
+	    "</div>");
 }
 
 void DoBindings(xo::Doc* doc) {
 	// This is where I discovered that I was aligning to child's content box, instead of aligning to
 	// child's margin box. That is fixed.
 	doc->Root.ParseAppend(
-		"right\n"
-		"<div style='width: 64px; height: 64px; background: #bdb; break: after; margin: 20px; padding: 0'>"
-		"	<div style='width: 8px; height: 8px; background: #0a0'></div>"
-		"	<div style='height: 16px; right: right; background: #d55; padding: 16px 0px;'></div>"
+	    "right\n"
+	    "<div style='width: 64px; height: 64px; background: #bdb; break: after; margin: 20px; padding: 0'>"
+	    "	<div style='width: 8px; height: 8px; background: #0a0'></div>"
+	    "	<div style='height: 16px; right: right; background: #d55; padding: 16px 0px;'></div>"
 	    "</div>");
 
 	doc->Root.ParseAppend(
-		"bottom\n"
-		"<div style='width: 64px; height: 64px; background: #bdb; break: after; margin: 20px; padding: 0'>"
-		"	<div style='width: 8px; height: 8px; background: #0a0'></div>"
-		"	<div style='height: 16px; bottom: bottom; background: #d55; padding: 16px 0px;'></div>"
+	    "bottom\n"
+	    "<div style='width: 64px; height: 64px; background: #bdb; break: after; margin: 20px; padding: 0'>"
+	    "	<div style='width: 8px; height: 8px; background: #0a0'></div>"
+	    "	<div style='height: 16px; bottom: bottom; background: #d55; padding: 16px 0px;'></div>"
 	    "</div>");
 }
 
@@ -392,7 +391,7 @@ void DoBackupSettings(xo::Doc* doc) {
 		    "	<div class='bg-light'><lab style='vcenter:vcenter'>" +
 		    title +
 		    "</lab></div>"
-			"	<div class='bg-dark' style='baseline:baseline'>"
+		    "	<div class='bg-dark' style='baseline:baseline'>"
 		    "		<lab class='textbox' style='width: 320ep'>this is a text box</lab>"
 		    "		<lab class='button'>Browse...</lab>"
 		    "	</div>"
@@ -475,15 +474,17 @@ void DoStyleVars(xo::Doc* doc) {
 	doc->SetStyleVar("$btn-bg", "#cdc");
 	doc->SetStyleVar("$btn-border", "#aba");
 	root->Parse(
-	    "<div style='border: 1px $btn-border; background: $btn-bg; border-radius: 5px; width: 50px; height: 50px; margin: 2px'></div>"
-	);
+	    "<div style='border: 1px $btn-border; background: $btn-bg; border-radius: 5px; width: 50px; height: 50px; margin: 2px'></div>");
 }
 
 void DoSVG(xo::Doc* doc) {
 	doc->SetSvg("media-play", svgmedia::MediaPlay);
 	doc->SetSvg("media-step-forward", svgmedia::MediaStepForward);
-	xo::controls::Button::NewSvg(&doc->Root, "media-play", "20ep", "20ep");
-	xo::controls::Button::NewSvg(&doc->Root, "media-step-forward", "20ep", "20ep");
+	auto btnPlay = xo::controls::Button::NewSvg(&doc->Root, "media-play", "20ep", "20ep");
+	auto btnStep = xo::controls::Button::NewSvg(&doc->Root, "media-step-forward", "20ep", "20ep");
+	auto txt     = doc->Root.AddText("");
+	btnPlay->OnClick([txt] { txt->SetText("Play"); });
+	btnStep->OnClick([txt] { txt->SetText("Step"); });
 }
 
 void InitDOM(xo::Doc* doc) {
