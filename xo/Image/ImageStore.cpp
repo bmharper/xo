@@ -68,6 +68,7 @@ void ImageStore::Delete(const char* name) {
 }
 
 void ImageStore::Delete(ImageID id) {
+	XO_ASSERT(id < Images.size());
 	delete Images[id];
 	Images[id] = nullptr;
 }

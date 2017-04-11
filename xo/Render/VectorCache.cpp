@@ -18,6 +18,8 @@ VectorCache::VectorCache() {
 }
 
 VectorCache::~VectorCache() {
+	for (auto a : Atlases)
+		a.Free();
 }
 
 bool VectorCache::Get(int iconID, int width, int height, Elem& cached) const {
@@ -73,7 +75,7 @@ VectorCache::Elem VectorCache::Render(const VariableTable& vectors, VectorCacheK
 	}
 
 	auto elem = AllocAtlas(key.IconID, key.Width, key.Height);
-	auto tex = Atlases[elem.Atlas].Window(elem.X, elem.Y, key.Width, key.Height);
+	auto tex  = Atlases[elem.Atlas].Window(elem.X, elem.Y, key.Width, key.Height);
 	Atlases[elem.Atlas].InvalidRect.ExpandToFit(Box(elem.X, elem.Y, key.Width, key.Height));
 	Canvas2D canvas(&tex);
 	canvas.RenderSVG(svg);

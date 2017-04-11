@@ -65,7 +65,7 @@ RenderResult RenderDoc::Render(RenderBase* driver) {
 
 	XOTRACE_RENDER("RenderDoc: Render\n");
 	Renderer     rend;
-	RenderResult res = rend.Render(&Doc, &ClonedImages, &Doc.GetSvgTable(), &VectorCache, &Doc.Strings, driver, &layout->Root);
+	RenderResult res = rend.Render(&Doc, &VectorCache, driver, &layout->Root);
 	TimeRender       = t.MeasureAndRestart();
 
 	layout->IDToNodeTable.resize(Doc.InternalIDSize());
@@ -90,10 +90,6 @@ RenderResult RenderDoc::Render(RenderBase* driver) {
 
 void RenderDoc::CopyFromCanonical(const xo::Doc& canonical, RenderStats& stats) {
 	canonical.CloneSlowInto(Doc, 0, stats);
-
-	// This must happen after textures are uploaded to the GPU. DocGroup ensures that.
-	ClonedImages.CloneMetadataFrom(canonical.Images);
-
 	HasExpandedClassVariables = false;
 }
 

@@ -92,6 +92,7 @@ void Doc::CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const {
 	c.Strings.CloneFrom_Incremental(Strings);
 	c.StyleVerbatimStrings.CloneFrom_Incremental(StyleVerbatimStrings);
 	
+	c.Images.CloneMetadataFrom(Images);
 	c.VectorIcons.CloneFrom_Incremental(VectorIcons);
 
 	c.Version = Version;
@@ -289,6 +290,7 @@ void Doc::Reset() {
 		ClassStyles.Discard();
 	}
 	*/
+	Root.DeleteAllChildren();
 	IncVersion();
 	Pool.FreeAll();
 	Root.SetInternalID(InternalIDNull); // Root will be assigned InternalIDRoot when we call ChildAdded() on it.

@@ -17,13 +17,13 @@ const int SHADER_RECT          = 2;
 const int SHADER_TEXT_SIMPLE   = 3;
 const int SHADER_TEXT_SUBPIXEL = 4;
 
-RenderResult Renderer::Render(const xo::Doc* doc, ImageStore* images, const VariableTable* vectors, xo::VectorCache* vcache, StringTable* strings, RenderBase* driver, const RenderDomNode* root) {
+RenderResult Renderer::Render(const xo::Doc* doc, xo::VectorCache* vcache, RenderBase* driver, const RenderDomNode* root) {
 	Doc         = doc;
 	Driver      = driver;
-	Images      = images;
-	Vectors     = vectors;
+	Images      = &doc->Images;
+	Vectors     = &doc->GetSvgTable();
 	VectorCache = vcache;
-	Strings     = strings;
+	Strings     = &doc->Strings;
 
 	Driver->PreRender();
 

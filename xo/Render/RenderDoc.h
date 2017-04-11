@@ -31,7 +31,7 @@ The 'Doc' member is a complete clone of the original document.
 */
 class XO_API RenderDoc {
 public:
-	Doc         Doc; // Defining state
+	Doc Doc; // Defining state
 
 	VectorCache VectorCache;
 
@@ -53,9 +53,6 @@ public:
 	void          ReleaseLayout(LayoutResult* layout);
 
 protected:
-	// Cloned image metadata
-	ImageStore ClonedImages;
-
 	// Tracks whether style variables (eg $dark = #aaa) have been baked into the class styles yet
 	// Variables on individual DOM element styles are baked in at final resolve time
 	bool HasExpandedClassVariables = false;

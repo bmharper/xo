@@ -11,7 +11,7 @@ Any state that is persisted between renderings is stored in RenderGL.
 class XO_API Renderer {
 public:
 	// I initially tried to not pass Doc in here, but I eventually needed it to lookup canvas objects
-	RenderResult Render(const xo::Doc* doc, ImageStore* images, const VariableTable* vectors, xo::VectorCache* vcache, StringTable* strings, RenderBase* driver, const RenderDomNode* root);
+	RenderResult Render(const xo::Doc* doc, xo::VectorCache* vcache, RenderBase* driver, const RenderDomNode* root);
 
 protected:
 	enum TexUnits {
@@ -24,11 +24,11 @@ protected:
 		TopRight,
 	};
 	const Doc*                 Doc         = nullptr;
-	RenderBase*                Driver      = nullptr;
-	ImageStore*                Images      = nullptr;
-	StringTable*               Strings     = nullptr;
+	const ImageStore*          Images      = nullptr;
+	const StringTable*         Strings     = nullptr;
 	const VariableTable*       Vectors     = nullptr;
 	VectorCache*               VectorCache = nullptr;
+	RenderBase*                Driver      = nullptr;
 	ohash::set<GlyphCacheKey>  GlyphsNeeded;
 	ohash::set<VectorCacheKey> VectorsNeeded;
 
