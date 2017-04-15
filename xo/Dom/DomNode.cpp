@@ -107,7 +107,7 @@ void DomNode::DeleteChild(DomEl* c) {
 	DeleteChildInternal(c);
 }
 
-void DomNode::DeleteAllChildren() {
+void DomNode::Clear() {
 	IncVersion();
 	for (size_t i = 0; i < Children.size(); i++)
 		DeleteChildInternal(Children[i]);
@@ -135,7 +135,7 @@ void DomNode::Discard() {
 }
 
 String DomNode::Parse(const char* src) {
-	DeleteAllChildren();
+	Clear();
 	String err;
 	ParseAppend(src, &err);
 	return err;
@@ -337,7 +337,7 @@ void DomNode::RecalcAllEventMask() {
 void DomNode::DeleteChildInternal(DomEl* c) {
 	auto node = c->ToNode();
 	if (node)
-		node->DeleteAllChildren();
+		node->Clear();
 	Doc->ChildRemoved(c);
 	Doc->FreeChild(c);
 }

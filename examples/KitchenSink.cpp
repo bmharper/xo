@@ -323,7 +323,7 @@ void DoInlineFlow(xo::Doc* doc) {
 	auto create = [doc](xo::Event& ev) {
 		static bool doSpan = false;
 		doSpan             = !doSpan;
-		doc->Root.DeleteAllChildren();
+		doc->Root.Clear();
 		doc->Root.StyleParse("font-size: 26px");
 		doc->Root.StyleParse("margin: 5px");
 		doc->ClassParse("red", "margin: 2px; padding: 2px; border-radius: 3px; border: 1px #d00b; background: #fddb");

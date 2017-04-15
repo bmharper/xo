@@ -290,7 +290,7 @@ void Doc::Reset() {
 		ClassStyles.Discard();
 	}
 	*/
-	Root.DeleteAllChildren();
+	Root.Clear();
 	IncVersion();
 	Pool.FreeAll();
 	Root.SetInternalID(InternalIDNull); // Root will be assigned InternalIDRoot when we call ChildAdded() on it.

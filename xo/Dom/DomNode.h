@@ -37,7 +37,7 @@ public:
 	DomCanvas*   AddCanvas(size_t position = -1);
 	DomText*     AddText(const char* txt = nullptr, size_t position = -1);
 	void         DeleteChild(DomEl* c);
-	void         DeleteAllChildren();
+	void         Clear(); // Delete all children
 	size_t       ChildCount() const { return Children.size(); }
 	DomEl*       ChildByIndex(size_t index);
 	const DomEl* ChildByIndex(size_t index) const;
