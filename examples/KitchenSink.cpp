@@ -248,12 +248,18 @@ void DoBindings(xo::Doc* doc) {
 	    "	<div style='width: 8px; height: 8px; background: #0a0'></div>"
 	    "	<div style='height: 16px; right: right; background: #d55; padding: 16px 0px;'></div>"
 	    "</div>");
-
+	
 	doc->Root.ParseAppend(
 	    "bottom\n"
 	    "<div style='width: 64px; height: 64px; background: #bdb; break: after; margin: 20px; padding: 0'>"
 	    "	<div style='width: 8px; height: 8px; background: #0a0'></div>"
 	    "	<div style='height: 16px; bottom: bottom; background: #d55; padding: 16px 0px;'></div>"
+	    "</div>");
+
+	doc->Root.ParseAppend(
+	    "percentage horizontal and vertical\n"
+	    "<div style='width: 64px; height: 64px; background: #bdb; break: after; margin: 20px; padding: 0'>"
+		"	<div style='width: 8px; height: 8px; background: #0a0; hcenter: 25%; vcenter: 25%'></div>"
 	    "</div>");
 }
 
@@ -508,7 +514,7 @@ void InitDOM(xo::Doc* doc) {
 	//DoBaselineAlignment_rev2(doc);
 	//DoBaselineAlignment_Multiline(doc);
 	//DoBaselineAlignment_DownPropagate(doc);
-	//DoBindings(doc);
+	DoBindings(doc);
 	//DoCanvas(doc);
 	//DoCenter(doc);
 	//DoCenter2(doc);
@@ -525,7 +531,7 @@ void InitDOM(xo::Doc* doc) {
 	//DoEditBox(doc);
 	//DoStyleVars(doc);
 	//DoSVG(doc);
-	DoKeyEventBubble(doc);
+	//DoKeyEventBubble(doc);
 
 	body->OnClick([](xo::Event& ev) {
 		//xo::Trace("%f %f\n", ev.PointsAbs[0].x, ev.PointsAbs[0].y);

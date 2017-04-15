@@ -901,7 +901,7 @@ Pos Layout::HBindHelper::Parent(StyleAttrib bind) {
 	if (bind.IsBindingTypeEnum()) {
 		return Layout::HBindOffset(bind.GetHorizontalBinding(), 0, ParentWidth);
 	} else {
-		return Layout->ComputeDimension(ChildWidth, bind.GetSize());
+		return Layout->ComputeDimension(ParentWidth, bind.GetSize());
 	}
 }
 
