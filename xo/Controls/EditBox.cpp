@@ -93,7 +93,7 @@ DomNode* EditBox::AppendTo(DomNode* node, const char* txt) {
 
 		switch (ev.Button) {
 		case (Button)((int) Button::KeyA + ('v' - 'a')):
-			if (ev.IsModifierKeyDown(Button::KeyCtrl)) {
+			if (ev.IsPressed(Button::KeyCtrl)) {
 				// hard-coded Ctrl+V for paste. I just need this too much right now!
 				auto clipboard = ClipboardRead();
 				txt.insert(insertPos, clipboard);

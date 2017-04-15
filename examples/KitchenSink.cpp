@@ -240,6 +240,7 @@ void DoFill(xo::Doc* doc) {
 }
 
 void DoBindings(xo::Doc* doc) {
+	//doc->Root.ParseAppend("<div style='width:30px'>one two</div>");
 	// This is where I discovered that I was aligning to child's content box, instead of aligning to
 	// child's margin box. That is fixed.
 	doc->Root.ParseAppend(

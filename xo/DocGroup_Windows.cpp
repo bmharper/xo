@@ -107,14 +107,27 @@ static void WM_KeyButtonToXo(WPARAM wp, LPARAM lp, Button& btn, int& codepoint) 
 // because he runs on a different thread, so he's not guaranteed to get
 // the correct result from the moment when the original event was generated.
 static void PopulateModifierKeyStates(Event& ev) {
-	ev.ModifierKeys.LShift   = !!(0x8000 & GetKeyState(VK_LSHIFT));
-	ev.ModifierKeys.RShift   = !!(0x8000 & GetKeyState(VK_RSHIFT));
-	ev.ModifierKeys.LAlt     = !!(0x8000 & GetKeyState(VK_LMENU));
-	ev.ModifierKeys.RAlt     = !!(0x8000 & GetKeyState(VK_RMENU));
-	ev.ModifierKeys.LCtrl    = !!(0x8000 & GetKeyState(VK_LCONTROL));
-	ev.ModifierKeys.RCtrl    = !!(0x8000 & GetKeyState(VK_RCONTROL));
-	ev.ModifierKeys.LWindows = !!(0x8000 & GetKeyState(VK_LWIN));
-	ev.ModifierKeys.RWindows = !!(0x8000 & GetKeyState(VK_RWIN));
+	ev.ButtonStates.LShift   = !!(0x8000 & GetKeyState(VK_LSHIFT));
+	ev.ButtonStates.RShift   = !!(0x8000 & GetKeyState(VK_RSHIFT));
+	ev.ButtonStates.LAlt     = !!(0x8000 & GetKeyState(VK_LMENU));
+	ev.ButtonStates.RAlt     = !!(0x8000 & GetKeyState(VK_RMENU));
+	ev.ButtonStates.LCtrl    = !!(0x8000 & GetKeyState(VK_LCONTROL));
+	ev.ButtonStates.RCtrl    = !!(0x8000 & GetKeyState(VK_RCONTROL));
+	ev.ButtonStates.LWindows = !!(0x8000 & GetKeyState(VK_LWIN));
+	ev.ButtonStates.RWindows = !!(0x8000 & GetKeyState(VK_RWIN));
+}
+
+static void PopulateMouseButtonStates(WPARAM wparam, Event& ev) {
+	if (!!(wparam & MK_LBUTTON))
+		ev.ButtonStates.MouseLeft = true;
+	if (!!(wparam & MK_MBUTTON))
+		ev.ButtonStates.MouseMiddle = true;
+	if (!!(wparam & MK_RBUTTON))
+		ev.ButtonStates.MouseRight = true;
+	if (!!(wparam & MK_XBUTTON1))
+		ev.ButtonStates.MouseX1 = true;
+	if (!!(wparam & MK_XBUTTON2))
+		ev.ButtonStates.MouseX2 = true;
 }
 
 // See the article on MSDN "Legacy User Interaction Features" > "Keyboard and Mouse Input" > "Using Keyboard Input". Just search for "MSDN Using Keyboard Input".
@@ -261,6 +274,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		ev.Event.Type         = EventMouseMove;
 		ev.Event.PointCount   = 1;
 		ev.Event.PointsAbs[0] = cursor;
+		PopulateMouseButtonStates(wParam, ev.Event);
 		PopulateModifierKeyStates(ev.Event);
 		AddOrReplaceMessage(ev);
 		XOTRACE_LATENCY("MouseMove\n");

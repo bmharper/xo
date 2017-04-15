@@ -24,7 +24,7 @@ XO_API Button AsciiToButton(char c) {
 	return Button::Null;
 }
 
-bool ModifierKeyStates::IsKeyDown(Button btn) const {
+bool ButtonStates::IsPressed(Button btn) const {
 	switch (btn) {
 	case Button::KeyShift: return LShift || RShift;
 	case Button::KeyLShift: return LShift;
@@ -38,6 +38,11 @@ bool ModifierKeyStates::IsKeyDown(Button btn) const {
 	case Button::KeyWindows: return LWindows || RWindows;
 	case Button::KeyLWindows: return LWindows;
 	case Button::KeyRWindows: return RWindows;
+	case Button::MouseLeft: return MouseLeft;
+	case Button::MouseMiddle: return MouseMiddle;
+	case Button::MouseRight: return MouseRight;
+	case Button::MouseX1: return MouseX1;
+	case Button::MouseX2: return MouseX2;
 	default: return false;
 	}
 }
@@ -66,8 +71,8 @@ void Event::MakeWindowSize(int w, int h) {
 	PointsAbs[0].y = (float) h;
 }
 
-bool Event::IsModifierKeyDown(xo::Button btn) const {
-	return ModifierKeys.IsKeyDown(btn);
+bool Event::IsPressed(xo::Button btn) const {
+	return ButtonStates.IsPressed(btn);
 }
 
 EventHandler::EventHandler() {

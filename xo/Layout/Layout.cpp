@@ -416,6 +416,7 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 	bool           aborted     = false;
 	Chunk          chunk;
 	Chunker        chunker(txt);
+	size_t         discardFinalNChars = 0;
 	while (!aborted && chunker.Next(chunk)) {
 		switch (chunk.Type) {
 		case ChunkWord: {
@@ -431,7 +432,8 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 			wordin.Height = lineHeight;
 			Box marginBox;
 			if (Boxer.AddWord(wordin, marginBox) == BoxLayout::FlowRestart) {
-				aborted = true;
+				aborted            = true;
+				discardFinalNChars = chunk.End - chunk.Start;
 				ts.RestartPoints->push(chunk.Start + txt_offset);
 				break;
 			}
@@ -443,7 +445,7 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 				ts.RNode->Children += rtxt_new;
 				if (rtxt != nullptr) {
 					// retire previous text object - which is all characters in the queue, except for the most recent word
-					FinishTextRNode(ts, rtxt);
+					FinishTextRNode(ts, rtxt, -1);
 				}
 				rtxt_new->Pos = marginBox;
 				rtxt          = rtxt_new;
@@ -459,6 +461,8 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 		case ChunkSpace: {
 			auto pos = Boxer.AddSpace(charWidth_32);
 			// We emit space characters, purely for the sake of UI selection, and caret placement inside text edit boxes
+			// This behaviour screws up the exact width of words, when word wraps comes into play. See DoInlineFlow in KitchenSink for
+			// an example. The width of the last word box on a line, before the wrap, includes a space which shouldn't be there.
 			RenderCharEl& el     = ts.Chars.PushHead();
 			el.OriginalCharIndex = chunk.Start;
 			el.Char              = 32;
@@ -476,22 +480,31 @@ void Layout::GenerateTextWords(TextRunState& ts) {
 		}
 	}
 	// the end
-	if (rtxt != nullptr)
-		FinishTextRNode(ts, rtxt);
+	if (rtxt != nullptr) {
+		size_t numChars = ts.Chars.Size() - discardFinalNChars;
+		FinishTextRNode(ts, rtxt, numChars);
+	}
 	ts.RNodeTxt = rtxt;
 }
 
-void Layout::FinishTextRNode(TextRunState& ts, RenderDomText* rnode) {
+void Layout::FinishTextRNode(TextRunState& ts, RenderDomText* rnode, size_t numChars) {
 	rnode->FontID     = ts.FontID;
 	rnode->Color      = ts.Color;
 	rnode->FontSizePx = ts.FontSizePx;
 	if (ts.IsSubPixel)
 		rnode->Flags |= RenderDomText::FlagSubPixelGlyphs;
 
-	size_t size = ts.Chars.Size();
-	rnode->Text.resize(size);
-	for (size_t i = 0; i < size; i++)
+	if (numChars == -1)
+		numChars = ts.Chars.Size();
+
+	rnode->Text.resize(numChars);
+	for (size_t i = 0; i < numChars; i++)
 		rnode->Text[i] = ts.Chars.PopTail();
+
+	// We don't always consume all the characters in the queue, because some of them may
+	// be destined for the next line, in which case they'll come in after the next restart.
+	// However, we do always clear the queue.
+	ts.Chars.Clear();
 }
 
 void Layout::OffsetTextHorz(TextRunState& ts, Pos offsetHorz, size_t numChars) {

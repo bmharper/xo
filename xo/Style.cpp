@@ -687,7 +687,7 @@ bool Style::Parse(const char* t, size_t maxLen, Doc* doc) {
 		if (IsWhitespace(c)) {
 		} else if (c == ':') {
 			eq = i;
-		} else if (c == '-') {
+		} else if (c == '-' && eq == -1) {
 			dash = i;
 		} else if (c == ';' || (eof && startv != -1)) {
 			// clang-format off

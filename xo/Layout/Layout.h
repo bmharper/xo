@@ -118,7 +118,7 @@ protected:
 	void  RunText(const DomText* node, const LayoutInput& in, LayoutOutput& out);
 	Point PositionChildFromBindings(const LayoutInput& cin, Pos parentBaseline, LayoutOutput& cout);
 	void  GenerateTextWords(TextRunState& ts);
-	void  FinishTextRNode(TextRunState& ts, RenderDomText* rnode);
+	void  FinishTextRNode(TextRunState& ts, RenderDomText* rnode, size_t numChars);
 	void  OffsetTextHorz(TextRunState& ts, Pos offsetHorz, size_t numChars);
 	Pos   MeasureWord(const char* txt, const Font* font, Pos fontAscender, Chunk chunk, TextRunState& ts);
 

@@ -35,6 +35,7 @@ void xoMain(xo::SysWnd* wnd)
 	auto onMoveOrTouch = [greybox, txtBox](xo::Event& ev) {
 		greybox->StyleParsef("left: %fpx; top: %fpx;", ev.PointsRel[0].x - 45.0, ev.PointsRel[0].y - 45.0);
 		txtBox->StyleParsef("left: %fpx; top: %fpx;", ev.PointsRel[0].x * 0.01 + 45.0, ev.PointsRel[0].y * 0.01 + 150.0);
+		//txtBox->SetText(ev.IsPressed(xo::Button::MouseRight) ? "right" : "hello");
 	};
 
 	doc->Root.OnMouseMove(onMoveOrTouch);
