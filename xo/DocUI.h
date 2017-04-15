@@ -63,7 +63,8 @@ protected:
 	// and handled by another thread.
 	volatile Cursors Cursor;
 
-	bool  BubbleEvent(Event& ev, const LayoutResult* layout);
+	bool  ProcessInputEvent(Event& ev, const LayoutResult* layout);
+	bool  BubbleEvent(int nEvents, Event* events, SelectorChain& chain, const LayoutResult* layout);
 	void  FindTarget(Vec2f p, const LayoutResult* layout, SelectorChain& selChain);
 	void  SetupChainForDeepNode(InternalID deepNode, Vec2f p, const LayoutResult* layout, SelectorChain& selChain);
 	void  UpdateCursorLocation(const SelectorChain& selChain);

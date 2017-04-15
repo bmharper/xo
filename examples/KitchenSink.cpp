@@ -487,6 +487,18 @@ void DoSVG(xo::Doc* doc) {
 	btnStep->OnClick([txt] { txt->SetText("Step"); });
 }
 
+void DoKeyEventBubble(xo::Doc* doc) {
+	auto btn = xo::controls::Button::NewText(&doc->Root, "Hello");
+	auto txtBtn = doc->Root.AddText("");
+	auto txtDoc = doc->Root.AddText("");
+	btn->OnKeyChar([txtBtn](xo::Event& ev) {
+		txtBtn->SetText((" Button " + std::string(1, ev.KeyChar)).c_str());
+	});
+	doc->Root.OnKeyChar([txtDoc](xo::Event& ev) {
+		txtDoc->SetText((" Doc " + std::string(1, ev.KeyChar)).c_str());
+	});
+}
+
 void InitDOM(xo::Doc* doc) {
 	xo::DomNode* body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
@@ -512,7 +524,8 @@ void InitDOM(xo::Doc* doc) {
 	//DoTimer(doc);
 	//DoEditBox(doc);
 	//DoStyleVars(doc);
-	DoSVG(doc);
+	//DoSVG(doc);
+	DoKeyEventBubble(doc);
 
 	body->OnClick([](xo::Event& ev) {
 		//xo::Trace("%f %f\n", ev.PointsAbs[0].x, ev.PointsAbs[0].y);

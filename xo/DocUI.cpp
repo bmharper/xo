@@ -87,7 +87,7 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 		break;
 	}
 	default:
-		BubbleEvent(ev, layout);
+		ProcessInputEvent(ev, layout);
 	}
 }
 
@@ -124,7 +124,7 @@ void DocUI::ReleaseCapture(InternalID id) {
 }
 
 // Returns true if the event was handled
-bool DocUI::BubbleEvent(Event& ev, const LayoutResult* layout) {
+bool DocUI::ProcessInputEvent(Event& ev, const LayoutResult* layout) {
 	// The platform must just send MouseMove. It is our job here to synthesize MouseEnter for DOM nodes.
 	// The platform must, however, send EventMouseLeave.
 	XO_DEBUG_ASSERT(ev.Type != EventMouseEnter);
@@ -143,16 +143,13 @@ bool DocUI::BubbleEvent(Event& ev, const LayoutResult* layout) {
 
 	XOTRACE_EVENTS("BubbleEvent type=%d\n", (int) ev.Type);
 
-	bool stop    = false;
-	bool handled = false;
-
 	if (ev.Type == EventKeyChar || ev.Type == EventKeyDown || ev.Type == EventKeyUp) {
-		// TODO: build upward chain and do inward bubbling, as mentioned in the comment above
-		DomNode* focus = (DomNode*) Doc->GetChildByInternalID(CurrentFocusID);
-		if (!focus)
-			focus = &Doc->Root;
-		SendEvent(ev, focus, &handled, &stop);
-		return handled;
+		InternalID focusID = CurrentFocusID;
+		if (!Doc->GetChildByInternalID(focusID))
+			focusID = Doc->Root.GetInternalID();
+		SelectorChain chain;
+		SetupChainForDeepNode(focusID, ev.PointsRel[0], layout, chain);
+		return BubbleEvent(1, &ev, chain, layout);
 	}
 
 	// We have two selector chains.
@@ -243,42 +240,57 @@ bool DocUI::BubbleEvent(Event& ev, const LayoutResult* layout) {
 
 	// After this point, we don't expect to see usage of 'ev'. Only finalEvents[i].
 
-	// This is the actual "bubbling" action
-	//XOTRACE_EVENTS( "FindTarget chainlen = %d\n", (int) nodeChain.size() );
-	for (int iEvent = 0; iEvent < numFinalEvents; iEvent++) {
-		Event& finalEv = finalEvents[iEvent];
+	return BubbleEvent(numFinalEvents, finalEvents, bubbleChain, layout);
+}
+
+// Returns true if any events were handled.
+// The events that we are dispatching here include synthesized events, such as Click, for a mouse
+// up. The events sent to this function will always tightly related, such as MouseUp & Click,
+// or KeyDown & KeyChar.
+bool DocUI::BubbleEvent(int nEvents, Event* events, SelectorChain& chain, const LayoutResult* layout) {
+	bool anyHandled = false;
+	bool anyStopped = false;
+
+	for (int iEvent = 0; iEvent < nEvents; iEvent++) {
+		Event& ev = events[iEvent];
 
 		// Start at the inner-most node first.
 		// Remember that SendEvent is allowed to do absolutely anything it wants to our DOM.
 		// So it could be that the rest of the objects inside nodeChain are invalid once
 		// SendEvent returns. We cater for this by always fetching DOM nodes based on InternalID.
-		for (size_t inode = bubbleChain.Nodes.size() - 1; inode != -1; inode--) {
-			bool                 isDeepestNode = inode == bubbleChain.Nodes.size() - 1;
-			const RenderDomNode* rnode         = bubbleChain.Nodes[inode];
+		for (size_t inode = chain.Nodes.size() - 1; inode != -1; inode--) {
+			bool                 isDeepestNode = inode == chain.Nodes.size() - 1;
+			const RenderDomNode* rnode         = chain.Nodes[inode];
 			const DomNode*       node          = Doc->GetNodeByInternalID(rnode->InternalID);
 			if (node != nullptr) {
-				if (node->HandlesEvent(finalEv.Type)) {
-					if (isDeepestNode && bubbleChain.Text) {
-						finalEv.TargetText = (DomText*) Doc->GetChildByInternalID(bubbleChain.Text->InternalID);
-						if (bubbleChain.Glyph)
-							finalEv.TargetChar = bubbleChain.Glyph->OriginalCharIndex;
+				if (node->HandlesEvent(ev.Type)) {
+					if (isDeepestNode && chain.Text) {
+						ev.TargetText = (DomText*) Doc->GetChildByInternalID(chain.Text->InternalID);
+						if (chain.Glyph)
+							ev.TargetChar = chain.Glyph->OriginalCharIndex;
 					} else {
-						finalEv.TargetText = nullptr;
-						finalEv.TargetChar = -1;
+						ev.TargetText = nullptr;
+						ev.TargetChar = -1;
 					}
-					finalEv.PointsRel[0] = bubbleChain.PosInNode[inode].ToReal();
-					SendEvent(finalEv, node, &handled, &stop);
-					if (stop)
+					ev.PointsRel[0] = chain.PosInNode[inode].ToReal();
+					bool handled = false;
+					bool stop = false;
+					SendEvent(ev, node, &handled, &stop);
+					if (handled)
+						anyHandled = true;
+					if (stop) {
+						anyStopped = true;
 						break;
+					}
 				}
 			}
 		}
 
-		if (finalEv.Type == EventClick)
-			UpdateFocusWindow(bubbleChain);
+		if (ev.Type == EventClick)
+			UpdateFocusWindow(chain);
 	}
 
-	return handled;
+	return anyHandled;
 }
 
 /* Given a point, return the chain of DOM elements (starting at the root) that leads down
