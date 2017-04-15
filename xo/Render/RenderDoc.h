@@ -24,6 +24,8 @@ public:
 			return nullptr;
 		return IDToNodeTable[id];
 	}
+
+	const RenderDomNode* Node(DomNode* node) const;
 };
 
 /* Document used by renderer.

@@ -43,6 +43,9 @@ public:
 	void    Discard();
 	void    SetStyle(RenderStack& stack);
 	void    SetPool(Pool* pool);
+	float   ContentWidthPx() const { return xo::PosToReal(Pos.Width()); }
+	float   ContentHeightPx() const { return xo::PosToReal(Pos.Height()); }
+	Box     ContentBox() const { return Pos; }
 	Box     BorderBox() const;
 	xo::Pos BorderBoxRight() const { return Pos.Right + Style.BorderSize.Right; }
 	xo::Pos BorderBoxBottom() const { return Pos.Bottom + Style.BorderSize.Bottom; }
