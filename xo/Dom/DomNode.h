@@ -32,16 +32,18 @@ public:
         count    = Handlers.size();
 	}
 
-	DomEl*       AddChild(xo::Tag tag, size_t position = -1);
-	DomNode*     AddNode(xo::Tag tag, size_t position = -1);
-	DomCanvas*   AddCanvas(size_t position = -1);
-	DomText*     AddText(const char* txt = nullptr, size_t position = -1);
-	void         DeleteChild(DomEl* c);
-	void         Clear(); // Delete all children
-	size_t       ChildCount() const { return Children.size(); }
-	DomEl*       ChildByIndex(size_t index);
-	const DomEl* ChildByIndex(size_t index) const;
-	void         Discard();
+	DomEl*         AddChild(xo::Tag tag, size_t position = -1);
+	DomNode*       AddNode(xo::Tag tag, size_t position = -1);
+	DomCanvas*     AddCanvas(size_t position = -1);
+	DomText*       AddText(const char* txt = nullptr, size_t position = -1);
+	void           DeleteChild(DomEl* c);
+	void           Clear(); // Delete all children
+	size_t         ChildCount() const { return Children.size(); }
+	DomEl*         ChildByIndex(size_t index);
+	const DomEl*   ChildByIndex(size_t index) const;
+	DomNode*       NodeByIndex(size_t index);
+	const DomNode* NodeByIndex(size_t index) const;
+	void           Discard();
 
 	// Replace all child elements with the given xml-like string. Returns empty string on success, or error message.
 	String   Parse(const char* src);
@@ -166,4 +168,4 @@ bool DomNode::StyleParsef(const char* fs, const Args&... args) {
 		delete[] s.Str;
 	return ok;
 }
-}
+} // namespace xo

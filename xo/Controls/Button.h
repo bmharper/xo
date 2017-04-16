@@ -12,6 +12,9 @@ public:
 	static DomNode* NewText(DomNode* node, const char* txt);
 	static DomNode* NewSvg(DomNode* node, const char* svgIcon, const char* width, const char* height);
 	static DomNode* New(DomNode* node, const char* txt, const char* svgIcon, const char* width, const char* height); // txt OR svg
+
+	static void SetSvg(DomNode* node, const char* svgIcon);
 };
-}
-}
+
+} // namespace controls
+} // namespace xo

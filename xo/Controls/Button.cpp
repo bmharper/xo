@@ -48,5 +48,9 @@ DomNode* Button::New(DomNode* node, const char* txt, const char* svgIcon, const 
 	return btn;
 }
 
+void Button::SetSvg(DomNode* node, const char* svgIcon) {
+	node->NodeByIndex(0)->StyleParsef("background: svg(%v)", svgIcon);
 }
-}
+
+} // namespace controls
+} // namespace xo

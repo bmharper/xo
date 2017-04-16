@@ -124,6 +124,14 @@ const DomEl* DomNode::ChildByIndex(size_t index) const {
 	return Children[index];
 }
 
+DomNode* DomNode::NodeByIndex(size_t index) {
+	return ChildByIndex(index)->ToNode();
+}
+
+const DomNode* DomNode::NodeByIndex(size_t index) const {
+	return ChildByIndex(index)->ToNode();
+}
+
 void DomNode::Discard() {
 	InternalID   = 0;
 	AllEventMask = 0;
@@ -341,4 +349,4 @@ void DomNode::DeleteChildInternal(DomEl* c) {
 	Doc->ChildRemoved(c);
 	Doc->FreeChild(c);
 }
-}
+} // namespace xo
