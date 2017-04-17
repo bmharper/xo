@@ -97,6 +97,10 @@ DomText* DomNode::AddText(const char* txt, size_t position) {
 	return el;
 }
 
+DomText* DomNode::AddText(const std::string& txt, size_t position) {
+	return AddText(txt.c_str(), position);
+}
+
 void DomNode::DeleteChild(DomEl* c) {
 	if (!c)
 		return;

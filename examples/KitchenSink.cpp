@@ -249,7 +249,7 @@ void DoBindings(xo::Doc* doc) {
 	    "	<div style='width: 8px; height: 8px; background: #0a0'></div>"
 	    "	<div style='height: 16px; right: right; background: #d55; padding: 16px 0px;'></div>"
 	    "</div>");
-	
+
 	doc->Root.ParseAppend(
 	    "bottom\n"
 	    "<div style='width: 64px; height: 64px; background: #bdb; break: after; margin: 20px; padding: 0'>"
@@ -260,7 +260,7 @@ void DoBindings(xo::Doc* doc) {
 	doc->Root.ParseAppend(
 	    "percentage horizontal and vertical\n"
 	    "<div style='width: 64px; height: 64px; background: #bdb; break: after; margin: 20px; padding: 0'>"
-		"	<div style='width: 8px; height: 8px; background: #0a0; hcenter: 25%; vcenter: 25%'></div>"
+	    "	<div style='width: 8px; height: 8px; background: #0a0; hcenter: 25%; vcenter: 25%'></div>"
 	    "</div>");
 }
 
@@ -495,7 +495,7 @@ void DoSVG(xo::Doc* doc) {
 }
 
 void DoKeyEventBubble(xo::Doc* doc) {
-	auto btn = xo::controls::Button::NewText(&doc->Root, "Hello");
+	auto btn    = xo::controls::Button::NewText(&doc->Root, "Hello");
 	auto txtBtn = doc->Root.AddText("");
 	auto txtDoc = doc->Root.AddText("");
 	btn->OnKeyChar([txtBtn](xo::Event& ev) {
@@ -503,6 +503,29 @@ void DoKeyEventBubble(xo::Doc* doc) {
 	});
 	doc->Root.OnKeyChar([txtDoc](xo::Event& ev) {
 		txtDoc->SetText((" Doc " + std::string(1, ev.KeyChar)).c_str());
+	});
+}
+
+void DoOSDialogs(xo::Doc* doc) {
+	auto root = &doc->Root;
+	auto open = xo::controls::Button::NewText(root, "Open");
+	auto save = xo::controls::Button::NewText(root, "Save");
+
+	std::vector<std::pair<std::string, std::string>> types = {
+	    {"Images", "*.png;*.jpeg;*.jpg"},
+	    {"PNG Image", "*.png"},
+	    {"JPEG Image", "*.jpeg;*.jpg"},
+	};
+
+	open->OnClick([types, doc] {
+		std::string filename;
+		if (xo::osdialogs::BrowseForFileOpen(doc, types, filename))
+			xo::controls::MsgBox::Show(doc, tsf::fmt("Open file '%v'", filename).c_str());
+	});
+	save->OnClick([types, doc] {
+		std::string filename;
+		if (xo::osdialogs::BrowseForFileSave(doc, types, filename))
+			xo::controls::MsgBox::Show(doc, tsf::fmt("Save file '%v'", filename).c_str());
 	});
 }
 
@@ -515,7 +538,7 @@ void InitDOM(xo::Doc* doc) {
 	//DoBaselineAlignment_rev2(doc);
 	//DoBaselineAlignment_Multiline(doc);
 	//DoBaselineAlignment_DownPropagate(doc);
-	DoBindings(doc);
+	//DoBindings(doc);
 	//DoCanvas(doc);
 	//DoCenter(doc);
 	//DoCenter2(doc);
@@ -533,6 +556,7 @@ void InitDOM(xo::Doc* doc) {
 	//DoStyleVars(doc);
 	//DoSVG(doc);
 	//DoKeyEventBubble(doc);
+	DoOSDialogs(doc);
 
 	body->OnClick([](xo::Event& ev) {
 		//xo::Trace("%f %f\n", ev.PointsAbs[0].x, ev.PointsAbs[0].y);

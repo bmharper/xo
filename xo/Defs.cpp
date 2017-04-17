@@ -200,7 +200,12 @@ void WorkerThreadFunc() {
 	}
 }
 
+static void InitializeThread();
+static void ShutdownThread();
+
 void UIThread() {
+	InitializeThread();
+
 	while (true) {
 		Global()->UIEventQueue.SemObj().wait();
 		if (Global()->ExitSignalled)
@@ -216,8 +221,18 @@ void UIThread() {
 
 #if XO_PLATFORM_WIN_DESKTOP
 
+static void InitializeThread() {
+	// This is necessary for CoCreateInstance inside OS_CommonDialogs.cpp
+	CoInitializeEx(NULL, COINIT_MULTITHREADED);
+}
+
+static void ShutdownThread() {
+	CoUninitialize();
+}
+
 static void Initialize_Win32() {
 	Global()->UIThread = std::thread(UIThread);
+	InitializeThread();
 }
 
 static void Shutdown_Win32() {
@@ -225,8 +240,14 @@ static void Shutdown_Win32() {
 		Global()->UIEventQueue.Add(OriginalEvent());
 		Global()->UIThread.join();
 	}
+	CoUninitialize();
 }
 
+#else
+static void InitializeThread() {
+}
+static void ShutdownThread() {
+}
 #endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

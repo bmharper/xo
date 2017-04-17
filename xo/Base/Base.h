@@ -132,6 +132,7 @@ typedef Mat4T<float> Mat4f;
 #include "Base/OS_Time.h"
 #include "Base/OS_IO.h"
 #include "Base/OS_Clipboard.h"
+#include "Base/OS_CommonDialogs.h"
 
 //#ifdef TEMP_ASSERT
 //#undef TEMP_ASSERT
