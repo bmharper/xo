@@ -18,8 +18,8 @@ static GlobalStruct* Globals = NULL;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Texture::Attach(void* buf, uint32_t width, uint32_t height, int stride) {
-	Data = buf;
-	Width = width;
+	Data   = buf;
+	Width  = width;
 	Height = height;
 	Stride = stride;
 }
@@ -40,16 +40,16 @@ void Texture::FlipVertical() {
 }
 
 void Texture::CopyInto(int x, int y, const void* src, int stride, int width, int height) {
-	auto src8 = (const uint8_t*) src;
-	int astride = std::abs(stride);
+	auto src8    = (const uint8_t*) src;
+	int  astride = std::abs(stride);
 	for (int i = 0; y < height; i++)
 		memcpy(DataAt(x, y + i), src8 + i * stride, astride);
 }
 
 Texture Texture::Window(int x, int y, int width, int height) const {
 	Texture t = *this;
-	t.Width = width;
-	t.Height = height;
+	t.Width   = width;
+	t.Height  = height;
 	(char*&) t.Data += x * BytesPerPixel();
 	(char*&) t.Data += y * Stride;
 	return t;
@@ -69,6 +69,24 @@ void Box::ExpandToFit(const Box& expando) {
 	Top    = Min(Top, expando.Top);
 	Right  = Max(Right, expando.Right);
 	Bottom = Max(Bottom, expando.Bottom);
+}
+
+void Box::ExpandToFit(int32_t x, int32_t y) {
+	Left   = Min(Left, x);
+	Top    = Min(Top, y);
+	Right  = Max(Right, x);
+	Bottom = Max(Bottom, y);
+}
+
+void Box::ExpandToFit(Point p) {
+	return ExpandToFit(p.X, p.Y);
+}
+
+void Box::Expand(int32_t x, int32_t y) {
+	Left -= x;
+	Top -= y;
+	Right += x;
+	Bottom += y;
 }
 
 void Box::ClampTo(const Box& clamp) {
@@ -136,6 +154,22 @@ BoxF Box16::ToRealBox2BitPrecision() const {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void BoxF::Expand(float x, float y) {
+	Left -= x;
+	Top -= y;
+	Right += x;
+	Bottom += y;
+}
+
+void BoxF::Scale(float sx, float sy) {
+	Left *= sx;
+	Top *= sy;
+	Right *= sx;
+	Bottom *= sy;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 Vec4f Color::GetVec4sRGB() const {
 	float s = 1.0f / 255.0f;
 	return Vec4f(r * s, g * s, b * s, a * s);
@@ -147,6 +181,32 @@ Vec4f Color::GetVec4Linear() const {
 	             SRGB2Linear(g),
 	             SRGB2Linear(b),
 	             a * s);
+}
+
+Color Color::Premultiply() const {
+	return Color::RGBA(MulUBGood(r, a), MulUBGood(g, a), MulUBGood(b, a), a);
+}
+
+// Don't believe what you read here. This is not necessarily correct
+Color Color::PremultiplySRGB() const {
+	float   s  = 1.0f / 255.0f;
+	float   rf = SRGB2Linear(r);
+	float   gf = SRGB2Linear(g);
+	float   bf = SRGB2Linear(b);
+	float   af = a * s;
+	uint8_t r8 = Linear2SRGB(rf * af);
+	uint8_t g8 = Linear2SRGB(gf * af);
+	uint8_t b8 = Linear2SRGB(bf * af);
+	return Color(r8, g8, b8, a);
+}
+
+// This is an experiment that doesn't seem to work
+Color Color::PremultiplyTweaked() const {
+	float   fa = pow(a / 255.0f, 1.0f / 2.2f);
+	uint8_t r8 = (uint8_t)(255 * ((r / 255.0f) * fa));
+	uint8_t g8 = (uint8_t)(255 * ((g / 255.0f) * fa));
+	uint8_t b8 = (uint8_t)(255 * ((b / 255.0f) * fa));
+	return Color(r8, g8, b8, a);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -518,4 +578,4 @@ XO_API void TimeTraceBuf(const char* msg) {
 	buf[arraysize(buf) - 1] = 0;
 	XO_TRACE_WRITE(buf);
 }
-}
+} // namespace xo

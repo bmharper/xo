@@ -529,34 +529,41 @@ void DoOSDialogs(xo::Doc* doc) {
 	});
 }
 
-void InitDOM(xo::Doc* doc) {
-	xo::DomNode* body = &doc->Root;
-	body->StyleParse("font-family: Segoe UI, Roboto");
+static int     Mode              = 0;
+static int     ModeCount         = 24;
+static int64_t EvMainSwitcherKey = 0;
 
-	//DoBorder(doc);
-	//DoBaselineAlignment(doc);
-	//DoBaselineAlignment_rev2(doc);
-	//DoBaselineAlignment_Multiline(doc);
-	//DoBaselineAlignment_DownPropagate(doc);
-	//DoBindings(doc);
-	//DoCanvas(doc);
-	//DoCenter(doc);
-	//DoCenter2(doc);
-	//DoFill(doc);
-	//DoTwoTextRects(doc);
-	//DoBlockMargins(doc);
-	//DoLongText(doc);
-	//DoInlineFlow(doc);
-	//DoBackupSettings(doc);
-	//DoPadding(doc);
-	//DoTextQuality(doc);
-	//DoQuadraticSplines(doc);
-	//DoTimer(doc);
-	//DoEditBox(doc);
-	//DoStyleVars(doc);
-	//DoSVG(doc);
-	//DoKeyEventBubble(doc);
-	DoOSDialogs(doc);
+void Render(xo::Doc* doc) {
+	auto body = &doc->Root;
+	body->StyleParse("font-family: Segoe UI, Roboto");
+	body->StyleParse("margin: 0");
+
+	switch (Mode) {
+	case 0: DoBorder(doc); break;
+	case 1: DoBaselineAlignment(doc); break;
+	case 2: DoBaselineAlignment_rev2(doc); break;
+	case 3: DoBaselineAlignment_Multiline(doc); break;
+	case 4: DoBaselineAlignment_DownPropagate(doc); break;
+	case 5: DoBindings(doc); break;
+	case 6: DoCanvas(doc); break;
+	case 7: DoCenter(doc); break;
+	case 8: DoCenter2(doc); break;
+	case 9: DoFill(doc); break;
+	case 10: DoTwoTextRects(doc); break;
+	case 11: DoBlockMargins(doc); break;
+	case 12: DoLongText(doc); break;
+	case 13: DoInlineFlow(doc); break;
+	case 14: DoBackupSettings(doc); break;
+	case 15: DoPadding(doc); break;
+	case 16: DoTextQuality(doc); break;
+	case 17: DoQuadraticSplines(doc); break;
+	case 18: DoTimer(doc); break;
+	case 19: DoEditBox(doc); break;
+	case 20: DoStyleVars(doc); break;
+	case 21: DoSVG(doc); break;
+	case 22: DoKeyEventBubble(doc); break;
+	case 23: DoOSDialogs(doc); break;
+	}
 
 	body->OnClick([](xo::Event& ev) {
 		//xo::Trace("%f %f\n", ev.PointsAbs[0].x, ev.PointsAbs[0].y);
@@ -574,6 +581,28 @@ void InitDOM(xo::Doc* doc) {
 			if (ev.Doc->GetDocGroup()->Wnd->CopySurfaceToImage(xo::Box(0, 0, width, height), img)) {
 				img.SaveToPng("c:\\temp\\xo-screenshot.png");
 			}
+		}
+	});
+}
+
+void InitDOM(xo::Doc* doc) {
+	xo::DomNode* body = &doc->Root;
+
+	Mode = 0;
+	Render(doc);
+
+	EvMainSwitcherKey = body->OnKeyChar([doc](xo::Event& ev) {
+		if (ev.KeyChar == '/') {
+			Mode = (Mode + 1) % ModeCount;
+			doc->Root.Clear();
+			// Remove all event handlers except for ourselves
+			for (int64_t i = 1; i < 10000; i++) {
+				if (i == EvMainSwitcherKey)
+					continue;
+				if (doc->Root.HandlerByID(i))
+					doc->Root.RemoveHandler(i);
+			}
+			Render(doc);
 		}
 	});
 }

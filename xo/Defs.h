@@ -209,6 +209,9 @@ public:
 
 	void SetInt(int32_t left, int32_t top, int32_t right, int32_t bottom);
 	void ExpandToFit(const Box& expando);
+	void ExpandToFit(int32_t x, int32_t y);
+	void ExpandToFit(Point p);
+	void Expand(int32_t x, int32_t y);
 	void ClampTo(const Box& clamp);
 	Box  ShrunkBy(const Box& marginBox);
 	Box  PiecewiseSum(const Box& box);
@@ -273,6 +276,11 @@ public:
 
 	BoxF() : Left(0), Right(0), Top(0), Bottom(0) {}
 	BoxF(float left, float top, float right, float bottom) : Left(left), Right(right), Top(top), Bottom(bottom) {}
+	BoxF(Box b) : Left((float) b.Left), Right((float) b.Right), Top((float) b.Top), Bottom((float) b.Bottom) {}
+
+	void Expand(float x, float y);
+	void Scale(float sx, float sy);
+
 	bool operator==(const BoxF& b) { return Left == b.Left && Right == b.Right && Top == b.Top && Bottom == b.Bottom; }
 	bool operator!=(const BoxF& b) { return !(*this == b); }
 };
@@ -342,9 +350,9 @@ struct XO_API Color {
 	}
 	Vec4f GetVec4sRGB() const;
 	Vec4f GetVec4Linear() const;
-	Color Premultiply() const {
-		return Color::RGBA(MulUBGood(r, a), MulUBGood(g, a), MulUBGood(b, a), a);
-	}
+	Color Premultiply() const;
+	Color PremultiplySRGB() const;
+	Color PremultiplyTweaked() const;
 
 	bool         operator==(const Color& x) const { return u == x.u; }
 	bool         operator!=(const Color& x) const { return u != x.u; }
@@ -597,4 +605,4 @@ void TimeTrace(const char* fs, const Args&... args) {
 #else
 #define XOTRACE_WARNING(msg, ...) ((void) 0)
 #endif
-}
+} // namespace xo

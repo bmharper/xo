@@ -36,7 +36,7 @@ void write_color(vec4 color)
 	// those are the ones that have meaning through the GL_ONE_MINUS_SRC1_COLOR, shown above.
 	// So... if you need this setup to behave like the classic blend equation, then the red,green,blue "alpha" values that
 	// you're sending to GL_ONE_MINUS_SRC1_COLOR, should all be the classic source alpha value. That is why we fill
-	// our_color1 with color.aaaa.
+	// out_color1 with color.aaaa.
 	// There is one redundant piece of information here - and that is out_color0.a. That value is not used at all during blending,
 	// so no matter what you make it, it won't change a thing.
 	out_color0 = color;
@@ -59,10 +59,19 @@ vec2 to_screen(vec2 pos)
 	return (vec2(pos.x, -pos.y) + vec2(1,1)) * Frame_VPort_HSize;
 }
 
+vec4 read_bgtex(vec2 uv, bool isAlreadyPremultiplied)
+{
+	vec4 c = texture2D(f_tex0, uv);
+	if (!isAlreadyPremultiplied)
+		c = premultiply(c);
+	return c;
+}
+
 void main()
 {
 	int shader = int(f_shader);
 	bool enableBGTex = (shader & SHADER_FLAG_TEXBG) != 0;
+	bool bgTexPremul = (shader & SHADER_FLAG_TEXBG_PREMUL) != 0;
 	shader = shader & SHADER_TYPE_MASK;
 
 	if (shader == SHADER_ARC)
@@ -78,7 +87,7 @@ void main()
 		vec4 bg_tex = vec4(0, 0, 0, 0);
 		if (enableBGTex)
 		{
-			bg_tex = premultiply(texture2D(f_tex0, uv));
+			bg_tex = read_bgtex(uv, bgTexPremul);
 			bg_color = blend_over(bg_color, bg_tex);
 		}
 
@@ -111,7 +120,7 @@ void main()
 		vec4 bg_tex = vec4(0, 0, 0, 0);
 		if (enableBGTex)
 		{
-			bg_tex = premultiply(texture2D(f_tex0, uv));
+			bg_tex = read_bgtex(uv, bgTexPremul);
 			bg_color = blend_over(bg_color, bg_tex);
 		}
 

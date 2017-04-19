@@ -60,6 +60,11 @@ Canvas2D* DomCanvas::GetCanvas2D() {
 	return new Canvas2D(Doc->Images.Get(ImageID));
 }
 
+void DomCanvas::ReleaseAndInvalidate(Canvas2D* canvas2D) {
+	canvas2D->Invalidate();
+	ReleaseCanvas(canvas2D);
+}
+
 void DomCanvas::ReleaseCanvas(Canvas2D* canvas2D) {
 	auto img = canvas2D->GetImage();
 	if (img != nullptr)
@@ -68,4 +73,4 @@ void DomCanvas::ReleaseCanvas(Canvas2D* canvas2D) {
 	IncVersion();
 }
 
-}
+} // namespace xo

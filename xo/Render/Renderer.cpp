@@ -10,7 +10,8 @@
 
 namespace xo {
 
-const int SHADER_FLAG_TEXBG = 16;
+const int SHADER_FLAG_TEXBG        = 16;
+const int SHADER_FLAG_TEXBG_PREMUL = 32;
 
 const int SHADER_ARC           = 1;
 const int SHADER_RECT          = 2;
@@ -105,24 +106,25 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 	Texture* bgImage = nullptr;
 	Box      bgImageRect(0, 0, 0, 0);
 
-	Color                 bg = style->BackgroundColor;
+	int                   shaderFlags = 0;
+	Color                 bg          = style->BackgroundColor;
 	xo::VectorCache::Elem bgImageCache;
 	if (style->BackgroundImageID != 0) {
 		auto key = VectorCacheKey::Make(style->BackgroundImageID, xo::RoundToInt(contentWidth), xo::RoundToInt(contentHeight));
 		if (VectorCache->Get(key, bgImageCache)) {
 			bgImage     = VectorCache->GetAtlas(bgImageCache.Atlas);
 			bgImageRect = Box(bgImageCache.X, bgImageCache.Y, bgImageCache.X + key.Width, bgImageCache.Y + key.Height);
+			shaderFlags |= SHADER_FLAG_TEXBG_PREMUL;
 		} else {
 			VectorsNeeded.insert(key);
 		}
 	}
 
-	int shaderFlags = 0;
-
 	if (node->IsCanvas()) {
 		const DomCanvas* canvas = static_cast<const DomCanvas*>(Doc->GetChildByInternalID(node->InternalID));
 		bgImage                 = Images->Get(canvas->GetImageID());
 		bgImageRect             = Box(0, 0, bgImage->Width, bgImage->Height);
+		//shaderFlags |= SHADER_FLAG_TEXBG_PREMUL;
 	}
 
 	if (bgImage) {
@@ -737,4 +739,4 @@ Vec2f Renderer::PtOnEllipse(float flipX, float flipY, float a, float b, float th
 	float y = (a * b) / sqrt(a * a + b * b / powf(tan(theta), 2.0f));
 	return Vec2f(flipX * x, flipY * y);
 };
-}
+} // namespace xo

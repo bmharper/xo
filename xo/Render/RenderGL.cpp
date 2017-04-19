@@ -64,8 +64,9 @@ vec4 premultiply(vec4 c)
 	return vec4(c.r * c.a, c.g * c.a, c.b * c.a, c.a);
 }
 
-#define SHADER_TYPE_MASK     15
-#define SHADER_FLAG_TEXBG    16
+#define SHADER_TYPE_MASK           15
+#define SHADER_FLAG_TEXBG          16
+#define SHADER_FLAG_TEXBG_PREMUL   32
 
 #define SHADER_ARC           1
 #define SHADER_RECT          2
@@ -676,7 +677,7 @@ void RenderGL::Draw(GPUPrimitiveTypes type, int nvertex, const void* v) {
 
 	int nindices = 0;
 	switch (type) {
-	case GPUPrimQuads: nindices     = (nvertex / 2) * 3; break;
+	case GPUPrimQuads: nindices = (nvertex / 2) * 3; break;
 	case GPUPrimTriangles: nindices = nvertex; break;
 	default: XO_TODO;
 	}
@@ -723,6 +724,16 @@ Check();
 }
 */
 
+uint8_t demultiply(uint8_t a, uint8_t b) {
+	if (a * b == 0) {
+		return 0;
+	} else if (a >= b) {
+		return 255;
+	} else {
+		return uint8_t((a * 255 + (b >> 1)) / b);
+	}
+}
+
 bool RenderGL::LoadTexture(Texture* tex, int texUnit) {
 	EnsureTextureProperlyDefined(tex, texUnit);
 
@@ -758,11 +769,10 @@ bool RenderGL::LoadTexture(Texture* tex, int texUnit) {
 		iformat = GL_XO_RED_OR_LUMINANCE;
 		format  = GL_XO_RED_OR_LUMINANCE;
 		break;
-	//case : format = GL_RG;
-	//case : format = GL_RGB;
 	case TexFormatRGBA8:
 		iformat = GL_SRGB8_ALPHA8;
-		format  = GL_RGBA;
+		//iformat = GL_RGBA8;
+		format = GL_RGBA;
 		break;
 	default:
 		XO_TODO;
@@ -772,6 +782,26 @@ bool RenderGL::LoadTexture(Texture* tex, int texUnit) {
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, tex->Stride / (int) tex->BytesPerPixel());
 
 	if (!Have_Unpack_RowLength || invRect == fullRect) {
+		// desperate attempt to understand premultiplied alpha & sRGB
+		//xo::RGBA* copy = (xo::RGBA*) malloc(tex->Height * tex->Width * 4);
+		//for (int y = 0; y < tex->Height; y++) {
+		//	xo::RGBA* s = (xo::RGBA*) tex->DataAtLine(y);
+		//	xo::RGBA* p = copy + y * tex->Width;
+		//	for (int x = 0; x < tex->Width; x++, p++, s++) {
+		//		uint8_t r = demultiply(s->r, s->a);
+		//		uint8_t g = demultiply(s->g, s->a);
+		//		uint8_t b = demultiply(s->b, s->a);
+		//		uint8_t a = s->a;
+		//		p->r      = r;
+		//		p->g      = g;
+		//		p->b      = b;
+		//		p->a      = a;
+		//	}
+		//}
+		//
+		//glTexImage2D(GL_TEXTURE_2D, 0, iformat, tex->Width, tex->Height, 0, format, GL_UNSIGNED_BYTE, copy);
+		//free(copy);
+
 		glTexImage2D(GL_TEXTURE_2D, 0, iformat, tex->Width, tex->Height, 0, format, GL_UNSIGNED_BYTE, tex->Data);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilterToGL(tex->FilterMin));
@@ -973,5 +1003,5 @@ void RenderGL::Check() {
 	}
 	//XO_ASSERT( glGetError() == GL_NO_ERROR );
 }
-}
+} // namespace xo
 #endif

@@ -50,8 +50,10 @@ public:
 	String   Parse(const char* src);
 	DomEl*   ParseAppend(const char* src, String* error = nullptr); // Same as Parse, but append to node. Returns root of first element added.
 	DomEl*   ParseAppend(const StringRaw& src, String* error = nullptr);
-	DomNode* ParseAppendNode(const char* src, String* error = nullptr);      // Logs a warning and returns null if resulting element is not a node
-	DomNode* ParseAppendNode(const StringRaw& src, String* error = nullptr); // Logs a warning and returns null if resulting element is not a node
+	DomEl*   ParseAppend(const std::string& src, String* error = nullptr);
+	DomNode* ParseAppendNode(const char* src, String* error = nullptr);        // Logs a warning and returns null if resulting element is not a node
+	DomNode* ParseAppendNode(const StringRaw& src, String* error = nullptr);   // Logs a warning and returns null if resulting element is not a node
+	DomNode* ParseAppendNode(const std::string& src, String* error = nullptr); // Logs a warning and returns null if resulting element is not a node
 
 	bool StyleParse(const char* s, size_t maxLen = -1);
 
@@ -74,6 +76,7 @@ public:
 	uint64_t      AddHandler(Events ev, EventHandlerLambda0 lambda);
 	uint64_t      AddHandler(Events ev, EventHandlerLambda1 lambda);
 	void          RemoveHandler(uint64_t id);
+	void          RemoveAllHandlers();
 	EventHandler* HandlerByID(uint64_t id);
 	bool          HandlesEvent(Events ev) const { return !!(AllEventMask & ev); }
 	uint32_t      FastestTimerMS() const;                                               // Returns the period of our fastest ticking timer event (or zero if none)

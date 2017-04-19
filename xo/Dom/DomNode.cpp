@@ -172,6 +172,10 @@ DomEl* DomNode::ParseAppend(const StringRaw& src, String* error) {
 	return ParseAppend(src.CStr(), error);
 }
 
+DomEl* DomNode::ParseAppend(const std::string& src, String* error) {
+	return ParseAppend(src.c_str(), error);
+}
+
 DomNode* DomNode::ParseAppendNode(const char* src, String* error) {
 	DomEl* el = ParseAppend(src, error);
 	if (!el->ToNode())
@@ -181,6 +185,10 @@ DomNode* DomNode::ParseAppendNode(const char* src, String* error) {
 
 DomNode* DomNode::ParseAppendNode(const StringRaw& src, String* error) {
 	return ParseAppendNode(src.CStr(), error);
+}
+
+DomNode* DomNode::ParseAppendNode(const std::string& src, String* error) {
+	return ParseAppendNode(src.c_str(), error);
 }
 
 bool DomNode::StyleParse(const char* s, size_t maxLen) {
@@ -273,6 +281,10 @@ void DomNode::RemoveHandler(uint64_t id) {
 			return;
 		}
 	}
+}
+
+void DomNode::RemoveAllHandlers() {
+	Handlers.clear();
 }
 
 EventHandler* DomNode::HandlerByID(uint64_t id) {

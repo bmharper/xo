@@ -8,9 +8,10 @@ Canvas2D::Canvas2D(xo::Texture* backingImage)
     : Image(backingImage) {
 	if (Image != nullptr && Image->Format == TexFormatRGBA8) {
 		RenderBuff.attach((uint8_t*) Image->Data, Image->Width, Image->Height, Image->Stride);
-		PixFormatRGBA_Pre.attach(RenderBuff);
-		RenderBaseRGBA_Pre.attach(PixFormatRGBA_Pre);
-		RenderAA_RGBA_Pre.attach(RenderBaseRGBA_Pre);
+		PixFormatRGBA.attach(RenderBuff);
+		RenderBaseRGBA.attach(PixFormatRGBA);
+		RenderAA_RGBA.attach(RenderBaseRGBA);
+		//RasAA.gamma(agg::gamma_power(2.2));
 		IsAlive = Image->Data != nullptr && Image->Width != 0 && Image->Height != 0;
 		InvalidRect.SetInverted();
 	} else {
@@ -32,7 +33,7 @@ void Canvas2D::FillRect(Box box, Color color) {
 	if (!IsAlive)
 		return;
 
-	RenderBaseRGBA_Pre.copy_bar(box.Left, box.Top, box.Right, box.Bottom, ColorToAgg8(color));
+	RenderBaseRGBA.copy_bar(box.Left, box.Top, box.Right, box.Bottom, ColorToAggS8(color));
 	InvalidRect.ExpandToFit(box);
 }
 
@@ -45,6 +46,20 @@ void Canvas2D::StrokeRect(Box box, Color color, float linewidth) {
 	    (float) box.Right, (float) box.Top,
 	    (float) box.Right, (float) box.Bottom,
 	    (float) box.Left, (float) box.Bottom,
+	};
+
+	StrokeLine(true, 4, v, 2 * sizeof(float), color, linewidth);
+}
+
+void Canvas2D::StrokeRect(BoxF box, Color color, float linewidth) {
+	if (!IsAlive)
+		return;
+
+	float v[8] = {
+	    box.Left, box.Top,
+	    box.Right, box.Top,
+	    box.Right, box.Bottom,
+	    box.Left, box.Bottom,
 	};
 
 	StrokeLine(true, 4, v, 2 * sizeof(float), color, linewidth);
@@ -67,7 +82,7 @@ void Canvas2D::StrokeLine(bool closed, int nvx, const float* vx, int vx_stride_b
 	nvx--;
 
 	// emit remaining vertices
-	for (int i = 0; i < nvx; i++, (char *&) vx += vx_stride_bytes)
+	for (int i = 0; i < nvx; i++, (char*&) vx += vx_stride_bytes)
 		path.line_to(vx[0], vx[1]);
 
 	if (closed)
@@ -92,15 +107,15 @@ void Canvas2D::StrokeLine(bool closed, int nvx, const float* vx, int vx_stride_b
 		RasAA.add_path(clipped_line_stroked);
 	}
 
-	RenderAA_RGBA_Pre.color(ColorToAgg8(color));
+	RenderAA_RGBA.color(ColorToAggS8(color));
 
 	RenderScanlines();
 }
 
 void Canvas2D::StrokeLine(float x1, float y1, float x2, float y2, Color color, float linewidth) {
 	float vx[4] = {
-		x1,y1,
-		x2,y2,
+	    x1, y1,
+	    x2, y2,
 	};
 	StrokeLine(false, 2, vx, 2 * sizeof(float), color, linewidth);
 }
@@ -116,12 +131,16 @@ void Canvas2D::StrokeCircle(float x, float y, float radius, Color color, float l
 	elps.init(x, y, radius, radius);
 	path.concat_path(elps, 0);
 
-	TLineClipper clipped_line(path);
-	clipped_line.clip_box(-linewidth, -linewidth, Width() + linewidth, Height() + linewidth);
-	agg::conv_stroke<TLineClipper> clipped_line_stroked(clipped_line);
-	clipped_line_stroked.width(linewidth);
-	RasAA.add_path(clipped_line_stroked);
-	RenderAA_RGBA_Pre.color(ColorToAgg8(color));
+	//TLineClipper clipped_line(path);
+	//clipped_line.clip_box(-linewidth, -linewidth, Width() + linewidth, Height() + linewidth);
+	//agg::conv_stroke<TLineClipper> clipped_line_stroked(clipped_line);
+	//clipped_line_stroked.width(linewidth);
+
+	agg::conv_stroke<agg::path_storage> stroked(path);
+	stroked.width(linewidth);
+
+	RasAA.add_path(stroked);
+	RenderAA_RGBA.color(ColorToAggS8(color));
 	RenderScanlines();
 }
 
@@ -137,38 +156,39 @@ void Canvas2D::FillCircle(float x, float y, float radius, Color color) {
 	path.concat_path(elps, 0);
 
 	RasAA.add_path(path);
-	RenderAA_RGBA_Pre.color(ColorToAgg8(color));
+	RenderAA_RGBA.color(ColorToAggS8(color));
 	RenderScanlines();
 }
 
 void Canvas2D::RenderSVG(const char* svg) {
 	try {
 		agg::svg::path_renderer path;
-		agg::svg::parser parse(path);
+		agg::svg::parser        parse(path);
 		parse.parse_mem(svg);
 
-        typedef agg::pixfmt_bgra32 pixfmt;
-        typedef agg::renderer_base<pixfmt> renderer_base;
-        typedef agg::renderer_scanline_aa_solid<renderer_base> renderer_solid;
+		typedef agg::pixfmt_rgba32                             pixfmt;
+		typedef agg::renderer_base<pixfmt>                     renderer_base;
+		typedef agg::renderer_scanline_aa_solid<renderer_base> renderer_solid;
 
 		//int stride = key.Width * 4;
 		//uint8_t* buf = (uint8_t*) MallocOrDie(stride * key.Height);
 		//agg::rendering_buffer rbuf(buf, key.Width, key.Height, stride);
 
-		pixfmt pixf(RenderBuff);
-		renderer_base rb(pixf);
+		pixfmt         pixf(RenderBuff);
+		renderer_base  rb(pixf);
 		renderer_solid ren(rb);
 
-		rb.clear(agg::rgba(1,1,1, 0));
+		//rb.clear(agg::rgba(1, 1, 1, 0));
+		rb.clear(agg::rgba(0, 0, 0, 0));
 
 		agg::rasterizer_scanline_aa<> ras;
-		agg::scanline_p8 sl;
-		agg::trans_affine mtx;
+		agg::scanline_p8              sl;
+		agg::trans_affine             mtx;
 
-		auto vb = parse.view_box();
-		double vbWidth = vb[2] - vb[0];
+		auto   vb       = parse.view_box();
+		double vbWidth  = vb[2] - vb[0];
 		double vbHeight = vb[3] - vb[1];
-		double scale = std::min(Width() / vbWidth, Height() / vbHeight);
+		double scale    = std::min(Width() / vbWidth, Height() / vbHeight);
 
 		//ras.gamma(agg::gamma_power(1));
 		//ras.gamma(agg::gamma_power(m_gamma.value()));
@@ -176,7 +196,7 @@ void Canvas2D::RenderSVG(const char* svg) {
 		mtx *= agg::trans_affine_scaling(scale);
 		//mtx *= agg::trans_affine_rotation(agg::deg2rad(m_rotate.value()));
 		//mtx *= agg::trans_affine_translation((m_min_x + m_max_x) * 0.5 + m_x, (m_min_y + m_max_y) * 0.5 + m_y + 30);
-        
+
 		//m_path.expand(m_expand.value());
 		//start_timer();
 		path.render(ras, sl, ren, mtx, rb.clip_box(), 1.0);
@@ -188,19 +208,33 @@ void Canvas2D::RenderSVG(const char* svg) {
 	}
 }
 
-agg::rgba Canvas2D::ColorToAgg(Color c) {
-	c = c.Premultiply();
-	return agg::rgba(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, c.a / 255.0f);
+//agg::rgba Canvas2D::ColorToAgg(Color c) {
+//	c             = c.Premultiply();
+//	//c             = c.PremultiplySRGB();
+//	const float s = 1.0f / 255.0f;
+//	return agg::rgba(c.r * s, c.g * s, c.b * s, c.a * s);
+//}
+
+agg::srgba8 Canvas2D::ColorToAggS8(Color c) {
+	//c = c.Premultiply();
+	return agg::srgba8(c.r, c.g, c.b, c.a);
 }
 
 agg::rgba8 Canvas2D::ColorToAgg8(Color c) {
-	c = c.Premultiply();
+	// If this is destined for a proper sRGB pipeline (ie our GPU render target),
+	// then it's vital that you perform premultiplication in sRGB space. The tell-tale
+	// sign if you do this in gamma space, is washed out colors.
+	//c = c.Premultiply();
+	//c = c.PremultiplySRGB();
+	//c.r = Min(c.r, c.a);
+	//c.g = Min(c.g, c.a);
+	//c.b = Min(c.b, c.a);
 	return agg::rgba8(c.r, c.g, c.b, c.a);
 }
 
 void Canvas2D::RenderScanlines() {
-	agg::render_scanlines(RasAA, Scanline, RenderAA_RGBA_Pre);
+	agg::render_scanlines(RasAA, Scanline, RenderAA_RGBA);
 	InvalidRect.ExpandToFit(Box(RasAA.min_x(), RasAA.min_y(), RasAA.max_x(), RasAA.max_y()));
 }
 
-}
+} // namespace xo
