@@ -430,15 +430,18 @@ public:
 	TexFilter FilterMin   = TexFilterLinear;
 	TexFilter FilterMax   = TexFilterLinear;
 
-	void    Attach(void* buf, uint32_t width, uint32_t height, int stride);
-	void    InvalidateWholeSurface() { InvalidRect = Box(0, 0, Width, Height); }
-	void    ClearInvalidRect() { InvalidRect.SetInverted(); }
-	void*   DataAt(int x, int y) { return ((char*) Data) + y * Stride + x * TexFormatBytesPerPixel(Format); }
-	void*   DataAtLine(int y) { return ((char*) Data) + y * Stride; }
-	size_t  BytesPerPixel() const { return TexFormatBytesPerPixel(Format); }
-	void    FlipVertical();
-	void    CopyInto(int x, int y, const void* src, int stride, int width, int height);
-	Texture Window(int x, int y, int width, int height) const; // Returns a window into this texture
+	void        Attach(void* buf, uint32_t width, uint32_t height, int stride);
+	void        InvalidateWholeSurface() { InvalidRect = Box(0, 0, Width, Height); }
+	void        ClearInvalidRect() { InvalidRect.SetInverted(); }
+	void*       DataAt(int x, int y) { return ((char*) Data) + y * Stride + x * TexFormatBytesPerPixel(Format); }
+	const void* DataAt(int x, int y) const { return ((const char*) Data) + y * Stride + x * TexFormatBytesPerPixel(Format); }
+	void*       DataAtLine(int y) { return ((char*) Data) + y * Stride; }
+	const void* DataAtLine(int y) const { return ((const char*) Data) + y * Stride; }
+	size_t      BytesPerPixel() const { return TexFormatBytesPerPixel(Format); }
+	void        FlipVertical();
+	void        CopyFrom(int x, int y, const void* src, int stride, int width, int height);
+	void        CopyFrom(const Texture* src);
+	Texture     Window(int x, int y, int width, int height) const; // Returns a window into this texture
 };
 
 // Base of GL and DX shader programs

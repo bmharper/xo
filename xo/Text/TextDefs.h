@@ -8,12 +8,16 @@ typedef void* FT_Face;
 typedef void* FT_Library;
 #endif
 
-// Once initialized, all members are immutable
+// Once initialized, all members are immutable, except for the usage
+// of the Freetype FTFace object, which must be accessed while holding the FTFace_Lock mutex.
 class XO_API Font {
 public:
-	FontID   ID;
-	String   Facename;
-	FT_Face  FTFace;
+	FontID ID;
+	String Facename;
+
+	FT_Face            FTFace;
+	mutable std::mutex FTFace_Lock; // Guards access to FTFace
+
 	int32_t  LinearHoriAdvance_Space_x256; // How much does character 32 advance?
 	int32_t  LinearXHeight_x256;           // Height of the 'x' character
 	int32_t  LineHeight_x256;              // Recommended spacing between consecutive lines

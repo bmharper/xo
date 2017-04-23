@@ -70,26 +70,17 @@ void FontStore::ShutdownFreetype() {
 }
 
 const Font* FontStore::GetByFontID(FontID fontID) {
-	XO_ASSERT(fontID != FontIDNull && (size_t) fontID < Fonts.size());
 	std::lock_guard<std::mutex> lock(Lock);
+	XO_ASSERT(fontID != FontIDNull && (size_t) fontID < Fonts.size());
 	return Fonts[fontID];
 }
 
 const Font* FontStore::GetByFacename(const char* facename) {
+	auto id = InsertByFacename(facename);
+	if (id == 0)
+		return nullptr;
 	std::lock_guard<std::mutex> lock(Lock);
-	return GetByFacename_Internal(facename);
-}
-
-FontID FontStore::Insert(const Font& font) {
-	XO_ASSERT(font.ID == FontIDNull);
-	XO_ASSERT(font.Facename.Length() != 0);
-	std::lock_guard<std::mutex> lock(Lock);
-
-	const Font* existing = GetByFacename_Internal(font.Facename.CStr());
-	if (existing)
-		return existing->ID;
-
-	return Insert_Internal(font);
+	return Fonts[id];
 }
 
 FontID FontStore::InsertByFacename(const char* facename) {
@@ -99,8 +90,6 @@ FontID FontStore::InsertByFacename(const char* facename) {
 	if (existing)
 		return existing->ID;
 
-	Font font;
-	font.Facename        = facename;
 	const char* filename = GetFilenameFromFacename(facename);
 
 	if (filename == nullptr) {
@@ -108,13 +97,14 @@ FontID FontStore::InsertByFacename(const char* facename) {
 		return FontIDNull;
 	}
 
-	FT_Error e = FT_New_Face(FTLibrary, filename, 0, &font.FTFace);
+	FT_Face  face;
+	FT_Error e = FT_New_Face(FTLibrary, filename, 0, &face);
 	if (e != 0) {
 		Trace("Failed to load font (facename=%s) (filename=%s)\n", facename, filename);
 		return FontIDNull;
 	}
 
-	return Insert_Internal(font);
+	return Insert_Internal(facename, face);
 }
 
 FontID FontStore::GetFallbackFontID() {
@@ -149,19 +139,20 @@ const Font* FontStore::GetByFacename_Internal(const char* facename) const {
 	FontID id;
 	if (FacenameToFontID.get(TempString(facename), id))
 		return Fonts[id];
-	else
-		return nullptr;
+
+	return nullptr;
 }
 
-FontID FontStore::Insert_Internal(const Font& font) {
-	Font* copy = new Font();
-	*copy      = font;
-	copy->ID   = (FontID) Fonts.size();
-	Fonts += copy;
-	FacenameToFontID.insert(copy->Facename, copy->ID);
-	LoadFontConstants(*copy);
-	LoadFontTweaks(*copy);
-	return copy->ID;
+FontID FontStore::Insert_Internal(const char* facename, FT_Face face) {
+	Font* font     = new Font();
+	font->Facename = facename;
+	font->FTFace   = face;
+	font->ID       = (FontID) Fonts.size();
+	Fonts += font;
+	FacenameToFontID.insert(font->Facename, font->ID);
+	LoadFontConstants(*font);
+	LoadFontTweaks(*font);
+	return font->ID;
 }
 
 #define EM_TO_256(x) ((int32_t)((x) *256 / font.FTFace->units_per_EM))
@@ -384,4 +375,4 @@ bool FontStore::IsFontFilename(const char* filename) {
 	return strstr(filename, ".ttf") != nullptr ||
 	       strstr(filename, ".ttc ") != nullptr;
 }
-}
+} // namespace xo

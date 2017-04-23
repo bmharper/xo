@@ -36,7 +36,7 @@ bool VectorCache::Get(const VectorCacheKey& key, Elem& cached) const {
 
 void VectorCache::Set(int iconID, const Image& img) {
 	Elem e = AllocAtlas(iconID, img.Width, img.Height);
-	Atlases[e.Atlas].CopyInto(e.X, e.Y, img.Data, img.Stride, img.Width, img.Height);
+	Atlases[e.Atlas].CopyFrom(e.X, e.Y, img.Data, img.Stride, img.Width, img.Height);
 }
 
 VectorCache::Elem VectorCache::AllocAtlas(int iconID, int width, int height) {

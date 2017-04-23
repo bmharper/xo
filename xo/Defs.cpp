@@ -39,11 +39,17 @@ void Texture::FlipVertical() {
 		free(line);
 }
 
-void Texture::CopyInto(int x, int y, const void* src, int stride, int width, int height) {
-	auto src8    = (const uint8_t*) src;
-	int  astride = std::abs(stride);
-	for (int i = 0; y < height; i++)
-		memcpy(DataAt(x, y + i), src8 + i * stride, astride);
+void Texture::CopyFrom(int x, int y, const void* src, int stride, int width, int height) {
+	auto src8 = (const uint8_t*) src;
+	for (int i = 0; i < height; i++)
+		memcpy(DataAt(x, y + i), src8 + i * stride, width * BytesPerPixel());
+}
+
+void Texture::CopyFrom(const Texture* src) {
+	XO_ASSERT(src->Format == Format);
+	XO_ASSERT(Width == src->Width);
+	XO_ASSERT(Height == src->Height);
+	CopyFrom(0, 0, src->Data, src->Stride, src->Width, src->Height);
 }
 
 Texture Texture::Window(int x, int y, int width, int height) const {

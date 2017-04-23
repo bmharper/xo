@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "Canvas2D.h"
 #include "../Image/Image.h"
+#include "../Text/FontStore.h"
+#include "../Text/GlyphCache.h"
+#include "../Render/TextureAtlas.h"
 
 namespace xo {
 
@@ -205,6 +208,79 @@ void Canvas2D::RenderSVG(const char* svg) {
 
 	} catch (const agg::svg::exception& ex) {
 		Trace("Error rendering svg: %v", ex.msg());
+	}
+}
+
+void Canvas2D::Text(float x, float y, float angle, float size, Color color, const char* font, const char* str) {
+	if (size < 1.0f)
+		return;
+	const Font* fnt = Global()->FontStore->GetByFacename(font);
+	if (!fnt)
+		return;
+
+	bool useCache = size <= 30 && angle == 0;
+	int  isize    = (int) (size + 0.5f);
+
+	// Our rendering mode here is not correct, in terms of gamma etc.
+	// Rendering looks awful if you render to a transparent canvas, but it looks OK
+	// when rendering to an opaque background (ie so that AGG does the blending, not the GPU)
+
+	Vec2f pos(x, y);
+	//Vec2f dir(cos(angle), -sin(angle));
+
+	XO_ASSERT(angle == 0);
+	auto col = ColorToAggS8(color);
+
+	if (useCache) {
+		auto                        cache = Global()->GlyphCache;
+		std::lock_guard<std::mutex> cache_lock(cache->Lock);
+		int                         flags = 0;
+		int                         posX  = (int) pos.x;
+		int                         posY  = (int) pos.y;
+		for (auto ch : utfz::cp(str)) {
+			GlyphCacheKey key(fnt->ID, ch, isize, flags);
+			auto          glyph = cache->GetOrRenderGlyph(key);
+			if (!glyph->IsNull()) {
+				auto atlas = cache->GetAtlas(glyph->AtlasID);
+				for (unsigned y = 0; y < glyph->Height; y++) {
+					int         outX = posX + glyph->MetricLeft;
+					int         outY = posY + y - glyph->MetricTop;
+					const void* src  = atlas->DataAt(glyph->X, glyph->Y + y);
+					if (outY < 0 || outY >= RenderBuff.height())
+						continue;
+					PixFormatRGBA.blend_solid_hspan(outX, outY, glyph->Width, col, (const agg::int8u*) src);
+				}
+				posX += glyph->MetricHoriAdvance;
+				// ignore vertical advance
+			}
+		}
+	} else {
+		std::lock_guard<std::mutex> ft_face_lock(fnt->FTFace_Lock);
+		FT_Error                    e = FT_Set_Pixel_Sizes(fnt->FTFace, isize, isize);
+		XO_ASSERT(e == 0);
+
+		for (auto ch : utfz::cp(str)) {
+			auto     iglyph  = FT_Get_Char_Index(fnt->FTFace, ch);
+			uint32_t ftflags = FT_LOAD_RENDER;
+			FT_Error e       = FT_Load_Glyph(fnt->FTFace, iglyph, ftflags);
+			if (e != 0) {
+				//Trace("Failed to load glyph for character %d (%d)\n", ch, iglyph);
+				continue;
+			}
+			const FT_GlyphSlot& glyph = fnt->FTFace->glyph;
+			const FT_Bitmap&    bmp   = glyph->bitmap;
+			for (unsigned y = 0; y < bmp.rows; y++) {
+				const void* src  = bmp.buffer + y * bmp.pitch;
+				int         outX = (int) pos.x + glyph->bitmap_left;
+				int         outY = (int) pos.y + y - glyph->bitmap_top;
+				if (outY < 0 || outY >= RenderBuff.height())
+					continue;
+				PixFormatRGBA.blend_solid_hspan(outX, outY, bmp.width, col, (const agg::int8u*) src);
+			}
+
+			pos.x += (float) glyph->advance.x / 64.0f;
+			pos.y += (float) glyph->advance.y / 64.0f;
+		}
 	}
 }
 

@@ -26,6 +26,13 @@ namespace xo {
 	MORE UPDATE.. I have switched to non-premultiplied alpha, just because it's the only option that seems
 	vaguely sane. It's absolutely awful for blending, because you have the alpha divide on every blend.
 	grrr..
+
+	THE ANSWER! Comes from this tweet by Fabian Giesen: https://twitter.com/nothings/status/501513209757437952
+
+	Fabian Giesen @rygorous 19 Aug 2014
+	Replying to @nothings
+	@nothings With sRGB encoding, I'd expect you to store sRGB(premul(x)) not premul(sRGB(x)).
+
 */
 class XO_API Canvas2D {
 public:
@@ -57,6 +64,7 @@ public:
 	void StrokeCircle(float x, float y, float radius, Color color, float linewidth);
 	void FillCircle(float x, float y, float radius, Color color);
 	void RenderSVG(const char* svg);
+	void Text(float x, float y, float angle, float size, Color color, const char* font, const char* str);
 
 	void SetPixel(int x, int y, RGBA c) { ((uint32_t*) RenderBuff.row_ptr(y))[x] = c.u; }
 

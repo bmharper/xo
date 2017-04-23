@@ -28,14 +28,19 @@ RenderResult Renderer::Render(const xo::Doc* doc, xo::VectorCache* vcache, Rende
 
 	Driver->PreRender();
 
+	Global()->GlyphCache->Lock.lock();
+
 	// This phase is probably worth parallelizing
 	RenderEl(Point(0, 0), root);
-	// After RenderNode we are serial again.
+	// After RenderEl we are serial again.
 
 	Driver->PostRenderCleanup();
 
 	bool moreNeeded = GlyphsNeeded.size() != 0 || VectorsNeeded.size() != 0;
+
 	RenderGlyphsNeeded();
+	Global()->GlyphCache->Lock.unlock();
+
 	RenderVectorsNeeded();
 
 	return moreNeeded ? RenderResultNeedMore : RenderResultDone;

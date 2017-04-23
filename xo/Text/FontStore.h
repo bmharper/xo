@@ -55,7 +55,6 @@ public:
 	void               ShutdownFreetype();
 	const Font*        GetByFontID(FontID fontID);
 	const Font*        GetByFacename(const char* facename);
-	FontID             Insert(const Font& font);
 	FontID             InsertByFacename(const char* facename); // This is safe to call if the font is already loaded
 	FontID             GetFallbackFontID();                    // This is a font that is always available on this platform. Panics if the font is not available.
 	FontTableImmutable GetImmutableTable();
@@ -72,7 +71,7 @@ private:
 	bool                       IsFontTableLoaded;
 
 	const Font* GetByFacename_Internal(const char* facename) const;
-	FontID      Insert_Internal(const Font& font);
+	FontID      Insert_Internal(const char* facename, FT_Face face);
 	void        LoadFontConstants(Font& font);
 	void        LoadFontTweaks(Font& font);
 	const char* GetFilenameFromFacename(const char* facename);

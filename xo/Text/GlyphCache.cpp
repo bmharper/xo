@@ -39,42 +39,6 @@ void GlyphCache::Initialize() {
 	Glyphs.back().SetNull();
 }
 
-/*
-bool GlyphCache::GetGlyphFromChar( const String& facename, int ch, uint8_t size, uint8_t flags, Glyph& glyph )
-{
-	FontID fontID = FontIDNull;
-	const Font* font = Global()->FontStore->GetByFacename( facename );
-	if ( font == NULL )
-	{
-		fontID = Global()->FontStore->InsertByFacename( facename );
-		XO_ASSERT( fontID != FontIDNull );
-	}
-	else
-		fontID = font->ID;
-
-	return GetGlyphFromChar( fontID, ch, size, flags, glyph );
-}
-
-bool GlyphCache::GetGlyphFromChar( FontID fontID, int ch, uint8_t size, uint8_t flags, Glyph& glyph )
-{
-	// TODO: This needs a better threading model. Perhaps you render with fonts in read-only mode,
-	// and then collect all cache misses, then before next render you fill in all cache misses.
-
-	GlyphCacheKey key( fontID, ch, size, flags );
-	uint32_t pos;
-	if ( !Table.get( key, pos ) )
-	{
-		const Font* font = Global()->FontStore->GetByFontID( fontID );
-		pos = RenderGlyph( key );
-		if ( pos == -1 )
-			return false;
-	}
-	glyph = Glyphs[pos];
-
-	return true;
-}
-*/
-
 const Glyph* GlyphCache::GetGlyph(const GlyphCacheKey& key) const {
 	uint32_t* pos = Table.getp(key);
 	if (pos != nullptr)
@@ -83,11 +47,20 @@ const Glyph* GlyphCache::GetGlyph(const GlyphCacheKey& key) const {
 		return nullptr;
 }
 
+const Glyph* GlyphCache::GetOrRenderGlyph(const GlyphCacheKey& key) {
+	auto g = GetGlyph(key);
+	if (g)
+		return g;
+	RenderGlyph(key);
+	return GetGlyph(key);
+}
+
 uint32_t GlyphCache::RenderGlyph(const GlyphCacheKey& key) {
 	XOTRACE_FONTS("RenderGlyph %d\n", (int) key.Char);
 
 	XO_ASSERT(key.Size != 0);
-	const Font* font = Global()->FontStore->GetByFontID(key.FontID);
+	const Font*                 font = Global()->FontStore->GetByFontID(key.FontID);
+	std::lock_guard<std::mutex> lock(font->FTFace_Lock);
 
 	FT_UInt iFTGlyph = FT_Get_Char_Index(font->FTFace, key.Char);
 
@@ -246,4 +219,4 @@ void GlyphCache::CopyBitmap(const Font* font, void* target, int target_stride) {
 		}
 	}
 }
-}
+} // namespace xo
