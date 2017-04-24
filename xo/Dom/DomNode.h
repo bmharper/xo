@@ -32,6 +32,7 @@ public:
         count    = Handlers.size();
 	}
 
+	void           SetText(const std::string& txt) { SetText(txt.c_str()); }
 	DomEl*         AddChild(xo::Tag tag, size_t position = -1);
 	DomNode*       AddNode(xo::Tag tag, size_t position = -1);
 	DomCanvas*     AddCanvas(size_t position = -1);

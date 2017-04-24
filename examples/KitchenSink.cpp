@@ -529,13 +529,24 @@ void DoOSDialogs(xo::Doc* doc) {
 	});
 }
 
-static int     Mode              = 0;
-static int     ModeCount         = 24;
+void DoPositionType(xo::Doc* doc) {
+	auto root = &doc->Root;
+	root->ParseAppend(
+	    "<div style='width: 100px; height: 100px; background: #fcc'>"
+		"	<div style='position: absolute; width: 50px; height: 50px; background: #cfc'></div>"
+		"	<div style='width: 20px; height: 20px; background: #ccf'></div>"
+		"	<div style='width: 20px; height: 20px; background: #aaa'></div>"
+	    "</div>");
+}
+
+static int     Mode              = 24;
+static int     ModeCount         = 25;
 static int64_t EvMainSwitcherKey = 0;
 
 void Render(xo::Doc* doc) {
 	auto body = &doc->Root;
 	body->StyleParse("font-family: Segoe UI, Roboto");
+	body->StyleParse("background: #fff");
 	body->StyleParse("margin: 0");
 
 	switch (Mode) {
@@ -563,6 +574,7 @@ void Render(xo::Doc* doc) {
 	case 21: DoSVG(doc); break;
 	case 22: DoKeyEventBubble(doc); break;
 	case 23: DoOSDialogs(doc); break;
+	case 24: DoPositionType(doc); break;
 	}
 
 	body->OnClick([](xo::Event& ev) {
@@ -588,7 +600,6 @@ void Render(xo::Doc* doc) {
 void InitDOM(xo::Doc* doc) {
 	xo::DomNode* body = &doc->Root;
 
-	Mode = 0;
 	Render(doc);
 
 	EvMainSwitcherKey = body->OnKeyChar([doc](xo::Event& ev) {

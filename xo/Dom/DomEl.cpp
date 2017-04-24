@@ -81,4 +81,4 @@ void DomEl::CloneSlowIntoBase(DomEl& c, uint32_t cloneFlags) const {
 	c.Tag        = Tag;
 	c.Version    = Version;
 }
-}
+} // namespace xo

@@ -18,6 +18,7 @@ public:
 	virtual void        CloneSlowInto(DomEl& c, uint32_t cloneFlags) const = 0;
 	virtual void        ForgetChildren()                                   = 0;
 
+	void           SetText(const std::string& txt) { SetText(txt.c_str()); }
 	InternalID     GetInternalID() const { return InternalID; }
 	Tag            GetTag() const { return Tag; }
 	Doc*           GetDoc() const { return Doc; }
@@ -32,8 +33,8 @@ public:
 
 	//void					CloneFastInto( DomEl& c, Pool* pool, uint32_t cloneFlags ) const;
 
-	void SetInternalID(InternalID id) { InternalID = id; }  // Used by Doc during element creation.
-	void SetDoc(Doc* doc) { Doc                    = doc; } // Used by Doc during element creation and destruction.
+	void SetInternalID(InternalID id) { InternalID = id; } // Used by Doc during element creation.
+	void SetDoc(Doc* doc) { Doc = doc; }                   // Used by Doc during element creation and destruction.
 	bool IsNode() const { return Tag != TagText; }
 	bool IsText() const { return Tag == TagText; }
 
@@ -47,4 +48,4 @@ protected:
 	void IncVersion();
 	void CloneSlowIntoBase(DomEl& c, uint32_t cloneFlags) const;
 };
-}
+} // namespace xo
