@@ -388,7 +388,7 @@ XO_API void Initialize(const InitParams* init) {
 	Globals->TargetFPS            = 60;
 	Globals->NumWorkerThreads     = Min(numCPUCores, 4); // I can't think of a reason right now why you'd want lots of these
 	Globals->MaxSubpixelGlyphSize = 60;
-	Globals->PreferOpenGL         = true;
+	Globals->PreferOpenGL         = false;
 	Globals->EnableVSync          = false;
 	// Freetype's output is linear coverage percentage, so if we treat our freetype texture as GL_LUMINANCE
 	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get perfect results without

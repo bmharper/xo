@@ -539,7 +539,7 @@ void DoPositionType(xo::Doc* doc) {
 	    "</div>");
 }
 
-static int     Mode              = 24;
+static int     Mode              = 6;
 static int     ModeCount         = 25;
 static int64_t EvMainSwitcherKey = 0;
 

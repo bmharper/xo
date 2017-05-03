@@ -62,3 +62,11 @@ float2 frag_to_screen(float2 unit_pt)
 {
 	return unit_pt;
 }
+
+#define SHADER_TYPE_MASK     15
+#define SHADER_FLAG_TEXBG    16
+
+#define SHADER_ARC           1
+#define SHADER_RECT          2
+#define SHADER_TEXT_SIMPLE   3
+#define SHADER_TEXT_SUBPIXEL 4

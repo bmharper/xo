@@ -21,7 +21,8 @@ RenderDX::RenderDX() {
 	AllProgs[2]        = &PRect;
 	AllProgs[3]        = &PTextRGB;
 	AllProgs[4]        = &PTextWhole;
-	static_assert(NumProgs == 5, "Add new shader here");
+	AllProgs[5]        = &PUber;
+	static_assert(NumProgs == 6, "Add new shader here");
 }
 
 RenderDX::~RenderDX() {
@@ -267,7 +268,7 @@ bool RenderDX::CreateVertexLayout(DXProg* prog, ID3DBlob* vsBlob) {
 	// OK.. so it is not supported as "Input assembler vertex buffer resources":
 	// http://www.gamedev.net/topic/643471-creatinputlayout-returns-a-null-pointer/
 	// http://msdn.microsoft.com/en-us/library/windows/desktop/ff471325%28v=vs.85%29.aspx
-	D3D11_INPUT_ELEMENT_DESC layouts[VertexType_END - 1][4] =
+	D3D11_INPUT_ELEMENT_DESC layouts[VertexType_END - 1][6] =
 	    {
 	        // VertexType_PTC
 	        {
@@ -282,11 +283,21 @@ bool RenderDX::CreateVertexLayout(DXProg* prog, ID3DBlob* vsBlob) {
 	            {"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, offsetof(Vx_PTCV4, Color), D3D11_INPUT_PER_VERTEX_DATA, 0},
 	            {"TEXCOORD", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(Vx_PTCV4, V4), D3D11_INPUT_PER_VERTEX_DATA, 0},
 	        },
+	        // VertexType_Uber
+	        {
+	            {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vx_Uber, Pos), D3D11_INPUT_PER_VERTEX_DATA, 0},
+	            {"TEXCOORD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(Vx_Uber, UV1), D3D11_INPUT_PER_VERTEX_DATA, 0},
+	            {"TEXCOORD", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offsetof(Vx_Uber, UV2), D3D11_INPUT_PER_VERTEX_DATA, 0},
+	            {"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, offsetof(Vx_Uber, Color1), D3D11_INPUT_PER_VERTEX_DATA, 0},
+	            {"COLOR", 1, DXGI_FORMAT_R8G8B8A8_UNORM, 0, offsetof(Vx_Uber, Color2), D3D11_INPUT_PER_VERTEX_DATA, 0},
+	            {"BLENDINDICES", 0, DXGI_FORMAT_R8_UINT, 0, offsetof(Vx_Uber, Shader), D3D11_INPUT_PER_VERTEX_DATA, 0},
+	        },
 	    };
 	int layoutSizes[VertexType_END - 1] =
 	    {
 	        3, // PTC
 	        4, // PTCV4
+	        6, // Uber
 	    };
 
 	static_assert(VertexType_NULL == 0, "VertexType_NULL = 0");
@@ -327,11 +338,35 @@ bool RenderDX::CompileShader(const char* name, const char* source, const char* s
 XO_DISABLE_CODE_ANALYSIS_WARNINGS_POP
 
 bool RenderDX::SetupBuffers() {
-	if (NULL == (D3D.VertBuffer = CreateBuffer(sizeof(Vx_PTCV4) * 4, D3D11_USAGE_DYNAMIC, D3D11_BIND_VERTEX_BUFFER, D3D11_CPU_ACCESS_WRITE, NULL)))
+	D3D.VertBufferBytes = 65536;
+	if (NULL == (D3D.VertBuffer = CreateBuffer(D3D.VertBufferBytes, D3D11_USAGE_DYNAMIC, D3D11_BIND_VERTEX_BUFFER, D3D11_CPU_ACCESS_WRITE, NULL)))
 		return false;
 
-	uint16_t quadIndices[4] = {0, 1, 3, 2};
-	if (NULL == (D3D.QuadIndexBuffer = CreateBuffer(sizeof(quadIndices), D3D11_USAGE_IMMUTABLE, D3D11_BIND_INDEX_BUFFER, 0, quadIndices)))
+	D3D.QuadIndexBufferSize = (65536 / 6) * 6;
+	uint16_t* quadIndices   = new uint16_t[D3D.QuadIndexBufferSize];
+	size_t    qi            = 0;
+	for (size_t i = 0; qi < D3D.QuadIndexBufferSize; i += 4) {
+		// our quads are emitted clockwise or CCW, but here we re-arrange them to be output as a triangle list.
+		quadIndices[qi++] = (uint16_t) i;
+		quadIndices[qi++] = (uint16_t)(i + 1);
+		quadIndices[qi++] = (uint16_t)(i + 3);
+
+		quadIndices[qi++] = (uint16_t)(i + 1);
+		quadIndices[qi++] = (uint16_t)(i + 2);
+		quadIndices[qi++] = (uint16_t)(i + 3);
+	}
+	D3D.QuadIndexBuffer = CreateBuffer(D3D.QuadIndexBufferSize * sizeof(uint16_t), D3D11_USAGE_IMMUTABLE, D3D11_BIND_INDEX_BUFFER, 0, quadIndices);
+	delete[] quadIndices;
+	if (!D3D.QuadIndexBuffer)
+		return false;
+
+	D3D.LinearIndexBufferSize = 65536;
+	uint16_t* linearIndices   = new uint16_t[D3D.LinearIndexBufferSize];
+	for (size_t i = 0; i < D3D.LinearIndexBufferSize; i++)
+		linearIndices[i] = (uint16_t) i;
+	D3D.LinearIndexBuffer = CreateBuffer(D3D.LinearIndexBufferSize * sizeof(uint16_t), D3D11_USAGE_IMMUTABLE, D3D11_BIND_INDEX_BUFFER, 0, linearIndices);
+	delete[] linearIndices;
+	if (!D3D.LinearIndexBuffer)
 		return false;
 
 	if (NULL == (D3D.ShaderPerFrameConstants = CreateBuffer(sizeof(ShaderPerFrame), D3D11_USAGE_DYNAMIC, D3D11_BIND_CONSTANT_BUFFER, D3D11_CPU_ACCESS_WRITE, NULL)))
@@ -450,7 +485,7 @@ bool RenderDX::CreateTexture2D(Texture* tex) {
 	desc.CPUAccessFlags   = 0;
 	desc.MiscFlags        = 0;
 	switch (tex->Format) {
-	case TexFormatRGBA8: desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; break;
+	case TexFormatRGBA8: desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB; break;
 	case TexFormatGrey8: desc.Format = DXGI_FORMAT_R8_UNORM; break;
 	default: XO_DIE_MSG("Unrecognized texture format");
 	}
@@ -505,6 +540,7 @@ ProgBase* RenderDX::GetShader(Shaders shader) {
 	case ShaderRect: return &PRect;
 	case ShaderTextRGB: return &PTextRGB;
 	case ShaderTextWhole: return &PTextWhole;
+	case ShaderUber: return &PUber;
 	default:
 		XO_TODO;
 		return NULL;
@@ -526,7 +562,7 @@ void RenderDX::ActivateShader(Shaders shader) {
 	float    blendFactors[4] = {0, 0, 0, 0};
 	uint32_t sampleMask      = 0xffffffff;
 
-	if (shader == ShaderTextRGB)
+	if (shader == ShaderTextRGB || shader == ShaderUber)
 		D3D.Context->OMSetBlendState(D3D.BlendDual, blendFactors, sampleMask);
 	else
 		D3D.Context->OMSetBlendState(D3D.BlendNormal, blendFactors, sampleMask);
@@ -538,8 +574,15 @@ void RenderDX::ActivateShader(Shaders shader) {
 void RenderDX::Draw(GPUPrimitiveTypes type, int nvertex, const void* v) {
 	SetShaderObjectUniforms();
 
-	const int      nvert = 4;
-	const uint8_t* vbyte = (const uint8_t*) v;
+	int nindices = 0;
+	switch (type) {
+	case GPUPrimQuads: nindices = (nvertex / 2) * 3; break;
+	case GPUPrimTriangles: nindices = nvertex; break;
+	default: XO_TODO;
+	}
+
+	int vertexSize = (int) VertexSize(D3D.ActiveProgram->VertexType());
+	XO_ASSERT(nvertex * vertexSize <= D3D.VertBufferBytes);
 
 	// map vertex buffer with DISCARD
 	D3D11_MAPPED_SUBRESOURCE map;
@@ -549,25 +592,24 @@ void RenderDX::Draw(GPUPrimitiveTypes type, int nvertex, const void* v) {
 		XOTRACE_RENDER("Vertex buffer map failed: %d", hr);
 		return;
 	}
-
-	int vertexSize = (int) VertexSize(D3D.ActiveProgram->VertexType());
-
-	memcpy(map.pData, v, nvert * vertexSize);
+	memcpy(map.pData, v, nvertex * vertexSize);
 	D3D.Context->Unmap(D3D.VertBuffer, 0);
-
-	// Triangles are TODO, as well as more than a single quad
-	XO_ASSERT(type == GPUPrimQuads && nvertex == 4);
 
 	UINT stride = vertexSize;
 	UINT offset = 0;
 	D3D.Context->IASetVertexBuffers(0, 1, &D3D.VertBuffer, &stride, &offset);
-	D3D.Context->IASetIndexBuffer(D3D.QuadIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
-	//D3D.Context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
-	D3D.Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-	D3D.Context->DrawIndexed(nvertex, 0, 0);
+	if (type == GPUPrimQuads) {
+		XO_ASSERT(nvertex <= D3D.QuadIndexBufferSize);
+		D3D.Context->IASetIndexBuffer(D3D.QuadIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+		D3D.Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	} else if (type == GPUPrimTriangles) {
+		XO_ASSERT(nvertex <= D3D.LinearIndexBufferSize);
+		D3D.Context->IASetIndexBuffer(D3D.LinearIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+		D3D.Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	} else
+		XO_TODO;
 
-	//D3D.Context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
-	//D3D.Context->Draw( 3, 0 );
+	D3D.Context->DrawIndexed(nindices, 0, 0);
 }
 
 bool RenderDX::LoadTexture(Texture* tex, int texUnit) {

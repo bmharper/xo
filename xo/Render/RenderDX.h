@@ -8,6 +8,7 @@
 #include "../Shaders/Processed_hlsl/RectShader.h"
 #include "../Shaders/Processed_hlsl/TextWholeShader.h"
 #include "../Shaders/Processed_hlsl/TextRGBShader.h"
+#include "../Shaders/Processed_hlsl/UberShader.h"
 #endif
 
 #if XO_BUILD_DIRECTX
@@ -30,7 +31,11 @@ private:
 		ID3D11SamplerState*     SamplerLinear;
 		ID3D11SamplerState*     SamplerPoint;
 		ID3D11Buffer*           VertBuffer;
+		size_t                  VertBufferBytes;
 		ID3D11Buffer*           QuadIndexBuffer;
+		size_t                  QuadIndexBufferSize;
+		ID3D11Buffer*           LinearIndexBuffer;
+		size_t                  LinearIndexBufferSize;
 		ID3D11Buffer*           ShaderPerFrameConstants;
 		ID3D11Buffer*           ShaderPerObjectConstants;
 
@@ -77,7 +82,8 @@ private:
 	DXProg_Rect      PRect;
 	DXProg_TextRGB   PTextRGB;
 	DXProg_TextWhole PTextWhole;
-	static const int NumProgs = 5;
+	DXProg_Uber      PUber;
+	static const int NumProgs = 6;
 	DXProg*          AllProgs[NumProgs];
 
 	bool          InitializeDXDevice(SysWnd& wnd);
@@ -99,12 +105,12 @@ private:
 
 	static int TexFilterToDX(TexFilter f);
 };
-}
+} // namespace xo
 #else
 
 namespace xo {
 class XO_API RenderDX : public RenderDummy {
 };
-}
+} // namespace xo
 
 #endif
