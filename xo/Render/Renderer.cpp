@@ -128,8 +128,10 @@ void Renderer::RenderNode(Point base, const RenderDomNode* node) {
 	if (node->IsCanvas()) {
 		const DomCanvas* canvas = static_cast<const DomCanvas*>(Doc->GetChildByInternalID(node->InternalID));
 		bgImage                 = Images->Get(canvas->GetImageID());
-		bgImageRect             = Box(0, 0, bgImage->Width, bgImage->Height);
-		//shaderFlags |= SHADER_FLAG_TEXBG_PREMUL;
+		if (bgImage) {
+			bgImageRect = Box(0, 0, bgImage->Width, bgImage->Height);
+			//shaderFlags |= SHADER_FLAG_TEXBG_PREMUL;
+		}
 	}
 
 	if (bgImage) {

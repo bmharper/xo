@@ -246,7 +246,7 @@ void Canvas2D::Text(float x, float y, float angle, float size, Color color, cons
 					int         outX = posX + glyph->MetricLeft;
 					int         outY = posY + y - glyph->MetricTop;
 					const void* src  = atlas->DataAt(glyph->X, glyph->Y + y);
-					if (outY < 0 || outY >= RenderBuff.height())
+					if ((unsigned) outY >= RenderBuff.height())
 						continue;
 					PixFormatRGBA.blend_solid_hspan(outX, outY, glyph->Width, col, (const agg::int8u*) src);
 				}
@@ -273,7 +273,7 @@ void Canvas2D::Text(float x, float y, float angle, float size, Color color, cons
 				const void* src  = bmp.buffer + y * bmp.pitch;
 				int         outX = (int) pos.x + glyph->bitmap_left;
 				int         outY = (int) pos.y + y - glyph->bitmap_top;
-				if (outY < 0 || outY >= RenderBuff.height())
+				if ((unsigned) outY >= RenderBuff.height())
 					continue;
 				PixFormatRGBA.blend_solid_hspan(outX, outY, bmp.width, col, (const agg::int8u*) src);
 			}
