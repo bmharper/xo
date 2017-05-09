@@ -144,7 +144,7 @@ static int Load_EXT_swap_control(void)
 typedef int (*PFN_LOADFUNCPOINTERS)(void);
 typedef struct glx_StrToExtMap_s
 {
-	char *extensionName;
+	const char *extensionName;
 	int *extensionVariable;
 	PFN_LOADFUNCPOINTERS LoadExtension;
 } glx_StrToExtMap;
@@ -265,4 +265,3 @@ int glx_LoadFunctions(Display *display, int screen)
 	return glx_LOAD_SUCCEEDED;
 }
 
-

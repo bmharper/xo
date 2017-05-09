@@ -365,7 +365,8 @@ void DoInlineFlow(xo::Doc* doc) {
 		//doc->Root.ParseAppend( R"(The quick)");
 	};
 	doc->Root.OnClick(create);
-	create(xo::Event());
+	xo::Event ev;
+	create(ev);
 }
 
 void DoBackupSettings(xo::Doc* doc) {
@@ -539,7 +540,7 @@ void DoPositionType(xo::Doc* doc) {
 	    "</div>");
 }
 
-static int     Mode              = 6;
+static int     Mode              = 16;
 static int     ModeCount         = 25;
 static int64_t EvMainSwitcherKey = 0;
 

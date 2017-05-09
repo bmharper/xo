@@ -177,7 +177,7 @@ static int Load_NV_swap_group(void)
 typedef int (*PFN_LOADFUNCPOINTERS)(void);
 typedef struct wgl_StrToExtMap_s
 {
-	char *extensionName;
+	const char *extensionName;
 	int *extensionVariable;
 	PFN_LOADFUNCPOINTERS LoadExtension;
 } wgl_StrToExtMap;
@@ -302,4 +302,3 @@ int wgl_LoadFunctions(HDC hdc)
 	return wgl_LOAD_SUCCEEDED;
 }
 
-
