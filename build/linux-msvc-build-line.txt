@@ -1,6 +1,6 @@
 Example MSVC nmake build command:
 
-	ssh ben@192.168.1.4 "cd dev/xo && build/linux-msvc-build-script.sh"
+	plink -i c:\Users\ben\.ssh\id_rsa.ppk ben@192.168.1.11 "cd ~/dev/w-xo && ../sync-from-windows && build/linux-msvc-build-script.sh"
 
 The sed script referenced by linux-msvc-build-script.sh converts a line like this:
 
@@ -13,5 +13,5 @@ into this:
 which is necessary for MSVC IDE consumption (ie to show error/warning list that you can click on to get to the source line).
 
 Then, to run tests on linux, do
-	export LD_LIBRARY_PATH=$(pwd)/t2-output/linux-gcc-debug-default
-	t2-output/linux-gcc-debug-default/test test all
+	export LD_LIBRARY_PATH=$(pwd)/t2-output/linux-clang-debug-default
+	t2-output/linux-clang-debug-default/test test all

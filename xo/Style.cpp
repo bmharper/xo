@@ -89,7 +89,7 @@ static int FindSpaces(const char* s, size_t len, int (&spaces)[10], bool& hasDol
 	return nspaces;
 }
 
-static StyleCategories CatUngenerify(StyleCategories c) {
+StyleCategories CatUngenerify(StyleCategories c) {
 	switch (c) {
 	case CatGenMargin: return CatMargin_Left;
 	case CatGenPadding: return CatPadding_Left;

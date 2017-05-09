@@ -1,5 +1,5 @@
 #pragma once
-#include "Base/xoString.h"
+#include "../Base/xoString.h"
 
 namespace xo {
 
@@ -26,7 +26,7 @@ public:
 	void GCSweep(bool forceRepack = false);
 
 protected:
-	Pool                       Pool;
+	xo::Pool                   Pool;
 	ohash::map<StringRaw, int> StrToID;
 	cheapvec<const char*>      IDToStr;
 	cheapvec<bool>             IsGCMarked;
@@ -41,4 +41,4 @@ protected:
 	// Repack our strings into a new Pool.
 	void GCRepack();
 };
-}
+} // namespace xo

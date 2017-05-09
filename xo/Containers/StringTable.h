@@ -1,5 +1,5 @@
 #pragma once
-#include "Base/xoString.h"
+#include "../Base/xoString.h"
 
 namespace xo {
 
@@ -19,8 +19,8 @@ public:
 	void CloneFrom_Incremental(const StringTable& src);
 
 protected:
-	Pool                       Pool;
+	xo::Pool                   Pool;
 	ohash::map<StringRaw, int> NameToID;
 	cheapvec<const char*>      IDToName;
 };
-}
+} // namespace xo

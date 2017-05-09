@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Defs.h"
-#include "TextureAtlas.h"
+#include "../Defs.h"
+#include "../Render/TextureAtlas.h"
 
 namespace xo {
 
@@ -48,5 +48,5 @@ private:
 }
 
 namespace ohash {
-inline ohash::hashkey_t gethashcode(const xo::VectorCacheKey& k) { return (hashkey_t) k.GetHashCode(); }
+template<> inline ohash::hashkey_t gethashcode(const xo::VectorCacheKey& k) { return (hashkey_t) k.GetHashCode(); }
 }

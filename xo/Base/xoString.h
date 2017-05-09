@@ -81,8 +81,8 @@ void XO_API Itoa(int64_t value, char* buf, int base);
 }
 
 namespace ohash {
-inline ohash::hashkey_t gethashcode(const xo::String& k) { return (ohash::hashkey_t) k.GetHashCode(); }
-inline ohash::hashkey_t gethashcode(const xo::StringRaw& k) { return (ohash::hashkey_t) k.GetHashCode(); }
+template<> inline ohash::hashkey_t gethashcode(const xo::String& k) { return (ohash::hashkey_t) k.GetHashCode(); }
+template<> inline ohash::hashkey_t gethashcode(const xo::StringRaw& k) { return (ohash::hashkey_t) k.GetHashCode(); }
 }
 
 #ifdef _WIN32

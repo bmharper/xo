@@ -582,7 +582,7 @@ void RenderDX::Draw(GPUPrimitiveTypes type, int nvertex, const void* v) {
 	}
 
 	int vertexSize = (int) VertexSize(D3D.ActiveProgram->VertexType());
-	XO_ASSERT(nvertex * vertexSize <= D3D.VertBufferBytes);
+	XO_ASSERT(nvertex * vertexSize <= (int) D3D.VertBufferBytes);
 
 	// map vertex buffer with DISCARD
 	D3D11_MAPPED_SUBRESOURCE map;
@@ -599,11 +599,11 @@ void RenderDX::Draw(GPUPrimitiveTypes type, int nvertex, const void* v) {
 	UINT offset = 0;
 	D3D.Context->IASetVertexBuffers(0, 1, &D3D.VertBuffer, &stride, &offset);
 	if (type == GPUPrimQuads) {
-		XO_ASSERT(nvertex <= D3D.QuadIndexBufferSize);
+		XO_ASSERT(nvertex <= (int) D3D.QuadIndexBufferSize);
 		D3D.Context->IASetIndexBuffer(D3D.QuadIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 		D3D.Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	} else if (type == GPUPrimTriangles) {
-		XO_ASSERT(nvertex <= D3D.LinearIndexBufferSize);
+		XO_ASSERT(nvertex <= (int) D3D.LinearIndexBufferSize);
 		D3D.Context->IASetIndexBuffer(D3D.LinearIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
 		D3D.Context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	} else

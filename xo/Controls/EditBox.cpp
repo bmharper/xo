@@ -127,6 +127,8 @@ DomNode* EditBox::AppendTo(DomNode* node, const char* txt) {
 			}
 			break;
 		}
+		default:
+			break;
 		}
 		s->CaretPos = ClampCaretPos(newCaretPos, txt.length());
 
@@ -179,5 +181,5 @@ void EditBox::PlaceCaretIndicator(State* s, Event& ev) {
 		caret->StyleParsef("left: %fpx", Round(pos));
 	}
 }
-}
-}
+} // namespace controls
+} // namespace xo

@@ -417,6 +417,7 @@ bool RenderGL::BeginRender(SysWnd& wnd) {
 	return true;
 #elif XO_PLATFORM_LINUX_DESKTOP
 	glXMakeCurrent(wnd.XDisplay, wnd.XWindow, wnd.GLContext);
+	return true;
 #else
 	return true;
 #endif
@@ -649,6 +650,9 @@ void RenderGL::Draw(GPUPrimitiveTypes type, int nvertex, const void* v) {
 		//vartexUnit0 = PCurve.v_tex0;
 		glVertexAttribPointer(PCurve.v_vflip, 1, GL_FLOAT, true, stride, vbyte + offsetof(Vx_PTCV4, V4.x));
 		glEnableVertexAttribArray(PCurve.v_vflip);
+		break;
+	case ShaderInvalid:
+		XO_DIE();
 		break;
 	}
 

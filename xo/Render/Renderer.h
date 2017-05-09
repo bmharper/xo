@@ -23,11 +23,11 @@ protected:
 		BottomRight,
 		TopRight,
 	};
-	const Doc*                 Doc         = nullptr;
+	const xo::Doc*             Doc         = nullptr;
 	const ImageStore*          Images      = nullptr;
 	const StringTable*         Strings     = nullptr;
 	const VariableTable*       Vectors     = nullptr;
-	VectorCache*               VectorCache = nullptr;
+	xo::VectorCache*           VectorCache = nullptr;
 	RenderBase*                Driver      = nullptr;
 	ohash::set<GlyphCacheKey>  GlyphsNeeded;
 	ohash::set<VectorCacheKey> VectorsNeeded;
@@ -46,4 +46,4 @@ protected:
 	static float CircleFrom3Pt(const Vec2f& a, const Vec2f& b, const Vec2f& c, Vec2f& center, float& radius);
 	static Vec2f PtOnEllipse(float flipX, float flipY, float a, float b, float theta);
 };
-}
+} // namespace xo

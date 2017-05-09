@@ -40,7 +40,7 @@ public:
 #else
 	XO_TODO_STATIC;
 #endif
-	DocGroup*                          DocGroup;
+	xo::DocGroup*                      DocGroup;
 	RenderBase*                        Renderer;
 	std::vector<std::function<void()>> OnWindowClose; // You can use this in a simple application to detect when the application is closing
 
@@ -51,17 +51,17 @@ public:
 	static SysWnd* CreateWithDoc(uint32_t createFlags = CreateDefault);
 	static void    PlatformInitialize();
 
-	void Attach(Doc* doc, bool destroyDocWithProcessor);
-	void Show();
-	Doc* Doc();
-	bool BeginRender();                      // Basically wglMakeCurrent()
-	void EndRender(uint32_t endRenderFlags); // SwapBuffers followed by wglMakeCurrent(NULL). Flags are EndRenderFlags
-	void SurfaceLost();                      // Surface lost, and now regained. Reinitialize GL state (textures, shaders, etc).
-	void SetPosition(Box box, uint32_t setPosFlags);
-	Box  GetRelativeClientRect(); // Returns the client rectangle (in screen coordinates), relative to the non-client window
-	void PostCursorChangedMessage();
-	void PostRepaintMessage();
-	bool CopySurfaceToImage(Box box, Image& img);
+	void     Attach(Doc* doc, bool destroyDocWithProcessor);
+	void     Show();
+	xo::Doc* Doc();
+	bool     BeginRender();                      // Basically wglMakeCurrent()
+	void     EndRender(uint32_t endRenderFlags); // SwapBuffers followed by wglMakeCurrent(NULL). Flags are EndRenderFlags
+	void     SurfaceLost();                      // Surface lost, and now regained. Reinitialize GL state (textures, shaders, etc).
+	void     SetPosition(Box box, uint32_t setPosFlags);
+	Box      GetRelativeClientRect(); // Returns the client rectangle (in screen coordinates), relative to the non-client window
+	void     PostCursorChangedMessage();
+	void     PostRepaintMessage();
+	bool     CopySurfaceToImage(Box box, Image& img);
 
 	// Invalid rectangle management
 	void InvalidateRect(Box box);
@@ -77,4 +77,4 @@ protected:
 	template <typename TRenderer>
 	bool InitializeRenderer_Any(RenderBase*& renderer);
 };
-}
+} // namespace xo

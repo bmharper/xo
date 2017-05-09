@@ -7,11 +7,11 @@ namespace xo {
 // A single item on the render stack
 class XO_API RenderStackEl {
 public:
-	Pool*    Pool; // This *could* be stored only inside RenderStack.Stack_Pools, but it is convenient to duplicate it here.
-	StyleSet Styles;
-	bool     HasHoverStyle : 1;
-	bool     HasFocusStyle : 1;
-	bool     HasCaptureStyle : 1;
+	xo::Pool* Pool; // This *could* be stored only inside RenderStack.Stack_Pools, but it is convenient to duplicate it here.
+	StyleSet  Styles;
+	bool      HasHoverStyle : 1;
+	bool      HasFocusStyle : 1;
+	bool      HasCaptureStyle : 1;
 
 	void Reset();
 
@@ -36,7 +36,7 @@ styles to blow that limit often. If they do, then it's simply a performance hit.
 */
 class XO_API RenderStack {
 public:
-	const Doc*     Doc;
+	const xo::Doc* Doc;
 	Pool*          Pool;
 	StyleAttrib    Defaults[CatEND];
 	Style          VerbatimExplodeTemp; // Temporary object used for verbatim style explosion
@@ -70,4 +70,4 @@ protected:
 	PoolArray<RenderStackEl> Stack;
 	cheapvec<xo::Pool*>      Stack_Pools; // Every position on the stack gets its own pool
 };
-}
+} // namespace xo

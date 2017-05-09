@@ -508,8 +508,8 @@ struct GlobalStruct {
 	TQueue<DocGroup*>     DocRemoveQueue; // Documents requesting removal
 	TQueue<OriginalEvent> UIEventQueue;   // Global event queue, consumed by the one-and-only UI thread
 	TQueue<Job>           JobQueue;       // Global job queue, consumed by the worker thread pool
-	FontStore*            FontStore;      // All fonts known to the system.
-	GlyphCache*           GlyphCache;     // This might have to move into a less global domain.
+	xo::FontStore*        FontStore;      // All fonts known to the system.
+	xo::GlyphCache*       GlyphCache;     // This might have to move into a less global domain.
 
 	std::atomic<bool>        ExitSignalled;
 	std::vector<std::thread> WorkerThreads;

@@ -97,7 +97,7 @@ public:
 
 protected:
 	volatile uint32_t      Version;
-	Pool                   Pool;       // Used only when making a clone via CloneFast()
+	xo::Pool               Pool;       // Used only when making a clone via CloneFast()
 	bool                   IsReadOnly; // Read-only clone used for rendering
 	cheapvec<DomEl*>       ChildByInternalID;
 	cheapvec<bool>         ChildIsModified; // Bit is set if child has been modified since we last synced with the renderer -- TODO - change to proper bitmap
@@ -113,4 +113,4 @@ protected:
 	void InitializeDefaultTagStyles();
 	void InitializeDefaultControls();
 };
-}
+} // namespace xo

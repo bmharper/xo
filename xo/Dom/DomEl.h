@@ -19,11 +19,11 @@ public:
 	virtual void        ForgetChildren()                                   = 0;
 
 	void           SetText(const std::string& txt) { SetText(txt.c_str()); }
-	InternalID     GetInternalID() const { return InternalID; }
-	Tag            GetTag() const { return Tag; }
-	Doc*           GetDoc() const { return Doc; }
+	xo::InternalID GetInternalID() const { return InternalID; }
+	xo::Tag        GetTag() const { return Tag; }
+	xo::Doc*       GetDoc() const { return Doc; }
 	uint32_t       GetVersion() const { return Version; }
-	InternalID     GetParentID() const { return ParentID; }
+	xo::InternalID GetParentID() const { return ParentID; }
 	const DomNode* GetParent() const;
 
 	DomNode*       ToNode();
@@ -39,11 +39,11 @@ public:
 	bool IsText() const { return Tag == TagText; }
 
 protected:
-	Doc*       Doc;            // Owning document
-	InternalID ParentID;       // Owning node
-	InternalID InternalID = 0; // Internal 32-bit ID that is used to keep track of an object (memory address is not sufficient)
-	Tag        Tag;            // Tag, such <div>, etc
-	uint32_t   Version = 0;    // Monotonic integer used to detect modified nodes
+	xo::Doc*       Doc;            // Owning document
+	xo::InternalID ParentID;       // Owning node
+	xo::InternalID InternalID = 0; // Internal 32-bit ID that is used to keep track of an object (memory address is not sufficient)
+	xo::Tag        Tag;            // Tag, such <div>, etc
+	uint32_t       Version = 0;    // Monotonic integer used to detect modified nodes
 
 	void IncVersion();
 	void CloneSlowIntoBase(DomEl& c, uint32_t cloneFlags) const;

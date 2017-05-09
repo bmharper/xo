@@ -35,9 +35,41 @@ enum class Button {
 	MouseX3     = 6, // Windows X button 3 (not sure if this ever exists)
 	MouseX4     = 7, // Windows X button 4 (not sure if this ever exists)
 	Key0,
-	Key9 = Key0 + 9,
+	Key1,
+	Key2,
+	Key3,
+	Key4,
+	Key5,
+	Key6,
+	Key7,
+	Key8,
+	Key9,
 	KeyA,
-	KeyZ = KeyA + 25,
+	KeyB,
+	KeyC,
+	KeyD,
+	KeyE,
+	KeyF,
+	KeyG,
+	KeyH,
+	KeyI,
+	KeyJ,
+	KeyK,
+	KeyL,
+	KeyM,
+	KeyN,
+	KeyO,
+	KeyP,
+	KeyQ,
+	KeyR,
+	KeyS,
+	KeyT,
+	KeyU,
+	KeyV,
+	KeyW,
+	KeyX,
+	KeyY,
+	KeyZ,
 	KeyBack, // aka Backspace
 	KeySpace,
 	KeyTab,
@@ -118,21 +150,21 @@ public:
 */
 class XO_API Event {
 public:
-	Doc*                Doc          = nullptr;
-	void*               Context      = nullptr;
-	DomEl*              Target       = nullptr;
-	DomText*            TargetText   = nullptr;
-	int32_t             TargetChar   = -1;
-	const LayoutResult* LayoutResult = nullptr;
-	Events              Type         = EventMouseMove;
-	Button              Button       = Button::Null;
-	ButtonStates        ButtonStates;                     // Special key states and mouse buttons. These are saved when the message is generated, to guarantee correct timing of keys (in case event is processed after key is lifted)
-	int                 KeyChar    = 0;                   // Unicode code point of a key message. If not a Unicode code point (eg DELETE), then use Button
-	int                 PointCount = 0;                   // Mouse = 1	Touch >= 1
-	Vec2f               PointsAbs[XO_MAX_TOUCHES];        // Points in pixels, relative to viewport top-left
-	Vec2f               PointsRel[XO_MAX_TOUCHES];        // Points relative to Target's content-box top-left
-	bool                IsStopPropagationToggled = false; // True if StopPropagation() has been called, and the event must not bubble out to enclosing DOM elements
-	bool                IsCancelTimerToggled     = false; // True if CancelTimer() has been called, in which case the timer will be cancelled
+	xo::Doc*                Doc          = nullptr;
+	void*                   Context      = nullptr;
+	DomEl*                  Target       = nullptr;
+	DomText*                TargetText   = nullptr;
+	int32_t                 TargetChar   = -1;
+	const xo::LayoutResult* LayoutResult = nullptr;
+	Events                  Type         = EventMouseMove;
+	xo::Button              Button       = xo::Button::Null;
+	xo::ButtonStates        ButtonStates;                     // Special key states and mouse buttons. These are saved when the message is generated, to guarantee correct timing of keys (in case event is processed after key is lifted)
+	int                     KeyChar    = 0;                   // Unicode code point of a key message. If not a Unicode code point (eg DELETE), then use Button
+	int                     PointCount = 0;                   // Mouse = 1	Touch >= 1
+	Vec2f                   PointsAbs[XO_MAX_TOUCHES];        // Points in pixels, relative to viewport top-left
+	Vec2f                   PointsRel[XO_MAX_TOUCHES];        // Points relative to Target's content-box top-left
+	bool                    IsStopPropagationToggled = false; // True if StopPropagation() has been called, and the event must not bubble out to enclosing DOM elements
+	bool                    IsCancelTimerToggled     = false; // True if CancelTimer() has been called, in which case the timer will be cancelled
 
 	Event();
 	~Event();
@@ -147,8 +179,8 @@ public:
 // Because there is only one event queue, it needs to know the destination DocGroup.
 class XO_API OriginalEvent {
 public:
-	DocGroup* DocGroup = nullptr;
-	Event     Event;
+	xo::DocGroup* DocGroup = nullptr;
+	xo::Event     Event;
 };
 
 typedef std::function<void()>          EventHandlerLambda0; // 0 Parameters
@@ -189,4 +221,4 @@ struct NodeEventIDPair {
 	InternalID NodeID;
 	uint64_t   EventID;
 };
-}
+} // namespace xo

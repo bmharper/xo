@@ -27,7 +27,7 @@ ImageID ImageStore::Set(const char* name, Image* img) {
 
 void ImageStore::Set(ImageID id, Image* img) {
 	// This function may only be used to modify existing images
-	XO_ASSERT(id < Images.size());
+	XO_ASSERT((size_t) id < Images.size());
 
 	delete Images[id];
 	Images[id] = img;
@@ -68,7 +68,7 @@ void ImageStore::Delete(const char* name) {
 }
 
 void ImageStore::Delete(ImageID id) {
-	XO_ASSERT(id < Images.size());
+	XO_ASSERT((size_t) id < Images.size());
 	delete Images[id];
 	Images[id] = nullptr;
 }

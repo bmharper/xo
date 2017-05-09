@@ -590,7 +590,7 @@ std::string XO_API ConvertWideToUTF8(const std::wstring& src)
 		dst.resize(MaximumUtf8FromWide(srcLen));
 		const wchar_t*	srcPos = src.c_str();
 		const wchar_t*	srcEnd = srcPos + srcLen;
-		UTF8*			tempDst	= (UINT8*) const_cast<char*>(dst.c_str());	// this violates the std::string spec, but I cannot see how any implementation would not be OK with it.
+		UTF8*			tempDst	= (UTF8*) const_cast<char*>(dst.c_str());	// this violates the std::string spec, but I cannot see how any implementation would not be OK with it.
 		UTF8*			dstPos = tempDst;
 		UTF8*			dstEnd = tempDst + dst.length();
 		ConversionResult res = WideIs16 ?

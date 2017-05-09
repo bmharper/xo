@@ -13,7 +13,7 @@ public:
 
 	bool                     IsLocked; // True if we are being used by the UI thread to do things like hit-testing
 	RenderDomNode            Root;     // This is a dummy node that is above Body. Use Body() to get the true root of the tree.
-	Pool                     Pool;
+	xo::Pool                 Pool;
 	cheapvec<RenderDomNode*> IDToNodeTable; // Mapping from InternalID to Node. Use Node() function rather than this directly.
 
 	const RenderDomNode* Body() const; // This is the effective root of the DOM
@@ -33,9 +33,9 @@ The 'Doc' member is a complete clone of the original document.
 */
 class XO_API RenderDoc {
 public:
-	Doc Doc; // Defining state
+	xo::Doc Doc; // Defining state
 
-	VectorCache VectorCache;
+	xo::VectorCache VectorCache;
 
 	// Timings of most recent render
 	double TimeVariableBake = 0;
@@ -68,4 +68,4 @@ protected:
 	void PopulateIDToNode(LayoutResult* res, RenderDomNode* node);
 	void ExpandVerbatimClassVariables(); // Expand and parse the value of style variables such as $dark-outline = #333
 };
-}
+} // namespace xo

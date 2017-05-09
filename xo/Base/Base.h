@@ -50,6 +50,7 @@
 #include <functional>
 #include <vector>
 #include <mutex>
+#include <thread>
 
 #ifdef _WIN32
 typedef SSIZE_T ssize_t;
@@ -74,36 +75,45 @@ char (&ArraySizeHelper(T (&array)[N]))[N];
 	TypeName(const TypeName&) = delete;       \
 	TypeName& operator=(const TypeName&) = delete
 
-#include "../dependencies/agg/include/agg_basics.h"
-#include "../dependencies/agg/include/agg_conv_stroke.h"
-#include "../dependencies/agg/include/agg_conv_curve.h"
-#include "../dependencies/agg/include/agg_conv_clip_polyline.h"
-#include "../dependencies/agg/include/agg_conv_clip_polygon.h"
-#include "../dependencies/agg/include/agg_ellipse.h"
-#include "../dependencies/agg/include/agg_path_storage.h"
-#include "../dependencies/agg/include/agg_pixfmt_rgba.h"
-#include "../dependencies/agg/include/agg_rasterizer_scanline_aa.h"
-#include "../dependencies/agg/include/agg_renderer_scanline.h"
-#include "../dependencies/agg/include/agg_rendering_buffer.h"
-#include "../dependencies/agg/include/agg_scanline_u.h"
-#include "../dependencies/agg/include/agg_scanline_p.h"
-#include "../dependencies/agg/svg/agg_svg_parser.h"
-#include "../dependencies/agg/svg/agg_svg_path_renderer.h"
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-register"
+#endif
 
-#include "../dependencies/sema.h"
-#include "../dependencies/ConvertUTF/ConvertUTF.h"
-#include "../dependencies/tsf/tsf.h"
+#include "../../dependencies/agg/include/agg_basics.h"
+#include "../../dependencies/agg/include/agg_conv_stroke.h"
+#include "../../dependencies/agg/include/agg_conv_curve.h"
+#include "../../dependencies/agg/include/agg_conv_clip_polyline.h"
+#include "../../dependencies/agg/include/agg_conv_clip_polygon.h"
+#include "../../dependencies/agg/include/agg_ellipse.h"
+#include "../../dependencies/agg/include/agg_path_storage.h"
+#include "../../dependencies/agg/include/agg_pixfmt_rgba.h"
+#include "../../dependencies/agg/include/agg_rasterizer_scanline_aa.h"
+#include "../../dependencies/agg/include/agg_renderer_scanline.h"
+#include "../../dependencies/agg/include/agg_rendering_buffer.h"
+#include "../../dependencies/agg/include/agg_scanline_u.h"
+#include "../../dependencies/agg/include/agg_scanline_p.h"
+#include "../../dependencies/agg/svg/agg_svg_parser.h"
+#include "../../dependencies/agg/svg/agg_svg_path_renderer.h"
 
-#include "../dependencies/ohash/ohashtable.h"
-#include "../dependencies/ohash/ohashset.h"
-#include "../dependencies/ohash/ohashmap.h"
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
+#include "../../dependencies/sema.h"
+#include "../../dependencies/ConvertUTF/ConvertUTF.h"
+#include "../../dependencies/tsf/tsf.h"
+
+#include "../../dependencies/ohash/ohashtable.h"
+#include "../../dependencies/ohash/ohashset.h"
+#include "../../dependencies/ohash/ohashmap.h"
 
 ///////////////////////////////////////////////////////////////////////////
 // Vector math
-#include "../dependencies/vectormath/Vec2.h"
-#include "../dependencies/vectormath/Vec3.h"
-#include "../dependencies/vectormath/Vec4.h"
-#include "../dependencies/vectormath/Mat4.h"
+#include "../../dependencies/vectormath/Vec2.h"
+#include "../../dependencies/vectormath/Vec3.h"
+#include "../../dependencies/vectormath/Vec4.h"
+#include "../../dependencies/vectormath/Mat4.h"
 
 namespace xo {
 
@@ -121,18 +131,18 @@ typedef Mat4T<float> Mat4f;
 ///////////////////////////////////////////////////////////////////////////
 
 #ifndef XXH32_SIZEOFSTATE
-#include "../dependencies/hash/xxhash.h"
+#include "../../dependencies/hash/xxhash.h"
 #endif
 
-#include "Base/Alloc.h"
-#include "Base/cheapvec.h"
-#include "Base/CPU.h"
-#include "Base/Queue.h"
-#include "Base/xoString.h"
-#include "Base/OS_Time.h"
-#include "Base/OS_IO.h"
-#include "Base/OS_Clipboard.h"
-#include "Base/OS_CommonDialogs.h"
+#include "../Base/Alloc.h"
+#include "../Base/cheapvec.h"
+#include "../Base/CPU.h"
+#include "../Base/Queue.h"
+#include "../Base/xoString.h"
+#include "../Base/OS_Time.h"
+#include "../Base/OS_IO.h"
+#include "../Base/OS_Clipboard.h"
+#include "../Base/OS_CommonDialogs.h"
 
 //#ifdef TEMP_ASSERT
 //#undef TEMP_ASSERT

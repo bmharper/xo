@@ -48,6 +48,7 @@ XO_API String DefaultCacheDir() {
 #endif
 }
 
+#ifdef _WIN32
 inline int64_t FileTimeToMicroseconds(const FILETIME& ft) {
 	uint64_t time  = ((uint64_t) ft.dwHighDateTime << 32) | ft.dwLowDateTime;
 	int64_t  stime = (int64_t) time;
@@ -60,6 +61,7 @@ inline double FileTimeToUnixSeconds(const FILETIME& ft) {
 	int64_t       micro                  = FileTimeToMicroseconds(ft);
 	return (micro - (days_from_1601_to_1970 * microsecondsPerDay)) * (1.0 / 1000000.0);
 }
+#endif
 
 XO_API bool FindFiles(const char* _dir, std::function<bool(const FilesystemItem& item)> callback) {
 	size_t dirLen = strlen(_dir);
@@ -104,6 +106,7 @@ XO_API bool FindFiles(const char* _dir, std::function<bool(const FilesystemItem&
 		fixed.pop_back();
 
 	DIR* d = opendir(fixed.c_str());
+	bool ok = d != nullptr;
 	if (d) {
 		FilesystemItem item;
 		item.Root = fixed.c_str();
@@ -131,6 +134,7 @@ XO_API bool FindFiles(const char* _dir, std::function<bool(const FilesystemItem&
 		}
 		closedir(d);
 	}
+	return ok;
 #endif
 }
 

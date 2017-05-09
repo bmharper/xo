@@ -3,7 +3,7 @@ require 'tundra.syntax.glob'
 local winFilter = "win*"
 local winDebugFilter = "win*-*-debug"
 local winReleaseFilter = "win*-*-release"
-local linuxFilter = "linux*"
+local linuxFilter = "linux-*-*-*"
 local directxFilter = "win*"
 
 local winKernelLibs = { "kernel32.lib", "user32.lib", "gdi32.lib", "winspool.lib", "advapi32.lib", "shell32.lib", "comctl32.lib", 
@@ -186,56 +186,6 @@ local freetype = StaticLibrary {
 	}	
 }
 
---[[
-local freetype_gl = StaticLibrary {
-	Name = "freetype_gl",
-	--Defines = {
-	--	"",
-	--},
-	SourceDir = "dependencies/freetype-gl",
-	Includes = "dependencies/freetype-gl",
-	Sources = {
-		"mat4.c",
-		"platform.c",
-		"shader.c",
-		"text-buffer.c",
-		"texture-atlas.c",
-		"texture-font.c",
-		"vector.c",
-		"vertex-attribute.c",
-		"vertex-buffer.c",
-	}	
-}
---]]
-
--- This is not used right now - shaders are hand-written in both environments
---[[
-local hlslang = Program {
-	Name = "hlslang",
-	SourceDir = ".",
-	Env = {
-		CXXOPTS = {
-			{ "/wd4267"; Config = "win*" },			-- loss of data
-			{ "/wd4018"; Config = "win*" },			-- signed/unsigned mismatch
-		}
-	},
-	Defines = {
-		"_CRT_SECURE_NO_WARNINGS",
-	},
-	Includes = {
-		"dependencies/hlslang/src/MachineIndependent",
-		{ "dependencies/hlslang/src/OSDependent/Windows"; Config = "win*" },
-	},
-	Depends = { crt, },
-	Sources = {
-		Glob { Extensions = { ".cpp", ".c" }, Dir = "dependencies/hlslang/src/GLSLCodeGen", },
-		Glob { Extensions = { ".cpp", ".c" }, Dir = "dependencies/hlslang/src/MachineIndependent", Recursive = true },
-		{ Glob { Extensions = { ".cpp", ".c" }, Dir = "dependencies/hlslang/src/OSDependent/Windows" }, Config = "win*" },
-		"dependencies/hlslang/src/hlslang.cpp",
-	}
-}
---]]
-
 local xo = SharedLibrary {
 	Name = "xo",
 	Libs = { 
@@ -252,7 +202,9 @@ local xo = SharedLibrary {
 		"dependencies/agg/include",
 		"dependencies/expat",
 	},
-	Depends = { crt, freetype, directx, utfz, expat, },
+	Depends = { crt, freetype, directx, utfz,
+		{ expat; Config = winFilter },
+	},
 	PrecompiledHeader = {
 		Source = "xo/pch.cpp",
 		Header = "pch.h",
@@ -264,10 +216,6 @@ local xo = SharedLibrary {
 		makeGlob("dependencies/ConvertUTF", {}),
 		makeGlob("dependencies/GL", {}),
 		makeGlob("dependencies/hash", {}),
-		"dependencies/tsf/xo_tsf_wrapper.cpp",
-		{ "dependencies/stb_image.cpp"; Config = "win*" },  
-		{ "dependencies/stb_image.c"; Config = "linux-*" }, -- now that we can use PCH on linux, probably can get rid of this difference and use the .cpp version everywhere
-		"dependencies/stb_image_write.h",
 	},
 }
 
@@ -304,7 +252,7 @@ local function XoExampleApp(template, name, sources)
 	return Program {
 		Name = name,
 		Includes = { "xo" },
-		Libs = { "stdc++", "m"; Config = "linux-*" },
+		Libs = { "X11", "GL", "GLU", "stdc++", "m"; Config = "linux-*" },
 		Depends = {
 			crt,
 			xo,
@@ -338,10 +286,6 @@ local Test = Program {
 	},
 	Sources = {
 		makeGlob("tests", {}),
-		"dependencies/tsf/xo_tsf_wrapper.cpp",
-		{ "dependencies/stb_image.cpp"; Config = "win*" },
-		{ "dependencies/stb_image.c"; Config = "linux-*" },
-		"dependencies/stb_image_write.h",
 	}
 }
 

@@ -12,11 +12,11 @@ class XO_API DocGroup {
 	XO_DISALLOW_COPY_AND_ASSIGN(DocGroup);
 
 public:
-	Doc*       Doc; // Canonical Document, which the UI thread manipulates. Guarded by DocLock.
-	SysWnd*    Wnd;
-	RenderDoc* RenderDoc; // Copy of Canonical Document, as well as rendered state of document
-	bool       DestroyDocWithGroup;
-	RenderStats RenderStats;
+	xo::Doc*        Doc; // Canonical Document, which the UI thread manipulates. Guarded by DocLock.
+	SysWnd*         Wnd;
+	xo::RenderDoc*  RenderDoc; // Copy of Canonical Document, as well as rendered state of document
+	bool            DestroyDocWithGroup;
+	xo::RenderStats RenderStats;
 
 	DocGroup();
 	~DocGroup();
@@ -48,4 +48,4 @@ protected:
 
 	static void AddOrReplaceMessage(const OriginalEvent& ev);
 };
-}
+} // namespace xo

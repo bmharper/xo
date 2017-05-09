@@ -152,7 +152,7 @@ public:
 protected:
 	uint64_t               NextEventHandlerID = 1;
 	uint32_t               AllEventMask       = 0;
-	Style                  Style; // Styles that override those referenced by the Tag and the Classes.
+	xo::Style              Style; // Styles that override those referenced by the Tag and the Classes.
 	cheapvec<EventHandler> Handlers;
 	cheapvec<DomEl*>       Children;
 	cheapvec<StyleClassID> Classes; // Classes of styles

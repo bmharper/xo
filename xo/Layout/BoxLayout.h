@@ -45,14 +45,14 @@ public:
 		FlowRestart,
 	};
 	struct NodeInput {
-		InternalID   InternalID;
-		Tag          Tag;
-		Box          MarginBorderPadding; // Sum of Margin, Border, and Padding boxes
-		Pos          ContentWidth;
-		Pos          ContentHeight;
-		BumpStyle    Bump;
-		bool         NewFlowContext;
-		PositionType Position;
+		xo::InternalID InternalID;
+		xo::Tag        Tag;
+		Box            MarginBorderPadding; // Sum of Margin, Border, and Padding boxes
+		Pos            ContentWidth;
+		Pos            ContentHeight;
+		BumpStyle      Bump;
+		bool           NewFlowContext;
+		PositionType   Position;
 	};
 	struct WordInput {
 		Pos Width;
@@ -67,7 +67,7 @@ public:
 		static LineBox MakeFresh() { return Make(PosNULL, 0, INT32_MAX); }
 	};
 
-	Pool* Pool = nullptr;
+	xo::Pool* Pool = nullptr;
 
 	BoxLayout();
 	~BoxLayout();
@@ -128,4 +128,4 @@ protected:
 	void       NewLine(FlowState& flow);
 	size_t     MostRecentUniqueFlowAncestor();
 };
-}
+} // namespace xo

@@ -26,7 +26,7 @@ XO_API double TimeAccurateSeconds() {
 }
 #else
 XO_API void SleepMS(int milliseconds) {
-	int64    nano = milliseconds * (int64) 1000;
+	int64_t    nano = milliseconds * (int64_t) 1000;
 	timespec t;
 	t.tv_nsec = nano % 1000000000;
 	t.tv_sec  = (nano - t.tv_nsec) / 1000000000;

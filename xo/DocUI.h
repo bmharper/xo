@@ -44,11 +44,11 @@ public:
 
 protected:
 	struct HoverNode {
-		InternalID InternalID;    // Element beneath the cursor
-		bool       HasHoverStyle; // Appearance of element beneath cursor depends upon cursor location
+		xo::InternalID InternalID;    // Element beneath the cursor
+		bool           HasHoverStyle; // Appearance of element beneath cursor depends upon cursor location
 	};
 
-	Doc*                   Doc;
+	xo::Doc*               Doc;
 	InternalID             CurrentFocusID   = InternalIDNull; // Element that has the keyboard focus
 	InternalID             CurrentCaptureID = InternalIDNull; // Element that has the input captured
 	InternalID             MouseDownID[NumMouseButtons];      // Element where a mouse button went down
@@ -75,4 +75,4 @@ protected:
 
 	static void SendEvent(const Event& ev, const DomNode* target, bool* handled = nullptr, bool* stop = nullptr);
 };
-}
+} // namespace xo

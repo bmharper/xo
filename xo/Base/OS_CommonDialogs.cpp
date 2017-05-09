@@ -7,7 +7,7 @@
 namespace xo {
 namespace osdialogs {
 
-#ifdef XO_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 XO_API bool BrowseForFile(BrowseFile& bf) {
 	// See https://msdn.microsoft.com/en-us/library/bb776913(v=vs.85).aspx - titled "Common Item Dialog" for the example upon which this code was based.
 	IFileDialog* pfd = NULL;

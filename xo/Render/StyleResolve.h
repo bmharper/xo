@@ -64,6 +64,6 @@ public:
 	~StyleResolveOnceOff();
 
 protected:
-	Pool* Pool;
+	xo::Pool* Pool;
 };
-}
+} // namespace xo

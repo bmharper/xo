@@ -41,10 +41,10 @@ protected:
 template <typename T>
 class PoolArray {
 public:
-	Pool*  Pool;
-	T*     Data;
-	size_t Count;
-	size_t Capacity;
+	xo::Pool* Pool;
+	T*        Data;
+	size_t    Count;
+	size_t    Capacity;
 
 	PoolArray() {
 		Pool     = nullptr;
@@ -354,7 +354,7 @@ protected:
 	uint32_t       Count    = 0;
 	T*             Items    = nullptr;
 };
-}
+} // namespace xo
 
 namespace std {
 XO_API void swap(xo::Pool& a, xo::Pool& b);

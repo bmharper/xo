@@ -100,8 +100,8 @@ XO_API void RunXMessageLoop() {
 			*/
 			Event nev;
 			nev.Type        = EventWindowSize;
-			nev.Points[0].x = wa.width;
-			nev.Points[0].y = wa.height;
+			nev.PointsAbs[0].x = wa.width;
+			nev.PointsAbs[0].y = wa.height;
 			for (int i = 0; i < Global()->Docs.size(); i++)
 				Global()->Docs[i]->ProcessEvent(nev);
 
@@ -113,8 +113,8 @@ XO_API void RunXMessageLoop() {
 			//XOTRACE_OS_MSG_QUEUE( "x,y = %d,%d\n", xev.xmotion.x, xev.xmotion.y );
 			Event nev;
 			nev.Type        = EventMouseMove;
-			nev.Points[0].x = xev.xmotion.x;
-			nev.Points[0].y = xev.xmotion.y;
+			nev.PointsAbs[0].x = xev.xmotion.x;
+			nev.PointsAbs[0].y = xev.xmotion.y;
 			for (int i = 0; i < Global()->Docs.size(); i++)
 				Global()->Docs[i]->ProcessEvent(nev);
 		}

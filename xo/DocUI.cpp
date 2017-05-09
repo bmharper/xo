@@ -29,6 +29,8 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 		Doc->IncVersion();
 		//TimeTrace( "Processed WindowSize event. Document at version %d\n", Doc->GetVersion() );
 		break;
+	default:
+		break;
 	}
 
 	// Give up processing any other events if we haven't run a layout yet

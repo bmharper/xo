@@ -321,7 +321,7 @@ void Doc::InitializeDefaultTagStyles() {
 #elif XO_PLATFORM_ANDROID
 	const char* font = "Roboto";
 #else
-	const char* font = "Droid Sans";
+	const char* font = "Ubuntu";
 #endif
 	StyleAttrib afont;
 	afont.SetFont(Global()->FontStore->InsertByFacename(font));

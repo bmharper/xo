@@ -245,13 +245,13 @@ void RenderStats::Reset() {
 XO_API void AddOrRemoveDocsFromGlobalList() {
 	DocGroup* p = NULL;
 
-	while (p = Global()->DocRemoveQueue.PopTailR()) {
+	while ((p = Global()->DocRemoveQueue.PopTailR())) {
 		size_t pos = Global()->Docs.find(p);
 		delete Global()->Docs[pos];
 		Global()->Docs.erase(pos);
 	}
 
-	while (p = Global()->DocAddQueue.PopTailR())
+	while ((p = Global()->DocAddQueue.PopTailR()))
 		Global()->Docs += p;
 }
 
@@ -376,7 +376,7 @@ XO_API void Initialize(const InitParams* init) {
 
 	// Windows default is 530
 	Globals->CaretBlinkTimeMS = 530;
-#ifdef XO_PLATFORM_WIN_DESKTOP
+#if XO_PLATFORM_WIN_DESKTOP
 	Globals->CaretBlinkTimeMS = GetCaretBlinkTime();
 #endif
 

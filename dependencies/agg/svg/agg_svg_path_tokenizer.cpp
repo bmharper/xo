@@ -123,7 +123,7 @@ namespace svg
         char* buf_ptr = buf;
 
         // Copy all sign characters
-        while(buf_ptr < buf+255 && *m_path == '-' || *m_path == '+')
+        while(buf_ptr < buf+255 && (*m_path == '-' || *m_path == '+'))
         {
             *buf_ptr++ = *m_path++;
         }

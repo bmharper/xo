@@ -1,0 +1,5 @@
+#!/bin/sh
+
+sudo apt install -y libx11-dev
+sudo apt install -y mesa-common-dev
+sudo apt install -y libglu1-mesa-dev

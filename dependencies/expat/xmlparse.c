@@ -27,6 +27,8 @@
 #include "watcomconfig.h"
 #elif defined(HAVE_EXPAT_CONFIG_H)
 #include <expat_config.h>
+#else
+#include "xo_expat_config.h"
 #endif /* ndef WIN32 */
 
 #include "ascii.h"

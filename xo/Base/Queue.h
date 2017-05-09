@@ -55,7 +55,7 @@ private:
 
 	uint32_t Mask() const { return RingSize - 1; }
 	void*    Slot(uint32_t pos) const { return Slot(pos, Mask()); }
-	void*    Slot(uint32_t pos, uint32_t mask) const { return (byte*) Buffer + ((pos & mask) * ItemSize); }
+	void*    Slot(uint32_t pos, uint32_t mask) const { return (uint8_t*) Buffer + ((pos & mask) * ItemSize); }
 	int32_t  SizeInternal() const { return Head - Tail; }
 
 	void Grow();

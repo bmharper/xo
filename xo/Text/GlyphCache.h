@@ -32,10 +32,10 @@ struct Glyph {
 };
 
 struct GlyphCacheKey {
-	FontID   FontID;
-	uint32_t Char;
-	uint8_t  Size;
-	uint8_t  Flags;
+	xo::FontID FontID;
+	uint32_t   Char;
+	uint8_t    Size;
+	uint8_t    Flags;
 
 	GlyphCacheKey() : FontID(0), Char(0), Size(0), Flags(0) {}
 	GlyphCacheKey(xo::FontID fid, uint32_t ch, uint8_t size, uint32_t flags) : FontID(fid), Char(ch), Size(size), Flags(flags) {}
@@ -108,5 +108,5 @@ protected:
 } // namespace xo
 
 namespace ohash {
-inline ohash::hashkey_t gethashcode(const xo::GlyphCacheKey& k) { return (hashkey_t) k.GetHashCode(); }
+template<> inline ohash::hashkey_t gethashcode(const xo::GlyphCacheKey& k) { return (hashkey_t) k.GetHashCode(); }
 } // namespace ohash

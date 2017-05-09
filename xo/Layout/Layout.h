@@ -83,8 +83,8 @@ protected:
 		float                 FontWidthScale;
 		int                   FontSizePx;
 		Pos                   FontAscender;
-		FontID                FontID;
-		Color                 Color;
+		xo::FontID            FontID;
+		xo::Color             Color;
 	};
 
 	struct FlowState {
@@ -98,9 +98,9 @@ protected:
 		// bool	ReverseMinor;	// Minor goes from high to low numbers (right to left, or bottom to top)
 	};
 
-	const Doc*                Doc;
+	const xo::Doc*            Doc;
 	BoxLayout                 Boxer;
-	Pool*                     Pool;
+	xo::Pool*                 Pool;
 	RenderStack               Stack;
 	FixedSizeHeap             FHeap;
 	float                     PtToPixel;
@@ -168,12 +168,12 @@ protected:
 	// a can of worms for our style parser.
 	class VBindHelper {
 	public:
-		Layout* Layout;
-		Pos     ParentHeight;
-		Pos     ParentBaseline;
-		Pos     ChildTop;
-		Pos     ChildHeight;
-		Pos     ChildBaseline;
+		xo::Layout* Layout;
+		Pos         ParentHeight;
+		Pos         ParentBaseline;
+		Pos         ChildTop;
+		Pos         ChildHeight;
+		Pos         ChildBaseline;
 
 		VBindHelper(xo::Layout* layout, Pos parentHeight, Pos parentBaseline, Pos childTop, Pos childHeight, Pos childBaseline) : Layout(layout), ParentHeight(parentHeight), ParentBaseline(parentBaseline), ChildTop(childTop), ChildHeight(childHeight), ChildBaseline(childBaseline) {}
 
@@ -184,10 +184,10 @@ protected:
 
 	class HBindHelper {
 	public:
-		Layout* Layout;
-		Pos     ParentWidth;
-		Pos     ChildLeft;
-		Pos     ChildWidth;
+		xo::Layout* Layout;
+		Pos         ParentWidth;
+		Pos         ChildLeft;
+		Pos         ChildWidth;
 
 		HBindHelper(xo::Layout* layout, Pos parentWidth, Pos childLeft, Pos childWidth) : Layout(layout), ParentWidth(parentWidth), ChildLeft(childLeft), ChildWidth(childWidth) {}
 
@@ -196,4 +196,4 @@ protected:
 		Pos Delta(StyleAttrib parent, HorizontalBindings child);
 	};
 };
-}
+} // namespace xo

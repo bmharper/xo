@@ -24,9 +24,9 @@ class XO_API RenderDomEl {
 public:
 	RenderDomEl(InternalID id, Tag tag);
 
-	InternalID InternalID; // Reference to our original DomEl. There can be many RenderDomEl per DomEl (text is an example)
-	Box        Pos;        // This is the ContentBox, relative to the parent RenderDomEl's context box. See log entry from 2014-08-02
-	Tag        Tag;
+	xo::InternalID InternalID; // Reference to our original DomEl. There can be many RenderDomEl per DomEl (text is an example)
+	Box            Pos;        // This is the ContentBox, relative to the parent RenderDomEl's context box. See log entry from 2014-08-02
+	xo::Tag        Tag;
 
 	bool IsNode() const { return Tag != TagText; }
 	bool IsText() const { return Tag == TagText; }
@@ -71,10 +71,10 @@ public:
 
 	bool IsSubPixel() const { return !!(Flags & FlagSubPixelGlyphs); }
 
-	FontID                  FontID;
+	xo::FontID              FontID;
 	PoolArray<RenderCharEl> Text;
-	Color                   Color;
+	xo::Color               Color;
 	uint8_t                 FontSizePx;
 	uint8_t                 Flags;
 };
-}
+} // namespace xo

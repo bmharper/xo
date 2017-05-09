@@ -76,7 +76,7 @@ XO_API void* AlignedRealloc(size_t original_block_bytes, void* block, size_t byt
 	if (!p)
 		return NULL;
 	memcpy(p, block, original_block_bytes);
-	aligned_free(block);
+	AlignedFree(block);
 	return p;
 #endif
 }

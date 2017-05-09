@@ -141,7 +141,6 @@ void StyleResolver::SetInherited(RenderStack& stack, const DomEl* node, StyleCat
 
 void StyleResolver::SetOrExplode(RenderStack& stack, const DomEl* node, RenderStackEl& result, StyleAttrib attrib) {
 	if (attrib.IsVerbatim()) {
-
 		// We justify the const_cast here, knowing that style parse will not alter Doc if we aren't
 		// defining new strings or variables.
 		// We know that we're not defining new variables, because RecursiveVariableResolve makes sure
@@ -164,6 +163,7 @@ void StyleResolver::SetFinal(RenderStackEl& result, StyleAttrib attrib) {
 	switch (attrib.Category) {
 	case CatVCenter: nullify = CatBaseline; break;
 	case CatBaseline: nullify = CatVCenter; break;
+	default: break;
 	}
 	if (nullify != CatNULL)
 		result.Styles.EraseOrSetNull(nullify);
@@ -199,4 +199,4 @@ StyleResolveOnceOff::~StyleResolveOnceOff() {
 	delete RS;
 	delete Pool;
 }
-}
+} // namespace xo

@@ -69,7 +69,7 @@ uintptr_t RenderBase::GetTextureDeviceHandle(TextureID texID) const {
 	TextureID absolute = texID - TEX_OFFSET_ONE - TexIDOffset;
 	if (absolute >= (TextureID) TexIDToNative.size()) {
 		XO_DIE_MSG("RenderBase::GetTextureDeviceHandle: Invalid texture ID. Use IsTextureValid() to check if a texture is valid.");
-		return NULL;
+		return (uintptr_t) nullptr;
 	}
 	return TexIDToNative[absolute];
 }

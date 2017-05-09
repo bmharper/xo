@@ -378,7 +378,7 @@ bool SysWnd::InitializeRenderer() {
 	}
 	return false;
 #else
-	InitializeRenderer_Any<RenderGL>(Renderer);
+	return InitializeRenderer_Any<RenderGL>(Renderer);
 #endif
 }
 

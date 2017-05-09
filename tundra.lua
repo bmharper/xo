@@ -69,10 +69,10 @@ Build {
 			Tools = { "gcc" },
 		},
 		{
-			Name = "linux-gcc",
+			Name = "linux-clang",
 			DefaultOnHost = "linux",
 			Inherit = unix_common,
-			Tools = { "gcc" },
+			Tools = { "clang" },
 		},
 		{
 			Name = "win32-msvc2015",

@@ -114,7 +114,9 @@ FontID FontStore::GetFallbackFontID() {
 #elif XO_PLATFORM_ANDROID
 	fid = InsertByFacename("Roboto");
 #elif XO_PLATFORM_LINUX_DESKTOP
-	fid = InsertByFacename("Arial");
+	fid = InsertByFacename("Ubuntu");
+	if (fid == FontIDNull)
+		fid = InsertByFacename("Arial");
 #else
 	XO_TODO_STATIC;
 #endif

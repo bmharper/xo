@@ -42,9 +42,9 @@ public:
 	void ResetModified();
 
 protected:
-	Doc*                 Doc;
+	xo::Doc*             Doc;
 	StringTable          IDTable;    // Store mapping to/from uint32 IDs of variable names
 	cheapvec<xo::String> Values;     // Index is the ID, so entry zero is always an empty style
 	cheapvec<bool>       IsModified; // Parallel to Values. Records whether a variable has been changed since last doc -> renderdoc sync. TODO: Change to proper bitmap
 };
-}
+} // namespace xo
