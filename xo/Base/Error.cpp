@@ -6,7 +6,10 @@ namespace xo {
 
 static XO_NORETURN void Die() {
 	XO_DEBUG_ASSERT(false);
-	*((int*) 0) = 1;
+	#ifdef __clang__
+	__builtin_trap();
+	#endif
+	*((int*) 1) = 1;
 }
 
 static const char* NoErrorMsg = "";

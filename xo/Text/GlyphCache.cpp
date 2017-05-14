@@ -77,8 +77,8 @@ uint32_t GlyphCache::RenderGlyph(const GlyphCacheKey& key) {
 
 	uint32_t ftflags = FT_LOAD_RENDER | FT_LOAD_LINEAR_DESIGN;
 	// See FontStore::LoadFontTweaks for details of why we have this "MaxAutoHinterSize"
-	//if ( isSubPixel && pixSize <= font->MaxAutoHinterSize )
-	//	ftflags |= FT_LOAD_FORCE_AUTOHINT;
+	if (isSubPixel && pixSize <= font->MaxAutoHinterSize)
+		ftflags |= FT_LOAD_FORCE_AUTOHINT;
 
 	if (useFTSubpixel)
 		ftflags |= FT_LOAD_TARGET_LCD;

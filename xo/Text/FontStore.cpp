@@ -193,16 +193,23 @@ void FontStore::LoadFontTweaks(Font& font) {
 	// The auto hinter fails to produce clean horizontal stems when the text gets larger
 	// Times New Roman seems to look better at all sub-pixel sizes using the auto hinter.
 	// The Sans Serif fonts like Segoe UI seem to look better with the TT hinter at larger sizes.
+	
+	// UPDATE - the above is pre freetype 2.6.2. Need to re-evaluate
 
-	if (font.Facename == "Times New Roman")
-		font.MaxAutoHinterSize = 30;
+	// The 's' is screwed up at many sizes with Freetype >= 2.6.2, and <= 2.8 (latest now is 2.8)
+	// It's not only at small sizes - I've seen the screwed up 's' at pretty large sizes.. I think around 30px
+	if (font.Facename == "Ubuntu")
+		font.MaxAutoHinterSize = 100;
 
-	if (font.Facename == "Microsoft Sans Serif")
-		font.MaxAutoHinterSize = 14;
+	// if (font.Facename == "Times New Roman")
+	// 	font.MaxAutoHinterSize = 30;
 
-	// This always looks better with the TT hinter
-	if (font.Facename == "Segoe UI")
-		font.MaxAutoHinterSize = 0;
+	//if (font.Facename == "Microsoft Sans Serif")
+	//	font.MaxAutoHinterSize = 14;
+
+	// This always looks better with the TT hinter, but 0 is now the default for MaxAutoHinterSize
+	// if (font.Facename == "Segoe UI")
+	// 	font.MaxAutoHinterSize = 0;
 
 	// This always looks better with the TT hinter
 	//if ( font.Facename == "Audiowide" )

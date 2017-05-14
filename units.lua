@@ -95,6 +95,17 @@ local function makeGlob(dir, options)
 	}
 end
 
+local function merge_tables(a, b)
+	local r = {}
+	for k,v in pairs(a) do
+		r[k] = v
+	end
+	for k,v in pairs(b) do
+		r[k] = v
+	end
+	return r
+end
+
 -- Swapping this out will change linkage to use MSVCR120.dll and its cousins,
 -- instead of statically linking to the required MSVC runtime libraries.
 -- I don't understand why, but if we build with crtStatic, then tests fail
@@ -129,6 +140,7 @@ local utfz = StaticLibrary {
 	}
 }
 
+-- This is not used on Linux Desktop
 local expat = StaticLibrary {
 	Name = "expat",
 	Depends = { crt, },
@@ -183,18 +195,16 @@ local freetype = StaticLibrary {
 		"src/cid/type1cid.c",
 		"src/type42/type42.c",
 		"src/winfonts/winfnt.c",
-	}	
+	}
 }
 
-local xo = SharedLibrary {
-	Name = "xo",
+local xo_base = {
 	Libs = { 
 		{ "opengl32.lib", "user32.lib", "gdi32.lib", "winmm.lib" ; Config = "win*" },
-		{ "X11", "GL", "GLU", "stdc++"; Config = "linux-*" },
+		{ "X11", "GL", "GLU", "stdc++", "expat", "pthread"; Config = "linux-*" },
 	},
-	--SourceDir = ".",
 	Defines = {
-		"XML_STATIC",
+		"XML_STATIC", -- for expat
 	},
 	Includes = {
 		"xo",
@@ -219,6 +229,16 @@ local xo = SharedLibrary {
 	},
 }
 
+local xo = SharedLibrary(merge_tables(xo_base, {
+		Name = "xo",
+	}
+))
+
+local xo_static = StaticLibrary(merge_tables(xo_base, {
+		Name = "xo_static",
+	}
+))
+
 local HelloAmalgamation = Program {
 	Name = "HelloAmalgamation",
 	Libs = { 
@@ -240,7 +260,7 @@ local HelloAmalgamation = Program {
 	}
 }
 
-local function XoExampleApp(template, name, sources)
+local function XoExampleApp(use_dynamic_xo, template, name, sources)
 	local src = {
 		"templates/" .. template,
 		"dependencies/tsf/tsf.cpp",
@@ -249,25 +269,38 @@ local function XoExampleApp(template, name, sources)
 		src[#src + 1] = "examples/" .. s
 	end
 
+	local depends = { crt }
+	local linux_libs = { "X11", "GL", "GLU", "stdc++", "m" }
+
+	if use_dynamic_xo then
+		depends[#depends + 1] = xo
+	else
+		depends[#depends + 1] = xo_static
+		depends[#depends + 1] = freetype
+		depends[#depends + 1] = utfz
+		linux_libs[#linux_libs + 1] = "expat"
+		linux_libs[#linux_libs + 1] = "pthread"
+	end
+
+	linux_libs.Config = "linux-*"
+
 	return Program {
 		Name = name,
 		Includes = { "xo" },
-		Libs = { "X11", "GL", "GLU", "stdc++", "m"; Config = "linux-*" },
-		Depends = {
-			crt,
-			xo,
-		},
+		Libs = { linux_libs },
+		Depends = depends,
 		Sources = src,
 	}
 end
 
-local ExampleBench       = XoExampleApp("xoWinMain.cpp", "Bench", {"Bench.cpp"})
-local ExampleCanvas      = XoExampleApp("xoWinMain.cpp", "Canvas", {"Canvas.cpp"})
-local ExampleEvents      = XoExampleApp("xoWinMain.cpp", "Events", {"Events.cpp"})
-local ExampleHelloWorld  = XoExampleApp("xoWinMain.cpp", "HelloWorld", {"HelloWorld.cpp"})
-local ExampleKitchenSink = XoExampleApp("xoWinMain.cpp", "KitchenSink", {"KitchenSink.cpp", "SVGSamples.cpp"})
-local ExampleSplineDev   = XoExampleApp("xoWinMain.cpp", "SplineDev", {"SplineDev.cpp"})
-local ExampleLowLevel    = XoExampleApp("xoWinMainLowLevel.cpp", "RunAppLowLevel", {"RunAppLowLevel.cpp"})
+local ExampleBench       = XoExampleApp(true, "xoWinMain.cpp", "Bench", {"Bench.cpp"})
+local ExampleCanvas      = XoExampleApp(true, "xoWinMain.cpp", "Canvas", {"Canvas.cpp"})
+local ExampleEvents      = XoExampleApp(true, "xoWinMain.cpp", "Events", {"Events.cpp"})
+local ExampleHelloWorld  = XoExampleApp(true, "xoWinMain.cpp", "HelloWorld", {"HelloWorld.cpp"})
+local ExampleSplineDev   = XoExampleApp(true, "xoWinMain.cpp", "SplineDev", {"SplineDev.cpp"})
+local ExampleLowLevel    = XoExampleApp(true, "xoWinMainLowLevel.cpp", "RunAppLowLevel", {"RunAppLowLevel.cpp"})
+local ExampleKitchenSink = XoExampleApp(true, "xoWinMain.cpp", "KitchenSink", {"KitchenSink.cpp", "SVGSamples.cpp"})
+local ExampleKitchenSink_Static = XoExampleApp(false, "xoWinMain.cpp", "KitchenSinkStatic", {"KitchenSink.cpp", "SVGSamples.cpp"})
 
 local Test = Program {
 	Name = "Test",

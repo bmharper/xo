@@ -12,7 +12,7 @@ Font::Font() {
 	Ascender_x256                = 0;
 	Descender_x256               = 0;
 	// See FontStore::LoadFontTweaks for more details
-	MaxAutoHinterSize = 15;
+	MaxAutoHinterSize = 0;
 }
 
 Font::~Font() {

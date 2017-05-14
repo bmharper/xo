@@ -423,10 +423,19 @@ void DoTextQuality(xo::Doc* doc) {
 	doc->Root.StyleParse("padding: 20px");
 
 	doc->Root.ParseAppend("<div style='break:after; font-family: Microsoft Sans Serif'>The quick brown fox jumps over the lazy dog<div>");
-	doc->Root.ParseAppend("<div style='break:after; padding: 20px; font-family: Microsoft Sans Serif'>h<div>");
-	doc->Root.ParseAppend("<div style='break:after; font-family: Microsoft Sans Serif'>Backup from<div>");
-	doc->Root.ParseAppend("<div style='break:after; font-family: Segoe UI; font-size: 12px; color: #f008'>Backup from<div>");
+	doc->Root.ParseAppend("<div style='break:after; padding: 20px; font-family: Microsoft Sans Serif'>h s<div>");
+	doc->Root.ParseAppend("<div style='break:after; font-family: Microsoft Sans Serif'>Backups from<div>");
+	doc->Root.ParseAppend("<div style='break:after; font-family: Ubuntu'>Backups from<div>");
+	doc->Root.ParseAppend("<div style='break:after; font-family: Segoe UI; font-size: 12px; color: #f008'>Backups from<div>");
 	doc->Root.ParseAppend("<div style='break:after; font-family: Consolas; font-size: 12px; color: #383'>DoBaselineAlignment_Multiline(doc)<div>");
+	for (int s = 10; s <= 24; s++) {
+		auto t = tsf::fmt("<div style='break:after; font-family: Ubuntu Medium; font-size: %vpx'>DoBaselineAlignment_Multiline(doc)<div>", s);
+		doc->Root.ParseAppend(t);
+	}
+	for (int s = 10; s <= 24; s++) {
+		auto t = tsf::fmt("<div style='break:after; font-family: Ubuntu Mono; font-size: %vpx'>DoBaselineAlignment_Multiline(doc)<div>", s);
+		doc->Root.ParseAppend(t);
+	}
 }
 
 void DoQuadraticSplines(xo::Doc* doc) {
@@ -541,7 +550,7 @@ void DoPositionType(xo::Doc* doc) {
 	    "</div>");
 }
 
-static int     Mode              = 19;
+static int     Mode              = 16;
 static int     ModeCount         = 25;
 static int64_t EvMainSwitcherKey = 0;
 
