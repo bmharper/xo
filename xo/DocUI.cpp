@@ -23,12 +23,21 @@ DocUI::~DocUI() {
 // By the time this is called, the DocGroup->DocLock must already be held.
 void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 	switch (ev.Type) {
-	case EventWindowSize:
-		ViewportWidth  = (uint32_t) ev.PointsAbs[0].x;
-		ViewportHeight = (uint32_t) ev.PointsAbs[0].y;
-		Doc->IncVersion();
-		//TimeTrace( "Processed WindowSize event. Document at version %d\n", Doc->GetVersion() );
+	case EventWindowSize: {
+		auto newWidth  = (uint32_t) ev.PointsAbs[0].x;
+		auto newHeight = (uint32_t) ev.PointsAbs[0].y;
+		if (ViewportWidth != newWidth || ViewportHeight != newHeight) {
+			ViewportWidth  = newWidth;
+			ViewportHeight = newHeight;
+			Doc->IncVersion();
+			//TimeTrace( "Processed WindowSize event. Document at version %d\n", Doc->GetVersion() );
+		} else {
+			// The linux code path hits this, because it just listens to any Expose message. Not sure
+			// if there is a better mechanism.
+			return;
+		}
 		break;
+	}
 	default:
 		break;
 	}
@@ -188,7 +197,7 @@ bool DocUI::ProcessInputEvent(Event& ev, const LayoutResult* layout) {
 
 	// This is necessary for buttons, which implement capture, which have icons or something else inside them.
 	// In this case, deepestNodeUnderCursor is not actually the button, but, for example, an SVG div inside of
-	// the button. Clicking on that SVG div must have the same effect as if you'd clicked on a naked part of 
+	// the button. Clicking on that SVG div must have the same effect as if you'd clicked on a naked part of
 	// the button's div.
 	// NOTE: The solution here is not perfect. I hacked it in quickly. The current solution still suffers from
 	// the problem that if the mouse goes down over the SVG in the button, then it also needs to come up over
@@ -275,8 +284,8 @@ bool DocUI::BubbleEvent(int nEvents, Event* events, SelectorChain& chain, const 
 						ev.TargetChar = -1;
 					}
 					ev.PointsRel[0] = chain.PosInNode[inode].ToReal();
-					bool handled = false;
-					bool stop = false;
+					bool handled    = false;
+					bool stop       = false;
 					SendEvent(ev, node, &handled, &stop);
 					if (handled)
 						anyHandled = true;
@@ -529,4 +538,4 @@ void DocUI::SendEvent(const Event& ev, const DomNode* target, bool* handled, boo
 	if (stop != nullptr)
 		*stop = localStop;
 }
-}
+} // namespace xo

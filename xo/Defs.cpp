@@ -3,6 +3,7 @@
 #include "DocGroup.h"
 #include "Doc.h"
 #include "SysWnd.h"
+#include "MsgLoop.h"
 #include "Render/RenderGL.h"
 #include "Text/FontStore.h"
 #include "Text/GlyphCache.h"
@@ -286,7 +287,6 @@ void UIThread() {
 }
 
 #if XO_PLATFORM_WIN_DESKTOP
-
 static void InitializeThread() {
 	// This is necessary for CoCreateInstance inside OS_CommonDialogs.cpp
 	CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -295,26 +295,25 @@ static void InitializeThread() {
 static void ShutdownThread() {
 	CoUninitialize();
 }
-
-static void Initialize_Win32() {
-	Global()->UIThread = std::thread(UIThread);
-	InitializeThread();
-}
-
-static void Shutdown_Win32() {
-	if (Global()->UIThread.joinable()) {
-		Global()->UIEventQueue.Add(OriginalEvent());
-		Global()->UIThread.join();
-	}
-	CoUninitialize();
-}
-
 #else
 static void InitializeThread() {
 }
 static void ShutdownThread() {
 }
 #endif
+
+static void InitializeXoThreads() {
+	InitializeThread();
+	Global()->UIThread = std::thread(UIThread);
+}
+
+static void ShutdownXoThreads() {
+	if (Global()->UIThread.joinable()) {
+		Global()->UIEventQueue.Add(OriginalEvent());
+		Global()->UIThread.join();
+	}
+	ShutdownThread();
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -351,6 +350,7 @@ static void InitializePlatform() {
 	SetProcessDPIAware();
 #elif XO_PLATFORM_ANDROID
 #elif XO_PLATFORM_LINUX_DESKTOP
+	XInitThreads();
 #else
 	XO_TODO_STATIC;
 #endif
@@ -432,16 +432,13 @@ XO_API void Initialize(const InitParams* init) {
 	Globals->FontStore = new FontStore();
 	Globals->FontStore->InitializeFreetype();
 	Globals->GlyphCache = new GlyphCache();
-	SysWnd::PlatformInitialize();
-#if XO_PLATFORM_WIN_DESKTOP
-	Initialize_Win32();
-#endif
+	auto dummySysWnd = SysWnd::New();
+	dummySysWnd->PlatformInitialize();
+	delete dummySysWnd;
+	InitializeXoThreads();
 	Trace("xo creating %d worker threads (%d CPU cores).\n", (int) Globals->NumWorkerThreads, (int) numCPUCores);
 	for (int i = 0; i < Globals->NumWorkerThreads; i++)
 		Globals->WorkerThreads.push_back(std::thread(WorkerThreadFunc));
-}
-
-XO_API void SurfaceLost() {
 }
 
 // This is the companion to Initialize.
@@ -459,9 +456,7 @@ XO_API void Shutdown() {
 	// allow documents scheduled for deletion to be deleted
 	AddOrRemoveDocsFromGlobalList();
 
-#if XO_PLATFORM_WIN_DESKTOP
-	Shutdown_Win32();
-#endif
+	ShutdownXoThreads();
 
 	// signal all threads to exit
 	Job nullJob = Job();
@@ -512,13 +507,7 @@ Example:
 XO_API void RunAppLowLevel(MainCallbackLowLevel mainCallback) {
 	Initialize();
 	mainCallback(MainEventInit);
-#if XO_PLATFORM_WIN_DESKTOP
-	RunWin32MessageLoop();
-#elif XO_PLATFORM_LINUX_DESKTOP
-	RunXMessageLoop();
-#else
-	XO_DIE_MSG("RunApp is not supported on this platform");
-#endif
+	RunMessageLoop();
 	mainCallback(MainEventShutdown);
 	Shutdown();
 }
@@ -538,7 +527,8 @@ XO_API void RunApp(MainCallback mainCallback) {
 	auto    mainCallbackEv = [mainCallback, &mainWnd](MainEvent ev) {
         switch (ev) {
         case MainEventInit:
-            mainWnd = SysWnd::CreateWithDoc();
+            mainWnd = SysWnd::New();
+			mainWnd->CreateWithDoc();
             mainWnd->Show();
             mainCallback(mainWnd);
             break;

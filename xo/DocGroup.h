@@ -12,20 +12,14 @@ class XO_API DocGroup {
 	XO_DISALLOW_COPY_AND_ASSIGN(DocGroup);
 
 public:
-	xo::Doc*        Doc; // Canonical Document, which the UI thread manipulates. Guarded by DocLock.
-	SysWnd*         Wnd;
-	xo::RenderDoc*  RenderDoc; // Copy of Canonical Document, as well as rendered state of document
-	bool            DestroyDocWithGroup;
+	xo::Doc*        Doc                 = nullptr; // Canonical Document, which the UI thread manipulates. Guarded by DocLock.
+	SysWnd*         Wnd                 = nullptr;
+	xo::RenderDoc*  RenderDoc           = nullptr; // Copy of Canonical Document, as well as rendered state of document
+	bool            DestroyDocWithGroup = false;
 	xo::RenderStats RenderStats;
 
 	DocGroup();
-	~DocGroup();
-
-#if XO_PLATFORM_WIN_DESKTOP
-	static LRESULT CALLBACK StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-	LRESULT                 WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-	void                    SetSysWndTimer(uint32_t periodMS);
-#endif
+	virtual ~DocGroup();
 
 	// These are the only 3 entry points into our content
 	RenderResult Render();                    // This is always called from the Render thread
@@ -37,10 +31,6 @@ public:
 
 protected:
 	std::mutex DocLock; // Mutation of 'Doc', or cloning of 'Doc' for the renderer
-
-#if XO_PLATFORM_WIN_DESKTOP
-	bool IsMouseTracking = false; // True if we called TrackMouseEvent when we first saw a WM_MOUSEMOVE message, and are waiting for a WM_MOUSELEAVE event.
-#endif
 
 	RenderResult RenderInternal(Image* targetImage);
 	void         UploadImagesToGPU(bool& beganRender);

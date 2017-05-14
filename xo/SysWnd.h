@@ -3,9 +3,7 @@
 
 namespace xo {
 
-/* A system window, or view.
-TODO: Get rid of the ifdefs, and move them out into separate platform-specific implementations.
-*/
+// A system window, or view.
 class XO_API SysWnd {
 public:
 	enum SetPositionFlags {
@@ -19,49 +17,34 @@ public:
 		CreateBorder         = 8,
 		CreateDefault        = CreateMinimizeButton | CreateMaximizeButton | CreateCloseButton | CreateBorder,
 	};
-#if XO_PLATFORM_WIN_DESKTOP
-	HWND     Wnd;
-	uint32_t TimerPeriodMS;
-	bool     QuitAppWhenWindowDestroyed; // This is here for multi-window applications. Close the first window, and the app exits.
-	enum WindowMessages {
-		WM_XO_CURSOR_CHANGED = WM_USER,
-	};
-#elif XO_PLATFORM_ANDROID
-	Box RelativeClientRect; // Set by XoLib_init
-#elif XO_PLATFORM_LINUX_DESKTOP
-	Display* XDisplay;
-	Window   XWindowRoot;
-	//GLint					att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
-	XVisualInfo* VisualInfo;
-	Colormap     ColorMap;
-	Window       XWindow;
-	GLXContext   GLContext;
-	XEvent       Event;
-#else
-	XO_TODO_STATIC;
-#endif
-	xo::DocGroup*                      DocGroup;
-	RenderBase*                        Renderer;
+
+	static int64_t NumWindowsCreated; // Incremented every time SysWnd constructor is called
+
+	uint32_t                           TimerPeriodMS = 0;
+	xo::DocGroup*                      DocGroup      = nullptr;
+	RenderBase*                        Renderer      = nullptr;
 	std::vector<std::function<void()>> OnWindowClose; // You can use this in a simple application to detect when the application is closing
 
 	SysWnd();
-	~SysWnd();
+	virtual ~SysWnd();
 
-	static SysWnd* Create(uint32_t createFlags = CreateDefault);
-	static SysWnd* CreateWithDoc(uint32_t createFlags = CreateDefault);
-	static void    PlatformInitialize();
+	static SysWnd* New(); // Just create a new SysWnd object, so that we can access it's virtual functions. Do not create the actual system window object.
 
+	virtual void  PlatformInitialize();
+	virtual Error Create(uint32_t createFlags = CreateDefault) = 0;
+	virtual Box   GetRelativeClientRect()                      = 0; // Returns the client rectangle (in screen coordinates), relative to the non-client window
+	virtual void  Show();
+	virtual void  SetPosition(Box box, uint32_t setPosFlags);
+	virtual void  PostCursorChangedMessage();
+	virtual void  PostRepaintMessage();
+	virtual bool  CopySurfaceToImage(Box box, Image& img);
+
+	Error    CreateWithDoc(uint32_t createFlags = CreateDefault);
 	void     Attach(Doc* doc, bool destroyDocWithProcessor);
-	void     Show();
 	xo::Doc* Doc();
 	bool     BeginRender();                      // Basically wglMakeCurrent()
 	void     EndRender(uint32_t endRenderFlags); // SwapBuffers followed by wglMakeCurrent(NULL). Flags are EndRenderFlags
 	void     SurfaceLost();                      // Surface lost, and now regained. Reinitialize GL state (textures, shaders, etc).
-	void     SetPosition(Box box, uint32_t setPosFlags);
-	Box      GetRelativeClientRect(); // Returns the client rectangle (in screen coordinates), relative to the non-client window
-	void     PostCursorChangedMessage();
-	void     PostRepaintMessage();
-	bool     CopySurfaceToImage(Box box, Image& img);
 
 	// Invalid rectangle management
 	void InvalidateRect(Box box);
@@ -72,9 +55,9 @@ protected:
 	std::mutex InvalidRect_Lock;
 	Box        InvalidRect;
 
-	bool InitializeRenderer();
+	Error InitializeRenderer();
 
 	template <typename TRenderer>
-	bool InitializeRenderer_Any(RenderBase*& renderer);
+	Error InitializeRenderer_Any(RenderBase*& renderer);
 };
 } // namespace xo

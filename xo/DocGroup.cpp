@@ -14,10 +14,7 @@
 namespace xo {
 
 DocGroup::DocGroup() {
-	DestroyDocWithGroup = false;
-	Doc                 = NULL;
-	Wnd                 = NULL;
-	RenderDoc           = new xo::RenderDoc(this);
+	RenderDoc = new xo::RenderDoc(this);
 	RenderStats.Reset();
 }
 
@@ -134,7 +131,7 @@ RenderResult DocGroup::RenderInternal(Image* targetImage) {
 
 	if (Global()->ShowCoarseTimes)
 		xo::Trace("Copy: %.1f, Bake: %.1f, Layout: %.1f, Render: %.1f, PostRender: %.1f\n",
-			timeCopyDoc * 1000, RenderDoc->TimeVariableBake * 1000, RenderDoc->TimeLayout * 1000, RenderDoc->TimeRender * 1000, RenderDoc->TimePostRender * 1000);
+		          timeCopyDoc * 1000, RenderDoc->TimeVariableBake * 1000, RenderDoc->TimeLayout * 1000, RenderDoc->TimeRender * 1000, RenderDoc->TimePostRender * 1000);
 
 	return rendResult;
 }
@@ -244,4 +241,4 @@ bool DocGroup::IsDirty() const {
 bool DocGroup::IsDocVersionDifferentToRenderer() const {
 	return Doc->GetVersion() != RenderDoc->Doc.GetVersion();
 }
-}
+} // namespace xo

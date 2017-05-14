@@ -503,6 +503,7 @@ void DoKeyEventBubble(xo::Doc* doc) {
 		txtBtn->SetText((" Button " + std::string(1, ev.KeyChar)).c_str());
 	});
 	doc->Root.OnKeyChar([txtDoc](xo::Event& ev) {
+		tsf::print("bubble %v\n", std::string(1, ev.KeyChar));
 		txtDoc->SetText((" Doc " + std::string(1, ev.KeyChar)).c_str());
 	});
 }
@@ -540,7 +541,7 @@ void DoPositionType(xo::Doc* doc) {
 	    "</div>");
 }
 
-static int     Mode              = 16;
+static int     Mode              = 19;
 static int     ModeCount         = 25;
 static int64_t EvMainSwitcherKey = 0;
 

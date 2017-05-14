@@ -26,14 +26,16 @@ enum Events {
 };
 
 enum class Button {
-	Null        = 0,
-	MouseLeft   = 1,
-	MouseMiddle = 2,
-	MouseRight  = 3,
-	MouseX1     = 4, // Windows X button 1 (back)
-	MouseX2     = 5, // Windows X button 2 (forward)
-	MouseX3     = 6, // Windows X button 3 (not sure if this ever exists)
-	MouseX4     = 7, // Windows X button 4 (not sure if this ever exists)
+	Null = 0,
+	MouseLeft,
+	MouseMiddle,
+	MouseRight,
+	MouseX1, // Windows X button 1 (back)
+	MouseX2, // Windows X button 2 (forward)
+	MouseX3, // Windows X button 3 (not sure if this ever exists)
+	MouseX4, // Windows X button 4 (not sure if this ever exists)
+	MouseWheelScrollDown,
+	MouseWheelScrollUp,
 	Key0,
 	Key1,
 	Key2,
@@ -175,7 +177,7 @@ public:
 	bool IsPressed(xo::Button btn) const;                       // Returns the state of the control key or mouse button when the event was fired. See ButtonStates for valid control keys
 };
 
-// This is the event that the Windowing system will post onto the single event queue.
+// This is the event that the Windowing system will post onto the process-wide event queue.
 // Because there is only one event queue, it needs to know the destination DocGroup.
 class XO_API OriginalEvent {
 public:

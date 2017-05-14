@@ -1,20 +1,17 @@
 #include "pch.h"
 #include "Doc.h"
-#include "DocGroup.h"
-#include "SysWnd.h"
+#include "DocGroup_windows.h"
+#include "SysWnd_windows.h"
 
 namespace xo {
 
-// TODO: Why is this functionality inside DocGroup_Windows.
-// Perhaps it should be inside SysWnd instead?
-
-LRESULT CALLBACK DocGroup::StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-	DocGroup* proc = (DocGroup*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
+LRESULT CALLBACK DocGroupWindows::StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+	DocGroupWindows* proc = (DocGroupWindows*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	if (proc == NULL && lParam != NULL && message == WM_NCCREATE) {
 		// This is passed in via CreateWindow()
 		// The one message that we unfortunately miss is WM_GETMINMAXINFO, which gets sent before WM_NCCREATE
 		CREATESTRUCT* cs = (CREATESTRUCT*) lParam;
-		proc             = (DocGroup*) cs->lpCreateParams;
+		proc             = (DocGroupWindows*) cs->lpCreateParams;
 		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR) proc);
 	}
 
@@ -177,7 +174,7 @@ static void UpdateWindowsCursor(HWND wnd, Cursors cursor, WPARAM wParam, LPARAM 
 	SetCursor(LoadCursor(NULL, wc));
 }
 
-void DocGroup::SetSysWndTimer(uint32_t periodMS) {
+void DocGroupWindows::SetSysWndTimer(uint32_t periodMS) {
 	if (periodMS == Wnd->TimerPeriodMS)
 		return;
 
@@ -185,14 +182,18 @@ void DocGroup::SetSysWndTimer(uint32_t periodMS) {
 
 	if (periodMS == 0) {
 		XOTRACE_OS_MSG_QUEUE("KillTimer\n");
-		KillTimer(Wnd->Wnd, XoWindowsTimerGenericEvent);
+		KillTimer(GetHWND(), XoWindowsTimerGenericEvent);
 	} else {
 		XOTRACE_OS_MSG_QUEUE("SetTimer(%u)\n", periodMS);
-		SetTimer(Wnd->Wnd, XoWindowsTimerGenericEvent, periodMS, nullptr);
+		SetTimer(GetHWND(), XoWindowsTimerGenericEvent, periodMS, nullptr);
 	}
 }
 
-LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+HWND DocGroupWindows::GetHWND() {
+	return ((SysWndWindows*) Wnd)->Wnd;
+}
+
+LRESULT DocGroupWindows::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	XO_ASSERT(Doc != NULL);
 	RECT          rect;
 	OriginalEvent ev;
@@ -211,7 +212,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_PAINT:
 		if (!!GetUpdateRect(hWnd, &rect, false)) {
-			// We will paint from RunWin32MessageLoop.
+			// We will paint from RunMessageLoop.
 			Wnd->InvalidateRect(ToBox(rect));
 			ValidateRect(hWnd, &rect);
 		}
@@ -239,7 +240,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return result;
 
 	case WM_DESTROY:
-		if (Wnd->QuitAppWhenWindowDestroyed)
+		if (((SysWndWindows*) Wnd)->QuitAppWhenWindowDestroyed)
 			PostQuitMessage(0);
 		break;
 
@@ -254,7 +255,7 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		UpdateWindowsCursor(hWnd, Doc->UI.GetCursor(), wParam, lParam);
 		break;
 
-	case SysWnd::WM_XO_CURSOR_CHANGED:
+	case SysWndWindows::WM_XO_CURSOR_CHANGED:
 		// The UI thread will post this message to us after it has processed a mouse move
 		// message, and detected that the cursor changed as a result of that.
 		UpdateWindowsCursor(hWnd, Doc->UI.GetCursor(), 0, 0);
@@ -390,4 +391,4 @@ LRESULT DocGroup::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	return 0;
 }
-}
+} // namespace xo

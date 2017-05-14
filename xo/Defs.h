@@ -534,11 +534,6 @@ XO_API void          AddOrRemoveDocsFromGlobalList();
 XO_API void          ParseFail(const char* msg, ...);
 XO_API void          StyleVarLookupFailed(const char* var);
 XO_API void          TimeTraceBuf(const char* msg);
-#if XO_PLATFORM_WIN_DESKTOP
-XO_API void RunWin32MessageLoop();
-#elif XO_PLATFORM_LINUX_DESKTOP
-XO_API void RunXMessageLoop();
-#endif
 
 template <typename... Args>
 void Trace(const char* fs, const Args&... args) {

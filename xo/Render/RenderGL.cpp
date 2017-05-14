@@ -5,6 +5,8 @@
 #include "TextureAtlas.h"
 #include "../Text/GlyphCache.h"
 #include "../SysWnd.h"
+#include "../SysWnd_windows.h"
+#include "../SysWnd_linux.h"
 
 namespace xo {
 
@@ -175,13 +177,13 @@ static bool BootGL(HWND wnd) {
 #if XO_PLATFORM_WIN_DESKTOP
 bool RenderGL::InitializeDevice(SysWnd& wnd) {
 	if (!GLIsBooted) {
-		if (!BootGL(wnd.Wnd))
+		if (!BootGL(GetHWND(wnd)))
 			return false;
 	}
 
 	bool  allGood = false;
 	HGLRC rc      = NULL;
-	HDC   dc      = GetDC(wnd.Wnd);
+	HDC   dc      = GetDC(GetHWND(wnd));
 	if (!dc)
 		return false;
 
@@ -215,7 +217,7 @@ bool RenderGL::InitializeDevice(SysWnd& wnd) {
 		}
 	}
 
-	ReleaseDC(wnd.Wnd, dc);
+	ReleaseDC(GetHWND(wnd), dc);
 
 	if (!allGood) {
 		if (rc)
@@ -234,8 +236,9 @@ bool RenderGL::InitializeDevice(SysWnd& wnd) {
 }
 #elif XO_PLATFORM_LINUX_DESKTOP
 bool RenderGL::InitializeDevice(SysWnd& wnd) {
+	auto w = (SysWndLinux*) &wnd;
 	int oglLoad = ogl_LoadFunctions();
-	int glxLoad = glx_LoadFunctions(wnd.XDisplay, 0);
+	int glxLoad = glx_LoadFunctions(w->XDisplay, 0);
 	Trace("oglload: %d\n", oglLoad);
 	Trace("glxload: %d\n", glxLoad);
 	if (!CreateShaders())
@@ -381,12 +384,12 @@ void RenderGL::ActivateShader(Shaders shader) {
 void RenderGL::DestroyDevice(SysWnd& wnd) {
 #if XO_PLATFORM_WIN_DESKTOP
 	if (GLRC != NULL) {
-		DC = GetDC(wnd.Wnd);
+		DC = GetDC(GetHWND(wnd));
 		wglMakeCurrent(DC, GLRC);
 		DeleteShadersAndTextures();
 		wglMakeCurrent(NULL, NULL);
 		wglDeleteContext(GLRC);
-		ReleaseDC(wnd.Wnd, DC);
+		ReleaseDC(GetHWND(wnd), DC);
 		DC   = NULL;
 		GLRC = NULL;
 	}
@@ -406,7 +409,7 @@ bool RenderGL::BeginRender(SysWnd& wnd) {
 	XOTRACE_RENDER("BeginRender %d x %d\n", FBWidth, FBHeight);
 #if XO_PLATFORM_WIN_DESKTOP
 	if (GLRC) {
-		DC = GetDC(wnd.Wnd);
+		DC = GetDC(GetHWND(wnd));
 		if (DC) {
 			wglMakeCurrent(DC, GLRC);
 			return true;
@@ -416,7 +419,8 @@ bool RenderGL::BeginRender(SysWnd& wnd) {
 #elif XO_PLATFORM_ANDROID
 	return true;
 #elif XO_PLATFORM_LINUX_DESKTOP
-	glXMakeCurrent(wnd.XDisplay, wnd.XWindow, wnd.GLContext);
+	auto w = (SysWndLinux*) &wnd;
+	glXMakeCurrent(w->XDisplay, w->XWindow, w->GLContext);
 	return true;
 #else
 	return true;
@@ -428,13 +432,14 @@ void RenderGL::EndRender(SysWnd& wnd, uint32_t endRenderFlags) {
 	if (!(endRenderFlags & EndRenderNoSwap))
 		SwapBuffers(DC);
 	wglMakeCurrent(NULL, NULL);
-	ReleaseDC(wnd.Wnd, DC);
+	ReleaseDC(GetHWND(wnd), DC);
 	DC = NULL;
 #elif XO_PLATFORM_ANDROID
 #elif XO_PLATFORM_LINUX_DESKTOP
+	auto w = (SysWndLinux*) &wnd;
 	if (!(endRenderFlags & EndRenderNoSwap))
-		glXSwapBuffers(wnd.XDisplay, wnd.XWindow);
-	glXMakeCurrent(wnd.XDisplay, None, NULL);
+		glXSwapBuffers(w->XDisplay, w->XWindow);
+	glXMakeCurrent(w->XDisplay, None, NULL);
 #endif
 }
 

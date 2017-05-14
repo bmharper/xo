@@ -16,9 +16,10 @@
 #include <jni.h>
 #include <android/log.h>
 #include <sys/atomics.h>
-#else
+#elif XO_PLATFORM_LINUX_DESKTOP
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h> 
 #include <unistd.h>
 #include <pwd.h>
 #include <X11/Xlib.h> // X11 definitions are needed by SysWnd.h
@@ -137,8 +138,10 @@ typedef Mat4T<float> Mat4f;
 #include "../Base/Alloc.h"
 #include "../Base/cheapvec.h"
 #include "../Base/CPU.h"
+#include "../Base/Error.h"
 #include "../Base/Queue.h"
 #include "../Base/xoString.h"
+#include "../Base/OS_Error.h"
 #include "../Base/OS_Time.h"
 #include "../Base/OS_IO.h"
 #include "../Base/OS_Clipboard.h"

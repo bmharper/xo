@@ -2,6 +2,7 @@
 #include "RenderDX.h"
 #include "../Image/Image.h"
 #include "../SysWnd.h"
+#include "../SysWnd_windows.h"
 
 namespace xo {
 
@@ -59,7 +60,7 @@ bool RenderDX::InitializeDXDevice(SysWnd& wnd) {
 	swap.SampleDesc.Quality = 0;
 	swap.BufferUsage        = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swap.BufferCount        = 1;
-	swap.OutputWindow       = wnd.Wnd;
+	swap.OutputWindow       = GetHWND(wnd);
 	swap.Windowed           = true;
 	swap.SwapEffect         = DXGI_SWAP_EFFECT_DISCARD;
 	swap.Flags              = 0;
