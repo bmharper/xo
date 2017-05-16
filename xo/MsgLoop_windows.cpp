@@ -14,6 +14,8 @@ static void SetupTimerMessagesForAllDocs() {
 }
 
 XO_API void RunMessageLoop() {
+	AddOrRemoveDocsFromGlobalList();
+
 	while (true) {
 		SetupTimerMessagesForAllDocs();
 
