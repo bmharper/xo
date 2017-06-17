@@ -4,6 +4,7 @@
 .metadata
 Thumbs.db
 t2-output
+/ide
 amalgamation/xo-amalgamation-freetype.c
 amalgamation/xo-amalgamation.cpp
 amalgamation/xo-amalgamation.h

@@ -102,6 +102,7 @@ Build {
 				['debug-analyze']      = 'Debug Analyze',
 			},
 		},
+		MsvcSolutionDir = 'ide',
 		-- Override solutions to generate and what units to put where.
 		MsvcSolutions = {
 			['xo.sln'] = {}, -- receives all the units due to empty set
