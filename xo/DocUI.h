@@ -28,6 +28,7 @@ public:
 
 	void InternalProcessEvent(Event& ev, const LayoutResult* layout); // This is always called from the UI thread. Do not call this yourself. It is called only by DocGroup::ProcessEvent()
 	void CloneSlowInto(DocUI& c) const;
+	void DispatchDocProcess();
 
 	uint32_t GetViewportWidth() const { return ViewportWidth; }
 	uint32_t GetViewportHeight() const { return ViewportHeight; }
@@ -72,6 +73,7 @@ protected:
 	Event MakeEvent(Events evType);
 	void  InvalidateRenderForPseudoClass();
 	bool  CanReceiveInputEvents(InternalID nodeID);
+	void  RobustDispatchEventToHandlers(const Event& ev, const cheapvec<NodeEventIDPair>& handlers);
 
 	static void SendEvent(const Event& ev, const DomNode* target, bool* handled = nullptr, bool* stop = nullptr);
 };

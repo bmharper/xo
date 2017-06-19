@@ -388,7 +388,7 @@ XO_API void Initialize(const InitParams* init) {
 	Globals->TargetFPS            = 60;
 	Globals->NumWorkerThreads     = Min(numCPUCores, 4); // I can't think of a reason right now why you'd want lots of these
 	Globals->MaxSubpixelGlyphSize = 60;
-	Globals->PreferOpenGL         = false;
+	Globals->PreferOpenGL         = true; // Should be false on Windows, but we have some memory leaks in our DX driver
 	Globals->EnableVSync          = false;
 	// Freetype's output is linear coverage percentage, so if we treat our freetype texture as GL_LUMINANCE
 	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get perfect results without
@@ -492,9 +492,11 @@ Example:
 		{
 		case MainEventInit:
 			{
-				MainWnd = SysWnd::CreateWithDoc();
+	            MainWnd = SysWnd::New();
+				MainWnd->CreateWithDoc();
 				...
 				MainWnd->Show();
+				MainWnd->Doc()->UI.DispatchDocProcess();
 			}
 			break;
 		case MainEventShutdown:
@@ -529,8 +531,18 @@ XO_API void RunApp(MainCallback mainCallback) {
         case MainEventInit:
             mainWnd = SysWnd::New();
 			mainWnd->CreateWithDoc();
-            mainWnd->Show();
             mainCallback(mainWnd);
+			// Send a 'post event process' event, so that reactive controls can receive their first callback and render themselves.
+			// This is not a all a hack. It is exactly what one would expect to receive, because this is the very first time
+			// that "userland" code is running, and one very much expects to receive a DocProcess event after that, just the
+			// same as a DocProcess event is received after processing a click event.
+			mainWnd->Doc()->UI.DispatchDocProcess();
+			// It's ideal to only show the window after initial document setup has been run, so that the application's
+			// first pixels shown to the world are not just a blank canvas. Some applications may need the window dimensions
+			// to draw themselves, but those applications will need to wait for a WindowSize event for that. But having
+			// said that, I don't think we send out such a message. We should probably synthesize it here, and send it 
+			// out after Show().
+            mainWnd->Show();
             break;
         case MainEventShutdown:
             delete mainWnd;

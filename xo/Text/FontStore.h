@@ -4,6 +4,18 @@
 
 namespace xo {
 
+typedef uint32_t FontIDWeightPair;
+
+// weight is 1..9
+inline FontIDWeightPair MakeFontIDWeightPair(FontID fontID, uint8_t weight) {
+	return ((uint32_t) fontID << 10) | (uint32_t) weight;
+}
+
+inline void SplitFontIDWeightPair(FontIDWeightPair pair, FontID& fontID, uint8_t& weight) {
+	fontID = pair >> 10;
+	weight = pair & 15;
+}
+
 // This is used during layout to get an immutable set of fonts that we can access
 // without having to take any locks. Once a Font object has been created, it is
 // never mutated. The Freetype internals are most definitely mutated as we generate
@@ -15,11 +27,13 @@ public:
 	FontTableImmutable();
 	~FontTableImmutable();
 
-	void        Initialize(const cheapvec<Font*>& fonts);
-	const Font* GetByFontID(FontID fontID) const;
+	void        Initialize(const cheapvec<Font*>& fonts, const ohash::map<FontIDWeightPair, FontID>& cacheByWeight);
+	const Font* GetByFontID(FontID fontID) const;                          // Panics if FontID is valid
+	const Font* GetByFontIDAndWeight(FontID fontID, uint8_t weight) const; // Returns null if FontID+weight combo does not exist
 
 protected:
-	cheapvec<Font*> Fonts;
+	cheapvec<Font*>                      Fonts;
+	ohash::map<FontIDWeightPair, FontID> CacheByWeight; // See FontStore's WeightCache for explanation
 };
 
 /* This stores only font metadata such as filename.
@@ -54,6 +68,7 @@ public:
 	void               InitializeFreetype();
 	void               ShutdownFreetype();
 	const Font*        GetByFontID(FontID fontID);
+	const Font*        GetByFontIDAndWeight(FontID fontID, uint8_t weight); // weight is from 1..9
 	const Font*        GetByFacename(const char* facename);
 	FontID             InsertByFacename(const char* facename); // This is safe to call if the font is already loaded
 	FontID             GetFallbackFontID();                    // This is a font that is always available on this platform. Panics if the font is not available.
@@ -62,13 +77,14 @@ public:
 	void AddFontDirectory(const char* dir);
 
 private:
-	std::mutex                 Lock;
-	cheapvec<Font*>            Fonts;
-	cheapvec<String>           Directories;
-	ohash::map<String, FontID> FacenameToFontID;
-	ohash::map<String, String> FacenameToFilename;
-	FT_Library                 FTLibrary;
-	bool                       IsFontTableLoaded;
+	std::mutex                   Lock;
+	cheapvec<Font*>              Fonts;
+	cheapvec<String>             Directories;
+	ohash::map<String, FontID>   FacenameToFontID;   // Facename is lowercase
+	ohash::map<String, String>   FacenameToFilename; // Facename is lowercase
+	ohash::map<uint32_t, FontID> CacheByWeight;      // accelerate FontID + Weight lookups, so we don't need to go via the Facename for ("Segoe UI", 700) -> "SegoeUI Bold"
+	FT_Library                   FTLibrary;
+	bool                         IsFontTableLoaded;
 
 	const Font* GetByFacename_Internal(const char* facename) const;
 	FontID      Insert_Internal(const char* facename, FT_Face face);
@@ -81,4 +97,4 @@ private:
 
 	static bool IsFontFilename(const char* filename);
 };
-}
+} // namespace xo

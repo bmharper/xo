@@ -17,14 +17,29 @@ void xoMain(xo::SysWnd* wnd);
 
 static int __cdecl CrtAllocHook(int allocType, void *pvData, size_t size, int blockUse, long request, const unsigned char *filename, int fileLine)
 {
+	if (request == 1825)
+		int adsdssd = 2332;
 	return TRUE;
 }
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	_CrtMemState m1;
+	_CrtMemCheckpoint(&m1);
+
 	_CrtSetAllocHook(CrtAllocHook);
+
 	xo::RunApp(xoMain);
-	_CrtDumpMemoryLeaks();
+	
+	_CrtMemState m2;
+	_CrtMemCheckpoint(&m2);
+	
+	_CrtMemState mdiff;
+	_CrtMemDifference(&mdiff, &m1, &m2);
+
+	// OpenCV
+
+	//_CrtDumpMemoryLeaks();
 	return 0;
 }
 

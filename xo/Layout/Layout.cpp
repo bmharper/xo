@@ -31,22 +31,35 @@ void Layout::PerformLayout(const xo::Doc& doc, RenderDomNode& root, xo::Pool* po
 	// inside the vectors that store LayoutOutput inside RunNode
 	FHeap.Initialize(100, 64);
 
-	Fonts         = Global()->FontStore->GetImmutableTable();
 	SnapBoxes     = Global()->SnapBoxes;
 	SnapHorzText  = Global()->SnapHorzText;
 	EnableKerning = Global()->EnableKerning;
 
 	while (true) {
+		Fonts = Global()->FontStore->GetImmutableTable();
+
 		LayoutInternal(root);
 
-		if (GlyphsNeeded.size() == 0) {
+		if (GlyphsNeeded.size() == 0 && FontsNeeded.size() == 0) {
 			XOTRACE_LAYOUT_VERBOSE("Layout done\n");
 			break;
 		} else {
-			XOTRACE_LAYOUT_VERBOSE("Layout done (but need another pass for missing glyphs)\n");
+			XOTRACE_LAYOUT_VERBOSE("Layout done (but need another pass for missing fonts/glyphs)\n");
+			RenderFontsNeeded();
 			RenderGlyphsNeeded();
 		}
 	}
+}
+
+void Layout::RenderFontsNeeded() {
+	for (auto p : FontsNeeded) {
+		FontID  fontID;
+		uint8_t weight;
+		SplitFontIDWeightPair(p, fontID, weight);
+		auto fnt = Global()->FontStore->GetByFontIDAndWeight(fontID, weight);
+		XO_ASSERT(fnt); // we expect a fallback path here, if the weight can't be found
+	}
+	FontsNeeded.clear();
 }
 
 void Layout::RenderGlyphsNeeded() {
@@ -274,49 +287,73 @@ void Layout::RunText(const DomText* node, const LayoutInput& in, LayoutOutput& o
 
 	StyleAttrib fontSizeAttrib = Stack.Get(CatFontSize);
 	Pos         fontHeight     = ComputeDimension(in.ParentHeight, fontSizeAttrib.GetSize());
+	uint8_t     fontWeight     = Stack.Get(CatFontWeight).ValU32 / 100; // We use one byte to represent weight, so 1..9
 
 	float fontSizePxUnrounded = PosToReal(fontHeight);
 
 	// round font size to integer units
 	uint8_t fontSizePx = (uint8_t) Round(fontSizePxUnrounded);
 
+	bool canRun = true;
+
 	// Nothing prevents somebody from setting a font size to zero
 	if (fontSizePx < 1)
-		return;
+		canRun = false;
 
-	TempText.Node           = node;
-	TempText.RNode          = in.ParentRNode;
-	TempText.RNodeTxt       = nullptr;
-	TempText.FontWidthScale = 1.0f;
-	TempText.IsSubPixel     = Global()->EnableSubpixelText && fontSizePx <= Global()->MaxSubpixelGlyphSize;
-	TempText.FontID         = fontID;
-	TempText.FontSizePx     = fontSizePx;
-	TempText.Color          = Stack.Get(CatColor).GetColor();
-	TempText.RestartPoints  = in.RestartPoints;
-	TempText.FontAscender   = PosNULL;
-	GenerateTextWords(TempText);
+	// Check if we have this font/weight combination loaded
+	const Font* font = Fonts.GetByFontIDAndWeight(fontID, fontWeight);
+	if (font) {
+		// Reset font weight, because now that we've found the appropriate real font,
+		// we're back to "normal" for in it's eyes. In future, we may want to synthesize
+		// weights that don't exist, but for now this is OK.
+		fontID     = font->ID;
+		fontWeight = 4;
+	} else {
+		FontsNeeded.insert(MakeFontIDWeightPair(fontID, fontWeight));
+		canRun = false;
+	}
 
-	// If we are restarting output, then it's possible that some characters in the
-	// buffer were not flushed. So just wipe the buffer always.
-	TempText.Chars.Clear();
+	if (canRun) {
+		TempText.Node           = node;
+		TempText.RNode          = in.ParentRNode;
+		TempText.RNodeTxt       = nullptr;
+		TempText.FontWidthScale = 1.0f;
+		TempText.IsSubPixel     = Global()->EnableSubpixelText && fontSizePx <= Global()->MaxSubpixelGlyphSize;
+		TempText.FontID         = fontID;
+		TempText.FontSizePx     = fontSizePx;
+		TempText.Color          = Stack.Get(CatColor).GetColor();
+		TempText.RestartPoints  = in.RestartPoints;
+		TempText.FontAscender   = PosNULL;
+		GenerateTextWords(TempText);
 
-	// It makes sense to bind text words on baseline. The extremely simply document
-	// "<span style='padding: 10px'>something</span> else" would not have 'else' aligned
-	// to 'something' if we didn't align words to baseline.
-	// Since we only bind on baseline, we don't need to populate width and height
-	out.Baseline = TempText.FontAscender;
-	if (TempText.RNodeTxt)
-		out.MarginBox = TempText.RNodeTxt->Pos;
-	else
-		out.MarginBox = Box(0, 0, 0, 0); // same quandary here as below
-	out.Binds.VChildBaseline.Set(CatBaseline, VerticalBindingBaseline);
-	out.RNode = TempText.RNodeTxt;
-	// If TempText.RNodeTxt is null, then it means we're an empty text object, or we emitted
-	// only whitespace. In that case, I'm not sure whether our 'top' is actually zero, although
-	// I've been unable to create a case where it's not zero. Anyway, if you see that zero is
-	// wrong here, then you'll need to save it out of the GenerateTextWords function.
-	out.RNodeTop = TempText.RNodeTxt ? TempText.RNodeTxt->Pos.Top : 0;
-	out.Break    = BreakNULL;
+		// If we are restarting output, then it's possible that some characters in the
+		// buffer were not flushed. So just wipe the buffer always.
+		TempText.Chars.Clear();
+
+		// It makes sense to bind text words on baseline. The extremely simply document
+		// "<span style='padding: 10px'>something</span> else" would not have 'else' aligned
+		// to 'something' if we didn't align words to baseline.
+		// Since we only bind on baseline, we don't need to populate width and height
+		out.Baseline = TempText.FontAscender;
+		if (TempText.RNodeTxt)
+			out.MarginBox = TempText.RNodeTxt->Pos;
+		else
+			out.MarginBox = Box(0, 0, 0, 0); // same quandary here as below
+		out.Binds.VChildBaseline.Set(CatBaseline, VerticalBindingBaseline);
+		out.RNode = TempText.RNodeTxt;
+		// If TempText.RNodeTxt is null, then it means we're an empty text object, or we emitted
+		// only whitespace. In that case, I'm not sure whether our 'top' is actually zero, although
+		// I've been unable to create a case where it's not zero. Anyway, if you see that zero is
+		// wrong here, then you'll need to save it out of the GenerateTextWords function.
+		out.RNodeTop = TempText.RNodeTxt ? TempText.RNodeTxt->Pos.Top : 0;
+		out.Break    = BreakNULL;
+	} else {
+		out.Baseline  = 0;
+		out.MarginBox = Box(0, 0, 0, 0);
+		out.RNode     = nullptr;
+		out.RNodeTop  = 0;
+		out.Break     = BreakNULL;
+	}
 }
 
 /*
@@ -808,8 +845,10 @@ bool Layout::IsLinebreak(int ch) {
 }
 
 GlyphCacheKey Layout::MakeGlyphCacheKey(RenderDomText* rnode) {
-	uint8_t glyphFlags = rnode->IsSubPixel() ? GlyphFlag_SubPixel_RGB : 0;
-	return GlyphCacheKey(rnode->FontID, 0, rnode->FontSizePx, glyphFlags);
+	uint8_t flags = 0;
+	if (rnode->IsSubPixel())
+		flags |= GlyphFlag_SubPixel_RGB;
+	return GlyphCacheKey(rnode->FontID, 0, rnode->FontSizePx, flags);
 }
 
 GlyphCacheKey Layout::MakeGlyphCacheKey(const TextRunState& ts) {
@@ -817,8 +856,10 @@ GlyphCacheKey Layout::MakeGlyphCacheKey(const TextRunState& ts) {
 }
 
 GlyphCacheKey Layout::MakeGlyphCacheKey(bool isSubPixel, FontID fontID, int fontSizePx) {
-	uint8_t glyphFlags = isSubPixel ? GlyphFlag_SubPixel_RGB : 0;
-	return GlyphCacheKey(fontID, 0, fontSizePx, glyphFlags);
+	uint8_t flags = 0;
+	if (isSubPixel)
+		flags |= GlyphFlag_SubPixel_RGB;
+	return GlyphCacheKey(fontID, 0, fontSizePx, flags);
 }
 
 bool Layout::IsAllZeros(const cheapvec<int32_t>& list) {
@@ -933,4 +974,4 @@ Pos Layout::HBindHelper::Delta(StyleAttrib parent, HorizontalBindings child) {
 		return p - c;
 	return PosNULL;
 }
-}
+} // namespace xo

@@ -27,6 +27,8 @@ public:
 	size_t      Index(const char* find) const;      // Find the first occurrence of 'find', or -1 if none
 	size_t      RIndex(const char* find) const;     // Find the last occurrence of 'find', or -1 if none
 	bool        EndsWith(const char* suffix) const; // Returns true if the string ends with 'suffix'
+	void        MakeLower();                    // Latin only
+	void        MakeUpper();                    // Latin only
 
 	bool operator==(const char* b) const;
 	bool operator!=(const char* b) const { return !(*this == b); }
@@ -78,12 +80,14 @@ public:
 };
 
 void XO_API Itoa(int64_t value, char* buf, int base);
-}
+} // namespace xo
 
 namespace ohash {
-template<> inline ohash::hashkey_t gethashcode(const xo::String& k) { return (ohash::hashkey_t) k.GetHashCode(); }
-template<> inline ohash::hashkey_t gethashcode(const xo::StringRaw& k) { return (ohash::hashkey_t) k.GetHashCode(); }
-}
+template <>
+inline ohash::hashkey_t gethashcode(const xo::String& k) { return (ohash::hashkey_t) k.GetHashCode(); }
+template <>
+inline ohash::hashkey_t gethashcode(const xo::StringRaw& k) { return (ohash::hashkey_t) k.GetHashCode(); }
+} // namespace ohash
 
 #ifdef _WIN32
 #pragma warning(pop)

@@ -13,7 +13,7 @@ static const size_t MaxStyleVarNameLen = 127;
 static const size_t MaxSvgNameLen = 127;
 
 // This is parsing whitespace, not DOM/textual whitespace
-// In other words, it is the space between the comma and verdana in "font-family: verdana, arial",
+// In other words, it is the space between the colon and verdana in "font-family: verdana, arial",
 inline bool IsWhitespace(char c) {
 	return c == 9 || c == 32 || c == 10 || c == 13;
 }
@@ -220,6 +220,19 @@ enum BumpStyle {
 	BumpNone,     // Neither horizontal nor vertical bumps have effect
 };
 
+// WARNING. Font weight is not finished being implemented. Search in the code for $FONT-WEIGHT-ABORT to see where to continue implementing it.
+enum FontWeight {
+	FontWeightThin       = 100,
+	FontWeightExtraLight = 200,
+	FontWeightLight      = 300,
+	FontWeightNormal     = 400,
+	FontWeightMedium     = 500,
+	FontWeightSemiBold   = 600,
+	FontWeightBold       = 700,
+	FontWeightExtraBold  = 800,
+	FontWeightBlack      = 900,
+};
+
 // The following attributes are "bind sources". You bind a position of your own to a position on your parent node.
 // The "bind targets" that you can bind to on your parent node are the same properties that can be used as bind sources.
 // So if you bind left:right, then you are binding your left edge to your parent content box's right edge.
@@ -236,7 +249,6 @@ enum BumpStyle {
 // In addition, all 'box' types must fall between Margin_Left and Border_Bottom. This is simply for sanity. It is verified
 // inside Style.SetBox()
 //
-// !!! This must be kept in sync with CatNameTable !!!
 enum StyleCategories {
 	CatNULL = 0,
 	CatColor,
@@ -245,6 +257,8 @@ enum StyleCategories {
 	CatBackground,
 	CatPadding_Use_Me_2,
 	CatText_Align_Vertical,
+
+	// !!! This list must be kept in sync with CatNameTable !!!
 
 	CatBreak,
 	CatCanFocus,
@@ -269,6 +283,8 @@ enum StyleCategories {
 	CatBorder_Right,
 	CatBorder_Bottom,
 
+	// !!! This list must be kept in sync with CatNameTable !!!
+
 	CatBorderColor_Left,
 	CatBorderColor_Top,
 	CatBorderColor_Right,
@@ -289,6 +305,8 @@ enum StyleCategories {
 	CatVertBinding_FIRST = CatTop,
 	CatVertBinding_LAST  = CatBaseline,
 
+	// !!! This list must be kept in sync with CatNameTable !!!
+
 	CatLeft,
 	CatHCenter,
 	CatRight,
@@ -297,6 +315,7 @@ enum StyleCategories {
 
 	CatFontSize,
 	CatFontFamily,
+	CatFontWeight,
 
 	CatPosition,
 	CatFlowContext,
@@ -305,6 +324,8 @@ enum StyleCategories {
 	CatFlowDirection_Vertical,
 	CatBoxSizing,
 	CatBump,
+
+	// !!! This list must be kept in sync with CatNameTable !!!
 
 	// Generic categories used for style properties that reference variables. Use CatUngenerify to make a concret _Left category.
 	CatGenMargin,
@@ -400,6 +421,7 @@ public:
 	//void SetBorderRadius(Size val) { SetSize(CatBorderRadius, val); }
 	void SetPosition(PositionType val) { SetU32(CatPosition, val); }
 	void SetFont(FontID val) { SetU32(CatFontFamily, val); }
+	void SetFontWeight(int val) { SetU32(CatFontWeight, val); }
 	void SetBackgroundVector(int vectorID) { SetWithSubtypeU32(CatBackground, SubType_Background_Vector, vectorID); }
 	void SetBreak(BreakType type) { SetU32(CatBreak, type); }
 	void SetCanFocus(bool canFocus) { SetU32(CatCanFocus, canFocus); }
@@ -441,10 +463,12 @@ public:
 	void Set(StyleCategories cat, HorizontalBindings val) { SetWithSubtypeU32(cat, SubType_EnumBinding, val); }
 	void Set(StyleCategories cat, VerticalBindings val) { SetWithSubtypeU32(cat, SubType_EnumBinding, val); }
 	void Set(StyleCategories cat, FontID val) { SetFont(val); }
+	void Set(StyleCategories cat, FontWeight val) { SetFontWeight(val); }
 	void Set(StyleCategories cat, BumpStyle val) { SetU32(cat, val); }
 	void Set(StyleCategories cat, const char* val, Doc* doc) { SetString(cat, val, doc); }
 
 	void SetBool(StyleCategories cat, bool val) { SetU32(cat, val); }
+	void SetInt(StyleCategories cat, int val) { SetU32(cat, val); }
 
 	bool IsNull() const { return Category == CatNULL; }
 	bool IsInherit() const { return !!(Flags & FlagInherit); }
@@ -458,6 +482,7 @@ public:
 	Color              GetColor() const { return Color::Make(ValU32); }
 	PositionType       GetPositionType() const { return (PositionType) ValU32; }
 	BreakType          GetBreakType() const { return (BreakType) ValU32; }
+	int                GetFontWeight() const { return (int) ValU32; }
 	bool               GetCanFocus() const { return ValU32 != 0; }
 	Cursors            GetCursor() const { return (Cursors) ValU32; }
 	int                GetStringID() const { return (int) ValU32; }
@@ -661,7 +686,7 @@ public:
 	void              Discard();
 	StyleClass*       GetOrCreate(const char* name);
 	const StyleClass* GetByID(StyleClassID id) const;
-	StyleClassID      GetClassID(const char* name);
+	StyleClassID      GetClassID(const char* name) const;
 	void              CloneSlowInto(StyleTable& c) const;             // Does not clone NameToIndex
 	void              CloneFastInto(StyleTable& c, Pool* pool) const; // Does not clone NameToIndex
 	void              ExpandVerbatimVariables(Doc* doc);              // Expand style $variables
@@ -686,4 +711,5 @@ XO_API bool ParseBinding(bool isHorz, const char* s, size_t len, StyleCategories
 XO_API bool ParseBump(const char* s, size_t len, BumpStyle& t);
 XO_API bool ParseBorder(const char* s, size_t len, const char* subCategory, size_t subCategoryLen, Doc* doc, Style& style);
 XO_API bool ParseBackground(const char* s, size_t len, const char* subCategory, size_t subCategoryLen, Doc* doc, Style& style);
-}
+XO_API bool ParseFontWeight(const char* s, size_t len, FontWeight& val);
+} // namespace xo

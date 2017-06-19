@@ -24,6 +24,7 @@
 #include "Controls/EditBox.h"
 #include "Controls/Button.h"
 #include "Controls/MsgBox.h"
+#include "Reactive/Control.h"
 
 #ifdef _WIN32
 #pragma warning(pop)

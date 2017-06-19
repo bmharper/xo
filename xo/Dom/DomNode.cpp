@@ -315,10 +315,16 @@ void DomNode::ReadyTimers(int64_t nowTicksMS, cheapvec<NodeEventIDPair>& handler
 	}
 }
 
-// Unlike ReaderTimers, this function could be const, but I haven't bothered.
-void DomNode::RenderHandlers(cheapvec<NodeEventIDPair>& handlers) {
+void DomNode::RenderHandlers(cheapvec<NodeEventIDPair>& handlers) const {
 	for (auto& h : Handlers) {
 		if (!!(h.Mask & EventRender))
+			handlers.push({InternalID, h.ID});
+	}
+}
+
+void DomNode::DocProcessHandlers(cheapvec<NodeEventIDPair>& handlers) {
+	for (auto& h : Handlers) {
+		if (!!(h.Mask & EventDocProcess))
 			handlers.push({InternalID, h.ID});
 	}
 }
@@ -336,16 +342,18 @@ void DomNode::ReleaseCapture() const {
 }
 
 void DomNode::RecalcAllEventMask() {
-	bool hadTimer  = !!(AllEventMask & EventTimer);
-	bool hadRender = !!(AllEventMask & EventTimer);
+	bool hadTimer    = !!(AllEventMask & EventTimer);
+	bool hadRender   = !!(AllEventMask & EventRender);
+	bool hadDocProcess = !!(AllEventMask & EventDocProcess);
 
 	uint32_t m = 0;
 	for (size_t i = 0; i < Handlers.size(); i++)
 		m |= Handlers[i].Mask;
 	AllEventMask = m;
 
-	bool hasTimerNow  = !!(AllEventMask & EventTimer);
-	bool hasRenderNow = !!(AllEventMask & EventRender);
+	bool hasTimerNow    = !!(AllEventMask & EventTimer);
+	bool hasRenderNow   = !!(AllEventMask & EventRender);
+	bool hasDocProcessNow = !!(AllEventMask & EventDocProcess);
 
 	if (!hadTimer && hasTimerNow)
 		Doc->NodeGotTimer(InternalID);
@@ -356,6 +364,11 @@ void DomNode::RecalcAllEventMask() {
 		Doc->NodeGotRender(InternalID);
 	else if (hadRender && !hasRenderNow)
 		Doc->NodeLostRender(InternalID);
+
+	if (!hadDocProcess && hasDocProcessNow)
+		Doc->NodeGotDocProcess(InternalID);
+	else if (hadRender && !hasRenderNow)
+		Doc->NodeLostDocProcess(InternalID);
 }
 
 void DomNode::DeleteChildInternal(DomEl* c) {

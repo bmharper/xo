@@ -4,7 +4,6 @@ local winFilter = "win*"
 local winDebugFilter = "win*-*-debug"
 local winReleaseFilter = "win*-*-release"
 local linuxFilter = "linux-*-*-*"
-local directxFilter = "win*"
 
 local winKernelLibs = { "kernel32.lib", "user32.lib", "gdi32.lib", "winspool.lib", "advapi32.lib", "shell32.lib", "comctl32.lib", 
 						"uuid.lib", "ole32.lib", "oleaut32.lib", "shlwapi.lib", "OLDNAMES.lib", "wldap32.lib", "wsock32.lib",
@@ -120,7 +119,7 @@ local directx = ExternalLibrary {
 	Name = "directx",
 	Propagate = {
 		Libs = {
-			{ "D3D11.lib", "d3dcompiler.lib"; Config = directxFilter },
+			{ "D3D11.lib", "d3dcompiler.lib"; Config = "win*" },
 		},
 	},
 }

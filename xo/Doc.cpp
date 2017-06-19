@@ -91,7 +91,7 @@ void Doc::CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const {
 	c.StyleVariables.CloneFrom_Incremental(StyleVariables);
 	c.Strings.CloneFrom_Incremental(Strings);
 	c.StyleVerbatimStrings.CloneFrom_Incremental(StyleVerbatimStrings);
-	
+
 	c.Images.CloneMetadataFrom(Images);
 	c.VectorIcons.CloneFrom_Incremental(VectorIcons);
 
@@ -128,6 +128,10 @@ bool Doc::ClassParse(const char* klass, const char* style, size_t styleMaxLen) {
 		return false;
 	}
 	return subset->Parse(style, styleMaxLen, this);
+}
+
+bool Doc::HasClass(const char* klass) const {
+	return ClassStyles.GetClassID(klass) != 0;
 }
 
 bool Doc::ParseStyleSheet(const char* sheet) {
@@ -228,6 +232,21 @@ void Doc::RenderHandlers(cheapvec<NodeEventIDPair>& handlers) {
 	for (InternalID id : NodesWithRender) {
 		DomNode* node = GetNodeByInternalIDMutable(id);
 		node->RenderHandlers(handlers);
+	}
+}
+
+void Doc::NodeGotDocProcess(InternalID node) {
+	NodesWithDocProcess.insert(node);
+}
+
+void Doc::NodeLostDocProcess(InternalID node) {
+	NodesWithDocProcess.erase(node);
+}
+
+void Doc::DocProcessHandlers(cheapvec<NodeEventIDPair>& handlers) {
+	for (InternalID id : NodesWithDocProcess) {
+		DomNode* node = GetNodeByInternalIDMutable(id);
+		node->DocProcessHandlers(handlers);
 	}
 }
 
@@ -348,4 +367,4 @@ void Doc::InitializeDefaultControls() {
 	controls::Button::InitializeStyles(this);
 	controls::MsgBox::InitializeStyles(this);
 }
-}
+} // namespace xo

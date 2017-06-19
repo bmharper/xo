@@ -48,6 +48,9 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 
 	ev.LayoutResult = layout;
 
+	// True if "userland" code ran
+	bool handled = false;
+
 	switch (ev.Type) {
 	case EventTimer: {
 		// Remember that any callback can do *anything* to our DOM, so we cannot assume that
@@ -68,6 +71,7 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 			localEv.Context              = eh->Context;
 			localEv.Target               = target;
 			localEv.IsCancelTimerToggled = false;
+			handled                      = true;
 			eh->Func(localEv);
 			// If the timer has destroyed it's owning DOM element, then 'eh' and 'target' will be dead.
 			if (!Doc->GetNodeByInternalIDMutable(h.NodeID))
@@ -83,22 +87,18 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 		// are still alive, at every step of the way.
 		cheapvec<NodeEventIDPair> handlers;
 		Doc->RenderHandlers(handlers);
-		Event localEv = ev;
-		for (NodeEventIDPair h : handlers) {
-			DomNode* target = Doc->GetNodeByInternalIDMutable(h.NodeID);
-			if (!target)
-				continue;
-			EventHandler* eh = target->HandlerByID(h.EventID);
-			if (!eh)
-				continue;
-			localEv.Context = eh->Context;
-			localEv.Target  = target;
-			eh->Func(localEv);
-		}
+		if (handlers.size() != 0)
+			handled = true;
+		RobustDispatchEventToHandlers(ev, handlers);
 		break;
 	}
 	default:
-		ProcessInputEvent(ev, layout);
+		handled = ProcessInputEvent(ev, layout);
+	}
+
+	// Process DocProcess messages, which listen for the end of an event loop that caused userland code to run
+	if (handled) {
+		DispatchDocProcess();
 	}
 }
 
@@ -111,6 +111,17 @@ void DocUI::CloneSlowInto(DocUI& c) const {
 	c.ViewportWidth    = ViewportWidth;
 	c.ViewportHeight   = ViewportHeight;
 	c.Cursor           = Cursor;
+}
+
+void DocUI::DispatchDocProcess() {
+	cheapvec<NodeEventIDPair> handlers;
+	Doc->DocProcessHandlers(handlers);
+	Event procEv;
+	procEv.Type   = EventDocProcess;
+	procEv.Button = Button::SpecialDispatchEnd;
+	procEv.Doc    = Doc;
+	//procEv.LayoutResult = ev.LayoutResult;
+	RobustDispatchEventToHandlers(procEv, handlers);
 }
 
 void DocUI::SetCapture(InternalID id) {
@@ -500,6 +511,24 @@ bool DocUI::CanReceiveInputEvents(InternalID nodeID) {
 	if (CurrentCaptureID == InternalIDNull)
 		return true;
 	return CurrentCaptureID == nodeID;
+}
+
+// This is "robust" because it is deals with the fact that handlers can remove themselves inside their callbacks
+void DocUI::RobustDispatchEventToHandlers(const Event& ev, const cheapvec<NodeEventIDPair>& handlers) {
+	Event localEv = ev;
+	for (NodeEventIDPair h : handlers) {
+		DomNode* target = Doc->GetNodeByInternalIDMutable(h.NodeID);
+		if (!target)
+			continue;
+		EventHandler* eh = target->HandlerByID(h.EventID);
+		if (!eh)
+			continue;
+		localEv.Context = eh->Context;
+		localEv.Target  = target;
+		eh->Func(localEv);
+		// After this point, ANYTHING could have happened. The entire DOM tree could have been destroyed.
+		// The only guarantee we have is that Doc is still alive.
+	}
 }
 
 void DocUI::SendEvent(const Event& ev, const DomNode* target, bool* handled, bool* stop) {

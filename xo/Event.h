@@ -21,12 +21,17 @@ enum Events {
 	EventKeyDown    = 4096,
 	EventKeyUp      = 8192,
 	EventKeyChar    = 16384,
-	EventDestroy    = 32768, // DOM node is being removed from document
-	EventRender     = 65536, // Document has finished rendering
+	EventDestroy    = 32768,  // DOM node is being removed from document
+	EventRender     = 65536,  // Document has finished rendering
+	// Catch-all for meta-events, like document has finished dispatching events.
+	// Look inside Event.Button, and expect Button::SpecialDispatchEnd.
+	// Other special 'buttons' may be added in future.
+	EventDocProcess = 131072, 
 };
 
 enum class Button {
 	Null = 0,
+	SpecialDispatchEnd, // Pseudo button. Used only with EventDocProcess to indicate that this is the end of event dispatching
 	MouseLeft,
 	MouseMiddle,
 	MouseRight,

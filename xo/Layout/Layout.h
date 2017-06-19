@@ -77,11 +77,11 @@ protected:
 		RenderDomNode*        RNode;    // Parent of the text nodes
 		RenderDomText*        RNodeTxt; // Child of RNode
 		RingBuf<RenderCharEl> Chars;
-		bool                  GlyphsNeeded;
-		bool                  IsSubPixel;
 		cheapvec<int32_t>*    RestartPoints;
 		float                 FontWidthScale;
 		int                   FontSizePx;
+		bool                  GlyphsNeeded;
+		bool                  IsSubPixel;
 		Pos                   FontAscender;
 		xo::FontID            FontID;
 		xo::Color             Color;
@@ -98,20 +98,22 @@ protected:
 		// bool	ReverseMinor;	// Minor goes from high to low numbers (right to left, or bottom to top)
 	};
 
-	const xo::Doc*            Doc;
-	BoxLayout                 Boxer;
-	xo::Pool*                 Pool;
-	RenderStack               Stack;
-	FixedSizeHeap             FHeap;
-	float                     PtToPixel;
-	float                     EpToPixel;
-	FontTableImmutable        Fonts;
-	ohash::set<GlyphCacheKey> GlyphsNeeded;
-	TextRunState              TempText;
-	bool                      SnapBoxes;
-	bool                      SnapHorzText;
-	bool                      EnableKerning;
+	const xo::Doc*               Doc;
+	BoxLayout                    Boxer;
+	xo::Pool*                    Pool;
+	RenderStack                  Stack;
+	FixedSizeHeap                FHeap;
+	float                        PtToPixel;
+	float                        EpToPixel;
+	FontTableImmutable           Fonts;
+	ohash::set<GlyphCacheKey>    GlyphsNeeded;
+	ohash::set<FontIDWeightPair> FontsNeeded; // Will only be here because of a weight that is not 400 (regular)
+	TextRunState                 TempText;
+	bool                         SnapBoxes;
+	bool                         SnapHorzText;
+	bool                         EnableKerning;
 
+	void  RenderFontsNeeded();
 	void  RenderGlyphsNeeded();
 	void  LayoutInternal(RenderDomNode& root);
 	void  RunNode(const DomNode* node, const LayoutInput& in, LayoutOutput& out);
