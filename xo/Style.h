@@ -220,17 +220,16 @@ enum BumpStyle {
 	BumpNone,     // Neither horizontal nor vertical bumps have effect
 };
 
-// WARNING. Font weight is not finished being implemented. Search in the code for $FONT-WEIGHT-ABORT to see where to continue implementing it.
 enum FontWeight {
-	FontWeightThin       = 100,
-	FontWeightExtraLight = 200,
-	FontWeightLight      = 300,
-	FontWeightNormal     = 400,
-	FontWeightMedium     = 500,
-	FontWeightSemiBold   = 600,
-	FontWeightBold       = 700,
-	FontWeightExtraBold  = 800,
-	FontWeightBlack      = 900,
+	FontWeightThin      = 100,
+	FontWeightLight     = 200,
+	FontWeightSemiLight = 300,
+	FontWeightNormal    = 400,
+	FontWeightMedium    = 500,
+	FontWeightSemiBold  = 600,
+	FontWeightBold      = 700,
+	FontWeightExtraBold = 800,
+	FontWeightBlack     = 900,
 };
 
 // The following attributes are "bind sources". You bind a position of your own to a position on your parent node.

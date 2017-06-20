@@ -1531,8 +1531,17 @@ XO_API bool ParseBackground(const char* s, size_t len, const char* subCategory, 
 }
 
 XO_API bool ParseFontWeight(const char* s, size_t len, FontWeight& val) {
+	// This table should match what we have inside FontStore.cpp
+	if (MATCH(s, 0, len, "thin")) {
+		val = FontWeightThin;
+		return true;
+	}
 	if (MATCH(s, 0, len, "light")) {
 		val = FontWeightLight;
+		return true;
+	}
+	if (MATCH(s, 0, len, "semilight")) {
+		val = FontWeightSemiLight;
 		return true;
 	}
 	if (MATCH(s, 0, len, "normal")) {

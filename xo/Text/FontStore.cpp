@@ -101,10 +101,12 @@ const Font* FontStore::GetByFontIDAndWeight(FontID fontID, uint8_t weight) {
 			return GetByFontID(fromAccel);
 	}
 
+	// Someday we'll probably want a bunch of different matching names here for the different categories,
+	// such as "extralight" = "light", and "heavy" = "black"
 	const char* lut[9] = {
 	    " thin",
-	    " extralight",
 	    " light",
+	    " semilight",
 	    " regular",
 	    " medium",
 	    " semibold",
@@ -123,6 +125,7 @@ const Font* FontStore::GetByFontIDAndWeight(FontID fontID, uint8_t weight) {
 			break;
 		fnt = GetByFacename((plain->Facename + lut[pos]).CStr());
 		if (fnt) {
+			Trace("Resolved weighted font %s @ %d -> %s.\n", plain->Facename.CStr(), (int) weight * 100, fnt->Facename.CStr());
 			Lock.lock();
 			CacheByWeight.insert(cacheKey, fnt->ID);
 			Lock.unlock();
