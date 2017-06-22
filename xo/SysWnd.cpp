@@ -27,7 +27,7 @@ SysWnd* SysWnd::New() {
 #endif
 }
 
-void SysWnd::PlatformInitialize() {
+void SysWnd::PlatformInitialize(const InitParams* init) {
 }
 
 SysWnd::SysWnd() {
@@ -52,7 +52,7 @@ SysWnd::~SysWnd() {
 Error SysWnd::CreateWithDoc(uint32_t createFlags) {
 	DocGroup      = new xo::DocGroup();
 	DocGroup->Wnd = this;
-	auto err = Create(createFlags);
+	auto err      = Create(createFlags);
 	if (!err.OK()) {
 		delete DocGroup;
 		DocGroup = nullptr;
@@ -64,6 +64,9 @@ Error SysWnd::CreateWithDoc(uint32_t createFlags) {
 }
 
 void SysWnd::Show() {
+}
+
+void SysWnd::SetTitle(const char* title) {
 }
 
 Doc* SysWnd::Doc() {
@@ -107,6 +110,10 @@ void SysWnd::PostRepaintMessage() {
 
 bool SysWnd::CopySurfaceToImage(Box box, Image& img) {
 	return false;
+}
+
+void SysWnd::MinimizeToSystemTray(const char* title, std::function<void()> showContextMenu) {
+	SysTrayContextMenuCallback = showContextMenu;
 }
 
 void SysWnd::InvalidateRect(Box box) {

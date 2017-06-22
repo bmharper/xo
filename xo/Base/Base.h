@@ -10,6 +10,7 @@
 #include <windowsx.h>
 #include <mmsystem.h>
 #include <Shlobj.h>
+#include <Shellapi.h>
 #include <tchar.h>
 #else
 #if XO_PLATFORM_ANDROID

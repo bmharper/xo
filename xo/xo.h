@@ -26,6 +26,10 @@
 #include "Controls/MsgBox.h"
 #include "Reactive/Control.h"
 
+#include "SysWnd_android.h"
+#include "SysWnd_linux.h"
+#include "SysWnd_windows.h"
+
 #ifdef _WIN32
 #pragma warning(pop)
 #endif

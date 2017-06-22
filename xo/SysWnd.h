@@ -23,21 +23,24 @@ public:
 	uint32_t                           TimerPeriodMS = 0;
 	xo::DocGroup*                      DocGroup      = nullptr;
 	RenderBase*                        Renderer      = nullptr;
-	std::vector<std::function<void()>> OnWindowClose; // You can use this in a simple application to detect when the application is closing
+	std::vector<std::function<void()>> OnWindowClose;              // You can use this in a simple application to detect when the application is closing
+	std::function<void()>              SysTrayContextMenuCallback; // Set by MinimizeToSystemTray
 
 	SysWnd();
 	virtual ~SysWnd();
 
 	static SysWnd* New(); // Just create a new SysWnd object, so that we can access it's virtual functions. Do not create the actual system window object.
 
-	virtual void  PlatformInitialize();
+	virtual void  PlatformInitialize(const InitParams* init);
 	virtual Error Create(uint32_t createFlags = CreateDefault) = 0;
 	virtual Box   GetRelativeClientRect()                      = 0; // Returns the client rectangle (in screen coordinates), relative to the non-client window
+	virtual void  SetTitle(const char* title);
 	virtual void  Show();
 	virtual void  SetPosition(Box box, uint32_t setPosFlags);
 	virtual void  PostCursorChangedMessage();
 	virtual void  PostRepaintMessage();
 	virtual bool  CopySurfaceToImage(Box box, Image& img);
+	virtual void  MinimizeToSystemTray(const char* title, std::function<void()> showContextMenu); // For Windows, when you click on "X" to close the window, minimize to the System Tray instead
 
 	Error    CreateWithDoc(uint32_t createFlags = CreateDefault);
 	void     Attach(Doc* doc, bool destroyDocWithProcessor);

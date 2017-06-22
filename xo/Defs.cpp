@@ -356,7 +356,9 @@ static void InitializePlatform() {
 #endif
 }
 
-// This must be called once at application startup. It is automatically called by RunApp and RunAppLowLevel.
+// This must be called once at application startup.
+// It is automatically called by RunApp and RunAppLowLevel, but if you call it before that,
+// then it won't run again.
 XO_API void Initialize(const InitParams* init) {
 	InitializeCount++;
 	if (InitializeCount != 1)
@@ -433,7 +435,7 @@ XO_API void Initialize(const InitParams* init) {
 	Globals->FontStore->InitializeFreetype();
 	Globals->GlyphCache = new GlyphCache();
 	auto dummySysWnd = SysWnd::New();
-	dummySysWnd->PlatformInitialize();
+	dummySysWnd->PlatformInitialize(init);
 	delete dummySysWnd;
 	InitializeXoThreads();
 	Trace("xo creating %d worker threads (%d CPU cores).\n", (int) Globals->NumWorkerThreads, (int) numCPUCores);
@@ -529,8 +531,7 @@ XO_API void RunApp(MainCallback mainCallback) {
 	auto    mainCallbackEv = [mainCallback, &mainWnd](MainEvent ev) {
         switch (ev) {
         case MainEventInit:
-            mainWnd = SysWnd::New();
-			mainWnd->CreateWithDoc();
+            mainWnd = CreateSysWnd();
             mainCallback(mainWnd);
 			// Send a 'post event process' event, so that reactive controls can receive their first callback and render themselves.
 			// This is not a all a hack. It is exactly what one would expect to receive, because this is the very first time
@@ -551,6 +552,12 @@ XO_API void RunApp(MainCallback mainCallback) {
         }
     };
 	RunAppLowLevel(mainCallbackEv);
+}
+
+XO_API SysWnd* CreateSysWnd() {
+    auto wnd = SysWnd::New();
+	wnd->CreateWithDoc();
+	return wnd;
 }
 
 XO_API Style** DefaultTagStyles() {

@@ -197,10 +197,11 @@ LRESULT DocGroupWindows::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 	XO_ASSERT(Doc != NULL);
 	RECT          rect;
 	OriginalEvent ev;
-	ev.DocGroup    = this;
-	ev.Event.Doc   = Doc;
-	LRESULT result = 0;
-	auto    cursor = VEC2((float) GET_X_LPARAM(lParam), (float) GET_Y_LPARAM(lParam));
+	ev.DocGroup           = this;
+	ev.Event.Doc          = Doc;
+	LRESULT        result = 0;
+	auto           cursor = VEC2((float) GET_X_LPARAM(lParam), (float) GET_Y_LPARAM(lParam));
+	SysWndWindows* sysWnd = (SysWndWindows*) Wnd;
 
 	// Remember that we are the Main Thread, so we do not own Doc.
 	// Doc is owned and manipulated by the UI Thread.
@@ -239,11 +240,39 @@ LRESULT DocGroupWindows::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 		KillTimer(hWnd, XoWindowsTimerRenderOutsideMainMsgPump);
 		return result;
 
+	case WM_CLOSE:
+		// For system tray apps
+		if (sysWnd->HideWindowOnClose)
+			ShowWindow(hWnd, SW_HIDE);
+		break;
+
 	case WM_DESTROY:
-		if (((SysWndWindows*) Wnd)->QuitAppWhenWindowDestroyed)
+		if (sysWnd->HasSysTrayIcon) {
+			// If we don't delete this, then it lingers around until Windows garbage collects it. It's neater to have to vanish immediately.
+			NOTIFYICONDATA nd = {0};
+			nd.cbSize = sizeof(nd);
+			nd.hWnd = hWnd;
+			nd.uID = SysWndWindows::SysTrayIconID;
+			Shell_NotifyIcon(NIM_DELETE, &nd);
+		}
+		if (sysWnd->QuitAppWhenWindowDestroyed)
 			PostQuitMessage(0);
 		break;
 
+	case SysWndWindows::WM_XO_SYSTRAY_ICON: {
+		int iconEv = LOWORD(lParam);
+		int iconID = HIWORD(lParam);
+		if (iconID == SysWndWindows::SysTrayIconID) {
+			if (iconEv == WM_LBUTTONDOWN) {
+				ShowWindow(hWnd, SW_SHOW);
+				SetForegroundWindow(hWnd);
+			} else if (iconEv == WM_CONTEXTMENU) {
+				if (Wnd->SysTrayContextMenuCallback != nullptr)
+					Wnd->SysTrayContextMenuCallback();
+			}
+		}
+		break;
+	}
 	case WM_SETCURSOR:
 		// Note that this is always at least one mouse move message behind, because we only
 		// update the Doc->UI.Cursor on WM_MOUSEMOVE, which is sent after WM_SETCURSOR.
