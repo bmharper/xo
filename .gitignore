@@ -3,6 +3,7 @@
 .tundra2.*
 .metadata
 Thumbs.db
+/ide
 t2-output
 amalgamation/xo-amalgamation-freetype.c
 amalgamation/xo-amalgamation.cpp

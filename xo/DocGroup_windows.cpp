@@ -242,17 +242,20 @@ LRESULT DocGroupWindows::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 	case WM_CLOSE:
 		// For system tray apps
-		if (sysWnd->HideWindowOnClose)
+		if (sysWnd->HideWindowOnClose) {
 			ShowWindow(hWnd, SW_HIDE);
-		break;
+			break;
+		} else {
+			return DefWindowProc(hWnd, message, wParam, lParam);
+		}
 
 	case WM_DESTROY:
 		if (sysWnd->HasSysTrayIcon) {
 			// If we don't delete this, then it lingers around until Windows garbage collects it. It's neater to have to vanish immediately.
 			NOTIFYICONDATA nd = {0};
-			nd.cbSize = sizeof(nd);
-			nd.hWnd = hWnd;
-			nd.uID = SysWndWindows::SysTrayIconID;
+			nd.cbSize         = sizeof(nd);
+			nd.hWnd           = hWnd;
+			nd.uID            = SysWndWindows::SysTrayIconID;
 			Shell_NotifyIcon(NIM_DELETE, &nd);
 		}
 		if (sysWnd->QuitAppWhenWindowDestroyed)

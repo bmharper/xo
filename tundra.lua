@@ -106,6 +106,8 @@ Build {
 		MsvcSolutions = {
 			['xo.sln'] = {}, -- receives all the units due to empty set
 		},
+		-- Override output directory for sln/vcxproj files.
+		MsvcSolutionDir = 'ide',
 		BuildAllByDefault = true,
 	},
 }
