@@ -246,7 +246,8 @@ void Doc::NodeLostDocProcess(InternalID node) {
 void Doc::DocProcessHandlers(cheapvec<NodeEventIDPair>& handlers) {
 	for (InternalID id : NodesWithDocProcess) {
 		DomNode* node = GetNodeByInternalIDMutable(id);
-		node->DocProcessHandlers(handlers);
+		if (node)
+			node->DocProcessHandlers(handlers);
 	}
 }
 
