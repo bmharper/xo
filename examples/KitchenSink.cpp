@@ -8,9 +8,11 @@ This sample was created when developing the layout concepts
 void InitDOM(xo::Doc* doc);
 
 void xoMain(xo::SysWnd* wnd) {
-	wnd->OnWindowClose.push_back([]() {
-		// This just demonstrates how to clean up global resources when an application exits
-		xo::Trace("KitchenSink application is closing\n");
+	wnd->EventListeners.push_back([](xo::SysWnd::Event ev) {
+		if (ev == xo::SysWnd::EvClose) {
+			// This demonstrates how to clean up global resources when an application exits
+			xo::Trace("KitchenSink application is closing\n");
+		}
 	});
 	xo::Global()->FontStore->AddFontDirectory("C:\\temp\\fonts");
 	//int left   = -1400;

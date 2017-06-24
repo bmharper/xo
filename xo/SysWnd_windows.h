@@ -16,8 +16,8 @@ public:
 
 	HWND Wnd                        = NULL;
 	bool QuitAppWhenWindowDestroyed = false; // This is here for multi-window applications. Close the first window, and the app exits.
-	bool HideWindowOnClose          = false; // On WM_CLOSE (ie top-right X button of window), do not close window, but hide instead. Set to true to MinimizeToSystemTray.
-	bool HasSysTrayIcon             = false; // Set to true by MinimizeToSystemTray
+	bool HideWindowOnClose          = false; // On WM_CLOSE (ie top-right X button of window), do not close window, but hide instead. AddToSystemTray() sets this to true.
+	bool HasSysTrayIcon             = false; // Set to true by AddToSystemTray()
 
 	SysWndWindows();
 	~SysWndWindows() override;
@@ -31,7 +31,8 @@ public:
 	void  PostCursorChangedMessage() override;
 	void  PostRepaintMessage() override;
 	bool  CopySurfaceToImage(Box box, Image& img) override;
-	void  MinimizeToSystemTray(const char* title, std::function<void()> showContextMenu) override;
+	void  AddToSystemTray(const char* title, bool hideInsteadOfClose) override;
+	void  ShowSystemTrayAlert(const char* msg) override;
 };
 
 inline HWND GetHWND(xo::SysWnd& w) { return ((xo::SysWndWindows&) w).Wnd; }

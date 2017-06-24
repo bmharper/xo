@@ -243,11 +243,12 @@ LRESULT DocGroupWindows::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 	case WM_CLOSE:
 		// For system tray apps
 		if (sysWnd->HideWindowOnClose) {
+			sysWnd->SendEvent(SysWnd::EvHideToSysTray);
 			ShowWindow(hWnd, SW_HIDE);
-			break;
 		} else {
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
+		break;
 
 	case WM_DESTROY:
 		if (sysWnd->HasSysTrayIcon) {
@@ -270,8 +271,7 @@ LRESULT DocGroupWindows::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 				ShowWindow(hWnd, SW_SHOW);
 				SetForegroundWindow(hWnd);
 			} else if (iconEv == WM_CONTEXTMENU) {
-				if (Wnd->SysTrayContextMenuCallback != nullptr)
-					Wnd->SysTrayContextMenuCallback();
+				Wnd->SendEvent(SysWnd::EvSysTrayContextMenu);
 			}
 		}
 		break;

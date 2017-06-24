@@ -45,8 +45,7 @@ SysWnd::~SysWnd() {
 	// the application can be confident that it can clean up resources by now, without worrying that it's still
 	// going to be receiving UI input during that time. See RunAppLowLevel() and RunApp() to understand how
 	// this works.
-	for (auto cb : OnWindowClose)
-		cb();
+	SendEvent(SysWnd::EvDestroy);
 }
 
 Error SysWnd::CreateWithDoc(uint32_t createFlags) {
@@ -98,6 +97,11 @@ void SysWnd::SurfaceLost() {
 		Renderer->SurfaceLost();
 }
 
+void SysWnd::SendEvent(Event ev) {
+	for (auto cb : EventListeners)
+		cb(ev);
+}
+
 void SysWnd::SetPosition(Box box, uint32_t setPosFlags) {
 	Trace("SysWnd.SetPosition is not implemented\n");
 }
@@ -112,8 +116,10 @@ bool SysWnd::CopySurfaceToImage(Box box, Image& img) {
 	return false;
 }
 
-void SysWnd::MinimizeToSystemTray(const char* title, std::function<void()> showContextMenu) {
-	SysTrayContextMenuCallback = showContextMenu;
+void SysWnd::AddToSystemTray(const char* title, bool hideInsteadOfClose) {
+}
+
+void SysWnd::ShowSystemTrayAlert(const char* msg) {
 }
 
 void SysWnd::InvalidateRect(Box box) {

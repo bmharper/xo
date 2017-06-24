@@ -530,10 +530,14 @@ typedef std::function<void(MainEvent ev)> MainCallbackLowLevel;
 typedef std::function<void(SysWnd* wnd)>  MainCallback;
 
 XO_API GlobalStruct* Global();
-XO_API void          Initialize(const InitParams* init = nullptr);
-XO_API void          Shutdown();
-XO_API void          RunAppLowLevel(MainCallbackLowLevel mainCallback);
-XO_API void          RunApp(MainCallback mainCallback);
+
+// This must be called once at application startup.
+// It is automatically called by RunApp and RunAppLowLevel, but if you call it before that,
+// then it won't run again. Every call to Initialize() must be paired with a call to Shutdown()
+XO_API void Initialize(const InitParams* init = nullptr);
+XO_API void Shutdown();
+XO_API void RunAppLowLevel(MainCallbackLowLevel mainCallback);
+XO_API void RunApp(MainCallback mainCallback);
 XO_API SysWnd* CreateSysWnd();
 XO_API void    AddOrRemoveDocsFromGlobalList();
 XO_API void    ParseFail(const char* msg, ...);

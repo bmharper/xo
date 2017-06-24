@@ -174,14 +174,13 @@ bool SysWndWindows::CopySurfaceToImage(Box box, Image& img) {
 	return true;
 }
 
-void SysWndWindows::MinimizeToSystemTray(const char* title, std::function<void()> showContextMenu) {
-	SysWnd::MinimizeToSystemTray(title, showContextMenu);
-	HideWindowOnClose = true;
+void SysWndWindows::AddToSystemTray(const char* title, bool hideInsteadOfClose) {
+	SysWnd::AddToSystemTray(title, hideInsteadOfClose);
+	HideWindowOnClose = hideInsteadOfClose;
 	HasSysTrayIcon = true;
 
-	NOTIFYICONDATA nd;
+	NOTIFYICONDATA nd = {0};
 	// Add icon
-	memset(&nd, 0, sizeof(nd));
 	nd.cbSize = sizeof(nd);
 	nd.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_SHOWTIP;
 	nd.hWnd = Wnd;
@@ -199,8 +198,19 @@ void SysWndWindows::MinimizeToSystemTray(const char* title, std::function<void()
 	nd.uID = SysTrayIconID;
 	nd.uVersion = NOTIFYICON_VERSION_4;
 	ok = Shell_NotifyIcon(NIM_SETVERSION, &nd);
+}
 
-	int abc = 123;
+void SysWndWindows::ShowSystemTrayAlert(const char* msg) {
+	NOTIFYICONDATA nd = {0};
+	nd.cbSize         = sizeof(nd);
+	nd.hWnd           = Wnd;
+	nd.uID            = SysWndWindows::SysTrayIconID;
+	nd.uFlags         = NIF_INFO;
+	wcscpy(nd.szInfoTitle, L"");
+	wcscpy(nd.szInfo, ConvertUTF8ToWide(msg).c_str());
+	nd.dwInfoFlags = NIIF_INFO | NIIF_NOSOUND;
+	// timeout is ignored on Vista+
+	Shell_NotifyIcon(NIM_MODIFY, &nd);
 }
 
 } // namespace xo

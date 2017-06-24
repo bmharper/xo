@@ -356,9 +356,6 @@ static void InitializePlatform() {
 #endif
 }
 
-// This must be called once at application startup.
-// It is automatically called by RunApp and RunAppLowLevel, but if you call it before that,
-// then it won't run again.
 XO_API void Initialize(const InitParams* init) {
 	InitializeCount++;
 	if (InitializeCount != 1)

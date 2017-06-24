@@ -17,14 +17,18 @@ public:
 		CreateBorder         = 8,
 		CreateDefault        = CreateMinimizeButton | CreateMaximizeButton | CreateCloseButton | CreateBorder,
 	};
+	enum Event {
+		EvDestroy,            // Called from the destructor of SysWnd
+		EvHideToSysTray,      // Window is being hidden, but application remains in the system tray
+		EvSysTrayContextMenu, // Right click on system tray icon
+	};
 
 	static int64_t NumWindowsCreated; // Incremented every time SysWnd constructor is called
 
-	uint32_t                           TimerPeriodMS = 0;
-	xo::DocGroup*                      DocGroup      = nullptr;
-	RenderBase*                        Renderer      = nullptr;
-	std::vector<std::function<void()>> OnWindowClose;              // You can use this in a simple application to detect when the application is closing
-	std::function<void()>              SysTrayContextMenuCallback; // Set by MinimizeToSystemTray
+	uint32_t                                   TimerPeriodMS = 0;
+	xo::DocGroup*                              DocGroup      = nullptr;
+	RenderBase*                                Renderer      = nullptr;
+	std::vector<std::function<void(Event ev)>> EventListeners; // Listen to window events
 
 	SysWnd();
 	virtual ~SysWnd();
@@ -40,7 +44,15 @@ public:
 	virtual void  PostCursorChangedMessage();
 	virtual void  PostRepaintMessage();
 	virtual bool  CopySurfaceToImage(Box box, Image& img);
-	virtual void  MinimizeToSystemTray(const char* title, std::function<void()> showContextMenu); // For Windows, when you click on "X" to close the window, minimize to the System Tray instead
+
+	// Add an icon to the system tray.
+	// If hideInsteadOfClose is true, then when you click on "X" to close the window, just hide it instead.
+	// Use EvSysTrayContextMenu to respond to a right click on the tray icon.
+	virtual void AddToSystemTray(const char* title, bool hideInsteadOfClose);
+
+	// Show an alert on the desktop. On Windows, this pops up in the bottom right of the screen, above the system tray.
+	// You must call AddToSystemTray() first, or this has no effect.
+	virtual void ShowSystemTrayAlert(const char* msg);
 
 	Error    CreateWithDoc(uint32_t createFlags = CreateDefault);
 	void     Attach(Doc* doc, bool destroyDocWithProcessor);
@@ -48,6 +60,7 @@ public:
 	bool     BeginRender();                      // Basically wglMakeCurrent()
 	void     EndRender(uint32_t endRenderFlags); // SwapBuffers followed by wglMakeCurrent(NULL). Flags are EndRenderFlags
 	void     SurfaceLost();                      // Surface lost, and now regained. Reinitialize GL state (textures, shaders, etc).
+	void     SendEvent(Event ev);
 
 	// Invalid rectangle management
 	void InvalidateRect(Box box);
