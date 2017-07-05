@@ -14,6 +14,10 @@ DomEl::DomEl(xo::Doc* doc, xo::Tag tag, xo::InternalID parentID)
 DomEl::~DomEl() {
 }
 
+DomNode* DomEl::GetParent() {
+	return Doc->GetNodeByInternalIDMutable(ParentID);
+}
+
 const DomNode* DomEl::GetParent() const {
 	return Doc->GetNodeByInternalID(ParentID);
 }

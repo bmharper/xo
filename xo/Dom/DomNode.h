@@ -38,6 +38,7 @@ public:
 	DomCanvas*     AddCanvas(size_t position = -1);
 	DomText*       AddText(const char* txt = nullptr, size_t position = -1);
 	DomText*       AddText(const std::string& txt, size_t position = -1);
+	void           Delete(); // Remove from DOM, and delete self
 	void           DeleteChild(DomEl* c);
 	void           Clear(); // Delete all children
 	size_t         ChildCount() const { return Children.size(); }
