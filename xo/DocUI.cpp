@@ -38,6 +38,10 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 		}
 		break;
 	}
+	case EventDocProcess:
+		XO_ASSERT(ev.DocProcess == DocProcessEvents::TouchedByBackgroundThread);
+		DispatchDocProcess();
+		return;
 	default:
 		break;
 	}
@@ -117,10 +121,9 @@ void DocUI::DispatchDocProcess() {
 	cheapvec<NodeEventIDPair> handlers;
 	Doc->DocProcessHandlers(handlers);
 	Event procEv;
-	procEv.Type   = EventDocProcess;
-	procEv.Button = Button::SpecialDispatchEnd;
-	procEv.Doc    = Doc;
-	//procEv.LayoutResult = ev.LayoutResult;
+	procEv.Type       = EventDocProcess;
+	procEv.DocProcess = DocProcessEvents::DispatchEnd;
+	procEv.Doc        = Doc;
 	RobustDispatchEventToHandlers(procEv, handlers);
 }
 

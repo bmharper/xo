@@ -117,7 +117,7 @@ enum CloneFlags {
 	CloneFlagEvents = 1, // Include events in clone
 };
 
-static const int XO_MAX_TOUCHES = 10;
+static const int XO_MAX_TOUCHES = 5;
 
 enum MainEvent {
 	MainEventInit = 1,

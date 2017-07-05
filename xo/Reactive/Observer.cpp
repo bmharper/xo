@@ -23,6 +23,7 @@ namespace xo {
 namespace rx {
 
 Observer::~Observer() {
+	std::lock_guard<std::mutex> lock(WatchingLock);
 	for (size_t i = 0; i < Watching.size(); i++) {
 		if (Watching[i])
 			Watching[i]->RemoveWatcher(this);
@@ -30,23 +31,27 @@ Observer::~Observer() {
 }
 
 void Observer::Watch(Observable* target) {
-	size_t empty = -1;
-	for (size_t i = 0; i < Watching.size(); i++) {
-		if (Watching[i] == target)
-			return;
-		else if (empty == -1 && Watching[i] == nullptr)
-			empty = i;
-	}
+	{
+		std::lock_guard<std::mutex> lock(WatchingLock);
+		size_t empty = -1;
+		for (size_t i = 0; i < Watching.size(); i++) {
+			if (Watching[i] == target)
+				return;
+			else if (empty == -1 && Watching[i] == nullptr)
+				empty = i;
+		}
 
-	if (empty != -1)
-		Watching[empty] = target;
-	else
-		Watching.push_back(target);
+		if (empty != -1)
+			Watching[empty] = target;
+		else
+			Watching.push_back(target);
+	}
 
 	target->AddWatcher(this);
 }
 
 void Observer::ObservableDestroyed(Observable* target) {
+	std::lock_guard<std::mutex> lock(WatchingLock);
 	for (size_t i = 0; i < Watching.size(); i++) {
 		if (Watching[i] == target) {
 			Watching[i] = nullptr;
@@ -61,6 +66,7 @@ void Observer::ObservableDestroyed(Observable* target) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Observable::~Observable() {
+	std::lock_guard<std::mutex> lock(ObserversLock);
 	for (size_t i = 0; i < Observers.size(); i++) {
 		if (Observers[i])
 			Observers[i]->ObservableDestroyed(this);
@@ -68,6 +74,11 @@ Observable::~Observable() {
 }
 
 void Observable::Touch() {
+	std::lock_guard<std::mutex> lock(ObserversLock);
+	TouchInternal();
+}
+
+void Observable::TouchInternal() {
 	for (size_t i = 0; i < Observers.size(); i++) {
 		if (Observers[i])
 			Observers[i]->ObservableTouched(this);
@@ -75,6 +86,7 @@ void Observable::Touch() {
 }
 
 void Observable::AddWatcher(Observer* watcher) {
+	std::lock_guard<std::mutex> lock(ObserversLock);
 	for (size_t i = 0; i < Observers.size(); i++) {
 		if (!Observers[i]) {
 			Observers[i] = watcher;
@@ -85,6 +97,7 @@ void Observable::AddWatcher(Observer* watcher) {
 }
 
 void Observable::RemoveWatcher(Observer* watcher) {
+	std::lock_guard<std::mutex> lock(ObserversLock);
 	for (size_t i = 0; i < Observers.size(); i++) {
 		if (Observers[i] == watcher) {
 			Observers[i] = nullptr;
@@ -92,6 +105,27 @@ void Observable::RemoveWatcher(Observer* watcher) {
 		}
 	}
 	XO_DIE_MSG("watcher not found in Observable::RemoveWatcher");
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+MutateLock::MutateLock(Observable& obs) : Obs(&obs) {
+	Obs->ObserversLock.lock();
+}
+
+MutateLock::~MutateLock() {
+	Obs->TouchInternal();
+	Obs->ObserversLock.unlock();
+}
+
+ObserveLock::ObserveLock(Observable& obs) : Obs(&obs) {
+	Obs->ObserversLock.lock();
+}
+
+ObserveLock::~ObserveLock() {
+	Obs->ObserversLock.unlock();
 }
 
 } // namespace rx

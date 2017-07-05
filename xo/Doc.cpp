@@ -104,6 +104,10 @@ InternalID Doc::InternalIDSize() const {
 	return (InternalID) ChildByInternalID.size();
 }
 
+void Doc::TouchedByOtherThread() {
+	Group->TouchedByOtherThread();
+}
+
 bool Doc::ClassParse(const char* klass, const char* style, size_t styleMaxLen) {
 	const char* colon = strchr(klass, ':');
 	String      tmpKlass;

@@ -18,5 +18,8 @@ public:
 
 protected:
 	bool IsMouseTracking = false; // True if we called TrackMouseEvent when we first saw a WM_MOUSEMOVE message, and are waiting for a WM_MOUSELEAVE event.
+
+	void InternalTouchedByOtherThread() override;
+
 };
 } // namespace xo
