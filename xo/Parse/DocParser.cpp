@@ -325,4 +325,4 @@ bool DocParser::EqNoCase(const char* a, const char* b, size_t bLen) {
 	XO_DEBUG_ASSERT(false);
 	return false;
 }
-}
+} // namespace xo

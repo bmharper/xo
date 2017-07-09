@@ -38,8 +38,8 @@ private:
 class XO_API Observable {
 public:
 	friend class Observer;
-	friend class MutateLock;
-	friend class ObserveLock;
+	friend class MutatorLock;
+	friend class ObserverLock;
 
 	virtual ~Observable();
 
@@ -59,10 +59,10 @@ private:
 // This is intended to be used as a catch-all mechanism for mutating an Observable object,
 // especially from a background thread (ie not the UI thread).
 // Usage of this is identical in spirit to std::lock_guard.
-class XO_API MutateLock {
+class XO_API MutatorLock {
 public:
-	MutateLock(Observable& obs);
-	~MutateLock();
+	MutatorLock(Observable& obs);
+	~MutatorLock();
 
 private:
 	Observable* Obs;
@@ -72,10 +72,10 @@ private:
 // This is intended to be a simple mechanism for ensuring that the state of an
 // Observable is always mutated and read atomically.
 // Usage of this is identical in spirit to std::lock_guard.
-class XO_API ObserveLock {
+class XO_API ObserverLock {
 public:
-	ObserveLock(Observable& obs);
-	~ObserveLock();
+	ObserverLock(Observable& obs);
+	~ObserverLock();
 
 private:
 	Observable* Obs;

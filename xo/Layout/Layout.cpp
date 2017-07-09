@@ -560,8 +560,10 @@ Pos Layout::MeasureWord(const char* txt, const Font* font, Pos fontAscender, Chu
 	GlyphCacheKey key       = MakeGlyphCacheKey(ts);
 	const Glyph*  prevGlyph = nullptr;
 
-	for (int32_t i = chunk.Start; i < chunk.End; i++) {
-		key.Char           = txt[i];
+	for (int32_t i = chunk.Start; i < chunk.End;) {
+		int seq_len = 0;
+		key.Char    = utfz::decode(txt + i, seq_len);
+		i += seq_len;
 		const Glyph* glyph = Global()->GlyphCache->GetGlyph(key);
 		if (!glyph) {
 			ts.GlyphsNeeded = true;

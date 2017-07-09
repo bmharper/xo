@@ -111,20 +111,20 @@ void Observable::RemoveWatcher(Observer* watcher) {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-MutateLock::MutateLock(Observable& obs) : Obs(&obs) {
+MutatorLock::MutatorLock(Observable& obs) : Obs(&obs) {
 	Obs->ObserversLock.lock();
 }
 
-MutateLock::~MutateLock() {
+MutatorLock::~MutatorLock() {
 	Obs->TouchInternal();
 	Obs->ObserversLock.unlock();
 }
 
-ObserveLock::ObserveLock(Observable& obs) : Obs(&obs) {
+ObserverLock::ObserverLock(Observable& obs) : Obs(&obs) {
 	Obs->ObserversLock.lock();
 }
 
-ObserveLock::~ObserveLock() {
+ObserverLock::~ObserverLock() {
 	Obs->ObserversLock.unlock();
 }
 
