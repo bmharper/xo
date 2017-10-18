@@ -34,9 +34,9 @@ void Control::SetDirty() {
 		// Make sure that the xo message loop wakes up to re-render us.
 		// This message was sent from another thread (something doing background processing), so
 		// the main xo message loop won't necessarily have any reason to invoke the DocProcess mechanism.
-		// And now? Need to get hold of our parent doc, and somehow inject a message into it's 
-		// OS window message queue, so that it wakes up. On Windows, I'm thinking of using a custom
-		// WM_USER message.
+		// What happens after this?
+		// Basically, we need to somehow inject a message into the OS window message queue, so that
+		// the main thread wakes up and performs a re-render. On Windows, we use a custom WM_USER message.
 		Root->GetDoc()->TouchedByOtherThread();
 	}
 }

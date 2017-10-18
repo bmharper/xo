@@ -9,7 +9,7 @@ void InitDOM(xo::Doc* doc);
 
 void xoMain(xo::SysWnd* wnd) {
 	wnd->EventListeners.push_back([](xo::SysWnd::Event ev) {
-		if (ev == xo::SysWnd::EvClose) {
+		if (ev == xo::SysWnd::EvDestroy) {
 			// This demonstrates how to clean up global resources when an application exits
 			xo::Trace("KitchenSink application is closing\n");
 		}
@@ -424,18 +424,18 @@ void DoTextQuality(xo::Doc* doc) {
 	doc->Root.StyleParse("background: #f0f0f0");
 	doc->Root.StyleParse("padding: 20px");
 
-	doc->Root.ParseAppend("<div style='break:after; font-family: Microsoft Sans Serif'>The quick brown fox jumps over the lazy dog<div>");
-	doc->Root.ParseAppend("<div style='break:after; padding: 20px; font-family: Microsoft Sans Serif'>h s<div>");
-	doc->Root.ParseAppend("<div style='break:after; font-family: Microsoft Sans Serif'>Backups from<div>");
-	doc->Root.ParseAppend("<div style='break:after; font-family: Ubuntu'>Backups from<div>");
-	doc->Root.ParseAppend("<div style='break:after; font-family: Segoe UI; font-size: 12px; color: #f008'>Backups from<div>");
-	doc->Root.ParseAppend("<div style='break:after; font-family: Consolas; font-size: 12px; color: #383'>DoBaselineAlignment_Multiline(doc)<div>");
+	doc->Root.ParseAppend("<div style='break:after; font-family: Microsoft Sans Serif'>The quick brown fox jumps over the lazy dog</div>");
+	doc->Root.ParseAppend("<div style='break:after; padding: 20px; font-family: Microsoft Sans Serif'>h s</div>");
+	doc->Root.ParseAppend("<div style='break:after; font-family: Microsoft Sans Serif'>Backups from</div>");
+	doc->Root.ParseAppend("<div style='break:after; font-family: Ubuntu'>Backups from</div>");
+	doc->Root.ParseAppend("<div style='break:after; font-family: Segoe UI; font-size: 12px; color: #f008'>Backups from</div>");
+	doc->Root.ParseAppend("<div style='break:after; font-family: Consolas; font-size: 12px; color: #383'>DoBaselineAlignment_Multiline(doc)</div>");
 	for (int s = 10; s <= 24; s++) {
-		auto t = tsf::fmt("<div style='break:after; font-family: Ubuntu Medium; font-size: %vpx'>DoBaselineAlignment_Multiline(doc)<div>", s);
+		auto t = tsf::fmt("<div style='break:after; font-family: Ubuntu Medium; font-size: %vpx'>DoBaselineAlignment_Multiline(doc)</div>", s);
 		doc->Root.ParseAppend(t);
 	}
 	for (int s = 10; s <= 24; s++) {
-		auto t = tsf::fmt("<div style='break:after; font-family: Ubuntu Mono; font-size: %vpx'>DoBaselineAlignment_Multiline(doc)<div>", s);
+		auto t = tsf::fmt("<div style='break:after; font-family: Ubuntu Mono; font-size: %vpx'>DoBaselineAlignment_Multiline(doc)</div>", s);
 		doc->Root.ParseAppend(t);
 	}
 }
@@ -445,9 +445,9 @@ void DoQuadraticSplines(xo::Doc* doc) {
 	// and it was only implemented on OpenGL.
 	// Also, you must disable backface culling, or the bottom (blue) curve won't render.
 
-	doc->Root.ParseAppend("<div style='width: 10ep; height: 10ep; break: after'>top<div>"); // top pad
-	doc->Root.ParseAppend("<div style='width: 20ep; height: 50ep'>left<div>");              // left pad
-	doc->Root.ParseAppend("<div style='background: #fff0f0ff; width: 100ep; height: 100ep'><div>");
+	doc->Root.ParseAppend("<div style='width: 10ep; height: 10ep; break: after'>top</div>"); // top pad
+	doc->Root.ParseAppend("<div style='width: 20ep; height: 50ep'>left</div>");              // left pad
+	doc->Root.ParseAppend("<div style='background: #fff0f0ff; width: 100ep; height: 100ep'></div>");
 	auto top_pad  = doc->Root.ChildByIndex(0)->GetInternalID();
 	auto left_pad = doc->Root.ChildByIndex(1)->GetInternalID();
 	doc->Root.OnMouseMove([top_pad, left_pad](xo::Event& ev) {
@@ -546,9 +546,9 @@ void DoPositionType(xo::Doc* doc) {
 	auto root = &doc->Root;
 	root->ParseAppend(
 	    "<div style='width: 100px; height: 100px; background: #fcc'>"
-		"	<div style='position: absolute; width: 50px; height: 50px; background: #cfc'></div>"
-		"	<div style='width: 20px; height: 20px; background: #ccf'></div>"
-		"	<div style='width: 20px; height: 20px; background: #aaa'></div>"
+	    "	<div style='position: absolute; width: 50px; height: 50px; background: #cfc'></div>"
+	    "	<div style='width: 20px; height: 20px; background: #ccf'></div>"
+	    "	<div style='width: 20px; height: 20px; background: #aaa'></div>"
 	    "</div>");
 }
 

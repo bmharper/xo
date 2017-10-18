@@ -5,13 +5,13 @@ namespace xo {
 
 const char* TagNames[TagEND] =
     {
-        "Tag-NULL",
-        "Body",
-        "Div",
-        "Text",
-        "Lab",
-        "Span",
-        "Canvas",
-		"Img",
+        "tag-NULL",
+        "body",
+        "div",
+        "text",
+        "lab",
+        "span",
+        "canvas",
+        "img",
 };
 }

@@ -67,7 +67,7 @@ public:
 	void HackSetStyle(StyleAttrib attrib); // TODO: This is also "Hack" because it doesn't work for attribute such as background-image
 
 	// Classes
-	void AddClass(const char* klass);
+	void AddClass(const char* classes); // Add one more space-separated classes
 	void RemoveClass(const char* klass);
 	bool HasClass(const char* klass) const;
 
@@ -83,7 +83,7 @@ public:
 	bool          HandlesEvent(Events ev) const { return !!(AllEventMask & ev); }
 	uint32_t      FastestTimerMS() const;                                               // Returns the period of our fastest ticking timer event (or zero if none)
 	void          ReadyTimers(int64_t nowTicksMS, cheapvec<NodeEventIDPair>& handlers); // Fetch the list of timer events that are ready to run
-	void          RenderHandlers(cheapvec<NodeEventIDPair>& handlers) const;                  // Fetch the list of handlers for the Render event
+	void          RenderHandlers(cheapvec<NodeEventIDPair>& handlers) const;            // Fetch the list of handlers for the Render event
 	void          DocProcessHandlers(cheapvec<NodeEventIDPair>& handlers);              // Fetch the list of handlers for the DocProcess event
 	bool          HasFocus() const;                                                     // Return true if this node has the keyboard focus
 	void          SetCapture() const;                                                   // Captures input events so that they only fire on this node

@@ -210,11 +210,37 @@ void DomNode::HackSetStyle(StyleAttrib attrib) {
 	Style.Set(attrib);
 }
 
-void DomNode::AddClass(const char* klass) {
+void DomNode::AddClass(const char* classes) {
 	IncVersion();
-	StyleClassID id = Doc->ClassStyles.GetClassID(klass);
-	if (Classes.find(id) == -1)
-		Classes += id;
+	size_t s = 0;
+	char   buf[xo::MaxClassNameLen + 1];
+	for (size_t i = 0; true; i++) {
+		bool space = classes[i] == 32 || classes[i] == 9;
+		if (classes[i] == 0 || space) {
+			if (i - s == 1 && space) {
+				// skip over consecutive whitespace
+				s = i + 1;
+				continue;
+			}
+
+			StyleClassID id;
+			if (space) {
+				// Use buf
+				XO_ASSERT(i - s < sizeof(buf));
+				memcpy(buf, classes + s, i - s);
+				buf[i - s] = 0;
+				id         = Doc->ClassStyles.GetClassID(buf);
+			} else {
+				// Don't need buf, because we're at the end
+				id = Doc->ClassStyles.GetClassID(classes + s);
+			}
+			if (Classes.find(id) == -1)
+				Classes += id;
+			if (classes[i] == 0)
+				break;
+			s = i + 1;
+		}
+	}
 }
 
 void DomNode::RemoveClass(const char* klass) {
@@ -346,8 +372,8 @@ void DomNode::ReleaseCapture() const {
 }
 
 void DomNode::RecalcAllEventMask() {
-	bool hadTimer    = !!(AllEventMask & EventTimer);
-	bool hadRender   = !!(AllEventMask & EventRender);
+	bool hadTimer      = !!(AllEventMask & EventTimer);
+	bool hadRender     = !!(AllEventMask & EventRender);
 	bool hadDocProcess = !!(AllEventMask & EventDocProcess);
 
 	uint32_t m = 0;
@@ -355,8 +381,8 @@ void DomNode::RecalcAllEventMask() {
 		m |= Handlers[i].Mask;
 	AllEventMask = m;
 
-	bool hasTimerNow    = !!(AllEventMask & EventTimer);
-	bool hasRenderNow   = !!(AllEventMask & EventRender);
+	bool hasTimerNow      = !!(AllEventMask & EventTimer);
+	bool hasRenderNow     = !!(AllEventMask & EventRender);
 	bool hasDocProcessNow = !!(AllEventMask & EventDocProcess);
 
 	if (!hadTimer && hasTimerNow)

@@ -14,6 +14,7 @@ public:
 	virtual ~Control();
 
 	virtual void Render() = 0;
+	virtual bool RenderDiffable() { return false; }
 
 	// Implementation of Observer
 	void ObservableTouched(Observable* target) override;

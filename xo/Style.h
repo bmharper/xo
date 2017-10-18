@@ -12,6 +12,9 @@ static const size_t MaxStyleVarNameLen = 127;
 // Maximum length of an SVG name
 static const size_t MaxSvgNameLen = 127;
 
+// Maximum length of a class name
+static const size_t MaxClassNameLen = 255;
+
 // This is parsing whitespace, not DOM/textual whitespace
 // In other words, it is the space between the colon and verdana in "font-family: verdana, arial",
 inline bool IsWhitespace(char c) {

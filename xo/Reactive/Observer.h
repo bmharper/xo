@@ -3,7 +3,7 @@
 namespace xo {
 namespace rx {
 
-// NOTE: When I first write Observer and Observable, I intended for them to be single-threaded, and usable
+// NOTE: When I first wrote Observer and Observable, I intended for them to be single-threaded, and usable
 // for a purpose other than listening for reactive events. However, since adding a mutex to them,
 // and intentionally making them usable from multiple threads, I think it's a good idea if one nails down
 // clearly what the intention was for these two interfaces, and that we don't try and use them for
