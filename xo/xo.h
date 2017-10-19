@@ -25,6 +25,8 @@
 #include "Controls/Button.h"
 #include "Controls/MsgBox.h"
 #include "Reactive/Control.h"
+#include "VirtualDom/Diff.h"
+#include "VirtualDom/VirtualDom.h"
 
 #include "SysWnd_android.h"
 #include "SysWnd_linux.h"
