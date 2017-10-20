@@ -205,7 +205,21 @@ private:
 	}
 };
 
-void Diff(Node* a, Node* b, std::function<void(PatchOp op, Node* a, Node* b)> apply) {
+struct NodeHasher {
+	uint32_t operator()(Node* n) const {
+		return n->Hash;
+	}
+};
+
+XO_API void Diff(size_t na, Node** a, size_t nb, Node** b, std::function<void(PatchOp op, size_t pos, size_t len, Node* const* first)> apply) {
+	for (size_t i = 0; i < na; i++)
+		a[i]->ComputeHashTree();
+	for (size_t i = 0; i < nb; i++)
+		b[i]->ComputeHashTree();
+
+	DiffCore   d;
+	NodeHasher hasher;
+	d.Diff<Node*, NodeHasher>(na, nb, a, b, hasher, apply);
 }
 
 struct CharHasher {
@@ -214,7 +228,6 @@ struct CharHasher {
 	}
 };
 
-// ops gets a negative number added when a deletion occurs, and a positive number when an insertion occurs
 XO_API std::string DiffTest(const char* a, const char* b, std::vector<int>& ops) {
 	std::string r = a;
 

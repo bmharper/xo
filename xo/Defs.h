@@ -46,6 +46,13 @@ class TextureAtlas;
 class Mat4f;
 #endif
 
+namespace rx {
+class Observer;
+class Observable;
+class Control;
+class Registry;
+} // namespace rx
+
 typedef int32_t       Pos; // fixed-point position
 static Pos            PosNULL  = INT32_MAX;
 static const uint32_t PosShift = 8;                   // 24:8 fixed point coordinates used during layout
@@ -503,13 +510,14 @@ struct GlobalStruct {
 	// Used to reduce console clutter, when showing messages about missing style variables
 	std::atomic<uint32_t> LastStyleLookupFailHash;
 
-	cheapvec<DocGroup*>   Docs;           // Only Main thread is allowed to touch this.
-	TQueue<DocGroup*>     DocAddQueue;    // Documents requesting addition
-	TQueue<DocGroup*>     DocRemoveQueue; // Documents requesting removal
-	TQueue<OriginalEvent> UIEventQueue;   // Global event queue, consumed by the one-and-only UI thread
-	TQueue<Job>           JobQueue;       // Global job queue, consumed by the worker thread pool
-	xo::FontStore*        FontStore;      // All fonts known to the system.
-	xo::GlyphCache*       GlyphCache;     // This might have to move into a less global domain.
+	cheapvec<DocGroup*>   Docs;            // Only Main thread is allowed to touch this.
+	TQueue<DocGroup*>     DocAddQueue;     // Documents requesting addition
+	TQueue<DocGroup*>     DocRemoveQueue;  // Documents requesting removal
+	TQueue<OriginalEvent> UIEventQueue;    // Global event queue, consumed by the one-and-only UI thread
+	TQueue<Job>           JobQueue;        // Global job queue, consumed by the worker thread pool
+	xo::FontStore*        FontStore;       // All fonts known to the system.
+	xo::GlyphCache*       GlyphCache;      // This might have to move into a less global domain.
+	xo::rx::Registry*     ControlRegistry; // Registry of reactive controls
 
 	std::atomic<bool>        ExitSignalled;
 	std::vector<std::thread> WorkerThreads;

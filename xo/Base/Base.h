@@ -136,6 +136,8 @@ typedef Mat4T<float> Mat4f;
 #include "../../dependencies/hash/xxhash.h"
 #endif
 
+#include "../../dependencies/hash/FNV1a.h"
+
 #include "../Base/Alloc.h"
 #include "../Base/cheapvec.h"
 #include "../Base/CPU.h"

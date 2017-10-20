@@ -10,11 +10,11 @@ public:
 	xo::DomNode* Root = nullptr;
 
 	// If root is not null, calls Bind(root)
-	Control(xo::DomNode* root);
+	Control(xo::DomNode* root = nullptr);
 	virtual ~Control();
 
 	virtual void Render() = 0;
-	virtual bool RenderDiffable() { return false; }
+	virtual void RenderDiffable(std::string& content) {}
 
 	// Implementation of Observer
 	void ObservableTouched(Observable* target) override;

@@ -7,6 +7,8 @@
 #include "Render/RenderGL.h"
 #include "Text/FontStore.h"
 #include "Text/GlyphCache.h"
+#include "Reactive/Registry.h"
+#include "Controls/All.h"
 
 namespace xo {
 
@@ -430,7 +432,9 @@ XO_API void Initialize(const InitParams* init) {
 	Globals->JobQueue.Initialize(true);
 	Globals->FontStore = new FontStore();
 	Globals->FontStore->InitializeFreetype();
-	Globals->GlyphCache = new GlyphCache();
+	Globals->GlyphCache      = new GlyphCache();
+	Globals->ControlRegistry = new rx::Registry();
+	controls::RegisterAllBuiltin(Globals->ControlRegistry);
 	auto dummySysWnd = SysWnd::New();
 	dummySysWnd->PlatformInitialize(init);
 	delete dummySysWnd;
@@ -468,12 +472,15 @@ XO_API void Shutdown() {
 
 	Globals->GlyphCache->Clear();
 	delete Globals->GlyphCache;
-	Globals->GlyphCache = NULL;
+	Globals->GlyphCache = nullptr;
 
 	Globals->FontStore->Clear();
 	Globals->FontStore->ShutdownFreetype();
 	delete Globals->FontStore;
-	Globals->FontStore = NULL;
+	Globals->FontStore = nullptr;
+
+	delete Globals->ControlRegistry;
+	Globals->ControlRegistry = nullptr;
 
 	delete Globals;
 }
@@ -530,16 +537,16 @@ XO_API void RunApp(MainCallback mainCallback) {
         case MainEventInit:
             mainWnd = CreateSysWnd();
             mainCallback(mainWnd);
-			// Send a 'post event process' event, so that reactive controls can receive their first callback and render themselves.
-			// This is not a all a hack. It is exactly what one would expect to receive, because this is the very first time
-			// that "userland" code is running, and one very much expects to receive a DocProcess event after that, just the
-			// same as a DocProcess event is received after processing a click event.
-			mainWnd->Doc()->UI.DispatchDocProcess();
-			// It's ideal to only show the window after initial document setup has been run, so that the application's
-			// first pixels shown to the world are not just a blank canvas. Some applications may need the window dimensions
-			// to draw themselves, but those applications will need to wait for a WindowSize event for that. But having
-			// said that, I don't think we send out such a message. We should probably synthesize it here, and send it 
-			// out after Show().
+            // Send a 'post event process' event, so that reactive controls can receive their first callback and render themselves.
+            // This is not a all a hack. It is exactly what one would expect to receive, because this is the very first time
+            // that "userland" code is running, and one very much expects to receive a DocProcess event after that, just the
+            // same as a DocProcess event is received after processing a click event.
+            mainWnd->Doc()->UI.DispatchDocProcess();
+            // It's ideal to only show the window after initial document setup has been run, so that the application's
+            // first pixels shown to the world are not just a blank canvas. Some applications may need the window dimensions
+            // to draw themselves, but those applications will need to wait for a WindowSize event for that. But having
+            // said that, I don't think we send out such a message. We should probably synthesize it here, and send it
+            // out after Show().
             mainWnd->Show();
             break;
         case MainEventShutdown:
@@ -552,7 +559,7 @@ XO_API void RunApp(MainCallback mainCallback) {
 }
 
 XO_API SysWnd* CreateSysWnd() {
-    auto wnd = SysWnd::New();
+	auto wnd = SysWnd::New();
 	wnd->CreateWithDoc();
 	return wnd;
 }
