@@ -12,3 +12,4 @@ examples/Android/bin/*
 examples/Android/libs/*
 examples/Android/obj/*
 examples/Android/gen/*
+/findings

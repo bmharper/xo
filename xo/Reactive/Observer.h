@@ -3,6 +3,9 @@
 namespace xo {
 namespace rx {
 
+class Observer;
+class Observable;
+
 // NOTE: When I first wrote Observer and Observable, I intended for them to be single-threaded, and usable
 // for a purpose other than listening for reactive events. However, since adding a mutex to them,
 // and intentionally making them usable from multiple threads, I think it's a good idea if one nails down

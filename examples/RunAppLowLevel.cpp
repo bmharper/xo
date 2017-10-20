@@ -13,10 +13,10 @@ void xoMain(xo::MainEvent ev)
 	switch (ev)
 	{
 	case xo::MainEventInit:
-		Wnd1 = xo::SysWnd::CreateWithDoc();
+		Wnd1 = xo::SysWnd::New();
 		Wnd1->Doc()->Root.AddText("Hello low level 1");
 		Wnd1->Show();
-		Wnd2 = xo::SysWnd::CreateWithDoc();
+		Wnd2 = xo::SysWnd::New();
 		Wnd2->Doc()->Root.AddText("Hello low level 2");
 		Wnd2->Show();
 		break;

@@ -310,7 +310,7 @@ local Test = Program {
 		crt,
 	},
 	Libs = { 
-		{ "m", "stdc++"; Config = "linux-*" },
+		{ "m", "stdc++", "pthread"; Config = "linux-*" },
 	},
 	PrecompiledHeader = {
 		Source = "tests/pch.cpp",

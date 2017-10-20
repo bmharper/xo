@@ -2,6 +2,12 @@
 -- MSVC /analyze is very slow, so we don't want it turned on all the time,
 -- which is why we keep a separate SubVariant called "analyze"
 
+-- How to build and test with afl?
+-- Uncomment the afl Config down below, in the Configs section
+-- TUNDRA_LUA_PATH=`pwd`/build/?.lua tundra2 linux-afl-release Test
+-- export LD_LIBRARY_PATH=`pwd`/t2-output/linux-afl-release-default
+-- ../afl-2.51b/afl-fuzz -m 200 -i testdata/fuzz-vdom-diff -o findings -- t2-output/linux-afl-release-default/Test fuzz-vdom-diff
+
 local win_linker = {
 	{ "/NXCOMPAT /DYNAMICBASE /DEBUG:FASTLINK";				Config = "win*" },
 	{ "/DEBUG";												Config = "win*-*-debug" },
@@ -74,6 +80,13 @@ Build {
 			Inherit = unix_common,
 			Tools = { "clang" },
 		},
+		-- See instructions at top of file.
+		--{
+		--	Name = "linux-afl",
+		--	SupportedHosts = { "linux" },
+		--	Inherit = unix_common,
+		--	Tools = { "afl" },
+		--},
 		{
 			Name = "win32-msvc2015",
 			SupportedHosts = { "windows" },
