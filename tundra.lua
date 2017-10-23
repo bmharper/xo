@@ -59,7 +59,7 @@ local win_common = {
 }
 
 Build {
-	ScriptDirs = { "build" }, -- Allow tundra to find our afl toolchain inside build/tundra/tools/afl.lua
+	ScriptDirs = { "meta" }, -- Allow tundra to find our afl toolchain inside build/tundra/tools/afl.lua
 	Units = "units.lua",
 	Passes= {
 		PchGen = { Name = "Precompiled Header Generation", BuildOrder = 1 },
