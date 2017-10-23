@@ -24,6 +24,13 @@
 #include "Controls/EditBox.h"
 #include "Controls/Button.h"
 #include "Controls/MsgBox.h"
+#include "Reactive/Control.h"
+#include "VirtualDom/Diff.h"
+#include "VirtualDom/VirtualDom.h"
+
+#include "SysWnd_android.h"
+#include "SysWnd_linux.h"
+#include "SysWnd_windows.h"
 
 #ifdef _WIN32
 #pragma warning(pop)

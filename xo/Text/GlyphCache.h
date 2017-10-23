@@ -7,7 +7,7 @@ class TextureAtlas;
 class Font;
 
 enum GlyphFlags {
-	GlyphFlag_SubPixel_RGB = 1
+	GlyphFlag_SubPixel_RGB = 1,
 };
 
 inline bool GlyphFlag_IsSubPixel(uint32_t flags) { return !!(flags & GlyphFlag_SubPixel_RGB); }
@@ -41,8 +41,8 @@ struct GlyphCacheKey {
 	GlyphCacheKey(xo::FontID fid, uint32_t ch, uint8_t size, uint32_t flags) : FontID(fid), Char(ch), Size(size), Flags(flags) {}
 
 	int GetHashCode() const {
-		// Assume we'll have less than 1024 fonts
-		return (FontID << 22) ^ (Flags << 20) ^ (Size << 10) ^ Char;
+		// Assume we'll have less than 1024 fonts registered
+		return ((uint32_t) FontID << 22) ^ ((uint32_t) Flags << 20) ^ ((uint32_t) Size << 10) ^ (uint32_t) Char;
 	}
 	bool operator==(const GlyphCacheKey& b) const { return FontID == b.FontID && Char == b.Char && Size == b.Size && Flags == b.Flags; }
 };
@@ -108,5 +108,6 @@ protected:
 } // namespace xo
 
 namespace ohash {
-template<> inline ohash::hashkey_t gethashcode(const xo::GlyphCacheKey& k) { return (hashkey_t) k.GetHashCode(); }
+template <>
+inline ohash::hashkey_t gethashcode(const xo::GlyphCacheKey& k) { return (hashkey_t) k.GetHashCode(); }
 } // namespace ohash

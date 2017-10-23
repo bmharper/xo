@@ -24,6 +24,7 @@ public:
 	xo::Doc*       GetDoc() const { return Doc; }
 	uint32_t       GetVersion() const { return Version; }
 	xo::InternalID GetParentID() const { return ParentID; }
+	DomNode*       GetParent();
 	const DomNode* GetParent() const;
 
 	DomNode*       ToNode();

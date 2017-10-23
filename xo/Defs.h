@@ -117,7 +117,7 @@ enum CloneFlags {
 	CloneFlagEvents = 1, // Include events in clone
 };
 
-static const int XO_MAX_TOUCHES = 10;
+static const int XO_MAX_TOUCHES = 5;
 
 enum MainEvent {
 	MainEventInit = 1,
@@ -520,20 +520,29 @@ struct GlobalStruct {
 struct InitParams {
 	float  EpToPixel = 0; // Override Eye Pixels to Device Pixels (ends up in GlobalStruct.EpToPixel)
 	String CacheDir;      // Override cache directory used for font caches etc.
+#if XO_PLATFORM_WIN_DESKTOP
+	HICON WindowsAppIconLarge = nullptr; // Override the large icon of the "xo" window class
+	HICON WindowsAppIconSmall = nullptr; // Override the small icon of the "xo" window class
+#endif
 };
 
 typedef std::function<void(MainEvent ev)> MainCallbackLowLevel;
 typedef std::function<void(SysWnd* wnd)>  MainCallback;
 
 XO_API GlobalStruct* Global();
-XO_API void          Initialize(const InitParams* init = nullptr);
-XO_API void          Shutdown();
-XO_API void          RunAppLowLevel(MainCallbackLowLevel mainCallback);
-XO_API void          RunApp(MainCallback mainCallback);
-XO_API void          AddOrRemoveDocsFromGlobalList();
-XO_API void          ParseFail(const char* msg, ...);
-XO_API void          StyleVarLookupFailed(const char* var);
-XO_API void          TimeTraceBuf(const char* msg);
+
+// This must be called once at application startup.
+// It is automatically called by RunApp and RunAppLowLevel, but if you call it before that,
+// then it won't run again. Every call to Initialize() must be paired with a call to Shutdown()
+XO_API void Initialize(const InitParams* init = nullptr);
+XO_API void Shutdown();
+XO_API void RunAppLowLevel(MainCallbackLowLevel mainCallback);
+XO_API void RunApp(MainCallback mainCallback);
+XO_API SysWnd* CreateSysWnd();
+XO_API void    AddOrRemoveDocsFromGlobalList();
+XO_API void    ParseFail(const char* msg, ...);
+XO_API void    StyleVarLookupFailed(const char* var);
+XO_API void    TimeTraceBuf(const char* msg);
 
 template <typename... Args>
 void Trace(const char* fs, const Args&... args) {

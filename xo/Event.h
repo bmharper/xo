@@ -23,6 +23,15 @@ enum Events {
 	EventKeyChar    = 16384,
 	EventDestroy    = 32768, // DOM node is being removed from document
 	EventRender     = 65536, // Document has finished rendering
+	// Catch-all for document-level events, like document has finished dispatching events.
+	// For further details of the EventDocProcess message, look inside Event.DocProcess.
+	EventDocProcess = 131072,
+};
+
+enum class DocProcessEvents {
+	Null                      = 0,
+	DispatchEnd               = 1, // This is the end of event dispatching. This is used by reactive controls to re-render themselves, if they are dirty.
+	TouchedByBackgroundThread = 2, // Sent from the system window messaging system to our UI thread's message queue, to tell it to artificially run DispatchEnd. This ends up sending DispatchEnd to nodes.
 };
 
 enum class Button {
@@ -160,13 +169,14 @@ public:
 	const xo::LayoutResult* LayoutResult = nullptr;
 	Events                  Type         = EventMouseMove;
 	xo::Button              Button       = xo::Button::Null;
-	xo::ButtonStates        ButtonStates;                     // Special key states and mouse buttons. These are saved when the message is generated, to guarantee correct timing of keys (in case event is processed after key is lifted)
-	int                     KeyChar    = 0;                   // Unicode code point of a key message. If not a Unicode code point (eg DELETE), then use Button
-	int                     PointCount = 0;                   // Mouse = 1	Touch >= 1
-	Vec2f                   PointsAbs[XO_MAX_TOUCHES];        // Points in pixels, relative to viewport top-left
-	Vec2f                   PointsRel[XO_MAX_TOUCHES];        // Points relative to Target's content-box top-left
-	bool                    IsStopPropagationToggled = false; // True if StopPropagation() has been called, and the event must not bubble out to enclosing DOM elements
-	bool                    IsCancelTimerToggled     = false; // True if CancelTimer() has been called, in which case the timer will be cancelled
+	xo::ButtonStates        ButtonStates;                        // Special key states and mouse buttons. These are saved when the message is generated, to guarantee correct timing of keys (in case event is processed after key is lifted)
+	xo::DocProcessEvents    DocProcess = DocProcessEvents::Null; // Only valid when Type = EventDocProcess
+	int                     KeyChar    = 0;                      // Unicode code point of a key message. If not a Unicode code point (eg DELETE), then use Button
+	int                     PointCount = 0;                      // Mouse = 1	Touch >= 1
+	Vec2f                   PointsAbs[XO_MAX_TOUCHES];           // Points in pixels, relative to viewport top-left
+	Vec2f                   PointsRel[XO_MAX_TOUCHES];           // Points relative to Target's content-box top-left
+	bool                    IsStopPropagationToggled = false;    // True if StopPropagation() has been called, and the event must not bubble out to enclosing DOM elements
+	bool                    IsCancelTimerToggled     = false;    // True if CancelTimer() has been called, in which case the timer will be cancelled
 
 	Event();
 	~Event();

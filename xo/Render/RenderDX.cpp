@@ -381,6 +381,9 @@ bool RenderDX::SetupBuffers() {
 
 void RenderDX::DestroyDevice(SysWnd& wnd) {
 	// free up all buffers etc
+	for (auto t : Textures2D)
+		delete t;
+	Textures2D.clear();
 }
 
 void RenderDX::SurfaceLost() {
@@ -507,6 +510,7 @@ bool RenderDX::CreateTexture2D(Texture* tex) {
 	}
 	tex->TexID = RegisterTextureDX(t);
 	tex->InvalidateWholeSurface();
+	Textures2D.push(t);
 	return true;
 }
 

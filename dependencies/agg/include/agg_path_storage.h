@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 6297) // 32-bit value shifted, then cast to 64
+#endif
 //----------------------------------------------------------------------------
 // Anti-Grain Geometry - Version 2.4
 // Copyright (C) 2002-2005 Maxim Shemanarev (http://www.antigrain.com)
@@ -1542,4 +1546,7 @@ namespace agg
 
 
 
+#endif
+#ifdef _MSC_VER
+#pragma warning(pop)
 #endif

@@ -156,6 +156,7 @@ const char* CatNameTable[CatEND] = {
 
     "font-size",
     "font-family",
+    "font-weight",
 
     "position",
     "flow-context",
@@ -191,7 +192,7 @@ bool Size::Parse(const char* s, size_t len, Size& v) {
 	size_t nondig = 0;
 	if (s[0] == '-') {
 		digits[0] = '-';
-		nondig = 1;
+		nondig    = 1;
 	}
 	for (; nondig < len; nondig++) {
 		digits[nondig] = s[nondig];
@@ -403,6 +404,53 @@ static bool ParseSingleAttrib(const char* s, size_t len, bool (*parseFunc)(const
 	}
 }
 
+static bool ParseIntComponent(const char* s, size_t len, int& val) {
+	val      = 0;
+	int tval = 0;
+
+	size_t i = 0;
+	while (i < len && IsWhitespace(s[i]))
+		i++;
+
+	for (; i < len; i++) {
+		char c = s[i];
+		if (c >= '0' && c <= '9') {
+			tval = tval * 10 + s[i];
+		} else if (IsWhitespace(s[i])) {
+			for (i++; i < len; i++) {
+				if (!IsWhitespace(s[i]))
+					break;
+			}
+		} else {
+			break;
+		}
+	}
+
+	if (i != len)
+		return false;
+
+	val = tval;
+	return true;
+}
+
+static bool ParseInt(const char* s, size_t len, StyleCategories cat, Doc* doc, Style& style) {
+	if (HasDollar(s, 0, len)) {
+		style.SetVerbatim(cat, doc->GetOrCreateStyleVerbatimID(s, len));
+		return true;
+	}
+
+	int val = 0;
+	if (!ParseIntComponent(s, len, val)) {
+		ParseFail("Parse of %s failed, Not an integer: '%.*s'\n", CatNameTable[cat], (int) len, s);
+		return false;
+	}
+
+	StyleAttrib attrib;
+	attrib.SetInt(cat, val);
+	style.Set(attrib);
+	return true;
+}
+
 // This was added when font-family was stored as a string, but it is now stored as a FontID
 static void ParseString(const char* s, size_t len, StyleCategories cat, Doc* doc, Style& style) {
 	char        stat[64];
@@ -453,7 +501,7 @@ StyleCategories SubCategoryOffsetLTRB(StyleCategories base, const char* subCateg
 		ParseFail("Parse failed, unknown sub-type: '%.*s'\n", (int) subCategoryLen, subCategory);
 		return CatNULL;
 	}
-	return (StyleCategories) (CatUngenerify(base) + offset);
+	return (StyleCategories)(CatUngenerify(base) + offset);
 }
 
 template <typename T>
@@ -716,6 +764,7 @@ bool Style::Parse(const char* t, size_t maxLen, Doc* doc) {
 			else if (MATCH(t, startk, eq, "box-sizing"))                  { ok = ParseSingleAttrib(TSTART, TLEN, &ParseBoxSize, CatBoxSizing, doc, *this); }
 			else if (MATCH(t, startk, eq, "font-size"))                   { ok = ParseSingleAttrib(TSTART, TLEN, &Size::Parse, CatFontSize, doc, *this); }
 			else if (MATCH(t, startk, eq, "font-family"))                 { ok = ParseSingleAttrib(TSTART, TLEN, &ParseFontFamily, CatFontFamily, doc, *this); }
+			else if (MATCH(t, startk, eq, "font-weight"))                 { ok = ParseSingleAttrib(TSTART, TLEN, &ParseFontWeight, CatFontWeight, doc, *this); }
 			else if (MATCH(t, startk, eq, "left"))                        { ok = ParseBinding(true, TSTART, TLEN, CatLeft, doc, *this); }
 			else if (MATCH(t, startk, eq, "hcenter"))                     { ok = ParseBinding(true, TSTART, TLEN, CatHCenter, doc, *this); }
 			else if (MATCH(t, startk, eq, "right"))                       { ok = ParseBinding(true, TSTART, TLEN, CatRight, doc, *this); }
@@ -859,25 +908,25 @@ void Style::CloneFastInto(Style& c, Pool* pool) const {
 	ClonePodvecWithMemCopy(c.Attribs, Attribs, pool);
 }
 
-#define XX(name, type, setfunc, cat)   \
+#define XX(name, type, setfunc, cat) \
 	\
 void Style::Set##name(type value) \
 { \
-		StyleAttrib a;                 \
-		a.setfunc(cat, value);         \
-		Set(a);                        \
+		StyleAttrib a;               \
+		a.setfunc(cat, value);       \
+		Set(a);                      \
 	\
 }
 NUSTYLE_SETTERS_2P
 #undef XX
 
-#define XX(name, type, setfunc)        \
+#define XX(name, type, setfunc)      \
 	\
 void Style::Set##name(type value) \
 { \
-		StyleAttrib a;                 \
-		a.setfunc(value);              \
-		Set(a);                        \
+		StyleAttrib a;               \
+		a.setfunc(value);            \
+		Set(a);                      \
 	\
 }
 NUSTYLE_SETTERS_1P
@@ -1090,7 +1139,7 @@ StyleClass* StyleTable::GetOrCreate(const char* name) {
 	return s;
 }
 
-StyleClassID StyleTable::GetClassID(const char* name) {
+StyleClassID StyleTable::GetClassID(const char* name) const {
 	TempString n(name);
 	int*       pindex = NameToIndex.getp(n);
 	if (pindex)
@@ -1384,7 +1433,7 @@ XO_API bool ParseBorder(const char* s, size_t len, const char* subCategory, size
 		return true;
 	}
 
-	StyleCategories catColor = (StyleCategories) (cat + (CatBorderColor_Left - CatBorder_Left));
+	StyleCategories catColor = (StyleCategories)(cat + (CatBorderColor_Left - CatBorder_Left));
 
 	if (nspaces == 0) {
 		// 1px		OR
@@ -1467,7 +1516,7 @@ XO_API bool ParseBackground(const char* s, size_t len, const char* subCategory, 
 					return false;
 				memcpy(buf, s + 4, nameLen);
 				buf[nameLen] = 0;
-				int id = doc->GetSvgID(buf);
+				int id       = doc->GetSvgID(buf);
 				if (id == 0)
 					return false;
 				StyleAttrib a;
@@ -1481,4 +1530,43 @@ XO_API bool ParseBackground(const char* s, size_t len, const char* subCategory, 
 	return false;
 }
 
+XO_API bool ParseFontWeight(const char* s, size_t len, FontWeight& val) {
+	// This table should match what we have inside FontStore.cpp
+	if (MATCH(s, 0, len, "thin")) {
+		val = FontWeightThin;
+		return true;
+	}
+	if (MATCH(s, 0, len, "light")) {
+		val = FontWeightLight;
+		return true;
+	}
+	if (MATCH(s, 0, len, "semilight")) {
+		val = FontWeightSemiLight;
+		return true;
+	}
+	if (MATCH(s, 0, len, "normal")) {
+		val = FontWeightNormal;
+		return true;
+	}
+	if (MATCH(s, 0, len, "medium")) {
+		val = FontWeightMedium;
+		return true;
+	}
+	if (MATCH(s, 0, len, "bold")) {
+		val = FontWeightBold;
+		return true;
+	}
+	if (MATCH(s, 0, len, "black")) {
+		val = FontWeightBlack;
+		return true;
+	}
+	int ival = 0;
+	if (ParseIntComponent(s, len, ival)) {
+		ival = Clamp(ival, 100, 900); // at render time we divide by 100 and store as byte, so only expect 1..9
+		val  = (FontWeight) ival;
+		return true;
+	}
+	return false;
 }
+
+} // namespace xo

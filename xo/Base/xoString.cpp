@@ -81,6 +81,20 @@ bool StringRaw::EndsWith(const char* suffix) const {
 	return true;
 }
 
+void StringRaw::MakeLower() {
+	for (size_t i = 0; Z[i]; i++) {
+		if (Z[i] >= 'A' && Z[i] <= 'Z')
+			Z[i] += 'a' - 'A';
+	}
+}
+
+void StringRaw::MakeUpper() {
+	for (size_t i = 0; Z[i]; i++) {
+		if (Z[i] >= 'a' && Z[i] <= 'z')
+			Z[i] -= 'a' - 'A';
+	}
+}
+
 bool StringRaw::operator==(const char* b) const {
 	return *this == Temp(const_cast<char*>(b));
 }
@@ -329,4 +343,4 @@ TCH* ItoaT(TINT value, TCH* result, int base) {
 void XO_API Itoa(int64_t value, char* buf, int base) {
 	ItoaT<int64_t, char>(value, buf, base);
 }
-}
+} // namespace xo

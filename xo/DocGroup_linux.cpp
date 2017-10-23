@@ -9,4 +9,8 @@ DocGroupLinux::DocGroupLinux() {
 DocGroupLinux::~DocGroupLinux() {
 }
 
+void DocGroupLinux::InternalTouchedByOtherThread() {
+	// TODO
+}
+
 } // namespace xo

@@ -12,18 +12,39 @@ void MsgBox::InitializeStyles(Doc* doc) {
 	doc->ClassParse("xo.msgbox.txt", "padding-bottom: 20ep; break: after");
 }
 
-void MsgBox::Show(Doc* doc, const char* msg) {
+void MsgBox::Show(Doc* doc, const char* msg, const char* okMsg) {
+	MsgBox* mb = new MsgBox();
+	mb->Create(doc, msg, okMsg);
+}
+
+void MsgBox::Create(Doc* doc, const char* msg, const char* okMsg) {
 	auto grabber = doc->Root.AddNode(xo::TagDiv);
 	grabber->AddClass("xo.msgbox.grabber");
+	Root = grabber;
 
-	auto box = (DomNode*) grabber->ParseAppend("<div class='xo.msgbox.box'></div>");
-	auto lab = (DomNode*) box->ParseAppend("<lab class='xo.msgbox.txt'></lab>");
-	lab->SetText(msg);
-	auto okBtn = (DomNode*) Button::NewText(box, "OK");
+	if (!okMsg)
+		okMsg = "OK";
 
-	okBtn->OnClick([doc, grabber](Event& ev) {
-		doc->Root.DeleteChild(grabber);
+	auto box   = (DomNode*) grabber->ParseAppend("<div class='xo.msgbox.box'></div>");
+	auto lab   = (DomNode*) box->ParseAppend("<lab class='xo.msgbox.txt'></lab>");
+	auto okBtn = (DomNode*) Button::NewText(box, okMsg);
+	SetText(msg);
+
+	okBtn->OnClick([this](Event& ev) {
+		// When we delete our DOM elements, our lambda gets blown away too.
+		// So before we can do Root->Delete(), we must store all state that we need locally.
+		auto self = this;
+		auto onclose = OnClose;
+		Root->Delete();
+		delete self;
+		if (onclose)
+			onclose();
 	});
 }
+
+void MsgBox::SetText(const char* msg) {
+	Root->NodeByIndex(0)->NodeByIndex(0)->SetText(msg);
 }
-}
+
+} // namespace controls
+} // namespace xo

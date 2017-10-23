@@ -8,6 +8,9 @@ class XO_API DocGroupLinux : public DocGroup {
 public:
 	DocGroupLinux();
 	~DocGroupLinux() override;
+
+protected:
+	void InternalTouchedByOtherThread() override;
 };
 } // namespace xo
 #endif

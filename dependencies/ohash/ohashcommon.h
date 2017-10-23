@@ -7,6 +7,7 @@
 //#include <wchar.h>
 //#include <string>
 //#include <utility>
+#include <string.h>
 #include <stdint.h>
 #include <assert.h>
 

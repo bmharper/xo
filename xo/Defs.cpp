@@ -356,7 +356,6 @@ static void InitializePlatform() {
 #endif
 }
 
-// This must be called once at application startup. It is automatically called by RunApp and RunAppLowLevel.
 XO_API void Initialize(const InitParams* init) {
 	InitializeCount++;
 	if (InitializeCount != 1)
@@ -388,7 +387,7 @@ XO_API void Initialize(const InitParams* init) {
 	Globals->TargetFPS            = 60;
 	Globals->NumWorkerThreads     = Min(numCPUCores, 4); // I can't think of a reason right now why you'd want lots of these
 	Globals->MaxSubpixelGlyphSize = 60;
-	Globals->PreferOpenGL         = false;
+	Globals->PreferOpenGL         = false; // Should be false on Windows, because DX generally starts up faster than OpenGL
 	Globals->EnableVSync          = false;
 	// Freetype's output is linear coverage percentage, so if we treat our freetype texture as GL_LUMINANCE
 	// (and not GL_SLUMINANCE), and we use an sRGB framebuffer, then we get perfect results without
@@ -433,7 +432,7 @@ XO_API void Initialize(const InitParams* init) {
 	Globals->FontStore->InitializeFreetype();
 	Globals->GlyphCache = new GlyphCache();
 	auto dummySysWnd = SysWnd::New();
-	dummySysWnd->PlatformInitialize();
+	dummySysWnd->PlatformInitialize(init);
 	delete dummySysWnd;
 	InitializeXoThreads();
 	Trace("xo creating %d worker threads (%d CPU cores).\n", (int) Globals->NumWorkerThreads, (int) numCPUCores);
@@ -492,9 +491,11 @@ Example:
 		{
 		case MainEventInit:
 			{
-				MainWnd = SysWnd::CreateWithDoc();
+	            MainWnd = SysWnd::New();
+				MainWnd->CreateWithDoc();
 				...
 				MainWnd->Show();
+				MainWnd->Doc()->UI.DispatchDocProcess();
 			}
 			break;
 		case MainEventShutdown:
@@ -527,10 +528,19 @@ XO_API void RunApp(MainCallback mainCallback) {
 	auto    mainCallbackEv = [mainCallback, &mainWnd](MainEvent ev) {
         switch (ev) {
         case MainEventInit:
-            mainWnd = SysWnd::New();
-			mainWnd->CreateWithDoc();
-            mainWnd->Show();
+            mainWnd = CreateSysWnd();
             mainCallback(mainWnd);
+			// Send a 'post event process' event, so that reactive controls can receive their first callback and render themselves.
+			// This is not a all a hack. It is exactly what one would expect to receive, because this is the very first time
+			// that "userland" code is running, and one very much expects to receive a DocProcess event after that, just the
+			// same as a DocProcess event is received after processing a click event.
+			mainWnd->Doc()->UI.DispatchDocProcess();
+			// It's ideal to only show the window after initial document setup has been run, so that the application's
+			// first pixels shown to the world are not just a blank canvas. Some applications may need the window dimensions
+			// to draw themselves, but those applications will need to wait for a WindowSize event for that. But having
+			// said that, I don't think we send out such a message. We should probably synthesize it here, and send it 
+			// out after Show().
+            mainWnd->Show();
             break;
         case MainEventShutdown:
             delete mainWnd;
@@ -539,6 +549,12 @@ XO_API void RunApp(MainCallback mainCallback) {
         }
     };
 	RunAppLowLevel(mainCallbackEv);
+}
+
+XO_API SysWnd* CreateSysWnd() {
+    auto wnd = SysWnd::New();
+	wnd->CreateWithDoc();
+	return wnd;
 }
 
 XO_API Style** DefaultTagStyles() {

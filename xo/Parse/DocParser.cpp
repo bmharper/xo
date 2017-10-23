@@ -43,7 +43,119 @@ struct StringBuf {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// A temporary data structure for a node that's on the parse stack
+struct StackNode {
+	vdom::Node*               Node;
+	std::vector<vdom::Node*>  Children;
+	std::vector<vdom::Attrib> Attribs;
+};
+
+struct ParseStack {
+	StackNode* Nodes = nullptr;
+	size_t     Len   = 0;
+	size_t     Cap   = 0;
+	xo::Pool*  Pool  = nullptr;
+
+	ParseStack(xo::Pool* pool) : Pool(pool) {}
+	~ParseStack() {
+		delete[] Nodes;
+	}
+
+	StackNode* Push(vdom::Node* node = nullptr) {
+		if (Len >= Cap) {
+			size_t ncap = max(Cap * 2, (size_t) 8);
+			auto   n    = new StackNode[ncap];
+			for (size_t i = 0; i < Len; i++)
+				n[i] = std::move(Nodes[i]);
+			delete[] Nodes;
+			Nodes = n;
+		}
+		// This is the reason for our existence - we do not clear the storage inside the vectors
+		// Children and Attrib. Partner function Pop() is also crucial.
+		Nodes[Len].Node = node;
+		Nodes[Len].Children.clear();
+		Nodes[Len].Attribs.clear();
+		Len++;
+		return &Nodes[Len - 1];
+	}
+
+	void Pop() {
+		XO_ASSERT(Len != 0);
+		Len--;
+		// Copy the temporary Children and Attribs into the permanent vdom::Node storage
+		auto& top         = Nodes[Len];
+		top.Node->NChild  = top.Children.size();
+		top.Node->NAttrib = top.Attribs.size();
+		if (top.Children.size() != 0) {
+			top.Node->Children = Pool->AllocNT<vdom::Node*>(top.Children.size(), false);
+			memcpy(top.Node->Children, &top.Children[0], sizeof(void*) * top.Children.size());
+		}
+		if (top.Attribs.size() != 0) {
+			top.Node->Attribs = Pool->AllocNT<vdom::Attrib>(top.Attribs.size(), false);
+			memcpy(top.Node->Attribs, &top.Attribs[0], sizeof(vdom::Attrib) * top.Attribs.size());
+		}
+	}
+
+	StackNode& Back() { return Nodes[Len - 1]; }
+
+	StackNode& operator[](size_t i) { return Nodes[i]; }
+};
+
+static bool Equals(const char* a, const char* b) {
+	return strcmp(a, b) == 0;
+}
+
+static Tag ParseTag(const char* t) {
+	ssize_t i = TagNULL + 1;
+	for (; i < TagEND; i++) {
+		if (Equals(TagNames[i], t))
+			return (Tag) i;
+	}
+	return TagNULL;
+}
+
+// Recursively build real dom from virtual dom
+static String VDomToDom_R(vdom::Node* src, DomNode* dst) {
+	// Set attributes
+	for (size_t i = 0; i < src->NAttrib; i++) {
+		const auto& a = src->Attribs[i];
+		if (Equals(a.Name, "style")) {
+			if (!dst->StyleParse(a.Val))
+				return tsf::fmt("Invalid style '%v'", a.Val).c_str();
+		} else if (Equals(a.Name, "class")) {
+			dst->AddClass(a.Val);
+		} else {
+			return tsf::fmt("Invalid attribute '%v'", a.Name).c_str();
+		}
+	}
+
+	// Add children
+	for (size_t i = 0; i < src->NChild; i++) {
+		if (src->Children[i]->IsText()) {
+			dst->AddText(src->Children[i]->Val);
+		} else {
+			auto tag = ParseTag(src->Children[i]->Name);
+			if (tag == TagNULL)
+				return tsf::fmt("Invalid tag '%v'", src->Children[i]->Name).c_str();
+			auto child = dst->AddNode(tag);
+			auto err   = VDomToDom_R(src->Children[i], child);
+			if (err != "")
+				return err;
+		}
+	}
+	return "";
+}
+
 String DocParser::Parse(const char* src, DomNode* target) {
+	xo::Pool    pool;
+	vdom::Node* root = pool.AllocT<vdom::Node>(true);
+	auto        err  = Parse(src, root, &pool);
+	if (err != "")
+		return err;
+	return VDomToDom_R(root, target);
+}
+
+String DocParser::Parse(const char* src, vdom::Node* target, xo::Pool* pool) {
 	enum States {
 		SText,
 		STagOpen,
@@ -56,13 +168,17 @@ String DocParser::Parse(const char* src, DomNode* target) {
 		SAttribBodyDoubleQuote,
 	};
 
-	States             s        = SText;
-	ssize_t            pos      = 0;
-	ssize_t            xStart   = 0;
-	ssize_t            xEnd     = 0;
-	ssize_t            txtStart = 0;
-	cheapvec<DomNode*> stack;
-	stack += target;
+	Pool = pool;
+
+	States  s        = SText;
+	ssize_t pos      = 0;
+	ssize_t xStart   = 0;
+	ssize_t xEnd     = 0;
+	ssize_t txtStart = 0;
+	//cheapvec<DomNode*> stack;
+	//stack += target;
+	ParseStack stack(pool);
+	stack.Push(target);
 
 	auto err = [&](const char* msg) -> String {
 		ssize_t start = Max<ssize_t>(pos - 1, 0);
@@ -74,14 +190,19 @@ String DocParser::Parse(const char* src, DomNode* target) {
 	auto newNode = [&]() -> String {
 		if (xEnd - xStart <= 0)
 			return "Tag is empty";
-		ssize_t i = TagNULL + 1;
-		for (; i < TagEND; i++) {
-			if (EqNoCase(TagNames[i], src + xStart, xEnd - xStart))
-				break;
-		}
-		if (i == TagEND)
-			return String("Unrecognized tag ") + String(src + xStart, xEnd - xStart);
-		stack += stack.back()->AddNode((Tag) i);
+		//ssize_t i = TagNULL + 1;
+		//for (; i < TagEND; i++) {
+		//	if (EqNoCase(TagNames[i], src + xStart, xEnd - xStart))
+		//		break;
+		//}
+		//if (i == TagEND)
+		//	return String("Unrecognized tag ") + String(src + xStart, xEnd - xStart);
+		//stack += stack.back()->AddNode((Tag) i);
+		auto node  = pool->AllocT<vdom::Node>(false);
+		node->Name = pool->CopyStr(src + xStart, xEnd - xStart);
+		node->Val  = nullptr;
+		stack.Back().Children.push_back(node);
+		stack.Push(node);
 		return "";
 	};
 
@@ -123,26 +244,33 @@ String DocParser::Parse(const char* src, DomNode* target) {
 		if (white)
 			return "";
 		if (str.Len != 0) {
-			str.Terminate();
-			stack.back()->AddText(str.Buf);
+			//str.Terminate();
+			//stack.back()->AddText(str.Buf);
+			auto t  = pool->AllocT<vdom::Node>(false);
+			t->Name = nullptr;
+			t->Val  = pool->CopyStr(str.Buf, str.Len);
+			stack.Back().Children.push_back(t);
 		}
 		return "";
 	};
 
 	auto closeNodeCompact = [&]() -> String {
-		if (stack.size() == 1)
+		if (stack.Len == 1)
 			return "Too many closing tags"; // not sure if this is reachable; suspect not.
-		stack.pop();
+		stack.Pop();
 		return "";
 	};
 
 	auto closeNode = [&]() -> String {
-		if (stack.size() == 1)
+		if (stack.Len == 1)
 			return "Too many closing tags";
-		DomNode* top = stack.back();
-		if (!EqNoCase(TagNames[top->GetTag()], src + xStart, xEnd - xStart))
-			return tsf::fmt("Cannot close %v here. Expected %v close.", String(src + xStart, xEnd - xStart).CStr(), TagNames[top->GetTag()]).c_str();
-		stack.pop();
+		//DomNode* top = stack.Back().Node;
+		//if (!EqNoCase(TagNames[top->GetTag()], src + xStart, xEnd - xStart))
+		//	return tsf::fmt("Cannot close %v here. Expected %v close.", String(src + xStart, xEnd - xStart).CStr(), TagNames[top->GetTag()]).c_str();
+		auto top = stack.Back().Node;
+		if (!Eq(top->Name, src + xStart, xEnd - xStart))
+			return tsf::fmt("Cannot close %v here. Expected %v close.", String(src + xStart, xEnd - xStart).CStr(), top->Name).c_str();
+		stack.Pop();
 		return "";
 	};
 
@@ -150,8 +278,17 @@ String DocParser::Parse(const char* src, DomNode* target) {
 		if (xEnd - xStart <= 0)
 			return "Attribute name is empty"; // should be impossible to reach this, due to possible state transitions
 
+		ssize_t      bodyStart = xEnd + 2;
+		vdom::Attrib a;
+		a.Name = pool->CopyStr(src + xStart, xEnd - xStart);
+		a.Val  = pool->CopyStr(src + bodyStart, pos - bodyStart);
+		stack.Back().Attribs.push_back(a);
+		return "";
+
+		/*
 		DomNode* node = stack.back();
-		char     buf[64];
+		auto node = stack.Back();
+		char buf[64];
 
 		ssize_t bodyStart = xEnd + 2;
 		if (EqNoCase("style", src + xStart, xEnd - xStart)) {
@@ -179,6 +316,7 @@ String DocParser::Parse(const char* src, DomNode* target) {
 		}
 
 		return String("Unrecognized attribute ") + String(src + xStart, xEnd - xStart);
+		*/
 	};
 
 	for (; src[pos]; pos++) {
@@ -254,7 +392,7 @@ String DocParser::Parse(const char* src, DomNode* target) {
 				return err("Expected attributes or >");
 			}
 		case SAttribName:
-			if (IsAlpha(c)) {
+			if (IsAlpha(c) || c == ':' || c == '-') {
 				break;
 			} else if (c == '=') {
 				xEnd = pos;
@@ -294,10 +432,15 @@ String DocParser::Parse(const char* src, DomNode* target) {
 	if (s != SText)
 		return err("Unfinished");
 
-	if (stack.size() != 1)
+	if (stack.Len != 1)
 		return err("Unclosed tags");
 
-	return newText();
+	auto txtErr = newText();
+	if (txtErr.Length() != 0)
+		return txtErr;
+
+	stack.Pop();
+	return "";
 }
 
 bool DocParser::IsWhite(int c) {
@@ -306,6 +449,22 @@ bool DocParser::IsWhite(int c) {
 
 bool DocParser::IsAlpha(int c) {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
+bool DocParser::Eq(const char* a, const char* b, size_t bLen) {
+	for (size_t i = 0;; i++) {
+		if (a[i] == 0 && i == bLen)
+			return true;
+		if (a[i] == 0 && i < bLen)
+			return false;
+		if (i == bLen)
+			return false;
+		if (a[i] != b[i])
+			return false;
+	}
+	// should be unreachable
+	XO_DEBUG_ASSERT(false);
+	return false;
 }
 
 bool DocParser::EqNoCase(const char* a, const char* b, size_t bLen) {
@@ -325,4 +484,4 @@ bool DocParser::EqNoCase(const char* a, const char* b, size_t bLen) {
 	XO_DEBUG_ASSERT(false);
 	return false;
 }
-}
+} // namespace xo

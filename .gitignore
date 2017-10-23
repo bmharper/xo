@@ -3,6 +3,7 @@
 .tundra2.*
 .metadata
 Thumbs.db
+/ide
 t2-output
 /ide
 amalgamation/xo-amalgamation-freetype.c
@@ -12,3 +13,4 @@ examples/Android/bin/*
 examples/Android/libs/*
 examples/Android/obj/*
 examples/Android/gen/*
+/findings

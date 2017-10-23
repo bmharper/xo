@@ -47,27 +47,27 @@ private:
 
 public:
 	RenderDX();
-	virtual ~RenderDX();
+	~RenderDX() override;
 
-	virtual const char* RendererName();
+	const char* RendererName() override;
 
-	virtual bool InitializeDevice(SysWnd& wnd);
-	virtual void DestroyDevice(SysWnd& wnd);
-	virtual void SurfaceLost();
+	bool InitializeDevice(SysWnd& wnd) override;
+	void DestroyDevice(SysWnd& wnd) override;
+	void SurfaceLost() override;
 
-	virtual bool BeginRender(SysWnd& wnd);
-	virtual void EndRender(SysWnd& wnd, uint32_t endRenderFlags);
+	bool BeginRender(SysWnd& wnd) override;
+	void EndRender(SysWnd& wnd, uint32_t endRenderFlags) override;
 
-	virtual void PreRender();
-	virtual void PostRenderCleanup();
+	void PreRender() override;
+	void PostRenderCleanup() override;
 
-	virtual ProgBase* GetShader(Shaders shader);
-	virtual void      ActivateShader(Shaders shader);
+	ProgBase* GetShader(Shaders shader) override;
+	void      ActivateShader(Shaders shader) override;
 
-	virtual void Draw(GPUPrimitiveTypes type, int nvertex, const void* v);
+	void Draw(GPUPrimitiveTypes type, int nvertex, const void* v) override;
 
-	virtual bool LoadTexture(Texture* tex, int texUnit);
-	virtual bool ReadBackbuffer(Image& image);
+	bool LoadTexture(Texture* tex, int texUnit) override;
+	bool ReadBackbuffer(Image& image) override;
 
 private:
 	struct Texture2D {
@@ -77,14 +77,15 @@ private:
 
 	D3DState D3D;
 
-	DXProg_Fill      PFill;
-	DXProg_FillTex   PFillTex;
-	DXProg_Rect      PRect;
-	DXProg_TextRGB   PTextRGB;
-	DXProg_TextWhole PTextWhole;
-	DXProg_Uber      PUber;
-	static const int NumProgs = 6;
-	DXProg*          AllProgs[NumProgs];
+	DXProg_Fill          PFill;
+	DXProg_FillTex       PFillTex;
+	DXProg_Rect          PRect;
+	DXProg_TextRGB       PTextRGB;
+	DXProg_TextWhole     PTextWhole;
+	DXProg_Uber          PUber;
+	static const int     NumProgs = 6;
+	DXProg*              AllProgs[NumProgs];
+	cheapvec<Texture2D*> Textures2D;
 
 	bool          InitializeDXDevice(SysWnd& wnd);
 	bool          InitializeDXSurface(SysWnd& wnd);

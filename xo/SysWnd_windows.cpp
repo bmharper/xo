@@ -9,6 +9,8 @@ namespace xo {
 
 static const wchar_t* WClass        = L"xo";
 static bool           IsFirstWindow = true;
+static HICON          LargeAppIcon  = nullptr;
+static HICON          SmallAppIcon  = nullptr;
 
 SysWndWindows::SysWndWindows() {
 }
@@ -22,22 +24,27 @@ SysWndWindows::~SysWndWindows() {
 		DestroyWindow(Wnd);
 }
 
-void SysWndWindows::PlatformInitialize() {
+void SysWndWindows::PlatformInitialize(const InitParams* init) {
 	WNDCLASSEX wcex;
 
 	wcex.cbSize = sizeof(WNDCLASSEX);
+
+	if (init) {
+		LargeAppIcon = init->WindowsAppIconLarge;
+		SmallAppIcon = init->WindowsAppIconSmall;
+	}
 
 	wcex.style         = CS_DBLCLKS; //CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wcex.lpfnWndProc   = DocGroupWindows::StaticWndProc;
 	wcex.cbClsExtra    = 0;
 	wcex.cbWndExtra    = 0;
 	wcex.hInstance     = GetModuleHandle(NULL);
-	wcex.hIcon         = NULL;
+	wcex.hIcon         = LargeAppIcon;
 	wcex.hCursor       = LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground = NULL; //(HBRUSH)(COLOR_WINDOW+1);
 	wcex.lpszMenuName  = NULL;
 	wcex.lpszClassName = WClass;
-	wcex.hIconSm       = NULL;
+	wcex.hIconSm       = SmallAppIcon;
 
 	ATOM wclass_atom = RegisterClassEx(&wcex);
 }
@@ -72,6 +79,10 @@ Error SysWndWindows::Create(uint32_t createFlags) {
 
 void SysWndWindows::Show() {
 	ShowWindow(Wnd, SW_SHOW);
+}
+
+void SysWndWindows::SetTitle(const char* title) {
+	SetWindowTextW(Wnd, ConvertUTF8ToWide(title).c_str());
 }
 
 void SysWndWindows::SetPosition(Box box, uint32_t setPosFlags) {
@@ -161,6 +172,45 @@ bool SysWndWindows::CopySurfaceToImage(Box box, Image& img) {
 	ReleaseDC(Wnd, dc);
 	DeleteObject(dibSec);
 	return true;
+}
+
+void SysWndWindows::AddToSystemTray(const char* title, bool hideInsteadOfClose) {
+	SysWnd::AddToSystemTray(title, hideInsteadOfClose);
+	HideWindowOnClose = hideInsteadOfClose;
+	HasSysTrayIcon = true;
+
+	NOTIFYICONDATA nd = {0};
+	// Add icon
+	nd.cbSize = sizeof(nd);
+	nd.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_SHOWTIP;
+	nd.hWnd = Wnd;
+	nd.uID = SysTrayIconID;
+	nd.hIcon = LargeAppIcon;
+	nd.uCallbackMessage = WM_XO_SYSTRAY_ICON;
+	auto titlew = ConvertUTF8ToWide(title);
+	wcsncpy(nd.szTip, titlew.c_str(), 127);
+	BOOL ok = Shell_NotifyIcon(NIM_ADD, &nd);
+
+	// toggle new (Vista+) behaviour
+	memset(&nd, 0, sizeof(nd));
+	nd.cbSize = sizeof(nd);
+	nd.hWnd = Wnd;
+	nd.uID = SysTrayIconID;
+	nd.uVersion = NOTIFYICON_VERSION_4;
+	ok = Shell_NotifyIcon(NIM_SETVERSION, &nd);
+}
+
+void SysWndWindows::ShowSystemTrayAlert(const char* msg) {
+	NOTIFYICONDATA nd = {0};
+	nd.cbSize         = sizeof(nd);
+	nd.hWnd           = Wnd;
+	nd.uID            = SysWndWindows::SysTrayIconID;
+	nd.uFlags         = NIF_INFO;
+	wcscpy(nd.szInfoTitle, L"");
+	wcscpy(nd.szInfo, ConvertUTF8ToWide(msg).c_str());
+	nd.dwInfoFlags = NIIF_INFO | NIIF_NOSOUND;
+	// timeout is ignored on Vista+
+	Shell_NotifyIcon(NIM_MODIFY, &nd);
 }
 
 } // namespace xo

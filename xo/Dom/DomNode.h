@@ -38,6 +38,7 @@ public:
 	DomCanvas*     AddCanvas(size_t position = -1);
 	DomText*       AddText(const char* txt = nullptr, size_t position = -1);
 	DomText*       AddText(const std::string& txt, size_t position = -1);
+	void           Delete(); // Remove from DOM, and delete self
 	void           DeleteChild(DomEl* c);
 	void           Clear(); // Delete all children
 	size_t         ChildCount() const { return Children.size(); }
@@ -66,7 +67,7 @@ public:
 	void HackSetStyle(StyleAttrib attrib); // TODO: This is also "Hack" because it doesn't work for attribute such as background-image
 
 	// Classes
-	void AddClass(const char* klass);
+	void AddClass(const char* classes); // Add one more space-separated classes
 	void RemoveClass(const char* klass);
 	bool HasClass(const char* klass) const;
 
@@ -82,7 +83,8 @@ public:
 	bool          HandlesEvent(Events ev) const { return !!(AllEventMask & ev); }
 	uint32_t      FastestTimerMS() const;                                               // Returns the period of our fastest ticking timer event (or zero if none)
 	void          ReadyTimers(int64_t nowTicksMS, cheapvec<NodeEventIDPair>& handlers); // Fetch the list of timer events that are ready to run
-	void          RenderHandlers(cheapvec<NodeEventIDPair>& handlers);                  // Fetch the list of handlers for the Render event
+	void          RenderHandlers(cheapvec<NodeEventIDPair>& handlers) const;            // Fetch the list of handlers for the Render event
+	void          DocProcessHandlers(cheapvec<NodeEventIDPair>& handlers);              // Fetch the list of handlers for the DocProcess event
 	bool          HasFocus() const;                                                     // Return true if this node has the keyboard focus
 	void          SetCapture() const;                                                   // Captures input events so that they only fire on this node
 	void          ReleaseCapture() const;                                               // Releases input capture
@@ -112,6 +114,7 @@ public:
 	uint64_t OnKeyChar(EventHandlerF func, void* context) { return AddHandler(EventKeyChar, func, context); }
 	uint64_t OnDestroy(EventHandlerF func, void* context) { return AddHandler(EventDestroy, func, context); }
 	uint64_t OnRender(EventHandlerF func, void* context) { return AddHandler(EventRender, func, context); }
+	uint64_t OnDocProcess(EventHandlerF func, void* context) { return AddHandler(EventDocProcess, func, context); }
 
 	uint64_t OnWindowSize(EventHandlerLambda0 lambda) { return AddHandler(EventWindowSize, lambda); }
 	uint64_t OnTimer(EventHandlerLambda0 lambda, uint32_t periodMS) { return AddTimerHandler(EventTimer, lambda, periodMS); }
@@ -130,6 +133,7 @@ public:
 	uint64_t OnKeyChar(EventHandlerLambda0 lambda) { return AddHandler(EventKeyChar, lambda); }
 	uint64_t OnDestroy(EventHandlerLambda0 lambda) { return AddHandler(EventDestroy, lambda); }
 	uint64_t OnRender(EventHandlerLambda0 lambda) { return AddHandler(EventRender, lambda); }
+	uint64_t OnDocProcess(EventHandlerLambda0 lambda) { return AddHandler(EventDocProcess, lambda); }
 
 	uint64_t OnWindowSize(EventHandlerLambda1 lambda) { return AddHandler(EventWindowSize, lambda); }
 	uint64_t OnTimer(EventHandlerLambda1 lambda, uint32_t periodMS) { return AddTimerHandler(EventTimer, lambda, periodMS); }
@@ -148,6 +152,7 @@ public:
 	uint64_t OnKeyChar(EventHandlerLambda1 lambda) { return AddHandler(EventKeyChar, lambda); }
 	uint64_t OnDestroy(EventHandlerLambda1 lambda) { return AddHandler(EventDestroy, lambda); }
 	uint64_t OnRender(EventHandlerLambda1 lambda) { return AddHandler(EventRender, lambda); }
+	uint64_t OnDocProcess(EventHandlerLambda1 lambda) { return AddHandler(EventDocProcess, lambda); }
 
 protected:
 	uint64_t               NextEventHandlerID = 1;

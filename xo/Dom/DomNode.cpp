@@ -101,6 +101,10 @@ DomText* DomNode::AddText(const std::string& txt, size_t position) {
 	return AddText(txt.c_str(), position);
 }
 
+void DomNode::Delete() {
+	GetParent()->DeleteChild(this);
+}
+
 void DomNode::DeleteChild(DomEl* c) {
 	if (!c)
 		return;
@@ -206,11 +210,37 @@ void DomNode::HackSetStyle(StyleAttrib attrib) {
 	Style.Set(attrib);
 }
 
-void DomNode::AddClass(const char* klass) {
+void DomNode::AddClass(const char* classes) {
 	IncVersion();
-	StyleClassID id = Doc->ClassStyles.GetClassID(klass);
-	if (Classes.find(id) == -1)
-		Classes += id;
+	size_t s = 0;
+	char   buf[xo::MaxClassNameLen + 1];
+	for (size_t i = 0; true; i++) {
+		bool space = classes[i] == 32 || classes[i] == 9;
+		if (classes[i] == 0 || space) {
+			if (i - s == 1 && space) {
+				// skip over consecutive whitespace
+				s = i + 1;
+				continue;
+			}
+
+			StyleClassID id;
+			if (space) {
+				// Use buf
+				XO_ASSERT(i - s < sizeof(buf));
+				memcpy(buf, classes + s, i - s);
+				buf[i - s] = 0;
+				id         = Doc->ClassStyles.GetClassID(buf);
+			} else {
+				// Don't need buf, because we're at the end
+				id = Doc->ClassStyles.GetClassID(classes + s);
+			}
+			if (Classes.find(id) == -1)
+				Classes += id;
+			if (classes[i] == 0)
+				break;
+			s = i + 1;
+		}
+	}
 }
 
 void DomNode::RemoveClass(const char* klass) {
@@ -315,10 +345,16 @@ void DomNode::ReadyTimers(int64_t nowTicksMS, cheapvec<NodeEventIDPair>& handler
 	}
 }
 
-// Unlike ReaderTimers, this function could be const, but I haven't bothered.
-void DomNode::RenderHandlers(cheapvec<NodeEventIDPair>& handlers) {
+void DomNode::RenderHandlers(cheapvec<NodeEventIDPair>& handlers) const {
 	for (auto& h : Handlers) {
 		if (!!(h.Mask & EventRender))
+			handlers.push({InternalID, h.ID});
+	}
+}
+
+void DomNode::DocProcessHandlers(cheapvec<NodeEventIDPair>& handlers) {
+	for (auto& h : Handlers) {
+		if (!!(h.Mask & EventDocProcess))
 			handlers.push({InternalID, h.ID});
 	}
 }
@@ -336,16 +372,18 @@ void DomNode::ReleaseCapture() const {
 }
 
 void DomNode::RecalcAllEventMask() {
-	bool hadTimer  = !!(AllEventMask & EventTimer);
-	bool hadRender = !!(AllEventMask & EventTimer);
+	bool hadTimer      = !!(AllEventMask & EventTimer);
+	bool hadRender     = !!(AllEventMask & EventRender);
+	bool hadDocProcess = !!(AllEventMask & EventDocProcess);
 
 	uint32_t m = 0;
 	for (size_t i = 0; i < Handlers.size(); i++)
 		m |= Handlers[i].Mask;
 	AllEventMask = m;
 
-	bool hasTimerNow  = !!(AllEventMask & EventTimer);
-	bool hasRenderNow = !!(AllEventMask & EventRender);
+	bool hasTimerNow      = !!(AllEventMask & EventTimer);
+	bool hasRenderNow     = !!(AllEventMask & EventRender);
+	bool hasDocProcessNow = !!(AllEventMask & EventDocProcess);
 
 	if (!hadTimer && hasTimerNow)
 		Doc->NodeGotTimer(InternalID);
@@ -356,6 +394,11 @@ void DomNode::RecalcAllEventMask() {
 		Doc->NodeGotRender(InternalID);
 	else if (hadRender && !hasRenderNow)
 		Doc->NodeLostRender(InternalID);
+
+	if (!hadDocProcess && hasDocProcessNow)
+		Doc->NodeGotDocProcess(InternalID);
+	else if (hadRender && !hasRenderNow)
+		Doc->NodeLostDocProcess(InternalID);
 }
 
 void DomNode::DeleteChildInternal(DomEl* c) {

@@ -12,12 +12,24 @@ FontTableImmutable::FontTableImmutable() {
 FontTableImmutable::~FontTableImmutable() {
 }
 
-void FontTableImmutable::Initialize(const cheapvec<Font*>& fonts) {
-	Fonts = fonts;
+void FontTableImmutable::Initialize(const cheapvec<Font*>& fonts, const ohash::map<FontIDWeightPair, FontID>& cacheByWeight) {
+	Fonts         = fonts;
+	CacheByWeight = cacheByWeight;
 }
 
 const Font* FontTableImmutable::GetByFontID(FontID fontID) const {
 	XO_ASSERT(fontID != FontIDNull && (size_t) fontID < Fonts.size());
+	return Fonts[fontID];
+}
+
+const Font* FontTableImmutable::GetByFontIDAndWeight(FontID fontID, uint8_t weight) const {
+	if (weight == 4)
+		return GetByFontID(fontID);
+
+	uint32_t key = MakeFontIDWeightPair(fontID, weight);
+	fontID       = CacheByWeight.get(key);
+	if (fontID == FontIDNull)
+		return nullptr;
 	return Fonts[fontID];
 }
 
@@ -75,6 +87,67 @@ const Font* FontStore::GetByFontID(FontID fontID) {
 	return Fonts[fontID];
 }
 
+const Font* FontStore::GetByFontIDAndWeight(FontID fontID, uint8_t weight) {
+	const Font* plain = GetByFontID(fontID);
+	if (!plain || weight == 4)
+		return plain;
+
+	uint32_t cacheKey = MakeFontIDWeightPair(fontID, weight);
+	{
+		Lock.lock();
+		FontID fromAccel = CacheByWeight.get(cacheKey);
+		Lock.unlock();
+		if (fromAccel != 0)
+			return GetByFontID(fromAccel);
+	}
+
+	// Someday we'll probably want a bunch of different matching names here for the different categories,
+	// such as "extralight" = "light", and "heavy" = "black"
+	const char* lut[9] = {
+	    " thin",
+	    " light",
+	    " semilight",
+	    " regular",
+	    " medium",
+	    " semibold",
+	    " bold",
+	    " extrabold",
+	    " black",
+	};
+
+	String face = plain->Facename;
+	face.MakeLower();
+	const Font* fnt   = nullptr;
+	int         delta = 0;
+	for (int i = 0; i < 5; i++) { // the 5 here takes us up to -2 from where we wanted to be
+		int pos = weight - 1 + delta;
+		if (pos < 0 || pos >= arraysize(lut))
+			break;
+		fnt = GetByFacename((plain->Facename + lut[pos]).CStr());
+		if (fnt) {
+			Trace("Resolved weighted font %s @ %d -> %s.\n", plain->Facename.CStr(), (int) weight * 100, fnt->Facename.CStr());
+			Lock.lock();
+			CacheByWeight.insert(cacheKey, fnt->ID);
+			Lock.unlock();
+			return fnt;
+		}
+
+		// produce 0,1,-1,2,-2,3,-3,4,-4
+		if (delta == 0)
+			delta = 1;
+		else if (delta > 0)
+			delta = -delta;
+		else
+			delta = -delta + 1;
+	}
+
+	Trace("Failed to load font %s, weight %d. Using font as-is.\n", plain->Facename.CStr(), (int) weight * 100);
+	Lock.lock();
+	CacheByWeight.insert(cacheKey, plain->ID);
+	Lock.unlock();
+	return plain;
+}
+
 const Font* FontStore::GetByFacename(const char* facename) {
 	auto id = InsertByFacename(facename);
 	if (id == 0)
@@ -127,7 +200,7 @@ FontID FontStore::GetFallbackFontID() {
 FontTableImmutable FontStore::GetImmutableTable() {
 	std::lock_guard<std::mutex> lock(Lock);
 	FontTableImmutable          t;
-	t.Initialize(Fonts);
+	t.Initialize(Fonts, CacheByWeight);
 	return t;
 }
 
@@ -139,7 +212,9 @@ void FontStore::AddFontDirectory(const char* dir) {
 
 const Font* FontStore::GetByFacename_Internal(const char* facename) const {
 	FontID id;
-	if (FacenameToFontID.get(TempString(facename), id))
+	String low = facename;
+	low.MakeLower();
+	if (FacenameToFontID.get(low, id))
 		return Fonts[id];
 
 	return nullptr;
@@ -151,7 +226,9 @@ FontID FontStore::Insert_Internal(const char* facename, FT_Face face) {
 	font->FTFace   = face;
 	font->ID       = (FontID) Fonts.size();
 	Fonts += font;
-	FacenameToFontID.insert(font->Facename, font->ID);
+	String low = facename;
+	low.MakeLower();
+	FacenameToFontID.insert(low, font->ID);
 	LoadFontConstants(*font);
 	LoadFontTweaks(*font);
 	return font->ID;
@@ -193,7 +270,7 @@ void FontStore::LoadFontTweaks(Font& font) {
 	// The auto hinter fails to produce clean horizontal stems when the text gets larger
 	// Times New Roman seems to look better at all sub-pixel sizes using the auto hinter.
 	// The Sans Serif fonts like Segoe UI seem to look better with the TT hinter at larger sizes.
-	
+
 	// UPDATE - the above is pre freetype 2.6.2. Need to re-evaluate
 
 	// The 's' is screwed up at many sizes with Freetype >= 2.6.2, and <= 2.8 (latest now is 2.8)
@@ -208,8 +285,8 @@ void FontStore::LoadFontTweaks(Font& font) {
 	//	font.MaxAutoHinterSize = 14;
 
 	// This always looks better with the TT hinter, but 0 is now the default for MaxAutoHinterSize
-	// if (font.Facename == "Segoe UI")
-	// 	font.MaxAutoHinterSize = 0;
+	//if (font.Facename == "Segoe UI")
+	//	font.MaxAutoHinterSize = 30;
 
 	// This always looks better with the TT hinter
 	//if ( font.Facename == "Audiowide" )
@@ -222,12 +299,13 @@ const char* FontStore::GetFilenameFromFacename(const char* facename) {
 			BuildAndSaveFontTable();
 	}
 
-	String  name = facename;
-	String* fn   = FacenameToFilename.getp(name);
+	String name = facename;
+	name.MakeLower();
+	String* fn = FacenameToFilename.getp(name);
 	if (fn != nullptr)
 		return fn->Z;
 
-	name += " Regular";
+	name += " regular";
 	fn = FacenameToFilename.getp(name);
 	if (fn != nullptr)
 		return fn->Z;
@@ -343,8 +421,10 @@ bool FontStore::LoadFontTable() {
 				String path, facename;
 				path.Set(buf + lineStart, term1 - lineStart);
 				facename.Set(buf + term1 + 1, i - term1 - 1);
-				FacenameToFilename.insert(facename, path);
 				XOTRACE_FONTS("Font %s -> %s\n", facename.CStr(), path.CStr());
+				facename.MakeLower();
+				Trace("Font %s -> %s\n", facename.CStr(), path.CStr());
+				FacenameToFilename.insert(facename, path);
 			}
 			lineStart = i + 1;
 			term1     = lineStart;

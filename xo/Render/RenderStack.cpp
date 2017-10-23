@@ -67,6 +67,7 @@ void RenderStack::Initialize(const xo::Doc* doc, xo::Pool* pool) {
 	//Defaults[CatRight]
 	//Defaults[CatBottom]
 	Defaults[CatFontSize].SetSize(CatFontSize, Size::EyePixels(12));
+	Defaults[CatFontWeight].SetInt(CatFontWeight, 400);
 	// Font should inherit from body. Doc initializes the default font for TagBody
 	//Defaults[CatFontFamily].SetFont( doc->TagStyles[TagBody].Get().GetFont( doc ).CStr(), doc );
 	Defaults[CatBorderRadius_TL].SetSize(CatBorderRadius_TL, Size::Zero());
@@ -126,9 +127,9 @@ RenderStackEl& RenderStack::StackPush() {
 	RenderStackEl& el = Stack.add();
 	while (Stack_Pools.size() < Stack.size()) {
 		Stack_Pools += new xo::Pool();
-		Stack_Pools.back()->SetChunkSize(8 * 1024); // this is mentioned in RenderStack docs, so keep that up to date if you change this
+		Stack_Pools.back()->SetChunkSize(8 * 1024, 8 * 1024); // this is mentioned in RenderStack docs, so keep that up to date if you change this
 	}
 	el.Pool = Stack_Pools[Stack.size() - 1];
 	return el;
 }
-}
+} // namespace xo

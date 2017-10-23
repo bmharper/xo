@@ -36,7 +36,7 @@ public:
 	GLProg*          AllProgs[NumProgs]; // All of the above programs
 
 	RenderGL();
-	~RenderGL();
+	~RenderGL() override;
 
 	bool CreateShaders();
 	void DeleteShadersAndTextures();
@@ -44,25 +44,25 @@ public:
 
 	// Implementation of RenderBase
 
-	virtual const char* RendererName();
+	const char* RendererName() override;
 
-	virtual bool InitializeDevice(SysWnd& wnd);
-	virtual void DestroyDevice(SysWnd& wnd);
-	virtual void SurfaceLost();
+	bool InitializeDevice(SysWnd& wnd) override;
+	void DestroyDevice(SysWnd& wnd) override;
+	void SurfaceLost() override;
 
-	virtual bool BeginRender(SysWnd& wnd);                        // Gets DC and does a MakeCurrent
-	virtual void EndRender(SysWnd& wnd, uint32_t endRenderFlags); // Releases DC and does a SwapBuffers (unless flags inhibit Swap)
+	bool BeginRender(SysWnd& wnd) override;                        // Gets DC and does a MakeCurrent
+	void EndRender(SysWnd& wnd, uint32_t endRenderFlags) override; // Releases DC and does a SwapBuffers (unless flags inhibit Swap)
 
-	virtual void PreRender();
-	virtual void PostRenderCleanup();
+	void PreRender() override;
+	void PostRenderCleanup() override;
 
-	virtual void Draw(GPUPrimitiveTypes type, int nvertex, const void* v);
+	void Draw(GPUPrimitiveTypes type, int nvertex, const void* v) override;
 
-	virtual ProgBase* GetShader(Shaders shader);
-	virtual void      ActivateShader(Shaders shader);
+	ProgBase* GetShader(Shaders shader) override;
+	void      ActivateShader(Shaders shader) override;
 
-	virtual bool LoadTexture(Texture* tex, int texUnit);
-	virtual bool ReadBackbuffer(Image& image);
+	bool LoadTexture(Texture* tex, int texUnit) override;
+	bool ReadBackbuffer(Image& image) override;
 
 protected:
 	Shaders     ActiveShader;
@@ -89,4 +89,4 @@ protected:
 
 	static GLint TexFilterToGL(TexFilter f);
 };
-}
+} // namespace xo

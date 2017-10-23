@@ -11,9 +11,28 @@
 #include "Render/StyleResolve.h"
 #include "Image/Image.h"
 
+#if XO_PLATFORM_WIN_DESKTOP
+#include "DocGroup_windows.h"
+#elif XO_PLATFORM_ANDROID
+#include "DocGroup_android.h"
+#elif XO_PLATFORM_LINUX_DESKTOP
+#include "DocGroup_linux.h"
+#endif
+
 namespace xo {
 
+DocGroup* DocGroup::New() {
+#if XO_PLATFORM_WIN_DESKTOP
+	return new DocGroupWindows();
+#elif XO_PLATFORM_ANDROID
+	return new DocGroupAndroid();
+#elif XO_PLATFORM_LINUX_DESKTOP
+	return new DocGroupLinux();
+#endif
+}
+
 DocGroup::DocGroup() {
+	IsTouchedByOtherThread = false;
 	RenderDoc = new xo::RenderDoc(this);
 	RenderStats.Reset();
 }
@@ -192,6 +211,7 @@ void DocGroup::AddOrReplaceMessage(const OriginalEvent& ev) {
 	}
 }
 
+// This function is called from the one and only UIThread, inside Defs.cpp
 void DocGroup::ProcessEvent(Event& ev) {
 	// NOTE: I think the use of a Windows CRITICAL_SECTION is not great, because I get the
 	// feeling that the UI thread can starve the render thread if the UI thread is processing
@@ -241,4 +261,12 @@ bool DocGroup::IsDirty() const {
 bool DocGroup::IsDocVersionDifferentToRenderer() const {
 	return Doc->GetVersion() != RenderDoc->Doc.GetVersion();
 }
+
+void DocGroup::TouchedByOtherThread() {
+	bool prev = false;
+	if (IsTouchedByOtherThread.compare_exchange_strong(prev, true)) {
+		InternalTouchedByOtherThread();
+	}
+}
+
 } // namespace xo
