@@ -22,7 +22,7 @@ The easiest way to use xo is to build with the "amalgamation". The amalgamation 
 
 Simply add `xo-amalgamation.cpp` and `xo-amalgamation-freetype.c` into your project. If you are building a cross-platform application, and you want xo to handle the event loop for you, then you will need to include at least one other file (xoWinMain.cpp). On Android, there is a bit more stuff to add, such as JNI bindings.
 
-The amalgamation is hosted [here](https://github.com/bmharper/xo-amalgamation), but you can also build it yourself by running `build\create-amalgamation.rb`.
+The amalgamation is hosted [here](https://github.com/bmharper/xo-amalgamation), but you can also build it yourself by running `meta\create-amalgamation.rb`.
 
 ### Building from full source
 
@@ -38,12 +38,12 @@ If you move the cursor around on the screen, then the green square and text will
 
 There is another sample application called `KitchenSink` that stresses the layout system more.
 
-If you change shaders, then you must run `build\shaders.rb` before building again.
+If you change shaders, then you must run `meta\shaders.rb` before building again.
 
 ### Using Visual Studio
 
 Tundra can generate Visual Studio IDE projects for you.  
-Use `build\genide.bat` to generate IDE projects that you can open in Visual Studio.
+Use `meta\genide.bat` to generate IDE projects that you can open in Visual Studio.
 
 ## Design goals
 * Keep the entire library small. At last count, xo compiles to 220 KB of code, but dependencies
