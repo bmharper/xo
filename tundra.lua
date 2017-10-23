@@ -79,7 +79,7 @@ Build {
 			Inherit = unix_common,
 			Tools = { "clang" },
 		},
-		-- See instructions at top of file.
+		-- See instructions at top of file for using afl (American Fuzzy Lop fuzzer).
 		{
 			Name = "linux-afl",
 			SupportedHosts = { "linux" },
