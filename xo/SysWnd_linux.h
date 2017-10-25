@@ -2,7 +2,29 @@
 #include "SysWnd.h"
 
 #if XO_PLATFORM_LINUX_DESKTOP
+
+#include <X11/Xlib.h> // X11 definitions are needed by SysWnd.h
+#include <X11/Xutil.h>
+// Remove ridiculous X11 defines
+#ifdef None
+#undef None
+#endif
+#ifdef Status
+#undef Status
+#endif
+#ifdef Success
+#undef Success
+#endif
+#ifdef Bool
+#undef Bool
+#endif
+
 namespace xo {
+
+enum X11Constants {
+	// These are copied from the macros defined inside the X11 headers. I hope they never change!
+	None = 0,
+};
 
 class XO_API SysWndLinux : public SysWnd {
 public:
