@@ -130,9 +130,8 @@ typedef Mat4T<float> Mat4f;
 } // namespace xo
 ///////////////////////////////////////////////////////////////////////////
 
-#ifndef XXH32_SIZEOFSTATE
-#include "../../dependencies/hash/xxhash.h"
-#endif
+// We keep xxhash.h out of our precompiled header file, because it has some
+// intricate linker/compilation tricks, and it's just not worth the pain.
 
 #include "../Base/Alloc.h"
 #include "../Base/cheapvec.h"

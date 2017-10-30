@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "FontStore.h"
+#include "../../dependencies/hash/xxhash_xo_wrapper.h"
 
 namespace xo {
 
@@ -443,7 +444,8 @@ bool FontStore::LoadFontTable() {
 }
 
 uint64_t FontStore::ComputeFontDirHash() {
-	void* hstate = XXH64_init(0);
+	auto hstate = XXH64_createState();
+	XXH64_reset(hstate, 0);
 
 	auto cb = [&](const FilesystemItem& item) -> bool {
 		if (IsFontFilename(item.Name)) {
@@ -457,7 +459,9 @@ uint64_t FontStore::ComputeFontDirHash() {
 	for (size_t i = 0; i < Directories.size(); i++)
 		FindFiles(Directories[i].CStr(), cb);
 
-	return (uint64_t) XXH64_digest(hstate);
+	uint64_t h = XXH64_digest(hstate);
+	XXH64_freeState(hstate);
+	return h;
 }
 
 bool FontStore::IsFontFilename(const char* filename) {

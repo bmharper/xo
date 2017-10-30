@@ -431,7 +431,7 @@ XO_API void Initialize(const InitParams* init) {
 	Globals->FontStore = new FontStore();
 	Globals->FontStore->InitializeFreetype();
 	Globals->GlyphCache = new GlyphCache();
-	auto dummySysWnd = SysWnd::New();
+	auto dummySysWnd    = SysWnd::New();
 	dummySysWnd->PlatformInitialize(init);
 	delete dummySysWnd;
 	InitializeXoThreads();
@@ -524,12 +524,12 @@ Example:
 	}
 */
 XO_API void RunApp(MainCallback mainCallback) {
-	SysWnd* mainWnd        = nullptr;
-	auto    mainCallbackEv = [mainCallback, &mainWnd](MainEvent ev) {
-        switch (ev) {
-        case MainEventInit:
-            mainWnd = CreateSysWnd();
-            mainCallback(mainWnd);
+	SysWnd* mainWnd     = nullptr;
+	auto mainCallbackEv = [mainCallback, &mainWnd](MainEvent ev) {
+		switch (ev) {
+		case MainEventInit:
+			mainWnd = CreateSysWnd();
+			mainCallback(mainWnd);
 			// Send a 'post event process' event, so that reactive controls can receive their first callback and render themselves.
 			// This is not a all a hack. It is exactly what one would expect to receive, because this is the very first time
 			// that "userland" code is running, and one very much expects to receive a DocProcess event after that, just the
@@ -538,21 +538,21 @@ XO_API void RunApp(MainCallback mainCallback) {
 			// It's ideal to only show the window after initial document setup has been run, so that the application's
 			// first pixels shown to the world are not just a blank canvas. Some applications may need the window dimensions
 			// to draw themselves, but those applications will need to wait for a WindowSize event for that. But having
-			// said that, I don't think we send out such a message. We should probably synthesize it here, and send it 
+			// said that, I don't think we send out such a message. We should probably synthesize it here, and send it
 			// out after Show().
-            mainWnd->Show();
-            break;
-        case MainEventShutdown:
-            delete mainWnd;
-            mainWnd = nullptr;
-            break;
-        }
-    };
+			mainWnd->Show();
+			break;
+		case MainEventShutdown:
+			delete mainWnd;
+			mainWnd = nullptr;
+			break;
+		}
+	};
 	RunAppLowLevel(mainCallbackEv);
 }
 
 XO_API SysWnd* CreateSysWnd() {
-    auto wnd = SysWnd::New();
+	auto wnd = SysWnd::New();
 	wnd->CreateWithDoc();
 	return wnd;
 }
