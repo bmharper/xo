@@ -5,6 +5,10 @@
 
 #include <X11/Xlib.h> // X11 definitions are needed by SysWnd.h
 #include <X11/Xutil.h>
+
+// This is not needed here. I added it for other downstream projects. SDL2's SDL_x11sym.h is perhaps a sane way to deal with this mess.
+#include <X11/extensions/XInput2.h> 
+
 // Remove ridiculous X11 defines
 #ifdef None
 #undef None
@@ -21,10 +25,13 @@
 
 namespace xo {
 
-enum X11Constants {
+namespace X11Constants {
+enum {
 	// These are copied from the macros defined inside the X11 headers. I hope they never change!
 	None = 0,
+	Success = 0,
 };
+}
 
 class XO_API SysWndLinux : public SysWnd {
 public:

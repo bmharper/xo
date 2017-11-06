@@ -13,7 +13,7 @@ SysWndLinux::SysWndLinux() {
 
 SysWndLinux::~SysWndLinux() {
 	if (XDisplay) {
-		glXMakeCurrent(XDisplay, None, nullptr);
+		glXMakeCurrent(XDisplay, X11Constants::None, nullptr);
 		glXDestroyContext(XDisplay, GLContext);
 		XDestroyWindow(XDisplay, XWindow);
 		XCloseDisplay(XDisplay);
@@ -29,7 +29,7 @@ SysWndLinux::~SysWndLinux() {
 }
 
 Error SysWndLinux::Create(uint32_t createFlags) {
-	GLint att[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, None};
+	GLint att[] = {GLX_RGBA, GLX_DEPTH_SIZE, 16, GLX_DOUBLEBUFFER, X11Constants::None};
 	XDisplay    = XOpenDisplay(nullptr);
 	if (XDisplay == nullptr)
 		return Error("Cannot connect to X server");
@@ -56,8 +56,8 @@ Error SysWndLinux::Create(uint32_t createFlags) {
 	    Button3MotionMask |
 	    Button4MotionMask |
 	    Button5MotionMask |
-		ButtonPressMask |
-		ButtonReleaseMask |
+	    ButtonPressMask |
+	    ButtonReleaseMask |
 	    EnterWindowMask |
 	    LeaveWindowMask;
 	XWindow = XCreateWindow(XDisplay, XWindowRoot, 0, 0, 600, 600, 0, VisualInfo->depth, InputOutput, VisualInfo->visual, CWColormap | CWEventMask, &swa);
@@ -66,7 +66,7 @@ Error SysWndLinux::Create(uint32_t createFlags) {
 	GLContext = glXCreateContext(XDisplay, VisualInfo, NULL, GL_TRUE);
 	glXMakeCurrent(XDisplay, XWindow, GLContext);
 	auto err = InitializeRenderer();
-	glXMakeCurrent(XDisplay, None, NULL);
+	glXMakeCurrent(XDisplay, X11Constants::None, NULL);
 	return err;
 }
 

@@ -424,7 +424,7 @@ bool FontStore::LoadFontTable() {
 				facename.Set(buf + term1 + 1, i - term1 - 1);
 				XOTRACE_FONTS("Font %s -> %s\n", facename.CStr(), path.CStr());
 				facename.MakeLower();
-				Trace("Font %s -> %s\n", facename.CStr(), path.CStr());
+				//Trace("Font %s -> %s\n", facename.CStr(), path.CStr());
 				FacenameToFilename.insert(facename, path);
 			}
 			lineStart = i + 1;
