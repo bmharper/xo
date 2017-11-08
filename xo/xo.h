@@ -28,9 +28,13 @@
 #include "VirtualDom/Diff.h"
 #include "VirtualDom/VirtualDom.h"
 
-#include "SysWnd_android.h"
-#include "SysWnd_linux.h"
-#include "SysWnd_windows.h"
+// We try to avoid including platform specific things.
+// This first became important because X11's headers define a bunch of nasty macros such as Bool and Success,
+// which just mess around with other symbol names. To counter that, we end up doing things like "#undef Bool",
+// but that is certainly not something that we can propagate downstream.
+//#include "SysWnd_android.h"
+//#include "SysWnd_linux.h"
+//#include "SysWnd_windows.h"
 
 #ifdef _WIN32
 #pragma warning(pop)

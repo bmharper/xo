@@ -14,16 +14,17 @@
 #include <tchar.h>
 #else
 #if XO_PLATFORM_ANDROID
-# include <jni.h>
-# include <android/log.h>
-# include <sys/atomics.h>
+#include <jni.h>
+#include <android/log.h>
+#include <sys/atomics.h>
 #elif XO_PLATFORM_LINUX_DESKTOP
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <fcntl.h>
-# include <unistd.h>
-# include <pwd.h>
-# include <GL/glx.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <pwd.h>
+// We can't include any thing here that includes XLib, because of XLib's nasty macros
+//# include <GL/glx.h>
 #endif
 #include <pthread.h>
 #include <semaphore.h>

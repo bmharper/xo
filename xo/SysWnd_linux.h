@@ -6,9 +6,6 @@
 #include <X11/Xlib.h> // X11 definitions are needed by SysWnd.h
 #include <X11/Xutil.h>
 
-// This is not needed here. I added it for other downstream projects. SDL2's SDL_x11sym.h is perhaps a sane way to deal with this mess.
-#include <X11/extensions/XInput2.h> 
-
 // Remove ridiculous X11 defines
 #ifdef None
 #undef None
