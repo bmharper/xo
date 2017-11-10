@@ -352,9 +352,9 @@ void DomNode::RenderHandlers(cheapvec<NodeEventIDPair>& handlers) const {
 	}
 }
 
-void DomNode::DocProcessHandlers(cheapvec<NodeEventIDPair>& handlers) {
+void DomNode::DocLifecycleHandlers(cheapvec<NodeEventIDPair>& handlers) {
 	for (auto& h : Handlers) {
-		if (!!(h.Mask & EventDocProcess))
+		if (!!(h.Mask & EventDocLifecycle))
 			handlers.push({InternalID, h.ID});
 	}
 }
@@ -372,18 +372,18 @@ void DomNode::ReleaseCapture() const {
 }
 
 void DomNode::RecalcAllEventMask() {
-	bool hadTimer      = !!(AllEventMask & EventTimer);
-	bool hadRender     = !!(AllEventMask & EventRender);
-	bool hadDocProcess = !!(AllEventMask & EventDocProcess);
+	bool hadTimer        = !!(AllEventMask & EventTimer);
+	bool hadRender       = !!(AllEventMask & EventRender);
+	bool hadDocLifecycle = !!(AllEventMask & EventDocLifecycle);
 
 	uint32_t m = 0;
 	for (size_t i = 0; i < Handlers.size(); i++)
 		m |= Handlers[i].Mask;
 	AllEventMask = m;
 
-	bool hasTimerNow      = !!(AllEventMask & EventTimer);
-	bool hasRenderNow     = !!(AllEventMask & EventRender);
-	bool hasDocProcessNow = !!(AllEventMask & EventDocProcess);
+	bool hasTimerNow        = !!(AllEventMask & EventTimer);
+	bool hasRenderNow       = !!(AllEventMask & EventRender);
+	bool hasDocLifecycleNow = !!(AllEventMask & EventDocLifecycle);
 
 	if (!hadTimer && hasTimerNow)
 		Doc->NodeGotTimer(InternalID);
@@ -395,10 +395,10 @@ void DomNode::RecalcAllEventMask() {
 	else if (hadRender && !hasRenderNow)
 		Doc->NodeLostRender(InternalID);
 
-	if (!hadDocProcess && hasDocProcessNow)
-		Doc->NodeGotDocProcess(InternalID);
+	if (!hadDocLifecycle && hasDocLifecycleNow)
+		Doc->NodeGotDocLifecycle(InternalID);
 	else if (hadRender && !hasRenderNow)
-		Doc->NodeLostDocProcess(InternalID);
+		Doc->NodeLostDocLifecycle(InternalID);
 }
 
 void DomNode::DeleteChildInternal(DomEl* c) {

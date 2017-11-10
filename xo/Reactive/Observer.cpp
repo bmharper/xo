@@ -9,7 +9,7 @@ This is not necessary for the use cases that I envisage with the reactive system
 The reason I say that, is because the reactive system is not supposed to be doing
 re-rendering in immediate response to an ObservableTouched event. Instead, the
 Control that received the ObservableTouched event should rather be setting Dirty = true,
-and then waiting for the next DocProcess message, and only during that message,
+and then waiting for the next DocLifecycle message, and only during that message,
 perform re-rendering.
 
 Anyway, I've been bitten by this kind of thing in the past, so I think it's a reasonable
@@ -33,7 +33,7 @@ Observer::~Observer() {
 void Observer::Watch(Observable* target) {
 	{
 		std::lock_guard<std::mutex> lock(WatchingLock);
-		size_t empty = -1;
+		size_t                      empty = -1;
 		for (size_t i = 0; i < Watching.size(); i++) {
 			if (Watching[i] == target)
 				return;

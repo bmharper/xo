@@ -239,19 +239,19 @@ void Doc::RenderHandlers(cheapvec<NodeEventIDPair>& handlers) {
 	}
 }
 
-void Doc::NodeGotDocProcess(InternalID node) {
-	NodesWithDocProcess.insert(node);
+void Doc::NodeGotDocLifecycle(InternalID node) {
+	NodesWithDocLifecycle.insert(node);
 }
 
-void Doc::NodeLostDocProcess(InternalID node) {
-	NodesWithDocProcess.erase(node);
+void Doc::NodeLostDocLifecycle(InternalID node) {
+	NodesWithDocLifecycle.erase(node);
 }
 
-void Doc::DocProcessHandlers(cheapvec<NodeEventIDPair>& handlers) {
-	for (InternalID id : NodesWithDocProcess) {
+void Doc::DocLifecycleHandlers(cheapvec<NodeEventIDPair>& handlers) {
+	for (InternalID id : NodesWithDocLifecycle) {
 		DomNode* node = GetNodeByInternalIDMutable(id);
 		if (node)
-			node->DocProcessHandlers(handlers);
+			node->DocLifecycleHandlers(handlers);
 	}
 }
 

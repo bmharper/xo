@@ -22,7 +22,7 @@ void Control::ObservableTouched(Observable* target) {
 
 void Control::Bind(xo::DomNode* root) {
 	Root = root;
-	Root->OnDocProcess(OnDocProcess, this);
+	Root->OnDocLifecycle(OnDocLifecycle, this);
 	Root->OnDestroy([this] {
 		delete this;
 	});
@@ -33,7 +33,7 @@ void Control::SetDirty() {
 	if (std::this_thread::get_id() != BoundThread) {
 		// Make sure that the xo message loop wakes up to re-render us.
 		// This message was sent from another thread (something doing background processing), so
-		// the main xo message loop won't necessarily have any reason to invoke the DocProcess mechanism.
+		// the main xo message loop won't necessarily have any reason to invoke the DocLifecycle mechanism.
 		// What happens after this?
 		// Basically, we need to somehow inject a message into the OS window message queue, so that
 		// the main thread wakes up and performs a re-render. On Windows, we use a custom WM_USER message.
@@ -41,8 +41,8 @@ void Control::SetDirty() {
 	}
 }
 
-void Control::OnDocProcess(Event& ev) {
-	if (ev.DocProcess != DocProcessEvents::DispatchEnd)
+void Control::OnDocLifecycle(Event& ev) {
+	if (ev.DocLifecycle != DocLifecycleEvents::DispatchEnd)
 		return;
 	Control* self = (Control*) ev.Context;
 	if (self->Dirty) {

@@ -302,8 +302,8 @@ LRESULT DocGroupWindows::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 	case SysWndWindows::WM_XO_TOUCHED_BY_OTHER_THREAD:
 		// clear the flag, so that subsequent invalidations can come through
 		IsTouchedByOtherThread = false;
-		ev.Event.Type = EventDocProcess;
-		ev.Event.DocProcess = DocProcessEvents::TouchedByBackgroundThread;
+		ev.Event.Type          = EventDocLifecycle;
+		ev.Event.DocLifecycle  = DocLifecycleEvents::TouchedByBackgroundThread;
 		Global()->UIEventQueue.Add(ev);
 		break;
 

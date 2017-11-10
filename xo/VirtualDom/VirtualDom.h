@@ -35,7 +35,7 @@ This is used in conjunctions with the virtual dom differ. It receives
 a set of 'patch' commands from the differ, and turns those patches into
 real DOM creation statements.
 
-This class is also responsible for knowing the names of controls, so
+Through the Registry, this class knows the names of controls, so
 that when it sees <foobar>...</foobar> in the virtual dom, it knows
 to create a FooBar control.
 */

@@ -87,10 +87,10 @@ public:
 	void   RenderHandlers(cheapvec<NodeEventIDPair>& handlers);
 	size_t AnyRenderHandlers() const { return NodesWithRender.size() != 0; }
 
-	void   NodeGotDocProcess(InternalID node);
-	void   NodeLostDocProcess(InternalID node);
-	void   DocProcessHandlers(cheapvec<NodeEventIDPair>& handlers);
-	size_t AnyDocProcessHandlers() const { return NodesWithDocProcess.size() != 0; }
+	void   NodeGotDocLifecycle(InternalID node);
+	void   NodeLostDocLifecycle(InternalID node);
+	void   DocLifecycleHandlers(cheapvec<NodeEventIDPair>& handlers);
+	size_t AnyDocLifecycleHandlers() const { return NodesWithDocLifecycle.size() != 0; }
 
 	//void				ChildAddedFromDocumentClone( DomEl* el );
 	void           ChildAdded(DomEl* el);
@@ -111,9 +111,9 @@ protected:
 	cheapvec<bool>         ChildIsModified; // Bit is set if child has been modified since we last synced with the renderer -- TODO - change to proper bitmap
 	cheapvec<InternalID>   UsableIDs;       // When we do a render sync, then FreeIDs are moved into UsableIDs
 	cheapvec<InternalID>   FreeIDs;
-	ohash::set<InternalID> NodesWithTimers;     // Set of all nodes that have an OnTimer event handler registered
-	ohash::set<InternalID> NodesWithRender;     // Set of all nodes that have an OnRender event handler registered
-	ohash::set<InternalID> NodesWithDocProcess; // Set of all nodes that have an OnDocProcess event handler registered
+	ohash::set<InternalID> NodesWithTimers;       // Set of all nodes that have an OnTimer event handler registered
+	ohash::set<InternalID> NodesWithRender;       // Set of all nodes that have an OnRender event handler registered
+	ohash::set<InternalID> NodesWithDocLifecycle; // Set of all nodes that have an OnDocLifecycle event handler registered
 	VariableTable          StyleVariables;
 	StringTableGC          StyleVerbatimStrings; // Table of all the verbatim style strings that contain variable references
 	VariableTable          VectorIcons;          // SVG Icons. Abuse VariableTable... VariableTable might need a rename or a slight refactor!

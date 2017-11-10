@@ -7,11 +7,11 @@ public:
 	Outer(xo::DomNode* root) : Control(root) {}
 
 	void Render() override {
-		Root->AddText("Hello World reac");
+		Root->AddText("Hello World reactive");
 	}
 };
 
 void xoMain(xo::SysWnd* wnd) {
-	//wnd->Doc()->Root.AddText("Hello World reac");
+	//wnd->Doc()->Root.AddText("Hello World reactive");
 	auto c = new Outer(&wnd->Doc()->Root);
 }

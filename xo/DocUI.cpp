@@ -38,9 +38,9 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 		}
 		break;
 	}
-	case EventDocProcess:
-		XO_ASSERT(ev.DocProcess == DocProcessEvents::TouchedByBackgroundThread);
-		DispatchDocProcess();
+	case EventDocLifecycle:
+		XO_ASSERT(ev.DocLifecycle == DocLifecycleEvents::TouchedByBackgroundThread);
+		DispatchDocLifecycle();
 		return;
 	default:
 		break;
@@ -100,9 +100,9 @@ void DocUI::InternalProcessEvent(Event& ev, const LayoutResult* layout) {
 		handled = ProcessInputEvent(ev, layout);
 	}
 
-	// Process DocProcess messages, which listen for the end of an event loop that caused userland code to run
+	// Process DocLifecycle messages, which listen for the end of an event loop that caused userland code to run
 	if (handled) {
-		DispatchDocProcess();
+		DispatchDocLifecycle();
 	}
 }
 
@@ -117,13 +117,13 @@ void DocUI::CloneSlowInto(DocUI& c) const {
 	c.Cursor           = Cursor;
 }
 
-void DocUI::DispatchDocProcess() {
+void DocUI::DispatchDocLifecycle() {
 	cheapvec<NodeEventIDPair> handlers;
-	Doc->DocProcessHandlers(handlers);
+	Doc->DocLifecycleHandlers(handlers);
 	Event procEv;
-	procEv.Type       = EventDocProcess;
-	procEv.DocProcess = DocProcessEvents::DispatchEnd;
-	procEv.Doc        = Doc;
+	procEv.Type         = EventDocLifecycle;
+	procEv.DocLifecycle = DocLifecycleEvents::DispatchEnd;
+	procEv.Doc          = Doc;
 	RobustDispatchEventToHandlers(procEv, handlers);
 }
 

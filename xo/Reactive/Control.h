@@ -23,7 +23,7 @@ public:
 	void SetDirty();
 	bool IsDirty() const { return Dirty; }
 
-	static void OnDocProcess(Event& ev);
+	static void OnDocLifecycle(Event& ev);
 
 private:
 	std::thread::id BoundThread = std::thread::id(); // Thread on which UI is expected to run, including all DOM manipulation

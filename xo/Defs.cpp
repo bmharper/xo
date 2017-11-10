@@ -502,7 +502,7 @@ Example:
 				MainWnd->CreateWithDoc();
 				...
 				MainWnd->Show();
-				MainWnd->Doc()->UI.DispatchDocProcess();
+				MainWnd->Doc()->UI.DispatchDocLifecycle();
 			}
 			break;
 		case MainEventShutdown:
@@ -539,9 +539,9 @@ XO_API void RunApp(MainCallback mainCallback) {
             mainCallback(mainWnd);
             // Send a 'post event process' event, so that reactive controls can receive their first callback and render themselves.
             // This is not a all a hack. It is exactly what one would expect to receive, because this is the very first time
-            // that "userland" code is running, and one very much expects to receive a DocProcess event after that, just the
-            // same as a DocProcess event is received after processing a click event.
-            mainWnd->Doc()->UI.DispatchDocProcess();
+            // that "userland" code is running, and one very much expects to receive a DocLifecycle event after that, just the
+            // same as a DocLifecycle event is received after processing a click event.
+            mainWnd->Doc()->UI.DispatchDocLifecycle();
             // It's ideal to only show the window after initial document setup has been run, so that the application's
             // first pixels shown to the world are not just a blank canvas. Some applications may need the window dimensions
             // to draw themselves, but those applications will need to wait for a WindowSize event for that. But having

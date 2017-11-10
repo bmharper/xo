@@ -28,7 +28,7 @@ public:
 
 	void InternalProcessEvent(Event& ev, const LayoutResult* layout); // This is always called from the UI thread. Do not call this yourself. It is called only by DocGroup::ProcessEvent()
 	void CloneSlowInto(DocUI& c) const;
-	void DispatchDocProcess();
+	void DispatchDocLifecycle();
 
 	uint32_t GetViewportWidth() const { return ViewportWidth; }
 	uint32_t GetViewportHeight() const { return ViewportHeight; }
