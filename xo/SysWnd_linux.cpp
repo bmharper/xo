@@ -48,6 +48,7 @@ Error SysWndLinux::Create(uint32_t createFlags) {
 	swa.colormap = ColorMap;
 	swa.event_mask =
 	    ExposureMask |
+	    VisibilityChangeMask |
 	    KeyPressMask |
 	    PointerMotionMask |
 	    ButtonMotionMask |
@@ -56,8 +57,8 @@ Error SysWndLinux::Create(uint32_t createFlags) {
 	    Button3MotionMask |
 	    Button4MotionMask |
 	    Button5MotionMask |
-		ButtonPressMask |
-		ButtonReleaseMask |
+	    ButtonPressMask |
+	    ButtonReleaseMask |
 	    EnterWindowMask |
 	    LeaveWindowMask;
 	XWindow = XCreateWindow(XDisplay, XWindowRoot, 0, 0, 600, 600, 0, VisualInfo->depth, InputOutput, VisualInfo->visual, CWColormap | CWEventMask, &swa);

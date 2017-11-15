@@ -121,6 +121,7 @@ bool ProcessEventsForDoc(DocGroupLinux* dg) {
 	while (XPending(wnd->XDisplay)) {
 		XEvent xev;
 		XNextEvent(wnd->XDisplay, &xev);
+		//tsf::print("xev: %v\n", xev.type);
 
 		OriginalEvent ev;
 		ev.DocGroup  = dg;
@@ -140,8 +141,13 @@ bool ProcessEventsForDoc(DocGroupLinux* dg) {
 			}
 			break;
 		}
+		case VisibilityNotify:
+			//tsf::print("VisibilityNotify\n");
+			// fallthrough
 		case Expose: {
-			//printf("ev: Expose %d %d %d %d %d\n", xev.xexpose.x, xev.xexpose.y, xev.xexpose.width, xev.xexpose.height, xev.xexpose.count);
+			if (xev.type == Expose) {
+				//tsf::print("ev: Expose %d %d %d %d %d\n", xev.xexpose.x, xev.xexpose.y, xev.xexpose.width, xev.xexpose.height, xev.xexpose.count);
+			}
 			XWindowAttributes wa;
 			XGetWindowAttributes(wnd->XDisplay, wnd->XWindow, &wa);
 			//printf("x,y = %d,%d borderwidth: %d\n", wa.x, wa.y, wa.border_width);

@@ -26,6 +26,9 @@ public:
 	// Same as Copy, but adds a null terminator
 	char* CopyStr(const void* src, size_t size);
 
+	// Same as CopyStr, but computes string length
+	char* CopyStr(const char* src);
+
 	void FreeAll();
 
 	/* This is an optimization for a pool that is frequently re-used.

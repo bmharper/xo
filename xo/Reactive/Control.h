@@ -46,7 +46,6 @@ private:
 
 	void          RenderRoot();
 	static String ApplyDiff_R(vdom::VDomToRealDom& vd, DomEl* ownerEl, vdom::Node* va, vdom::Node* vb);
-	//static String ApplyDiff_R(vdom::VDomToRealDom& vd, DomNode* owner, size_t na, vdom::Node** a, size_t nb, vdom::Node** b);
 
 	static void _OnDocLifecycle(Event& ev);
 	static void _OnDestroy(Event& ev);

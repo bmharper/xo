@@ -23,17 +23,25 @@ void Control::RenderRoot() {
 	Render(dom);
 
 	DocParser  parser;
-	Pool       pool;
+	Pool       treePool;
 	vdom::Node tree = {};
-	auto       err  = parser.Parse(dom.c_str(), &tree, &pool);
-	//ApplyDiff_R(vd, Owner, PrevTree.NChild, PrevTree.Children, tree.NChild, tree.Children);
+
+	auto err = parser.Parse(dom.c_str(), &tree, &treePool);
+
+	// Give Node a name, so that it knows it's a node. We don't strictly need to copy "control-root" into the mem pool,
+	// but the inconsistency of having all other strings in the pool scares me. If we don't do this, then 'tree' doesn't
+	// know that it's a Node, and functions don't recurse down into it (ie functions such as ComputeHashTree).
+	tree.Name = treePool.CopyStr("control-root");
+	tree.ComputeHashTree(vdom::Node::HashMode::NameOnly);
+
 	ApplyDiff_R(vd, Owner, &PrevTree, &tree);
+
+	std::swap(PrevTreePool, treePool);
+	std::swap(PrevTree, tree);
 
 	// just get something alive...
 	Owner->OnMouseDown(_OnAny, this);
 }
-
-//String Control::ApplyDiff_R(vdom::VDomToRealDom& vd, DomNode* owner, size_t na, vdom::Node** a, size_t nb, vdom::Node** b) {
 
 // va can be null, if this is a new element.
 // vb is always defined.

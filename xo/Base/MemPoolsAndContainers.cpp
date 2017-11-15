@@ -82,6 +82,10 @@ char* Pool::CopyStr(const void* src, size_t size) {
 	return c;
 }
 
+char* Pool::CopyStr(const char* src) {
+	return CopyStr(src, strlen(src));
+}
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif

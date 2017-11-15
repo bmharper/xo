@@ -211,6 +211,16 @@ struct NodeTraits {
 	}
 	bool Equals(const Node* a, const Node* b) const {
 		// This is 'NameOnly' mode - ie intended to be used in conjunction with vdom::Node::HashMode::NameOnly
+
+		// One is a Node, and one is a Text
+		if (a->IsNode() != b->IsNode())
+			return false;
+
+		// Text is always the same (trivial to check/fixup if necessary - because no children).
+		// Obviously we're throwing away useful information here.
+		if (a->IsText() && b->IsText())
+			return true;
+
 		return strcmp(a->Name, b->Name) == 0;
 	}
 };
