@@ -105,7 +105,7 @@ static bool Equals(const char* a, const char* b) {
 	return strcmp(a, b) == 0;
 }
 
-static Tag ParseTag(const char* t) {
+Tag DocParser::ParseTag(const char* t) {
 	ssize_t i = TagNULL + 1;
 	for (; i < TagEND; i++) {
 		if (Equals(TagNames[i], t))
@@ -114,31 +114,39 @@ static Tag ParseTag(const char* t) {
 	return TagNULL;
 }
 
-// Recursively build real dom from virtual dom
-static String VDomToDom_R(vdom::Node* src, DomNode* dst) {
-	// Set attributes
+String DocParser::SetAttributes(const vdom::Node* src, DomNode* target) {
 	for (size_t i = 0; i < src->NAttrib; i++) {
 		const auto& a = src->Attribs[i];
 		if (Equals(a.Name, "style")) {
-			if (!dst->StyleParse(a.Val))
+			if (!target->StyleParse(a.Val)) {
 				return tsf::fmt("Invalid style '%v'", a.Val).c_str();
+			}
 		} else if (Equals(a.Name, "class")) {
-			dst->AddClass(a.Val);
+			target->AddClass(a.Val);
 		} else {
 			return tsf::fmt("Invalid attribute '%v'", a.Name).c_str();
 		}
 	}
+	return "";
+}
+
+// Recursively build real dom from virtual dom
+static String VDomToDom_R(vdom::Node* src, DomNode* dst) {
+	// Set attributes
+	auto err = DocParser::SetAttributes(src, dst);
+	if (err != "")
+		return err;
 
 	// Add children
 	for (size_t i = 0; i < src->NChild; i++) {
 		if (src->Children[i]->IsText()) {
 			dst->AddText(src->Children[i]->Val);
 		} else {
-			auto tag = ParseTag(src->Children[i]->Name);
+			auto tag = DocParser::ParseTag(src->Children[i]->Name);
 			if (tag == TagNULL)
 				return tsf::fmt("Invalid tag '%v'", src->Children[i]->Name).c_str();
 			auto child = dst->AddNode(tag);
-			auto err   = VDomToDom_R(src->Children[i], child);
+			err        = VDomToDom_R(src->Children[i], child);
 			if (err != "")
 				return err;
 		}

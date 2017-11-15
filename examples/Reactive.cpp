@@ -4,14 +4,23 @@ using namespace xo;
 
 class Outer : public rx::Control {
 public:
-	Outer(xo::DomNode* root) : Control(root) {}
+	int Foo = 0;
 
-	void Render() override {
-		Root->AddText("Hello World reactive");
+	void Render(std::string& dom) override {
+		dom += tsf::fmt("<div>Hello World reactive diffable %v</div>", Foo);
+	}
+
+	void OnEvent(const char* evname) override {
+		switch (hash::crc32(evname)) {
+		case "mdown"_crc32:
+			Foo++;
+			SetDirty();
+			break;
+		}
 	}
 };
 
 void xoMain(xo::SysWnd* wnd) {
 	//wnd->Doc()->Root.AddText("Hello World reactive");
-	auto c = new Outer(&wnd->Doc()->Root);
+	auto c = rx::Control::CreateRoot<Outer>(&wnd->Doc()->Root);
 }

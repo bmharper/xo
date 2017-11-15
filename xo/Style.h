@@ -543,7 +543,7 @@ public:
 		Set(a);
 	}
 
-	void Discard();
+	void Clear();
 	void CloneSlowInto(Style& c) const;
 	void CloneFastInto(Style& c, Pool* pool) const;
 

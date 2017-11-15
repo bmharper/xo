@@ -52,8 +52,8 @@ void Button::SetSvg(DomNode* node, const char* svgIcon) {
 	node->NodeByIndex(0)->StyleParsef("background: svg(%v)", svgIcon);
 }
 
-void ButtonRx::RenderDiffable(std::string& content) {
-	content = "<div class='xo.button'>a button</div>";
+void ButtonRx::Render(std::string& dom) {
+	dom += "<div class='xo.button'>a button</div>";
 }
 
 } // namespace controls

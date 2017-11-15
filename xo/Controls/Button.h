@@ -23,8 +23,7 @@ class XO_API ButtonRx : public xo::rx::Control {
 public:
 	static xo::rx::Control* Create() { return new ButtonRx(); }
 
-	virtual void Render() {}
-	virtual void RenderDiffable(std::string& content);
+	virtual void Render(std::string& dom);
 };
 
 } // namespace controls

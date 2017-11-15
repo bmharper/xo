@@ -894,9 +894,8 @@ void Style::Set(StyleCategories cat, CornerStyleBox val) {
 	SetCornerBox(cat, val);
 }
 
-void Style::Discard() {
+void Style::Clear() {
 	Attribs.clear_noalloc();
-	//Name.Discard();
 }
 
 void Style::CloneSlowInto(Style& c) const {

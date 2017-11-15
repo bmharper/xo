@@ -115,6 +115,29 @@ void DomNode::DeleteChild(DomEl* c) {
 	DeleteChildInternal(c);
 }
 
+void DomNode::DeleteChildren(size_t index, size_t ndelete) {
+	IncVersion();
+	XO_ASSERT(index < Children.size());
+	// Take pains to be consistent with DeleteChild():
+	// Before calling DeleteChildInternal(), remove the children from our 'Children' vector.
+	// I don't know of any code that would care whether 'Children' is updated before
+	// or after DeleteChildInternal(), but it's the kind of inconsistency that can cause
+	// really surprising (and often hard to fix) bugs.
+	const size_t nStatic = 1024;
+	DomEl*       stat[nStatic];
+	DomEl**      copy = nullptr;
+	if (ndelete < nStatic)
+		copy = stat;
+	else
+		copy = (DomEl**) MallocOrDie(sizeof(void*) * ndelete);
+	memcpy(copy, &Children[index], sizeof(void*) * ndelete);
+	Children.erase(index, index + ndelete);
+	for (size_t i = 0; i < ndelete; i++)
+		DeleteChildInternal(copy[i]);
+	if (copy != stat)
+		free(copy);
+}
+
 void DomNode::Clear() {
 	IncVersion();
 	for (size_t i = 0; i < Children.size(); i++)
@@ -144,7 +167,7 @@ void DomNode::Discard() {
 	InternalID   = 0;
 	AllEventMask = 0;
 	Version      = 0;
-	Style.Discard();
+	Style.Clear();
 	Classes.discard();
 	Children.discard();
 	Handlers.discard();
@@ -205,6 +228,11 @@ void DomNode::HackSetStyle(const xo::Style& style) {
 	Style = style;
 }
 
+void DomNode::ClearStyle() {
+	IncVersion();
+	Style.Clear();
+}
+
 void DomNode::HackSetStyle(StyleAttrib attrib) {
 	IncVersion();
 	Style.Set(attrib);
@@ -249,6 +277,11 @@ void DomNode::RemoveClass(const char* klass) {
 	size_t       index = Classes.find(id);
 	if (index != -1)
 		Classes.erase(index);
+}
+
+void DomNode::RemoveAllClasses() {
+	IncVersion();
+	Classes.clear_noalloc();
 }
 
 bool DomNode::HasClass(const char* klass) const {

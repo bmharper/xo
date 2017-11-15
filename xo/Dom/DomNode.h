@@ -40,7 +40,8 @@ public:
 	DomText*       AddText(const std::string& txt, size_t position = -1);
 	void           Delete(); // Remove from DOM, and delete self
 	void           DeleteChild(DomEl* c);
-	void           Clear(); // Delete all children
+	void           DeleteChildren(size_t index, size_t ndelete); // Delete children in the range [index, index + ndelete)
+	void           Clear();                                      // Delete all children
 	size_t         ChildCount() const { return Children.size(); }
 	DomEl*         ChildByIndex(size_t index);
 	const DomEl*   ChildByIndex(size_t index) const;
@@ -61,6 +62,7 @@ public:
 
 	template <typename... Args>
 	bool StyleParsef(const char* fs, const Args&... args);
+	void ClearStyle();
 
 	// TODO: This is here for experiments. Future work needs a better performing method for setting just one attribute of the style.
 	void HackSetStyle(const Style& style);
@@ -69,6 +71,7 @@ public:
 	// Classes
 	void AddClass(const char* classes); // Add one more space-separated classes
 	void RemoveClass(const char* klass);
+	void RemoveAllClasses();
 	bool HasClass(const char* klass) const;
 
 	// Events

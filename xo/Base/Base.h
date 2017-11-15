@@ -139,6 +139,7 @@ typedef Mat4T<float> Mat4f;
 #include "../../dependencies/hash/FNV1a.h"
 
 #include "../Base/Alloc.h"
+#include "../Base/crc32.h"
 #include "../Base/cheapvec.h"
 #include "../Base/CPU.h"
 #include "../Base/Error.h"

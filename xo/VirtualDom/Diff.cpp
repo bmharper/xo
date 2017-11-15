@@ -40,8 +40,8 @@ information from a number of adjacent elements.
 */
 class DiffCore {
 public:
-	template <typename T, typename Hasher>
-	void Diff(size_t na, size_t nb, const T* a, const T* b, Hasher& hasher, std::function<void(PatchOp op, size_t pos, size_t len, const T* el)> apply) {
+	template <typename T, typename TTraits>
+	void Diff(size_t na, size_t nb, const T* a, const T* b, TTraits& traits, std::function<void(PatchOp op, size_t pos, size_t len, const T* el)> apply) {
 		size_t minLen = std::min(na, nb);
 		// compute window size based on minLen? Would probably help.
 
@@ -50,12 +50,12 @@ public:
 
 		// Compute rolling hash for a and b, with window of N, and window of 1
 		if (minLen >= WindowThreshold) {
-			ComputeRollingHash<T, Hasher>(hasher, WindowSize, na, a, WindowHashA);
-			ComputeRollingHash<T, Hasher>(hasher, WindowSize, nb, b, WindowHashB);
+			ComputeRollingHash<T, TTraits>(traits, WindowSize, na, a, WindowHashA);
+			ComputeRollingHash<T, TTraits>(traits, WindowSize, nb, b, WindowHashB);
 		}
-		ComputeRollingHash<T, Hasher>(hasher, 1, na, a, SingleHashA);
-		ComputeRollingHash<T, Hasher>(hasher, 1, nb, b, SingleHashB);
-		DiffCore_R(a, b, 0, na, 0, nb, apply, 0);
+		ComputeRollingHash<T, TTraits>(traits, 1, na, a, SingleHashA);
+		ComputeRollingHash<T, TTraits>(traits, 1, nb, b, SingleHashB);
+		DiffCore_R<T, TTraits>(traits, a, b, 0, na, 0, nb, apply, 0);
 	}
 
 private:
@@ -85,8 +85,8 @@ private:
 
 	THashIndex HashIndex;
 
-	template <typename T>
-	ssize_t DiffCore_R(const T* a, const T* b, size_t aBegin, size_t aEnd, size_t bBegin, size_t bEnd, std::function<void(PatchOp op, size_t pos, size_t len, const T* el)> apply, size_t patchPosOffset) {
+	template <typename T, typename TTraits>
+	ssize_t DiffCore_R(TTraits& traits, const T* a, const T* b, size_t aBegin, size_t aEnd, size_t bBegin, size_t bEnd, std::function<void(PatchOp op, size_t pos, size_t len, const T* el)> apply, size_t patchPosOffset) {
 		if (aEnd - aBegin == 0 && bEnd - bBegin == 0) {
 			// two empty sequences
 			return 0;
@@ -105,9 +105,9 @@ private:
 		Sequence sa, sb;
 		auto     minLen = std::min(aEnd - aBegin, bEnd - bBegin);
 		if (minLen < WindowSize * 2)
-			LongestCommonSubsequence(aEnd - aBegin, bEnd - bBegin, a + aBegin, b + bBegin, &SingleHashA[0] + aBegin, &SingleHashB[0] + bBegin, 1, sa, sb);
+			LongestCommonSubsequence(traits, aEnd - aBegin, bEnd - bBegin, a + aBegin, b + bBegin, &SingleHashA[0] + aBegin, &SingleHashB[0] + bBegin, 1, sa, sb);
 		else
-			LongestCommonSubsequence(aEnd - aBegin, bEnd - bBegin, a + aBegin, b + bBegin, &WindowHashA[0] + aBegin, &WindowHashB[0] + bBegin, WindowSize, sa, sb);
+			LongestCommonSubsequence(traits, aEnd - aBegin, bEnd - bBegin, a + aBegin, b + bBegin, &WindowHashA[0] + aBegin, &WindowHashB[0] + bBegin, WindowSize, sa, sb);
 
 		ssize_t offset = 0;
 		if (sa.Len() == 0) {
@@ -118,15 +118,15 @@ private:
 		} else {
 			sa += aBegin;
 			sb += bBegin;
-			offset = DiffCore_R(a, b, aBegin, sa.Begin, bBegin, sb.Begin, apply, patchPosOffset); // left of LCS
+			offset = DiffCore_R(traits, a, b, aBegin, sa.Begin, bBegin, sb.Begin, apply, patchPosOffset); // left of LCS
 			patchPosOffset += offset;
-			offset += DiffCore_R(a, b, sa.End, aEnd, sb.End, bEnd, apply, patchPosOffset); // right of LCS
+			offset += DiffCore_R(traits, a, b, sa.End, aEnd, sb.End, bEnd, apply, patchPosOffset); // right of LCS
 		}
 		return offset;
 	}
 
-	template <typename T, typename Hasher>
-	static void ComputeRollingHash(Hasher& hasher, size_t window, size_t n, const T* v, std::vector<uint32_t>& hashes) {
+	template <typename T, typename TTraits>
+	static void ComputeRollingHash(TTraits& traits, size_t window, size_t n, const T* v, std::vector<uint32_t>& hashes) {
 		hashes.clear();
 
 		// By multiplying the raw hash values by a large prime, we splat them across the uint32 number space,
@@ -138,25 +138,25 @@ private:
 
 		if (window == 1) {
 			for (size_t i = 0; i < n; i++)
-				hashes.push_back(hasher(v[i]) * multiplier);
+				hashes.push_back(traits.Hash(v[i]) * multiplier);
 		} else {
 			uint32_t h = 0;
 			for (size_t i = 0; i < n; i++) {
 				if (i >= window)
-					h -= hasher(v[i - window]) * multiplier;
-				h += hasher(v[i]) * multiplier;
+					h -= traits.Hash(v[i - window]) * multiplier;
+				h += traits.Hash(v[i]) * multiplier;
 				hashes.push_back(h);
 			}
 		}
 	}
 
-	template <typename T>
-	void LongestCommonSubsequence(size_t na, size_t nb, const T* a, const T* b, const uint32_t* hashA, const uint32_t* hashB, size_t windowSize, Sequence& _sa, Sequence& _sb) {
+	template <typename T, typename TTraits>
+	void LongestCommonSubsequence(TTraits& traits, size_t na, size_t nb, const T* a, const T* b, const uint32_t* hashA, const uint32_t* hashB, size_t windowSize, Sequence& _sa, Sequence& _sb) {
 		// We ignore rolling hash collisions, and just hope that the odds work in our favour, and
 		// even if one match gets lost because of a collision, we'll find an adjacent one.
 
 		// Index B, so that we can quickly search for matching hashes inside it
-		HashIndex.clear();
+		HashIndex.clear_noalloc();
 		for (size_t i = 0; i < nb; i++)
 			HashIndex.insert({hashB[i], (int) i});
 
@@ -179,7 +179,7 @@ private:
 			size_t minRemain = min(na - i, nb - j);
 			size_t k         = 0;
 			for (; k < minRemain; k++) {
-				if (a[i + k] != b[j + k])
+				if (!traits.Equals(a[i + k], b[j + k]))
 					break;
 			}
 			size_t r = 0;
@@ -188,7 +188,7 @@ private:
 				size_t maxBack = min(i, j) + 1;
 				r              = 1;
 				for (; r < maxBack; r++) {
-					if (a[i - r] != b[j - r])
+					if (!traits.Equals(a[i - r], b[j - r]))
 						break;
 				}
 				r--;
@@ -205,26 +205,33 @@ private:
 	}
 };
 
-struct NodeHasher {
-	uint32_t operator()(Node* n) const {
+struct NodeTraits {
+	uint32_t Hash(Node* n) const {
 		return n->Hash;
+	}
+	bool Equals(const Node* a, const Node* b) const {
+		// This is 'NameOnly' mode - ie intended to be used in conjunction with vdom::Node::HashMode::NameOnly
+		return strcmp(a->Name, b->Name) == 0;
 	}
 };
 
-XO_API void Diff(size_t na, Node** a, size_t nb, Node** b, std::function<void(PatchOp op, size_t pos, size_t len, Node* const* first)> apply) {
-	for (size_t i = 0; i < na; i++)
-		a[i]->ComputeHashTree();
-	for (size_t i = 0; i < nb; i++)
-		b[i]->ComputeHashTree();
+XO_API void Diff(vdom::Node::HashMode hashMode, size_t na, Node** a, size_t nb, Node** b, std::function<void(PatchOp op, size_t pos, size_t len, Node* const* first)> apply) {
+	//for (size_t i = 0; i < na; i++)
+	//	a[i]->ComputeHashTree(hashMode);
+	//for (size_t i = 0; i < nb; i++)
+	//	b[i]->ComputeHashTree(hashMode);
 
 	DiffCore   d;
-	NodeHasher hasher;
-	d.Diff<Node*, NodeHasher>(na, nb, a, b, hasher, apply);
+	NodeTraits traits;
+	d.Diff<Node*, NodeTraits>(na, nb, a, b, traits, apply);
 }
 
-struct CharHasher {
-	uint32_t operator()(char c) const {
+struct CharTraits {
+	uint32_t Hash(char c) const {
 		return (uint32_t) c;
+	}
+	bool Equals(char a, char b) const {
+		return a == b;
 	}
 };
 
@@ -242,8 +249,8 @@ XO_API std::string DiffTest(const char* a, const char* b, std::vector<int>& ops)
 	};
 
 	DiffCore   d;
-	CharHasher hasher;
-	d.Diff<char, CharHasher>(strlen(a), strlen(b), a, b, hasher, patch);
+	CharTraits traits;
+	d.Diff<char, CharTraits>(strlen(a), strlen(b), a, b, traits, patch);
 	return r;
 }
 

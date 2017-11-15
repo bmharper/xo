@@ -1,6 +1,8 @@
 #pragma once
 
 namespace xo {
+class DomEl;
+class DomNode;
 namespace rx {
 class Registry;
 }
@@ -13,9 +15,13 @@ struct Attrib {
 
 struct Node {
 public:
+	enum class HashMode {
+		All,      // Incorporate all state of Node and child nodes into hash
+		NameOnly, // Only hash 'Name' (aka node type). Very loose diffing - requires walking down trees.
+	};
 	uint32_t    Hash;
 	const char* Name;
-	const char* Val;
+	const char* Val; // Used only for Text nodes
 
 	size_t NChild;
 	Node** Children;
@@ -23,10 +29,13 @@ public:
 	size_t  NAttrib;
 	Attrib* Attribs;
 
+	bool IsNode() const { return Name != nullptr; }
 	bool IsText() const { return Name == nullptr; }
 
+	bool EqualAttribs(const Node& b) const;
+
 	// Recursively compute Hash for this node, and all of it's children
-	void ComputeHashTree();
+	void ComputeHashTree(HashMode mode);
 };
 
 /* Converter from Virtual DOM to Real DOM.
@@ -45,7 +54,8 @@ public:
 
 	VDomToRealDom(rx::Registry* registry) : Registry(registry) {}
 
-	//void ApplyDiff
+	// Returns error message or empty string on success
+	String CreateChild(DomNode* owner, size_t pos, const vdom::Node* newChild);
 };
 
 } // namespace vdom

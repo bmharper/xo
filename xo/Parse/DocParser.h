@@ -39,6 +39,9 @@ Examples:
 */
 class XO_API DocParser {
 public:
+	static Tag    ParseTag(const char* tag);
+	static String SetAttributes(const vdom::Node* src, DomNode* target); // Returns empty string on success
+
 	String Parse(const char* src, DomNode* target);
 	String Parse(const char* src, vdom::Node* target, xo::Pool* pool);
 

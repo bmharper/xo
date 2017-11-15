@@ -29,9 +29,9 @@ enum Events {
 };
 
 enum class DocLifecycleEvents {
-	Null                      = 0,
-	DispatchEnd               = 1, // This is the end of event dispatching. This is used by reactive controls to re-render themselves, if they are dirty.
-	TouchedByBackgroundThread = 2, // Sent from the system window messaging system to our UI thread's message queue, to tell it to artificially run DispatchEnd. This ends up sending DispatchEnd to nodes.
+	Null = 0,
+	DispatchEnd,               // This is the end of event dispatching. This is used by reactive controls to re-render themselves, if they are dirty.
+	TouchedByBackgroundThread, // Sent from the system window messaging system to our UI thread's message queue, to tell it to artificially run DispatchEnd. This ends up sending DispatchEnd to nodes.
 };
 
 enum class Button {
