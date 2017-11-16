@@ -115,6 +115,16 @@ static void MapButton(XButtonEvent& xb, Event& ev) {
 	}
 }
 
+static void OnWindowExposeOrResize(SysWndLinux* wnd, OriginalEvent& ev) {
+	XWindowAttributes wa;
+	XGetWindowAttributes(wnd->XDisplay, wnd->XWindow, &wa);
+	//printf("x,y = %d,%d borderwidth: %d\n", wa.x, wa.y, wa.border_width);
+	ev.Event.Type           = EventWindowSize;
+	ev.Event.PointsAbs[0].x = wa.width;
+	ev.Event.PointsAbs[0].y = wa.height;
+	Global()->UIEventQueue.Add(ev);
+}
+
 bool ProcessEventsForDoc(DocGroupLinux* dg) {
 	SysWndLinux* wnd = (SysWndLinux*) dg->Wnd;
 
@@ -133,30 +143,17 @@ bool ProcessEventsForDoc(DocGroupLinux* dg) {
 
 		switch (xev.type) {
 		case ClientMessage: {
-			// This is no longer used. We use a pipe instead. See comment at top of file.
 			int msg = xev.xclient.data.l[0];
-			if (msg == SysWndLinux::XClientMessage_Repaint) {
-				static uint32_t nrepaint = 0;
-				//printf("received repaint %u\n", nrepaint++);
+			if (msg == SysWndLinux::XClientMessage_Example) {
+				static uint32_t nExample = 0;
+				tsf::print("received example %u\n", nExample++);
 			}
 			break;
 		}
 		case VisibilityNotify:
-			//tsf::print("VisibilityNotify\n");
-			// fallthrough
-		case Expose: {
-			if (xev.type == Expose) {
-				//tsf::print("ev: Expose %d %d %d %d %d\n", xev.xexpose.x, xev.xexpose.y, xev.xexpose.width, xev.xexpose.height, xev.xexpose.count);
-			}
-			XWindowAttributes wa;
-			XGetWindowAttributes(wnd->XDisplay, wnd->XWindow, &wa);
-			//printf("x,y = %d,%d borderwidth: %d\n", wa.x, wa.y, wa.border_width);
-			ev.Event.Type           = EventWindowSize;
-			ev.Event.PointsAbs[0].x = wa.width;
-			ev.Event.PointsAbs[0].y = wa.height;
-			Global()->UIEventQueue.Add(ev);
+		case Expose:
+			OnWindowExposeOrResize(wnd, ev);
 			break;
-		}
 		case KeymapNotify:
 			XRefreshKeyboardMapping(&xev.xmapping);
 			break;

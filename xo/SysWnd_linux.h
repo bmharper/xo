@@ -7,7 +7,7 @@ namespace xo {
 class XO_API SysWndLinux : public SysWnd {
 public:
 	enum XClientMessages {
-		XClientMessage_Repaint = 1,
+		XClientMessage_Example = 1,
 	};
 
 	Display*     XDisplay    = nullptr;
@@ -25,8 +25,14 @@ public:
 
 	Error Create(uint32_t createFlags) override;
 	Box   GetRelativeClientRect() override;
+	void  SetTitle(const char* title) override;
+	void  Show() override;
+	void  SetPosition(Box box, uint32_t setPosFlags) override;
 	void  PostCursorChangedMessage() override;
 	void  PostRepaintMessage() override;
+
+private:
+	void SendExampleClientMessage();
 };
 } // namespace xo
 #endif

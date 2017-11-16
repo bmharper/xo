@@ -77,25 +77,55 @@ Box SysWndLinux::GetRelativeClientRect() {
 	return Box(wa.x, wa.y, wa.x + wa.width, wa.y + wa.height);
 }
 
+void SysWndLinux::SetTitle(const char* title) {
+	XStoreName(XDisplay, XWindow, title);
+}
+
+void SysWndLinux::Show() {
+	// I don't know exactly why this is necessary.
+	// What we're doing here is we're forcing the select() statement in SelectDocsWithEventsInQueue()
+	// to come up with a positive result for this window. Once the select() wakes and the OS tells it
+	// that our Window has new events, then the code ends up calling into ProcessEventsForDoc(),
+	// which in turn calls XPending() and XNextEvent(). Both XPending and XNextEvent then return a bunch
+	// of messages that have been queued up for us, such as Expose. I don't understand why the select()
+	// would fail when there are actually messages in the queue, but then again, it doesn't surprise me.
+	// The origin of this failure may be related to the behaviour described at the top of MsgLoop_Linux.cpp,
+	// where we describe why we use pipes to wake up our processor, instead of a custom message.
+	write(EventLoopWakePipe[1], "r", 1);
+	// This is also sufficient (ie send any new message to the window)
+	//SendExampleClientMessage();
+}
+
+void SysWndLinux::SetPosition(Box box, uint32_t setPosFlags) {
+	if (!!(setPosFlags & SetPositionFlags::SetPosition_Move) && !!(setPosFlags & SetPositionFlags::SetPosition_Size))
+		XMoveResizeWindow(XDisplay, XWindow, box.Left, box.Top, box.Width(), box.Height());
+	else if (!!(setPosFlags & SetPositionFlags::SetPosition_Size))
+		XResizeWindow(XDisplay, XWindow, box.Width(), box.Height());
+	else if (!!(setPosFlags & SetPositionFlags::SetPosition_Move))
+		XMoveWindow(XDisplay, XWindow, box.Left, box.Top);
+}
+
 void SysWndLinux::PostCursorChangedMessage() {
 }
 
 void SysWndLinux::PostRepaintMessage() {
-	// See comment at top of MsgLoop_linux.cpp, for why XClientMessageEvent didn't work.
-	/*
+	// See comment at top of MsgLoop_linux.cpp, for why XClientMessage_Example doesn't work for this.
+	// So we use our special wake pipe, which does work.
+	write(EventLoopWakePipe[1], "r", 1);
+}
+
+// Example code for sending a user-defined message
+// I keep this around because I have a strong feeling that it's going to be necessary to use this at some point,
+// and it's a useful debugging tool.
+void SysWndLinux::SendExampleClientMessage() {
 	XClientMessageEvent ev;
 	memset(&ev, 0, sizeof(ev));
-	ev.type   = ClientMessage;
-	ev.window = XWindow;
-	ev.format = 32;
-	ev.data.l[0] = XClientMessage_Repaint;
-	int r = XSendEvent(XDisplay, XWindow, 0, 0, (XEvent*) &ev);
+	ev.type      = ClientMessage;
+	ev.window    = XWindow;
+	ev.format    = 32;
+	ev.data.l[0] = XClientMessage_Example;
+	int r        = XSendEvent(XDisplay, XWindow, 0, 0, (XEvent*) &ev);
 	XFlush(XDisplay);
-	printf("posting repaint msg: %u (status %d)\n", nrepaint++, r);
-	*/
-	write(EventLoopWakePipe[1], "r", 1);
-	//static uint32_t nrepaint = 0;
-	//printf("posting repaint msg: %u\n", nrepaint++);
 }
 
 } // namespace xo
