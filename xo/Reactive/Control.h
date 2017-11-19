@@ -52,5 +52,30 @@ private:
 	static void _OnAny(Event& ev);
 };
 
+// Old, first attempt
+class XO_API DumbControl : public Observer {
+public:
+	xo::DomNode* Root = nullptr;
+
+	// If root is not null, calls Bind(root)
+	DumbControl(xo::DomNode* root);
+	virtual ~DumbControl();
+
+	virtual void Render() = 0;
+	virtual bool RenderDiffable() { return false; }
+
+	// Implementation of Observer
+	void ObservableTouched(Observable* target) override;
+
+	void Bind(xo::DomNode* root);
+	void SetDirty();
+	bool IsDirty() const { return Dirty; }
+
+	static void OnDocLifecycle(Event& ev);
+
+private:
+	std::thread::id BoundThread = std::thread::id(); // Thread on which UI is expected to run, including all DOM manipulation
+	bool            Dirty       = true;              // Hide Dirty behind getter/setter so that we can put breakpoints on SetDirty, and maybe do other things at that moment.
+};
 } // namespace rx
 } // namespace xo
