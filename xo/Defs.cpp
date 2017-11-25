@@ -415,10 +415,12 @@ XO_API void Initialize(const InitParams* init) {
 #endif
 	// Do we round text line heights to whole pixels?
 	// We only render sub-pixel text on low resolution monitors that do not change orientation (ie desktop).
-	Globals->RoundLineHeights    = Globals->EnableSubpixelText || Globals->EpToPixel < 2.0f;
-	Globals->SnapBoxes           = true;
-	Globals->SnapHorzText        = false;
-	Globals->UseFreetypeSubpixel = false;
+	Globals->RoundLineHeights = Globals->EnableSubpixelText || Globals->EpToPixel < 2.0f;
+	Globals->SnapBoxes        = true;
+	Globals->SnapHorzText     = false;
+	// Setting UseFreetypeSubpixel to true fixes the bad 's' characters that I'm seeing on Ubuntu Regular font,
+	// so we leave this on.
+	Globals->UseFreetypeSubpixel = true;
 	Globals->EnableKerning       = !Globals->EnableSubpixelText || !Globals->SnapHorzText;
 	Globals->EnableKerning       = false; // Freetype's kerning is CRAZY SLOW.. from one quick profile that I did. Will investigate more later.
 	Globals->ShowCoarseTimes     = false;
@@ -554,7 +556,7 @@ XO_API void RunApp(MainCallback mainCallback) {
             mainWnd = nullptr;
             break;
         }
-    };
+	};
 	RunAppLowLevel(mainCallbackEv);
 }
 

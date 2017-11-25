@@ -431,11 +431,11 @@ void DoTextQuality(xo::Doc* doc) {
 	doc->Root.ParseAppend("<div style='break:after; font-family: Segoe UI; font-size: 12px; color: #f008'>Backups from</div>");
 	doc->Root.ParseAppend("<div style='break:after; font-family: Consolas; font-size: 12px; color: #383'>DoBaselineAlignment_Multiline(doc)</div>");
 	for (int s = 10; s <= 24; s++) {
-		auto t = tsf::fmt("<div style='break:after; font-family: Ubuntu Medium; font-size: %vpx'>DoBaselineAlignment_Multiline(doc)</div>", s);
+		auto t = tsf::fmt("<div style='break:after; font-family: DejaVu Sans Book; font-size: %vpx'>DoBaselineAlignment_Multiline(doc)</div>", s);
 		doc->Root.ParseAppend(t);
 	}
 	for (int s = 10; s <= 24; s++) {
-		auto t = tsf::fmt("<div style='break:after; font-family: Ubuntu Mono; font-size: %vpx'>DoBaselineAlignment_Multiline(doc)</div>", s);
+		auto t = tsf::fmt("<div style='break:after; font-family: Ubuntu Regular; font-size: %vpx'>DoBaselineAlignment_Multiline(doc)</div>", s);
 		doc->Root.ParseAppend(t);
 	}
 }

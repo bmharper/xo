@@ -189,6 +189,8 @@ FontID FontStore::GetFallbackFontID() {
 #elif XO_PLATFORM_LINUX_DESKTOP
 	fid = InsertByFacename("Ubuntu");
 	if (fid == FontIDNull)
+		fid = InsertByFacename("Ubuntu Regular");
+	if (fid == FontIDNull)
 		fid = InsertByFacename("Arial");
 #else
 	XO_TODO_STATIC;
