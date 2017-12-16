@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "SysWnd_linux.h"
+#include "Doc.h"
 #include "DocGroup.h"
 #include "Render/RenderGL.h"
 #include "Render/RenderDX.h"
@@ -68,6 +69,10 @@ Error SysWndLinux::Create(uint32_t createFlags) {
 	glXMakeCurrent(XDisplay, XWindow, GLContext);
 	auto err = InitializeRenderer();
 	glXMakeCurrent(XDisplay, None, NULL);
+	CursorArrow = XCreateFontCursor(XDisplay, XC_top_left_arrow);
+	CursorHand  = XCreateFontCursor(XDisplay, XC_hand1);
+	CursorText  = XCreateFontCursor(XDisplay, XC_xterm);
+	CursorWait  = XCreateFontCursor(XDisplay, XC_watch);
 	return err;
 }
 
@@ -106,6 +111,15 @@ void SysWndLinux::SetPosition(Box box, uint32_t setPosFlags) {
 }
 
 void SysWndLinux::PostCursorChangedMessage() {
+	auto c  = Doc()->UI.GetCursor();
+	auto xc = CursorArrow;
+	switch (c) {
+	case xo::Cursors::CursorArrow: xc = CursorArrow; break;
+	case xo::Cursors::CursorHand: xc = CursorHand; break;
+	case xo::Cursors::CursorText: xc = CursorText; break;
+	case xo::Cursors::CursorWait: xc = CursorWait; break;
+	}
+	XDefineCursor(XDisplay, XWindow, xc);
 }
 
 void SysWndLinux::PostRepaintMessage() {

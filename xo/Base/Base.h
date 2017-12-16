@@ -25,6 +25,7 @@
 #include <pwd.h>
 #include <X11/Xlib.h> // X11 definitions are needed by SysWnd.h
 #include <X11/Xutil.h>
+#include <X11/cursorfont.h>
 #include <GL/glx.h>
 #endif
 #include <pthread.h>

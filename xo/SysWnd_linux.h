@@ -18,6 +18,10 @@ public:
 	Window       XWindow;
 	GLXContext   GLContext = nullptr;
 	XEvent       Event;
+	Cursor       CursorArrow = 0;
+	Cursor       CursorHand  = 0;
+	Cursor       CursorText  = 0;
+	Cursor       CursorWait  = 0;
 	int          EventLoopWakePipe[2]; // read,write ends of pipe used to wake message loop's select()
 
 	SysWndLinux();
