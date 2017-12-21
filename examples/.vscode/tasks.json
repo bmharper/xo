@@ -6,7 +6,7 @@
 		{
 			"label": "Build Reactive Example",
 			"type": "shell",
-			"command": "tundra2 -C ../ linux-clang-debug Reactive",
+			"command": "tundra2 -C ../ macosx-clang-debug Reactive",
 			"group": {
 				"kind": "build",
 				"isDefault": true

@@ -4,6 +4,7 @@ local winFilter = "win*"
 local winDebugFilter = "win*-*-debug"
 local winReleaseFilter = "win*-*-release"
 local linuxFilter = "linux-*-*-*"
+local osxFilter = "macosx-*-*-*"
 
 local winKernelLibs = { "kernel32.lib", "user32.lib", "gdi32.lib", "winspool.lib", "advapi32.lib", "shell32.lib", "comctl32.lib", 
 						"uuid.lib", "ole32.lib", "oleaut32.lib", "shlwapi.lib", "OLDNAMES.lib", "wldap32.lib", "wsock32.lib",
@@ -78,6 +79,7 @@ local function makeGlob(dir, options)
 	local filters = {
 		{ Pattern = "_windows"; Config = winFilter },
 		{ Pattern = "_linux"; Config = linuxFilter },
+		{ Pattern = "_osx"; Config = osxFilter },
 		{ Pattern = "_android"; Config = "ignore" },       -- Android stuff is built with a different build system
 		{ Pattern = "[/\\]_[^/\\]*$"; Config = "ignore" }, -- Any file that starts with an underscore is ignored
 	}
@@ -200,7 +202,11 @@ local freetype = StaticLibrary {
 local xo_base = {
 	Libs = { 
 		{ "opengl32.lib", "user32.lib", "gdi32.lib", "winmm.lib" ; Config = "win*" },
-		{ "X11", "GL", "GLU", "stdc++", "expat", "pthread"; Config = "linux-*" },
+		{ "X11", "GL", "GLU", "stdc++", "expat", "pthread"; Config = linuxFilter },
+		{ "stdc++", "expat", "pthread"; Config = osxFilter },
+	},
+	Frameworks = {
+		{ "OpenGL"; Config = osxFilter },
 	},
 	Defines = {
 		"XML_STATIC", -- for expat
@@ -270,6 +276,8 @@ local function XoExampleApp(use_dynamic_xo, template, name, sources)
 
 	local depends = { crt }
 	local linux_libs = { "X11", "GL", "GLU", "stdc++", "m" }
+	local osx_libs = { "stdc++", "m" }
+	local osx_frameworks = { "OpenGL" }
 
 	if use_dynamic_xo then
 		depends[#depends + 1] = xo
@@ -281,12 +289,13 @@ local function XoExampleApp(use_dynamic_xo, template, name, sources)
 		linux_libs[#linux_libs + 1] = "pthread"
 	end
 
-	linux_libs.Config = "linux-*"
+	linux_libs.Config = linuxFilter
+	osx_libs.Config = osxFilter
 
 	return Program {
 		Name = name,
 		Includes = { "xo" },
-		Libs = { linux_libs },
+		Libs = { linux_libs, osx_libs },
 		Depends = depends,
 		Sources = src,
 	}

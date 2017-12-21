@@ -61,6 +61,13 @@ int main(int argc, char** argv)
 	xo::RunApp(xoMain);
 	return 0;
 }
+#elif XO_PLATFORM_OSX
+
+int main(int argc, char** argv)
+{
+	xo::RunApp(xoMain);
+	return 0;
+}
 
 #else
 XO_TODO_STATIC;

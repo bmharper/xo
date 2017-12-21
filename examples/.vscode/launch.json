@@ -5,17 +5,34 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "(gdb) Launch",
+			"name": "(lldb) Launch Example",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/../t2-output/linux-clang-debug-default/Reactive",
+			"program": "${workspaceFolder}/../t2-output/macosx-clang-debug-default/Reactive",
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
 			"environment": [
 				{
 					"name": "LD_LIBRARY_PATH",
-					"value": "${workspaceRoot}/../t2-output/linux-clang-debug-default"
+					"value": "${workspaceRoot}/../t2-output/macosx-clang-debug-default"
+				}
+			],
+			"externalConsole": true,
+			"MIMode": "lldb"
+		},
+		{
+			"name": "(gdb) Launch Example",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/../t2-output/macosx-clang-debug-default/Reactive",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}",
+			"environment": [
+				{
+					"name": "LD_LIBRARY_PATH",
+					"value": "${workspaceRoot}/../t2-output/macosx-clang-debug-default"
 				}
 			],
 			"externalConsole": true,

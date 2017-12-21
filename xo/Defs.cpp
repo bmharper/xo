@@ -342,6 +342,9 @@ static float ComputeEpToPixel() {
 #elif XO_PLATFORM_LINUX_DESKTOP
 	// TODO
 	return 1;
+#elif XO_PLATFORM_OSX
+	// TODO
+	return 1;
 #else
 	XO_TODO_STATIC
 #endif
@@ -353,6 +356,7 @@ static void InitializePlatform() {
 #elif XO_PLATFORM_ANDROID
 #elif XO_PLATFORM_LINUX_DESKTOP
 	XInitThreads();
+#elif XO_PLATFORM_OSX
 #else
 	XO_TODO_STATIC;
 #endif
@@ -437,9 +441,11 @@ XO_API void Initialize(const InitParams* init) {
 	Globals->GlyphCache      = new GlyphCache();
 	Globals->ControlRegistry = new rx::Registry();
 	controls::RegisterAllBuiltin(Globals->ControlRegistry);
+#if !(XO_PLATFORM_OSX)
 	auto dummySysWnd = SysWnd::New();
 	dummySysWnd->PlatformInitialize(init);
 	delete dummySysWnd;
+#endif
 	InitializeXoThreads();
 	Trace("xo creating %d worker threads (%d CPU cores).\n", (int) Globals->NumWorkerThreads, (int) numCPUCores);
 	for (int i = 0; i < Globals->NumWorkerThreads; i++)

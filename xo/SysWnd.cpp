@@ -24,6 +24,8 @@ SysWnd* SysWnd::New() {
 	return new SysWndAndroid();
 #elif XO_PLATFORM_LINUX_DESKTOP
 	return new SysWndLinux();
+#elif XO_PLATFORM_OSX
+	return nullptr;
 #endif
 }
 
