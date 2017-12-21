@@ -72,7 +72,7 @@ XO_API void* AlignedRealloc(size_t original_block_bytes, void* block, size_t byt
 #ifdef _WIN32
 	return _aligned_realloc(block, bytes, alignment);
 #else
-	void* p = aligned_alloc(bytes, alignment);
+	void* p = AlignedAlloc(bytes, alignment);
 	if (!p)
 		return NULL;
 	memcpy(p, block, original_block_bytes);
@@ -94,4 +94,4 @@ XO_API void AlignedFree(void* block) {
 	}
 #endif
 }
-}
+} // namespace xo

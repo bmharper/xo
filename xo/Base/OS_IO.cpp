@@ -6,12 +6,22 @@
 #include <sys/stat.h> // Added for Android
 #endif
 
+#ifdef __APPLE__
+#include <sys/types.h>
+#include <pwd.h>
+#include <uuid/uuid.h>
+#include <unistd.h>
+#endif
+
 #ifndef _WIN32
 #ifdef ANDROID
 // unsigned long       st_mtime;
 // unsigned long       st_mtime_nsec;
 // #define STAT_TIME(st, x) (st.st_ ## x ## time_nsec) * (1.0 / 1000000000)
 #define STAT_TIME(st, x) (st.st_##x##time) + ((st.st_##x##time_nsec) * (1.0 / 1000000000))
+#elif defined(__APPLE__)
+// struct timespec st_mtimespec;	/* time of last data modification */
+#define STAT_TIME(st, x) (st.st_##x##timespec.tv_sec) + ((st.st_##x##timespec.tv_nsec) * (1.0 / 1000000000))
 #else
 // struct timespec st_mtim;  /* time of last modification */
 #define STAT_TIME(st, x) (st.st_##x##tim.tv_sec) + ((st.st_##x##tim.tv_nsec) * (1.0 / 1000000000))
@@ -33,7 +43,7 @@ XO_API String DefaultCacheDir() {
 	path.append(L"cache");
 	CreateDirectoryW(path.c_str(), NULL);
 	return ConvertWideToUTF8(path).c_str();
-#elif XO_PLATFORM_LINUX_DESKTOP
+#elif XO_PLATFORM_LINUX_DESKTOP || XO_PLATFORM_OSX
 	struct stat    st   = {0};
 	struct passwd* pw   = getpwuid(getuid());
 	String         path = pw->pw_dir;
@@ -105,7 +115,7 @@ XO_API bool FindFiles(const char* _dir, std::function<bool(const FilesystemItem&
 	if (_dir[dirLen - 1] == '/')
 		fixed.pop_back();
 
-	DIR* d = opendir(fixed.c_str());
+	DIR* d  = opendir(fixed.c_str());
 	bool ok = d != nullptr;
 	if (d) {
 		FilesystemItem item;
@@ -141,4 +151,4 @@ XO_API bool FindFiles(const char* _dir, std::function<bool(const FilesystemItem&
 #ifndef _WIN32
 #undef STAT_TIME
 #endif
-}
+} // namespace xo

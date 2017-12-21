@@ -54,6 +54,8 @@
 #include <vector>
 #include <mutex>
 #include <thread>
+#include <cmath>
+#include <cstdlib>
 
 #ifdef _WIN32
 typedef SSIZE_T ssize_t;

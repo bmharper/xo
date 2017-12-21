@@ -192,7 +192,7 @@ String DocParser::Parse(const char* src, vdom::Node* target, xo::Pool* pool) {
 		ssize_t start = Max<ssize_t>(pos - 1, 0);
 		String  sample;
 		sample.Set(src + start, 10);
-		return tsf::fmt("Parse error at position %v (%v): %v", pos, sample.CStr(), msg).c_str();
+		return tsf::fmt("Parse error at position %v (%v): %v", (int64_t) pos, sample.CStr(), msg).c_str();
 	};
 
 	auto newNode = [&]() -> String {

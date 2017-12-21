@@ -51,4 +51,4 @@ bool TextureAtlas::Alloc(uint16_t width, uint16_t height, uint16_t& x, uint16_t&
 	InvalidRect.ExpandToFit(Box(x, y, x + width, y + height));
 	return true;
 }
-}
+} // namespace xo

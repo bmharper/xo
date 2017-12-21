@@ -34,6 +34,11 @@
 #elif XO_PLATFORM_ANDROID
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
+#elif XO_PLATFORM_OSX
+#include "../dependencies/GL/gl_xo.h"
+//#include "../dependencies/GL/glx_xo.h"
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
 #else
 XO_TODO_STATIC
 #endif

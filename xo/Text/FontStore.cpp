@@ -54,6 +54,8 @@ FontStore::FontStore() {
 	Directories += "/usr/share/fonts/truetype/msttcorefonts";
 #elif XO_PLATFORM_ANDROID
 	Directories += "/system/fonts";
+#elif XO_PLATFORM_OSX
+	Directories += "/Library/Fonts";
 #else
 	XO_TODO_STATIC
 #endif
@@ -192,6 +194,12 @@ FontID FontStore::GetFallbackFontID() {
 		fid = InsertByFacename("Ubuntu Regular");
 	if (fid == FontIDNull)
 		fid = InsertByFacename("Arial");
+#elif XO_PLATFORM_OSX
+	fid = InsertByFacename("San Francisco");
+	if (fid == FontIDNull)
+		fid = InsertByFacename("Helvetica Neue");
+	if (fid == FontIDNull)
+		fid = InsertByFacename("Lucida Grande");
 #else
 	XO_TODO_STATIC;
 #endif

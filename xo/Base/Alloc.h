@@ -1,6 +1,11 @@
 #pragma once
 
+#ifdef __APPLE__
+#include <sys/malloc.h>
+#else
 #include <malloc.h>
+#endif
+
 #include <stdlib.h>
 
 namespace xo {
@@ -17,4 +22,4 @@ void DeleteAll(Vec& v) {
 		delete p;
 	v.clear();
 }
-}
+} // namespace xo

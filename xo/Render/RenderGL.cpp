@@ -174,8 +174,8 @@ static bool BootGL(HWND wnd) {
 }
 #endif
 
-#if XO_PLATFORM_WIN_DESKTOP
 bool RenderGL::InitializeDevice(SysWnd& wnd) {
+#if XO_PLATFORM_WIN_DESKTOP
 	if (!GLIsBooted) {
 		if (!BootGL(GetHWND(wnd)))
 			return false;
@@ -227,15 +227,11 @@ bool RenderGL::InitializeDevice(SysWnd& wnd) {
 
 	GLRC = rc;
 	return GLRC != NULL;
-}
 #elif XO_PLATFORM_ANDROID
-bool RenderGL::InitializeDevice(SysWnd& wnd) {
 	if (!CreateShaders())
 		return false;
 	return true;
-}
 #elif XO_PLATFORM_LINUX_DESKTOP
-bool RenderGL::InitializeDevice(SysWnd& wnd) {
 	auto w = (SysWndLinux*) &wnd;
 	int oglLoad = ogl_LoadFunctions();
 	int glxLoad = glx_LoadFunctions(w->XDisplay, 0);
@@ -245,10 +241,15 @@ bool RenderGL::InitializeDevice(SysWnd& wnd) {
 		return false;
 	Trace("Shaders created\n");
 	return true;
-}
+#elif XO_PLATFORM_OSX
+	// TODO: What else do we need to do here?
+	if (!CreateShaders())
+		return false;
+	return true;
 #else
 XO_TODO_STATIC
 #endif
+}
 
 void RenderGL::CheckExtensions() {
 	const char* ver          = (const char*) glGetString(GL_VERSION);
@@ -857,6 +858,8 @@ void RenderGL::PreparePreprocessor() {
 	BaseShader.append("#define XO_PLATFORM_ANDROID\n");
 #elif XO_PLATFORM_LINUX_DESKTOP
 	BaseShader.append("#define XO_PLATFORM_LINUX_DESKTOP\n");
+#elif XO_PLATFORM_OSX
+	BaseShader.append("#define XO_PLATFORM_OSX\n");
 #else
 #ifdef _MSC_VER
 #pragma error("Unknown Dom platform")

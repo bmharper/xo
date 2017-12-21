@@ -69,9 +69,10 @@ Build {
 	DefaultSubVariant = "default",
 	Configs = {
 		{
-			Name = "macosx-gcc",
+			Name = "macosx-clang",
 			DefaultOnHost = "macosx",
-			Tools = { "gcc" },
+			Inherit = unix_common,
+			Tools = { "clang" },
 		},
 		{
 			Name = "linux-clang",
