@@ -453,12 +453,13 @@ bool FontStore::LoadFontTable() {
 }
 
 uint64_t FontStore::ComputeFontDirHash() {
-	void* hstate = XXH64_init(0);
+	auto hstate = XXH64_createState();
+	XXH64_reset(hstate, 0);
 
 	auto cb = [&](const FilesystemItem& item) -> bool {
 		if (IsFontFilename(item.Name)) {
-			XXH64_update(hstate, item.Root, (int) strlen(item.Root));
-			XXH64_update(hstate, item.Name, (int) strlen(item.Name));
+			XXH64_update(hstate, item.Root, strlen(item.Root));
+			XXH64_update(hstate, item.Name, strlen(item.Name));
 			XXH64_update(hstate, &item.TimeModify, sizeof(item.TimeModify));
 		}
 		return true;
@@ -467,7 +468,9 @@ uint64_t FontStore::ComputeFontDirHash() {
 	for (size_t i = 0; i < Directories.size(); i++)
 		FindFiles(Directories[i].CStr(), cb);
 
-	return (uint64_t) XXH64_digest(hstate);
+	auto hash = (uint64_t) XXH64_digest(hstate);
+	XXH64_freeState(hstate);
+	return hash;
 }
 
 bool FontStore::IsFontFilename(const char* filename) {

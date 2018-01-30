@@ -135,9 +135,8 @@ typedef Mat4T<float> Mat4f;
 } // namespace xo
 ///////////////////////////////////////////////////////////////////////////
 
-#ifndef XXH32_SIZEOFSTATE
+#define XXH_PRIVATE_API
 #include "../../dependencies/hash/xxhash.h"
-#endif
 
 #include "../../dependencies/hash/FNV1a.h"
 

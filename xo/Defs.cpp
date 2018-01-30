@@ -450,6 +450,7 @@ XO_API void Initialize(const InitParams* init) {
 	Trace("xo creating %d worker threads (%d CPU cores).\n", (int) Globals->NumWorkerThreads, (int) numCPUCores);
 	for (int i = 0; i < Globals->NumWorkerThreads; i++)
 		Globals->WorkerThreads.push_back(std::thread(WorkerThreadFunc));
+	Trace("xo::Initialize complete\n");
 }
 
 // This is the companion to Initialize.
