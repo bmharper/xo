@@ -562,16 +562,23 @@ void TimeTrace(const char* fs, const Args&... args) {
 	TimeTraceBuf(tsf::fmt(fs, args...).c_str());
 }
 
-// Various tracing options. Uncomment these to enable tracing of that class of events.
-//#define XOTRACE_RENDER_ENABLE
-//#define XOTRACE_LAYOUT_VERBOSE_ENABLE
-//#define XOTRACE_EVENTS_ENABLE
-//#define XOTRACE_LATENCY_ENABLE
-//#define XOTRACE_FONTS_ENABLE
-//#define XOTRACE_OS_MSG_QUEUE_ENABLE
+	// Various tracing options. Uncomment these to enable tracing of that class of events.
+	//#define XOTRACE_LIFECYCLE_ENABLE
+	//#define XOTRACE_RENDER_ENABLE
+	//#define XOTRACE_LAYOUT_VERBOSE_ENABLE
+	//#define XOTRACE_EVENTS_ENABLE
+	//#define XOTRACE_LATENCY_ENABLE
+	//#define XOTRACE_FONTS_ENABLE
+	//#define XOTRACE_OS_MSG_QUEUE_ENABLE
 
 #define XOTRACE_WARNING_ENABLE
 #define XOTRACE_LAYOUT_WARNINGS_ENABLE
+
+#ifdef XOTRACE_LIFECYCLE_ENABLE
+#define XOTRACE_LIFECYCLE(msg, ...) TimeTrace(msg, ##__VA_ARGS__)
+#else
+#define XOTRACE_LIFECYCLE(msg, ...) ((void) 0)
+#endif
 
 #ifdef XOTRACE_RENDER_ENABLE
 #define XOTRACE_RENDER(msg, ...) TimeTrace(msg, ##__VA_ARGS__)

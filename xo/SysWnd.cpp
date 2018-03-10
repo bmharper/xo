@@ -167,7 +167,7 @@ template <typename TRenderer>
 Error SysWnd::InitializeRenderer_Any(RenderBase*& renderer) {
 	renderer = new TRenderer();
 	if (renderer->InitializeDevice(*this)) {
-		Trace("Successfully initialized %s renderer\n", renderer->RendererName());
+		XOTRACE_RENDER("Successfully initialized %s renderer\n", renderer->RendererName());
 		return Error();
 	} else {
 		Trace("Failed to initialize %s renderer\n", renderer->RendererName());

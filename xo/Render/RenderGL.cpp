@@ -232,14 +232,14 @@ bool RenderGL::InitializeDevice(SysWnd& wnd) {
 		return false;
 	return true;
 #elif XO_PLATFORM_LINUX_DESKTOP
-	auto w = (SysWndLinux*) &wnd;
-	int oglLoad = ogl_LoadFunctions();
-	int glxLoad = glx_LoadFunctions(w->XDisplay, 0);
-	Trace("oglload: %d\n", oglLoad);
-	Trace("glxload: %d\n", glxLoad);
+	auto w       = (SysWndLinux*) &wnd;
+	int  oglLoad = ogl_LoadFunctions();
+	int  glxLoad = glx_LoadFunctions(w->XDisplay, 0);
+	XOTRACE_RENDER("oglload: %d\n", oglLoad);
+	XOTRACE_RENDER("glxload: %d\n", glxLoad);
 	if (!CreateShaders())
 		return false;
-	Trace("Shaders created\n");
+	XOTRACE_RENDER("Shaders created\n");
 	return true;
 #elif XO_PLATFORM_OSX
 	// TODO: What else do we need to do here?
@@ -247,7 +247,7 @@ bool RenderGL::InitializeDevice(SysWnd& wnd) {
 		return false;
 	return true;
 #else
-XO_TODO_STATIC
+	XO_TODO_STATIC
 #endif
 }
 
@@ -264,9 +264,9 @@ void RenderGL::CheckExtensions() {
             else if (pos == NULL)
                 return false;
         }
-    };
+	};
 
-	Trace("Checking OpenGL extensions\n");
+	XOTRACE_RENDER("Checking OpenGL extensions\n");
 	// On my desktop Nvidia I get "4.3.0"
 
 	int dot     = (int) (strstr(ver, ".") - ver);
@@ -274,21 +274,21 @@ void RenderGL::CheckExtensions() {
 	int minor   = ver[dot + 1] - '0';
 	int version = major * 10 + minor;
 
-	Trace("OpenGL version: %s\n", ver);
-	Trace("OpenGL extensions: %s\n", ext);
+	XOTRACE_RENDER("OpenGL version: %s\n", ver);
+	XOTRACE_RENDER("OpenGL extensions: %s\n", ext);
 
 	if (strstr(ver, "OpenGL ES")) {
-		Trace("OpenGL ES\n");
+		XOTRACE_RENDER("OpenGL ES\n");
 		Have_Unpack_RowLength = version >= 30 || hasExtension("GL_EXT_unpack_subimage");
 		Have_sRGB_Framebuffer = version >= 30 || hasExtension("GL_EXT_sRGB");
 	} else {
-		Trace("OpenGL Regular (non-ES)\n");
+		XOTRACE_RENDER("OpenGL Regular (non-ES)\n");
 		Have_Unpack_RowLength = true;
 		Have_sRGB_Framebuffer = version >= 40 || hasExtension("ARB_framebuffer_sRGB") || hasExtension("GL_EXT_framebuffer_sRGB");
 	}
 
 	Have_BlendFuncExtended = hasExtension("GL_ARB_blend_func_extended");
-	Trace(
+	XOTRACE_RENDER(
 	    "OpenGL Extensions ("
 	    "UNPACK_SUBIMAGE=%d, "
 	    "sRGB_FrameBuffer=%d, "
@@ -907,7 +907,7 @@ bool RenderGL::LoadProgram(GLProg& prog, const char* name, const char* vsrc, con
 }
 
 bool RenderGL::LoadProgram(GLuint& vshade, GLuint& fshade, GLuint& prog, const char* name, const char* vsrc, const char* fsrc) {
-	Trace("Loading shader %s\n", name);
+	XOTRACE_RENDER("Loading shader %s\n", name);
 	XO_ASSERT(glGetError() == GL_NO_ERROR);
 
 	bool isTextRGB = strcmp(name, "TextRGB") == 0;
@@ -945,9 +945,9 @@ bool RenderGL::LoadProgram(GLuint& vshade, GLuint& fshade, GLuint& prog, const c
 	glGetProgramiv(prog, GL_LINK_STATUS, &linkStat);
 	glGetProgramInfoLog(prog, maxBuff, &ilen, ibuff);
 	if (ibuff[0] != 0) {
-		Trace("Shader: %s\n", name);
-		Trace(ibuff);
-		Trace("\n");
+		XOTRACE_RENDER("Shader: %s\n", name);
+		XOTRACE_RENDER(ibuff);
+		XOTRACE_RENDER("\n");
 	}
 	bool ok = linkStat != 0 && glGetError() == GL_NO_ERROR;
 	if (!ok)
@@ -973,7 +973,7 @@ bool RenderGL::LoadShader(GLenum shaderType, GLuint& shader, const char* name, c
 	if (shaderType == GL_FRAGMENT_SHADER)
 		raw_prefix += "precision mediump float;\n";
 #elif XO_PLATFORM_WIN_DESKTOP || XO_PLATFORM_LINUX_DESKTOP
-	raw_prefix += "#version 130\n"; // necessary for dual color blending
+	raw_prefix += "#version 130\n";                           // necessary for dual color blending
 	raw_prefix += "#extension GL_EXT_gpu_shader4 : enable\n"; // for "bool"
 #endif
 
@@ -999,8 +999,8 @@ bool RenderGL::LoadShader(GLenum shaderType, GLuint& shader, const char* name, c
 	glGetShaderInfoLog(shader, maxBuff, &ilen, ibuff);
 	//glGetInfoLogARB( shader, maxBuff, &ilen, ibuff );
 	if (ibuff[0] != 0) {
-		Trace("Shader %s (%s)\n", name, shaderType == GL_FRAGMENT_SHADER ? "frag" : "vert");
-		Trace(ibuff);
+		XOTRACE_RENDER("Shader %s (%s)\n", name, shaderType == GL_FRAGMENT_SHADER ? "frag" : "vert");
+		XOTRACE_RENDER(ibuff);
 	}
 	if (compileStat == 0)
 		return false;

@@ -43,7 +43,7 @@ Error SysWndLinux::Create(uint32_t createFlags) {
 	}
 	pipe2(EventLoopWakePipe, O_NONBLOCK);
 	XDisplay_FD = ConnectionNumber(XDisplay);
-	Trace("visual %p selected\n", (void*) VisualInfo->visualid);
+	//Trace("visual %p selected\n", (void*) VisualInfo->visualid);
 	ColorMap = XCreateColormap(XDisplay, XWindowRoot, VisualInfo->visual, AllocNone);
 	XSetWindowAttributes swa;
 	swa.colormap = ColorMap;
