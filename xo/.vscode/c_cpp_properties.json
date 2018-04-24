@@ -1,90 +1,93 @@
 {
-	"configurations": [
-		{
-			"name": "Mac",
-			"includePath": [
-				"${workspaceRoot}",
-				"${workspaceRoot}/../dependencies",
-				"${workspaceRoot}/../dependencies/freetype/include",
-				"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1",
-				"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/8.1.0/include",
-				"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
-				"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/usr/include"
-			],
-			"defines": [],
-			"intelliSenseMode": "clang-x64",
-			"browse": {
-				"path": [
-					"${workspaceRoot}",
-					"${workspaceRoot}/../dependencies",
-					"${workspaceRoot}/../dependencies/freetype/include",
-					"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1",
-					"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/8.1.0/include",
-					"/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
-					"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/usr/include"
-				],
-				"limitSymbolsToIncludedHeaders": true,
-				"databaseFilename": ""
-			},
-			"macFrameworkPath": [
-				"/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/System/Library/Frameworks"
-			]
-		},
-		{
-			"name": "Linux",
-			"includePath": [
-				"${workspaceRoot}",
-				"${workspaceRoot}/../dependencies",
-				"${workspaceRoot}/../dependencies/freetype/include",
-				"/usr/include/c++/5",
-				"/usr/include/x86_64-linux-gnu/c++/5",
-				"/usr/include/c++/5/backward",
-				"/usr/lib/gcc/x86_64-linux-gnu/5/include",
-				"/usr/local/include",
-				"/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed",
-				"/usr/include/x86_64-linux-gnu",
-				"/usr/include"
-			],
-			"defines": [],
-			"intelliSenseMode": "clang-x64",
-			"browse": {
-				"path": [
-					"/usr/include/c++/5",
-					"/usr/include/x86_64-linux-gnu/c++/5",
-					"/usr/include/c++/5/backward",
-					"/usr/lib/gcc/x86_64-linux-gnu/5/include",
-					"/usr/local/include",
-					"/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed",
-					"/usr/include/x86_64-linux-gnu",
-					"/usr/include",
-					"${workspaceRoot}",
-					"${workspaceRoot}/../dependencies",
-					"${workspaceRoot}/../dependencies/freetype/include"
-				],
-				"limitSymbolsToIncludedHeaders": true,
-				"databaseFilename": ""
-			}
-		},
-		{
-			"name": "Win32",
-			"includePath": [
-				"C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include",
-				"${workspaceRoot}"
-			],
-			"defines": [
-				"_DEBUG",
-				"UNICODE"
-			],
-			"intelliSenseMode": "msvc-x64",
-			"browse": {
-				"path": [
-					"C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include/*",
-					"${workspaceRoot}"
-				],
-				"limitSymbolsToIncludedHeaders": true,
-				"databaseFilename": ""
-			}
-		}
-	],
-	"version": 3
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${workspaceRoot}",
+                "${workspaceRoot}/../dependencies",
+                "${workspaceRoot}/../dependencies/freetype/include",
+                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1",
+                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/8.1.0/include",
+                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
+                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/usr/include"
+            ],
+            "defines": [],
+            "intelliSenseMode": "clang-x64",
+            "browse": {
+                "path": [
+                    "${workspaceRoot}",
+                    "${workspaceRoot}/../dependencies",
+                    "${workspaceRoot}/../dependencies/freetype/include",
+                    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../include/c++/v1",
+                    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/../lib/clang/8.1.0/include",
+                    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
+                    "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/usr/include"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "macFrameworkPath": [
+                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.sdk/System/Library/Frameworks"
+            ]
+        },
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceRoot}",
+                "${workspaceRoot}/../dependencies",
+                "${workspaceRoot}/../dependencies/freetype/include",
+                "/usr/include/c++/5",
+                "/usr/include/x86_64-linux-gnu/c++/5",
+                "/usr/include/c++/5/backward",
+                "/usr/lib/gcc/x86_64-linux-gnu/5/include",
+                "/usr/local/include",
+                "/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed",
+                "/usr/include/x86_64-linux-gnu",
+                "/usr/include"
+            ],
+            "defines": [],
+            "intelliSenseMode": "clang-x64",
+            "browse": {
+                "path": [
+                    "/usr/include/c++/5",
+                    "/usr/include/x86_64-linux-gnu/c++/5",
+                    "/usr/include/c++/5/backward",
+                    "/usr/lib/gcc/x86_64-linux-gnu/5/include",
+                    "/usr/local/include",
+                    "/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed",
+                    "/usr/include/x86_64-linux-gnu",
+                    "/usr/include",
+                    "${workspaceRoot}",
+                    "${workspaceRoot}/../dependencies",
+                    "${workspaceRoot}/../dependencies/freetype/include"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        },
+        {
+            "name": "Win32",
+            "includePath": [
+                "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include",
+                "${workspaceRoot}"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE"
+            ],
+            "intelliSenseMode": "msvc-x64",
+            "browse": {
+                "path": [
+                    "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/include/*",
+                    "${workspaceRoot}"
+                ],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            }
+        }
+    ],
+    "version": 3
 }

@@ -45,10 +45,14 @@ void Canvas2D::StrokeRect(Box box, Color color, float linewidth) {
 		return;
 
 	float v[8] = {
-	    (float) box.Left, (float) box.Top,
-	    (float) box.Right, (float) box.Top,
-	    (float) box.Right, (float) box.Bottom,
-	    (float) box.Left, (float) box.Bottom,
+	    (float) box.Left,
+	    (float) box.Top,
+	    (float) box.Right,
+	    (float) box.Top,
+	    (float) box.Right,
+	    (float) box.Bottom,
+	    (float) box.Left,
+	    (float) box.Bottom,
 	};
 
 	StrokeLine(true, 4, v, 2 * sizeof(float), color, linewidth);
@@ -59,10 +63,14 @@ void Canvas2D::StrokeRect(BoxF box, Color color, float linewidth) {
 		return;
 
 	float v[8] = {
-	    box.Left, box.Top,
-	    box.Right, box.Top,
-	    box.Right, box.Bottom,
-	    box.Left, box.Bottom,
+	    box.Left,
+	    box.Top,
+	    box.Right,
+	    box.Top,
+	    box.Right,
+	    box.Bottom,
+	    box.Left,
+	    box.Bottom,
 	};
 
 	StrokeLine(true, 4, v, 2 * sizeof(float), color, linewidth);
@@ -117,8 +125,10 @@ void Canvas2D::StrokeLine(bool closed, int nvx, const float* vx, int vx_stride_b
 
 void Canvas2D::StrokeLine(float x1, float y1, float x2, float y2, Color color, float linewidth) {
 	float vx[4] = {
-	    x1, y1,
-	    x2, y2,
+	    x1,
+	    y1,
+	    x2,
+	    y2,
 	};
 	StrokeLine(false, 2, vx, 2 * sizeof(float), color, linewidth);
 }
@@ -163,7 +173,12 @@ void Canvas2D::FillCircle(float x, float y, float radius, Color color) {
 	RenderScanlines();
 }
 
-void Canvas2D::RenderSVG(const char* svg) {
+void Canvas2D::RenderSVGIcon(const char* svg) {
+	Fill(Color(0, 0, 0, 0));
+	RenderSVG(svg, BoxF(0, 0, Width(), Height()));
+}
+
+void Canvas2D::RenderSVG(const char* svg, BoxF pos) {
 	try {
 		agg::svg::path_renderer path;
 		agg::svg::parser        parse(path);
@@ -182,7 +197,7 @@ void Canvas2D::RenderSVG(const char* svg) {
 		renderer_solid ren(rb);
 
 		//rb.clear(agg::rgba(1, 1, 1, 0));
-		rb.clear(agg::rgba(0, 0, 0, 0));
+		//rb.clear(agg::rgba(0, 0, 0, 0));
 
 		agg::rasterizer_scanline_aa<> ras;
 		agg::scanline_p8              sl;
@@ -191,12 +206,12 @@ void Canvas2D::RenderSVG(const char* svg) {
 		auto   vb       = parse.view_box();
 		double vbWidth  = vb[2] - vb[0];
 		double vbHeight = vb[3] - vb[1];
-		double scale    = std::min(Width() / vbWidth, Height() / vbHeight);
+		double scale    = std::min(pos.Width() / vbWidth, pos.Height() / vbHeight);
 
 		//ras.gamma(agg::gamma_power(1));
 		//ras.gamma(agg::gamma_power(m_gamma.value()));
-		//mtx *= agg::trans_affine_translation((m_min_x + m_max_x) * -0.5, (m_min_y + m_max_y) * -0.5);
 		mtx *= agg::trans_affine_scaling(scale);
+		mtx *= agg::trans_affine_translation(pos.Left, pos.Top);
 		//mtx *= agg::trans_affine_rotation(agg::deg2rad(m_rotate.value()));
 		//mtx *= agg::trans_affine_translation((m_min_x + m_max_x) * 0.5 + m_x, (m_min_y + m_max_y) * 0.5 + m_y + 30);
 

@@ -288,6 +288,9 @@ public:
 	void Expand(float x, float y);
 	void Scale(float sx, float sy);
 
+	float Width() const { return Right - Left; }
+	float Height() const { return Bottom - Top; }
+
 	bool operator==(const BoxF& b) { return Left == b.Left && Right == b.Right && Top == b.Top && Bottom == b.Bottom; }
 	bool operator!=(const BoxF& b) { return !(*this == b); }
 };

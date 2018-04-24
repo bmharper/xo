@@ -78,7 +78,7 @@ VectorCache::Elem VectorCache::Render(const VariableTable& vectors, VectorCacheK
 	auto tex  = Atlases[elem.Atlas].Window(elem.X, elem.Y, key.Width, key.Height);
 	Atlases[elem.Atlas].InvalidRect.ExpandToFit(Box(elem.X, elem.Y, key.Width, key.Height));
 	Canvas2D canvas(&tex);
-	canvas.RenderSVG(svg);
+	canvas.RenderSVGIcon(svg);
 	return elem;
 }
-}
+} // namespace xo

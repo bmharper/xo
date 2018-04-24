@@ -63,7 +63,8 @@ public:
 	void StrokeLine(float x1, float y1, float x2, float y2, Color color, float linewidth);
 	void StrokeCircle(float x, float y, float radius, Color color, float linewidth);
 	void FillCircle(float x, float y, float radius, Color color);
-	void RenderSVG(const char* svg);
+	void RenderSVGIcon(const char* svg);
+	void RenderSVG(const char* svg, BoxF pos);
 	void Text(float x, float y, float angle, float size, Color color, const char* font, const char* str);
 
 	void SetPixel(int x, int y, RGBA c) { ((uint32_t*) RenderBuff.row_ptr(y))[x] = c.u; }
