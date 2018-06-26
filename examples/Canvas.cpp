@@ -26,10 +26,17 @@ void xoMain(xo::SysWnd* wnd) {
         };
 		//c2d->Fill(xo::Color::RGBA(0, 0, 0, 0));
 		//c2d->Fill(xo::Color::RGBA(255,255,255,255));
-		c2d->Fill(xo::Color::RGBA(255,255,255,xc));
+		c2d->Fill(xo::Color::RGBA(255, 255, 255, xc));
 		c2d->StrokeLine(true, arraysize(vx), &vx[0].x, sizeof(vx[0]), xo::Color(200, 0, 0, 255), 5.0f);
 		c2d->StrokeCircle(80, 80, 5, xo::Color(235, 0, 0, 200), 1.5f);
 		c2d->StrokeCircle(80, 80, 15, xo::Color(255, 0, 0, 200), 3.0f);
+
+		Vec2f vxFill[] = {
+		    {120, 45},
+		    {160, 45},
+		    {140, 70},
+		};
+		c2d->FillPoly(3, &vxFill[0].x, sizeof(vxFill[0]), xo::Color(0, 200, 0, 200));
 
 		c2d->Text(40, 40, 0, 14, xo::Color(30, 30, 30, 255), "Segoe UI", "Hello text!");
 		c2d->Text(110, 40, 0, 32, xo::Color(0, 0, 180, 255), "Segoe UI", "Big TEXT");
@@ -46,8 +53,8 @@ void xoMain(xo::SysWnd* wnd) {
 			c2d->StrokeLine(x + 0.5f, 140, x + 0.5f, 160, c3, 1.0f);
 			c2d->StrokeLine(x + 0.5f, 160, x + 0.5f, 180, c4, 1.0f);
 
-			auto raw = c4;
-			uint32_t cc = (uint32_t) raw.a << 24 | (uint32_t) raw.b << 16 | (uint32_t) raw.g << 8 | (uint32_t) raw.r;
+			auto     raw = c4;
+			uint32_t cc  = (uint32_t) raw.a << 24 | (uint32_t) raw.b << 16 | (uint32_t) raw.g << 8 | (uint32_t) raw.r;
 
 			uint32_t* px = (uint32_t*) c2d->PixelPtr(x, 190);
 			for (int y = 0; y < 20; y++, px += c2d->Stride() / 4) {

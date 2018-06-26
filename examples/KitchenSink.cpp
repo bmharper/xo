@@ -9,7 +9,7 @@ void InitDOM(xo::Doc* doc);
 
 void xoMain(xo::SysWnd* wnd) {
 	wnd->EventListeners.push_back([](xo::SysWnd::Event ev) {
-		if (ev == xo::SysWnd::EvClose) {
+		if (ev == xo::SysWnd::EvDestroy) {
 			// This demonstrates how to clean up global resources when an application exits
 			xo::Trace("KitchenSink application is closing\n");
 		}
@@ -546,9 +546,9 @@ void DoPositionType(xo::Doc* doc) {
 	auto root = &doc->Root;
 	root->ParseAppend(
 	    "<div style='width: 100px; height: 100px; background: #fcc'>"
-		"	<div style='position: absolute; width: 50px; height: 50px; background: #cfc'></div>"
-		"	<div style='width: 20px; height: 20px; background: #ccf'></div>"
-		"	<div style='width: 20px; height: 20px; background: #aaa'></div>"
+	    "	<div style='position: absolute; width: 50px; height: 50px; background: #cfc'></div>"
+	    "	<div style='width: 20px; height: 20px; background: #ccf'></div>"
+	    "	<div style='width: 20px; height: 20px; background: #aaa'></div>"
 	    "</div>");
 }
 

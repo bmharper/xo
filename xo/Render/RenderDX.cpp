@@ -572,8 +572,8 @@ void RenderDX::ActivateShader(Shaders shader) {
 	else
 		D3D.Context->OMSetBlendState(D3D.BlendNormal, blendFactors, sampleMask);
 
-	//D3D.Context->PSSetSamplers( 0, 1, &D3D.SamplerLinear );
-	D3D.Context->PSSetSamplers(0, 1, &D3D.SamplerPoint);
+	D3D.Context->PSSetSamplers(0, 1, &D3D.SamplerLinear);
+	//D3D.Context->PSSetSamplers(0, 1, &D3D.SamplerPoint);
 }
 
 void RenderDX::Draw(GPUPrimitiveTypes type, int nvertex, const void* v) {

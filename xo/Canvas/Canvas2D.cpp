@@ -45,10 +45,14 @@ void Canvas2D::StrokeRect(Box box, Color color, float linewidth) {
 		return;
 
 	float v[8] = {
-	    (float) box.Left, (float) box.Top,
-	    (float) box.Right, (float) box.Top,
-	    (float) box.Right, (float) box.Bottom,
-	    (float) box.Left, (float) box.Bottom,
+	    (float) box.Left,
+	    (float) box.Top,
+	    (float) box.Right,
+	    (float) box.Top,
+	    (float) box.Right,
+	    (float) box.Bottom,
+	    (float) box.Left,
+	    (float) box.Bottom,
 	};
 
 	StrokeLine(true, 4, v, 2 * sizeof(float), color, linewidth);
@@ -59,10 +63,14 @@ void Canvas2D::StrokeRect(BoxF box, Color color, float linewidth) {
 		return;
 
 	float v[8] = {
-	    box.Left, box.Top,
-	    box.Right, box.Top,
-	    box.Right, box.Bottom,
-	    box.Left, box.Bottom,
+	    box.Left,
+	    box.Top,
+	    box.Right,
+	    box.Top,
+	    box.Right,
+	    box.Bottom,
+	    box.Left,
+	    box.Bottom,
 	};
 
 	StrokeLine(true, 4, v, 2 * sizeof(float), color, linewidth);
@@ -117,8 +125,10 @@ void Canvas2D::StrokeLine(bool closed, int nvx, const float* vx, int vx_stride_b
 
 void Canvas2D::StrokeLine(float x1, float y1, float x2, float y2, Color color, float linewidth) {
 	float vx[4] = {
-	    x1, y1,
-	    x2, y2,
+	    x1,
+	    y1,
+	    x2,
+	    y2,
 	};
 	StrokeLine(false, 2, vx, 2 * sizeof(float), color, linewidth);
 }
@@ -157,6 +167,25 @@ void Canvas2D::FillCircle(float x, float y, float radius, Color color) {
 	agg::ellipse elps;
 	elps.init(x, y, radius, radius);
 	path.concat_path(elps, 0);
+
+	RasAA.add_path(path);
+	RenderAA_RGBA.color(ColorToAggS8(color));
+	RenderScanlines();
+}
+
+void Canvas2D::FillPoly(int nvx, const float* vx, int vx_stride_bytes, Color color) {
+	if (!IsAlive)
+		return;
+
+	RasAA.reset();
+	agg::path_storage path;
+	path.start_new_path();
+	path.move_to(vx[0], vx[1]);
+	(char*&) vx += vx_stride_bytes;
+	for (int i = 1; i < nvx; i++) {
+		path.line_to(vx[0], vx[1]);
+		(char*&) vx += vx_stride_bytes;
+	}
 
 	RasAA.add_path(path);
 	RenderAA_RGBA.color(ColorToAggS8(color));
