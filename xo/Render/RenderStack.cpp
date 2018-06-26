@@ -127,9 +127,9 @@ RenderStackEl& RenderStack::StackPush() {
 	RenderStackEl& el = Stack.add();
 	while (Stack_Pools.size() < Stack.size()) {
 		Stack_Pools += new xo::Pool();
-		Stack_Pools.back()->SetChunkSize(8 * 1024); // this is mentioned in RenderStack docs, so keep that up to date if you change this
+		Stack_Pools.back()->SetChunkSize(8 * 1024, 8 * 1024); // this is mentioned in RenderStack docs, so keep that up to date if you change this
 	}
 	el.Pool = Stack_Pools[Stack.size() - 1];
 	return el;
 }
-}
+} // namespace xo

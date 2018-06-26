@@ -1,6 +1,6 @@
 [submodule "testdata"]
 	path = testdata
-	url = git@github.com:benharper123/xo-testdata.git
+	url = https://github.com/bmharper/xo-testdata.git
 [submodule "dependencies/utfz"]
 	path = dependencies/utfz
-	url = git@github.com:IMQS/utfz
+	url = https://github.com/IMQS/utfz

@@ -140,7 +140,7 @@ void StringTableGC::GCSweep(bool forceRepack) {
 	}
 
 	// I don't know what good numbers are here. These are just thumb suck, but probably OK.
-	if (forceRepack || (WastedBytes > Pool.GetChunkSize() && WastedBytes > Pool.TotalAllocatedBytes() / 2))
+	if (forceRepack || WastedBytes > Pool.TotalAllocatedBytes() / 2)
 		GCRepack();
 }
 
@@ -166,4 +166,4 @@ void StringTableGC::GCRepack() {
 	WastedBytes = 0;
 	std::swap(newPool, Pool);
 }
-}
+} // namespace xo

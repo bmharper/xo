@@ -2,6 +2,11 @@
 -- MSVC /analyze is very slow, so we don't want it turned on all the time,
 -- which is why we keep a separate SubVariant called "analyze"
 
+-- How to build and test with afl?
+-- Uncomment the afl Config down below, in the Configs section
+-- export LD_LIBRARY_PATH=`pwd`/t2-output/linux-afl-release-default
+-- ../afl-2.51b/afl-fuzz -m 200 -i testdata/fuzz-vdom-diff -o findings -- t2-output/linux-afl-release-default/Test fuzz-vdom-diff
+
 local win_linker = {
 	{ "/NXCOMPAT /DYNAMICBASE /DEBUG:FASTLINK";				Config = "win*" },
 	{ "/DEBUG";												Config = "win*-*-debug" },
@@ -38,7 +43,6 @@ local win_common = {
 			{ "/W3"; Config = "win*" },
 			{ "/wd4251"; Config = "win*" },			-- class needs to have DLL-interface...
 			{ "/wd6387"; Config = "win*" },			-- 'data' could be '0':  this does not adhere to the specification for the function 'foo'
-			--{ "/analyze"; Config = "win*" },
 			{ "/Gm-"; Config = "win*" },
 			{ "/GS"; Config = "win*" },
 			{ "/RTC1"; Config = "win*-*-debug" },
@@ -55,6 +59,7 @@ local win_common = {
 }
 
 Build {
+	ScriptDirs = { "build" }, -- Allow tundra to find our afl toolchain inside build/tundra/tools/afl.lua
 	Units = "units.lua",
 	Passes= {
 		PchGen = { Name = "Precompiled Header Generation", BuildOrder = 1 },
@@ -73,6 +78,13 @@ Build {
 			DefaultOnHost = "linux",
 			Inherit = unix_common,
 			Tools = { "clang" },
+		},
+		-- See instructions at top of file for using afl (American Fuzzy Lop fuzzer).
+		{
+			Name = "linux-afl",
+			SupportedHosts = { "linux" },
+			Inherit = unix_common,
+			Tools = { "afl" },
 		},
 		{
 			Name = "win32-msvc2015",

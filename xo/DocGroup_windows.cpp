@@ -5,6 +5,12 @@
 
 namespace xo {
 
+DocGroupWindows::DocGroupWindows() {
+}
+
+DocGroupWindows::~DocGroupWindows() {
+}
+
 LRESULT CALLBACK DocGroupWindows::StaticWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	DocGroupWindows* proc = (DocGroupWindows*) GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	if (proc == NULL && lParam != NULL && message == WM_NCCREATE) {
@@ -293,6 +299,14 @@ LRESULT DocGroupWindows::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 		UpdateWindowsCursor(hWnd, Doc->UI.GetCursor(), 0, 0);
 		break;
 
+	case SysWndWindows::WM_XO_TOUCHED_BY_OTHER_THREAD:
+		// clear the flag, so that subsequent invalidations can come through
+		IsTouchedByOtherThread = false;
+		ev.Event.Type = EventDocProcess;
+		ev.Event.DocProcess = DocProcessEvents::TouchedByBackgroundThread;
+		Global()->UIEventQueue.Add(ev);
+		break;
+
 	case WM_MOUSEMOVE:
 		if (!IsMouseTracking) {
 			TRACKMOUSEEVENT tme = {0};
@@ -423,4 +437,9 @@ LRESULT DocGroupWindows::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 	return 0;
 }
+
+void DocGroupWindows::InternalTouchedByOtherThread() {
+	PostMessage(GetHWND(), SysWndWindows::WM_XO_TOUCHED_BY_OTHER_THREAD, 0, 0);
+}
+
 } // namespace xo

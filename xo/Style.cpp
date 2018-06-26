@@ -405,7 +405,7 @@ static bool ParseSingleAttrib(const char* s, size_t len, bool (*parseFunc)(const
 }
 
 static bool ParseIntComponent(const char* s, size_t len, int& val) {
-	val = 0;
+	val      = 0;
 	int tval = 0;
 
 	size_t i = 0;
@@ -908,25 +908,25 @@ void Style::CloneFastInto(Style& c, Pool* pool) const {
 	ClonePodvecWithMemCopy(c.Attribs, Attribs, pool);
 }
 
-#define XX(name, type, setfunc, cat)   \
+#define XX(name, type, setfunc, cat) \
 	\
 void Style::Set##name(type value) \
 { \
-		StyleAttrib a;                 \
-		a.setfunc(cat, value);         \
-		Set(a);                        \
+		StyleAttrib a;               \
+		a.setfunc(cat, value);       \
+		Set(a);                      \
 	\
 }
 NUSTYLE_SETTERS_2P
 #undef XX
 
-#define XX(name, type, setfunc)        \
+#define XX(name, type, setfunc)      \
 	\
 void Style::Set##name(type value) \
 { \
-		StyleAttrib a;                 \
-		a.setfunc(value);              \
-		Set(a);                        \
+		StyleAttrib a;               \
+		a.setfunc(value);            \
+		Set(a);                      \
 	\
 }
 NUSTYLE_SETTERS_1P
@@ -1563,10 +1563,10 @@ XO_API bool ParseFontWeight(const char* s, size_t len, FontWeight& val) {
 	int ival = 0;
 	if (ParseIntComponent(s, len, ival)) {
 		ival = Clamp(ival, 100, 900); // at render time we divide by 100 and store as byte, so only expect 1..9
-		val = (FontWeight) ival;
+		val  = (FontWeight) ival;
 		return true;
 	}
 	return false;
 }
 
-}
+} // namespace xo

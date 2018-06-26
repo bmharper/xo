@@ -9,6 +9,7 @@ public:
 	enum WindowMessages {
 		WM_XO_CURSOR_CHANGED = WM_USER,
 		WM_XO_SYSTRAY_ICON,
+		WM_XO_TOUCHED_BY_OTHER_THREAD,
 	};
 	enum {
 		SysTrayIconID = 1,

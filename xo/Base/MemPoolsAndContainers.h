@@ -10,8 +10,7 @@ public:
 	Pool();
 	~Pool();
 
-	void   SetChunkSize(size_t size);
-	size_t GetChunkSize() const { return ChunkSize; }
+	void   SetChunkSize(size_t minSize, size_t maxSize);
 	void*  Alloc(size_t bytes, bool zeroInit);
 	size_t TotalAllocatedBytes() const { return TotalAllocated; }
 
@@ -20,6 +19,12 @@ public:
 
 	template <typename T>
 	T* AllocNT(size_t count, bool zeroInit) { return (T*) Alloc(count * sizeof(T), zeroInit); }
+
+	// Allocate a copy of 'src', of length 'size', and return the copy
+	void* Copy(const void* src, size_t size);
+
+	// Same as Copy, but adds a null terminator
+	char* CopyStr(const void* src, size_t size);
 
 	void FreeAll();
 
@@ -30,8 +35,10 @@ public:
 	void FreeAllExceptOne();
 
 protected:
-	size_t          ChunkSize      = 64 * 1024;
-	size_t          TopRemain      = 0;
+	size_t          MinChunkSize   = 256;
+	size_t          MaxChunkSize   = 64 * 1024;
+	size_t          TopPos         = 0;
+	size_t          TopSize        = 0;
 	size_t          TotalAllocated = 0;
 	cheapvec<void*> Chunks;
 	cheapvec<void*> BigBlocks;

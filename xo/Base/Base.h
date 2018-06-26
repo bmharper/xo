@@ -20,12 +20,11 @@
 #elif XO_PLATFORM_LINUX_DESKTOP
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h> 
+#include <fcntl.h>
 #include <unistd.h>
 #include <pwd.h>
-#include <X11/Xlib.h> // X11 definitions are needed by SysWnd.h
-#include <X11/Xutil.h>
-#include <GL/glx.h>
+// We can't include any thing here that includes XLib, because of XLib's nasty macros
+//# include <GL/glx.h>
 #endif
 #include <pthread.h>
 #include <semaphore.h>
@@ -66,7 +65,7 @@ template <typename T>
 T Min(T a, T b) { return a < b ? a : b; }
 template <typename T>
 T Max(T a, T b) { return a < b ? b : a; }
-}
+} // namespace xo
 
 // Found this in the Chrome sources, via a PVS studio blog post
 template <typename T, size_t N>
@@ -129,12 +128,11 @@ typedef Vec4T<float> Vec4f;
 
 #define XO_MAT4F_DEFINED
 typedef Mat4T<float> Mat4f;
-}
+} // namespace xo
 ///////////////////////////////////////////////////////////////////////////
 
-#ifndef XXH32_SIZEOFSTATE
-#include "../../dependencies/hash/xxhash.h"
-#endif
+// We keep xxhash.h out of our precompiled header file, because it has some
+// intricate linker/compilation tricks, and it's just not worth the pain.
 
 #include "../Base/Alloc.h"
 #include "../Base/cheapvec.h"

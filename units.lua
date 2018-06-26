@@ -300,6 +300,7 @@ local ExampleSplineDev   = XoExampleApp(true, "xoWinMain.cpp", "SplineDev", {"Sp
 local ExampleLowLevel    = XoExampleApp(true, "xoWinMainLowLevel.cpp", "RunAppLowLevel", {"RunAppLowLevel.cpp"})
 local ExampleKitchenSink = XoExampleApp(true, "xoWinMain.cpp", "KitchenSink", {"KitchenSink.cpp", "SVGSamples.cpp"})
 local ExampleKitchenSink_Static = XoExampleApp(false, "xoWinMain.cpp", "KitchenSinkStatic", {"KitchenSink.cpp", "SVGSamples.cpp"})
+local ExampleReactive    = XoExampleApp(true, "xoWinMain.cpp", "Reactive", {"Reactive.cpp"})
 
 local Test = Program {
 	Name = "Test",
@@ -309,7 +310,7 @@ local Test = Program {
 		crt,
 	},
 	Libs = { 
-		{ "m", "stdc++"; Config = "linux-*" },
+		{ "m", "stdc++", "pthread"; Config = "linux-*" },
 	},
 	PrecompiledHeader = {
 		Source = "tests/pch.cpp",
@@ -329,4 +330,5 @@ Default(ExampleEvents)
 Default(ExampleHelloWorld)
 Default(ExampleKitchenSink)
 Default(ExampleLowLevel)
+Default(ExampleReactive)
 

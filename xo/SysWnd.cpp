@@ -49,7 +49,7 @@ SysWnd::~SysWnd() {
 }
 
 Error SysWnd::CreateWithDoc(uint32_t createFlags) {
-	DocGroup      = new xo::DocGroup();
+	DocGroup      = xo::DocGroup::New();
 	DocGroup->Wnd = this;
 	auto err      = Create(createFlags);
 	if (!err.OK()) {

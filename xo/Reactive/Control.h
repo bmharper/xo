@@ -14,6 +14,7 @@ public:
 	virtual ~Control();
 
 	virtual void Render() = 0;
+	virtual bool RenderDiffable() { return false; }
 
 	// Implementation of Observer
 	void ObservableTouched(Observable* target) override;
@@ -25,7 +26,8 @@ public:
 	static void OnDocProcess(Event& ev);
 
 private:
-	bool Dirty = true; // Hide Dirty behind getter/setter so that we can put breakpoints on SetDirty, and maybe do other things at that moment.
+	std::thread::id BoundThread = std::thread::id(); // Thread on which UI is expected to run, including all DOM manipulation
+	bool            Dirty       = true;              // Hide Dirty behind getter/setter so that we can put breakpoints on SetDirty, and maybe do other things at that moment.
 };
 
 } // namespace rx

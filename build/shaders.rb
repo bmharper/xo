@@ -1,4 +1,4 @@
-
+#!/usr/bin/env ruby
 =begin
 
 Shader Generator for xo

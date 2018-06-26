@@ -50,6 +50,7 @@ public:
 	void       CloneSlowInto(Doc& c, uint32_t cloneFlags, RenderStats& stats) const; // Used to make a read-only clone for the renderer. Preserves existing.
 	InternalID InternalIDSize() const;                                               // Returns the size of the InternalID table
 	DocGroup*  GetDocGroup() const { return Group; }
+	void       TouchedByOtherThread(); // TouchedByOtherThread is documented inside DocGroup
 
 	// Style Classes
 	bool        ClassParse(const char* klass, const char* style, size_t styleMaxLen = -1); // Set the class, overwriting any previously set style

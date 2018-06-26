@@ -16,11 +16,9 @@ Pool::~Pool() {
 	FreeAll();
 }
 
-void Pool::SetChunkSize(size_t size) {
-	// If this were not true, then FreeAllExceptOne would be wrong.
-	// Also, this just seems like sane behaviour (i.e. initializing chunk size a priori).
-	XO_ASSERT(Chunks.size() == 0);
-	ChunkSize = size;
+void Pool::SetChunkSize(size_t minSize, size_t maxSize) {
+	MinChunkSize = minSize;
+	MaxChunkSize = maxSize;
 }
 
 void Pool::FreeAll() {
@@ -30,14 +28,15 @@ void Pool::FreeAll() {
 		free(BigBlocks[i]);
 	Chunks.clear();
 	BigBlocks.clear();
-	TopRemain      = 0;
+	TopPos         = 0;
+	TopSize        = 0;
 	TotalAllocated = 0;
 }
 
 void Pool::FreeAllExceptOne() {
 	if (Chunks.size() == 1 && BigBlocks.size() == 0) {
-		TopRemain = ChunkSize;
-		TotalAllocated = ChunkSize;
+		TopPos  = 0;
+		TopSize = TotalAllocated;
 	} else {
 		FreeAll();
 	}
@@ -45,24 +44,42 @@ void Pool::FreeAllExceptOne() {
 
 void* Pool::Alloc(size_t bytes, bool zeroInit) {
 	XO_ASSERT(bytes != 0);
-	if (bytes > ChunkSize) {
+	if (bytes > MaxChunkSize) {
 		TotalAllocated += bytes;
 		BigBlocks += MallocOrDie(bytes);
 		if (zeroInit)
 			memset(BigBlocks.back(), 0, bytes);
 		return BigBlocks.back();
 	} else {
-		if ((ssize_t)(TopRemain - bytes) < 0) {
-			TotalAllocated += ChunkSize;
-			Chunks += MallocOrDie(ChunkSize);
-			TopRemain = ChunkSize;
+		if (TopPos + bytes > TopSize) {
+			size_t size = MinChunkSize;
+			while (size < TotalAllocated || size < bytes)
+				size *= 2;
+			size = min(size, MaxChunkSize);
+			TotalAllocated += size;
+			Chunks += MallocOrDie(size);
+			TopPos  = 0;
+			TopSize = size;
 		}
-		uint8_t* p = ((uint8_t*) Chunks.back()) + ChunkSize - TopRemain;
+		uint8_t* p = ((uint8_t*) Chunks.back()) + TopPos;
 		if (zeroInit)
 			memset(p, 0, bytes);
-		TopRemain -= bytes;
+		TopPos += bytes;
 		return p;
 	}
+}
+
+void* Pool::Copy(const void* src, size_t size) {
+	void* c = Alloc(size, false);
+	memcpy(c, src, size);
+	return c;
+}
+
+char* Pool::CopyStr(const void* src, size_t size) {
+	char* c = (char*) Alloc(size + 1, false);
+	memcpy(c, src, size);
+	c[size] = 0;
+	return c;
 }
 
 #ifdef _MSC_VER
@@ -139,7 +156,7 @@ uint32_t FixedSizeHeap::SlotFromPtr(void* p) const {
 	else
 		return -1;
 }
-}
+} // namespace xo
 
 namespace std {
 XO_API void swap(xo::Pool& a, xo::Pool& b) {
@@ -149,4 +166,4 @@ XO_API void swap(xo::Pool& a, xo::Pool& b) {
 	memcpy(&b, &tmp, sizeof(xo::Pool));
 	memset(&tmp, 0, sizeof(xo::Pool));
 }
-}
+} // namespace std

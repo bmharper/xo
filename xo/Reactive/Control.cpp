@@ -1,11 +1,13 @@
 #include "pch.h"
 #include "Control.h"
 #include "../Dom/DomNode.h"
+#include "../Doc.h"
 
 namespace xo {
 namespace rx {
 
 Control::Control(xo::DomNode* root) {
+	BoundThread = std::this_thread::get_id();
 	if (root)
 		Bind(root);
 }
@@ -28,9 +30,20 @@ void Control::Bind(xo::DomNode* root) {
 
 void Control::SetDirty() {
 	Dirty = true;
+	if (std::this_thread::get_id() != BoundThread) {
+		// Make sure that the xo message loop wakes up to re-render us.
+		// This message was sent from another thread (something doing background processing), so
+		// the main xo message loop won't necessarily have any reason to invoke the DocProcess mechanism.
+		// What happens after this?
+		// Basically, we need to somehow inject a message into the OS window message queue, so that
+		// the main thread wakes up and performs a re-render. On Windows, we use a custom WM_USER message.
+		Root->GetDoc()->TouchedByOtherThread();
+	}
 }
 
 void Control::OnDocProcess(Event& ev) {
+	if (ev.DocProcess != DocProcessEvents::DispatchEnd)
+		return;
 	Control* self = (Control*) ev.Context;
 	if (self->Dirty) {
 		self->Render();

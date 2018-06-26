@@ -439,7 +439,7 @@ void RenderGL::EndRender(SysWnd& wnd, uint32_t endRenderFlags) {
 	auto w = (SysWndLinux*) &wnd;
 	if (!(endRenderFlags & EndRenderNoSwap))
 		glXSwapBuffers(w->XDisplay, w->XWindow);
-	glXMakeCurrent(w->XDisplay, None, NULL);
+	glXMakeCurrent(w->XDisplay, X11Constants::None, NULL);
 #endif
 }
 
