@@ -37,7 +37,7 @@ styles to blow that limit often. If they do, then it's simply a performance hit.
 class XO_API RenderStack {
 public:
 	const xo::Doc* Doc;
-	Pool*          Pool;
+	xo::Pool*      Pool;
 	StyleAttrib    Defaults[CatEND];
 	Style          VerbatimExplodeTemp; // Temporary object used for verbatim style explosion
 	cheapvec<char> VerbatimBufTemp;     // Temporary string used during verbatim explosion

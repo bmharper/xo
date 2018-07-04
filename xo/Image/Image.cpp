@@ -1,18 +1,6 @@
 #include "pch.h"
 #include "Image.h"
 
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 4244)
-#endif
-
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "../dependencies/stb_image_write.h"
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
 namespace xo {
 
 Image::Image() {
