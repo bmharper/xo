@@ -175,7 +175,7 @@ void Canvas2D::FillCircle(float x, float y, float radius, Color color) {
 
 void Canvas2D::RenderSVGIcon(const char* svg) {
 	Fill(Color(0, 0, 0, 0));
-	RenderSVG(svg, BoxF(0, 0, Width(), Height()));
+	RenderSVG(svg, BoxF(0, 0, (float) Width(), (float) Height()));
 }
 
 void Canvas2D::RenderSVG(const char* svg, BoxF pos) {

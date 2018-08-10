@@ -382,7 +382,7 @@ will always be on one line only. We should clean this function up.
 
 This diagram was created using asciiflow (http://asciiflow.com/)
 
-               +–––––––––––––––––––––––––––––––––––+  XXXXXXXXXXXX
+               +â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“+  XXXXXXXXXXXX
             XX |      X       X                    |             X
             X  |      X       X                    |             X
             X  |      X       X                    |             X
@@ -391,13 +391,13 @@ This diagram was created using asciiflow (http://asciiflow.com/)
             X  |      X       X     X      X       |             X
             X  |      X       X     X      X       |             X lineheight
             XX |      X       X     XXXXXXXX       |             X
-               +–––––––––––––––––––+X+––––––––––––––+ baseline   X
+               +â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“+X+â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“+ baseline   X
             XX |                    X              |             X
 descender   X  |                    X              |             X
             X  |                    X              |             X
             XX |                    X              |             X
                |                                   |             X
-               +–––––––––––––––––––––––––––––––––––+  XXXXXXXXXXXX
+               +â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“â€“+  XXXXXXXXXXXX
 
 */
 void Layout::GenerateTextWords(TextRunState& ts) {
