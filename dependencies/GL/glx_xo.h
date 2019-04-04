@@ -93,6 +93,9 @@ typedef unsigned __int64 uint64_t;
 	typedef XID GLXVideoSourceSGIX;
 	typedef struct __GLXFBConfigRec *GLXFBConfigSGIX;
 	typedef XID GLXPbufferSGIX;
+
+// BMH manual 2019-04-04
+#ifndef GLX_EXT_stereo_tree
 	typedef struct {
     int type;
     unsigned long serial;
@@ -122,6 +125,7 @@ typedef unsigned __int64 uint64_t;
     char pipeName[80]; /* Should be [GLX_HYPERPIPE_PIPE_NAME_LENGTH_SGIX] */
     int XOrigin, YOrigin, maxHeight, maxWidth;
 } GLXPipeRectLimits;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
