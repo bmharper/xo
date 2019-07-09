@@ -4,53 +4,46 @@
 #include <initializer_list>
 #include "ohashtable.h"
 
-namespace ohash
-{
+namespace ohash {
 
-template <	typename TKey,
-			typename TVal,
-			typename THashFunc = func_default<TKey>,
-			typename TGetKeyFunc = getkey_pair<TKey, TVal> ,
-			typename TGetValFunc = getval_pair<TKey, TVal>
-			>
-class map : public table< TKey, std::pair<TKey, TVal>, THashFunc, TGetKeyFunc, TGetValFunc >
-{
+template <typename TKey,
+          typename TVal,
+          typename THashFunc   = func_default<TKey>,
+          typename TGetKeyFunc = getkey_pair<TKey, TVal>,
+          typename TGetValFunc = getval_pair<TKey, TVal>>
+class map : public table<TKey, std::pair<TKey, TVal>, THashFunc, TGetKeyFunc, TGetValFunc> {
 public:
-	typedef std::pair< TKey, TVal > pair_type;
-	typedef table< TKey, pair_type, THashFunc, TGetKeyFunc, TGetValFunc > base;
-	typedef typename base::iterator iterator;
+	typedef TKey                                                        key_type;    // consistent with unordered_map
+	typedef TVal                                                        mapped_type; // consistent with unordered_map
+	typedef std::pair<TKey, TVal>                                       pair_type;
+	typedef table<TKey, pair_type, THashFunc, TGetKeyFunc, TGetValFunc> base;
+	typedef typename base::iterator                                     iterator;
 
-	map()
-	{
+	map() {
 	}
 
-	map(std::initializer_list<pair_type> list)
-	{
+	map(std::initializer_list<pair_type> list) {
 		for (size_t i = 0; i < list.size(); i++)
 			insert(list.begin()[i]);
 	}
 
-	bool insert(const pair_type& obj)
-	{
+	bool insert(const pair_type& obj) {
 		return this->insert_check_exist(obj) != npos;
 	}
 
-	bool insert(const TKey& key, const TVal& val, bool overwrite = false)
-	{
+	bool insert(const TKey& key, const TVal& val, bool overwrite = false) {
 		return this->insert_check_exist(pair_type(key, val), overwrite) != npos;
 	}
 
 	/** Insert, always overwriting any existing value.
 	**/
-	void set(const TKey& key, const TVal& val)
-	{
+	void set(const TKey& key, const TVal& val) {
 		insert(key, val, true);
 	}
 
 #ifdef DVECT_DEFINED
 	/// Returns a list of all our keys
-	dvect<TKey> keys() const
-	{
+	dvect<TKey> keys() const {
 		dvect<TKey> k;
 		for (iterator it = base::begin(); it != base::end(); it++)
 			k += it->first;
@@ -58,52 +51,37 @@ public:
 	}
 #endif
 
-	const TVal& at(const TKey& Key) const
-	{
-		return *getp(Key);
-	}
-
 	/// Get an item in the set
 	/**
 	\return The object if found, or TVal() if not found.
 	**/
-	TVal get(const TKey& Key) const
-	{
-		hashsize_t pos = this->_find(Key);
-		if (pos != npos) return base::mData[pos].second;
-		else return TVal();
-	}
-
-	// Get an item in the set
-	// return true if found
-	bool get(const TKey& Key, TVal& val) const
-	{
+	TVal get(const TKey& Key) const {
 		hashsize_t pos = this->_find(Key);
 		if (pos != npos)
-		{
-			val = base::mData[pos].second;
-			return true;
-		}
-		else 
-		{
-			return false;
-		}
+			return base::mData[pos].second;
+		else
+			return TVal();
+	}
+
+	// Compatibility with unordered_map
+	TVal at(const TKey& Key) const {
+		return get(Key);
 	}
 
 	/// Get a pointer to an item in the map
 	/**
 	\return A pointer to an item in the set, NULL if object is not in set.
 	**/
-	TVal* getp(const TKey& Key) const
-	{
+	TVal* getp(const TKey& Key) const {
 		hashsize_t pos = this->_find(Key);
-		if (pos != npos) return &(base::mData[pos].second);
-		else return NULL;
+		if (pos != npos)
+			return &(base::mData[pos].second);
+		else
+			return NULL;
 	}
 
 	// const version- does not create object if it does not exist
-	const TVal& operator[](const TKey& index) const
-	{
+	const TVal& operator[](const TKey& index) const {
 		// This was my original implementation, but the fact that npos = -1 means that base::mdata[pos] is usually not
 		// an invalid memory location, so we don't trap the error at site.
 
@@ -115,24 +93,20 @@ public:
 		return *p;
 	}
 
-	TVal& operator[](const TKey& index)
-	{
+	TVal& operator[](const TKey& index) {
 		hashsize_t pos = this->_find(index);
-		if (pos == npos)
-		{
+		if (pos == npos) {
 			// create it.
 			pos = this->insert_no_check(pair_type(index, TVal()));
 		}
 		return base::mData[pos].second;
 	}
 
-	bool operator==(const map& other) const
-	{
+	bool operator==(const map& other) const {
 		if (this->size() != other.size())
 			return false;
 
-		for (auto& pair : *this)
-		{
+		for (auto& pair : *this) {
 			auto otherVal = other.getp(pair.first);
 			if (otherVal == nullptr)
 				return false;
@@ -143,25 +117,21 @@ public:
 		return true;
 	}
 
-	bool operator!=(const map& other) const
-	{
+	bool operator!=(const map& other) const {
 		return !(*this == other);
 	}
-
 };
-
-}
+} // namespace ohash
 
 // It is not sufficient to rely on ohash::table's swap. We need to define one for ohash::map, despite the fact that it has the same state
-namespace std
-{
-template<typename T1, typename T2, typename T3, typename T4, typename T5> inline void swap(ohash::map<T1,T2,T3,T4,T5>& a, ohash::map<T1,T2,T3,T4,T5>& b)
-{
-	char tmp[sizeof(ohash::map<T1,T2,T3,T4,T5>)];
+namespace std {
+template <typename T1, typename T2, typename T3, typename T4, typename T5>
+inline void swap(ohash::map<T1, T2, T3, T4, T5>& a, ohash::map<T1, T2, T3, T4, T5>& b) {
+	char tmp[sizeof(ohash::map<T1, T2, T3, T4, T5>)];
 	memcpy(tmp, &a, sizeof(a));
 	memcpy(&a, &b, sizeof(a));
 	memcpy(&b, tmp, sizeof(a));
 }
-}
+} // namespace std
 
 #endif

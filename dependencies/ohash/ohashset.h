@@ -4,70 +4,58 @@
 #include <initializer_list>
 #include "ohashtable.h"
 
-namespace ohash
-{
+namespace ohash {
 
-template <	typename TKey,
-			typename THashFunc = func_default< TKey >,
-			typename TGetKeyFunc = getkey_self< TKey, TKey >,
-			typename TGetValFunc = getval_self< TKey, TKey >
-			>
-class set : public table< TKey, TKey, THashFunc, TGetKeyFunc, TGetValFunc >
-{
+template <typename TKey,
+          typename THashFunc   = func_default<TKey>,
+          typename TGetKeyFunc = getkey_self<TKey, TKey>,
+          typename TGetValFunc = getval_self<TKey, TKey>>
+class set : public table<TKey, TKey, THashFunc, TGetKeyFunc, TGetValFunc> {
 public:
-	typedef table< TKey, TKey, THashFunc, TGetKeyFunc, TGetValFunc > base;
-	typedef typename base::iterator iterator;
+	typedef table<TKey, TKey, THashFunc, TGetKeyFunc, TGetValFunc> base;
+	typedef typename base::iterator                                iterator;
 
-	set()
-	{
+	set() {
 	}
 
-	set(std::initializer_list<TKey> list)
-	{
+	set(std::initializer_list<TKey> list) {
 		for (size_t i = 0; i < list.size(); i++)
 			insert(list.begin()[i]);
 	}
 
-	bool insert(const TKey& obj)
-	{
+	bool insert(const TKey& obj) {
 		return this->insert_check_exist(obj) != npos;
 	}
 
 	/// Wrapper for contains()
 	bool operator[](const TKey& obj) const { return contains(obj); }
-
 	/// Calls insert()
-	set& operator+=(const TKey& obj)
-	{
+	set& operator+=(const TKey& obj) {
 		insert(obj);
 		return *this;
 	}
 
 	/// Calls erase()
-	set& operator-=(const TKey& obj)
-	{
+	set& operator-=(const TKey& obj) {
 		erase(obj);
 		return *this;
 	}
 
 	// Stupid C++ overload breaks inheritance rule
-	set& operator+=(const set& obj)
-	{
-		base::operator +=(obj);
+	set& operator+=(const set& obj) {
+		base::operator+=(obj);
 		return *this;
 	}
 
 	// Stupid C++ overload breaks inheritance rule
-	set& operator-=(const set& obj)
-	{
-		base::operator -=(obj);
+	set& operator-=(const set& obj) {
+		base::operator-=(obj);
 		return *this;
 	}
 
 #ifdef DVECT_DEFINED
 	/// Returns a list of all our keys
-	dvect<TKey> keys() const
-	{
+	dvect<TKey> keys() const {
 		dvect<TKey> k;
 		for (iterator it = base::begin(); it != base::end(); it++)
 			k += *it;
@@ -77,36 +65,33 @@ public:
 
 	/** Determine if the set is not equal to set @a b.
 	**/
-	bool operator!=(const set& b) const
-	{
+	bool operator!=(const set& b) const {
 		return !(*this == b);
 	}
 
 	/** Determine if the set is equal to set @a b.
 	**/
-	bool operator==(const set& b) const
-	{
-		if (base::size() != b.size()) return false;
+	bool operator==(const set& b) const {
+		if (base::size() != b.size())
+			return false;
 
 		for (iterator it = base::begin(); it != base::end(); it++)
-			if (!b.contains(*it)) return false;
+			if (!b.contains(*it))
+				return false;
 
 		return true;
 	}
-
 };
+} // namespace ohash
 
-}
-
-namespace std
-{
-template<typename T1, typename T2, typename T3, typename T4> inline void swap(ohash::set<T1,T2,T3,T4>& a, ohash::set<T1,T2,T3,T4>& b)
-{
-	char tmp[sizeof(ohash::set<T1,T2,T3,T4>)];
+namespace std {
+template <typename T1, typename T2, typename T3, typename T4>
+inline void swap(ohash::set<T1, T2, T3, T4>& a, ohash::set<T1, T2, T3, T4>& b) {
+	char tmp[sizeof(ohash::set<T1, T2, T3, T4>)];
 	memcpy(tmp, &a, sizeof(a));
 	memcpy(&a, &b, sizeof(a));
 	memcpy(&b, tmp, sizeof(a));
 }
-}
+} // namespace std
 
 #endif
