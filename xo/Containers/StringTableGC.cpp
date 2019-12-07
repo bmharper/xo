@@ -60,11 +60,12 @@ int StringTableGC::GetID(const char* str, size_t len) const {
 
 int StringTableGC::GetOrCreateID(const char* str, size_t len) {
 	XO_ASSERT(str != nullptr);
-	int                 id = 0;
+	int*                pid;
 	TruncatedTempString tstr(str, len);
-	if (StrToID.get(tstr, id))
-		return id;
+	if ((pid = StrToID.getp(tstr)) != nullptr)
+		return *pid;
 
+	int id = 0;
 	if (FreeIDList.size() != 0) {
 		id = FreeIDList.rpop();
 	} else {

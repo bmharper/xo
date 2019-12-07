@@ -224,8 +224,9 @@ const Font* FontStore::GetByFacename_Internal(const char* facename) const {
 	FontID id;
 	String low = facename;
 	low.MakeLower();
-	if (FacenameToFontID.get(low, id))
-		return Fonts[id];
+	FontID* pid = FacenameToFontID.getp(low);
+	if (pid)
+		return Fonts[*pid];
 
 	return nullptr;
 }

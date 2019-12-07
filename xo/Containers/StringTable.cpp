@@ -17,16 +17,14 @@ const char* StringTable::GetStr(int id) const {
 
 int StringTable::GetID(const char* str) const {
 	XO_ASSERT(str != nullptr);
-	int v = 0;
-	NameToID.get(StringRaw::WrapConstAway(str), v);
-	return v;
+	return NameToID.get(StringRaw::WrapConstAway(str));
 }
 
 int StringTable::GetOrCreateID(const char* str) {
 	XO_ASSERT(str != nullptr);
-	int v = 0;
-	if (NameToID.get(StringRaw::WrapConstAway(str), v))
-		return v;
+	int* v = NameToID.getp(StringRaw::WrapConstAway(str));
+	if (v)
+		return *v;
 	size_t len  = strlen(str);
 	char*  copy = (char*) Pool.Alloc(len + 1, false);
 	memcpy(copy, str, len);
@@ -42,4 +40,4 @@ void StringTable::CloneFrom_Incremental(const StringTable& src) {
 		XO_ASSERT(id == i);
 	}
 }
-}
+} // namespace xo
